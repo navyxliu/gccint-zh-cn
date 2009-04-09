@@ -1,0 +1,33 @@
+@c Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+@c 1999, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+@c This is part of the GCC manual.
+@c For copying conditions, see the file gcc.texi.
+
+@node Interface
+@chapter Interfacing to GCC Output
+@cindex interfacing to GCC output
+@cindex run-time conventions
+@cindex function call conventions
+@cindex conventions, run-time
+正常情况下GCC被配置为使用和在目标系统上相同的函数调用约定。这是通过机器描述宏来描述的（@pxref{Target Macros}）。
+
+@cindex unions, returning
+@cindex structures, returning
+@cindex returning structures and unions
+但是，结构体和联合体的值的返回在一些目标机上采用了不同的方式。于是，由PCC编译的返回这些类型的函数就不能够被由GCC编译的代码调用，反之亦然。这并没有引起麻烦，因为几乎很少的Unix库函数返回结构体或联合体。
+
+GCC代码使用存放 @code{int} 或者 @code{double} 返回值的寄存器来返回1，2，4或者8个字节长的结构体和联合体。（而且GCC还寄存器来分配这样类型的变量。）其它大小的结构体和联合体在返回时，将它们存放在调用者传给的一个地址中（通常通过寄存器存放）。目标钩（target hook） @code{TARGET_STRUCT_VALUE_RTX} 告诉GCC将这个地址传到什么地方。
+
+相比之下，PCC在大多目标机上返回任何大小的结构体和联合体时，通过将数据复制到一个静态存储区域，然后将那个存储地址当作指针值返回。调用者必须将数据从那个内存区域复制到所需要的地方。这比GCC使用的方法要慢，而且不可重入。
+
+在一些目标机上，例如RISC机器和80386，标准的系统约定是将返回值得地址传给子程序。在这些机器上，当使用这种方法时，GCC被配置为与标准编译器兼容。可能对于1，2，4或者8字节的结构体不兼容。
+
+@cindex argument passing
+@cindex passing arguments
+GCC使用系统的标准约定来传递参数。在一些机器上，前几个参数通过寄存器传递；另一些机器上，是所有的都通过栈传递。本来是可以在所有的机器上使用寄存器传递参数，而且这样还有可能大大提高性能。但是，这样就与使用标准约定的代码不兼容了。所以这种变换只有在你将GCC作为系统的唯一C编译器时才实用。只有当我们拥有一套完整的GNU系统，并用GCC来编译库时，我们才可以在特定的机器上实现寄存器参数传输。
+
+在一些机器上（特别是SPARC），一些类型参数通过“隐匿引用”（invisible reference）传递。这意味着值存储在内存中，将内存地址传给子程序。
+
+@cindex @code{longjmp} and automatic variables
+如果使用 @code{longjmp}，则需要注意自动变量。ISO C规定了没有声明为 @code{volatile} 的自动变量在 @code{longjmp} 之后其值未定义。这也是GCC所承诺的，因为很难正确的存储寄存器变量，而且GCC的一个特点是可以在未作要求的情况下也可以将变量放在寄存器中。
+

@@ -1,0 +1,79 @@
+<html lang="en">
+<head>
+<title>Interface - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.11">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="prev" href="Portability.html#Portability" title="Portability">
+<link rel="next" href="Libgcc.html#Libgcc" title="Libgcc">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
+2008 Free Software Foundation, Inc.
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.2 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being ``Funding Free Software'', the Front-Cover
+Texts being (a) (see below), and with the Back-Cover Texts being (b)
+(see below).  A copy of the license is included in the section entitled
+``GNU Free Documentation License''.
+
+(a) The FSF's Front-Cover Text is:
+
+     A GNU Manual
+
+(b) The FSF's Back-Cover Text is:
+
+     You have freedom to copy and modify this GNU Manual, like GNU
+     software.  Copies published by the Free Software Foundation raise
+     funds for GNU development.-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<p>
+<a name="Interface"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="Libgcc.html#Libgcc">Libgcc</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Portability.html#Portability">Portability</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
+<hr>
+</div>
+
+<h2 class="chapter">3 Interfacing to GCC Output</h2>
+
+<p><a name="index-interfacing-to-GCC-output-7"></a><a name="index-run_002dtime-conventions-8"></a><a name="index-function-call-conventions-9"></a><a name="index-conventions_002c-run_002dtime-10"></a>正常情况下GCC被配置为使用和在目标系统上相同的函数调用约定。这是通过机器描述宏来描述的（see <a href="Target-Macros.html#Target-Macros">Target Macros</a>）。
+
+ <p><a name="index-unions_002c-returning-11"></a><a name="index-structures_002c-returning-12"></a><a name="index-returning-structures-and-unions-13"></a>但是，结构体和联合体的值的返回在一些目标机上采用了不同的方式。于是，由PCC编译的返回这些类型的函数就不能够被由GCC编译的代码调用，反之亦然。这并没有引起麻烦，因为几乎很少的Unix库函数返回结构体或联合体。
+
+ <p>GCC代码使用存放 <code>int</code> 或者 <code>double</code> 返回值的寄存器来返回1，2，4或者8个字节长的结构体和联合体。（而且GCC还寄存器来分配这样类型的变量。）其它大小的结构体和联合体在返回时，将它们存放在调用者传给的一个地址中（通常通过寄存器存放）。目标钩（target hook） <code>TARGET_STRUCT_VALUE_RTX</code> 告诉GCC将这个地址传到什么地方。
+
+ <p>相比之下，PCC在大多目标机上返回任何大小的结构体和联合体时，通过将数据复制到一个静态存储区域，然后将那个存储地址当作指针值返回。调用者必须将数据从那个内存区域复制到所需要的地方。这比GCC使用的方法要慢，而且不可重入。
+
+ <p>在一些目标机上，例如RISC机器和80386，标准的系统约定是将返回值得地址传给子程序。在这些机器上，当使用这种方法时，GCC被配置为与标准编译器兼容。可能对于1，2，4或者8字节的结构体不兼容。
+
+ <p><a name="index-argument-passing-14"></a><a name="index-passing-arguments-15"></a>GCC使用系统的标准约定来传递参数。在一些机器上，前几个参数通过寄存器传递；另一些机器上，是所有的都通过栈传递。本来是可以在所有的机器上使用寄存器传递参数，而且这样还有可能大大提高性能。但是，这样就与使用标准约定的代码不兼容了。所以这种变换只有在你将GCC作为系统的唯一C编译器时才实用。只有当我们拥有一套完整的GNU系统，并用GCC来编译库时，我们才可以在特定的机器上实现寄存器参数传输。
+
+ <p>在一些机器上（特别是SPARC），一些类型参数通过“隐匿引用”（invisible reference）传递。这意味着值存储在内存中，将内存地址传给子程序。
+
+ <p><a name="index-g_t_0040code_007blongjmp_007d-and-automatic-variables-16"></a>如果使用 <code>longjmp</code>，则需要注意自动变量。ISO C规定了没有声明为 <code>volatile</code> 的自动变量在 <code>longjmp</code> 之后其值未定义。这也是GCC所承诺的，因为很难正确的存储寄存器变量，而且GCC的一个特点是可以在未作要求的情况下也可以将变量放在寄存器中。
+
+<!-- Copyright (C) 2003, 2004, 2005, 2006, 2007 Free Software Foundation, Inc. -->
+<!-- This is part of the GCC manual. -->
+<!-- For copying conditions, see the file gcc.texi. -->
+<!-- Contributed by Aldy Hernandez <aldy@quesejoda.com> -->
+ </body></html>
+
