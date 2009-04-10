@@ -57,69 +57,49 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Machine-Desc.html#Machine-Desc">Machine
 <h3 class="section">16.2 Everything about Instruction Patterns</h3>
 
 <p><a name="index-patterns-3156"></a><a name="index-instruction-patterns-3157"></a>
-<a name="index-define_005finsn-3158"></a>Each instruction pattern contains an incomplete RTL expression, with pieces
-to be filled in later, operand constraints that restrict how the pieces can
-be filled in, and an output pattern or C code to generate the assembler
-output, all wrapped up in a <code>define_insn</code> expression.
+<a name="index-define_005finsn-3158"></a>每个指令模式包含了一个不完全的RTL表达式，和之后要被填充的部分；操作数约束，用来
+限制如何填充那些部分；以及一个输出模式或者C代码来生成汇编输出。所有这些都由一个
+ <code>define_insn</code> 表达式包裹起来。
 
- <p>A <code>define_insn</code> is an RTL expression containing four or five operands:
+ <p><code>define_insn</code> 是一个RTL表达式，包含了四或五个操作数：
 
      <ol type=1 start=1>
-<li>An optional name.  The presence of a name indicate that this instruction
-pattern can perform a certain standard job for the RTL-generation
-pass of the compiler.  This pass knows certain names and will use
-the instruction patterns with those names, if the names are defined
-in the machine description.
+<li>一个可选的名字。存在名字表明该指令模式能够为编译器的RTL生成过程，执行一个确定的
+标准工作。这个过程知道确定的名字，并且如果在机器描述中定义了这些名字，则会使用
+它们的指令模式。
 
-     <p>The absence of a name is indicated by writing an empty string
-where the name should go.  Nameless instruction patterns are never
-used for generating RTL code, but they may permit several simpler insns
-to be combined later on.
+     <p>空字符串表示不存在名字。没有命名的指令模式是不会被用来生成RTL代码的，但是之后它
+们能够用来组合多个简单insn。
 
-     <p>Names that are not thus known and used in RTL-generation have no
-effect; they are equivalent to no name at all.
+     <p>不识别的并且因此不在RTL生成中使用的名字，没有任何作用，就像没有命名一样。
 
-     <p>For the purpose of debugging the compiler, you may also specify a
-name beginning with the &lsquo;<samp><span class="samp">*</span></samp>&rsquo; character.  Such a name is used only
-for identifying the instruction in RTL dumps; it is entirely equivalent
-to having a nameless pattern for all other purposes.
+     <p>出于调试编译器的目的，你可能还需要指定一个名字起始于 &lsquo;<samp><span class="samp">*</span></samp>&rsquo; 字符。这样的名字只
+被用来标识RTL dump中的指令，其它的都与没有命名的模式一样。
 
-     <li>The <dfn>RTL template</dfn> (see <a href="RTL-Template.html#RTL-Template">RTL Template</a>) is a vector of incomplete
-RTL expressions which show what the instruction should look like.  It is
-incomplete because it may contain <code>match_operand</code>,
-<code>match_operator</code>, and <code>match_dup</code> expressions that stand for
-operands of the instruction.
+     <li><dfn>RTL template</dfn>（see <a href="RTL-Template.html#RTL-Template">RTL Template</a>）是一个不完全的RTL表达式向量，展示了这
+条指令的样子。所谓不完全是因为它可以包含 <code>match_operand</code>,
+<code>match_operator</code> 和 <code>match_dup</code> 表达式，用来表示指令的操作数。
 
-     <p>If the vector has only one element, that element is the template for the
-instruction pattern.  If the vector has multiple elements, then the
-instruction pattern is a <code>parallel</code> expression containing the
-elements described.
+     <p>如果向量只有一个元素，则那个元素为指令模式的模版。如果向量有多个元素，则指令模式是一个 <code>parallel</code> 表达式，包含了所描述的元素。
 
-     <li><a name="index-pattern-conditions-3159"></a><a name="index-conditions_002c-in-patterns-3160"></a>A condition.  This is a string which contains a C expression that is
-the final test to decide whether an insn body matches this pattern.
+     <li><a name="index-pattern-conditions-3159"></a><a name="index-conditions_002c-in-patterns-3160"></a>一个条件。这是一个字符串，包含了一个C表达式用来最终测试，判定一个insn实体是否匹
+配该模式。
 
-     <p><a name="index-named-patterns-and-conditions-3161"></a>For a named pattern, the condition (if present) may not depend on
-the data in the insn being matched, but only the target-machine-type
-flags.  The compiler needs to test these conditions during
-initialization in order to learn exactly which named instructions are
-available in a particular run.
+     <p><a name="index-named-patterns-and-conditions-3161"></a>对于命名模式，条件（如果存在）可能不取决于要被匹配的insn的数据，而只是取决于
+目标-机器-类型标记（target-machine-type flag）。编译器需要在初始化时测试这些条
+件，以至于能够确切的知道在这一次运行中，哪些命名指令是可用的。
 
-     <p><a name="index-operands-3162"></a>For nameless patterns, the condition is applied only when matching an
-individual insn, and only after the insn has matched the pattern's
-recognition template.  The insn's operands may be found in the vector
-<code>operands</code>.  For an insn where the condition has once matched, it
-can't be used to control register allocation, for example by excluding
-certain hard registers or hard register combinations.
+     <p><a name="index-operands-3162"></a>对于没有命名的模式，条件只用来匹配一个单独的insn，并且只在insn已经匹配了模式的识
+别模版。insn的操作数可以为vector <code>operands</code>。对于一旦条件匹配的insn，它便不能被用来控制寄存器分配，例如用来排除某个硬件寄存器，或者硬件寄存器组合。
 
-     <li>The <dfn>output template</dfn>: a string that says how to output matching
-insns as assembler code.  &lsquo;<samp><span class="samp">%</span></samp>&rsquo; in this string specifies where
-to substitute the value of an operand.  See <a href="Output-Template.html#Output-Template">Output Template</a>.
+     <li><dfn>output template</dfn>：一个字符串，说明了如何将匹配的insn输出为汇编代码。字符串
+中的 &lsquo;<samp><span class="samp">%</span></samp>&rsquo; 指定了替换一个操作数值的地方。See <a href="Output-Template.html#Output-Template">Output Template</a>。
 
-     <p>When simple substitution isn't general enough, you can specify a piece
-of C code to compute the output.  See <a href="Output-Statement.html#Output-Statement">Output Statement</a>.
+     <p>当简单替换无法满足需求的时候，你可以指定一块C代码来计算输出。
+See <a href="Output-Statement.html#Output-Statement">Output Statement</a>。
 
-     <li>Optionally, a vector containing the values of attributes for insns matching
-this pattern.  See <a href="Insn-Attributes.html#Insn-Attributes">Insn Attributes</a>.
+     <li>一个可选的向量，包含了匹配该模式的insn的属性值。See <a href="Insn-Attributes.html#Insn-Attributes">Insn Attributes</a>。
+
       </ol>
 
  </body></html>
