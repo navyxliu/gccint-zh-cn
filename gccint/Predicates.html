@@ -57,60 +57,41 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Machine-Desc.html#Machine-Desc">Machine
 <h3 class="section">16.7 Predicates</h3>
 
 <p><a name="index-predicates-3191"></a><a name="index-operand-predicates-3192"></a><a name="index-operator-predicates-3193"></a>
-A predicate determines whether a <code>match_operand</code> or
-<code>match_operator</code> expression matches, and therefore whether the
-surrounding instruction pattern will be used for that combination of
-operands.  GCC has a number of machine-independent predicates, and you
-can define machine-specific predicates as needed.  By convention,
-predicates used with <code>match_operand</code> have names that end in
-&lsquo;<samp><span class="samp">_operand</span></samp>&rsquo;, and those used with <code>match_operator</code> have names
-that end in &lsquo;<samp><span class="samp">_operator</span></samp>&rsquo;.
+断言用于判断一个 <code>match_operand</code> 或者 <code>match_operator</code> 表达式是否匹
+配，以及指令模式是否会被用于那些操作数的组合。GCC有许多机器独立的断言，并且如
+果需要的话你可以定义机器特定的断言。根据惯例，与 <code>match_operand</code> 一起使用
+的断言名字以 &lsquo;<samp><span class="samp">_operand</span></samp>&rsquo; 结束，与 <code>match_operator</code> 一起使用的断言名字
+以&lsquo;<samp><span class="samp">_operator</span></samp>&rsquo; 结束。
 
- <p>All predicates are Boolean functions (in the mathematical sense) of
-two arguments: the RTL expression that is being considered at that
-position in the instruction pattern, and the machine mode that the
-<code>match_operand</code> or <code>match_operator</code> specifies.  In this
-section, the first argument is called <var>op</var> and the second argument
-<var>mode</var>.  Predicates can be called from C as ordinary two-argument
-functions; this can be useful in output templates or other
-machine-specific code.
+ <p>所有断言（从数学意义上）都是具有两个参数的布尔函数：指令模式中的RTL表达式，以
+及 <code>match_operand</code> 或 <code>match_operator</code> 指定的机器模式。在这一节里，
+第一个参数被称为 <var>op</var>，第二个被称为 <var>mode</var>。断言能够作为普通的两个参数
+的函数，由C来调用；这可以用于输出模板或者其它机器特定代码中。
 
- <p>Operand predicates can allow operands that are not actually acceptable
-to the hardware, as long as the constraints give reload the ability to
-fix them up (see <a href="Constraints.html#Constraints">Constraints</a>).  However, GCC will usually generate
-better code if the predicates specify the requirements of the machine
-instructions as closely as possible.  Reload cannot fix up operands
-that must be constants (&ldquo;immediate operands&rdquo;); you must use a
-predicate that allows only constants, or else enforce the requirement
-in the extra condition.
+ <p>操作数断言能够允许硬件实际上无法接受的操作数，只要约束提供重载的能力，能够修复
+它们（see <a href="Constraints.html#Constraints">Constraints</a>）。然而，只要断言指定的机器指令要求尽可能的严密，GCC
+通常便会生成较好的代码。重载不能修复必须为常量的操作数（立即数）；你必须使用只
+允许常量的断言，或者使用额外的条件来加强必要条件。
 
- <p><a name="index-predicates-and-machine-modes-3194"></a><a name="index-normal-predicates-3195"></a><a name="index-special-predicates-3196"></a>Most predicates handle their <var>mode</var> argument in a uniform manner. 
-If <var>mode</var> is <code>VOIDmode</code> (unspecified), then <var>op</var> can have
-any mode.  If <var>mode</var> is anything else, then <var>op</var> must have the
-same mode, unless <var>op</var> is a <code>CONST_INT</code> or integer
-<code>CONST_DOUBLE</code>.  These RTL expressions always have
-<code>VOIDmode</code>, so it would be counterproductive to check that their
-mode matches.  Instead, predicates that accept <code>CONST_INT</code> and/or
-integer <code>CONST_DOUBLE</code> check that the value stored in the
-constant will fit in the requested mode.
+ <p><a name="index-predicates-and-machine-modes-3194"></a><a name="index-normal-predicates-3195"></a><a name="index-special-predicates-3196"></a>大多数断言使用统一的方式来处理它们的 <var>mode</var> 参数。如果 <var>mode</var> 为
+<code>VOIDmode</code>（未指定的），那么 <var>op</var> 能够具有任意的模式。如果 <var>mode</var>
+为其它情况，那么 <var>op</var> 必须具有相同的模式，除非 <var>op</var> 是一个
+<code>CONST_INT</code> 或者整数 <code>CONST_DOUBLE</code>。这些RTL表达式总是具有
+<code>VOIDmode</code>，所以检测它们的模式匹配是不必要的。相反的，接受
+<code>CONST_INT</code> 以及整数 <code>CONST_DOUBLE</code> 的断言，检测存储在常量中的值时，
+将会得到适合的模式。
 
- <p>Predicates with this behavior are called <dfn>normal</dfn>. 
-<samp><span class="command">genrecog</span></samp> can optimize the instruction recognizer based on
-knowledge of how normal predicates treat modes.  It can also diagnose
-certain kinds of common errors in the use of normal predicates; for
-instance, it is almost always an error to use a normal predicate
-without specifying a mode.
+ <p>这种行为的断言被称为常规断言。<samp><span class="command">genrecog</span></samp> 能够根据常规断言如何处理模式的
+知识来优化指令识别器。它还能够诊断使用常规断言所出现的一些常见错误类型。例如，
+常见的使用常规断言而没有指定模式的错误。
 
- <p>Predicates that do something different with their <var>mode</var> argument
-are called <dfn>special</dfn>.  The generic predicates
-<code>address_operand</code> and <code>pmode_register_operand</code> are special
-predicates.  <samp><span class="command">genrecog</span></samp> does not do any optimizations or
-diagnosis when special predicates are used.
+ <p>对 <var>mode</var> 参数进行不同方式处理的断言被称为特殊断言。通用断言
+<code>address_operand</code> 和 <code>pmode_register_operand</code> 是特殊断言。
+<samp><span class="command">genrecog</span></samp> 对使用特殊断言的不做任何优化和诊断。
 
 <ul class="menu">
-<li><a accesskey="1" href="Machine_002dIndependent-Predicates.html#Machine_002dIndependent-Predicates">Machine-Independent Predicates</a>:   Predicates available to all back ends. 
-<li><a accesskey="2" href="Defining-Predicates.html#Defining-Predicates">Defining Predicates</a>:              How to write machine-specific predicate
-                                    functions. 
+<li><a accesskey="1" href="Machine_002dIndependent-Predicates.html#Machine_002dIndependent-Predicates">Machine-Independent Predicates</a>:  所有后端都可用的断言。
+<li><a accesskey="2" href="Defining-Predicates.html#Defining-Predicates">Defining Predicates</a>:             如何写机器特定的断言函数。
 </ul>
 
  </body></html>

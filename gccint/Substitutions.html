@@ -56,60 +56,52 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Mode-Iterators.html#Mode-Iterators">Mod
 
 <h5 class="subsubsection">16.22.1.2 Substitution in Mode Iterators</h5>
 
-<p><a name="index-define_005fmode_005fattr-3674"></a>
-If an <samp><span class="file">.md</span></samp> file construct uses mode iterators, each version of the
-construct will often need slightly different strings or modes.  For
-example:
+<p><a name="index-define_005fmode_005fattr-3674"></a>如果一个 <samp><span class="file">.md</span></samp> 文件结构使用了机器模式迭代器，则结构的每个版本将通常
+需要轻微不同的字符串或机器模式。例如：
 
      <ul>
-<li>When a <code>define_expand</code> defines several <code>add</code><var>m</var><code>3</code> patterns
-(see <a href="Standard-Names.html#Standard-Names">Standard Names</a>), each expander will need to use the
-appropriate mode name for <var>m</var>.
+<li>当一个 <code>define_expand</code> 定义了多个 <code>add</code><var>m</var><code>3</code> 指令模式时
+（see <a href="Standard-Names.html#Standard-Names">Standard Names</a>），每个扩展将需要针对 <var>m</var> 的适当的机器模式。
 
-     <li>When a <code>define_insn</code> defines several instruction patterns,
-each instruction will often use a different assembler mnemonic.
+     <li>当一个 <code>define_insn</code> 定义了多个指令模式时，每条指令将通常需要一个不
+同的汇编助记符。
 
-     <li>When a <code>define_insn</code> requires operands with different modes,
-using an iterator for one of the operand modes usually requires a specific
-mode for the other operand(s). 
+     <li>当一个 <code>define_insn</code> 需要操作数具有不同的机器模式时，针对一个操作数
+的机器模式使用迭代器通常需要对于其它操作数使用特点的机器模式。
 </ul>
 
- <p>GCC supports such variations through a system of &ldquo;mode attributes&rdquo;. 
-There are two standard attributes: <code>mode</code>, which is the name of
-the mode in lower case, and <code>MODE</code>, which is the same thing in
-upper case.  You can define other attributes using:
+ <p>GCC通过“机器模式属性”系统来支持这样的变种。有两种标准属性：<code>mode</code>，
+其为机器模式的小写名字，<code>MODE</code>，其为机器模式的大写名字。你可以定义其
+它属性，使用：
 
 <pre class="smallexample">     (define_mode_attr <var>name</var> [(<var>mode1</var> "<var>value1</var>") ... (<var>moden</var> "<var>valuen</var>")])
 </pre>
- <p>where <var>name</var> is the name of the attribute and <var>valuei</var>
-is the value associated with <var>modei</var>.
+ <p>其中 <var>name</var> 为属性的名字，<var>valuei</var> 为与 <var>modei</var> 关联的值。
 
- <p>When GCC replaces some <var>:iterator</var> with <var>:mode</var>, it will scan
-each string and mode in the pattern for sequences of the form
-<code>&lt;</code><var>iterator</var><code>:</code><var>attr</var><code>&gt;</code>, where <var>attr</var> is the name of a
-mode attribute.  If the attribute is defined for <var>mode</var>, the whole
-<code>&lt;...&gt;</code> sequence will be replaced by the appropriate attribute
-value.
+ <p>当GCC使用 <var>:mode</var> 来替换某个 <var>:iterator</var> 时，其将扫描指令模式中的
+每个字符串和机器模式，按照 <code>&lt;</code><var>iterator</var><code>:</code><var>attr</var><code>&gt;</code>形式的序列，
+其中<var>attr</var>为一个机器模式属性的名字。如果属性针对mode被定义，则整个
+<code>&lt;...&gt;</code> 序列将被适当的属性值替换。
 
- <p>For example, suppose an <samp><span class="file">.md</span></samp> file has:
+ <p>例如，假设一个 <samp><span class="file">.md</span></samp> 具有：
 
 <pre class="smallexample">     (define_mode_iterator P [(SI "Pmode == SImode") (DI "Pmode == DImode")])
      (define_mode_attr load [(SI "lw") (DI "ld")])
 </pre>
- <p>If one of the patterns that uses <code>:P</code> contains the string
-<code>"&lt;P:load&gt;\t%0,%1"</code>, the <code>SI</code> version of that pattern
-will use <code>"lw\t%0,%1"</code> and the <code>DI</code> version will use
-<code>"ld\t%0,%1"</code>.
+ <p>如果其中一个使用 <code>:P</code> 的指令模式包含了字符串
+<code>"&lt;P:load&gt;\t%0,%1"</code>，则 <code>SI</code> 版本的指令模式将使用
+<code>"lw\t%0,%1"</code> 并且 <code>DI</code> 版本的将使用
+<code>"ld\t%0,%1"</code>。
 
- <p>Here is an example of using an attribute for a mode:
+ <p>这里有一个关于使用针对一个机器模式的属性的例子：
 
 <pre class="smallexample">     (define_mode_iterator LONG [SI DI])
      (define_mode_attr SHORT [(SI "HI") (DI "SI")])
      (define_insn ...
        (sign_extend:LONG (match_operand:&lt;LONG:SHORT&gt; ...)) ...)
 </pre>
- <p>The <var>iterator</var><code>:</code> prefix may be omitted, in which case the
-substitution will be attempted for every iterator expansion.
+ <p><var>iterator</var><code>:</code> 前缀可以被省略掉，这种情况下将会针对每个迭代器扩展来
+尝试替换。
 
  </body></html>
 

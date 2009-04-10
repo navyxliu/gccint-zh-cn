@@ -57,19 +57,15 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Machine-Desc.html#Machine-Desc">Machine
 <h3 class="section">16.6 C Statements for Assembler Output</h3>
 
 <p><a name="index-output-statements-3184"></a><a name="index-C-statements-for-assembler-output-3185"></a><a name="index-generating-assembler-output-3186"></a>
-Often a single fixed template string cannot produce correct and efficient
-assembler code for all the cases that are recognized by a single
-instruction pattern.  For example, the opcodes may depend on the kinds of
-operands; or some unfortunate combinations of operands may require extra
-machine instructions.
+经常，单个固定的模板字符串，不能够为单个指令模式所识别的所有情况都能产生正确，
+有效的汇编代码。例如，操作码可以依赖于操作数类别；或者一些不适宜的操作数组合
+可能需要额外的机器指令。
 
- <p>If the output control string starts with a &lsquo;<samp><span class="samp">@</span></samp>&rsquo;, then it is actually
-a series of templates, each on a separate line.  (Blank lines and
-leading spaces and tabs are ignored.)  The templates correspond to the
-pattern's constraint alternatives (see <a href="Multi_002dAlternative.html#Multi_002dAlternative">Multi-Alternative</a>).  For example,
-if a target machine has a two-address add instruction &lsquo;<samp><span class="samp">addr</span></samp>&rsquo; to add
-into a register and another &lsquo;<samp><span class="samp">addm</span></samp>&rsquo; to add a register to memory, you
-might write this pattern:
+ <p>如果输出控制字符串起始于 &lsquo;<samp><span class="samp">@</span></samp>&rsquo;，则其实际为一系列模板，每一个单独一行。
+（空行，以及开头的空格和tab被忽略掉。）这些模板对应于模式的各个约束
+（see <a href="Multi_002dAlternative.html#Multi_002dAlternative">Multi-Alternative</a>）。例如，如果一个目标机有一个二址（two-address）
+加法指令 &lsquo;<samp><span class="samp">addr</span></samp>&rsquo;相加到寄存器中，另外还有一个 &lsquo;<samp><span class="samp">addm</span></samp>&rsquo; 将寄存器的值相加
+到内存中，你可能会这样写模式：
 
 <pre class="smallexample">     (define_insn "addsi3"
        [(set (match_operand:SI 0 "general_operand" "=r,m")
@@ -80,46 +76,31 @@ might write this pattern:
         addr %2,%0
         addm %2,%0")
 </pre>
- <p><a name="index-g_t_0040code_007b_002a_007d-in-template-3187"></a><a name="index-asterisk-in-template-3188"></a>If the output control string starts with a &lsquo;<samp><span class="samp">*</span></samp>&rsquo;, then it is not an
-output template but rather a piece of C program that should compute a
-template.  It should execute a <code>return</code> statement to return the
-template-string you want.  Most such templates use C string literals, which
-require doublequote characters to delimit them.  To include these
-doublequote characters in the string, prefix each one with &lsquo;<samp><span class="samp">\</span></samp>&rsquo;.
+ <p><a name="index-g_t_0040code_007b_002a_007d-in-template-3187"></a><a name="index-asterisk-in-template-3188"></a>如果输出控制字符串起始于 &lsquo;<samp><span class="samp">*</span></samp>&rsquo;，则其不是一个输出模板，而是一个C程序片段并且
+能够计算出一个模板。其应该执行一个 <code>return</code> 语句来返回你想要的模板字符串。
+大多数这样的模板使用C字符串文字，需要用双引号包含起来。如果要在字符串中包含这
+些双引号，可以在前面加上 &lsquo;<samp><span class="samp">\</span></samp>&rsquo;。
 
- <p>If the output control string is written as a brace block instead of a
-double-quoted string, it is automatically assumed to be C code.  In that
-case, it is not necessary to put in a leading asterisk, or to escape the
-doublequotes surrounding C string literals.
+ <p>如果输出控制串写成一个花括号块，而不是双引号的字符串，则其被自动认为是C代码。
+这种情况下，则不必要有的起始的星号，以及转义C字符串文字中的双引号。
 
- <p>The operands may be found in the array <code>operands</code>, whose C data type
-is <code>rtx []</code>.
+ <p>操作数可以为数组 <code>operands</code>，其C数据类型为 <code>rtx []</code>。
 
- <p>It is very common to select different ways of generating assembler code
-based on whether an immediate operand is within a certain range.  Be
-careful when doing this, because the result of <code>INTVAL</code> is an
-integer on the host machine.  If the host machine has more bits in an
-<code>int</code> than the target machine has in the mode in which the constant
-will be used, then some of the bits you get from <code>INTVAL</code> will be
-superfluous.  For proper results, you must carefully disregard the
-values of those bits.
+ <p>一种常见的情况是，根据立即数是否在一个特定范围内来选择生成汇编代码的方式。在做
+这种事情的时候要仔细，因为 <code>INTVAL</code> 的结果是一个主机上的整形。如果主机的
+<code>int</code> 比目标机上的具有更多的位，则从 <code>INTVAL</code> 中的得到的一些位将会是
+多余的。要得到正确的结果，必须仔细的忽视掉那些位的值。
 
- <p><a name="index-output_005fasm_005finsn-3189"></a>It is possible to output an assembler instruction and then go on to output
-or compute more of them, using the subroutine <code>output_asm_insn</code>.  This
-receives two arguments: a template-string and a vector of operands.  The
-vector may be <code>operands</code>, or it may be another array of <code>rtx</code>
-that you declare locally and initialize yourself.
+ <p><a name="index-output_005fasm_005finsn-3189"></a>有可能输出一个汇编指令，然后使用子程序 <code>output_asm_insn</code> 来继续输出或者计
+算更多的。其接收两个参数：一个模板字符串和一个操作数向量。向量可以是
+<code>operands</code>，或者是另一个声明为局部的并且自己初始化的 <code>rtx</code> 数组。
 
- <p><a name="index-which_005falternative-3190"></a>When an insn pattern has multiple alternatives in its constraints, often
-the appearance of the assembler code is determined mostly by which alternative
-was matched.  When this is so, the C code can test the variable
-<code>which_alternative</code>, which is the ordinal number of the alternative
-that was actually satisfied (0 for the first, 1 for the second alternative,
-etc.).
+ <p><a name="index-which_005falternative-3190"></a>当一个insn模式有多个可选择的约束时，则汇编代码经常主要是由所匹配的约束选择来决
+定。如果是这样，C代码可以测试变量 <code>which_alternative</code>，其为实际满足条件的
+约束选择的序号（0为第一个，1位第二个选择，以此类推）。
 
- <p>For example, suppose there are two opcodes for storing zero, &lsquo;<samp><span class="samp">clrreg</span></samp>&rsquo;
-for registers and &lsquo;<samp><span class="samp">clrmem</span></samp>&rsquo; for memory locations.  Here is how
-a pattern could use <code>which_alternative</code> to choose between them:
+ <p>例如，假设有两个操作码来存储0，&lsquo;<samp><span class="samp">clrreg</span></samp>&rsquo; 用于寄存器，&lsquo;<samp><span class="samp">clrmem</span></samp>&rsquo; 用于内存
+地址。这个模式实现了如何能够使用 &lsquo;<samp><span class="samp">which_alternative</span></samp>&rsquo; 来选择它们：
 
 <pre class="smallexample">     (define_insn ""
        [(set (match_operand:SI 0 "general_operand" "=r,m")
@@ -130,9 +111,8 @@ a pattern could use <code>which_alternative</code> to choose between them:
                ? "clrreg %0" : "clrmem %0");
        })
 </pre>
- <p>The example above, where the assembler code to generate was
-<em>solely</em> determined by the alternative, could also have been specified
-as follows, having the output control string start with a &lsquo;<samp><span class="samp">@</span></samp>&rsquo;:
+ <p>对于上面的例子，要生成的汇编代码 <em>只是</em> 由alternative来决定，则还可以写成
+如下形式，使用起始于 &lsquo;<samp><span class="samp">@</span></samp>&rsquo; 的输出控制串：
 
 <pre class="smallexample">     (define_insn ""
        [(set (match_operand:SI 0 "general_operand" "=r,m")

@@ -459,19 +459,15 @@ describe multiple variants of assembler language syntax.
 @cindex C statements for assembler output
 @cindex generating assembler output
 
-Often a single fixed template string cannot produce correct and efficient
-assembler code for all the cases that are recognized by a single
-instruction pattern.  For example, the opcodes may depend on the kinds of
-operands; or some unfortunate combinations of operands may require extra
-machine instructions.
+经常，单个固定的模板字符串，不能够为单个指令模式所识别的所有情况都能产生正确，
+有效的汇编代码。例如，操作码可以依赖于操作数类别；或者一些不适宜的操作数组合
+可能需要额外的机器指令。
 
-If the output control string starts with a @samp{@@}, then it is actually
-a series of templates, each on a separate line.  (Blank lines and
-leading spaces and tabs are ignored.)  The templates correspond to the
-pattern's constraint alternatives (@pxref{Multi-Alternative}).  For example,
-if a target machine has a two-address add instruction @samp{addr} to add
-into a register and another @samp{addm} to add a register to memory, you
-might write this pattern:
+如果输出控制字符串起始于 @samp{@@}，则其实际为一系列模板，每一个单独一行。
+（空行，以及开头的空格和tab被忽略掉。）这些模板对应于模式的各个约束
+（@pxref{Multi-Alternative}）。例如，如果一个目标机有一个二址（two-address）
+加法指令 @samp{addr}相加到寄存器中，另外还有一个 @samp{addm} 将寄存器的值相加
+到内存中，你可能会这样写模式：
 
 @smallexample
 (define_insn "addsi3"
@@ -486,48 +482,33 @@ might write this pattern:
 
 @cindex @code{*} in template
 @cindex asterisk in template
-If the output control string starts with a @samp{*}, then it is not an
-output template but rather a piece of C program that should compute a
-template.  It should execute a @code{return} statement to return the
-template-string you want.  Most such templates use C string literals, which
-require doublequote characters to delimit them.  To include these
-doublequote characters in the string, prefix each one with @samp{\}.
+如果输出控制字符串起始于 @samp{*}，则其不是一个输出模板，而是一个C程序片段并且
+能够计算出一个模板。其应该执行一个 @code{return} 语句来返回你想要的模板字符串。
+大多数这样的模板使用C字符串文字，需要用双引号包含起来。如果要在字符串中包含这
+些双引号，可以在前面加上 @samp{\}。
 
-If the output control string is written as a brace block instead of a
-double-quoted string, it is automatically assumed to be C code.  In that
-case, it is not necessary to put in a leading asterisk, or to escape the
-doublequotes surrounding C string literals.
+如果输出控制串写成一个花括号块，而不是双引号的字符串，则其被自动认为是C代码。
+这种情况下，则不必要有的起始的星号，以及转义C字符串文字中的双引号。
 
-The operands may be found in the array @code{operands}, whose C data type
-is @code{rtx []}.
+操作数可以为数组 @code{operands}，其C数据类型为 @code{rtx []}。
 
-It is very common to select different ways of generating assembler code
-based on whether an immediate operand is within a certain range.  Be
-careful when doing this, because the result of @code{INTVAL} is an
-integer on the host machine.  If the host machine has more bits in an
-@code{int} than the target machine has in the mode in which the constant
-will be used, then some of the bits you get from @code{INTVAL} will be
-superfluous.  For proper results, you must carefully disregard the
-values of those bits.
+一种常见的情况是，根据立即数是否在一个特定范围内来选择生成汇编代码的方式。在做
+这种事情的时候要仔细，因为 @code{INTVAL} 的结果是一个主机上的整形。如果主机的
+@code{int} 比目标机上的具有更多的位，则从 @code{INTVAL} 中的得到的一些位将会是
+多余的。要得到正确的结果，必须仔细的忽视掉那些位的值。
 
 @findex output_asm_insn
-It is possible to output an assembler instruction and then go on to output
-or compute more of them, using the subroutine @code{output_asm_insn}.  This
-receives two arguments: a template-string and a vector of operands.  The
-vector may be @code{operands}, or it may be another array of @code{rtx}
-that you declare locally and initialize yourself.
+有可能输出一个汇编指令，然后使用子程序 @code{output_asm_insn} 来继续输出或者计
+算更多的。其接收两个参数：一个模板字符串和一个操作数向量。向量可以是 
+@code{operands}，或者是另一个声明为局部的并且自己初始化的 @code{rtx} 数组。
 
 @findex which_alternative
-When an insn pattern has multiple alternatives in its constraints, often
-the appearance of the assembler code is determined mostly by which alternative
-was matched.  When this is so, the C code can test the variable
-@code{which_alternative}, which is the ordinal number of the alternative
-that was actually satisfied (0 for the first, 1 for the second alternative,
-etc.).
+当一个insn模式有多个可选择的约束时，则汇编代码经常主要是由所匹配的约束选择来决
+定。如果是这样，C代码可以测试变量 @code{which_alternative}，其为实际满足条件的
+约束选择的序号（0为第一个，1位第二个选择，以此类推）。
 
-For example, suppose there are two opcodes for storing zero, @samp{clrreg}
-for registers and @samp{clrmem} for memory locations.  Here is how
-a pattern could use @code{which_alternative} to choose between them:
+例如，假设有两个操作码来存储0，@samp{clrreg} 用于寄存器，@samp{clrmem} 用于内存
+地址。这个模式实现了如何能够使用 @samp{which_alternative} 来选择它们：
 
 @smallexample
 (define_insn ""
@@ -540,9 +521,8 @@ a pattern could use @code{which_alternative} to choose between them:
   @})
 @end smallexample
 
-The example above, where the assembler code to generate was
-@emph{solely} determined by the alternative, could also have been specified
-as follows, having the output control string start with a @samp{@@}:
+对于上面的例子，要生成的汇编代码 @emph{只是} 由alternative来决定，则还可以写成
+如下形式，使用起始于 @samp{@@} 的输出控制串：
 
 @smallexample
 @group
@@ -562,63 +542,44 @@ as follows, having the output control string start with a @samp{@@}:
 @cindex operand predicates
 @cindex operator predicates
 
-A predicate determines whether a @code{match_operand} or
-@code{match_operator} expression matches, and therefore whether the
-surrounding instruction pattern will be used for that combination of
-operands.  GCC has a number of machine-independent predicates, and you
-can define machine-specific predicates as needed.  By convention,
-predicates used with @code{match_operand} have names that end in
-@samp{_operand}, and those used with @code{match_operator} have names
-that end in @samp{_operator}.
+断言用于判断一个 @code{match_operand} 或者 @code{match_operator} 表达式是否匹
+配，以及指令模式是否会被用于那些操作数的组合。GCC有许多机器独立的断言，并且如
+果需要的话你可以定义机器特定的断言。根据惯例，与 @code{match_operand} 一起使用
+的断言名字以 @samp{_operand} 结束，与 @code{match_operator} 一起使用的断言名字
+以@samp{_operator} 结束。
 
-All predicates are Boolean functions (in the mathematical sense) of
-two arguments: the RTL expression that is being considered at that
-position in the instruction pattern, and the machine mode that the
-@code{match_operand} or @code{match_operator} specifies.  In this
-section, the first argument is called @var{op} and the second argument
-@var{mode}.  Predicates can be called from C as ordinary two-argument
-functions; this can be useful in output templates or other
-machine-specific code.
+所有断言（从数学意义上）都是具有两个参数的布尔函数：指令模式中的RTL表达式，以
+及 @code{match_operand} 或 @code{match_operator} 指定的机器模式。在这一节里，
+第一个参数被称为 @var{op}，第二个被称为 @var{mode}。断言能够作为普通的两个参数
+的函数，由C来调用；这可以用于输出模板或者其它机器特定代码中。
 
-Operand predicates can allow operands that are not actually acceptable
-to the hardware, as long as the constraints give reload the ability to
-fix them up (@pxref{Constraints}).  However, GCC will usually generate
-better code if the predicates specify the requirements of the machine
-instructions as closely as possible.  Reload cannot fix up operands
-that must be constants (``immediate operands''); you must use a
-predicate that allows only constants, or else enforce the requirement
-in the extra condition.
+操作数断言能够允许硬件实际上无法接受的操作数，只要约束提供重载的能力，能够修复
+它们（@pxref{Constraints}）。然而，只要断言指定的机器指令要求尽可能的严密，GCC
+通常便会生成较好的代码。重载不能修复必须为常量的操作数（立即数）；你必须使用只
+允许常量的断言，或者使用额外的条件来加强必要条件。
 
 @cindex predicates and machine modes
 @cindex normal predicates
 @cindex special predicates
-Most predicates handle their @var{mode} argument in a uniform manner.
-If @var{mode} is @code{VOIDmode} (unspecified), then @var{op} can have
-any mode.  If @var{mode} is anything else, then @var{op} must have the
-same mode, unless @var{op} is a @code{CONST_INT} or integer
-@code{CONST_DOUBLE}.  These RTL expressions always have
-@code{VOIDmode}, so it would be counterproductive to check that their
-mode matches.  Instead, predicates that accept @code{CONST_INT} and/or
-integer @code{CONST_DOUBLE} check that the value stored in the
-constant will fit in the requested mode.
+大多数断言使用统一的方式来处理它们的 @var{mode} 参数。如果 @var{mode} 为
+@code{VOIDmode}（未指定的），那么 @var{op} 能够具有任意的模式。如果 @var{mode} 
+为其它情况，那么 @var{op} 必须具有相同的模式，除非 @var{op} 是一个 
+@code{CONST_INT} 或者整数 @code{CONST_DOUBLE}。这些RTL表达式总是具有
+@code{VOIDmode}，所以检测它们的模式匹配是不必要的。相反的，接受
+@code{CONST_INT} 以及整数 @code{CONST_DOUBLE} 的断言，检测存储在常量中的值时，
+将会得到适合的模式。
 
-Predicates with this behavior are called @dfn{normal}.
-@command{genrecog} can optimize the instruction recognizer based on
-knowledge of how normal predicates treat modes.  It can also diagnose
-certain kinds of common errors in the use of normal predicates; for
-instance, it is almost always an error to use a normal predicate
-without specifying a mode.
+这种行为的断言被称为常规断言。@command{genrecog} 能够根据常规断言如何处理模式的
+知识来优化指令识别器。它还能够诊断使用常规断言所出现的一些常见错误类型。例如，
+常见的使用常规断言而没有指定模式的错误。
 
-Predicates that do something different with their @var{mode} argument
-are called @dfn{special}.  The generic predicates
-@code{address_operand} and @code{pmode_register_operand} are special
-predicates.  @command{genrecog} does not do any optimizations or
-diagnosis when special predicates are used.
+对 @var{mode} 参数进行不同方式处理的断言被称为特殊断言。通用断言 
+@code{address_operand} 和 @code{pmode_register_operand} 是特殊断言。
+@command{genrecog} 对使用特殊断言的不做任何优化和诊断。
 
 @menu
-* Machine-Independent Predicates::  Predicates available to all back ends.
-* Defining Predicates::             How to write machine-specific predicate
-                                    functions.
+* Machine-Independent Predicates:: 所有后端都可用的断言。 
+* Defining Predicates::            如何写机器特定的断言函数。
 @end menu
 
 @node Machine-Independent Predicates
@@ -7620,12 +7581,10 @@ construction
 @cindex conditional execution
 @cindex predication
 
-A number of architectures provide for some form of conditional
-execution, or predication.  The hallmark of this feature is the
-ability to nullify most of the instructions in the instruction set.
-When the instruction set is large and not entirely symmetric, it
-can be quite tedious to describe these forms directly in the
-@file{.md} file.  An alternative is the @code{define_cond_exec} template.
+许多体系结构都提供了某种形式的条件执行，或者断言。其特点是能够使得
+指令集中的大多数指令变为无效。当指令集很大并且不完全对称时，在
+@file{.md} 文件中直接描述这些形式将会变得非常冗长。一种可替代的方式
+为 @code{define_cond_exec} 模板。
 
 @findex define_cond_exec
 @smallexample
@@ -7635,36 +7594,28 @@ can be quite tedious to describe these forms directly in the
   "@var{output-template}")
 @end smallexample
 
-@var{predicate-pattern} is the condition that must be true for the
-insn to be executed at runtime and should match a relational operator.
-One can use @code{match_operator} to match several relational operators
-at once.  Any @code{match_operand} operands must have no more than one
-alternative.
+@var{predicate-pattern} 为运行时执行insn所需要的必须为真的条件，并且
+应该能匹配一个相关的操作符。可以使用 @code{match_operator} 来一次匹配
+多个相关的操作符。任何 @code{match_operand} 操作数必须具有不超过一个
+的可选项。
 
-@var{condition} is a C expression that must be true for the generated
-pattern to match.
+@var{condition} 为一个C表达式，对于生成的指令模式必须匹配为真。
 
 @findex current_insn_predicate
-@var{output-template} is a string similar to the @code{define_insn}
-output template (@pxref{Output Template}), except that the @samp{*}
-and @samp{@@} special cases do not apply.  This is only useful if the
-assembly text for the predicate is a simple prefix to the main insn.
-In order to handle the general case, there is a global variable
-@code{current_insn_predicate} that will contain the entire predicate
-if the current insn is predicated, and will otherwise be @code{NULL}.
+@var{output-template} 为一个类似于 @code{define_insn} 输出模板
+（@pxref{Output Template}）的字符串，除了不应用 @samp{*} 和 @samp{@@}
+的特殊情况。这只在针对断言的汇编文本为一个主insn的简单前缀时有用。为了
+处理通用的情况，有一个全局变量 @code{current_insn_predicate}，在当前
+insn被断言时其将包含整个断言，否则将为 @code{NULL}。
 
-When @code{define_cond_exec} is used, an implicit reference to
-the @code{predicable} instruction attribute is made.
-@xref{Insn Attributes}.  This attribute must be boolean (i.e.@: have
-exactly two elements in its @var{list-of-values}).  Further, it must
-not be used with complex expressions.  That is, the default and all
-uses in the insns must be a simple constant, not dependent on the
-alternative or anything else.
+当使用 @code{define_cond_exec} 时，将会创建一个对 @code{predicable} 指
+令属性的隐式引用。@xref{Insn Attributes}。该属性并须为布尔的（即在它的
+@var{list-of-values} 中具有确切的两个元素）。甚至，其必须不能使用复杂
+表达式。也就是，insn中的缺省的和所有的使用都必须为一个简单常量，不能依
+赖于可选项或其它。
 
-For each @code{define_insn} for which the @code{predicable}
-attribute is true, a new @code{define_insn} pattern will be
-generated that matches a predicated version of the instruction.
-For example,
+对于每个 @code{predicable} 属性为真的 @code{define_insn}，一个新的匹配
+一个指令断言版本的 @code{define_insn} 指令模式将被生成。例如，
 
 @smallexample
 (define_insn "addsi"
@@ -7682,7 +7633,7 @@ For example,
 @end smallexample
 
 @noindent
-generates a new pattern
+生成一个新的指令模式
 
 @smallexample
 (define_insn ""
@@ -7702,18 +7653,14 @@ generates a new pattern
 @cindex constant definitions
 @findex define_constants
 
-Using literal constants inside instruction patterns reduces legibility and
-can be a maintenance problem.
+在指令模板中使用文字常量会减小可读性并会成为一个维护问题。
 
-To overcome this problem, you may use the @code{define_constants}
-expression.  It contains a vector of name-value pairs.  From that
-point on, wherever any of the names appears in the MD file, it is as
-if the corresponding value had been written instead.  You may use
-@code{define_constants} multiple times; each appearance adds more
-constants to the table.  It is an error to redefine a constant with
-a different value.
+要克服该问题，你可以使用 @code{define_constants} 表达式。它包含了一个
+“名字-值”成对向量。从定义处开始，任何出现在MD文件中的那些名字，都作为
+相应的值被替换。你可以多次使用 @code{define_constants}；每次都为表格中
+增加更多的常量。使用不同的值来重新定义一个常量将会产生一个错误。
 
-To come back to the a29k load multiple example, instead of
+回到a29k加载乘的例子，对于
 
 @smallexample
 (define_insn ""
@@ -7726,7 +7673,7 @@ To come back to the a29k load multiple example, instead of
   "loadm 0,0,%1,%2")
 @end smallexample
 
-You could write:
+你可以写成:
 
 @smallexample
 (define_constants [
@@ -7746,153 +7693,135 @@ You could write:
   "loadm 0,0,%1,%2")
 @end smallexample
 
-The constants that are defined with a define_constant are also output
-in the insn-codes.h header file as #defines.
+使用define_constants定义的常量也在insn-codes.h头文件中作为#defines被输出。
 @end ifset
 @ifset INTERNALS
 @node Iterators
 @section Iterators
 @cindex iterators in @file{.md} files
 
-Ports often need to define similar patterns for more than one machine
-mode or for more than one rtx code.  GCC provides some simple iterator
-facilities to make this process easier.
+后端（Ports）常常需要为多个机器模式或者多个rtx代码定义类似的指令模式。
+GCC提供了一些简单的迭代机制使得该处理变的很容易。
 
 @menu
-* Mode Iterators::         Generating variations of patterns for different modes.
-* Code Iterators::         Doing the same for codes.
+* Mode Iterators::         为不同的机器模式生成指令模式的变种
+* Code Iterators::         为代码做同样的事
 @end menu
 
 @node Mode Iterators
 @subsection Mode Iterators
 @cindex mode iterators in @file{.md} files
 
-Ports often need to define similar patterns for two or more different modes.
-For example:
+后端（Ports）经常需要为两个或多个不同机器模式定义类似的指令模式。例如：
 
 @itemize @bullet
 @item
-If a processor has hardware support for both single and double
-floating-point arithmetic, the @code{SFmode} patterns tend to be
-very similar to the @code{DFmode} ones.
+如果一个处理器对单浮点和双浮点算术都具有硬件支持，则 @code{SFmode} 的
+指令模式将会与 @code{DFmode} 的非常类似。
 
 @item
-If a port uses @code{SImode} pointers in one configuration and
-@code{DImode} pointers in another, it will usually have very similar
-@code{SImode} and @code{DImode} patterns for manipulating pointers.
+如果一个后端（port）在一个配置中使用 @code{SImode} 的指针，而在另一个
+配置中使用 @code{DImode} 的指针，则通常会具有非常类似的操作指针的
+@code{SImode} 和 @code{DImode} 的指令模式。
 @end itemize
 
-Mode iterators allow several patterns to be instantiated from one
-@file{.md} file template.  They can be used with any type of
-rtx-based construct, such as a @code{define_insn},
-@code{define_split}, or @code{define_peephole2}.
+机器模式迭代器允许从一个 @file{.md} 文件模板实例化多个指令模式。它们
+可以用于任何类型的基于rtx的结构，例如 @code{define_insn}, 
+@code{define_split} 或 @code{define_peephole2}。
 
 @menu
-* Defining Mode Iterators:: Defining a new mode iterator.
-* Substitutions::           Combining mode iterators with substitutions
-* Examples::                Examples
+* Defining Mode Iterators:: 定义一个新的机器模式迭代器
+* Substitutions::           使用替换来合成机器模式迭代器
+* Examples::                例子
 @end menu
 
 @node Defining Mode Iterators
 @subsubsection Defining Mode Iterators
 @findex define_mode_iterator
 
-The syntax for defining a mode iterator is:
+定义一个机器模式迭代器的语法为：
 
 @smallexample
 (define_mode_iterator @var{name} [(@var{mode1} "@var{cond1}") @dots{} (@var{moden} "@var{condn}")])
 @end smallexample
 
-This allows subsequent @file{.md} file constructs to use the mode suffix
-@code{:@var{name}}.  Every construct that does so will be expanded
-@var{n} times, once with every use of @code{:@var{name}} replaced by
-@code{:@var{mode1}}, once with every use replaced by @code{:@var{mode2}},
-and so on.  In the expansion for a particular @var{modei}, every
-C condition will also require that @var{condi} be true.
+这将允许后续的 @file{.md} 文件结构可以使用机器模式suffix 
+@code{:@var{name}}。每个这样的结构将被扩展 @var{n} 次，一次使用
+@code{:@var{mode1}} 来替换，一次使用 @code{:@var{mode2}} 来替换，等等。
+在扩展 @var{modei} 时，每个C条件 @var{condi} 还要为真。
 
-For example:
+例如：
 
 @smallexample
 (define_mode_iterator P [(SI "Pmode == SImode") (DI "Pmode == DImode")])
 @end smallexample
 
-defines a new mode suffix @code{:P}.  Every construct that uses
-@code{:P} will be expanded twice, once with every @code{:P} replaced
-by @code{:SI} and once with every @code{:P} replaced by @code{:DI}.
-The @code{:SI} version will only apply if @code{Pmode == SImode} and
-the @code{:DI} version will only apply if @code{Pmode == DImode}.
+定义了一个新的机器模式后缀 @code{:P}。每个使用 @code{:P} 的结构将被扩展
+两次，一次由 @code{:SI} 来替换 @code{:P}，一次由 @code{:DI} 来替换
+@code{:P}。其中 @code{:SI} 版本的只有当 @code{Pmode == SImode} 时才被应
+用，@code{:DI} 版本的只有当 @code{Pmode == DImode} 时才被应用。
 
-As with other @file{.md} conditions, an empty string is treated
-as ``always true''.  @code{(@var{mode} "")} can also be abbreviated
-to @code{@var{mode}}.  For example:
+就像其它 @file{.md} 条件，一个空字符串被当作“总为真”。@code{(@var{mode} "")}
+也可以被缩写为 @code{@var{mode}}。例如：
 
 @smallexample
 (define_mode_iterator GPR [SI (DI "TARGET_64BIT")])
 @end smallexample
 
-means that the @code{:DI} expansion only applies if @code{TARGET_64BIT}
-but that the @code{:SI} expansion has no such constraint.
+意味着 @code{:DI} 扩展只有为 @code{TARGET_64BIT} 时被应用，但 @code{:SI} 
+扩展却没有这样的限制。
 
-Iterators are applied in the order they are defined.  This can be
-significant if two iterators are used in a construct that requires
-substitutions.  @xref{Substitutions}.
+迭代器按照它们定义的顺序被应用。这在当两个迭代器用于一个结构中需要替换时
+会变的很重要。@xref{Substitutions}。
 
 @node Substitutions
 @subsubsection Substitution in Mode Iterators
 @findex define_mode_attr
-
-If an @file{.md} file construct uses mode iterators, each version of the
-construct will often need slightly different strings or modes.  For
-example:
+如果一个 @file{.md} 文件结构使用了机器模式迭代器，则结构的每个版本将通常
+需要轻微不同的字符串或机器模式。例如：
 
 @itemize @bullet
 @item
-When a @code{define_expand} defines several @code{add@var{m}3} patterns
-(@pxref{Standard Names}), each expander will need to use the
-appropriate mode name for @var{m}.
+当一个 @code{define_expand} 定义了多个 @code{add@var{m}3} 指令模式时
+（@pxref{Standard Names}），每个扩展将需要针对 @var{m} 的适当的机器模式。
 
 @item
-When a @code{define_insn} defines several instruction patterns,
-each instruction will often use a different assembler mnemonic.
+当一个 @code{define_insn} 定义了多个指令模式时，每条指令将通常需要一个不
+同的汇编助记符。
 
 @item
-When a @code{define_insn} requires operands with different modes,
-using an iterator for one of the operand modes usually requires a specific
-mode for the other operand(s).
+当一个 @code{define_insn} 需要操作数具有不同的机器模式时，针对一个操作数
+的机器模式使用迭代器通常需要对于其它操作数使用特点的机器模式。
 @end itemize
 
-GCC supports such variations through a system of ``mode attributes''.
-There are two standard attributes: @code{mode}, which is the name of
-the mode in lower case, and @code{MODE}, which is the same thing in
-upper case.  You can define other attributes using:
+GCC通过“机器模式属性”系统来支持这样的变种。有两种标准属性：@code{mode}，
+其为机器模式的小写名字，@code{MODE}，其为机器模式的大写名字。你可以定义其
+它属性，使用：
 
 @smallexample
 (define_mode_attr @var{name} [(@var{mode1} "@var{value1}") @dots{} (@var{moden} "@var{valuen}")])
 @end smallexample
 
-where @var{name} is the name of the attribute and @var{valuei}
-is the value associated with @var{modei}.
+其中 @var{name} 为属性的名字，@var{valuei} 为与 @var{modei} 关联的值。
 
-When GCC replaces some @var{:iterator} with @var{:mode}, it will scan
-each string and mode in the pattern for sequences of the form
-@code{<@var{iterator}:@var{attr}>}, where @var{attr} is the name of a
-mode attribute.  If the attribute is defined for @var{mode}, the whole
-@code{<@dots{}>} sequence will be replaced by the appropriate attribute
-value.
+当GCC使用 @var{:mode} 来替换某个 @var{:iterator} 时，其将扫描指令模式中的
+每个字符串和机器模式，按照 @code{<@var{iterator}:@var{attr}>}形式的序列，
+其中@var{attr}为一个机器模式属性的名字。如果属性针对mode被定义，则整个
+@code{<@dots{}>} 序列将被适当的属性值替换。
 
-For example, suppose an @file{.md} file has:
+例如，假设一个 @file{.md} 具有：
 
 @smallexample
 (define_mode_iterator P [(SI "Pmode == SImode") (DI "Pmode == DImode")])
 (define_mode_attr load [(SI "lw") (DI "ld")])
 @end smallexample
 
-If one of the patterns that uses @code{:P} contains the string
-@code{"<P:load>\t%0,%1"}, the @code{SI} version of that pattern
-will use @code{"lw\t%0,%1"} and the @code{DI} version will use
-@code{"ld\t%0,%1"}.
+如果其中一个使用 @code{:P} 的指令模式包含了字符串
+@code{"<P:load>\t%0,%1"}，则 @code{SI} 版本的指令模式将使用
+@code{"lw\t%0,%1"} 并且 @code{DI} 版本的将使用
+@code{"ld\t%0,%1"}。
 
-Here is an example of using an attribute for a mode:
+这里有一个关于使用针对一个机器模式的属性的例子：
 
 @smallexample
 (define_mode_iterator LONG [SI DI])
@@ -7901,22 +7830,20 @@ Here is an example of using an attribute for a mode:
   (sign_extend:LONG (match_operand:<LONG:SHORT> @dots{})) @dots{})
 @end smallexample
 
-The @code{@var{iterator}:} prefix may be omitted, in which case the
-substitution will be attempted for every iterator expansion.
+@code{@var{iterator}:} 前缀可以被省略掉，这种情况下将会针对每个迭代器扩展来
+尝试替换。
 
 @node Examples
 @subsubsection Mode Iterator Examples
 
-Here is an example from the MIPS port.  It defines the following
-modes and attributes (among others):
+这里有一个来自MIPS后端的一个例子。其定义了下列机器模式和属性（除了别的以外）：
 
 @smallexample
 (define_mode_iterator GPR [SI (DI "TARGET_64BIT")])
 (define_mode_attr d [(SI "") (DI "d")])
 @end smallexample
 
-and uses the following template to define both @code{subsi3}
-and @code{subdi3}:
+并且使用下列模板来同时定义 @code{subsi3} 和 @code{subdi3}：
 
 @smallexample
 (define_insn "sub<mode>3"
@@ -7929,7 +7856,7 @@ and @code{subdi3}:
    (set_attr "mode" "<MODE>")])
 @end smallexample
 
-This is exactly equivalent to:
+这就完全等价于：
 
 @smallexample
 (define_insn "subsi3"
@@ -7957,33 +7884,31 @@ This is exactly equivalent to:
 @findex define_code_iterator
 @findex define_code_attr
 
-Code iterators operate in a similar way to mode iterators.  @xref{Mode Iterators}.
+代码迭代器使用与机器模式迭代器类似的方法来操作。@xref{Node Iterators}。
 
-The construct:
+结构：
 
 @smallexample
 (define_code_iterator @var{name} [(@var{code1} "@var{cond1}") @dots{} (@var{coden} "@var{condn}")])
 @end smallexample
 
-defines a pseudo rtx code @var{name} that can be instantiated as
-@var{codei} if condition @var{condi} is true.  Each @var{codei}
-must have the same rtx format.  @xref{RTL Classes}.
+定义了一个伪rtx代码 @var{name}，如果条件 @var{condi} 为真时，其可以作为
+@var{codei} 被实例化。每个 @var{codei} 必须具有相同的rtx格式。
+@xref{RTL Classes}。
 
-As with mode iterators, each pattern that uses @var{name} will be
-expanded @var{n} times, once with all uses of @var{name} replaced by
-@var{code1}, once with all uses replaced by @var{code2}, and so on.
-@xref{Defining Mode Iterators}.
+跟机器模式迭代器一样，每个使用 @var{name} 的指令模式将被扩展 @var{n} 次，
+一次使用 @var{code1} 来替换，一次使用 @var{code2}，等等。
+@xref{Defining Mode Iterators}。
 
-It is possible to define attributes for codes as well as for modes.
-There are two standard code attributes: @code{code}, the name of the
-code in lower case, and @code{CODE}, the name of the code in upper case.
-Other attributes are defined using:
+跟机器模式一样可以为代码定义属性。有两种标准代码属性：@code{code}，代码
+的小写形式名字，以及 @code{CODE}，代码的大写形式名字。其它属性使用下列
+方式来定义：
 
 @smallexample
 (define_code_attr @var{name} [(@var{code1} "@var{value1}") @dots{} (@var{coden} "@var{valuen}")])
 @end smallexample
 
-Here's an example of code iterators in action, taken from the MIPS port:
+这里有一个实际使用的关于代码迭代器的例子，摘自MIPS后端（port）：
 
 @smallexample
 (define_code_iterator any_cond [unordered ordered unlt unge uneq ltgt unle ungt
@@ -8002,7 +7927,7 @@ Here's an example of code iterators in action, taken from the MIPS port:
 @})
 @end smallexample
 
-This is equivalent to:
+这等价于：
 
 @smallexample
 (define_expand "bunordered"

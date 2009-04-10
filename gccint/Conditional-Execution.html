@@ -57,12 +57,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Machine-Desc.html#Machine-Desc">Machine
 <h3 class="section">16.20 Conditional Execution</h3>
 
 <p><a name="index-conditional-execution-3665"></a><a name="index-predication-3666"></a>
-A number of architectures provide for some form of conditional
-execution, or predication.  The hallmark of this feature is the
-ability to nullify most of the instructions in the instruction set. 
-When the instruction set is large and not entirely symmetric, it
-can be quite tedious to describe these forms directly in the
-<samp><span class="file">.md</span></samp> file.  An alternative is the <code>define_cond_exec</code> template.
+许多体系结构都提供了某种形式的条件执行，或者断言。其特点是能够使得
+指令集中的大多数指令变为无效。当指令集很大并且不完全对称时，在
+<samp><span class="file">.md</span></samp> 文件中直接描述这些形式将会变得非常冗长。一种可替代的方式
+为 <code>define_cond_exec</code> 模板。
 
  <p><a name="index-define_005fcond_005fexec-3667"></a>
 <pre class="smallexample">     (define_cond_exec
@@ -70,35 +68,27 @@ can be quite tedious to describe these forms directly in the
        "<var>condition</var>"
        "<var>output-template</var>")
 </pre>
- <p><var>predicate-pattern</var> is the condition that must be true for the
-insn to be executed at runtime and should match a relational operator. 
-One can use <code>match_operator</code> to match several relational operators
-at once.  Any <code>match_operand</code> operands must have no more than one
-alternative.
+ <p><var>predicate-pattern</var> 为运行时执行insn所需要的必须为真的条件，并且
+应该能匹配一个相关的操作符。可以使用 <code>match_operator</code> 来一次匹配
+多个相关的操作符。任何 <code>match_operand</code> 操作数必须具有不超过一个
+的可选项。
 
- <p><var>condition</var> is a C expression that must be true for the generated
-pattern to match.
+ <p><var>condition</var> 为一个C表达式，对于生成的指令模式必须匹配为真。
 
- <p><a name="index-current_005finsn_005fpredicate-3668"></a><var>output-template</var> is a string similar to the <code>define_insn</code>
-output template (see <a href="Output-Template.html#Output-Template">Output Template</a>), except that the &lsquo;<samp><span class="samp">*</span></samp>&rsquo;
-and &lsquo;<samp><span class="samp">@</span></samp>&rsquo; special cases do not apply.  This is only useful if the
-assembly text for the predicate is a simple prefix to the main insn. 
-In order to handle the general case, there is a global variable
-<code>current_insn_predicate</code> that will contain the entire predicate
-if the current insn is predicated, and will otherwise be <code>NULL</code>.
+ <p><a name="index-current_005finsn_005fpredicate-3668"></a><var>output-template</var> 为一个类似于 <code>define_insn</code> 输出模板
+（see <a href="Output-Template.html#Output-Template">Output Template</a>）的字符串，除了不应用 &lsquo;<samp><span class="samp">*</span></samp>&rsquo; 和 &lsquo;<samp><span class="samp">@</span></samp>&rsquo;
+的特殊情况。这只在针对断言的汇编文本为一个主insn的简单前缀时有用。为了
+处理通用的情况，有一个全局变量 <code>current_insn_predicate</code>，在当前
+insn被断言时其将包含整个断言，否则将为 <code>NULL</code>。
 
- <p>When <code>define_cond_exec</code> is used, an implicit reference to
-the <code>predicable</code> instruction attribute is made. 
-See <a href="Insn-Attributes.html#Insn-Attributes">Insn Attributes</a>.  This attribute must be boolean (i.e. have
-exactly two elements in its <var>list-of-values</var>).  Further, it must
-not be used with complex expressions.  That is, the default and all
-uses in the insns must be a simple constant, not dependent on the
-alternative or anything else.
+ <p>当使用 <code>define_cond_exec</code> 时，将会创建一个对 <code>predicable</code> 指
+令属性的隐式引用。See <a href="Insn-Attributes.html#Insn-Attributes">Insn Attributes</a>。该属性并须为布尔的（即在它的
+<var>list-of-values</var> 中具有确切的两个元素）。甚至，其必须不能使用复杂
+表达式。也就是，insn中的缺省的和所有的使用都必须为一个简单常量，不能依
+赖于可选项或其它。
 
- <p>For each <code>define_insn</code> for which the <code>predicable</code>
-attribute is true, a new <code>define_insn</code> pattern will be
-generated that matches a predicated version of the instruction. 
-For example,
+ <p>对于每个 <code>predicable</code> 属性为真的 <code>define_insn</code>，一个新的匹配
+一个指令断言版本的 <code>define_insn</code> 指令模式将被生成。例如，
 
 <pre class="smallexample">     (define_insn "addsi"
        [(set (match_operand:SI 0 "register_operand" "r")
@@ -113,7 +103,7 @@ For example,
        "<var>test2</var>"
        "(%0)")
 </pre>
- <p class="noindent">generates a new pattern
+ <p class="noindent">生成一个新的指令模式
 
 <pre class="smallexample">     (define_insn ""
        [(cond_exec
