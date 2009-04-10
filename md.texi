@@ -9,95 +9,73 @@
 @chapter Machine Descriptions
 @cindex machine descriptions
 
-A machine description has two parts: a file of instruction patterns
-(@file{.md} file) and a C header file of macro definitions.
+机器描述包括两个部分：指令模式文件（@file{.md} file）和宏定义C头文件。
 
-The @file{.md} file for a target machine contains a pattern for each
-instruction that the target machine supports (or at least each instruction
-that is worth telling the compiler about).  It may also contain comments.
-A semicolon causes the rest of the line to be a comment, unless the semicolon
-is inside a quoted string.
+目标机器的 @file{.md} 文件包含了目标机器支持的（或者最起码值得告诉编译器的）每条指令的模式。还可能包含注释。分号使得一行的剩余部分为注释，引号标注的字符串中的分号除外。
 
-See the next chapter for information on the C header file.
+关于C头文件的信息，参见下一章。
 
 @menu
-* Overview::            How the machine description is used.
-* Patterns::            How to write instruction patterns.
-* Example::             An explained example of a @code{define_insn} pattern.
-* RTL Template::        The RTL template defines what insns match a pattern.
-* Output Template::     The output template says how to make assembler code
-                        from such an insn.
-* Output Statement::    For more generality, write C code to output
-                        the assembler code.
-* Predicates::          Controlling what kinds of operands can be used
-                        for an insn.
-* Constraints::         Fine-tuning operand selection.
-* Standard Names::      Names mark patterns to use for code generation.
-* Pattern Ordering::    When the order of patterns makes a difference.
-* Dependent Patterns::  Having one pattern may make you need another.
-* Jump Patterns::       Special considerations for patterns for jump insns.
-* Looping Patterns::    How to define patterns for special looping insns.
-* Insn Canonicalizations::Canonicalization of Instructions
-* Expander Definitions::Generating a sequence of several RTL insns
-                        for a standard operation.
-* Insn Splitting::      Splitting Instructions into Multiple Instructions.
-* Including Patterns::  Including Patterns in Machine Descriptions.
-* Peephole Definitions::Defining machine-specific peephole optimizations.
-* Insn Attributes::     Specifying the value of attributes for generated insns.
-* Conditional Execution::Generating @code{define_insn} patterns for
-                         predication.
-* Constant Definitions::Defining symbolic constants that can be used in the
-                        md file.
-* Iterators::           Using iterators to generate patterns from a template.
+* Overview::            如何使用机器描述。
+* Patterns::            如何写指令模式。
+* Example::             一个 @code{define_insn} 模式的例子说明。
+* RTL Template::        RTL模板定义了什么样的insn与一个模式匹配。
+* Output Template::     输出模板说明了如何从这样一个insn来生成汇编代码。
+* Output Statement::    更一般的情况, 编写C代码来输出汇编代码。
+* Predicates::          控制一个insn可以使用什么类型的操作数。
+* Constraints::         对操作数的选择进行微调。
+* Standard Names::      代码生成时使用的模式名字。
+* Pattern Ordering::    不同模式顺序所产生的作用。
+* Dependent Patterns::  拥有一个模式，可能还会需要另一个。
+* Jump Patterns::       针对跳转insn的模式的特殊考虑。
+* Looping Patterns::    如何为特定的循环insn定义模式。
+* Insn Canonicalizations:: 指令的规范化。
+* Expander Definitions:: 为一个标准操作生成一个RTL insn序列。
+* Insn Splitting::      拆分指令为多条指令。
+* Including Patterns::  在机器描述中包含模式。
+* Peephole Definitions::定义机器特定的窥孔优化。
+* Insn Attributes::     为生成的insn指定属性值。
+* Conditional Execution:: 为predication生成 @code{define_insn} 模式。
+* Constant Definitions:: 定义可以用在md文件中的符号常量。
+* Iterators::           使用迭代器从模板中生成模式。
 @end menu
 
 @node Overview
 @section Overview of How the Machine Description is Used
 
-There are three main conversions that happen in the compiler:
+编译器中有三个主要的转换：
 
 @enumerate
 
 @item
-The front end reads the source code and builds a parse tree.
+前端读取源代码并建立解析树。
 
 @item
-The parse tree is used to generate an RTL insn list based on named
-instruction patterns.
+基于命名的指令模式，解析树被用来生成RTL insn列表。
 
 @item
-The insn list is matched against the RTL templates to produce assembler
-code.
+insn列表被用来匹配RTL模板，产生汇编代码。
 
 @end enumerate
 
-For the generate pass, only the names of the insns matter, from either a
-named @code{define_insn} or a @code{define_expand}.  The compiler will
-choose the pattern with the right name and apply the operands according
-to the documentation later in this chapter, without regard for the RTL
-template or operand constraints.  Note that the names the compiler looks
-for are hard-coded in the compiler---it will ignore unnamed patterns and
-patterns with names it doesn't know about, but if you don't provide a
-named pattern it needs, it will abort.
+生成过程，只与insn的名字有关系，包括命名的 @code{define_insn} 或者 
+@code{define_expand}。编译器会选择恰当名字的模式，并且根据这章后面的文档来使用
+操作数，而不需要关心RTL模板或者操作数约束。注意，编译器所寻找的名字是被硬编码
+进编译器中的——它将忽略未命名的模式和名字无法识别的模式，但是，如果你没有提供所
+需要的命名模式，它将异常中断（abort）。
 
-If a @code{define_insn} is used, the template given is inserted into the
-insn list.  If a @code{define_expand} is used, one of three things
-happens, based on the condition logic.  The condition logic may manually
-create new insns for the insn list, say via @code{emit_insn()}, and
-invoke @code{DONE}.  For certain named patterns, it may invoke @code{FAIL} to tell the
-compiler to use an alternate way of performing that task.  If it invokes
-neither @code{DONE} nor @code{FAIL}, the template given in the pattern
-is inserted, as if the @code{define_expand} were a @code{define_insn}.
+如果使用了 @code{define_insn} ，所给出的模版将会被插入到insn列表中。如果使用了
+@code{define_expand} ，将会发生三种情况之一，取决于条件逻辑。条件逻辑可以手动为
+insn列表创建一个新的insn，并且调用 @code{DONE}。对于某些命名模式，它可以调用
+ @code{FAIL} 来告诉编译器使用一种备用方式完成任务。如果既没有调用DONE也没有调用
+ @code{FAIL}，在模式中所给出的模版将会被插入，就像 @code{define_insn}一样。
 
-Once the insn list is generated, various optimization passes convert,
-replace, and rearrange the insns in the insn list.  This is where the
-@code{define_split} and @code{define_peephole} patterns get used, for
-example.
+一旦生成insn列表，各种优化过程便在insn列表中转换，替代和重排insn。例如，
+@code{define_split} 和 @code{define_peephole} 模式便在这里被使用。
 
-Finally, the insn list's RTL is matched up with the RTL templates in the
-@code{define_insn} patterns, and those patterns are used to emit the
-final assembly code.  For this purpose, each named @code{define_insn}
-acts like it's unnamed, since the names are ignored.
+最后，insn列表的RTL被用来匹配 @code{define_insn} 模式中的RTL模版，并且那些模式
+被用来生成最终的汇编代码。这时，由于不需要关心名字，所以每个命名的 
+@code{define_insn}跟没有命名没有区别。
 
 @node Patterns
 @section Everything about Instruction Patterns
