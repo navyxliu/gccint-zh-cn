@@ -5,81 +5,69 @@
 @node Collect2
 @chapter @code{collect2}
 
-GCC uses a utility called @code{collect2} on nearly all systems to arrange
-to call various initialization functions at start time.
+GCC使用叫做 @code{collect2} 的工具，在几乎所有的系统上，来安排在起始
+时候调用不同的初始化函数。
 
-The program @code{collect2} works by linking the program once and
-looking through the linker output file for symbols with particular names
-indicating they are constructor functions.  If it finds any, it
-creates a new temporary @samp{.c} file containing a table of them,
-compiles it, and links the program a second time including that file.
+程序 @code{collect2} 的工作方式是通过初次连接程序，并查找连接器输出
+文件中的指示为构造函数的特定名字符号；如果找到，则会创建一个新的包含
+这些符号的临时文件 @samp{.c}，编译该文件，并再次连接程序。
 
 @findex __main
 @cindex constructors, automatic calls
-The actual calls to the constructors are carried out by a subroutine
-called @code{__main}, which is called (automatically) at the beginning
-of the body of @code{main} (provided @code{main} was compiled with GNU
-CC)@.  Calling @code{__main} is necessary, even when compiling C code, to
-allow linking C and C++ object code together.  (If you use
-@option{-nostdlib}, you get an unresolved reference to @code{__main},
-since it's defined in the standard GCC library.  Include @option{-lgcc} at
-the end of your compiler command line to resolve this reference.)
+实际调用构造者的是叫做 @code{__main} 的子程序，其在main函数体（假若 
+@code{main} 是由GNU CC编译的）的开始处被（自动的）调用。调用 
+@code{__main} 是必需的，即使当编译C代码，并允许将C和C++目标代码连接
+一起时。如果使用了 @option{-nostdlib}，则会得到对 @code{__main} 未解
+决的引用(unresolved reference)这样的错误，这是因为它是定义在标准GCC库
+中。将 @option{-lgcc} 包含在编译器命令行的后面便可以解决这个引用。
 
-The program @code{collect2} is installed as @code{ld} in the directory
-where the passes of the compiler are installed.  When @code{collect2}
-needs to find the @emph{real} @code{ld}, it tries the following file
-names:
+程序 @code{collect2} 被作为 @code{ld} 安装在编译器过程所被安装的目录
+下。当 @code{collect2} 需要找到 @emph{真正的} @code{ld} 时，它会尝试
+下面的文件名：
 
 @itemize @bullet
 @item
-@file{real-ld} in the directories listed in the compiler's search
-directories.
+编译器搜索目录下的 @file{real-ld}。
 
 @item
-@file{real-ld} in the directories listed in the environment variable
-@code{PATH}.
+环境变量 @code{PATH} 所列出的目录下的 @file{real-ld}。
 
 @item
-The file specified in the @code{REAL_LD_FILE_NAME} configuration macro,
-if specified.
+如果制定了配置宏 @code{REAL_LD_FILE_NAME} 则搜索该文件。
 
 @item
-@file{ld} in the compiler's search directories, except that
-@code{collect2} will not execute itself recursively.
+编译器搜索目录下的 @file{ld}，除了能导致 @code{collect2} 递归执行自己
+的以外。
 
 @item
-@file{ld} in @code{PATH}.
+@code{PATH} 下的 @file{ld}。
 @end itemize
 
-``The compiler's search directories'' means all the directories where
-@command{gcc} searches for passes of the compiler.  This includes
-directories that you specify with @option{-B}.
+“编译器搜索目录”是指的 @command{gcc} 针对编译器过程所搜寻的全部目录。
+这包括通过 @option{-B} 制定的目录。
 
-Cross-compilers search a little differently:
+交叉编译器的搜寻方式有一些不同：
 
 @itemize @bullet
 @item
-@file{real-ld} in the compiler's search directories.
+编译器搜索目录下的 @file{real-ld}。
 
 @item
-@file{@var{target}-real-ld} in @code{PATH}.
+@code{PATH} 下的 @file{@var{target}-real-ld}。
 
 @item
-The file specified in the @code{REAL_LD_FILE_NAME} configuration macro,
-if specified.
+如果制定了配置宏 @code{REAL_LD_FILE_NAME} 则搜索该文件。
 
 @item
-@file{ld} in the compiler's search directories.
+编译器搜索目录下的 @file{ld}。
 
 @item
-@file{@var{target}-ld} in @code{PATH}.
+@code{PATH} 下的 @file{@var{target}-ld}。
 @end itemize
 
-@code{collect2} explicitly avoids running @code{ld} using the file name
-under which @code{collect2} itself was invoked.  In fact, it remembers
-up a list of such names---in case one copy of @code{collect2} finds
-another copy (or version) of @code{collect2} installed as @code{ld} in a
-second place in the search path.
+@code{collect2} 显示的避免使用调用 @code{collect2} 的文件名来运行 
+@code{ld}。实际上，它记录了一个名字列表——以防一个 @code{collect2} 版本会
+找到另一个版本的 @code{collect2}。
 
-@code{collect2} searches for the utilities @code{nm} and @code{strip}
-using the same algorithm as above for @code{ld}.
+@code{collect2} 使用上面针对 @code{ld} 的相同算法来搜寻工具 @code{nm} 和 
+@code{strip}。

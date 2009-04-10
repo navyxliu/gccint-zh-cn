@@ -55,52 +55,46 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Insn-Attributes.html#Insn-Attributes">I
 <h4 class="subsection">16.19.1 Defining Attributes and their Values</h4>
 
 <p><a name="index-defining-attributes-and-their-values-3570"></a><a name="index-attributes_002c-defining-3571"></a>
-<a name="index-define_005fattr-3572"></a>The <code>define_attr</code> expression is used to define each attribute required
-by the target machine.  It looks like:
+<a name="index-define_005fattr-3572"></a>表达式 <code>define_attr</code> 用于定义目标机所需要的每个属性。其形式为：
 
 <pre class="smallexample">     (define_attr <var>name</var> <var>list-of-values</var> <var>default</var>)
 </pre>
- <p><var>name</var> is a string specifying the name of the attribute being defined.
+ <p><var>name</var> 为一个字符串，指定了被定义的属性名。
 
- <p><var>list-of-values</var> is either a string that specifies a comma-separated
-list of values that can be assigned to the attribute, or a null string to
-indicate that the attribute takes numeric values.
+ <p><var>list-of-values</var> 或者为一个字符串，指定了可以赋予属性的逗号分隔
+的值的列表，或者为一个空字符串，表示属性接受一个数字值。
 
- <p><var>default</var> is an attribute expression that gives the value of this
-attribute for insns that match patterns whose definition does not include
-an explicit value for this attribute.  See <a href="Attr-Example.html#Attr-Example">Attr Example</a>, for more
-information on the handling of defaults.  See <a href="Constant-Attributes.html#Constant-Attributes">Constant Attributes</a>,
-for information on attributes that do not depend on any particular insn.
+ <p><var>default</var> 为一个属性表达式，给出了匹配指令模式，但指令模式定义中
+没有显式包含该属性值的insns，所应具有的属性值。关于更多处理缺省值的
+信息，See <a href="Attr-Example.html#Attr-Example">Attr Example</a>。关于不依赖于任何特定insn的属性，
+See <a href="Constant-Attributes.html#Constant-Attributes">Constant Attributes</a>。
 
- <p><a name="index-insn_002dattr_002eh-3573"></a>For each defined attribute, a number of definitions are written to the
-<samp><span class="file">insn-attr.h</span></samp> file.  For cases where an explicit set of values is
-specified for an attribute, the following are defined:
+ <p><a name="index-insn_002dattr_002eh-3573"></a>对于每个定义的属性，都有许多定义被写入 <samp><span class="file">insn-attr.h</span></samp> 文件。对于
+显式指定了属性取值集合的情况，下列将被定义：
 
      <ul>
-<li>A &lsquo;<samp><span class="samp">#define</span></samp>&rsquo; is written for the symbol &lsquo;<samp><span class="samp">HAVE_ATTR_</span><var>name</var></samp>&rsquo;.
+<li>一个针对符号 &lsquo;<samp><span class="samp">HAVE_ATTR_</span><var>name</var></samp>&rsquo; 的 &lsquo;<samp><span class="samp">#define</span></samp>&rsquo; 被写入。
 
-     <li>An enumerated class is defined for &lsquo;<samp><span class="samp">attr_</span><var>name</var></samp>&rsquo; with
-elements of the form &lsquo;<samp><var>upper-name</var><span class="samp">_</span><var>upper-value</var></samp>&rsquo; where
-the attribute name and value are first converted to uppercase.
+     <li>一个枚举类别被定义，元素的形式为 &lsquo;<samp><var>upper-name</var><span class="samp">_</span><var>upper-value</var></samp>&rsquo;，
+其中属性名和值首先被转换为大写的。
 
-     <li>A function &lsquo;<samp><span class="samp">get_attr_</span><var>name</var></samp>&rsquo; is defined that is passed an insn and
-returns the attribute value for that insn. 
+     <li>一个函数 &lsquo;<samp><span class="samp">get_attr_</span><var>name</var></samp>&rsquo; 被定义，其传入一个insn并返回该insn
+的属性值。
 </ul>
 
- <p>For example, if the following is present in the <samp><span class="file">md</span></samp> file:
+ <p>例如，如果在 <samp><span class="file">md</span></samp> 文件中存在下列定义：
 
 <pre class="smallexample">     (define_attr "type" "branch,fp,load,store,arith" ...)
 </pre>
- <p class="noindent">the following lines will be written to the file <samp><span class="file">insn-attr.h</span></samp>.
+ <p class="noindent">则下面的行将被写入文件 <samp><span class="file">insn-attr.h</span></samp> 中。
 
 <pre class="smallexample">     #define HAVE_ATTR_type
      enum attr_type {TYPE_BRANCH, TYPE_FP, TYPE_LOAD,
                       TYPE_STORE, TYPE_ARITH};
      extern enum attr_type get_attr_type ();
 </pre>
- <p>If the attribute takes numeric values, no <code>enum</code> type will be
-defined and the function to obtain the attribute's value will return
-<code>int</code>.
+ <p>如果属性接受数字值，则不会定义 <code>enum</code> 类型，并且获得属性值的函数将
+返回 <code>int</code>。
 
  <p>There are attributes which are tied to a specific meaning.  These
 attributes are not free to use for other purposes:
