@@ -7,24 +7,22 @@
 @chapter Host Configuration
 @cindex host configuration
 
-Most details about the machine and system on which the compiler is
-actually running are detected by the @command{configure} script.  Some
-things are impossible for @command{configure} to detect; these are
-described in two ways, either by macros defined in a file named
-@file{xm-@var{machine}.h} or by hook functions in the file specified
-by the @var{out_host_hook_obj} variable in @file{config.gcc}.  (The
-intention is that very few hosts will need a header file but nearly
-every fully supported host will need to override some hooks.)
+大多数关于编译器实际运行的机器和系统的详细信息可以由 
+@command{configure} 脚本检测。有一些是不可能通过 @command{configure} 
+来检测到的；这些将有两种方式可以来描述，或者通过定义在名为
+@file{xm-@var{machine}.h} 的文件中的宏，或者通过 @file{config.gcc} 中
+的 @var{out_host_hook_obj} 变量所制定的钩子函数。(The intention is 
+that very few hosts will need a header file but nearly every fully 
+supported host will need to override some hooks.)
 
-If you need to define only a few macros, and they have simple
-definitions, consider using the @code{xm_defines} variable in your
-@file{config.gcc} entry instead of creating a host configuration
-header.  @xref{System Config}.
+如果只需要定义一些宏，并且它们的定义很简单，可以考虑使用在 
+@file{config.gcc} 中的 @code{xm_defines} 变量来替代创建一个主机配置头
+文件。@xref{System Config}。
 
 @menu
-* Host Common::         Things every host probably needs implemented.
+* Host Common::         每个主机都可能需要实现的东西。
 * Filesystem::          Your host can't have the letter `a' in filenames?
-* Host Misc::           Rare configuration options for hosts.
+* Host Misc::           针对主机的很少用的配置选项。
 @end menu
 
 @node Host Common
@@ -32,50 +30,41 @@ header.  @xref{System Config}.
 @cindex host hooks
 @cindex host functions
 
-Some things are just not portable, even between similar operating systems,
-and are too difficult for autoconf to detect.  They get implemented using
-hook functions in the file specified by the @var{host_hook_obj}
-variable in @file{config.gcc}.
+有些东西不具有可移植性，甚至是在相似的操作系统之间，并且autoconf也难
+以检测出。它们是通过钩子函数来实现的，这些函数放在 @file{config.gcc} 
+中 @var{host_hook_obj} 变量指定的文件中。
+
 
 @deftypefn {Host Hook} void HOST_HOOKS_EXTRA_SIGNALS (void)
-This host hook is used to set up handling for extra signals.  The most
-common thing to do in this hook is to detect stack overflow.
+该主机钩子用于建立对额外信号的处理。最通用的事情是在这个钩子中去检测栈溢出。
 @end deftypefn
 
 @deftypefn {Host Hook} void * HOST_HOOKS_GT_PCH_GET_ADDRESS (size_t @var{size}, int @var{fd})
-This host hook returns the address of some space that is likely to be
-free in some subsequent invocation of the compiler.  We intend to load
-the PCH data at this address such that the data need not be relocated.
-The area should be able to hold @var{size} bytes.  If the host uses
-@code{mmap}, @var{fd} is an open file descriptor that can be used for
-probing.
+该主机钩子返回很可能在编译器的后续调用中为空闲的某块空间地址。我们打算将
+PCH数据加载到这个地址，从而使得不需要对数据进行重定位。该区域应该能够容纳
+@var{size} 个字节。如果主机使用 @code{mmap}，则 @var{fd} 为一个打开文件的
+描述符，可以用来做探测。
 @end deftypefn
 
 @deftypefn {Host Hook} int HOST_HOOKS_GT_PCH_USE_ADDRESS (void * @var{address}, size_t @var{size}, int @var{fd}, size_t @var{offset})
-This host hook is called when a PCH file is about to be loaded.
-We want to load @var{size} bytes from @var{fd} at @var{offset}
-into memory at @var{address}.  The given address will be the result of
-a previous invocation of @code{HOST_HOOKS_GT_PCH_GET_ADDRESS}.
-Return @minus{}1 if we couldn't allocate @var{size} bytes at @var{address}.
-Return 0 if the memory is allocated but the data is not loaded.  Return 1
-if the hook has performed everything.
+该主机钩子会在将要加载PCH文件时被调用。我们要从 @var{fd} 中加载 @var{size} 
+字节到内存中 @var{address} 地址的 @var{offset} 偏移量出。给定的 @var{address} 
+为之前调用 @code{HOST_HOOKS_GT_PCH_GET_ADDRESS} 所得的结果。如果不能在
+@var{address} 处分配 @var{size} 个字节，则返回 @minus{}1。如果分配了内
+存但是没有加载数据，则返回0。如果该钩子完成了所有的事情，则返回1。
 
-If the implementation uses reserved address space, free any reserved
-space beyond @var{size}, regardless of the return value.  If no PCH will
-be loaded, this hook may be called with @var{size} zero, in which case
-all reserved address space should be freed.
+如果实现使用了保留地址空间，则会释放超出 @var{size} 的任何保留空间，而
+不管返回值如何。如果不加载PCH，则该钩子可以使用 @var{size} 为0的方式调
+用，这样所有保留地址空间将被释放。
 
-Do not try to handle values of @var{address} that could not have been
-returned by this executable; just return @minus{}1.  Such values usually
-indicate an out-of-date PCH file (built by some other GCC executable),
-and such a PCH file won't work.
+不要试图不能被该执行程序返回的 @var{address} 值；直接返回 @minus{}1。这
+些值通常表明了一个过时的PCH文件（由其它GCC可执行程序创建的），并且该PCH
+文件是无法工作的。
 @end deftypefn
 
 @deftypefn {Host Hook} size_t HOST_HOOKS_GT_PCH_ALLOC_GRANULARITY (void);
-This host hook returns the alignment required for allocating virtual
-memory.  Usually this is the same as getpagesize, but on some hosts the
-alignment for reserving memory differs from the pagesize for committing
-memory.
+该主机钩子返回分配虚拟内存所需的对齐大小。通常这与getpagesize相同，但是
+在一些主机上，保留内存的对齐大小与供使用的内存页尺寸是不同的。
 @end deftypefn
 
 @node Filesystem
@@ -83,90 +72,70 @@ memory.
 @cindex configuration file
 @cindex @file{xm-@var{machine}.h}
 
-GCC needs to know a number of things about the semantics of the host
-machine's filesystem.  Filesystems with Unix and MS-DOS semantics are
-automatically detected.  For other systems, you can define the
-following macros in @file{xm-@var{machine}.h}.
+GCC需要知道许多关于主机文件系统的语义方面的东西。具有Unix和MS-DOS语义的
+文件系统会被自动检测。对于其它系统，你可以在 @file{xm-@var{machine}.h} 
+中定义下列宏。
 
 @ftable @code
 @item HAVE_DOS_BASED_FILE_SYSTEM
-This macro is automatically defined by @file{system.h} if the host
-file system obeys the semantics defined by MS-DOS instead of Unix.
-DOS file systems are case insensitive, file specifications may begin
-with a drive letter, and both forward slash and backslash (@samp{/}
-and @samp{\}) are directory separators.
+如果主机文件系统服从MS-DOS而不是Unix定义的语义，则该宏会被 @file{system.h} 
+自动定义。DOS文件系统大小写不敏感，文件描述可以起始于一个驱动字母，并且
+斜线和反斜线（@samp{/} 和 @samp{\}）都是目录分隔符。
 
 @item DIR_SEPARATOR
 @itemx DIR_SEPARATOR_2
-If defined, these macros expand to character constants specifying
-separators for directory names within a file specification.
-@file{system.h} will automatically give them appropriate values on
-Unix and MS-DOS file systems.  If your file system is neither of
-these, define one or both appropriately in @file{xm-@var{machine}.h}.
+如果定义，这些宏扩展为字符常量，用来指定在文件描述中的目录名的分隔符。在
+Unix和MS-DOS文件系统上，@file{system.h} 会自动给出合适的值。如果你的文件
+系统不是这些，则在 @file{xm-@var{machine}.h} 中定义一个或者这两个合适的值。
 
-However, operating systems like VMS, where constructing a pathname is
-more complicated than just stringing together directory names
-separated by a special character, should not define either of these
-macros.
+但是，像VMS这样的操作系统，构建路径名要比将目录名通过特定字符进行字符串连
+接复杂的多，对于这种情况，则不要定义这些宏。
 
 @item PATH_SEPARATOR
-If defined, this macro should expand to a character constant
-specifying the separator for elements of search paths.  The default
-value is a colon (@samp{:}).  DOS-based systems usually, but not
-always, use semicolon (@samp{;}).
+如果定义，该宏将扩展为一个字符常量，用来指定搜寻路径中元素的分隔符。缺省
+值为一个冒号（@samp{:}）。基于DOS的系统，通常，并不是所有的，使用分号
+（@samp{;}）。 
 
 @item VMS
-Define this macro if the host system is VMS@.
+如果主机系统为VMS，则定义该宏。
 
 @item HOST_OBJECT_SUFFIX
-Define this macro to be a C string representing the suffix for object
-files on your host machine.  If you do not define this macro, GCC will
-use @samp{.o} as the suffix for object files.
+定义该宏为一个C字符串，用来表示在你的主机上目标文件的后缀。如果没有定义该
+宏，GCC将会使用 @samp{.o} 作为目标文件的后缀。 
 
 @item HOST_EXECUTABLE_SUFFIX
-Define this macro to be a C string representing the suffix for
-executable files on your host machine.  If you do not define this macro,
-GCC will use the null string as the suffix for executable files.
+定义该宏为一个C字符串，用来表示在你的主机上可执行文件的后缀。如果没有定义
+该宏，GCC将会使用空字符串作为可执行文件的后缀。 
 
 @item HOST_BIT_BUCKET
-A pathname defined by the host operating system, which can be opened as
-a file and written to, but all the information written is discarded.
-This is commonly known as a @dfn{bit bucket} or @dfn{null device}.  If
-you do not define this macro, GCC will use @samp{/dev/null} as the bit
-bucket.  If the host does not support a bit bucket, define this macro to
-an invalid filename.
+一个路径名，由主机操作系统定义，可以作为一个文件被打开和写入内容，但是所
+有写入的信息都将被丢弃。这就是众所皆知的 @dfn{bit bucket}，或者 
+@dfn{null device}。如果没有定义该宏，GCC将使用 @samp{/dev/null} 作为
+bit bucket。如果主机不支持bit bucket，则将该宏定义为一个无效的文件名。
 
 @item UPDATE_PATH_HOST_CANONICALIZE (@var{path})
-If defined, a C statement (sans semicolon) that performs host-dependent
-canonicalization when a path used in a compilation driver or
-preprocessor is canonicalized.  @var{path} is a malloc-ed path to be
-canonicalized.  If the C statement does canonicalize @var{path} into a
-different buffer, the old path should be freed and the new buffer should
-have been allocated with malloc.
+如果定义，则为一个C语句（没有分号），当编译驱动器或者预处理器中使用的路径
+需要被canonicalized时，用于执行主机相关的 canonicalization。@var{path} 是
+被malloc出来的。如果C语句将 @var{path} canonicalize到一个不同的缓存中，则
+旧的路径将被释放，并且新的缓存应该通过malloc被分配。
 
 @item DUMPFILE_FORMAT
-Define this macro to be a C string representing the format to use for
-constructing the index part of debugging dump file names.  The resultant
-string must fit in fifteen bytes.  The full filename will be the
-concatenation of: the prefix of the assembler file name, the string
-resulting from applying this format to an index number, and a string
-unique to each dump file kind, e.g.@: @samp{rtl}.
+定义该宏为一个字符串，用来表示构建调试转储文件名字的索引部分的格式。结果
+字符串必须适合15个字节。文件名的全称为：汇编文件名的前缀，应用该模式生成
+的索引号，以及每种转储文件所特定的字符串，例如 @samp{rtl}。
 
-If you do not define this macro, GCC will use @samp{.%02d.}.  You should
-define this macro if using the default will create an invalid file name.
+如果没有定义该宏，GCC将会使用 @samp{.%02d.}。应该在使用缺省方式会生成无效
+文件名的情况下，定义该宏。
 
 @item DELETE_IF_ORDINARY
-Define this macro to be a C statement (sans semicolon) that performs
-host-dependent removal of ordinary temp files in the compilation driver.
+定义该宏为一个C语句（没有分号），用来执行主机相关的编译驱动器产生的普通临
+时文件的删除操作。
 
-If you do not define this macro, GCC will use the default version.  You
-should define this macro if the default version does not reliably remove
-the temp file as, for example, on VMS which allows multiple versions
-of a file.
+如果没有定义该宏，GCC将会使用缺省的版本。应该在缺省版本不能可靠的删除临时
+文件的情况下，定义该宏。例如，在VMS上，会允许一个文件有多个版本。
 
 @item HOST_LACKS_INODE_NUMBERS
-Define this macro if the host filesystem does not report meaningful inode
-numbers in struct stat.
+如果主机文件系统不在struct stat中报告有意义的inode数字时，则定义该宏。
 @end ftable
 
 @node Host Misc
@@ -176,45 +145,36 @@ numbers in struct stat.
 
 @ftable @code
 @item FATAL_EXIT_CODE
-A C expression for the status code to be returned when the compiler
-exits after serious errors.  The default is the system-provided macro
-@samp{EXIT_FAILURE}, or @samp{1} if the system doesn't define that
-macro.  Define this macro only if these defaults are incorrect.
+一个C表达式，作为当编译器发生严重错误退出时，所返回的状态码。缺省值为系统
+提供的宏 @samp{EXIT_FAILURE}，或者如果系统没有定义此宏时为 @samp{1}。只在
+这些缺省值不正确的时候，才定义该宏。
 
 @item SUCCESS_EXIT_CODE
-A C expression for the status code to be returned when the compiler
-exits without serious errors.  (Warnings are not serious errors.)  The
-default is the system-provided macro @samp{EXIT_SUCCESS}, or @samp{0} if
-the system doesn't define that macro.  Define this macro only if these
-defaults are incorrect.
+一个C表达式，作为当编译器没有发生严重错误而退出时，所返回的状态码。（警告
+不属于严重错误。）缺省值为系统提供的宏 @samp{EXIT_SUCCESS}，或者如果系统没
+有定义此宏时为 @samp{0}。只在这些缺省值不正确的时候，才定义该宏。 
 
 @item USE_C_ALLOCA
-Define this macro if GCC should use the C implementation of @code{alloca}
-provided by @file{libiberty.a}.  This only affects how some parts of the
-compiler itself allocate memory.  It does not change code generation.
+定义该宏，如果GCC应该使用 @file{libiberty.a} 提供的C实现的 @code{alloca}。
+这只影响编译器本身的一些部分的内存分配。并不改变代码生成。
 
-When GCC is built with a compiler other than itself, the C @code{alloca}
-is always used.  This is because most other implementations have serious
-bugs.  You should define this macro only on a system where no
-stack-based @code{alloca} can possibly work.  For instance, if a system
-has a small limit on the size of the stack, GCC's builtin @code{alloca}
-will not work reliably.
+当GCC通过其它编译器而不是它本身来构建时，C @code{alloca} 总是被使用。这是
+因为大多其它实现都具有严重的bug。应该只在基于栈的 @code{alloca} 可能无法工
+作的系统上定义该宏。例如，如果系统在栈的大小上有一个小额限制，则GCC内建的 
+@code{alloca} 将无法可靠的工作。
 
 @item COLLECT2_HOST_INITIALIZATION
-If defined, a C statement (sans semicolon) that performs host-dependent
-initialization when @code{collect2} is being initialized.
+如果定义，则为一个C语句（没有分号），当 @code{collect2} 被初始化时，执行主
+机相关的初始化。 
 
 @item GCC_DRIVER_HOST_INITIALIZATION
-If defined, a C statement (sans semicolon) that performs host-dependent
-initialization when a compilation driver is being initialized.
+如果定义，则为一个C语句（没有分号），当编译驱动器被初始化时，执行主机相关的初始化。
 
 @item HOST_LONG_LONG_FORMAT
-If defined, the string used to indicate an argument of type @code{long
-long} to functions like @code{printf}.  The default value is
-@code{"ll"}. 
+如果定义，则为一个字符串，用于表示像 @code{printf} 这样的函数的 
+@code{long long} 类型参数。缺省值为 @code{ll}。
 @end ftable
 
-In addition, if @command{configure} generates an incorrect definition of
-any of the macros in @file{auto-host.h}, you can override that
-definition in a host configuration header.  If you need to do this,
-first see if it is possible to fix @command{configure}.
+另外，如果 @command{configure} 在 @file{auto-host.h} 中生成了任何不正确的宏
+定义，你可以在一个主机配置头文件中覆盖那个定义。如果你需要这么做，请首先看看
+是否可以去修补 @command{configure}。

@@ -55,54 +55,44 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Host-Config.html#Host-Config">Host Conf
 <h3 class="section">18.1 Host Common</h3>
 
 <p><a name="index-host-hooks-4728"></a><a name="index-host-functions-4729"></a>
-Some things are just not portable, even between similar operating systems,
-and are too difficult for autoconf to detect.  They get implemented using
-hook functions in the file specified by the <var>host_hook_obj</var>
-variable in <samp><span class="file">config.gcc</span></samp>.
+有些东西不具有可移植性，甚至是在相似的操作系统之间，并且autoconf也难
+以检测出。它们是通过钩子函数来实现的，这些函数放在 <samp><span class="file">config.gcc</span></samp>
+中 <var>host_hook_obj</var> 变量指定的文件中。
 
 <div class="defun">
 &mdash; Host Hook: void <b>HOST_HOOKS_EXTRA_SIGNALS</b> (<var>void</var>)<var><a name="index-HOST_005fHOOKS_005fEXTRA_005fSIGNALS-4730"></a></var><br>
-<blockquote><p>This host hook is used to set up handling for extra signals.  The most
-common thing to do in this hook is to detect stack overflow. 
+<blockquote><p>该主机钩子用于建立对额外信号的处理。最通用的事情是在这个钩子中去检测栈溢出。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Host Hook: void <b>*</b><var> HOST_HOOKS_GT_PCH_GET_ADDRESS </var>(<var>size_t size, int fd</var>)<var><a name="index-g_t_002a-4731"></a></var><br>
-<blockquote><p>This host hook returns the address of some space that is likely to be
-free in some subsequent invocation of the compiler.  We intend to load
-the PCH data at this address such that the data need not be relocated. 
-The area should be able to hold <var>size</var> bytes.  If the host uses
-<code>mmap</code>, <var>fd</var> is an open file descriptor that can be used for
-probing. 
+<blockquote><p>该主机钩子返回很可能在编译器的后续调用中为空闲的某块空间地址。我们打算将
+PCH数据加载到这个地址，从而使得不需要对数据进行重定位。该区域应该能够容纳
+<var>size</var> 个字节。如果主机使用 <code>mmap</code>，则 <var>fd</var> 为一个打开文件的
+描述符，可以用来做探测。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Host Hook: int <b>HOST_HOOKS_GT_PCH_USE_ADDRESS</b> (<var>void * address, size_t size, int fd, size_t offset</var>)<var><a name="index-HOST_005fHOOKS_005fGT_005fPCH_005fUSE_005fADDRESS-4732"></a></var><br>
-<blockquote><p>This host hook is called when a PCH file is about to be loaded. 
-We want to load <var>size</var> bytes from <var>fd</var> at <var>offset</var>
-into memory at <var>address</var>.  The given address will be the result of
-a previous invocation of <code>HOST_HOOKS_GT_PCH_GET_ADDRESS</code>. 
-Return &minus;1 if we couldn't allocate <var>size</var> bytes at <var>address</var>. 
-Return 0 if the memory is allocated but the data is not loaded.  Return 1
-if the hook has performed everything.
+<blockquote><p>该主机钩子会在将要加载PCH文件时被调用。我们要从 <var>fd</var> 中加载 <var>size</var>
+字节到内存中 <var>address</var> 地址的 <var>offset</var> 偏移量出。给定的 <var>address</var>
+为之前调用 <code>HOST_HOOKS_GT_PCH_GET_ADDRESS</code> 所得的结果。如果不能在
+<var>address</var> 处分配 <var>size</var> 个字节，则返回 &minus;1。如果分配了内
+存但是没有加载数据，则返回0。如果该钩子完成了所有的事情，则返回1。
 
-      <p>If the implementation uses reserved address space, free any reserved
-space beyond <var>size</var>, regardless of the return value.  If no PCH will
-be loaded, this hook may be called with <var>size</var> zero, in which case
-all reserved address space should be freed.
+      <p>如果实现使用了保留地址空间，则会释放超出 <var>size</var> 的任何保留空间，而
+不管返回值如何。如果不加载PCH，则该钩子可以使用 <var>size</var> 为0的方式调
+用，这样所有保留地址空间将被释放。
 
-      <p>Do not try to handle values of <var>address</var> that could not have been
-returned by this executable; just return &minus;1.  Such values usually
-indicate an out-of-date PCH file (built by some other GCC executable),
-and such a PCH file won't work. 
+      <p>不要试图不能被该执行程序返回的 <var>address</var> 值；直接返回 &minus;1。这
+些值通常表明了一个过时的PCH文件（由其它GCC可执行程序创建的），并且该PCH
+文件是无法工作的。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Host Hook: size_t <b>HOST_HOOKS_GT_PCH_ALLOC_GRANULARITY</b> (<var>void</var>)<var>;<a name="index-HOST_005fHOOKS_005fGT_005fPCH_005fALLOC_005fGRANULARITY-4733"></a></var><br>
-<blockquote><p>This host hook returns the alignment required for allocating virtual
-memory.  Usually this is the same as getpagesize, but on some hosts the
-alignment for reserving memory differs from the pagesize for committing
-memory. 
+<blockquote><p>该主机钩子返回分配虚拟内存所需的对齐大小。通常这与getpagesize相同，但是
+在一些主机上，保留内存的对齐大小与供使用的内存页尺寸是不同的。
 </p></blockquote></div>
 
  </body></html>
