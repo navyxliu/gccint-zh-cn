@@ -8,32 +8,28 @@
 @cindex option specification files
 @cindex @samp{optc-gen.awk}
 
-Most GCC command-line options are described by special option
-definition files, the names of which conventionally end in
-@code{.opt}.  This chapter describes the format of these files.
+大多数GCC命令行选项由特定的选项定义文件来描述，按照惯例命名
+为 @code{.opt}。这章描述了这些文件的格式。
 
 @menu
-* Option file format::   The general layout of the files
-* Option properties::    Supported option properties
+* Option file format::   文件的总体结构
+* Option properties::    所支持的选项属性
 @end menu
 
 @node Option file format
 @section Option file format
 
-Option files are a simple list of records in which each field occupies
-its own line and in which the records themselves are separated by
-blank lines.  Comments may appear on their own line anywhere within
-the file and are preceded by semicolons.  Whitespace is allowed before
-the semicolon.
+选项文件是一个简单的记录列表，记录中的每个域独自占有一行，记录之间
+由空行分隔。注释独自占有一行，可以出现在文件的任何地方，并且由分号
+开头。分号前允许有空格。
 
-The files can contain the following types of record:
+文件中可以包含下列类型的记录：
 
 @itemize @bullet
 @item
-A language definition record.  These records have two fields: the
-string @samp{Language} and the name of the language.  Once a language
-has been declared in this way, it can be used as an option property.
-@xref{Option properties}.
+语言定义记录。这些记录有两个域：字符串 @samp{Language} 和语言的名字。
+一旦通过这种方式声明了一个语言，则可以作为选项属性来使用。
+@xref{Option properties}。
 
 @item
 A target specific save record to save additional information. These
@@ -41,194 +37,155 @@ records have two fields: the string @samp{TargetSave}, and a
 declaration type to go in the @code{cl_target_option} structure.
 
 @item
-An option definition record.  These records have the following fields:
+选项定义记录。这些记录有如下域： 
 @enumerate
 @item
-the name of the option, with the leading ``-'' removed
+选项的名字，去掉前导符“-”
 @item
-a space-separated list of option properties (@pxref{Option properties})
+空格分隔的选项属性列表 (@pxref{Option properties})
 @item
-the help text to use for @option{--help} (omitted if the second field
-contains the @code{Undocumented} property).
+帮助文本，用于 @option{--help}（如果第二个域包含 @code{Undocumented} 
+属性，则会忽略该域）
 @end enumerate
 
-By default, all options beginning with ``f'', ``W'' or ``m'' are
-implicitly assumed to take a ``no-'' form.  This form should not be
-listed separately.  If an option beginning with one of these letters
-does not have a ``no-'' form, you can use the @code{RejectNegative}
-property to reject it.
+缺省的，所有以“f”，“W”或者“m”开头的选项被隐式的假设会有一个“no-”形式。
+该形式不必再单独列出来。如果以这些字母开头的选项没有“no-”形式，可以使
+用 @code{RejectNegative} 属性来去掉。
 
-The help text is automatically line-wrapped before being displayed.
-Normally the name of the option is printed on the left-hand side of
-the output and the help text is printed on the right.  However, if the
-help text contains a tab character, the text to the left of the tab is
-used instead of the option's name and the text to the right of the
-tab forms the help text.  This allows you to elaborate on what type
-of argument the option takes.
+帮助文本在显示前会被自动换行。正常情况下，选项的名字会被打印在输出的左
+边，帮助文本被打印在右边。但是，如果帮助文本包含一个tab字符，则tab左边
+的文本会被用来替代选项的名字，tab右边的文本作为帮助文本。这样就可以用来
+详尽的阐述选项会使用什么类型的参数。
 
 @item
-A target mask record.  These records have one field of the form
-@samp{Mask(@var{x})}.  The options-processing script will automatically
-allocate a bit in @code{target_flags} (@pxref{Run-time Target}) for
-each mask name @var{x} and set the macro @code{MASK_@var{x}} to the
-appropriate bitmask.  It will also declare a @code{TARGET_@var{x}}
-macro that has the value 1 when bit @code{MASK_@var{x}} is set and
-0 otherwise.
+目标掩码记录。这些记录有一个域，形式为 @samp{Mask(@var{x})}。选项处理脚
+本将会自动在target_flags（参见运行时目标）中为每个掩码名字x分配一个位，
+并且将 @code{MASK_@var{x}} 宏对应的位置位。同时，会声明一个 
+@code{TARGET_@var{x}} 宏，当 @code{MASK_@var{x}} 位被置位时其值为1，否则为0。
 
-They are primarily intended to declare target masks that are not
-associated with user options, either because these masks represent
-internal switches or because the options are not available on all
-configurations and yet the masks always need to be defined.
+它们最初是为了声明与用户选项没有联系的目标掩码，或者是因为这些掩码表示内
+部的开关，或者是因为这些选项不在所有的配置中，但是还需要定义掩码的。
 @end itemize
 
 @node Option properties
 @section Option properties
 
-The second field of an option record can specify the following properties:
+选项记录的第二个域可以指定下列属性：
 
 @table @code
 @item Common
-The option is available for all languages and targets.
+选项对所有语言和目标都有效。 
 
 @item Target
-The option is available for all languages but is target-specific.
+选项对所有语言都有效，但是目标特定的。 
 
 @item @var{language}
-The option is available when compiling for the given language.
+当编译给定语言时，选项有效。
 
-It is possible to specify several different languages for the same
-option.  Each @var{language} must have been declared by an earlier
-@code{Language} record.  @xref{Option file format}.
+可以为多个不同的语言指定同一个选项。每个语言 @var{language} 必须
+已经被之前的 @code{Language} 记录声明过。@xref{Option file format}。
 
 @item RejectNegative
-The option does not have a ``no-'' form.  All options beginning with
-``f'', ``W'' or ``m'' are assumed to have a ``no-'' form unless this
-property is used.
+选项没有“no-”形式。所有由“f”，“W”或者“m”开始的选项都被假设具有“no-”形式，
+除非使用这个属性。
 
 @item Negative(@var{othername})
-The option will turn off another option @var{othername}, which is the
-the option name with the leading ``-'' removed.  This chain action will
-propagate through the @code{Negative} property of the option to be
-turned off.
+选项将会关掉另一个选项 @var{othername}，这是去掉前导符“-”的选项名字。
+这会通过 @code{Negative} 属性来传播一连串的选项关闭行为。
 
 @item Joined
 @itemx Separate
-The option takes a mandatory argument.  @code{Joined} indicates
-that the option and argument can be included in the same @code{argv}
-entry (as with @code{-mflush-func=@var{name}}, for example).
-@code{Separate} indicates that the option and argument can be
-separate @code{argv} entries (as with @code{-o}).  An option is
-allowed to have both of these properties.
+选项接受一个强制参数。@code{Joined} 指示选项和参数可以被包含在同一个
+@code{argv} 项中（例如 @code{-mflush-func=@var{name}}）。
+@code{Separate} 指示选项和参数可以为分开的 @code{argv} 项（如 @code{-o}）。
+一个选项允许同时具有这两个属性。 
 
 @item JoinedOrMissing
-The option takes an optional argument.  If the argument is given,
-it will be part of the same @code{argv} entry as the option itself.
+选项接受一个可选参数。如果参数给出，则会作为选项本身的 @code{argv} 项
+的一部分。
 
-This property cannot be used alongside @code{Joined} or @code{Separate}.
+该属性不能和 @code{Joined} 或 @code{Separate} 一起使用。
 
 @item UInteger
-The option's argument is a non-negative integer.  The option parser
-will check and convert the argument before passing it to the relevant
-option handler.  @code{UInteger} should also be used on options like
-@code{-falign-loops} where both @code{-falign-loops} and
-@code{-falign-loops}=@var{n} are supported to make sure the saved
-options are given a full integer.
+选项的参数是一个非负整数。选项解析器将会在传给选项处理前检测并转换参数。
 
 @item Var(@var{var})
-The state of this option should be stored in variable @var{var}.
-The way that the state is stored depends on the type of option:
+该选项的状态将被存储在变量 @var{var} 中。存储状态的方式取决于选项的类型：
 
 @itemize @bullet
 @item
-If the option uses the @code{Mask} or @code{InverseMask} properties,
-@var{var} is the integer variable that contains the mask.
+如果使用了 @code{Mask} 或者 @code{InverseMask} 属性，则 @var{var} 为包含
+mask的整数变量。
 
 @item
-If the option is a normal on/off switch, @var{var} is an integer
-variable that is nonzero when the option is enabled.  The options
-parser will set the variable to 1 when the positive form of the
-option is used and 0 when the ``no-'' form is used.
+如果选项是一个正常的on/off开关，则 @var{var} 为整数变量，并且当启用该选
+项时其值为非零。当使用选项的正面形式时，选项解析器会把变量置为1，当使用
+“no-”形式的时候，置为0。
 
 @item
-If the option takes an argument and has the @code{UInteger} property,
-@var{var} is an integer variable that stores the value of the argument.
+如果选项接受一个参数，并且具有 @code{UInteger} 属性，则 @var{var} 为整数
+变量，并且存储了参数的值。
 
 @item
-Otherwise, if the option takes an argument, @var{var} is a pointer to
-the argument string.  The pointer will be null if the argument is optional
-and wasn't given.
+否则，如果选项接受一个参数，则 @var{var} 为指向参数字符串的指针。如果参数
+是可选的并且没有给出，则该指针将为null。
 @end itemize
 
-The option-processing script will usually declare @var{var} in
-@file{options.c} and leave it to be zero-initialized at start-up time.
-You can modify this behavior using @code{VarExists} and @code{Init}.
+选项处理脚本通常会在 @file{options.c} 中声明 @var{var}，并且在起动时间将
+其初始化为0。你可以使用 @code{VarExists} 和 @code{Init} 来修改这种行为。
 
 @item Var(@var{var}, @var{set})
-The option controls an integer variable @var{var} and is active when
-@var{var} equals @var{set}.  The option parser will set @var{var} to
-@var{set} when the positive form of the option is used and @code{!@var{set}}
-when the ``no-'' form is used.
+选项控制一个整数变量 @var{var}，并且当 @var{var} 等于 @var{set} 时起作用。
+当使用选项的正面形式时，选项解析器会把变量置为 @var{set}，当使用“no-”形式
+的时候，置为 @code{!@var{set}}。
 
-@var{var} is declared in the same way as for the single-argument form
-described above.
+@var{var} 的声明方式与上面描述的单一参数形式的具有相同的方式。
 
 @item VarExists
-The variable specified by the @code{Var} property already exists.
-No definition should be added to @file{options.c} in response to
-this option record.
+由 @var{Var} 属性指定的变量已经存在。这样，就不会有任何定义被增加到 
+@file{options.c} 中。
 
-You should use this property only if the variable is declared outside
-@file{options.c}.
+应该只有在 @file{options.c} 之外声明了该变量的时候，才使用这个属性。
 
 @item Init(@var{value})
-The variable specified by the @code{Var} property should be statically
-initialized to @var{value}.
+由属性 @code{Var} 指定的变量应该被静态初始化为 @var{value}。
 
 @item Mask(@var{name})
-The option is associated with a bit in the @code{target_flags}
-variable (@pxref{Run-time Target}) and is active when that bit is set.
-You may also specify @code{Var} to select a variable other than
-@code{target_flags}.
+选项与 @code{target_flags} 变量（@pxref{Run-time Target}）中的一个位
+相关联，并且当该位被置位时才起作用。你还可以指定 @code{Var} 去选择一
+个变量，而不只是 @code{target_flags}。
 
-The options-processing script will automatically allocate a unique bit
-for the option.  If the option is attached to @samp{target_flags},
-the script will set the macro @code{MASK_@var{name}} to the appropriate
-bitmask.  It will also declare a @code{TARGET_@var{name}} macro that has
-the value 1 when the option is active and 0 otherwise.  If you use @code{Var}
-to attach the option to a different variable, the associated macros are
-called @code{OPTION_MASK_@var{name}} and @code{OPTION_@var{name}} respectively.
+选项处理脚本将会自动为选项分配一个唯一的位。如果选项与 @samp{target_flags}
+关联，则脚本会将宏 @code{MASK_@var{name}} 设为合适的位掩码。它还会声明一个
+@code{TARGET_@var{name}} 宏，当选项起作用时其值为1，否则为0。如果使用 
+@var{Var} 将选项关联到不同的变量上，则相关的宏分别叫做 
+@code{OPTION_MASK_@var{name}} 和 @code{OPTION_@var{name}}。
 
-You can disable automatic bit allocation using @code{MaskExists}.
+可以使用 @code{MaskExists} 来禁止自动位分配。
 
 @item InverseMask(@var{othername})
 @itemx InverseMask(@var{othername}, @var{thisname})
-The option is the inverse of another option that has the
-@code{Mask(@var{othername})} property.  If @var{thisname} is given,
-the options-processing script will declare a @code{TARGET_@var{thisname}}
-macro that is 1 when the option is active and 0 otherwise.
+选项是具有 @code{Mask(@var{othername})}属性的另一个选项的反面。如果给出了
+@var{thisname}，则选项处理脚本会声明一个 @code{TARGET_@var{thisname}} 宏，
+当选项起作用时其为1，否则为0。
 
 @item MaskExists
-The mask specified by the @code{Mask} property already exists.
-No @code{MASK} or @code{TARGET} definitions should be added to
-@file{options.h} in response to this option record.
+由 @code{Mask} 属性指定的掩码已经存在。这样，就不会有 @code{MASK} 和 
+@code{TARGET} 定义被增加到 @file{options.h} 中。
 
-The main purpose of this property is to support synonymous options.
-The first option should use @samp{Mask(@var{name})} and the others
-should use @samp{Mask(@var{name}) MaskExists}.
+该属性的主要目的用来支持同义选项。第一个选项应该使用 @samp{Mask(@var{name})} 
+并且其它的应该使用 @samp{Mask(@var{name}) MaskExists}。
 
 @item Report
-The state of the option should be printed by @option{-fverbose-asm}.
+选项的说明应该通过 @option{-fverbose-asm} 来打印。 
 
 @item Undocumented
-The option is deliberately missing documentation and should not
-be included in the @option{--help} output.
+选项有意的不提供文档，并且不应该包括在 @option{--help} 输出中。 
 
 @item Condition(@var{cond})
-The option should only be accepted if preprocessor condition
-@var{cond} is true.  Note that any C declarations associated with the
-option will be present even if @var{cond} is false; @var{cond} simply
-controls whether the option is accepted and whether it is printed in
-the @option{--help} output.
+选项应该只在预处理程序条件 @var{cond} 为真时才被接受。注意即使 @var{cond} 为
+假时，任何与选项相关的C声明也会存在；@var{cond}只是简单的控制选项是否被接受，
+以及是否在 @option{--help} 输出中被打印。
 
 @item Save
 Build the @code{cl_target_option} structure to hold a copy of the
