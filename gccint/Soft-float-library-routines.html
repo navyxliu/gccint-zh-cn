@@ -246,19 +246,15 @@ These functions convert <var>i</var>, an unsigned long long, to floating point.
 <h4 class="subsection">4.2.3 Comparison functions</h4>
 
 <p>有两组基本的比较函数。
-There are two sets of basic comparison functions.
 
 <div class="defun">
 &mdash; Runtime Function: int <b>__cmpsf2</b> (<var>float a, float b</var>)<var><a name="index-g_t_005f_005fcmpsf2-157"></a></var><br>
 &mdash; Runtime Function: int <b>__cmpdf2</b> (<var>double a, double b</var>)<var><a name="index-g_t_005f_005fcmpdf2-158"></a></var><br>
 &mdash; Runtime Function: int <b>__cmptf2</b> (<var>long double a, long double b</var>)<var><a name="index-g_t_005f_005fcmptf2-159"></a></var><br>
-<blockquote><p>这些函数计算a &lt;=&gt; b。也就是，如果a小于b，则返回-1；如果a大于b，则返回1；如果a与b相等，则返回0。如果有任一参数为NaN，则返回1，但你不要依赖于这点；如果可以出现NaN，则使用高级的比较函数。
-These functions calculate a &lt;=&gt; b.  That is, if <var>a</var> is less
-than <var>b</var>, they return &minus;1; if <var>a</var> is greater than <var>b</var>, they
-return 1; and if <var>a</var> and <var>b</var> are equal they return 0.  If
-either argument is NaN they return 1, but you should not rely on this;
-if NaN is a possibility, use one of the higher-level comparison
-functions. 
+<blockquote><p>这些函数计算 a &lt;=&gt; b。也就是，如果 <var>a</var> 小于 <var>b</var>，则返回-1；
+如果 <var>a</var> 大于 <var>b</var>，则返回1；如果 <var>a</var> 与 <var>b</var> 相等，则返回0。
+如果有任一参数为NaN，则返回1，但你不要依赖于这点；如果可以出现NaN，则使用
+高级的比较函数。
 </p></blockquote></div>
 
 <div class="defun">
@@ -266,79 +262,60 @@ functions.
 &mdash; Runtime Function: int <b>__unorddf2</b> (<var>double a, double b</var>)<var><a name="index-g_t_005f_005funorddf2-161"></a></var><br>
 &mdash; Runtime Function: int <b>__unordtf2</b> (<var>long double a, long double b</var>)<var><a name="index-g_t_005f_005funordtf2-162"></a></var><br>
 <blockquote><p>这些函数返回一个非0值，如果任一参数为NaN，否则返回0。
-These functions return a nonzero value if either argument is NaN, otherwise 0. 
 </p></blockquote></div>
 
- <p>还有一个直接对应于比较运算符的高级别函数的完备群。它们实现了浮点运算的ISO C语义，将NaN考虑了进来。要仔细注意每组的返回值定义。（Under the hood），所有这些函数都被实现为：
-There is also a complete group of higher level functions which
-correspond directly to comparison operators.  They implement the ISO C
-semantics for floating-point comparisons, taking NaN into account. 
-Pay careful attention to the return values defined for each set. 
-Under the hood, all of these routines are implemented as
+ <p>还有一个直接对应于比较运算符的高级别函数的完备群。它们实现了浮点运算
+的ISO C语义，将NaN考虑了进来。要仔细注意每组的返回值定义。
+（Under the hood），所有这些函数都被实现为：
 
 <pre class="smallexample">       if (__unord<var>X</var>f2 (a, b))
          return <var>E</var>;
        return __cmp<var>X</var>f2 (a, b);
 </pre>
- <p class="noindent">其中E是一个常数，被选来给出对于NaN的合适行为。因此，返回值的意义对于每组都不同。不要依赖于这些实现；只有在下面被说明的语义才有担保。
-where <var>E</var> is a constant chosen to give the proper behavior for
-NaN.  Thus, the meaning of the return value is different for each set. 
-Do not rely on this implementation; only the semantics documented
-below are guaranteed.
+ <p class="noindent">其中 <var>E</var> 是一个常数，被选来给出对于NaN的合适行为。因此，
+返回值的意义对于每组都不同。不要依赖于这些实现；只有在下面
+被说明的语义才有担保。
 
 <div class="defun">
 &mdash; Runtime Function: int <b>__eqsf2</b> (<var>float a, float b</var>)<var><a name="index-g_t_005f_005feqsf2-163"></a></var><br>
 &mdash; Runtime Function: int <b>__eqdf2</b> (<var>double a, double b</var>)<var><a name="index-g_t_005f_005feqdf2-164"></a></var><br>
 &mdash; Runtime Function: int <b>__eqtf2</b> (<var>long double a, long double b</var>)<var><a name="index-g_t_005f_005feqtf2-165"></a></var><br>
-<blockquote><p>如果参数都不为NaN，并且a和b相等，则这些函数返回0。
-These functions return zero if neither argument is NaN, and <var>a</var> and
-<var>b</var> are equal. 
+<blockquote><p>如果参数都不为NaN，并且 <var>a</var> 和 <var>b</var> 相等，则这些函数返回0。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Runtime Function: int <b>__nesf2</b> (<var>float a, float b</var>)<var><a name="index-g_t_005f_005fnesf2-166"></a></var><br>
 &mdash; Runtime Function: int <b>__nedf2</b> (<var>double a, double b</var>)<var><a name="index-g_t_005f_005fnedf2-167"></a></var><br>
 &mdash; Runtime Function: int <b>__netf2</b> (<var>long double a, long double b</var>)<var><a name="index-g_t_005f_005fnetf2-168"></a></var><br>
-<blockquote><p>如果有任一参数为NaN，或者a和b不相等，则这些函数返回非0。
-These functions return a nonzero value if either argument is NaN, or
-if <var>a</var> and <var>b</var> are unequal. 
+<blockquote><p>如果有任一参数为NaN，或者 <var>a</var> 和 <var>b</var> 不相等，则这些函数返回非0。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Runtime Function: int <b>__gesf2</b> (<var>float a, float b</var>)<var><a name="index-g_t_005f_005fgesf2-169"></a></var><br>
 &mdash; Runtime Function: int <b>__gedf2</b> (<var>double a, double b</var>)<var><a name="index-g_t_005f_005fgedf2-170"></a></var><br>
 &mdash; Runtime Function: int <b>__getf2</b> (<var>long double a, long double b</var>)<var><a name="index-g_t_005f_005fgetf2-171"></a></var><br>
-<blockquote><p>如果参数都不为NaN，并且a大于或等于b，则这些函数返回一个大于或等于0的值。
-These functions return a value greater than or equal to zero if
-neither argument is NaN, and <var>a</var> is greater than or equal to
-<var>b</var>. 
+<blockquote><p>如果参数都不为NaN，并且 <var>a</var> 大于或等于 <var>b</var>，则这些函数返回一个大于或等于0的值。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Runtime Function: int <b>__ltsf2</b> (<var>float a, float b</var>)<var><a name="index-g_t_005f_005fltsf2-172"></a></var><br>
 &mdash; Runtime Function: int <b>__ltdf2</b> (<var>double a, double b</var>)<var><a name="index-g_t_005f_005fltdf2-173"></a></var><br>
 &mdash; Runtime Function: int <b>__lttf2</b> (<var>long double a, long double b</var>)<var><a name="index-g_t_005f_005flttf2-174"></a></var><br>
-<blockquote><p>如果参数都不为NaN，并且a严格小于b，则这些函数返回一个小于0的值。
-These functions return a value less than zero if neither argument is
-NaN, and <var>a</var> is strictly less than <var>b</var>. 
+<blockquote><p>如果参数都不为NaN，并且 <var>a</var> 严格小于 <var>b</var>，则这些函数返回一个小于0的值。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Runtime Function: int <b>__lesf2</b> (<var>float a, float b</var>)<var><a name="index-g_t_005f_005flesf2-175"></a></var><br>
 &mdash; Runtime Function: int <b>__ledf2</b> (<var>double a, double b</var>)<var><a name="index-g_t_005f_005fledf2-176"></a></var><br>
 &mdash; Runtime Function: int <b>__letf2</b> (<var>long double a, long double b</var>)<var><a name="index-g_t_005f_005fletf2-177"></a></var><br>
-<blockquote><p>如果参数都不为NaN，并且a小于或等于b，则这些函数返回一个小于或等于0的值。
-These functions return a value less than or equal to zero if neither
-argument is NaN, and <var>a</var> is less than or equal to <var>b</var>. 
+<blockquote><p>如果参数都不为NaN，并且 <var>a</var> 小于或等于 <var>b</var>，则这些函数返回一个小于或等于0的值。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Runtime Function: int <b>__gtsf2</b> (<var>float a, float b</var>)<var><a name="index-g_t_005f_005fgtsf2-178"></a></var><br>
 &mdash; Runtime Function: int <b>__gtdf2</b> (<var>double a, double b</var>)<var><a name="index-g_t_005f_005fgtdf2-179"></a></var><br>
 &mdash; Runtime Function: int <b>__gttf2</b> (<var>long double a, long double b</var>)<var><a name="index-g_t_005f_005fgttf2-180"></a></var><br>
-<blockquote><p>如果参数都不为NaN，并且a严格大于b，则这些函数返回一个大于0的值。
-These functions return a value greater than zero if neither argument
-is NaN, and <var>a</var> is strictly greater than <var>b</var>. 
+<blockquote><p>如果参数都不为NaN，并且 <var>a</var> 严格大于 <var>b</var>，则这些函数返回一个大于0的值。
 </p></blockquote></div>
 
 <h4 class="subsection">4.2.4 Other floating-point functions</h4>
@@ -348,8 +325,7 @@ is NaN, and <var>a</var> is strictly greater than <var>b</var>.
 &mdash; Runtime Function: double <b>__powidf2</b> (<var>double a, int b</var>)<var><a name="index-g_t_005f_005fpowidf2-182"></a></var><br>
 &mdash; Runtime Function: long double <b>__powitf2</b> (<var>long double a, int b</var>)<var><a name="index-g_t_005f_005fpowitf2-183"></a></var><br>
 &mdash; Runtime Function: long double <b>__powixf2</b> (<var>long double a, int b</var>)<var><a name="index-g_t_005f_005fpowixf2-184"></a></var><br>
-<blockquote><p>这些函数求得a的b次幂。
-These functions convert raise <var>a</var> to the power <var>b</var>. 
+<blockquote><p>这些函数求得 <var>a</var> 的 <var>b</var> 次幂。
 </p></blockquote></div>
 
 <div class="defun">
@@ -357,9 +333,7 @@ These functions convert raise <var>a</var> to the power <var>b</var>.
 &mdash; Runtime Function: complex double <b>__muldc3</b> (<var>double a, double b, double c, double d</var>)<var><a name="index-g_t_005f_005fmuldc3-186"></a></var><br>
 &mdash; Runtime Function: complex long double <b>__multc3</b> (<var>long double a, long double b, long double c, long double d</var>)<var><a name="index-g_t_005f_005fmultc3-187"></a></var><br>
 &mdash; Runtime Function: complex long double <b>__mulxc3</b> (<var>long double a, long double b, long double c, long double d</var>)<var><a name="index-g_t_005f_005fmulxc3-188"></a></var><br>
-<blockquote><p>这些函数返回a+ib和c+id的乘积，遵从C99附录G的规则。
-These functions return the product of <var>a</var> + i<var>b</var> and
-<var>c</var> + i<var>d</var>, following the rules of C99 Annex G. 
+<blockquote><p>这些函数返回 <var>a</var> + i<var>b</var> 和 <var>c</var> + i<var>d</var> 的乘积，遵从C99附录G的规则。
 </p></blockquote></div>
 
 <div class="defun">
@@ -367,10 +341,8 @@ These functions return the product of <var>a</var> + i<var>b</var> and
 &mdash; Runtime Function: complex double <b>__divdc3</b> (<var>double a, double b, double c, double d</var>)<var><a name="index-g_t_005f_005fdivdc3-190"></a></var><br>
 &mdash; Runtime Function: complex long double <b>__divtc3</b> (<var>long double a, long double b, long double c, long double d</var>)<var><a name="index-g_t_005f_005fdivtc3-191"></a></var><br>
 &mdash; Runtime Function: complex long double <b>__divxc3</b> (<var>long double a, long double b, long double c, long double d</var>)<var><a name="index-g_t_005f_005fdivxc3-192"></a></var><br>
-<blockquote><p>这些函数返回a+ib和c+id的商（即 (a + ib) / (c + id)），遵从C99附录G的规则。
-These functions return the quotient of <var>a</var> + i<var>b</var> and
-<var>c</var> + i<var>d</var> (i.e., (<var>a</var> + i<var>b</var>) / (<var>c</var>
-+ i<var>d</var>)), following the rules of C99 Annex G. 
+<blockquote><p>这些函数返回 <var>a</var> + i<var>b</var> 和 <var>c</var> + i<var>d</var> 的商
+（即 (<var>a</var> + i<var>b</var>) / (<var>c</var> + i<var>d</var>)），遵从C99附录G的规则。
 </p></blockquote></div>
 
  </body></html>

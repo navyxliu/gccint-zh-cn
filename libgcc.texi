@@ -372,33 +372,25 @@ These functions convert @var{i}, an unsigned long long, to floating point.
 @subsection Comparison functions
 
 有两组基本的比较函数。
-There are two sets of basic comparison functions.
 
 @deftypefn {Runtime Function} int __cmpsf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __cmpdf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __cmptf2 (long double @var{a}, long double @var{b})
-这些函数计算a <=> b。也就是，如果a小于b，则返回-1；如果a大于b，则返回1；如果a与b相等，则返回0。如果有任一参数为NaN，则返回1，但你不要依赖于这点；如果可以出现NaN，则使用高级的比较函数。
-These functions calculate @math{a <=> b}.  That is, if @var{a} is less
-than @var{b}, they return @minus{}1; if @var{a} is greater than @var{b}, they
-return 1; and if @var{a} and @var{b} are equal they return 0.  If
-either argument is NaN they return 1, but you should not rely on this;
-if NaN is a possibility, use one of the higher-level comparison
-functions.
+这些函数计算 @math{a <=> b}。也就是，如果 @var{a} 小于 @var{b}，则返回-1；
+如果 @var{a} 大于 @var{b}，则返回1；如果 @var{a} 与 @var{b} 相等，则返回0。
+如果有任一参数为NaN，则返回1，但你不要依赖于这点；如果可以出现NaN，则使用
+高级的比较函数。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __unordsf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __unorddf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __unordtf2 (long double @var{a}, long double @var{b})
 这些函数返回一个非0值，如果任一参数为NaN，否则返回0。
-These functions return a nonzero value if either argument is NaN, otherwise 0.
 @end deftypefn
 
-还有一个直接对应于比较运算符的高级别函数的完备群。它们实现了浮点运算的ISO C语义，将NaN考虑了进来。要仔细注意每组的返回值定义。（Under the hood），所有这些函数都被实现为：
-There is also a complete group of higher level functions which
-correspond directly to comparison operators.  They implement the ISO C
-semantics for floating-point comparisons, taking NaN into account.
-Pay careful attention to the return values defined for each set.
-Under the hood, all of these routines are implemented as
+还有一个直接对应于比较运算符的高级别函数的完备群。它们实现了浮点运算
+的ISO C语义，将NaN考虑了进来。要仔细注意每组的返回值定义。
+（Under the hood），所有这些函数都被实现为：
 
 @smallexample
   if (__unord@var{X}f2 (a, b))
@@ -407,59 +399,44 @@ Under the hood, all of these routines are implemented as
 @end smallexample
 
 @noindent
-其中E是一个常数，被选来给出对于NaN的合适行为。因此，返回值的意义对于每组都不同。不要依赖于这些实现；只有在下面被说明的语义才有担保。
-where @var{E} is a constant chosen to give the proper behavior for
-NaN@.  Thus, the meaning of the return value is different for each set.
-Do not rely on this implementation; only the semantics documented
-below are guaranteed.
+其中 @var{E} 是一个常数，被选来给出对于NaN的合适行为。因此，
+返回值的意义对于每组都不同。不要依赖于这些实现；只有在下面
+被说明的语义才有担保。
 
 @deftypefn {Runtime Function} int __eqsf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __eqdf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __eqtf2 (long double @var{a}, long double @var{b})
-如果参数都不为NaN，并且a和b相等，则这些函数返回0。
-These functions return zero if neither argument is NaN, and @var{a} and
-@var{b} are equal.
+如果参数都不为NaN，并且 @var{a} 和 @var{b} 相等，则这些函数返回0。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __nesf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __nedf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __netf2 (long double @var{a}, long double @var{b})
-如果有任一参数为NaN，或者a和b不相等，则这些函数返回非0。
-These functions return a nonzero value if either argument is NaN, or
-if @var{a} and @var{b} are unequal.
+如果有任一参数为NaN，或者 @var{a} 和 @var{b} 不相等，则这些函数返回非0。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __gesf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __gedf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __getf2 (long double @var{a}, long double @var{b})
-如果参数都不为NaN，并且a大于或等于b，则这些函数返回一个大于或等于0的值。
-These functions return a value greater than or equal to zero if
-neither argument is NaN, and @var{a} is greater than or equal to
-@var{b}.
+如果参数都不为NaN，并且 @var{a} 大于或等于 @var{b}，则这些函数返回一个大于或等于0的值。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __ltsf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __ltdf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __lttf2 (long double @var{a}, long double @var{b})
-如果参数都不为NaN，并且a严格小于b，则这些函数返回一个小于0的值。
-These functions return a value less than zero if neither argument is
-NaN, and @var{a} is strictly less than @var{b}.
+如果参数都不为NaN，并且 @var{a} 严格小于 @var{b}，则这些函数返回一个小于0的值。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __lesf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __ledf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __letf2 (long double @var{a}, long double @var{b})
-如果参数都不为NaN，并且a小于或等于b，则这些函数返回一个小于或等于0的值。
-These functions return a value less than or equal to zero if neither
-argument is NaN, and @var{a} is less than or equal to @var{b}.
+如果参数都不为NaN，并且 @var{a} 小于或等于 @var{b}，则这些函数返回一个小于或等于0的值。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __gtsf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __gtdf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __gttf2 (long double @var{a}, long double @var{b})
-如果参数都不为NaN，并且a严格大于b，则这些函数返回一个大于0的值。
-These functions return a value greater than zero if neither argument
-is NaN, and @var{a} is strictly greater than @var{b}.
+如果参数都不为NaN，并且 @var{a} 严格大于 @var{b}，则这些函数返回一个大于0的值。
 @end deftypefn
 
 @subsection Other floating-point functions
@@ -468,27 +445,22 @@ is NaN, and @var{a} is strictly greater than @var{b}.
 @deftypefnx {Runtime Function} double __powidf2 (double @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {long double} __powitf2 (long double @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {long double} __powixf2 (long double @var{a}, int @var{b})
-这些函数求得a的b次幂。
-These functions convert raise @var{a} to the power @var{b}.
+这些函数求得 @var{a} 的 @var{b} 次幂。
 @end deftypefn
 
 @deftypefn {Runtime Function} {complex float} __mulsc3 (float @var{a}, float @var{b}, float @var{c}, float @var{d})
 @deftypefnx {Runtime Function} {complex double} __muldc3 (double @var{a}, double @var{b}, double @var{c}, double @var{d})
 @deftypefnx {Runtime Function} {complex long double} __multc3 (long double @var{a}, long double @var{b}, long double @var{c}, long double @var{d})
 @deftypefnx {Runtime Function} {complex long double} __mulxc3 (long double @var{a}, long double @var{b}, long double @var{c}, long double @var{d})
-这些函数返回a+ib和c+id的乘积，遵从C99附录G的规则。
-These functions return the product of @math{@var{a} + i@var{b}} and
-@math{@var{c} + i@var{d}}, following the rules of C99 Annex G@.
+这些函数返回 @math{@var{a} + i@var{b}} 和 @math{@var{c} + i@var{d}} 的乘积，遵从C99附录G的规则。
 @end deftypefn
 
 @deftypefn {Runtime Function} {complex float} __divsc3 (float @var{a}, float @var{b}, float @var{c}, float @var{d})
 @deftypefnx {Runtime Function} {complex double} __divdc3 (double @var{a}, double @var{b}, double @var{c}, double @var{d})
 @deftypefnx {Runtime Function} {complex long double} __divtc3 (long double @var{a}, long double @var{b}, long double @var{c}, long double @var{d})
 @deftypefnx {Runtime Function} {complex long double} __divxc3 (long double @var{a}, long double @var{b}, long double @var{c}, long double @var{d})
-这些函数返回a+ib和c+id的商（即 (a + ib) / (c + id)），遵从C99附录G的规则。
-These functions return the quotient of @math{@var{a} + i@var{b}} and
-@math{@var{c} + i@var{d}} (i.e., @math{(@var{a} + i@var{b}) / (@var{c}
-+ i@var{d})}), following the rules of C99 Annex G@.
+这些函数返回 @math{@var{a} + i@var{b}} 和 @math{@var{c} + i@var{d}} 的商
+（即 @math{(@var{a} + i@var{b}) / (@var{c} + i@var{d})}），遵从C99附录G的规则。
 @end deftypefn
 
 @node Decimal float library routines
@@ -520,9 +492,7 @@ These functions return the quotient of @math{@var{a} + i@var{b}} and
 @deftypefnx {Runtime Function} _Decimal64 __bid_subdd3 (_Decimal64 @var{a}, _Decimal64 @var{b})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_subtd3 (_Decimal128 @var{a}, _Decimal128 @var{b})
 @deftypefnx {Runtime Function} _Decimal128 __bid_subtd3 (_Decimal128 @var{a}, _Decimal128 @var{b})
-这些函数返回a和b的差，也就是a-b。
-These functions return the difference between @var{b} and @var{a};
-that is, @w{@math{@var{a} - @var{b}}}.
+这些函数返回 @var{a} 和 @var{b} 的差，也就是 @w{@math{@var{a} - @var{b}}}。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_mulsd3 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -531,8 +501,7 @@ that is, @w{@math{@var{a} - @var{b}}}.
 @deftypefnx {Runtime Function} _Decimal64 __bid_muldd3 (_Decimal64 @var{a}, _Decimal64 @var{b})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_multd3 (_Decimal128 @var{a}, _Decimal128 @var{b})
 @deftypefnx {Runtime Function} _Decimal128 __bid_multd3 (_Decimal128 @var{a}, _Decimal128 @var{b})
-这些函数返回a和b的积。
-These functions return the product of @var{a} and @var{b}.
+这些函数返回 @var{a} 和 @var{b} 的积。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_divsd3 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -541,9 +510,7 @@ These functions return the product of @var{a} and @var{b}.
 @deftypefnx {Runtime Function} _Decimal64 __bid_divdd3 (_Decimal64 @var{a}, _Decimal64 @var{b})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_divtd3 (_Decimal128 @var{a}, _Decimal128 @var{b})
 @deftypefnx {Runtime Function} _Decimal128 __bid_divtd3 (_Decimal128 @var{a}, _Decimal128 @var{b})
-这些函数返回a和b的商，也就是a/b。
-These functions return the quotient of @var{a} and @var{b}; that is,
-@w{@math{@var{a} / @var{b}}}.
+这些函数返回 @var{a} 和 @var{b} 的商，也就是 @w{@math{@var{a} / @var{b}}}。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_negsd2 (_Decimal32 @var{a})
@@ -552,9 +519,7 @@ These functions return the quotient of @var{a} and @var{b}; that is,
 @deftypefnx {Runtime Function} _Decimal64 __bid_negdd2 (_Decimal64 @var{a})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_negtd2 (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} _Decimal128 __bid_negtd2 (_Decimal128 @var{a})
-这些函数返回a的负数。它们只是简单的反转符号位，因此能够产生负0和负NaN。
-These functions return the negation of @var{a}.  They simply flip the
-sign bit, so they can produce negative zero and negative NaN@.
+这些函数返回 @var{a} 的负数。它们只是简单的反转符号位，因此能够产生负0和负NaN。
 @end deftypefn
 
 @subsection Conversion functions
@@ -571,9 +536,7 @@ sign bit, so they can produce negative zero and negative NaN@.
 @deftypefnx {Runtime Function} _Decimal32 __bid_trunctdsd2 (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} _Decimal64 __dpd_trunctddd2 (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} _Decimal64 __bid_trunctddd2 (_Decimal128 @var{a})
-这些函数将a扩展为它们返回类型的模式。
-These functions convert the value @var{a} from one decimal floating type
-to another.
+这些函数将 @var{a} 扩展为它们返回类型的模式。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal64 __dpd_extendsfdd (float @var{a})
@@ -643,7 +606,7 @@ binary floating types of the same size.
 @deftypefnx {Runtime Function} int __bid_fixddsi (_Decimal64 @var{a})
 @deftypefnx {Runtime Function} int __dpd_fixtdsi (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} int __bid_fixtdsi (_Decimal128 @var{a})
-These functions convert @var{a} to a signed integer.
+这些函数将 @var{a} 转换为有符号整数。
 @end deftypefn
 
 @deftypefn {Runtime Function} long __dpd_fixsddi (_Decimal32 @var{a})
@@ -652,7 +615,7 @@ These functions convert @var{a} to a signed integer.
 @deftypefnx {Runtime Function} long __bid_fixdddi (_Decimal64 @var{a})
 @deftypefnx {Runtime Function} long __dpd_fixtddi (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} long __bid_fixtddi (_Decimal128 @var{a})
-These functions convert @var{a} to a signed long.
+这些函数将 @var{a} 转换为有符号长整数。
 @end deftypefn
 
 @deftypefn {Runtime Function} {unsigned int} __dpd_fixunssdsi (_Decimal32 @var{a})
@@ -661,7 +624,7 @@ These functions convert @var{a} to a signed long.
 @deftypefnx {Runtime Function} {unsigned int} __bid_fixunsddsi (_Decimal64 @var{a})
 @deftypefnx {Runtime Function} {unsigned int} __dpd_fixunstdsi (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} {unsigned int} __bid_fixunstdsi (_Decimal128 @var{a})
-These functions convert @var{a} to an unsigned integer.  Negative values all become zero.
+这些函数将 @var{a} 转换为无符号整数。将负值都变为0。
 @end deftypefn
 
 @deftypefn {Runtime Function} {unsigned long} __dpd_fixunssddi (_Decimal32 @var{a})
@@ -670,8 +633,7 @@ These functions convert @var{a} to an unsigned integer.  Negative values all bec
 @deftypefnx {Runtime Function} {unsigned long} __bid_fixunsdddi (_Decimal64 @var{a})
 @deftypefnx {Runtime Function} {unsigned long} __dpd_fixunstddi (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} {unsigned long} __bid_fixunstddi (_Decimal128 @var{a})
-These functions convert @var{a} to an unsigned long.  Negative values
-all become zero.
+这些函数将 @var{a} 转换为无符号长整数。将负值都变为0。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_floatsisd (int @var{i})
@@ -680,7 +642,7 @@ all become zero.
 @deftypefnx {Runtime Function} _Decimal64 __bid_floatsidd (int @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_floatsitd (int @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __bid_floatsitd (int @var{i})
-These functions convert @var{i}, a signed integer, to decimal floating point.
+这些函数将有符号整数 @var{i} 转换为十进制浮点数。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_floatdisd (long @var{i})
@@ -689,7 +651,7 @@ These functions convert @var{i}, a signed integer, to decimal floating point.
 @deftypefnx {Runtime Function} _Decimal64 __bid_floatdidd (long @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_floatditd (long @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __bid_floatditd (long @var{i})
-These functions convert @var{i}, a signed long, to decimal floating point.
+这些函数将有符号长整数 @var{i} 转换为十进制浮点数。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_floatunssisd (unsigned int @var{i})
@@ -698,7 +660,7 @@ These functions convert @var{i}, a signed long, to decimal floating point.
 @deftypefnx {Runtime Function} _Decimal64 __bid_floatunssidd (unsigned int @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_floatunssitd (unsigned int @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __bid_floatunssitd (unsigned int @var{i})
-These functions convert @var{i}, an unsigned integer, to decimal floating point.
+这些函数将无符号整数 @var{i} 转换为十进制浮点数。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_floatunsdisd (unsigned long @var{i})
@@ -707,7 +669,7 @@ These functions convert @var{i}, an unsigned integer, to decimal floating point.
 @deftypefnx {Runtime Function} _Decimal64 __bid_floatunsdidd (unsigned long @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_floatunsditd (unsigned long @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __bid_floatunsditd (unsigned long @var{i})
-These functions convert @var{i}, an unsigned long, to decimal floating point.
+这些函数将无符号长整数 @var{i} 转换为十进制浮点数。
 @end deftypefn
 
 @subsection Comparison functions
