@@ -54,29 +54,24 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Type-Information.html#Type-Information"
 
 <h3 class="section">22.1 The Inside of a <code>GTY(())</code></h3>
 
-<p>Sometimes the C code is not enough to fully describe the type
-structure.  Extra information can be provided with <code>GTY</code> options
-and additional markers.  Some options take a parameter, which may be
-either a string or a type name, depending on the parameter.  If an
-option takes no parameter, it is acceptable either to omit the
-parameter entirely, or to provide an empty string as a parameter.  For
-example, <code>GTY&nbsp;((skip))<!-- /@w --></code> and <code>GTY&nbsp;((skip&nbsp;("")))<!-- /@w --></code> are
-equivalent.
+<p>有时候C代码不足以完全描述类型结构体，这时可以使用 <code>GTY</code> 选项和
+额外标记来提供额外的信息。一些选项接受一个参数，其可以为字符串或者类
+型名。如果一个选项不需要参数，则可以完全省略参数，或者提供一个空字符
+串作为参数。例如，<code>GTY&nbsp;((skip))<!-- /@w --></code> 和
+<code>GTY&nbsp;((skip("")))<!-- /@w --></code> 是等价的。
 
- <p>When the parameter is a string, often it is a fragment of C code.  Four
-special escapes may be used in these strings, to refer to pieces of
-the data structure being marked:
+ <p>当参数为字符串时，通常为一个C代码片段。有四种特定换码符可以在字符串
+中使用，用来指定被标记的数据结构体：
 
  <p><a name="index-g_t_0025-in-GTY-option-4777"></a>
      <dl>
-<dt><code>%h</code><dd>The current structure. 
-<br><dt><code>%1</code><dd>The structure that immediately contains the current structure. 
-<br><dt><code>%0</code><dd>The outermost structure that contains the current structure. 
-<br><dt><code>%a</code><dd>A partial expression of the form <code>[i1][i2]...</code> that indexes
-the array item currently being marked. 
+<dt><code>%h</code><dd>当前结构体。
+<br><dt><code>%1</code><dd>直接包含当前结构体的结构体。
+<br><dt><code>%0</code><dd>包含当前结构体的最外层结构体。
+<br><dt><code>%a</code><dd><code>[i1][i2]...</code> 形式的部分表达式，用来索引当前被标记的数组项。
 </dl>
 
- <p>For instance, suppose that you have a structure of the form
+ <p>例如，假设有一个结构体
 <pre class="smallexample">     struct A {
        ...
      };
@@ -84,71 +79,64 @@ the array item currently being marked.
        struct A foo[12];
      };
 </pre>
- <p class="noindent">and <code>b</code> is a variable of type <code>struct B</code>.  When marking
-&lsquo;<samp><span class="samp">b.foo[11]</span></samp>&rsquo;, <code>%h</code> would expand to &lsquo;<samp><span class="samp">b.foo[11]</span></samp>&rsquo;,
-<code>%0</code> and <code>%1</code> would both expand to &lsquo;<samp><span class="samp">b</span></samp>&rsquo;, and <code>%a</code>
-would expand to &lsquo;<samp><span class="samp">[11]</span></samp>&rsquo;.
+ <p class="noindent">并且 <code>b</code> 是 <code>struct B</code> 类型的变量。当标记 &lsquo;<samp><span class="samp">b.foo[11]</span></samp>&rsquo;
+时，<code>%h</code> 将扩展为 &lsquo;<samp><span class="samp">b.foo[11]</span></samp>&rsquo;，<code>%0</code> 和 <code>%1</code> 都会
+扩展为 &lsquo;<samp><span class="samp">b</span></samp>&rsquo;，<code>%a</code> 会扩展为 &lsquo;<samp><span class="samp">[11]</span></samp>&rsquo;。
 
- <p>As in ordinary C, adjacent strings will be concatenated; this is
-helpful when you have a complicated expression.
+ <p>由于原始的C中，相邻的字符串会被连接；这对于复杂的表达式是有帮助的。
+
 <pre class="smallexample">     GTY ((chain_next ("TREE_CODE (&amp;%h.generic) == INTEGER_TYPE"
                        " ? TYPE_NEXT_VARIANT (&amp;%h.generic)"
                        " : TREE_CHAIN (&amp;%h.generic)")))
 </pre>
- <p>The available options are:
+ <p>可用的选项：
 
      
 <a name="index-length-4778"></a>
 <dl><dt><code>length ("</code><var>expression</var><code>")</code><dd>
-There are two places the type machinery will need to be explicitly told
-the length of an array.  The first case is when a structure ends in a
-variable-length array, like this:
+有两个地方需要显示的告诉类型机构一个数组的长度。第一种情况是当一个结
+构体结束于一个可变长度数组，像这样：
      <pre class="smallexample">          struct rtvec_def GTY(()) {
             int num_elem;         /* <span class="roman">number of elements</span> */
             rtx GTY ((length ("%h.num_elem"))) elem[1];
           };
 </pre>
-     <p>In this case, the <code>length</code> option is used to override the specified
-array length (which should usually be <code>1</code>).  The parameter of the
-option is a fragment of C code that calculates the length.
+     <p>在这种情况下，<code>length</code> 选项用来覆盖指定数组的长度（通常本应该为
+<code>1</code>）。选项的参数是C代码片断用来计算长度。
 
-     <p>The second case is when a structure or a global variable contains a
-pointer to an array, like this:
+     <p>第二种情况是当一个结构体或者全局变量包含一个指向数组的指针，像这样：
+
      <pre class="smallexample">          tree *
             GTY ((length ("%h.regno_pointer_align_length"))) regno_decl;
 </pre>
-     <p>In this case, <code>regno_decl</code> has been allocated by writing something like
+     <p>在这种情况下，<code>regno_decl</code> 已经通过类似下面的方式被分配：
      <pre class="smallexample">            x-&gt;regno_decl =
               ggc_alloc (x-&gt;regno_pointer_align_length * sizeof (tree));
 </pre>
-     <p>and the <code>length</code> provides the length of the field.
+     <p>并且 <code>length</code> 提供了指定域的长度。
 
-     <p>This second use of <code>length</code> also works on global variables, like:
+     <p><code>lenght</code> 的第二种用法还包括在全局变量上，像这样：
 <pre class="verbatim">     
        static GTY((length ("reg_base_value_size")))
          rtx *reg_base_value;
 </pre>
 
      <p><a name="index-skip-4779"></a><br><dt><code>skip</code><dd>
-If <code>skip</code> is applied to a field, the type machinery will ignore it. 
-This is somewhat dangerous; the only safe use is in a union when one
-field really isn't ever used.
+如果 <code>skip</code> 应用在一个域上，则类型机构将会忽略该域。这有些危险；
+唯一安全的使用方式是在一个联合体中，当一个域确实不会被使用到的时候。
 
      <p><a name="index-desc-4780"></a><a name="index-tag-4781"></a><a name="index-default-4782"></a><br><dt><code>desc ("</code><var>expression</var><code>")</code><dt><code>tag ("</code><var>constant</var><code>")</code><dt><code>default</code><dd>
-The type machinery needs to be told which field of a <code>union</code> is
-currently active.  This is done by giving each field a constant
-<code>tag</code> value, and then specifying a discriminator using <code>desc</code>. 
-The value of the expression given by <code>desc</code> is compared against
-each <code>tag</code> value, each of which should be different.  If no
-<code>tag</code> is matched, the field marked with <code>default</code> is used if
-there is one, otherwise no field in the union will be marked.
+类型机构需要知道 <code>union</code> 的哪一个域是当前活跃的。这是通过赋给每个
+域一个常数 <code>tag</code> 值，并且使用 <code>desc</code> 指定一个判别器来完成的。
+由 <code>desc</code> 给出的表达式的值用来与每个 <code>tag</code> 值比较，每个
+<code>tag</code> 值应该不同。如果没有 <code>tag</code> 匹配，则会使用标记为
+<code>default</code> 的域。
 
-     <p>In the <code>desc</code> option, the &ldquo;current structure&rdquo; is the union that
-it discriminates.  Use <code>%1</code> to mean the structure containing it. 
-There are no escapes available to the <code>tag</code> option, since it is a
-constant.
+     <p>在 <code>desc</code> 选项中，“当前结构体”是指要进行判别的联合体，可以使用
+<code>%1</code> 来指定。 <code>tag</code> 选项没有换码符可用，因为其为常数。
 
-     <p>For example,
+     <p>例如,
+
      <pre class="smallexample">          struct tree_binding GTY(())
           {
             struct tree_common common;
@@ -159,128 +147,95 @@ constant.
             tree value;
           };
 </pre>
-     <p>In this example, the value of BINDING_HAS_LEVEL_P when applied to a
-<code>struct tree_binding *</code> is presumed to be 0 or 1.  If 1, the type
-mechanism will treat the field <code>level</code> as being present and if 0,
-will treat the field <code>scope</code> as being present.
+     <p>在这个例子中，当BINDING_HAS_LEVEL_P应用到 <code>struct tree_binding*</code>
+时，其值会被假设为0或者1。如果是1，类型机制则会认为域 <code>level</code> 存在，
+如果是0，则会认为域 <code>scope</code> 存在。
 
      <p><a name="index-param_005fis-4783"></a><a name="index-use_005fparam-4784"></a><br><dt><code>param_is (</code><var>type</var><code>)</code><dt><code>use_param</code><dd>
-Sometimes it's convenient to define some data structure to work on
-generic pointers (that is, <code>PTR</code>) and then use it with a specific
-type.  <code>param_is</code> specifies the real type pointed to, and
-<code>use_param</code> says where in the generic data structure that type
-should be put.
+有时候，定义某种数据结构作为通用指针（也就是 <code>PTR</code>），并且与特定
+类型一起使用是比较方便的。<code>param_is</code> 指定了所指向的真正类型，
+<code>use_param</code> 说明了该类型应该放在通用数据结构的哪个地方。
 
-     <p>For instance, to have a <code>htab_t</code> that points to trees, one would
-write the definition of <code>htab_t</code> like this:
+     <p>例如，为了让 <code>htab_t</code> 指向trees，则应该像这样来写 <code>htab_t</code>
+的定义：
+
      <pre class="smallexample">          typedef struct GTY(()) {
             ...
             void ** GTY ((use_param, ...)) entries;
             ...
           } htab_t;
 </pre>
-     <p>and then declare variables like this:
+     <p>然后按这种方式声明变量：
      <pre class="smallexample">            static htab_t GTY ((param_is (union tree_node))) ict;
 </pre>
      <p><a name="index-param_0040var_007bn_007d_005fis-4785"></a><a name="index-use_005fparam_0040var_007bn_007d-4786"></a><br><dt><code>param</code><var>n</var><code>_is (</code><var>type</var><code>)</code><dt><code>use_param</code><var>n</var><dd>
-In more complicated cases, the data structure might need to work on
-several different types, which might not necessarily all be pointers. 
-For this, <code>param1_is</code> through <code>param9_is</code> may be used to
-specify the real type of a field identified by <code>use_param1</code> through
-<code>use_param9</code>.
+在更复杂的情况下，数据结构可能需要工作在多个不同类型之上，而且这些类型
+也不必都是指针。对于这样的，可以使用 <code>param1_is</code> 到
+<code>param9_is</code> 来指定由 <code>use_param1</code> 到 <code>use_param9</code> 标识的
+实际类型域。
 
      <p><a name="index-use_005fparams-4787"></a><br><dt><code>use_params</code><dd>
-When a structure contains another structure that is parameterized,
-there's no need to do anything special, the inner structure inherits the
-parameters of the outer one.  When a structure contains a pointer to a
-parameterized structure, the type machinery won't automatically detect
-this (it could, it just doesn't yet), so it's necessary to tell it that
-the pointed-to structure should use the same parameters as the outer
-structure.  This is done by marking the pointer with the
-<code>use_params</code> option.
+当结构体包含另一个参数化的结构体时，不需要做特别的处理，内部结构体会继
+承外部的参数。当结构体包含指向一个参数化的结构体的指针时，类型机构不会
+自动检测到（是应该可以的，只是还没有实现），所以需要告诉类型机构所指向
+的结构体将使用外部结构体的相同参数。这可以通过使用 <code>usr_params</code>
+选项来标识指针。
 
      <p><a name="index-deletable-4788"></a><br><dt><code>deletable</code><dd>
-<code>deletable</code>, when applied to a global variable, indicates that when
-garbage collection runs, there's no need to mark anything pointed to
-by this variable, it can just be set to <code>NULL</code> instead.  This is used
-to keep a list of free structures around for re-use.
+将 <code>deletable</code> 应用到全局变量上时，表示当垃圾收集运行时，不需要标记
+由该变量指向的任何对象，可以只是将其设为 <code>NULL</code>。这可以用来维护一个
+可以重用的空闲结构体列表。
 
      <p><a name="index-if_005fmarked-4789"></a><br><dt><code>if_marked ("</code><var>expression</var><code>")</code><dd>
-Suppose you want some kinds of object to be unique, and so you put them
-in a hash table.  If garbage collection marks the hash table, these
-objects will never be freed, even if the last other reference to them
-goes away.  GGC has special handling to deal with this: if you use the
-<code>if_marked</code> option on a global hash table, GGC will call the
-routine whose name is the parameter to the option on each hash table
-entry.  If the routine returns nonzero, the hash table entry will
-be marked as usual.  If the routine returns zero, the hash table entry
-will be deleted.
+假设你想要一些类别的对象是唯一的，并且为此你将它们放在了哈希表中。如果垃
+圾搜集标记了哈希表，这些对象将永远不会被释放掉，即使最后一个引用也不存在。
+对此GCC有特定的处理方式：如果你使用 <code>if_marked</code> 选项在一个全局哈希表
+上，GCC将会对每个哈希表项调用该选项参数命名的函数。如果函数返回非0，哈希
+表项将按照通常的方式被标记，如果返回0，则哈希表项将会被删除。
 
-     <p>The routine <code>ggc_marked_p</code> can be used to determine if an element
-has been marked already; in fact, the usual case is to use
-<code>if_marked ("ggc_marked_p")</code>.
+     <p>函数 <code>ggc_marded_p</code> 可以用来判断一个元素是否已经被标记。实际上，通常
+的情况是使用 <code>if_marked ("ggc_marked_p")</code>。
 
      <p><a name="index-mark_005fhook-4790"></a><br><dt><code>mark_hook ("</code><var>hook-routine-name</var><code>")</code><dd>
-If provided for a structure or union type, the given
-<var>hook-routine-name</var> (between double-quotes) is the name of a
-routine called when the garbage collector has just marked the data as
-reachable. This routine should not change the data, or call any ggc
-routine. Its only argument is a pointer to the just marked (const)
-structure or union.
+如果用在结构体或者联合体类型上，给出的（双引号之间的）
+<var>hook-routine-name</var> 则为一个函数名，其在垃圾搜集器刚刚标记数据为可达
+（reachable）时会被调用。该函数不应该改变数据，或者调用任何ggc函数。它的
+唯一参数是一个指向刚刚被标记的结构体或联合体的指针。
 
      <p><a name="index-maybe_005fundef-4791"></a><br><dt><code>maybe_undef</code><dd>
-When applied to a field, <code>maybe_undef</code> indicates that it's OK if
-the structure that this fields points to is never defined, so long as
-this field is always <code>NULL</code>.  This is used to avoid requiring
-backends to define certain optional structures.  It doesn't work with
-language frontends.
+当应用到一个域时，<code>maybe_undef</code> 表示可以允许该域所指向的结构体没有被
+定义，只要该域总是为 <code>NULL</code>。这可以用来避免要求后端去定义一些可选的
+结构体。该选项对语言前端不起作用。
 
      <p><a name="index-nested_005fptr-4792"></a><br><dt><code>nested_ptr (</code><var>type</var><code>, "</code><var>to expression</var><code>", "</code><var>from expression</var><code>")</code><dd>
-The type machinery expects all pointers to point to the start of an
-object.  Sometimes for abstraction purposes it's convenient to have
-a pointer which points inside an object.  So long as it's possible to
-convert the original object to and from the pointer, such pointers
-can still be used.  <var>type</var> is the type of the original object,
-the <var>to expression</var> returns the pointer given the original object,
-and the <var>from expression</var> returns the original object given
-the pointer.  The pointer will be available using the <code>%h</code>
-escape.
+类型设备期望所有指针都指向一个对象的起始处。有时候出于抽象目的，使用指向
+对象内部的指针是比较方便的。只要能够对原始对象和指针进行相互转换，这样的
+指针还是可以使用的。<var>type</var> 是原始对象的类型，<var>to expression</var> 返回
+给定原始对象的指针，<var>from expression</var> 返回给定指针的原始对象。指针可
+以使用 <code>%h</code> 转换符得到。
 
      <p><a name="index-chain_005fnext-4793"></a><a name="index-chain_005fprev-4794"></a><a name="index-chain_005fcircular-4795"></a><br><dt><code>chain_next ("</code><var>expression</var><code>")</code><dt><code>chain_prev ("</code><var>expression</var><code>")</code><dt><code>chain_circular ("</code><var>expression</var><code>")</code><dd>
-It's helpful for the type machinery to know if objects are often
-chained together in long lists; this lets it generate code that uses
-less stack space by iterating along the list instead of recursing down
-it.  <code>chain_next</code> is an expression for the next item in the list,
-<code>chain_prev</code> is an expression for the previous item.  For singly
-linked lists, use only <code>chain_next</code>; for doubly linked lists, use
-both.  The machinery requires that taking the next item of the
-previous item gives the original item.  <code>chain_circular</code> is similar
-to <code>chain_next</code>, but can be used for circular single linked lists.
+让类型设备知道对象是否经常被链接在长的链表中是有帮助作用的。这可以让其
+使用遍历链表的方式来替代递归调用，从而使得生成的代码使用很少的栈空间。
+<code>chain_next</code> 是链表中的下一项，<code>chain_prev</code> 是前一项。对于单
+向链表，只使用 <code>chain_next</code>；对于双向链表，两者都使用。设备要求对
+一个项求 <code>chain_prev</code>，然后 <code>chain_next</code>，可以得到原始的项。
 
      <p><a name="index-reorder-4796"></a><br><dt><code>reorder ("</code><var>function name</var><code>")</code><dd>
-Some data structures depend on the relative ordering of pointers.  If
-the precompiled header machinery needs to change that ordering, it
-will call the function referenced by the <code>reorder</code> option, before
-changing the pointers in the object that's pointed to by the field the
-option applies to.  The function must take four arguments, with the
-signature &lsquo;<samp><span class="samp">void&nbsp;*,&nbsp;void&nbsp;*,&nbsp;gt_pointer_operator,&nbsp;void&nbsp;*<!-- /@w --></span></samp>&rsquo;. 
-The first parameter is a pointer to the structure that contains the
-object being updated, or the object itself if there is no containing
-structure.  The second parameter is a cookie that should be ignored. 
-The third parameter is a routine that, given a pointer, will update it
-to its correct new value.  The fourth parameter is a cookie that must
-be passed to the second parameter.
+一些数据结构依赖于相应的指针顺序。如果预编译头文件设备需要改变顺序，其
+将会调用由 <code>reorder</code> 选项指定的函数。函数必须接收4个参数，
+&lsquo;<samp><span class="samp">void&nbsp;*,&nbsp;void&nbsp;*,&nbsp;gt_pointer_operator,&nbsp;void&nbsp;*<!-- /@w --></span></samp>&rsquo;。第一个参数是指
+向更新对象的结构体的指针，或者对象本身，如果没有包含的结构体。第二个参
+数为一个cookie，目前被忽略。第三个参数是一个函数，给定指针，将会更新该
+指针为正确的新值。第四个参数是一个cookie，且必须传给第二个参数。
 
-     <p>PCH cannot handle data structures that depend on the absolute values
-of pointers.  <code>reorder</code> functions can be expensive.  When
-possible, it is better to depend on properties of the data, like an ID
-number or the hash of a string instead.
+     <p>PCH无法处理依赖于指针绝对值得数据结构。<code>reorder</code> 函数代价很高。在
+可能的情况下，最好依赖于数据的属性，像ID号或者字符串的哈希值。
 
      <p><a name="index-special-4797"></a><br><dt><code>special ("</code><var>name</var><code>")</code><dd>
-The <code>special</code> option is used to mark types that have to be dealt
-with by special case machinery.  The parameter is the name of the
-special case.  See <samp><span class="file">gengtype.c</span></samp> for further details.  Avoid
-adding new special cases unless there is no other alternative. 
+<code>special</code> 选项用来标记类型必须由特定情况的机制来处理。参数是特定
+情况的名字。详细信息参见 <samp><span class="file">gengtype.c</span></samp>。应避免添加新的特定情况，除
+非没有别的办法。
 </dl>
 
  </body></html>

@@ -57,55 +57,44 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Type-Information.html#Type-Information"
 <h3 class="section">22.3 Source Files Containing Type Information</h3>
 
 <p><a name="index-generated-files-4800"></a><a name="index-files_002c-generated-4801"></a>
-Whenever you add <code>GTY</code> markers to a source file that previously
-had none, or create a new source file containing <code>GTY</code> markers,
-there are three things you need to do:
+只要向之前没有 <code>GTY</code> 标记的源文件里添加 <code>GTY</code> 标记，或者
+创建一个新的包含 <code>GTY</code> 标记的源文件，那么就有三件事情需要做：
 
      <ol type=1 start=1>
-<li>You need to add the file to the list of source files the type
-machinery scans.  There are four cases:
+<li>需要将文件添加到类型机构需要扫描的源文件列表中。有四种情况：
 
           <ol type=a start=1>
-<li>For a back-end file, this is usually done
-automatically; if not, you should add it to <code>target_gtfiles</code> in
-the appropriate port's entries in <samp><span class="file">config.gcc</span></samp>.
+<li>对于一个后端文件，通常会自动完成。如果没有，则需要将其添加到
+<samp><span class="file">config.gcc</span></samp> 里的适当port条目 <code>target_gtfiles</code> 中。
 
-          <li>For files shared by all front ends, add the filename to the
-<code>GTFILES</code> variable in <samp><span class="file">Makefile.in</span></samp>.
+          <li>对于所用前端共享的文件，将文件名添加到 <samp><span class="file">Makefile.in</span></samp> 里的
+<code>GTFILES</code> 变量中。
 
-          <li>For files that are part of one front end, add the filename to the
-<code>gtfiles</code> variable defined in the appropriate
-<samp><span class="file">config-lang.in</span></samp>.  For C, the file is <samp><span class="file">c-config-lang.in</span></samp>. 
-Headers should appear before non-headers in this list.
+          <li>对于一个前端的文件，将文件名添加到在适当 <samp><span class="file">config-lang.in</span></samp>
+里定义的 <code>gtfiles</code> 变量中。对于C，文件为 <samp><span class="file">c-config-lang.in</span></samp>。
 
-          <li>For files that are part of some but not all front ends, add the
-filename to the <code>gtfiles</code> variable of <em>all</em> the front ends
-that use it.
+          <li>对于一些而不是所有的前端的文件，将文件名添加到 <em>所有</em> 使用
+它的前端的 <code>gtfiles</code> 变量中。
           </ol>
 
-     <li>If the file was a header file, you'll need to check that it's included
-in the right place to be visible to the generated files.  For a back-end
-header file, this should be done automatically.  For a front-end header
-file, it needs to be included by the same file that includes
-<samp><span class="file">gtype-</span><var>lang</var><span class="file">.h</span></samp>.  For other header files, it needs to be
-included in <samp><span class="file">gtype-desc.c</span></samp>, which is a generated file, so add it to
-<code>ifiles</code> in <code>open_base_file</code> in <samp><span class="file">gengtype.c</span></samp>.
+     <li>如果是头文件，则需要检查是否被包含在正确的位置，使得对于生成文件
+为可见的。对于一个后端文件，这应该是自动完成的。对于前端的头文件，
+应该被包含 <samp><span class="file">gtype-</span><var>lang</var><span class="file">.h</span></samp> 的同一文件所包含。对于其它头
+文件，需要被包含在 <samp><span class="file">gtype-desc.c</span></samp> 中。<samp><span class="file">gtype-desc.c</span></samp> 为
+生成文件，所以需要将头文件名添加到 <samp><span class="file">gengtype.c</span></samp> 里的
+<code>open_base_file</code> 里的 <code>ifiles</code> 中。
 
-     <p>For source files that aren't header files, the machinery will generate a
-header file that should be included in the source file you just changed. 
-The file will be called <samp><span class="file">gt-</span><var>path</var><span class="file">.h</span></samp> where <var>path</var> is the
-pathname relative to the <samp><span class="file">gcc</span></samp> directory with slashes replaced by
-<tt>-</tt>, so for example the header file to be included in
-<samp><span class="file">cp/parser.c</span></samp> is called <samp><span class="file">gt-cp-parser.c</span></samp>.  The
-generated header file should be included after everything else in the
-source file.  Don't forget to mention this file as a dependency in the
-<samp><span class="file">Makefile</span></samp>!
+     <p>对于不是头文件的源文件，类型机构将会生成一个头文件，并且该头文件
+应该被包含在所修改的源文件中。文件名为 <samp><span class="file">gt-</span><var>path</var><span class="file">.h</span></samp>，其
+中 <var>path</var> 是相对于 <samp><span class="file">gcc</span></samp> 目录的路径名，并且由 <tt>-</tt>
+来替换斜线。例如，要被包含在 <samp><span class="file">cp/parser.c</span></samp> 中的头文件命名为
+<samp><span class="file">gt-cp-parser.c</span></samp>。生成的头文件应该被包含在源文件所有其它内容
+之后。不要忘记将该文件在 <samp><span class="file">Makefile</span></samp> 中作为一个依赖条件！
 
       </ol>
 
- <p>For language frontends, there is another file that needs to be included
-somewhere.  It will be called <samp><span class="file">gtype-</span><var>lang</var><span class="file">.h</span></samp>, where
-<var>lang</var> is the name of the subdirectory the language is contained in.
+ <p>对于语言前端，还有另一个文件需要在某处被包含。其为
+<samp><span class="file">gtype-</span><var>lang</var><span class="file">.h</span></samp>，其中 <var>lang</var> 是语言子目录的名字。
 
  </body></html>
 
