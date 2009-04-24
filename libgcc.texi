@@ -4,48 +4,49 @@
 @c Contributed by Aldy Hernandez <aldy@quesejoda.com>
 
 @node Libgcc
-@chapter The GCC low-level runtime library
+@chapter GCC低级运行时库
 
-GCC在一些平台上提供了一个低级运行时库， @file{libgcc.a} 或者 
-@file{libgcc_s.so.1}。一旦需要执行某些过于复杂而无法通过内嵌
-代码实现的操作，GCC便会自动生成对这些库函数的调用。
+GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者 
+@file{libgcc_s.so.1}。每当需要执行某些过于复杂而无法通过生成
+内嵌代码来实现的操作时，GCC便会自动生成对该库中的例程的调用。
 
-大多数 @code{libgcc} 中的函数用来处理目标处理器不能直接执行的
+大多数 @code{libgcc} 中的例程用来处理目标处理器不能直接执行的
 算术运算。这包括一些机器上的整数乘除，以及其它一些机器上的所
-有浮点运算。@code{libgcc} 还包括异常处理，以及少数杂项操作。
+有浮点和定点运算。@code{libgcc} 还包括异常处理，以及少数其它
+操作。
 
-这些函数中有一些能够用机器独立的C来定义。其它的必须为需要它们
+这些例程中有一些能够用机器独立的C来定义。其它的必须为需要它们
 的处理器使用汇编语言手写。
 
-在一些情况下，GCC还会生成对C库函数的调用，像 @code{memcpy} 和 
-@code{memset}。GCC可能使用的函数集在 
+在一些情况下，GCC还会生成对C库例程的调用，像 @code{memcpy} 和 
+@code{memset}。GCC可能使用的例程集在 
 @ref{Other Builtins,,,gcc, Using the GNU Compiler Collection (GCC)}
 中有介绍。
 
-这些函数接受参数并且返回特定机器模式的值，而不是特定的C类型。
-关于这方面的概念解释，参见@ref{Machine Modes}。为了便于说明，在
+这些例程接受参数并且返回特定机器模式的值，而不是特定的C类型。
+关于这方面的概念解释，参见@ref{机器模式}。为了便于说明，在
 这章中浮点类型 @code{float} 被假设为对应于 @code{SFmode}；
 @code{double} 对应于 @code{DFmode}；以及 @code{@w{long double}} 
-对应于 @code{TFmode} 和 @code{XFmode}。类似的整数类型 @code{int} 
+对应于 @code{TFmode} 和 @code{XFmode}。类似的，整数类型 @code{int} 
 和 @code{@w{unsigned int}} 对应于 @code{SImode}；@code{long} 和 
 @code{@w{unsigned long}} 对应于DImode；以及 @code{@w{long long}} 
 和 @code{@w{unsigned long long}} 对应于 @code{TImode}。
 
 @menu
-* Integer library routines::
-* Soft float library routines::
-* Decimal float library routines::
-* Fixed-point fractional library routines::
-* Exception handling routines::
-* Miscellaneous routines::
+* 整数库例程::
+* 软浮点库例程::
+* 十进制浮点库例程::
+* 定点分数库例程::
+* 异常处理例程::
+* 其它例程::
 @end menu
 
-@node Integer library routines
-@section Routines for integer arithmetic
+@node 整数库例程
+@section 整数算术例程
 
-整型算术运算函数用于那些对一些模式的算术运算不提供硬件支持的平台。
+整数算术例程用于那些对一些机器模式的算术运算不提供硬件支持的平台上。
 
-@subsection Arithmetic functions
+@subsection 算术函数
 
 @deftypefn {Runtime Function} int __ashlsi3 (int @var{a}, int @var{b})
 @deftypefnx {Runtime Function} long __ashldi3 (long @var{a}, int @var{b})
@@ -106,7 +107,7 @@ GCC在一些平台上提供了一个低级运行时库， @file{libgcc.a} 或者
 这些函数返回 @var{a} 和 @var{b} 的无符号除法的余数。
 @end deftypefn
 
-@subsection Comparison functions
+@subsection 比较函数
 
 以下函数实现了整数比较。这些函数实现了低层次的比较，在这之上可以构建
 更高级别的比较运算符（像小于，大于，或者等于）。返回值位于0到2的范围，
@@ -126,9 +127,9 @@ GCC在一些平台上提供了一个低级运行时库， @file{libgcc.a} 或者
 如果 @var{a} 大于 @var{b}，则返回2；如果 @var{a} 和 @var{b} 相等则返回1。
 @end deftypefn
 
-@subsection Trapping arithmetic functions
+@subsection 可产生异常的算术函数
 
-以下函数实现了会产生异常的算术运算。这些函数在出现有符号算术溢出时，
+以下函数实现了可产生异常的算术运算。这些函数在出现有符号算术溢出时，
 会调用libc函数 @code{abort}。
 
 @deftypefn {Runtime Function} int __absvsi2 (int @var{a})
@@ -156,7 +157,7 @@ GCC在一些平台上提供了一个低级运行时库， @file{libgcc.a} 或者
 这些函数返回 @var{a} 和 @var{b} 的差；也就是 @code{@var{a} - @var{b}}。
 @end deftypefn
 
-@subsection Bit operations
+@subsection 位运算
 
 @deftypefn {Runtime Function} int __clzsi2 (int @var{a})
 @deftypefnx {Runtime Function} int __clzdi2 (long @var{a})
@@ -195,23 +196,23 @@ GCC在一些平台上提供了一个低级运行时库， @file{libgcc.a} 或者
 这些函数返回 @var{a} 的字节交换。
 @end deftypefn
 
-@node Soft float library routines
-@section Routines for floating point emulation
+@node 软浮点库例程
+@section 浮点模拟例程
 @cindex soft float library
 @cindex arithmetic library
 @cindex math library
 @opindex msoft-float
 
 软件浮点库用于不支持硬件浮点计算的机器上。也用于通过 @option{-msoft-float}
-禁止生成浮点指令的场合。（有些目标机不支持该开关选项。）
+禁止生成浮点指令的场合。（并不是琐有的目标机都支持该开关选项。）
 
 为了和其它编译器兼容，可以使用 @code{DECLARE_LIBRARY_RENAMES} 来
-重命名浮点模拟函数（@pxref{Library Calls}）。在这一章，使用了缺省
+重命名浮点模拟例程（@pxref{Library Calls}）。在这一章，使用了缺省
 的名字。
 
 目前库不支持在一些机器上用于 @code{long double} 的 @code{XFmode}。
 
-@subsection Arithmetic functions
+@subsection 算术函数
 
 @deftypefn {Runtime Function} float __addsf3 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} double __adddf3 (double @var{a}, double @var{b})
@@ -248,7 +249,7 @@ GCC在一些平台上提供了一个低级运行时库， @file{libgcc.a} 或者
 这些函数返回 @var{a} 的负数。它们只是简单的反转符号位，因此能够产生负0和负NaN。
 @end deftypefn
 
-@subsection Conversion functions
+@subsection 转换函数
 
 @deftypefn {Runtime Function} double __extendsfdf2 (float @var{a})
 @deftypefnx {Runtime Function} {long double} __extendsftf2 (float @var{a})
@@ -369,7 +370,7 @@ These functions convert @var{i}, an unsigned long, to floating point.
 These functions convert @var{i}, an unsigned long long, to floating point.
 @end deftypefn
 
-@subsection Comparison functions
+@subsection 比较函数
 
 有两组基本的比较函数。
 
@@ -439,7 +440,7 @@ These functions convert @var{i}, an unsigned long long, to floating point.
 如果参数都不为NaN，并且 @var{a} 严格大于 @var{b}，则这些函数返回一个大于0的值。
 @end deftypefn
 
-@subsection Other floating-point functions
+@subsection 其它浮点函数
 
 @deftypefn {Runtime Function} float __powisf2 (float @var{a}, int @var{b})
 @deftypefnx {Runtime Function} double __powidf2 (double @var{a}, int @var{b})
@@ -463,8 +464,8 @@ These functions convert @var{i}, an unsigned long long, to floating point.
 （即 @math{(@var{a} + i@var{b}) / (@var{c} + i@var{d})}），遵从C99附录G的规则。
 @end deftypefn
 
-@node Decimal float library routines
-@section Routines for decimal floating point emulation
+@node 十进制浮点库例程
+@section 十进制浮点模拟例程
 @cindex decimal float library
 @cindex IEEE 754-2008
 
@@ -475,7 +476,7 @@ These functions convert @var{i}, an unsigned long long, to floating point.
 或 BID编码 (Binary Integer Decimal，用二进制整数表示的十进制数)，
 可以在配置时进行选择。
 
-@subsection Arithmetic functions
+@subsection 算术函数
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_addsd3 (_Decimal32 @var{a}, _Decimal32 @var{b})
 @deftypefnx {Runtime Function} _Decimal32 __bid_addsd3 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -522,7 +523,7 @@ These functions convert @var{i}, an unsigned long long, to floating point.
 这些函数返回 @var{a} 的负数。它们只是简单的反转符号位，因此能够产生负0和负NaN。
 @end deftypefn
 
-@subsection Conversion functions
+@subsection 转换函数
 
 @deftypefn {Runtime Function} _Decimal64 __dpd_extendsddd2 (_Decimal32 @var{a})
 @deftypefnx {Runtime Function} _Decimal64 __bid_extendsddd2 (_Decimal32 @var{a})
@@ -672,7 +673,7 @@ binary floating types of the same size.
 这些函数将无符号长整数 @var{i} 转换为十进制浮点数。
 @end deftypefn
 
-@subsection Comparison functions
+@subsection 比较函数
 
 @deftypefn {Runtime Function} int __dpd_unordsd2 (_Decimal32 @var{a}, _Decimal32 @var{b})
 @deftypefnx {Runtime Function} int __bid_unordsd2 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -752,8 +753,8 @@ binary floating types of the same size.
 如果参数都不为NaN，并且 @var{a} 严格大于 @var{b}，则这些函数返回一个大于0的值。
 @end deftypefn
 
-@node Fixed-point fractional library routines
-@section Routines for fixed-point fractional emulation
+@node 定点分数库例程
+@section 定点分数模拟例程
 @cindex fixed-point fractional library
 @cindex fractional types
 @cindex Embedded C
@@ -784,7 +785,7 @@ Similarly the fixed-point accumulator type
 @code{@w{long long accum}} to @code{TAmode};
 and @code{@w{unsigned long long accum}} to @code{UTAmode}.
 
-@subsection Arithmetic functions
+@subsection 算术函数
 
 @deftypefn {Runtime Function} {short fract} __addqq3 (short fract @var{a}, short fract @var{b})
 @deftypefnx {Runtime Function} {fract} __addhq3 (fract @var{a}, fract @var{b})
@@ -1069,7 +1070,7 @@ These functions return the result of shifting @var{a} left by @var{b} bits
 with unsigned saturation.
 @end deftypefn
 
-@subsection Comparison functions
+@subsection 比较函数
 
 The following functions implement fixed-point comparisons.  These functions
 implement a low-level compare, upon which the higher level comparison
@@ -1100,7 +1101,7 @@ than @var{b}, they return 0; if @var{a} is greater than @var{b}, they
 return 2; and if @var{a} and @var{b} are equal they return 1.
 @end deftypefn
 
-@subsection Conversion functions
+@subsection 转换函数
 
 @deftypefn {Runtime Function} {fract} __fractqqhq2 (short fract @var{a})
 @deftypefnx {Runtime Function} {long fract} __fractqqsq2 (short fract @var{a})
@@ -2175,8 +2176,8 @@ These functions convert from unsigned non-fractionals to fractionals,
 with saturation.
 @end deftypefn
 
-@node Exception handling routines
-@section Language-independent routines for exception handling
+@node 异常处理例程
+@section 语言无关的异常处理例程
 
 document me!
 
@@ -2211,10 +2212,10 @@ document me!
   __register_frame_table
 @end smallexample
 
-@node Miscellaneous routines
-@section Miscellaneous runtime library routines
+@node 其它例程
+@section 其它运行时库例程
 
-@subsection Cache control functions
+@subsection Cache控制函数
 @deftypefn {Runtime Function} void __clear_cache (char *@var{beg}, char *@var{end})
 该函数清除 @var{beg} 和 @var{end} 之间的指令缓存。
 @end deftypefn
