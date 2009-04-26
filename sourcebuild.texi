@@ -759,77 +759,66 @@ a maintainer when support is added.
 @node 测试包
 @section 测试包
 
-GCC contains several testsuites to help maintain compiler quality.
-Most of the runtime libraries and language front ends in GCC have
-testsuites.  Currently only the C language testsuites are documented
-here; FIXME: document the others.
+GCC包含了几个测试包用来确保编译器的质量。
+大部分运行时库和语言前端在GCC中都有测试包。
+目前在这里只讲述了C语言的测试包；FIXME：介绍其它的测试包。
 
 @menu
-* Test Idioms::     Idioms used in testsuite code.
-* Test Directives:: Directives used within DejaGnu tests.
-* Ada Tests::       The Ada language testsuites.
-* C Tests::         The C language testsuites.
-* libgcj Tests::    The Java library testsuites.
-* gcov Testing::    Support for testing gcov.
-* profopt Testing:: Support for testing profile-directed optimizations.
-* compat Testing::  Support for testing binary compatibility.
-* Torture Tests::   Support for torture testing using multiple options.
+* 测试用语::      在测试包代码中使用的习惯用语
+* 测试指令::      在DejaGnu测试中使用到的指令
+* Ada测试::       Ada语言测试包
+* C测试::         C语言测试包
+* libgcj测试::    Java库测试包
+* gcov测试::      对gcov测试的支持
+* profopt测试::   对profile-directed优化测试的支持
+* compat测试::    对二进制兼容性测试的支持
+* Torture Tests:: 对使用多个选项进行torture测试的支持
 @end menu
 
-@node Test Idioms
-@subsection Idioms Used in Testsuite Code
+@node 测试用语
+@subsection 测试包代码中使用的习惯用法
 
-In general, C testcases have a trailing @file{-@var{n}.c}, starting
-with @file{-1.c}, in case other testcases with similar names are added
-later.  If the test is a test of some well-defined feature, it should
-have a name referring to that feature such as
-@file{@var{feature}-1.c}.  If it does not test a well-defined feature
-but just happens to exercise a bug somewhere in the compiler, and a
-bug report has been filed for this bug in the GCC bug database,
-@file{pr@var{bug-number}-1.c} is the appropriate form of name.
-Otherwise (for miscellaneous bugs not filed in the GCC bug database),
-and previously more generally, test cases are named after the date on
-which they were added.  This allows people to tell at a glance whether
-a test failure is because of a recently found bug that has not yet
-been fixed, or whether it may be a regression, but does not give any
-other information about the bug or where discussion of it may be
-found.  Some other language testsuites follow similar conventions.
+通常，C 测试用例以@file{-@var{n}.c}结尾，并且从@file{-1.c}开始，
+以便于以后增加其它具有类似名字的测试用例。
+如果是测试一些明确定义的特征，则测试的名字应该指出这个特征，
+例如@file{@var{feature}-1.c}。如果不是测试一个明确定义的特征，
+而只是检验在编译器中存在的，并且是在GCC bug库中归档的bug，
+则可以使用@file{pr@var{bug-number}-1.c}这样的名字形式。
+否则（对于在GCC bug库中没有归档的各种bug），
+测试用例根据它们被添加的日期来命名，这种情况在以前更加常见。
+这样使人们能够一眼看出一个测试失败是由于一个新发现并且还没有被修复的bug造成的，
+还是由于一个回退错误造成的，但它并没有给出关于bug的其它信息，
+以及从哪里可以找到相关的讨论。一些其它语言的测试包也遵守类似的惯例。
 
-In the @file{gcc.dg} testsuite, it is often necessary to test that an
-error is indeed a hard error and not just a warning---for example,
-where it is a constraint violation in the C standard, which must
-become an error with @option{-pedantic-errors}.  The following idiom,
-where the first line shown is line @var{line} of the file and the line
-that generates the error, is used for this:
+在@file{gcc.dg}测试包中，通常需要测试一个错误确实是硬件错误，
+而不只是一个警告——例如，在C标准中的violatile限定，
+在有@option{-pedantic-errors}的时候必须为一个错误。为此，
+可以使用下面的习惯用法，其中第一行为产生错误的文件的行@var{line}。
 
 @smallexample
 /* @{ dg-bogus "warning" "warning in place of error" @} */
 /* @{ dg-error "@var{regexp}" "@var{message}" @{ target *-*-* @} @var{line} @} */
 @end smallexample
 
-It may be necessary to check that an expression is an integer constant
-expression and has a certain value.  To check that @code{@var{E}} has
-value @code{@var{V}}, an idiom similar to the following is used:
+可能需要检查一个表达式为整数常量表达式，并且具有一个特定的值。
+要检查@code{@var{E}}具有值@code{@var{V}}，可以使用类似下面的习惯用法：
 
 @smallexample
 char x[((E) == (V) ? 1 : -1)];
 @end smallexample
 
-In @file{gcc.dg} tests, @code{__typeof__} is sometimes used to make
-assertions about the types of expressions.  See, for example,
-@file{gcc.dg/c99-condexpr-1.c}.  The more subtle uses depend on the
-exact rules for the types of conditional expressions in the C
-standard; see, for example, @file{gcc.dg/c99-intconst-1.c}.
+在@file{gcc.dg}测试中，@code{__typeof__}有时被用于表达式类型的断言。
+例如，可以参见@file{gcc.dg/c99-condexpr-1.c}。
+更加巧妙的用法依靠了C标准中条件表达式类型的确切规则；
+例如，可以参见@file{gcc.dg/c99-intconst-1.c}。
 
-It is useful to be able to test that optimizations are being made
-properly.  This cannot be done in all cases, but it can be done where
-the optimization will lead to code being optimized away (for example,
-where flow analysis or alias analysis should show that certain code
-cannot be called) or to functions not being called because they have
-been expanded as built-in functions.  Such tests go in
-@file{gcc.c-torture/execute}.  Where code should be optimized away, a
-call to a nonexistent function such as @code{link_failure ()} may be
-inserted; a definition
+如果能够测试优化被做的很适当会很有帮助。这并不能在所有情况下都能做到，
+但对于可以使得代码被优化掉的情况
+（例如，流分析或别名分析应该显示那样的代码不会被调用），
+或者函数将不被调用，因为它们已经被扩展为内建的函数时，是可以做到的。
+这样的测试在@file{gcc.c-torture/execute}中。
+在将要被优化掉的代码的地方，可以插入一个像@code{link_failure ()}
+这样的对一个不存在的函数的调用；并且还需要如下定义，
 
 @smallexample
 #ifndef __OPTIMIZE__
@@ -842,46 +831,40 @@ link_failure (void)
 @end smallexample
 
 @noindent
-will also be needed so that linking still succeeds when the test is
-run without optimization.  When all calls to a built-in function
-should have been optimized and no calls to the non-built-in version of
-the function should remain, that function may be defined as
-@code{static} to call @code{abort ()} (although redeclaring a function
-as static may not work on all targets).
+从而使得当测试在没有优化而运行时，连接依然成功。
+当对一个内建函数的所有调用都已经被优化，并且不会剩下对函数的非内建版本的调用时，
+那个函数可以定义为@code{static}，并且调用@code{abort ()}
+（虽然将函数声明为静态的可能不会在所有的目标上工作）。
 
-All testcases must be portable.  Target-specific testcases must have
-appropriate code to avoid causing failures on unsupported systems;
-unfortunately, the mechanisms for this differ by directory.
+所有测试用例都必须是可移植的。
+目标特定的测试用例必须具有适当的代码来避免在不支持的系统上引起失败；
+不幸的是，这种机制随目录有所不同。
 
-FIXME: discuss non-C testsuites here.
+FIXME: 讨论一下非C的测试包。
 
-@node Test Directives
-@subsection Directives used within DejaGnu tests
+@node 测试指令
+@subsection DejaGnu测试中使用的指令
 
-Test directives appear within comments in a test source file and begin
-with @code{dg-}.  Some of these are defined within DejaGnu and others
-are local to the GCC testsuite.
+测试指令出现在测试源文件的注释中，并且起始于@code{dg-}。
+其中一些是在DejaGnu中定义的，其它的是局限于GCC测试包自己的。
 
-The order in which test directives appear in a test can be important:
-directives local to GCC sometimes override information used by the
-DejaGnu directives, which know nothing about the GCC directives, so the
-DejaGnu directives must precede GCC directives.
+测试中测试指令出现的顺序很重要：
+局限于GCC的指令有时会覆盖DejaGnu的指令使用的信息，
+并且其对GCC指令一无所知，所以DejaGnu指令必须在GCC指令之前。
 
-Several test directives include selectors which are usually preceded by
-the keyword @code{target} or @code{xfail}.  A selector is: one or more
-target triplets, possibly including wildcard characters; a single
-effective-target keyword; or a logical expression.  Depending on the
-context, the selector specifies whether a test is skipped and reported
-as unsupported or is expected to fail.  Use @samp{*-*-*} to match any
-target.
-Effective-target keywords are defined in @file{target-supports.exp} in
-the GCC testsuite.
+个别测试指令包含了选择器，
+其通常由关键字@code{target}或@code{xfail}打头。
+一个选择器为：一个或多个目标三元组，可能包含通配符；
+单个的有效目标关键字；或者一个逻辑表达式。
+取决于上下文，选择器指定了是否测试被跳过并报告为不支持，
+或者预期为失败。使用@samp{*-*-*}来匹配任何目标。
+有效目标关键字在GCC测试包的@file{target-supports.exp}中定义。
 
-A selector expression appears within curly braces and uses a single
-logical operator: one of @samp{!}, @samp{&&}, or @samp{||}.  An
-operand is another selector expression, an effective-target keyword,
-a single target triplet, or a list of target triplets within quotes or
-curly braces.  For example:
+选择器表达式出现在大括号中，
+并且使用单个的逻辑操作符：@samp{!},@samp{&&}, 或@samp{||}。
+操作数为另一个选择器表达式，一个有效目标关键字，
+单个的目标三元组，或者一个双引号或大括号包裹的目标三元组列表。
+例如：
 
 @smallexample
 @{ target @{ ! "hppa*-*-* ia64*-*-*" @} @}
@@ -891,56 +874,51 @@ curly braces.  For example:
 
 @table @code
 @item @{ dg-do @var{do-what-keyword} [@{ target/xfail @var{selector} @}] @}
-@var{do-what-keyword} specifies how the test is compiled and whether
-it is executed.  It is one of:
+@var{do-what-keyword}指定了测试如何被编译，以及是否被执行。其为：
 
 @table @code
 @item preprocess
-Compile with @option{-E} to run only the preprocessor.
+使用@option{-E}编译，从而只运行预处理器。 
 @item compile
-Compile with @option{-S} to produce an assembly code file.
+使用@option{-S}编译，从而生成汇编代码文件。
 @item assemble
-Compile with @option{-c} to produce a relocatable object file.
+使用@option{-c}编译，从而生成可重定位的目标文件。
 @item link
-Compile, assemble, and link to produce an executable file.
+编译，汇编，并连接，从而生成一个可执行文件。
 @item run
-Produce and run an executable file, which is expected to return
-an exit code of 0.
+生成并运行一个可执行文件，并期望其返回的退出代码为0。
 @end table
 
-The default is @code{compile}.  That can be overridden for a set of
-tests by redefining @code{dg-do-what-default} within the @code{.exp}
-file for those tests.
+缺省情况为@code{compile}。
+可以通过在那些测试的@code{.exp}文件中重定义
+@code{dg-do-what-default}来覆盖这个值。
 
-If the directive includes the optional @samp{@{ target @var{selector} @}}
-then the test is skipped unless the target system is included in the
-list of target triplets or matches the effective-target keyword.
+如果指令包含了可选的@samp{@{ target @var{selector} @} }，
+则除非目标系统被包含在目标三元组列表中，或者匹配有效目标关键字，
+否则测试将被跳过。
 
-If @samp{do-what-keyword} is @code{run} and the directive includes
-the optional @samp{@{ xfail @var{selector} @}} and the selector is met
-then the test is expected to fail.  The @code{xfail} clause is ignored
-for other values of @samp{do-what-keyword}; those tests can use
-directive @code{dg-xfail-if}.
+如果运行了@samp{do-what-keyword}并且指令包含了可选的
+@samp{@{ xfail @var{selector} @}}并且选择器匹配，则测试期望为失败。
+对于@samp{do-what-keyword}的其它值，@code{xfail}子句会被忽略；
+那些测试可以使用指令@code{dg-xfail-if}。
 
 @item @{ dg-options @var{options} [@{ target @var{selector} @}] @}
-This DejaGnu directive provides a list of compiler options, to be used
-if the target system matches @var{selector}, that replace the default
-options used for this set of tests.
+该DejaGnu指令提供了一个编译器选项列表，
+用来在目标系统匹配@var{selector}的时候被使用，
+以替换这个测试集的缺省选项。
 
 @item @{ dg-add-options @var{feature} @dots{} @}
-Add any compiler options that are needed to access certain features.
-This directive does nothing on targets that enable the features by
-default, or that don't provide them at all.  It must come after
-all @code{dg-options} directives.
+增加任何访问特定特征所需要的编译器选项。
+该指令对使用缺省方式启用特征或者根本不提供特征的目标不做任何事情。
+其必须在所有@code{dg-options}指令之后。
 
-The supported values of @var{feature} are:
+支持的@var{feature}为：
 @table @code
 @item c99_runtime
-The target's C99 runtime (both headers and libraries).
+目标的C99运行时（包括头文件和库）。 
 
 @item mips16_attribute
-@code{mips16} function attributes.  Only MIPS targets support this feature,
-and only then in certain modes.
+@code{mips16}函数属性。只有MIPS目标支持该特征，并且是在特定的模式下。
 @end table
 
 @item @{ dg-timeout @var{n} [@{target @var{selector} @}] @}
@@ -1140,46 +1118,37 @@ Check branch and/or call counts, in addition to line counts, in
 @end table
 @end table
 
-@node Ada Tests
-@subsection Ada Language Testsuites
+@node Ada测试
+@subsection Ada语言测试包
 
-The Ada testsuite includes executable tests from the ACATS 2.5
-testsuite, publicly available at
-@uref{http://www.adaic.org/compilers/acats/2.5}
+Ada测试包包括了来自ACATS 2.5测试包的可执行测试，
+其在@uref{http://www.adaic.org/compilers/acats/2.5}上可公开获得。
 
-These tests are integrated in the GCC testsuite in the
-@file{gcc/testsuite/ada/acats} directory, and
-enabled automatically when running @code{make check}, assuming
-the Ada language has been enabled when configuring GCC@.
+这些测试被集成在GCC测试包中，在@file{gcc/testsuite/ada/acats}目录下，
+并且如果配置GCC时设置了Ada语言，则运行@code{make check}时会自动执行。
 
-You can also run the Ada testsuite independently, using
-@code{make check-ada}, or run a subset of the tests by specifying which
-chapter to run, e.g.:
+你还可以单独运行Ada测试包，使用@code{make check-ada}，或测试的子集，
+通过指定运行那些章节，例如
 
 @smallexample
 $ make check-ada CHAPTERS="c3 c9"
 @end smallexample
 
-The tests are organized by directory, each directory corresponding to
-a chapter of the Ada Reference Manual.  So for example, c9 corresponds
-to chapter 9, which deals with tasking features of the language.
+测试通过目录组织起来，每个目录对应于Ada参考手册的一个章节。
+所以，例如c9对应于第9章，关于语言任务特征的。
 
-There is also an extra chapter called @file{gcc} containing a template for
-creating new executable tests.
+还有一个额外的章节叫做@file{gcc}，包含了用来创建新的可执行测试的模版。
 
-The tests are run using two @command{sh} scripts: @file{run_acats} and
-@file{run_all.sh}.  To run the tests using a simulator or a cross
-target, see the small
-customization section at the top of @file{run_all.sh}.
+测试使用两个@command{sh}脚本来运行：@file{run_acats}和@file{run_all.sh}。
+如果要使用模拟器或者交叉目标来运行测试，
+参见@file{run_all.sh}顶部的small customization部分。
 
-These tests are run using the build tree: they can be run without doing
-a @code{make install}.
+这些测试使用构建树来运行：它们可以在没有执行@code{make install}的情况下被运行。
 
-@node C Tests
-@subsection C Language Testsuites
+@node C测试
+@subsection C语言测试包
 
-GCC contains the following C language testsuites, in the
-@file{gcc/testsuite} directory:
+GCC在@file{gcc/testsuite}目录下包含下列C语言测试包：
 
 @table @file
 @item gcc.dg
@@ -1273,30 +1242,26 @@ Test i386-specific support for data prefetch using @file{i386-prefetch.exp}.
 FIXME: merge in @file{testsuite/README.gcc} and discuss the format of
 test cases and magic comments more.
 
-@node libgcj Tests
-@subsection The Java library testsuites.
+@node libgcj测试
+@subsection Java库测试包
 
-Runtime tests are executed via @samp{make check} in the
-@file{@var{target}/libjava/testsuite} directory in the build
-tree.  Additional runtime tests can be checked into this testsuite.
+运行时测试通过在构建树的@file{@var{target}/libjava/testsuite}目录下
+运行@samp{make check}来执行。额外的运行时测试可以放在这个测试包中。
 
-Regression testing of the core packages in libgcj is also covered by the
-Mauve testsuite.  The @uref{http://sourceware.org/mauve/,,Mauve Project}
-develops tests for the Java Class Libraries.  These tests are run as part
-of libgcj testing by placing the Mauve tree within the libjava testsuite
-sources at @file{libjava/testsuite/libjava.mauve/mauve}, or by specifying
-the location of that tree when invoking @samp{make}, as in
-@samp{make MAUVEDIR=~/mauve check}.
+Mauve测试包还覆盖了libgcj的核心包的回归测试。Mauve项目为Java类库开发了测试。
+这些测试作为libgcj测试的一部分来运行，通过在
+@uref{libjava/testsuite/libjava.mauve/mauve的libjava}测试包源中放置Mauve树，
+或者当调用@samp{make}时，通过@samp{make MAUVEDIR=~/mauve check}来指定该树
+的位置。
 
-To detect regressions, a mechanism in @file{mauve.exp} compares the
-failures for a test run against the list of expected failures in
-@file{libjava/testsuite/libjava.mauve/xfails} from the source hierarchy.
-Update this file when adding new failing tests to Mauve, or when fixing
-bugs in libgcj that had caused Mauve test failures.
+为了检测回退，@file{mauve.exp}中有一个机制用来比较一个测试的失败
+与在源层次结构@file{libjava/testsuite/libjava.mauve/xfails}中的期望的失败列表。
+当向Mauve中增加一个新的失败测试时，或者修改libgcj中的bug造成了Mauve测试失败时，
+需要更新该文件。
 
-We encourage developers to contribute test cases to Mauve.
+我们鼓励开发者将测试用例贡献给Mauve。
 
-@node gcov Testing
+@node gcov测试
 @subsection Support for testing @command{gcov}
 
 Language-independent support for testing @command{gcov}, and for checking
@@ -1362,7 +1327,7 @@ line count must appear on the line that will report that count, but
 commands to check branch percentages and call return percentages can
 bracket the lines that report them.
 
-@node profopt Testing
+@node profopt测试
 @subsection Support for testing profile-directed optimizations
 
 The file @file{profopt.exp} provides language-independent support for
@@ -1401,7 +1366,7 @@ list of options with which to run each test, similar to the lists for
 torture tests
 @end table
 
-@node compat Testing
+@node compat测试
 @subsection Support for testing binary compatibility
 
 The file @file{compat.exp} provides language-independent support for
