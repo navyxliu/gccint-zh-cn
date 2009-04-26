@@ -117,175 +117,145 @@ C++运行时库。
 @node 子目录
 @subsection @file{gcc}的子目录
 
-The @file{gcc} directory contains the following subdirectories:
+@file{gcc} 目录包含了下列子目录：
 
 @table @file
 @item @var{language}
-Subdirectories for various languages.  Directories containing a file
-@file{config-lang.in} are language subdirectories.  The contents of
-the subdirectories @file{cp} (for C++), @file{objc} (for Objective-C)
-and @file{objcp} (for Objective-C++) are documented in this manual
-(@pxref{Passes, , Passes and Files of the Compiler}); those for other
-languages are not.  @xref{前端, , Anatomy of a Language Front End},
-for details of the files in these directories.
+各种语言的子目录。包含了文件 @file{config-lang.in} 的目录是语言子目录。
+子目录 @file{cp} (C++), @file{objc} (Objective-C) 和 @file{objcp} 
+(Objective-C++)的内容在该手册中有介绍（参见 
+@ref{Passes, , Passes and Files of the Compiler}）；其它语言的没有。
+关于这些目录下的文件的详细信息，参见 @ref{前端, , 语言前端剖析}。
 
 @item config
-Configuration files for supported architectures and operating
-systems.  @xref{后端, , Anatomy of a Target Back End}, for
-details of the files in this directory.
+支持的体系结构和操作系统的配置文件。关于这个目录下的文件的详情，
+参见 @ref{后端, , 目标后端剖析}。 
 
 @item doc
-Texinfo documentation for GCC, together with automatically generated
-man pages and support for converting the installation manual to
-HTML@.  @xref{文档}.
+GCC的Texinfo文档，和自动生成的man页，以及对将安装手册转换成HTML的支持。
+参见 @ref{文档}。
 
 @item ginclude
-System headers installed by GCC, mainly those required by the C
-standard of freestanding implementations.  @xref{头文件, , GCC安装的头文件}, for details of when these and other headers are
-installed.
+GCC安装的，那些主要由独立实现C标准所需要的系统头文件。
+关于什么时候安装这些以及其它头文件的详情，
+参见 @ref{头文件, , GCC安装的头文件}。 
 
 @item po
-Message catalogs with translations of messages produced by GCC into
-various languages, @file{@var{language}.po}.  This directory also
-contains @file{gcc.pot}, the template for these message catalogues,
-@file{exgettext}, a wrapper around @command{gettext} to extract the
-messages from the GCC sources and create @file{gcc.pot}, which is run
-by @samp{make gcc.pot}, and @file{EXCLUDES}, a list of files from
-which messages should not be extracted.
+用于把GCC产生的信息翻译成各种语言（如德语、西班牙语等）的信息目录，
+@file{@var{language}.po}。这个目录还包含了信息目录模板 @file{gcc.pot}, 
+封装 @command{gettext} 以提取GCC信息并创建 @file{gcc.pot} 的 @file{exgettext}
+（通过命令 @samp{make gcc.pot} 执行），以及不需要提取信息的文件列表
+@file{EXCLUDES}。
 
 @item testsuite
-The GCC testsuites (except for those for runtime libraries).
-参见 @ref{测试包}.
+GCC测试包（运行时库的除外）。参见 @ref{测试包}。
 @end table
 
 @node 配置
-@subsection Configuration in the @file{gcc} Directory
+@subsection @file{gcc}目录下的配置 
 
-The @file{gcc} directory is configured with an Autoconf-generated
-script @file{configure}.  The @file{configure} script is generated
-from @file{configure.ac} and @file{aclocal.m4}.  From the files
-@file{configure.ac} and @file{acconfig.h}, Autoheader generates the
-file @file{config.in}.  The file @file{cstamp-h.in} is used as a
-timestamp.
+@file{gcc} 目录是通过Autoconf生成的脚本@file{configure}来配置的。
+@file{configure}脚本由@file{configure.ac}和@file{aclocal.m4}生成。
+Autoheader通过@file{configure.ac}和@file{acconfig.h}来生成文件@file{config.in}。
+文件@file{cstamp-h.in}作为时间戳使用。
 
 @menu
-* Config Fragments::     Scripts used by @file{configure}.
-* System Config::        The @file{config.build}, @file{config.host}, and
-                         @file{config.gcc} files.
-* Configuration Files::  Files created by running @file{configure}.
+* 配置片段::  @file{configure}使用的脚本。
+* 系统配置::  @file{config.build}，@file{config.host}和@file{config.gcc}文件。
+* 配置文件::  运行@file{configure}而创建的文件。
 @end menu
 
-@node Config Fragments
-@subsubsection Scripts Used by @file{configure}
+@node 配置片段
+@subsubsection @file{configure}使用的脚本
 
-@file{configure} uses some other scripts to help in its work:
+@file{configure}使用一些其它的脚本帮助其来完成工作：
 
 @itemize @bullet
-@item The standard GNU @file{config.sub} and @file{config.guess}
-files, kept in the top level directory, are used.
+@item 
+使用了位于顶层目录的标准GNU @file{config.sub}和@file{config.guess}文件。
 
-@item The file @file{config.gcc} is used to handle configuration
-specific to the particular target machine.  The file
-@file{config.build} is used to handle configuration specific to the
-particular build machine.  The file @file{config.host} is used to handle
-configuration specific to the particular host machine.  (In general,
-these should only be used for features that cannot reasonably be tested in
-Autoconf feature tests.)
-@xref{System Config, , The @file{config.build}; @file{config.host};
-and @file{config.gcc} Files}, for details of the contents of these files.
+@item 
+文件@file{config.gcc}被用来处理针对特定目标机器的配置。
+文件@file{config.build}被用来处理针对特定构建机器的配置。
+文件@file{config.host}被用来处理针对特定主机的配置。
+（通常，这些只用于那些无法通过Autoconf测试来得到的那些特征。）
+关于这些文件的详细内容，参见 
+@ref{系统配置, ,@file{config.build}，@file{config.host}和@file{config.gcc}文件}。
 
-@item Each language subdirectory has a file
-@file{@var{language}/config-lang.in} that is used for
-front-end-specific configuration.  @xref{Front End Config, , The Front
-End @file{config-lang.in} File}, for details of this file.
+@item 
+每个language子目录有一个@file{@var{language}/config-lang.in}，
+用来进行前端特定的配置。关于该文件的详情，参见 
+@ref{Front End Config, , The Front End @file{config-lang.in} File}。
 
-@item A helper script @file{configure.frag} is used as part of
-creating the output of @file{configure}.
+@item 
+辅助脚本@file{configure.frag}，被@file{configure}用来产生输出。
 @end itemize
 
-@node System Config
-@subsubsection The @file{config.build}; @file{config.host}; and @file{config.gcc} Files
+@node 系统配置
+@subsubsection @file{config.build}，@file{config.host}和@file{config.gcc}文件
 
-The @file{config.build} file contains specific rules for particular systems
-which GCC is built on.  This should be used as rarely as possible, as the
-behavior of the build system can always be detected by autoconf.
+@file{config.build}文件包含了针对构建GCC的特殊系统的特定规则。
+通常尽量不使用这个文件，因为autoconf可以检测出构建系统的行为。
 
-The @file{config.host} file contains specific rules for particular systems
-which GCC will run on.  This is rarely needed.
+@file{config.host}文件包含了将要运行GCC的特殊系统的特定规则。该文件很少被用到。
 
-The @file{config.gcc} file contains specific rules for particular systems
-which GCC will generate code for.  This is usually needed.
+@file{config.gcc}文件包含了GCC生成代码所针对特殊系统的特定规则。通常需要该文件。
 
-Each file has a list of the shell variables it sets, with descriptions, at the
-top of the file.
+每一个文件的开始部分都有一个设置的shell变量列表及其描述。
 
-FIXME: document the contents of these files, and what variables should
-be set to control build, host and target configuration.
+FIXME：介绍这些文件的内容，以及需要设置什么变量来控制build,host和target配置。
 
 @include configfiles.texi
 
 @node 构建
-@subsection Build System in the @file{gcc} Directory
+@subsection @file{gcc}目录下的构建系统 
 
-FIXME: describe the build system, including what is built in what
-stages.  Also list the various source files that are used in the build
-process but aren't source files of GCC itself and so aren't documented
-below (@pxref{Passes}).
+FIXME: 描述构建系统，包括什么阶段构建了什么。同时列出在构建过程中使用的，
+不属于GCC本身的而因此没有在下面记录的，各种源文件（参见 @ref{Passes}）。
 
 @include makefile.texi
 
 @node 库文件
-@subsection Library Source Files and Headers under the @file{gcc} Directory
+@subsection 在@file{gcc}目录下的库源文件和头文件
 
-FIXME: list here, with explanation, all the C source files and headers
-under the @file{gcc} directory that aren't built into the GCC
-executable but rather are part of runtime libraries and object files,
-such as @file{crtstuff.c} and @file{unwind-dw2.c}.  @xref{头文件, ,
-GCC安装的头文件}, for more information about the
-@file{ginclude} directory.
+FIXME：列出并说明在@file{gcc}目录下的不被构建到GCC可执行程序中，
+而是作为运行时库的一部分或者目标文件的所有C源文件和头文件。
+例如@file{crtstuff.c}和@file{unwind-dw2.c}。
+关于@file{ginclude}目录的详细介绍，参见 @ref{头文件, ,GCC安装的头文件}。
 
 @node 头文件
 @subsection GCC安装的头文件
 
-In general, GCC expects the system C library to provide most of the
-headers to be used with it.  However, GCC will fix those headers if
-necessary to make them work with GCC, and will install some headers
-required of freestanding implementations.  These headers are installed
-in @file{@var{libsubdir}/include}.  Headers for non-C runtime
-libraries are also installed by GCC; these are not documented here.
-(FIXME: document them somewhere.)
+通常，GCC希望所使用的头文件大部分由系统C库提供。但是在需要的时候，
+GCC会修改那些头文件以便能够工作，并且会安装一些需要单独实现的头文件。
+这些头文件被安装在@file{@var{libsubdir}/include}下。
+GCC也安装了些非C运行时库的头文件；这些没有在这里列出。
+（FIXME：在某处给出这些的文档。）
 
-Several of the headers GCC installs are in the @file{ginclude}
-directory.  These headers, @file{iso646.h},
-@file{stdarg.h}, @file{stdbool.h}, and @file{stddef.h},
-are installed in @file{@var{libsubdir}/include},
-unless the target Makefile fragment (@pxref{Target Fragment})
-overrides this by setting @code{USER_H}.
+GCC所安装一些头文件来自@file{ginclude}目录下。
+这些头文件@file{iso646.h}, @file{stdarg.h}, @file{stdbool.h}, @file{stddef.h}
+将被安装在@file{@var{libsubdir}/include}下，除非通过在目标Makefile片段中
+（参见 @ref{目标片段}）设置@code{USER_H}来改变。
 
-In addition to these headers and those generated by fixing system
-headers to work with GCC, some other headers may also be installed in
-@file{@var{libsubdir}/include}.  @file{config.gcc} may set
-@code{extra_headers}; this specifies additional headers under
-@file{config} to be installed on some systems.
+除了这些头文件，以及那些GCC为了能够正常工作而修改的系统头文件，
+@file{@var{libsubdir}/include}下还可能安装了其它头文件。
+@file{config.gcc}可以设置@code{extra_headers}，
+用来指出将@file{config}目录下的其它头文件安装在一些系统上。
 
-GCC installs its own version of @code{<float.h>}, from @file{ginclude/float.h}.
-This is done to cope with command-line options that change the
-representation of floating point numbers.
+GCC使用@file{ginclude/float.h}，来安装自己版本的@code{<float.h>}，
+并通过拷贝命令行选项来改变浮点数的表示。
 
-GCC also installs its own version of @code{<limits.h>}; this is generated
-from @file{glimits.h}, together with @file{limitx.h} and
-@file{limity.h} if the system also has its own version of
-@code{<limits.h>}.  (GCC provides its own header because it is
-required of ISO C freestanding implementations, but needs to include
-the system header from its own header as well because other standards
-such as POSIX specify additional values to be defined in
-@code{<limits.h>}.)  The system's @code{<limits.h>} header is used via
-@file{@var{libsubdir}/include/syslimits.h}, which is copied from
-@file{gsyslimits.h} if it does not need fixing to work with GCC; if it
-needs fixing, @file{syslimits.h} is the fixed copy.
+GCC还安装它自己版本的@code{<limits.h>}；它是从@file{glimits.h}中生成的，
+以及@file{limitx.h}和@file{limity.h}，如果系统还具有自己版本@code{<limits.h>}。
+（GCC提供自己的头文件，是因为ISO C独立实现的需要，
+但是该头文件还需要包含系统头文件，
+是因为其它标准像POSIX指定的额外的值在@code{<limits.h>}中有定义）
+系统的@code{<limits.h>}头文件通过@file{@var{libsubdir}/include/syslimits.h}来使用，
+它是从@file{gsyslimits.h}复制过来的，如果其不需要修改为与GCC一起工作；
+如果需要修改，@file{syslimits.h}为修改后的副本。
 
-GCC can also install @code{<tgmath.h>}.  It will do this when
-@file{config.gcc} sets @code{use_gcc_tgmath} to @code{yes}.
+当@file{config.gcc}设置@code{use_gcc_tgmath}为@code{yes}时，
+GCC还将安装@code{<tgmath.h>}。
 
 @node 文档
 @subsection Building Documentation
@@ -725,8 +695,7 @@ directory, containing a list of target-specific options.  You can also
 add other option files using the @code{extra_options} variable in
 @file{config.gcc}.  @xref{Options}.
 @item
-Entries in @file{config.gcc} (@pxref{System Config, , The
-@file{config.gcc} File}) for the systems with this target
+Entries in @file{config.gcc} (@pxref{系统配置, , @file{config.gcc} 文件}) for the systems with this target
 architecture.
 @item
 Documentation in @file{gcc/doc/invoke.texi} for any command-line
