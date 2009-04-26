@@ -5100,23 +5100,18 @@ If this pattern is not defined, a call to the library function
 @cindex Pattern Ordering
 @cindex Ordering of Patterns
 
-Sometimes an insn can match more than one instruction pattern.  Then the
-pattern that appears first in the machine description is the one used.
-Therefore, more specific patterns (patterns that will match fewer things)
-and faster instructions (those that will produce better code when they
-do match) should usually go first in the description.
+有时一条insn可以匹配不止一个指令模式。
+则在机器描述中首先出现的指令模式将被使用。因此，
+更加详细的指令模式（匹配更少事物的）和更快的指令
+（在匹配时将会产生更好的代码）将通常放在描述中的前面。
 
-In some cases the effect of ordering the patterns can be used to hide
-a pattern when it is not valid.  For example, the 68000 has an
-instruction for converting a fullword to floating point and another
-for converting a byte to floating point.  An instruction converting
-an integer to floating point could match either one.  We put the
-pattern to convert the fullword first to make sure that one will
-be used rather than the other.  (Otherwise a large integer might
-be generated as a single-byte immediate quantity, which would not work.)
-Instead of using this pattern ordering it would be possible to make the
-pattern for convert-a-byte smart enough to deal properly with any
-constant value.
+有些情况下，指令模式的顺序效果可以用于隐藏无效的指令模式。
+例如，68000有一条将全字转换为浮点的指令，和一条将字节转换为浮点的指令。
+则将整数转换为浮点的指令将两者都可以匹配。
+我们将转换全字的指令模式放在前面，从而确保使用前一种方式。
+（否则将可能产生一个大的整数，以作为单个字节的立即数，这样可能无法工作）。
+除了使用该指令模式顺序，还可能将转换字节的指令模式作的更加巧妙些，
+以能够合适的处理任何常数值。
 
 @end ifset
 @ifset INTERNALS
@@ -5125,9 +5120,8 @@ constant value.
 @cindex Dependent Patterns
 @cindex Interdependence of Patterns
 
-Every machine description must have a named pattern for each of the
-conditional branch names @samp{b@var{cond}}.  The recognition template
-must always have the form
+每个机器描述必须针对每个名为@samp{b@var{cond}}的条件分支，
+具有一个命名的指令模式。识别模板必须总是具有如下形式
 
 @smallexample
 (set (pc)
@@ -5137,9 +5131,8 @@ must always have the form
 @end smallexample
 
 @noindent
-In addition, every machine description must have an anonymous pattern
-for each of the possible reverse-conditional branches.  Their templates
-look like
+另外，每个机器描述必须针对每个可能的逆转条件分支具有一个匿名的指令模式。
+它们的模板的形式为
 
 @smallexample
 (set (pc)
@@ -5149,12 +5142,11 @@ look like
 @end smallexample
 
 @noindent
-They are necessary because jump optimization can turn direct-conditional
-branches into reverse-conditional branches.
+之所以需要这些，是因为jump优化会将直接条件（direct-conditional）分支，
+转换为逆转条件（reverse-conditional）分支。
 
-It is often convenient to use the @code{match_operator} construct to
-reduce the number of patterns that must be specified for branches.  For
-example,
+使用@code{match_operator}结构来减少必须为分支指定的指令模式的编号
+通常是很方便的。例如，
 
 @smallexample
 (define_insn ""
@@ -5167,10 +5159,8 @@ example,
   "@dots{}")
 @end smallexample
 
-In some cases machines support instructions identical except for the
-machine mode of one or more operands.  For example, there may be
-``sign-extend halfword'' and ``sign-extend byte'' instructions whose
-patterns are
+有些情况，机器支持除了一个或多个操作数的机器模式不同的相同指令。
+例如，可以有指令“sign-extend halfword” 和“sign-extend byte”，其指令模式为
 
 @smallexample
 (set (match_operand:SI 0 @dots{})
@@ -5181,24 +5171,18 @@ patterns are
 @end smallexample
 
 @noindent
-Constant integers do not specify a machine mode, so an instruction to
-extend a constant value could match either pattern.  The pattern it
-actually will match is the one that appears first in the file.  For correct
-results, this must be the one for the widest possible mode (@code{HImode},
-here).  If the pattern matches the @code{QImode} instruction, the results
-will be incorrect if the constant value does not actually fit that mode.
+常整数不指定机器模式，所以扩展常量值的指令可以两个指令模式都匹配。
+实际匹配的指令模式将为文件中首先出现的指令模式。为了获得正确的结果，
+其必须为尽可能宽的模式（这里为@code{HImode}）。
+如果指令模式匹配@code{QImode}，则当常量值实际不适合该模式时，结果将不正确。
 
-Such instructions to extend constants are rarely generated because they are
-optimized away, but they do occasionally happen in nonoptimized
-compilations.
+像这样扩展常数的指令很少被生成，因为它们会被优化掉，
+不过在不优化的编译中确实偶尔会出现。
 
-If a constraint in a pattern allows a constant, the reload pass may
-replace a register with a constant permitted by the constraint in some
-cases.  Similarly for memory references.  Because of this substitution,
-you should not provide separate patterns for increment and decrement
-instructions.  Instead, they should be generated from the same pattern
-that supports register-register add insns by examining the operands and
-generating the appropriate machine instruction.
+如果在指令模式中约束允许为一个常量，reload过程可以用约束允许的常量来替换寄存器。
+类似的对于内存引用。由于存在这种替换，
+所以不要为递增和递减指令提供单独的指令模式。
+替换的，它们应该由同一个指令模式生成。
 
 @end ifset
 @ifset INTERNALS
@@ -5207,99 +5191,72 @@ generating the appropriate machine instruction.
 @cindex jump instruction patterns
 @cindex defining jump instruction patterns
 
-For most machines, GCC assumes that the machine has a condition code.
-A comparison insn sets the condition code, recording the results of both
-signed and unsigned comparison of the given operands.  A separate branch
-insn tests the condition code and branches or not according its value.
-The branch insns come in distinct signed and unsigned flavors.  Many
-common machines, such as the VAX, the 68000 and the 32000, work this
-way.
+对于大多数机器，GCC假设该机器具有一个条件码。
+比较insn根据给定操作数的有符号和无符号比较的结果来设定条件码。
+单独的分支insn测试条件代码，并根据它的值进行分支跳转。
+分支insn分为不同的有符号和无符号的。
+许多通用机器，像VAX，68000和32000都按这种方式工作。
 
-Some machines have distinct signed and unsigned compare instructions, and
-only one set of conditional branch instructions.  The easiest way to handle
-these machines is to treat them just like the others until the final stage
-where assembly code is written.  At this time, when outputting code for the
-compare instruction, peek ahead at the following branch using
-@code{next_cc0_user (insn)}.  (The variable @code{insn} refers to the insn
-being output, in the output-writing code in an instruction pattern.)  If
-the RTL says that is an unsigned branch, output an unsigned compare;
-otherwise output a signed compare.  When the branch itself is output, you
-can treat signed and unsigned branches identically.
+一些机器具有截然不同的有符号和无符号比较指令，并且只有一套条件分支指令。
+处理这些机器最容易的方法为保持它们不变，直到最后写汇编代码的阶段。
+这时，当输出比较指令的代码时，查看一下使用@code{next_cc0_user (insn)}的分支。
+（）如果RTL得出其为一个无符号分支，则输出一个无符号比较；
+否则输出一个有符号比较。当分支本身被输出时，你可以将有符号和无符号分支视为等同的。
 
-The reason you can do this is that GCC always generates a pair of
-consecutive RTL insns, possibly separated by @code{note} insns, one to
-set the condition code and one to test it, and keeps the pair inviolate
-until the end.
+之所以可以这样做，是因为GCC总是生成一对连续的RTL insn，
+可能由@code{note} insn分隔，一个用于设置条件代码，一个用于测试，
+并保持这对insn不被改变，直到最后。
 
-To go with this technique, you must define the machine-description macro
-@code{NOTICE_UPDATE_CC} to do @code{CC_STATUS_INIT}; in other words, no
-compare instruction is superfluous.
+要使用该技术，你必须定义机器描述宏@code{NOTICE_UPDATE_CC}，
+来做@code{CC_STATUS_INIT}；换句话说，没有多余的比较指令。
 
-Some machines have compare-and-branch instructions and no condition code.
-A similar technique works for them.  When it is time to ``output'' a
-compare instruction, record its operands in two static variables.  When
-outputting the branch-on-condition-code instruction that follows, actually
-output a compare-and-branch instruction that uses the remembered operands.
+一些机器具有比较分支指令，并且没有条件码。对它们可以使用类似的技术。
+当该要“输出”一个比较指令时，将它的操作数记录在两个静态变量中。
+当输出随后的条件码分支指令时，实际上输出了一个使用已记录的操作数的比较分支指令。
 
-It also works to define patterns for compare-and-branch instructions.
-In optimizing compilation, the pair of compare and branch instructions
-will be combined according to these patterns.  But this does not happen
-if optimization is not requested.  So you must use one of the solutions
-above in addition to any special patterns you define.
+它还用于定义比较分支指令的指令模式。在优化编译中，
+比较和分支指令对将根据这些指令模式被组合。但是如果优化不要求的时候，
+这是不会发生的。所以你必须针对你定义的任何特定指令模式额外使用上面的一种解决方式。
 
-In many RISC machines, most instructions do not affect the condition
-code and there may not even be a separate condition code register.  On
-these machines, the restriction that the definition and use of the
-condition code be adjacent insns is not necessary and can prevent
-important optimizations.  For example, on the IBM RS/6000, there is a
-delay for taken branches unless the condition code register is set three
-instructions earlier than the conditional branch.  The instruction
-scheduler cannot perform this optimization if it is not permitted to
-separate the definition and use of the condition code register.
+在许多RISC机器上，大多数指令不影响条件码，并且甚至会没有一个单独的条件码寄存器。
+在这些机器上，限制条件码的定义和使用为邻近的insn是不必要的，
+并且还会阻止一些重要的优化。例如，在IBM RS/6000上，对于分支将会有一个延迟，
+除非条件码寄存器在条件分支的三条指令前被设置。
+如果不允许将条件码寄存器的定义和使用分开，则指令调度器将无法执行该优化。
 
-On these machines, do not use @code{(cc0)}, but instead use a register
-to represent the condition code.  If there is a specific condition code
-register in the machine, use a hard register.  If the condition code or
-comparison result can be placed in any general register, or if there are
-multiple condition registers, use a pseudo register.
+在这些机器上，不要使用@code{(cc0)}，而是使用寄存器来表示条件代码。
+如果该机器有一个特定的条件代码寄存器，则使用硬件寄存器。
+如果条件代码或者比较结果可以被放在任意的通用寄存器中，
+或者有多个条件寄存器，则使用伪寄存器。
 
 @findex prev_cc0_setter
 @findex next_cc0_user
-On some machines, the type of branch instruction generated may depend on
-the way the condition code was produced; for example, on the 68k and
-SPARC, setting the condition code directly from an add or subtract
-instruction does not clear the overflow bit the way that a test
-instruction does, so a different branch instruction must be used for
-some conditional branches.  For machines that use @code{(cc0)}, the set
-and use of the condition code must be adjacent (separated only by
-@code{note} insns) allowing flags in @code{cc_status} to be used.
-(@xref{Condition Code}.)  Also, the comparison and branch insns can be
-located from each other by using the functions @code{prev_cc0_setter}
-and @code{next_cc0_user}.
+在一些机器上，所生成的分支指令类型可以依赖于条件代码所产生的方式；
+例如，在68k和SPARC上，直接从加法或减法指令来设置条件代码，
+这并不像测试指令那样，不会清除溢出位，
+所以不同的分支指令必须用于某些条件分支。对于使用@code{(cc0)}的机器，
+对条件代码的设置和使用必须是邻近的（只有@code{note} insn分隔），
+以允许在@code{cc_status}中的标记被使用。（参见条件码）并且，
+比较分支insn可以互相定位，通过使用函数@code{prev_cc0_setter}和@code{next_cc0_user}。
 
-However, this is not true on machines that do not use @code{(cc0)}.  On
-those machines, no assumptions can be made about the adjacency of the
-compare and branch insns and the above methods cannot be used.  Instead,
-we use the machine mode of the condition code register to record
-different formats of the condition code register.
+但是，这在不使用@code{(cc0)}的机器上是不一样的。
+在这些机器上，并不会假设比较分支指令是邻近的，上面的方法不可用。
+替换的，我们使用条件码寄存器的机器模式来记录条件码寄存器的不同格式。
 
-Registers used to store the condition code value should have a mode that
-is in class @code{MODE_CC}.  Normally, it will be @code{CCmode}.  If
-additional modes are required (as for the add example mentioned above in
-the SPARC), define them in @file{@var{machine}-modes.def}
-(@pxref{Condition Code}).  Also define @code{SELECT_CC_MODE} to choose
-a mode given an operand of a compare.
+用于存储条件码值的寄存器应该具有@code{MODE_CC}类别的一个机器模式。
+通常，其为@code{CCmode}。如果需要额外的机器模式
+（正如上面提到的SPARC中加法例子），
+则在@file{@var{machine}-modes.def}中定义它们（参见条件码）。
+还要定义@code{SELECT_CC_MODE}来选择给定比较操作数的机器模式。
 
-If it is known during RTL generation that a different mode will be
-required (for example, if the machine has separate compare instructions
-for signed and unsigned quantities, like most IBM processors), they can
-be specified at that time.
+如果知道在RTL生成过程中，将需要不同的机器模式
+（例如，如果机器具有单独的比较指令，针对有符号和无符号），
+则它们可以在那个时候被指定。
 
-If the cases that require different modes would be made by instruction
-combination, the macro @code{SELECT_CC_MODE} determines which machine
-mode should be used for the comparison result.  The patterns should be
-written using that mode.  To support the case of the add on the SPARC
-discussed above, we have the pattern
+如果是在指令合成时需要不同的机器模式，
+则宏@code{SELECT_CC_MODE}用来确定哪个机器模式作为比较结果。
+指令模式应该使用该模式来书写。要支持上面讨论的SPARC的加法，
+我们具有指令模式
 
 @smallexample
 (define_insn ""
@@ -5312,8 +5269,7 @@ discussed above, we have the pattern
   "@dots{}")
 @end smallexample
 
-The @code{SELECT_CC_MODE} macro on the SPARC returns @code{CC_NOOVmode}
-for comparisons whose argument is a @code{plus}.
+SPARC的宏@code{SELECT_CC_MODE}为参数是@code{plus}的比较运算返回一个@code{CC_NOOVmode}。
 
 @end ifset
 @ifset INTERNALS
@@ -5322,30 +5278,23 @@ for comparisons whose argument is a @code{plus}.
 @cindex looping instruction patterns
 @cindex defining looping instruction patterns
 
-Some machines have special jump instructions that can be utilized to
-make loops more efficient.  A common example is the 68000 @samp{dbra}
-instruction which performs a decrement of a register and a branch if the
-result was greater than zero.  Other machines, in particular digital
-signal processors (DSPs), have special block repeat instructions to
-provide low-overhead loop support.  For example, the TI TMS320C3x/C4x
-DSPs have a block repeat instruction that loads special registers to
-mark the top and end of a loop and to count the number of loop
-iterations.  This avoids the need for fetching and executing a
-@samp{dbra}-like instruction and avoids pipeline stalls associated with
-the jump.
+一些机器具有特定的跳转指令，可以使循环更为有效。
+常见的例子为68000的@samp{dbra}指令，其执行一个寄存器的递减，
+并且如果结果大于0，则进行一个分支。其它机器，特别是数字信号处理器（DSP），
+具有特定的块重复指令，以提供低成本的循环支持。
+例如TI TMS320C3x/C4x DSP具有一个块重复指令，
+其加载特定的寄存器来标记一个循环的顶部和底部，并计算循环迭代的次数。
+这就避免了对@samp{dbra}这样的指令的取指和执行的需要，
+并避免了和跳转相关的流水线阻塞。
 
-GCC has three special named patterns to support low overhead looping.
-They are @samp{decrement_and_branch_until_zero}, @samp{doloop_begin},
-and @samp{doloop_end}.  The first pattern,
-@samp{decrement_and_branch_until_zero}, is not emitted during RTL
-generation but may be emitted during the instruction combination phase.
-This requires the assistance of the loop optimizer, using information
-collected during strength reduction, to reverse a loop to count down to
-zero.  Some targets also require the loop optimizer to add a
-@code{REG_NONNEG} note to indicate that the iteration count is always
-positive.  This is needed if the target performs a signed loop
-termination test.  For example, the 68000 uses a pattern similar to the
-following for its @code{dbra} instruction:
+GCC具有三个特定的命名指令模式，来支持低开销循环。
+它们为@samp{decrement_and_branch_until_zero}, @samp{doloop_begin}和@samp{doloop_end}。
+第一个指令模式@samp{decrement_and_branch_until_zero}，在RTL生成过程中没有被产生，
+但可以在指令合并阶段被产生。这需要循环优化器的帮助，
+使用在strength reduction过程中所搜集的信息，来将一个循环转换为向下计数到0。
+一些target还要求循环优化器增加一个@code{REG_NONNEG}注解，来指示迭代计数总是为正的。
+这在target执行一个有符号循环终止测试的时候被需要。例如，
+68000为它的@code{dbra}指令使用了下面类似的指令模式：
 
 @smallexample
 @group
@@ -5365,13 +5314,10 @@ following for its @code{dbra} instruction:
 @end group
 @end smallexample
 
-Note that since the insn is both a jump insn and has an output, it must
-deal with its own reloads, hence the `m' constraints.  Also note that
-since this insn is generated by the instruction combination phase
-combining two sequential insns together into an implicit parallel insn,
-the iteration counter needs to be biased by the same amount as the
-decrement operation, in this case @minus{}1.  Note that the following similar
-pattern will not be matched by the combiner.
+注意，由于该insn为jump insn并且具有一个输出，所以其必须处理自己的重载，
+因此要使用`m' 约束。还要注意，由于该insn是在指令组合过程中，
+通过将两个连序insn组合成一个隐式并行的insn而生成的，所以迭代计数器需要。
+注意下面类似的指令模式将不会被编译器匹配。
 
 @smallexample
 @group
@@ -5390,37 +5336,27 @@ pattern will not be matched by the combiner.
 @end group
 @end smallexample
 
-The other two special looping patterns, @samp{doloop_begin} and
-@samp{doloop_end}, are emitted by the loop optimizer for certain
-well-behaved loops with a finite number of loop iterations using
-information collected during strength reduction.
+另外两个特定的循环指令模式@samp{doloop_begin}和@samp{doloop_end}，
+由循环优化器为一些具有有限循环迭代，
+使用强度消减所搜集的信息的良好行为的循环所生成的。
 
-The @samp{doloop_end} pattern describes the actual looping instruction
-(or the implicit looping operation) and the @samp{doloop_begin} pattern
-is an optional companion pattern that can be used for initialization
-needed for some low-overhead looping instructions.
+@samp{doloop_end}指令模式描述了实际的循环指令（或者隐式的循环操作），
+@samp{doloop_begin}指令模式为一个可选的配套指令模式，
+可以用于一些低开销循环指令的初始化需要。
 
-Note that some machines require the actual looping instruction to be
-emitted at the top of the loop (e.g., the TMS320C3x/C4x DSPs).  Emitting
-the true RTL for a looping instruction at the top of the loop can cause
-problems with flow analysis.  So instead, a dummy @code{doloop} insn is
-emitted at the end of the loop.  The machine dependent reorg pass checks
-for the presence of this @code{doloop} insn and then searches back to
-the top of the loop, where it inserts the true looping insn (provided
-there are no instructions in the loop which would cause problems).  Any
-additional labels can be emitted at this point.  In addition, if the
-desired special iteration counter register was not allocated, this
-machine dependent reorg pass could emit a traditional compare and jump
-instruction pair.
+注意有些机器需要在循环顶部生成实际的循环指令（例如TMS320C3x/C4x DSP）。
+在循环顶部生成真正的RTL循环指令，会对流分析造成问题。所以，替换的，
+一个假@samp{doloop} insn在循环的结尾处被生成。
+机器相关的reorg过程会检查该@samp{doloop} insn的存在，
+然后向后搜寻插入了真正循环insn（假设在循环中没有会造成问题的指令）的循环顶部。
+任何额外的标号都可以在该点被生成。另外，
+如果所需要的特定迭代技术器寄存器没有被分配，
+则该机器相关的reorg过程能够生成一个传统的比较跳转指令对。
 
-The essential difference between the
-@samp{decrement_and_branch_until_zero} and the @samp{doloop_end}
-patterns is that the loop optimizer allocates an additional pseudo
-register for the latter as an iteration counter.  This pseudo register
-cannot be used within the loop (i.e., general induction variables cannot
-be derived from it), however, in many cases the loop induction variable
-may become redundant and removed by the flow pass.
-
+指令模式@samp{decrement_and_branch_until_zero}和@samp{doloop_end}的本质区别为，
+循环优化器会为后者分配一个额外的伪寄存器作为迭代计数器。
+该伪寄存器不能用在循环中（即，通用的规约变量不能由此生成），但是，
+许多情况下循环规约变量可能变成冗余的并且被后续的过程移除掉。
 
 @end ifset
 @ifset INTERNALS
@@ -6103,39 +6039,35 @@ order; the standard default directory come after.
 @cindex peephole optimizer definitions
 @cindex defining peephole optimizers
 
-In addition to instruction patterns the @file{md} file may contain
-definitions of machine-specific peephole optimizations.
+除了指令模式，@file{md}文件还可以包含关于机器特定的窥孔优化的定义。
 
-The combiner does not notice certain peephole optimizations when the data
-flow in the program does not suggest that it should try them.  For example,
-sometimes two consecutive insns related in purpose can be combined even
-though the second one does not appear to use a register computed in the
-first one.  A machine-specific peephole optimizer can detect such
-opportunities.
+当程序中的数据流没有建议进行尝试的时候，
+组合器便不会注意某些可能存在的窥孔优化。
+例如，有时两个连续的insn是可以被组合的，
+虽然第二个没有显示出要使用在第一个中所计算的寄存器。
+机器特定的窥孔优化器可以检测出这样的机会。
 
-There are two forms of peephole definitions that may be used.  The
-original @code{define_peephole} is run at assembly output time to
-match insns and substitute assembly text.  Use of @code{define_peephole}
-is deprecated.
+有两种窥孔定义形式可以使用。
+最初的@code{define_peephole}运行于汇编输出时，
+用于匹配insn和替换汇编文本。不赞成使用@code{define_peephole}。
 
-A newer @code{define_peephole2} matches insns and substitutes new
-insns.  The @code{peephole2} pass is run after register allocation
-but before scheduling, which may result in much better code for
-targets that do scheduling.
+较新的@code{define_peephole2}用来匹配insn和替换新的insn。
+@code{peephole2}过程运行于寄存器分配之后，调度之前，
+其使进行调度的target获得更好的代码。
 
 @menu
-* define_peephole::     RTL to Text Peephole Optimizers
-* define_peephole2::    RTL to RTL Peephole Optimizers
+* define_peephole::     RTL到文本的窥孔优化器
+* define_peephole2::    RTL到RTL的窥孔优化器
 @end menu
 
 @end ifset
 @ifset INTERNALS
 @node define_peephole
-@subsection RTL to Text Peephole Optimizers
+@subsection RTL到文本的窥孔优化器
 @findex define_peephole
 
 @need 1000
-A definition looks like this:
+定义的形式如下：
 
 @smallexample
 (define_peephole
@@ -6148,82 +6080,68 @@ A definition looks like this:
 @end smallexample
 
 @noindent
-The last string operand may be omitted if you are not using any
-machine-specific information in this machine description.  If present,
-it must obey the same rules as in a @code{define_insn}.
+如果没有在该机器描述中使用任何机器特定的信息，
+则可以省略掉最后的字符串操作数。
+如果有，则其必须遵守在@code{define_insn}中相同的规则。
 
-In this skeleton, @var{insn-pattern-1} and so on are patterns to match
-consecutive insns.  The optimization applies to a sequence of insns when
-@var{insn-pattern-1} matches the first one, @var{insn-pattern-2} matches
-the next, and so on.
+该结构中，@var{insn-pattern-1}等为匹配连续insn的指令模式。
+当@var{insn-pattern-1}匹配第一个insn，
+@var{insn-pattern-2}匹配下一个，等等依次类推的情况时，
+则会将优化应用到该insn序列。
 
-Each of the insns matched by a peephole must also match a
-@code{define_insn}.  Peepholes are checked only at the last stage just
-before code generation, and only optionally.  Therefore, any insn which
-would match a peephole but no @code{define_insn} will cause a crash in code
-generation in an unoptimized compilation, or at various optimization
-stages.
+每个由窥孔匹配的insn也必须匹配一个@code{define_insn}。
+窥孔只在代码生成前的最后阶段被检查，并且只是可选的。
+因此，在一个未优化的编译中，或者不同的优化阶段中，
+任何匹配窥孔但是不匹配@code{define_insn}的将会在代码生成时造成崩溃。
 
-The operands of the insns are matched with @code{match_operands},
-@code{match_operator}, and @code{match_dup}, as usual.  What is not
-usual is that the operand numbers apply to all the insn patterns in the
-definition.  So, you can check for identical operands in two insns by
-using @code{match_operand} in one insn and @code{match_dup} in the
-other.
+和通常一样，insn的操作数使用@code{match_operands},
+@code{match_operator}和@code{match_dup}来匹配。
+不同的是，操作数编号应用在定义的所有insn指令模式中。所以，
+你可以通过一个insn中的@code{match_operand}和另一个insn中的@code{match_dup}，
+来在两个insn中检查相同的操作数。
 
-The operand constraints used in @code{match_operand} patterns do not have
-any direct effect on the applicability of the peephole, but they will
-be validated afterward, so make sure your constraints are general enough
-to apply whenever the peephole matches.  If the peephole matches
-but the constraints are not satisfied, the compiler will crash.
+用于@code{match_operand}指令模式的操作数约束对窥孔的适用性没有任何直接的影响，
+不过它们将会在后面被验证，所以要确信当窥孔匹配时，你的约束要足够通用。
+如果窥孔匹配，但约束却不满足，则编译器将崩溃。
 
-It is safe to omit constraints in all the operands of the peephole; or
-you can write constraints which serve as a double-check on the criteria
-previously tested.
+将窥孔中的所有操作数的约束省略掉是安全的；
+或者你可以编写约束作为之前测试过的标准的二次检查。
 
-Once a sequence of insns matches the patterns, the @var{condition} is
-checked.  This is a C expression which makes the final decision whether to
-perform the optimization (we do so if the expression is nonzero).  If
-@var{condition} is omitted (in other words, the string is empty) then the
-optimization is applied to every sequence of insns that matches the
-patterns.
+一旦insn序列匹配指令模式，则@code{condition}将被检查。
+这是一个C表达式，用于对是否执行优化来做最后的决定
+（如果表达式非0时，我们这样做）。
+如果@code{condition}被省略掉（换句话说，字符串为空）
+则优化会被应用到每个匹配指令模式的insn序列。
 
-The defined peephole optimizations are applied after register allocation
-is complete.  Therefore, the peephole definition can check which
-operands have ended up in which kinds of registers, just by looking at
-the operands.
+定义的窥孔优化在寄存器分配完成之后应用。
+因此，窥孔定义可以只是查看操作数，便能检查哪些操作数结束于哪种寄存器。
 
 @findex prev_active_insn
-The way to refer to the operands in @var{condition} is to write
-@code{operands[@var{i}]} for operand number @var{i} (as matched by
-@code{(match_operand @var{i} @dots{})}).  Use the variable @code{insn}
-to refer to the last of the insns being matched; use
-@code{prev_active_insn} to find the preceding insns.
+在条件中引用操作数的方式为对操作数编号@var{i}编写@code{operands[@var{i}]}
+（匹配于@code{(match_operand @var{i} @dots{})}）。
+使用变量@code{insn}来引用正在被匹配的insns的最后一个insn；
+使用@code{prev_active_insn}来找到先前的insns。
 
 @findex dead_or_set_p
-When optimizing computations with intermediate results, you can use
-@var{condition} to match only when the intermediate results are not used
-elsewhere.  Use the C expression @code{dead_or_set_p (@var{insn},
-@var{op})}, where @var{insn} is the insn in which you expect the value
-to be used for the last time (from the value of @code{insn}, together
-with use of @code{prev_nonnote_insn}), and @var{op} is the intermediate
-value (from @code{operands[@var{i}]}).
+当正在优化中间结果计算时，
+你可以使用条件来匹配只有当中间结果不在其它地方被使用的情况。
+使用C表达式@code{dead_or_set_p (@var{insn}, @var{op})}，
+其中@var{insn}为你所期望其值为最后一次被使用的insn，
+以及@var{op}为中间值（来自@code{operands[@var{i}]}）。
 
-Applying the optimization means replacing the sequence of insns with one
-new insn.  The @var{template} controls ultimate output of assembler code
-for this combined insn.  It works exactly like the template of a
-@code{define_insn}.  Operand numbers in this template are the same ones
-used in matching the original sequence of insns.
+应用优化，意味着将insn序列替换为新的insn。
+@var{template}控制了针对该组合insn的最终汇编代码输出。
+就像@code{define_insn}模板所做的一样。
+该模板中的操作数编号与用于要匹配的原始insn序列中的相同。
 
-The result of a defined peephole optimizer does not need to match any of
-the insn patterns in the machine description; it does not even have an
-opportunity to match them.  The peephole optimizer definition itself serves
-as the insn pattern to control how the insn is output.
+被定义的窥孔优化器的结果不需要匹配机器描述中的任何insn模式；
+它甚至没有机会来匹配它们。窥孔优化器定义本身是作为insn模式，
+用来控制insn如何输出。
 
-Defined peephole optimizers are run as assembler code is being output,
-so the insns they produce are never combined or rearranged in any way.
+被定义的窥孔优化器被作为汇编代码运行输出，
+所以它们产生的insns不再被组合或重排。
 
-Here is an example, taken from the 68000 machine description:
+这里有一个例子，来自68000机器描述：
 
 @smallexample
 (define_peephole
@@ -6247,7 +6165,7 @@ Here is an example, taken from the 68000 machine description:
 @end smallexample
 
 @need 1000
-The effect of this optimization is to change
+该优化的效果是将
 
 @smallexample
 @group
@@ -6260,7 +6178,7 @@ fmoved sp@@+,fp0
 @end smallexample
 
 @noindent
-into
+转换为
 
 @smallexample
 @group
@@ -6284,15 +6202,13 @@ and in this C code check the condition code status flags and change the
 assembler code as appropriate.
 @end ignore
 
-@var{insn-pattern-1} and so on look @emph{almost} like the second
-operand of @code{define_insn}.  There is one important difference: the
-second operand of @code{define_insn} consists of one or more RTX's
-enclosed in square brackets.  Usually, there is only one: then the same
-action can be written as an element of a @code{define_peephole}.  But
-when there are multiple actions in a @code{define_insn}, they are
-implicitly enclosed in a @code{parallel}.  Then you must explicitly
-write the @code{parallel}, and the square brackets within it, in the
-@code{define_peephole}.  Thus, if an insn pattern looks like this,
+@var{insn-pattern-1}等看起来与@code{define_insn}的第二个操作数非常相似。
+不过有一个重要的不同：@code{define_insn}的第二个操作数包含了一个或多个RTX，
+使用方括号包裹。通常，只有一个：
+那么相同的动作则可以写成@code{define_peephole}的一个元素。
+但是，当在@code{define_insn}中有多个动作时，它们被隐式的由@code{parallel}包裹。
+则你必须在@code{define_peephole}中，显式的写出@code{parallel}，以及里面的方括号。
+因此，如果一个insn的指令模式如下，
 
 @smallexample
 (define_insn "divmodsi4"
@@ -6306,7 +6222,7 @@ write the @code{parallel}, and the square brackets within it, in the
 @end smallexample
 
 @noindent
-then the way to mention this insn in a peephole is as follows:
+则在窥孔中提及该insn的方法为：
 
 @smallexample
 (define_peephole
@@ -6324,13 +6240,11 @@ then the way to mention this insn in a peephole is as follows:
 @end ifset
 @ifset INTERNALS
 @node define_peephole2
-@subsection RTL to RTL Peephole Optimizers
+@subsection RTL到RTL的窥孔优化器
 @findex define_peephole2
 
-The @code{define_peephole2} definition tells the compiler how to
-substitute one sequence of instructions for another sequence,
-what additional scratch registers may be needed and what their
-lifetimes must be.
+@code{define_peephole2}定义告诉了编译器如何将一个指令序列用来替换另一个序列，
+可能需要那些额外的scratch寄存器，以及它们的生命期必须为什么。
 
 @smallexample
 (define_peephole2
@@ -6344,24 +6258,22 @@ lifetimes must be.
   "@var{preparation-statements}")
 @end smallexample
 
-The definition is almost identical to @code{define_split}
-(@pxref{Insn Splitting}) except that the pattern to match is not a
-single instruction, but a sequence of instructions.
+定义几乎与@code{define_split}（参见 @ref{Insn拆分}）相同，
+除了要匹配的指令模式不是一个单个指令，而是一个指令序列。
 
-It is possible to request additional scratch registers for use in the
-output template.  If appropriate registers are not free, the pattern
-will simply not match.
+在输出模板中有可能需要用到额外的scratch寄存器。
+如果没有合适的寄存器，则指令模式将简单的作为不匹配处理。
 
 @findex match_scratch
 @findex match_dup
-Scratch registers are requested with a @code{match_scratch} pattern at
-the top level of the input pattern.  The allocated register (initially) will
-be dead at the point requested within the original sequence.  If the scratch
-is used at more than a single point, a @code{match_dup} pattern at the
-top level of the input pattern marks the last position in the input sequence
-at which the register must be available.
+使用@code{match_scratch}描述所需要的scratch寄存器，
+并放在输入指令模式的顶层。被分配的寄存器（最初的）
+将会在原始指令序列中需要使用的位置死掉。
+如果scratch被用于多个位置，
+则位于输入指令模式顶层的@code{match_dup}
+指令模式用来标记在输入序列中寄存器必须为活跃的最后位置。
 
-Here is an example from the IA-32 machine description:
+这里有一个来自IA-32机器描述的例子：
 
 @smallexample
 (define_peephole2
@@ -6380,13 +6292,11 @@ Here is an example from the IA-32 machine description:
 @end smallexample
 
 @noindent
-This pattern tries to split a load from its use in the hopes that we'll be
-able to schedule around the memory load latency.  It allocates a single
-@code{SImode} register of class @code{GENERAL_REGS} (@code{"r"}) that needs
-to be live only at the point just before the arithmetic.
+该指令模式尝试拆分加载的使用，以希望我们能够调度内存加载延迟。
+它分配了一个@code{GENERAL_REGS}(@code{"r"})类别的单个的@code{SImode}寄存器，
+其只需在算术运算之前的位置为活跃的。
 
-A real example requiring extended scratch lifetimes is harder to come by,
-so here's a silly made-up example:
+很难找到需要延长scratch生命期的真实例子，所以这里只是一个制造的例子： 
 
 @smallexample
 (define_peephole2
@@ -6404,9 +6314,8 @@ so here's a silly made-up example:
 @end smallexample
 
 @noindent
-If we had not added the @code{(match_dup 4)} in the middle of the input
-sequence, it might have been the case that the register we chose at the
-beginning of the sequence is killed by the first or second @code{set}.
+如果我们没有在输入序列的中间增加@code{(match_dup 4)}，
+则可能的情况是我们选择的寄存器会在序列的起始处被第一个或第二个@code{set}杀死。
 
 @end ifset
 @ifset INTERNALS
@@ -6421,19 +6330,19 @@ beginning of the sequence is killed by the first or second @code{set}.
 被 @code{NOTICE_UPDATE_CC} 使用，来跟踪条件代码。
 
 @menu
-* Defining Attributes:: 指定属性以及它们的值。
-* Expressions::         属性值的有效表达式。
-* Tagging Insns::       为insns赋予属性值。
-* Attr Example::        一个设置属性的例子。
-* Insn Lengths::        计算insns的长度。
-* Constant Attributes:: 定义值为常量的属性。
-* Delay Slots::         定义机器所需要的延迟槽。
-* Processor pipeline description:: 为insn调度指定信息。
+* 定义属性::         指定属性以及它们的值。
+* 表达式::           属性值的有效表达式。
+* 给Insns打标签::    为insns赋予属性值。
+* 属性的例子::       一个设置属性的例子。
+* Insn长度::         计算insns的长度。
+* 常量属性::         定义值为常量的属性。
+* 延迟槽::           定义机器所需要的延迟槽。
+* 处理器流水线描述:: 为insn调度指定信息。
 @end menu
 
 @end ifset
 @ifset INTERNALS
-@node Defining Attributes
+@node 定义属性
 @subsection Defining Attributes and their Values
 @cindex defining attributes and their values
 @cindex attributes, defining
@@ -6509,8 +6418,8 @@ generation. @xref{Disable Insn Alternatives}.
 
 @end ifset
 @ifset INTERNALS
-@node Expressions
-@subsection Attribute Expressions
+@node 表达式
+@subsection 属性表达式
 @cindex attribute expressions
 
 用于定义属性的RTL表达式，除了使用上面描述的代码外，还使用了下面要
@@ -6711,7 +6620,7 @@ produce more efficient code for non-numeric attributes.
 
 @end ifset
 @ifset INTERNALS
-@node Tagging Insns
+@node 给Insns打标签
 @subsection Assigning Attribute Values to Insns
 @cindex tagging insns
 @cindex assigning attribute values to insns
@@ -6818,7 +6727,7 @@ of a single machine instruction.
 
 @end ifset
 @ifset INTERNALS
-@node Attr Example
+@node 属性例子
 @subsection Example of Attribute Specifications
 @cindex attribute specifications example
 @cindex attribute specifications
@@ -6875,7 +6784,7 @@ full-word result.
 
 @end ifset
 @ifset INTERNALS
-@node Insn Lengths
+@node Insn长度
 @subsection Computing the Length of an Insn
 @cindex insn lengths, computing
 @cindex computing the length of an insn
@@ -6961,14 +6870,13 @@ as follows:
 
 @end ifset
 @ifset INTERNALS
-@node Constant Attributes
+@node 常量属性
 @subsection Constant Attributes
 @cindex constant attributes
 
-A special form of @code{define_attr}, where the expression for the
-default value is a @code{const} expression, indicates an attribute that
-is constant for a given run of the compiler.  Constant attributes may be
-used to specify which variety of processor is used.  For example,
+一个@code{define_attr}的特殊形式，是其缺省值的表达式为一个@code{const}表达式，
+这表示了对于一个给定的运行编译器的一个属性为常量。
+常量熟性可以用于指定使用了哪个处理器的变种。例如，
 
 @smallexample
 (define_attr "cpu" "m88100,m88110,m88000"
@@ -6984,15 +6892,13 @@ used to specify which variety of processor is used.  For example,
                 (const_string "slow"))))
 @end smallexample
 
-The routine generated for constant attributes has no parameters as it
-does not depend on any particular insn.  RTL expressions used to define
-the value of a constant attribute may use the @code{symbol_ref} form,
-but may not use either the @code{match_operand} form or @code{eq_attr}
-forms involving insn attributes.
+针对常量属性生成的程序不具有任何参数，因为它不依赖于任何特定的insn。
+用于定义常量属性的RTL表达式可以使用@code{symbol_ref}形式，
+但是不可以使用包括insn属性的@code{match_operand}形式或者@code{eq_attr}形式。
 
 @end ifset
 @ifset INTERNALS
-@node Delay Slots
+@node 延迟槽
 @subsection Delay Slot Scheduling
 @cindex delay slots, defining
 
@@ -7069,8 +6975,8 @@ branch is true, we might represent this as follows:
 
 @end ifset
 @ifset INTERNALS
-@node Processor pipeline description
-@subsection Specifying processor pipeline description
+@node 处理器流水线描述
+@subsection 处理器流水线描述
 @cindex processor pipeline description
 @cindex processor functional units
 @cindex instruction latency time
@@ -7085,172 +6991,128 @@ branch is true, we might represent this as follows:
 @cindex RISC
 @cindex VLIW
 
-To achieve better performance, most modern processors
-(super-pipelined, superscalar @acronym{RISC}, and @acronym{VLIW}
-processors) have many @dfn{functional units} on which several
-instructions can be executed simultaneously.  An instruction starts
-execution if its issue conditions are satisfied.  If not, the
-instruction is stalled until its conditions are satisfied.  Such
-@dfn{interlock (pipeline) delay} causes interruption of the fetching
-of successor instructions (or demands nop instructions, e.g.@: for some
-MIPS processors).
+为了获得更好的性能，大多数现代处理器（超流水线的，超标量@acronym{RISC}，
+以及@acronym{VLIW}处理器）都具有许多功能单元（@dfn{functional units}），
+可以在其上同时执行多条指令。一条指令当它的问题条件（issue conditions）
+被满足时才开始执行。如果不满足，则指令会被延迟直到它的条件被满足。
+这样的互锁（流水线）延迟(@dfn{interlock (pipeline) delay})
+造成了获取后继指令的中断（或者需要nop指令，例如一些MIPS处理器）。
 
-There are two major kinds of interlock delays in modern processors.
-The first one is a data dependence delay determining @dfn{instruction
-latency time}.  The instruction execution is not started until all
-source data have been evaluated by prior instructions (there are more
-complex cases when the instruction execution starts even when the data
-are not available but will be ready in given time after the
-instruction execution start).  Taking the data dependence delays into
-account is simple.  The data dependence (true, output, and
-anti-dependence) delay between two instructions is given by a
-constant.  In most cases this approach is adequate.  The second kind
-of interlock delays is a reservation delay.  The reservation delay
-means that two instructions under execution will be in need of shared
-processors resources, i.e.@: buses, internal registers, and/or
-functional units, which are reserved for some time.  Taking this kind
-of delay into account is complex especially for modern @acronym{RISC}
-processors.
+现代处理器中有两种主要的互锁延迟。第一个为数据相关延迟用来判定指令延迟时间
+（@dfn{instruction latency time}）。直到所有源数据都被先前指令求得，
+该指令才会开始执行（有更加复杂的情况是，
+当指令开始执行时数据还不可用但是将会在指令开始执行后的给定时间准备好）。
+考虑数据相关延迟是简单的。两个指令间的数据相关（）延迟被给定为一个常量。
+大多数情况下该方法都适合。第二种互锁延迟为保留延迟（reservation delay）。
+保留延迟意味着要执行的两条指令将会需要共享的处理器资源，即总线，内部寄存器，
+以及/或者函数单元，而这些将被保留一段时间。考虑这种延迟是复杂的，
+特别是对于现代@acronym{RISC}处理器。
 
-The task of exploiting more processor parallelism is solved by an
-instruction scheduler.  For a better solution to this problem, the
-instruction scheduler has to have an adequate description of the
-processor parallelism (or @dfn{pipeline description}).  GCC
-machine descriptions describe processor parallelism and functional
-unit reservations for groups of instructions with the aid of
-@dfn{regular expressions}.
+探索更多的处理器并行的任务是由指令调度器来解决的。为了能够更好的解决该问题，
+指令调度器必须具有一个处理器并行的适当描述（或者说流水线描述）。
+GCC机器描述使用正规表达式来描述处理器并行和对指令组的功能单元保留。
 
-The GCC instruction scheduler uses a @dfn{pipeline hazard recognizer} to
-figure out the possibility of the instruction issue by the processor
-on a given simulated processor cycle.  The pipeline hazard recognizer is
-automatically generated from the processor pipeline description.  The
-pipeline hazard recognizer generated from the machine description
-is based on a deterministic finite state automaton (@acronym{DFA}):
-the instruction issue is possible if there is a transition from one
-automaton state to another one.  This algorithm is very fast, and
-furthermore, its speed is not dependent on processor
-complexity@footnote{However, the size of the automaton depends on
-processor complexity.  To limit this effect, machine descriptions
-can split orthogonal parts of the machine description among several
-automata: but then, since each of these must be stepped independently,
-this does cause a small decrease in the algorithm's performance.}.
+GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟周期模拟来找出可能的指令问题。
+流水线冒险识别器通过处理器流水线描述自动生成。
+由机器描述生成的流水线冒险识别器是基于有限确定状态机（@acronym{DFA}）：
+如果存在从一个自动机状态到另一状态的转换，则可以进行指令发射。
+该算法非常快，而且它的速度不依赖于处理器的复杂度
+@footnote{然而，自动机的大小依赖于处理器的复杂度。为了限制这种影响，
+机器描述可以将机器描述的正交部分拆分成多个自动机：但是，
+由于每个这样的自动机都必须独立的执行每一步，
+所以这确实会在算法性能上造成一点消减。}。
 
 @cindex automaton based pipeline description
-The rest of this section describes the directives that constitute
-an automaton-based processor pipeline description.  The order of
-these constructions within the machine description file is not
-important.
+该章节的剩余部分描述了构造一个基于自动机的处理器流水线描述的指令。
+这些结构在机器描述文件中的顺序并不重要。
 
 @findex define_automaton
 @cindex pipeline hazard recognizer
-The following optional construction describes names of automata
-generated and used for the pipeline hazards recognition.  Sometimes
-the generated finite state automaton used by the pipeline hazard
-recognizer is large.  If we use more than one automaton and bind functional
-units to the automata, the total size of the automata is usually
-less than the size of the single automaton.  If there is no one such
-construction, only one finite state automaton is generated.
+下面的可选结构描述了生成的自动机的名字，并用于流水线冒险识别。
+有时供流水线冒险识别器使用的生成的有限状态机会非常大。
+如果我们使用多个自动机并且将功能单元绑定到自动机上，
+则自动机的总的大小通常会小于单个自动机的情况。
+如果没有这样一个结构，则会只生成一个有限状态机。
 
 @smallexample
 (define_automaton @var{automata-names})
 @end smallexample
 
-@var{automata-names} is a string giving names of the automata.  The
-names are separated by commas.  All the automata should have unique names.
-The automaton name is used in the constructions @code{define_cpu_unit} and
-@code{define_query_cpu_unit}.
+@var{automata-names}为一个字符串，给出了自动机的名字。
+名字由逗号分隔。所有自动机应该具有唯一的名字。
+自动机名用于结构@code{define_cpu_unit}和@code{define_query_cpu_unit}。
 
 @findex define_cpu_unit
 @cindex processor functional units
-Each processor functional unit used in the description of instruction
-reservations should be described by the following construction.
+用于指令保留描述的每个处理器功能单元应该使用下列结构来描述。
 
 @smallexample
 (define_cpu_unit @var{unit-names} [@var{automaton-name}])
 @end smallexample
 
-@var{unit-names} is a string giving the names of the functional units
-separated by commas.  Don't use name @samp{nothing}, it is reserved
-for other goals.
+@var{unit-names}为一个字符串，给出了由逗号分隔的功能单元的名字。
+不要使用名字@samp{nothing}，它被保留用于其它目的。
 
-@var{automaton-name} is a string giving the name of the automaton with
-which the unit is bound.  The automaton should be described in
-construction @code{define_automaton}.  You should give
-@dfn{automaton-name}, if there is a defined automaton.
+@var{automaton-name}为一个字符串，给出了功能单元绑定的自动机名。
+自动机应该在结构@code{define_automaton}中有描述。
+如果有一个定义的自动机，则你应该给出@dfn{automaton-name}。
 
-The assignment of units to automata are constrained by the uses of the
-units in insn reservations.  The most important constraint is: if a
-unit reservation is present on a particular cycle of an alternative
-for an insn reservation, then some unit from the same automaton must
-be present on the same cycle for the other alternatives of the insn
-reservation.  The rest of the constraints are mentioned in the
-description of the subsequent constructions.
+为功能单元赋予自动机，受到insn保留中对功能单元使用的限制。
+最重要的约束为：如果一个功能单元保留。
+其余的约束将在后续的结构描述中提到。
 
 @findex define_query_cpu_unit
 @cindex querying function unit reservations
-The following construction describes CPU functional units analogously
-to @code{define_cpu_unit}.  The reservation of such units can be
-queried for an automaton state.  The instruction scheduler never
-queries reservation of functional units for given automaton state.  So
-as a rule, you don't need this construction.  This construction could
-be used for future code generation goals (e.g.@: to generate
-@acronym{VLIW} insn templates).
+下面的结构描述了CPU功能单元，类似于@code{define_cpu_unit}。
+对于这样的功能单元的保留，可以被询问自动机状态。
+对于给定的自动机状态，指令调度器从来不询问功能单元的保留。
+所以按照规则，你不需要该结构。
+该结构可以被用于将来的代码生成目的（例如，生成@acronym{VLIW} insn模板）。
 
 @smallexample
 (define_query_cpu_unit @var{unit-names} [@var{automaton-name}])
 @end smallexample
 
-@var{unit-names} is a string giving names of the functional units
-separated by commas.
+@var{unit-names}为一个字符串，给出了由逗号分隔的功能单元名字。
 
-@var{automaton-name} is a string giving the name of the automaton with
-which the unit is bound.
+@var{automaton-name}为一个字符串，给出了功能单元所绑定的自动机。
 
 @findex define_insn_reservation
 @cindex instruction latency time
 @cindex regular expressions
 @cindex data bypass
-The following construction is the major one to describe pipeline
-characteristics of an instruction.
+下面的结构为描述一条指令的流水线特征的主要结构。
 
 @smallexample
 (define_insn_reservation @var{insn-name} @var{default_latency}
                          @var{condition} @var{regexp})
 @end smallexample
 
-@var{default_latency} is a number giving latency time of the
-instruction.  There is an important difference between the old
-description and the automaton based pipeline description.  The latency
-time is used for all dependencies when we use the old description.  In
-the automaton based pipeline description, the given latency time is only
-used for true dependencies.  The cost of anti-dependencies is always
-zero and the cost of output dependencies is the difference between
-latency times of the producing and consuming insns (if the difference
-is negative, the cost is considered to be zero).  You can always
-change the default costs for any description by using the target hook
-@code{TARGET_SCHED_ADJUST_COST} (@pxref{Scheduling}).
+@var{default_latency}为一个数，给出了指令的延迟时间。
+在旧描述和基于自动机的流水线描述中，有一个重要的不同之处。
+当我们使用旧描述时，延迟时间是用于所有的依赖。
+在基于自动机的流水线描述中，给定的延迟时间只用于真依赖。
+反依赖的代价总为0，并且输出依赖的代价是生产者insn和消费者insn的延迟时间之差
+（如果差为负数，则代价被认为为0）。
+你可以通过使用target钩子@code{TARGET_SCHED_ADJUST_COST} （参见 @ref{调度}），
+来改变任何描述的缺省代价。
 
-@var{insn-name} is a string giving the internal name of the insn.  The
-internal names are used in constructions @code{define_bypass} and in
-the automaton description file generated for debugging.  The internal
-name has nothing in common with the names in @code{define_insn}.  It is a
-good practice to use insn classes described in the processor manual.
+@var{insn-name}为一个字符串，给出了insn的内部名字。
+内部名字被用于结构@code{define_bypass}和为了调试所生成的自动机描述文件。
+内部名字与@code{define_insn}中的名字没有任何关系。
+使用在处理器手册中描述的insn类别，是一个很好的做法。
 
-@var{condition} defines what RTL insns are described by this
-construction.  You should remember that you will be in trouble if
-@var{condition} for two or more different
-@code{define_insn_reservation} constructions is TRUE for an insn.  In
-this case what reservation will be used for the insn is not defined.
-Such cases are not checked during generation of the pipeline hazards
-recognizer because in general recognizing that two conditions may have
-the same value is quite difficult (especially if the conditions
-contain @code{symbol_ref}).  It is also not checked during the
-pipeline hazard recognizer work because it would slow down the
-recognizer considerably.
+@var{condition}定义了什么样的RTL insns由该结构描述。
+你应该记住如果对于一个insn，
+两个或更多不同@code{define_insn_reservation}结构的@var{condition}都为真，
+则会出问题。这种情况，该insn将使用什么保留，是未定义的。
+这种情况在流水线冒险识别器生成时，是不被检查的，
+因为识别两个条件具有相同值是十分困难的
+（特别是如果条件中包含@code{symbol_ref}）。
+这在流水线识别器工作时，也不被检查，因为它将使识别器变得相当慢。
 
-@var{regexp} is a string describing the reservation of the cpu's functional
-units by the instruction.  The reservations are described by a regular
-expression according to the following syntax:
+@var{regexp}为一个字符串，描述了指令对cpu的功能单元的保留。
+保留通过正规表达式来描述，语法如下：
 
 @smallexample
        regexp = regexp "," oneof
@@ -7274,16 +7136,15 @@ expression according to the following syntax:
 
 @itemize @bullet
 @item
-@samp{,} is used for describing the start of the next cycle in
-the reservation.
+@samp{,}用于描述在保留中，下一周期的开始。
 
 @item
-@samp{|} is used for describing a reservation described by the first
-regular expression @strong{or} a reservation described by the second
-regular expression @strong{or} etc.
+@samp{|}用于描述在保留中，第一个正规表达式@strong{或上}第二个正规表达式，
+@strong{或}等等。 
 
 @item
-@samp{+} is used for describing a reservation described by the first
+@samp{+}用于描述在保留中，第一个正规表达式@strong{与上}第二个正规表达式，与上等等。
+is used for describing a reservation described by the first
 regular expression @strong{and} a reservation described by the
 second regular expression @strong{and} etc.
 

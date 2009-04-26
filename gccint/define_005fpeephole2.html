@@ -48,13 +48,11 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_00aa_00a5_00e5_00ad_0094_00e5_00a
 <hr>
 </div>
 
-<h4 class="subsection">16.18.2 RTL to RTL Peephole Optimizers</h4>
+<h4 class="subsection">16.18.2 RTL到RTL的窥孔优化器</h4>
 
 <p><a name="index-define_005fpeephole2-3565"></a>
-The <code>define_peephole2</code> definition tells the compiler how to
-substitute one sequence of instructions for another sequence,
-what additional scratch registers may be needed and what their
-lifetimes must be.
+<code>define_peephole2</code>定义告诉了编译器如何将一个指令序列用来替换另一个序列，
+可能需要那些额外的scratch寄存器，以及它们的生命期必须为什么。
 
 <pre class="smallexample">     (define_peephole2
        [<var>insn-pattern-1</var>
@@ -66,22 +64,20 @@ lifetimes must be.
         ...]
        "<var>preparation-statements</var>")
 </pre>
- <p>The definition is almost identical to <code>define_split</code>
-(see <a href="Insn-Splitting.html#Insn-Splitting">Insn Splitting</a>) except that the pattern to match is not a
-single instruction, but a sequence of instructions.
+ <p>定义几乎与<code>define_split</code>（参见 <a href="Insn_00e6_008b_0086_00e5_0088_0086.html#Insn_00e6_008b_0086_00e5_0088_0086">Insn拆分</a>）相同，
+除了要匹配的指令模式不是一个单个指令，而是一个指令序列。
 
- <p>It is possible to request additional scratch registers for use in the
-output template.  If appropriate registers are not free, the pattern
-will simply not match.
+ <p>在输出模板中有可能需要用到额外的scratch寄存器。
+如果没有合适的寄存器，则指令模式将简单的作为不匹配处理。
 
- <p><a name="index-match_005fscratch-3566"></a><a name="index-match_005fdup-3567"></a>Scratch registers are requested with a <code>match_scratch</code> pattern at
-the top level of the input pattern.  The allocated register (initially) will
-be dead at the point requested within the original sequence.  If the scratch
-is used at more than a single point, a <code>match_dup</code> pattern at the
-top level of the input pattern marks the last position in the input sequence
-at which the register must be available.
+ <p><a name="index-match_005fscratch-3566"></a><a name="index-match_005fdup-3567"></a>使用<code>match_scratch</code>描述所需要的scratch寄存器，
+并放在输入指令模式的顶层。被分配的寄存器（最初的）
+将会在原始指令序列中需要使用的位置死掉。
+如果scratch被用于多个位置，
+则位于输入指令模式顶层的<code>match_dup</code>
+指令模式用来标记在输入序列中寄存器必须为活跃的最后位置。
 
- <p>Here is an example from the IA-32 machine description:
+ <p>这里有一个来自IA-32机器描述的例子：
 
 <pre class="smallexample">     (define_peephole2
        [(match_scratch:SI 2 "r")
@@ -97,13 +93,11 @@ at which the register must be available.
                    (clobber (reg:CC 17))])]
        "")
 </pre>
- <p class="noindent">This pattern tries to split a load from its use in the hopes that we'll be
-able to schedule around the memory load latency.  It allocates a single
-<code>SImode</code> register of class <code>GENERAL_REGS</code> (<code>"r"</code>) that needs
-to be live only at the point just before the arithmetic.
+ <p class="noindent">该指令模式尝试拆分加载的使用，以希望我们能够调度内存加载延迟。
+它分配了一个<code>GENERAL_REGS</code>(<code>"r"</code>)类别的单个的<code>SImode</code>寄存器，
+其只需在算术运算之前的位置为活跃的。
 
- <p>A real example requiring extended scratch lifetimes is harder to come by,
-so here's a silly made-up example:
+ <p>很难找到需要延长scratch生命期的真实例子，所以这里只是一个制造的例子：
 
 <pre class="smallexample">     (define_peephole2
        [(match_scratch:SI 4 "r")
@@ -118,9 +112,8 @@ so here's a silly made-up example:
         (set (match_dup 3) (match_dup 4))]
        "")
 </pre>
- <p class="noindent">If we had not added the <code>(match_dup 4)</code> in the middle of the input
-sequence, it might have been the case that the register we chose at the
-beginning of the sequence is killed by the first or second <code>set</code>.
+ <p class="noindent">如果我们没有在输入序列的中间增加<code>(match_dup 4)</code>，
+则可能的情况是我们选择的寄存器会在序列的起始处被第一个或第二个<code>set</code>杀死。
 
  </body></html>
 
