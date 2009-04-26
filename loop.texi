@@ -10,97 +10,73 @@
 @node 循环分析和表示
 @chapter 循环分析和表示
 
-GCC provides extensive infrastructure for work with natural loops, i.e.,
-strongly connected components of CFG with only one entry block.  This
-chapter describes representation of loops in GCC, both on GIMPLE and in
-RTL, as well as the interfaces to loop-related analyses (induction
-variable analysis and number of iterations analysis).
+GCC提供了大量的基础结构，用来处理普通的循环结构，
+也就是CFG中只有一个入口块的强连通部分。
+这章描述了GCC中对于循环的GIMPLE和RTL表示，
+以及循环相关的分析的接口（归纳变量分析和迭代次数分析）。
 
 @menu
-* Loop representation::         Representation and analysis of loops.
-* Loop querying::               Getting information about loops.
-* Loop manipulation::           Loop manipulation functions.
-* LCSSA::                       Loop-closed SSA form.
-* Scalar evolutions::           Induction variables on GIMPLE.
-* loop-iv::                     Induction variables on RTL.
-* Number of iterations::        Number of iterations analysis.
-* Dependency analysis::         Data dependency analysis.
-* Lambda::                      Linear loop transformations framework.
-* Omega::                       A solver for linear programming problems.
+* 循环表示::   循环的表示和分析。
+* 循环查询::   获得循环的信息。    
+* 循环操作::   循环操作函数。      
+* LCSSA::      闭环SSA形式。       
+* 标量演化::   GIMPLE级的归约变量。
+* loop-iv::    RTL级的归约变量。  
+* 迭代次数::   迭代次数分析。     
+* 依赖分析::   数据依赖分析。     
+* Lambda::     线性循环转换框架。  
+* Omega::      线性编程问题的解决。
 @end menu
 
-@node Loop representation
-@section Loop representation
+@node 循环表示
+@section 循环表示
 @cindex Loop representation
 @cindex Loop analysis
 
-This chapter describes the representation of loops in GCC, and functions
-that can be used to build, modify and analyze this representation.  Most
-of the interfaces and data structures are declared in @file{cfgloop.h}.
-At the moment, loop structures are analyzed and this information is
-updated only by the optimization passes that deal with loops, but some
-efforts are being made to make it available throughout most of the
-optimization passes.
+这章描述了GCC中循环的表示，以及可以用来构建，修改和分析这些表示的函数。
+大多数接口和数据结构都在@file{cfgloop.h}中声明。目前，
+只是由处理循环的优化过程来分析这些循环结构和更新这些信息，
+不过正在做一些努力，使得其在大多数优化过程中都可用。
 
-In general, a natural loop has one entry block (header) and possibly
-several back edges (latches) leading to the header from the inside of
-the loop.  Loops with several latches may appear if several loops share
-a single header, or if there is a branching in the middle of the loop.
-The representation of loops in GCC however allows only loops with a
-single latch.  During loop analysis, headers of such loops are split and
-forwarder blocks are created in order to disambiguate their structures.
-Heuristic based on profile information and structure of the induction
-variables in the loops is used to determine whether the latches
-correspond to sub-loops or to control flow in a single loop.  This means
-that the analysis sometimes changes the CFG, and if you run it in the
-middle of an optimization pass, you must be able to deal with the new
-blocks.  You may avoid CFG changes by passing
-@code{LOOPS_MAY_HAVE_MULTIPLE_LATCHES} flag to the loop discovery,
-note however that most other loop manipulation functions will not work
-correctly for loops with multiple latch edges (the functions that only
-query membership of blocks to loops and subloop relationships, or
-enumerate and test loop exits, can be expected to work).
+通常，一个自然的循环会具有一个入口块（header），
+以及可能多个的从循环内部通向header的回边（latch）。
+如果多个循环共享单个 header，或者在循环中间有个分支跳转，
+则可能会出现带有多个latch的循环。然而GCC中对循环的表示只允许具有单个latch。
+在循环分析过程中，为了消除循环结构的歧义，这样的循环的header会被拆分，
+并创建前向的块。基于profile信息的heuristic，
+以及循环中的归纳变量的结构被用来判定latches是否与子循环相关，
+还是与单个循环中的控制流相关。这意味着分析有时候会改变CFG，
+并且如果你在一个优化过程的中间运行了该分析，则必须能够处理新的块。
+可以通过传递@code{LOOPS_MAY_HAVE_MULTIPLE_LATCHES}标记来避免CFG改变，
+但是要注意，对于具有多个latch边的循环，
+大多其它的循环操作函数将无法正确工作
+（只有查询块成员与循环和子循环关系的，或者枚举和测试循环出口的函数能够工作）。
 
-Body of the loop is the set of blocks that are dominated by its header,
-and reachable from its latch against the direction of edges in CFG@.  The
-loops are organized in a containment hierarchy (tree) such that all the
-loops immediately contained inside loop L are the children of L in the
-tree.  This tree is represented by the @code{struct loops} structure.
-The root of this tree is a fake loop that contains all blocks in the
-function.  Each of the loops is represented in a @code{struct loop}
-structure.  Each loop is assigned an index (@code{num} field of the
-@code{struct loop} structure), and the pointer to the loop is stored in
-the corresponding field of the @code{larray} vector in the loops
-structure.  The indices do not have to be continuous, there may be
-empty (@code{NULL}) entries in the @code{larray} created by deleting
-loops.  Also, there is no guarantee on the relative order of a loop
-and its subloops in the numbering.  The index of a loop never changes.
+循环体是由header支配的一组基本块，并且可以通过回边沿着CFG中边的方向达到。
+循环使用树的层次结构来组织，直接包含在循环L中的所有循环在树中都为L的子节点。
+该树由@code{struct loops}结构体表示。该树的根是一个假循环，包含了函数中的所有块。
+每个循环都由@code{struct loop}结构体表示。
+每个循环都被赋予一个索引（@code{struct loop}结构体的@code{num}域），
+并且指向循环的指针被存在@code{struct loops}结构体中的@code{larray}向量的对应域里。
+索引不必是连续的，@code{larray}中可能会有空项（@code{NULL}），是由删除循环产生的。
+而且不保证索引的数字与循环和子循环有关系。循环的索引不会改变。
 
-The entries of the @code{larray} field should not be accessed directly.
-The function @code{get_loop} returns the loop description for a loop with
-the given index.  @code{number_of_loops} function returns number of
-loops in the function.  To traverse all loops, use @code{FOR_EACH_LOOP}
-macro.  The @code{flags} argument of the macro is used to determine
-the direction of traversal and the set of loops visited.  Each loop is
-guaranteed to be visited exactly once, regardless of the changes to the
-loop tree, and the loops may be removed during the traversal.  The newly
-created loops are never traversed, if they need to be visited, this
-must be done separately after their creation.  The @code{FOR_EACH_LOOP}
-macro allocates temporary variables.  If the @code{FOR_EACH_LOOP} loop
-were ended using break or goto, they would not be released;
-@code{FOR_EACH_LOOP_BREAK} macro must be used instead.
+不要直接访问@code{larray}域中的项。函数@code{get_loop}返回给定索引的循环描述。
+@code{number_of_loops}函数返回函数中的循环数目。要遍历所有的循环，
+使用@code{FOR_EACH_LOOP}宏。宏的标记参数用来决定遍历的方向和要访问的循环集。
+不管循环树是否变化，以及在遍历过程中循环是否被移除，每个循环都保证只被访问一次。
+新创建的循环将不会被访问到，如果需要访问，这必须在它们创建之后单独进行。
+@code{FOR_EACH_LOOP}宏会分配临时变量，如果使用break或者goto终止了@code{FOR_EACH_LOOP}，
+它们将不会被释放；因此必须使用@code{FOR_EACH_LOOP_BREAK}宏。
 
-Each basic block contains the reference to the innermost loop it belongs
-to (@code{loop_father}).  For this reason, it is only possible to have
-one @code{struct loops} structure initialized at the same time for each
-CFG@.  The global variable @code{current_loops} contains the
-@code{struct loops} structure.  Many of the loop manipulation functions
-assume that dominance information is up-to-date.
+每个基本块包含了对其所属的最内层循环的引用（@code{loop_father}）。
+基于这个原因，对每个CFG只可能有一个@code{struct loops}结构体在同一时间被初始化。
+全局变量@code{current_loops}包含了@code{struct loops}结构体。
+许多循环操作函数都假设dominance信息是最新的。
 
-The loops are analyzed through @code{loop_optimizer_init} function.  The
-argument of this function is a set of flags represented in an integer
-bitmask.  These flags specify what other properties of the loop
-structures should be calculated/enforced and preserved later:
+通过@code{loop_optimizer_init}函数来分析循环。
+该函数的参数是一个标记集，使用整数位掩码表示。
+这些标记指定了循环结构体的其它哪些属性将在之后被计算/赋予，并且保留：
 
 @itemize
 @item @code{LOOPS_MAY_HAVE_MULTIPLE_LATCHES}: If this flag is set, no
@@ -467,8 +443,8 @@ The function @code{number_of_cond_exit_executions} can be used to
 determine number of executions of the exit condition of a single-exit
 loop (i.e., the @code{number_of_latch_executions} increased by one).
 
-@node Dependency analysis
-@section Data Dependency Analysis
+@node 依赖分析
+@section 数据依赖分析
 @cindex Data Dependency Analysis
 
 The code for the data dependence analysis can be found in
@@ -594,62 +570,47 @@ direction vectors for a data dependence relations array, and
 contained in a data reference array.
 
 @node Lambda
-@section Linear loop transformations framework
+@section 线性循环转换框架
 @cindex Linear loop transformations framework
 
-Lambda is a framework that allows transformations of loops using
-non-singular matrix based transformations of the iteration space and
-loop bounds. This allows compositions of skewing, scaling, interchange,
-and reversal transformations.  These transformations are often used to
-improve cache behavior or remove inner loop dependencies to allow
-parallelization and vectorization to take place.
+Lambda是一个允许循环转换使用基于迭代空间和循环边界的非退化矩阵的框架。
+这允许组合使用skewing，scaling，interchange，和reversal转换。
+这些转换常用来提高cache行为，
+或者移除内部循环依赖使得可以进行并行化或者向量化。
 
-To perform these transformations, Lambda requires that the loopnest be
-converted into a internal form that can be matrix transformed easily.
-To do this conversion, the function
-@code{gcc_loopnest_to_lambda_loopnest} is provided.  If the loop cannot
-be transformed using lambda, this function will return NULL.
+为了执行这些转换，Lambda需要loopnest转化为可以被很容易的进行矩阵转换的内部形式。
+函数@code{gcc_loopnest_to_lambda_loopnest}用来做这种转换。
+如果循环不能够使用lambda转换，这个函数将返回NULL。
 
-Once a @code{lambda_loopnest} is obtained from the conversion function,
-it can be transformed by using @code{lambda_loopnest_transform}, which
-takes a transformation matrix to apply.  Note that it is up to the
-caller to verify that the transformation matrix is legal to apply to the
-loop (dependence respecting, etc).  Lambda simply applies whatever
-matrix it is told to provide.  It can be extended to make legal matrices
-out of any non-singular matrix, but this is not currently implemented.
-Legality of a matrix for a given loopnest can be verified using
-@code{lambda_transform_legal_p}.
+一旦通过转换函数获得lambda_loopnest，
+便可以使用@code{lambda_loopnest_transform}来进行各种转换处理，
+其接受一个转换矩阵。
+注意这是由调用者来检验转换矩阵是否合法，即可以应用到循环上的。
+Lambda只是简单的应用提供给它的矩阵。可以扩展为使用任何非退化矩阵之外的矩阵，
+不过现在还没有实现。
+可以使用@code{lambda_transform_legal_p}来检验给定loopnest的矩阵的合法性。
 
-Given a transformed loopnest, conversion back into gcc IR is done by
-@code{lambda_loopnest_to_gcc_loopnest}.  This function will modify the
-loops so that they match the transformed loopnest.
-
+给定一个转换过的loopnest，
+可以通过@code{lambda_loopnest_to_gcc_loopnest}来将其转化回到gcc IR。
+该函数会修改循环使得它们匹配转换过的loopnest。
 
 @node Omega
-@section Omega a solver for linear programming problems
+@section Omega 一种对线性规划问题的求解
 @cindex Omega a solver for linear programming problems
 
-The data dependence analysis contains several solvers triggered
-sequentially from the less complex ones to the more sophisticated.
-For ensuring the consistency of the results of these solvers, a data
-dependence check pass has been implemented based on two different
-solvers.  The second method that has been integrated to GCC is based
-on the Omega dependence solver, written in the 1990's by William Pugh
-and David Wonnacott.  Data dependence tests can be formulated using a
-subset of the Presburger arithmetics that can be translated to linear
-constraint systems.  These linear constraint systems can then be
-solved using the Omega solver.
+数据相关性分析包含多个求解器，从不太复杂的到比较复杂的。
+为了确保这些求解器的结果的一致性，
+实现了一个基于不同求解器的数据相关性检查过程。
+已经被集成到GCC中的第二种方法是基于Omega相关求解器，
+由William Pugh和David Wonnacott在1990年编写。
+数据相关性测试能够通过使用Presburger算法的子集来公式化，
+从而可以转化为线性约束系统。然后这些线性约束系统能够使用Omega求解器求解。
 
-The Omega solver is using Fourier-Motzkin's algorithm for variable
-elimination: a linear constraint system containing @code{n} variables
-is reduced to a linear constraint system with @code{n-1} variables.
-The Omega solver can also be used for solving other problems that can
-be expressed under the form of a system of linear equalities and
-inequalities.  The Omega solver is known to have an exponential worst
-case, also known under the name of ``omega nightmare'' in the
-literature, but in practice, the omega test is known to be efficient
-for the common data dependence tests.
+Omega求解器使用Fourier-Motzkin算法进行变量消除：
+一个包含@code{n}个变量的线性约束系统被消减为包含@code{n-1}个变量的线性约束系统。
+Omega求解器还能够用来解决其它能被表示为线性等式和不等式系统形式的问题。
+Omega求解器有一个公认的指数最坏情况，即文献上称之的“omega 恶梦”，
+不过实际上，众所周知omega测试对于公用数据相关性测试是有效的。
 
-The interface used by the Omega solver for describing the linear
-programming problems is described in @file{omega.h}, and the solver is
-@code{omega_solve_problem}.  
+Omega求解器所使用的描述线性规划问题接口在@file{omega.h}中，
+求解器为@code{omega_solve_problem}。

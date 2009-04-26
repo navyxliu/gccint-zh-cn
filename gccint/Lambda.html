@@ -6,7 +6,7 @@
 <meta name="generator" content="makeinfo 4.11">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="_00e5_00be_00aa_00e7_008e_00af_00e5_0088_0086_00e6_009e_0090_00e5_0092_008c_00e8_00a1_00a8_00e7_00a4_00ba.html#g_t_00e5_00be_00aa_00e7_008e_00af_00e5_0088_0086_00e6_009e_0090_00e5_0092_008c_00e8_00a1_00a8_00e7_00a4_00ba" title="循环分析和表示">
-<link rel="prev" href="Dependency-analysis.html#Dependency-analysis" title="Dependency analysis">
+<link rel="prev" href="_00e4_00be_009d_00e8_00b5_0096_00e5_0088_0086_00e6_009e_0090.html#g_t_00e4_00be_009d_00e8_00b5_0096_00e5_0088_0086_00e6_009e_0090" title="依赖分析">
 <link rel="next" href="Omega.html#Omega" title="Omega">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
@@ -44,40 +44,34 @@
 <p>
 <a name="Lambda"></a>
 Next:&nbsp;<a rel="next" accesskey="n" href="Omega.html#Omega">Omega</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="Dependency-analysis.html#Dependency-analysis">Dependency analysis</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e4_00be_009d_00e8_00b5_0096_00e5_0088_0086_00e6_009e_0090.html#g_t_00e4_00be_009d_00e8_00b5_0096_00e5_0088_0086_00e6_009e_0090">依赖分析</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_00be_00aa_00e7_008e_00af_00e5_0088_0086_00e6_009e_0090_00e5_0092_008c_00e8_00a1_00a8_00e7_00a4_00ba.html#g_t_00e5_00be_00aa_00e7_008e_00af_00e5_0088_0086_00e6_009e_0090_00e5_0092_008c_00e8_00a1_00a8_00e7_00a4_00ba">循环分析和表示</a>
 <hr>
 </div>
 
-<h3 class="section">14.9 Linear loop transformations framework</h3>
+<h3 class="section">14.9 线性循环转换框架</h3>
 
 <p><a name="index-Linear-loop-transformations-framework-3083"></a>
-Lambda is a framework that allows transformations of loops using
-non-singular matrix based transformations of the iteration space and
-loop bounds. This allows compositions of skewing, scaling, interchange,
-and reversal transformations.  These transformations are often used to
-improve cache behavior or remove inner loop dependencies to allow
-parallelization and vectorization to take place.
+Lambda是一个允许循环转换使用基于迭代空间和循环边界的非退化矩阵的框架。
+这允许组合使用skewing，scaling，interchange，和reversal转换。
+这些转换常用来提高cache行为，
+或者移除内部循环依赖使得可以进行并行化或者向量化。
 
- <p>To perform these transformations, Lambda requires that the loopnest be
-converted into a internal form that can be matrix transformed easily. 
-To do this conversion, the function
-<code>gcc_loopnest_to_lambda_loopnest</code> is provided.  If the loop cannot
-be transformed using lambda, this function will return NULL.
+ <p>为了执行这些转换，Lambda需要loopnest转化为可以被很容易的进行矩阵转换的内部形式。
+函数<code>gcc_loopnest_to_lambda_loopnest</code>用来做这种转换。
+如果循环不能够使用lambda转换，这个函数将返回NULL。
 
- <p>Once a <code>lambda_loopnest</code> is obtained from the conversion function,
-it can be transformed by using <code>lambda_loopnest_transform</code>, which
-takes a transformation matrix to apply.  Note that it is up to the
-caller to verify that the transformation matrix is legal to apply to the
-loop (dependence respecting, etc).  Lambda simply applies whatever
-matrix it is told to provide.  It can be extended to make legal matrices
-out of any non-singular matrix, but this is not currently implemented. 
-Legality of a matrix for a given loopnest can be verified using
-<code>lambda_transform_legal_p</code>.
+ <p>一旦通过转换函数获得lambda_loopnest，
+便可以使用<code>lambda_loopnest_transform</code>来进行各种转换处理，
+其接受一个转换矩阵。
+注意这是由调用者来检验转换矩阵是否合法，即可以应用到循环上的。
+Lambda只是简单的应用提供给它的矩阵。可以扩展为使用任何非退化矩阵之外的矩阵，
+不过现在还没有实现。
+可以使用<code>lambda_transform_legal_p</code>来检验给定loopnest的矩阵的合法性。
 
- <p>Given a transformed loopnest, conversion back into gcc IR is done by
-<code>lambda_loopnest_to_gcc_loopnest</code>.  This function will modify the
-loops so that they match the transformed loopnest.
+ <p>给定一个转换过的loopnest，
+可以通过<code>lambda_loopnest_to_gcc_loopnest</code>来将其转化回到gcc IR。
+该函数会修改循环使得它们匹配转换过的loopnest。
 
  </body></html>
 
