@@ -51,49 +51,38 @@ Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
 <h2 class="chapter">9 Trees: C和C++前端使用的中间表示</h2>
 
 <p><a name="index-Trees-1689"></a><a name="index-C_002fC_002b_002b-Internal-Representation-1690"></a>
-This chapter documents the internal representation used by GCC to
-represent C and C++ source programs.  When presented with a C or C++
-source program, GCC parses the program, performs semantic analysis
-(including the generation of error messages), and then produces the
-internal representation described here.  This representation contains a
-complete representation for the entire translation unit provided as
-input to the front end.  This representation is then typically processed
-by a code-generator in order to produce machine code, but could also be
-used in the creation of source browsers, intelligent editors, automatic
-documentation generators, interpreters, and any other programs needing
-the ability to process C or C++ code.
+这一章记述了GCC用来表示C和C++源程序的内部表示。当源程序为C或者C++时，
+GCC解析程序，执行语义分析（包括生成错误消息），
+然后产生在这里描述的中间表示。
+该表示包含了一个对前端输入的整个转换单元的完全表示。
+该表示然后由代码生成器处理，从而产生机器代码，
+但是还可以用来创建源浏览器，智能编辑器，自动文本生成器，解析器，
+以及任何其它处理C或C++代码所需的程序。
 
- <p>This chapter explains the internal representation.  In particular, it
-documents the internal representation for C and C++ source
-constructs, and the macros, functions, and variables that can be used to
-access these constructs.  The C++ representation is largely a superset
-of the representation used in the C front end.  There is only one
-construct used in C that does not appear in the C++ front end and that
-is the GNU &ldquo;nested function&rdquo; extension.  Many of the macros documented
-here do not apply in C because the corresponding language constructs do
-not appear in C.
+ <p>这一章解释了内部表示。特别是，记录了C和C++源结构的内部表示，
+以及能够用来访问这些结构的宏，函数和变量。
+C++的表示很大程度上为C前端使用的表示的超集。
+只有一种C中使用的结构没有出现在C++前端，即GNU“嵌套函数”扩展。
+许多这里记录的宏不在C中出现，因为相应的语言结构不出现在C 中。
 
- <p>If you are developing a &ldquo;back end&rdquo;, be it is a code-generator or some
-other tool, that uses this representation, you may occasionally find
-that you need to ask questions not easily answered by the functions and
-macros available here.  If that situation occurs, it is quite likely
-that GCC already supports the functionality you desire, but that the
-interface is simply not documented here.  In that case, you should ask
-the GCC maintainers (via mail to <a href="mailto:gcc@gcc.gnu.org">gcc@gcc.gnu.org</a>) about
-documenting the functionality you require.  Similarly, if you find
-yourself writing functions that do not deal directly with your back end,
-but instead might be useful to other people using the GCC front end, you
-should submit your patches for inclusion in GCC.
+ <p>如果你正在开发一个“后端”，一个代码生成器或一些其它工具，
+使用了该表示，你可能偶然发现需要询问一些问题，
+并且这些问题不好通过这里列出的函数和宏来回答。如果是这种情况，
+可能GCC已经支持了你想要的功能，只不过接口并没有记录在这里。
+在这种情况下，你应该询问GCC维护者（通过发邮件给<a href="mailto:gcc@gcc.gnu.org">gcc@gcc.gnu.org</a>），
+关于记录你想要的功能。
+同样，如果你发现你自己写的函数并不是直接处理你的后端，
+而是可能对其他使用GCC前端的人有帮助，你应该将你的patch提交纳入GCC。
 
 <ul class="menu">
-<li><a accesskey="1" href="Deficiencies.html#Deficiencies">Deficiencies</a>:         Topics net yet covered in this document. 
-<li><a accesskey="2" href="Tree-overview.html#Tree-overview">Tree overview</a>:        All about <code>tree</code>s. 
-<li><a accesskey="3" href="Types.html#Types">Types</a>:                Fundamental and aggregate types. 
-<li><a accesskey="4" href="Scopes.html#Scopes">Scopes</a>:               Namespaces and classes. 
-<li><a accesskey="5" href="Functions.html#Functions">Functions</a>:            Overloading, function bodies, and linkage. 
-<li><a accesskey="6" href="Declarations.html#Declarations">Declarations</a>:         Type declarations and variables. 
-<li><a accesskey="7" href="Attributes.html#Attributes">Attributes</a>:           Declaration and type attributes. 
-<li><a accesskey="8" href="Expression-trees.html#Expression-trees">Expression trees</a>:     From <code>typeid</code> to <code>throw</code>. 
+<li><a accesskey="1" href="_00e4_00b8_008d_00e8_00b6_00b3_00e4_00b9_008b_00e5_00a4_0084.html#g_t_00e4_00b8_008d_00e8_00b6_00b3_00e4_00b9_008b_00e5_00a4_0084">不足之处</a>:         在该文档中没有涵盖的专题。
+<li><a accesskey="2" href="Tree_00e6_00a6_0082_00e8_00bf_00b0.html#Tree_00e6_00a6_0082_00e8_00bf_00b0">Tree概述</a>:         所有关于<code>tree</code>的。
+<li><a accesskey="3" href="_00e7_00b1_00bb_00e5_009e_008b.html#g_t_00e7_00b1_00bb_00e5_009e_008b">类型</a>:             基本类型和聚合类型。
+<li><a accesskey="4" href="_00e4_00bd_009c_00e7_0094_00a8_00e5_009f_009f.html#g_t_00e4_00bd_009c_00e7_0094_00a8_00e5_009f_009f">作用域</a>:           命名空间和类。
+<li><a accesskey="5" href="_00e5_0087_00bd_00e6_0095_00b0.html#g_t_00e5_0087_00bd_00e6_0095_00b0">函数</a>:             重载，函数体和连接。
+<li><a accesskey="6" href="_00e5_00a3_00b0_00e6_0098_008e.html#g_t_00e5_00a3_00b0_00e6_0098_008e">声明</a>:             类型声明和变量。
+<li><a accesskey="7" href="_00e5_00b1_009e_00e6_0080_00a7.html#g_t_00e5_00b1_009e_00e6_0080_00a7">属性</a>:             声明和类型属性。
+<li><a accesskey="8" href="_00e8_00a1_00a8_00e8_00be_00be_00e5_00bc_008ftree.html#g_t_00e8_00a1_00a8_00e8_00be_00be_00e5_00bc_008ftree">表达式tree</a>:       从<code>typeid</code>到<code>throw</code>。
 </ul>
 
 <!--  -->
