@@ -10,42 +10,41 @@
 @cindex representation of RTL
 @cindex Register Transfer Language (RTL)
 
-Most of the work of the compiler is done on an intermediate representation
-called register transfer language.  In this language, the instructions to be
-output are described, pretty much one by one, in an algebraic form that
-describes what the instruction does.
+编译器的大部分工作都是基于一种中间表示，
+叫做寄存器传送语言（register transfer language）。
+在该语言中，描述了将要输出的指令，
+并且差不多是按照字母顺序一个一个的来描述指令的行为。
 
-RTL is inspired by Lisp lists.  It has both an internal form, made up of
-structures that point at other structures, and a textual form that is used
-in the machine description and in printed debugging dumps.  The textual
-form uses nested parentheses to indicate the pointers in the internal form.
+RTL的灵感来自Lisp列表。它同时具有一个内部形式，由指向结构体的结构体组成，
+以及一个文本形式，用在机器描述和打印的调试输出中。文本形式使用嵌套的括号，
+来表示内部形式中的指针。
 
 @menu
-* RTL对象::       Expressions vs vectors vs strings vs integers.
-* RTL类别::       Categories of RTL expression objects, and their structure.
-* 访问方式::         Macros to access expression operands or vector elts.
-* 特殊访问方式:: Macros to access specific annotations on RTL.
-* 标记::             Other flags in an RTL expression.
-* 机器模式::          Describing the size and format of a datum.
-* 常数::         Expressions with constant values.
-* 寄存器和内存::   Expressions representing register contents or memory.
-* 算术运算::        Expressions representing arithmetic on other expressions.
-* 比较运算::       Expressions representing comparison of expressions.
-* 位域运算::        Expressions representing bit-fields in memory or reg.
-* 向量运算:: Expressions involving vector datatypes.
-* 转换运算::       Extending, truncating, floating or fixing.
-* RTL声明::  Declaring volatility, constancy, etc.
-* 副作用::      Expressions for storing in registers, etc.
-* Incdec::            Embedded side-effects for autoincrement addressing.
-* 汇编::         Representing @code{asm} with operands.
-* Insns::             Expression types for entire insns.
-* 函数调用::             RTL representation of function call insns.
-* 共享::           Some expressions are unique; others *must* be copied.
-* 读取RTL::       Reading textual RTL from a file.
+* RTL对象::       表达式、向量、字符串、整数 
+* RTL类别::       RTL表达式对象的类别，以及它们的结构 
+* 访问方式::      用来访问表达式操作数和向量成员的宏
+* 特殊访问方式::  用来访问RTL中的特殊注解
+* 标记::          RTL表达式中的其它标记
+* 机器模式::      描述一个数据的大小和格式
+* 常数::          常数值表达式
+* 寄存器和内存::  表示寄存器内容或内存的表达式
+* 算术运算::      表示算术运算的表达式 
+* 比较运算::      表示比较运算的表达式
+* 位域运算::      表示内存或寄存器中位域的表达式
+* 向量运算::      关于向量数据类型的表达式
+* 转换运算::      扩展，截断，浮点化或者定点化
+* RTL声明::       声明为volatile的，constant的，等等
+* 副作用::        存储到寄存器的表达式，等
+* Incdec::        自动增量寻址的嵌入的副作用
+* 汇编::          表示带有操作数的asm
+* Insns::         整个insn的表达式类型
+* 函数调用::      函数call insn的RTL表示
+* 共享::          一些表达式是唯一的；其它的必须要被复制
+* 读取RTL::       从文件中读取文本的RTL
 @end menu
 
 @node RTL对象
-@section RTL Object Types
+@section RTL对象类型
 @cindex RTL object types
 
 @cindex RTL integers
@@ -53,24 +52,21 @@ form uses nested parentheses to indicate the pointers in the internal form.
 @cindex RTL vectors
 @cindex RTL expression
 @cindex RTX (See RTL)
-RTL uses five kinds of objects: expressions, integers, wide integers,
-strings and vectors.  Expressions are the most important ones.  An RTL
-expression (``RTX'', for short) is a C structure, but it is usually
-referred to with a pointer; a type that is given the typedef name
-@code{rtx}.
+RTL使用五种对象：表达式、整数、宽整数、字符串和向量。
+其中，最重要的是表达式。
+RTL 表达式（简称RTX）是一个C结构体，通常用指针来引用它。
+这种引用它的指针的类型定义名为@code{rtx}。
 
-An integer is simply an @code{int}; their written form uses decimal
-digits.  A wide integer is an integral object whose type is
-@code{HOST_WIDE_INT}; their written form uses decimal digits.
+整数就是C中的@code{int}，书写形式使用十进制表示。
+宽整数是@code{HOST_WIDE_INT}类型的一个整数对象，
+其书写形式也用十进制表示。
 
-A string is a sequence of characters.  In core it is represented as a
-@code{char *} in usual C fashion, and it is written in C syntax as well.
-However, strings in RTL may never be null.  If you write an empty string in
-a machine description, it is represented in core as a null pointer rather
-than as a pointer to a null character.  In certain contexts, these null
-pointers instead of strings are valid.  Within RTL code, strings are most
-commonly found inside @code{symbol_ref} expressions, but they appear in
-other contexts in the RTL expressions that make up machine descriptions.
+字符串为一串字符，在存储器中以C的@code{char *}形式表示且按C语法规定书写。
+然而，RTL中的字符串决不会为空值。若机器描述中有一空字符串，
+它在存储器中则表示成一个空指针而不是通常意义上的指向空字符的指针。
+在某些上下文中，允许用这种空指针表示空字符串。在RTL代码中，
+字符串经常出现在@code{symbol_ref}表达式中，
+但也出现在某些机器描述的RTL表达式中。
 
 In a machine description, strings are normally written with double
 quotes, as you would in C@.  However, strings in machine descriptions may
@@ -304,7 +300,7 @@ You can make no assumptions about the format of these codes.
 @end table
 
 @node 访问方式
-@section Access to Operands
+@section 访问操作数
 @cindex accessors
 @cindex access to operands
 @cindex operand access
@@ -313,71 +309,62 @@ You can make no assumptions about the format of these codes.
 @findex XINT
 @findex XWINT
 @findex XSTR
-Operands of expressions are accessed using the macros @code{XEXP},
-@code{XINT}, @code{XWINT} and @code{XSTR}.  Each of these macros takes
-two arguments: an expression-pointer (RTX) and an operand number
-(counting from zero).  Thus,
+表达式的操作数用宏@code{XEXP}、@code{XINT}、@code{XWINT}和@code{XSTR}访问。
+所有这些宏都有两个参数：一个为表达式指针（RTX），
+另一个为操作数序号 ( 从0 开始计算 )。如：
 
 @smallexample
 XEXP (@var{x}, 2)
 @end smallexample
 
 @noindent
-accesses operand 2 of expression @var{x}, as an expression.
+表示以表达式方式访问表达式@var{x}的第2个操作数。
 
 @smallexample
 XINT (@var{x}, 2)
 @end smallexample
 
 @noindent
-accesses the same operand as an integer.  @code{XSTR}, used in the same
-fashion, would access it as a string.
+表示以整数方式访问@code{x}的第2个操作数。
+@code{XSTR}表示以字符串方式访问。
 
-Any operand can be accessed as an integer, as an expression or as a string.
-You must choose the correct method of access for the kind of value actually
-stored in the operand.  You would do this based on the expression code of
-the containing expression.  That is also how you would know how many
-operands there are.
+任何一个操作数都能以整数方式、表达式方式或字符串方式来访问，
+但必须根据存贮在操作数中的实际值选择正确的访问方式。
+这可根据表达式的代码而获得，同样也可表达式代码获得操作数的个数。
 
-For example, if @var{x} is a @code{subreg} expression, you know that it has
-two operands which can be correctly accessed as @code{XEXP (@var{x}, 0)}
-and @code{XINT (@var{x}, 1)}.  If you did @code{XINT (@var{x}, 0)}, you
-would get the address of the expression operand but cast as an integer;
-that might occasionally be useful, but it would be cleaner to write
-@code{(int) XEXP (@var{x}, 0)}.  @code{XEXP (@var{x}, 1)} would also
-compile without error, and would return the second, integer operand cast as
-an expression pointer, which would probably result in a crash when
-accessed.  Nothing stops you from writing @code{XEXP (@var{x}, 28)} either,
-but this will access memory past the end of the expression with
-unpredictable results.
+例如：若@var{x}是@code{subreg}表达式，通过表达式代码可知它有二个操作数，
+这两个操作数的访问应该是@code{XEXP (@var{x}, 0)} 和@code{XINT (@var{x}, 1)}，
+若写成@code{XINT (@var{x}, 0)}，那么，你得到的表达式地址将被强制成整数，
+偶尔可能会需要这样做，但在这种情况下用@code{(int) XEXP (@var{x}, 0)}表示要更好。
+同样写成@code{XEXP (@var{x}, 1)} 也不会导致编译错误，
+它将返回强制为表达式指针而实际为整数的1号操作数，在运行中访问该指针时，
+这可能会导致出错。同样，你也可以写成@code{XEXP (@var{x}, 28)}，
+但这超出了此表达式的存贮边界，所得到的将是一个预料不到的结果。
 
-Access to operands which are vectors is more complicated.  You can use the
-macro @code{XVEC} to get the vector-pointer itself, or the macros
-@code{XVECEXP} and @code{XVECLEN} to access the elements and length of a
-vector.
+对向量操作数的访问较为复杂些，可用@code{XVEC}宏来获取向量指针本身，
+@code{XVECEXP}和@code{XVECLEN}宏访问一个向量的元素和长度。
 
 @table @code
 @findex XVEC
 @item XVEC (@var{exp}, @var{idx})
-Access the vector-pointer which is operand number @var{idx} in @var{exp}.
+获得@var{exp}中第@var{idx}个操作数的向量指针。
 
 @findex XVECLEN
 @item XVECLEN (@var{exp}, @var{idx})
-Access the length (number of elements) in the vector which is
-in operand number @var{idx} in @var{exp}.  This value is an @code{int}.
+获得@var{exp}中第@var{idx}个操作数（为向量操作数）的向量长度（元素个数），
+其值是@code{int}。
 
 @findex XVECEXP
 @item XVECEXP (@var{exp}, @var{idx}, @var{eltnum})
-Access element number @var{eltnum} in the vector which is
-in operand number @var{idx} in @var{exp}.  This value is an RTX@.
+访问@var{exp}中第@var{idx}个操作数（为向量操作数）的第@var{eltnum}个元素，
+其值是一个RTX。
 
 It is up to you to make sure that @var{eltnum} is not negative
 and is less than @code{XVECLEN (@var{exp}, @var{idx})}.
 @end table
 
-All the macros defined in this section expand into lvalues and therefore
-can be used to assign the operands, lengths and vector elements as well as
-to access them.
+在本节中所定义的所有宏定义都被扩展成左值，
+因而也可用于对操作数、长度和向量元素赋值。
 
 @node 特殊访问方式
 @section Access to Special Operands
@@ -4017,23 +4004,19 @@ combiner is finished with the insn.  This is done by calling
 @end itemize
 
 @node 读取RTL
-@section Reading RTL
+@section 读取RTL
 
-To read an RTL object from a file, call @code{read_rtx}.  It takes one
-argument, a stdio stream, and returns a single RTL object.  This routine
-is defined in @file{read-rtl.c}.  It is not available in the compiler
-itself, only the various programs that generate the compiler back end
-from the machine description.
+若要从文件中读取RTL对象，可以调用@code{read_rtx}。
+它接受一个参数，stdio标准输入输出流，并且返回一个RTL对象。
+该函数在@file{read-rtl.c}中定义。
+它只在通过机器描述来生成编译器后端的各种程序中使用，编译器本身并没有用到。
 
-People frequently have the idea of using RTL stored as text in a file as
-an interface between a language front end and the bulk of GCC@.  This
-idea is not feasible.
+人们经常想到使用以文本方式存储在文件中的RTL来作为语言前端和GCC主干之间的接口。
+这种想法其实是不可行的。
 
-GCC was designed to use RTL internally only.  Correct RTL for a given
-program is very dependent on the particular target machine.  And the RTL
-does not contain all the information about the program.
+GCC一度被设计为只是在内部使用RTL。对于给定的程序，
+RTL正确与否与特定的目标机器非常有关系。而且RTL并不包含程序的所有信息。
 
-The proper way to interface GCC to a new language front end is with
-the ``tree'' data structure, described in the files @file{tree.h} and
-@file{tree.def}.  The documentation for this structure (@pxref{Trees})
-is incomplete.
+对于GCC和一个新语言前端接口的恰当方式，
+是使用在文件@file{tree.h}和@file{tree.def}中描述的“tree”数据结构。
+关于该结构的文档（参见 @ref{Trees}）不是很全面。
