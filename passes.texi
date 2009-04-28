@@ -13,30 +13,24 @@
 @cindex compiler passes and files
 
 这章综述了编译器的优化和代码产生过程。
-This chapter is dedicated to giving an overview of the optimization and
-code generation passes of the compiler.  In the process, it describes
-some of the language front end interface, though this description is no
-where near complete.
 
 @menu
-* Parsing pass::         The language front end turns text into bits.
-* Gimplification pass::  The bits are turned into something we can optimize.
-* Pass manager::         Sequencing the optimization passes.
-* Tree-SSA passes::      Optimizations on a high-level representation.
-* RTL passes::           Optimizations on a low-level representation.
+* 语法分析过程::        语言前端将文本转换为机器字节。
+* Gimplification过程::  将机器字节转换为可以优化的形式。
+* 过程管理器::          序列化优化过程。
+* Tree-SSA过程::        基于高级表示上的优化。
+* RTL过程::             基于低级表示上的优化。
 @end menu
 
-@node Parsing pass
-@section Parsing pass
+@node 语法分析过程
+@section 语法分析过程
 @cindex GENERIC
 @findex lang_hooks.parse_file
-The language front end is invoked only once, via
-@code{lang_hooks.parse_file}, to parse the entire input.  The language
-front end may use any intermediate language representation deemed
-appropriate.  The C front end uses GENERIC trees (CROSSREF), plus
-a double handful of language specific tree codes defined in
-@file{c-common.def}.  The Fortran front end uses a completely different
-private representation.
+语言前端只被调用一次，通过@code{lang_hooks.parse_file}，
+用来解析整个输入。语言前端可以使用任何被认为合适的中间语言表示。
+C前端使用了GENERIC树，以及在@file{c-common.def}中定义的
+（double handful of）语言特定的树代码。
+Fortran前端使用了完全不同的私有表示。
 
 @cindex GIMPLE
 @cindex gimplification
@@ -44,139 +38,104 @@ private representation.
 @cindex language-independent intermediate representation
 @cindex intermediate representation lowering
 @cindex lowering, language-dependent intermediate representation
-At some point the front end must translate the representation used in the
-front end to a representation understood by the language-independent
-portions of the compiler.  Current practice takes one of two forms.
-The C front end manually invokes the gimplifier (CROSSREF) on each function,
-and uses the gimplifier callbacks to convert the language-specific tree
-nodes directly to GIMPLE (CROSSREF) before passing the function off to
-be compiled.
-The Fortran front end converts from a private representation to GENERIC,
-which is later lowered to GIMPLE when the function is compiled.  Which
-route to choose probably depends on how well GENERIC (plus extensions)
-can be made to match up with the source language and necessary parsing
-data structures.
+在某个地方，
+前端必须将其使用的表示转换为编译器中语言独立的部分能够理解的表示。
+目前的实现采用了两种形式。C前端在函数编译完之前，
+手动的对每个函数调用gimplifier，
+并且使用gimplifier回调函数将语言特定的树代码直接转换为GIMPLE。
+Fortran前端将私有表示转换为 GENERIC，之后当函数编译完时，
+再降低为GIMPLE。选择哪种途径可能取决于GENERIC（及其扩展）
+是否能够很好的匹配源语言，以及是否需要解析数据结构。
 
-BUG: Gimplification must occur before nested function lowering,
-and nested function lowering must be done by the front end before
-passing the data off to cgraph.
+BUG：Gimplification必须在nested function lowering之前进行，
+并且nested function lowering必须在将数据传给cgraph之前，由前端完成。
 
-TODO: Cgraph should control nested function lowering.  It would
-only be invoked when it is certain that the outer-most function
-is used.
+TODO：Cgraph应该控制nested function lowering。并且只会在确定最外层函数被使用时才调用。
 
-TODO: Cgraph needs a gimplify_function callback.  It should be
-invoked when (1) it is certain that the function is used, (2)
-warning flags specified by the user require some amount of
-compilation in order to honor, (3) the language indicates that
-semantic analysis is not complete until gimplification occurs.
-Hum@dots{} this sounds overly complicated.  Perhaps we should just
-have the front end gimplify always; in most cases it's only one
-function call.
+TODO：Cgraph需要一个gimplify_function回调函数。
+并且在下列情况下会被调用：(1)确定函数被使用，
+(2)为了兑现用户指定的警告选项，需要多次的编译，
+(3)语言本身表明了在gimplification进行前，语义分析会不完整。
+嗯。。。听起来有点过度复杂。或许我们应该总是进行前端的gimplify；
+大多数情况，这只是一个函数调用。
 
-The front end needs to pass all function definitions and top level
-declarations off to the middle-end so that they can be compiled and
-emitted to the object file.  For a simple procedural language, it is
-usually most convenient to do this as each top level declaration or
-definition is seen.  There is also a distinction to be made between
-generating functional code and generating complete debug information.
-The only thing that is absolutely required for functional code is that
-function and data @emph{definitions} be passed to the middle-end.  For
-complete debug information, function, data and type declarations
-should all be passed as well.
+前端需要将所有函数的定义和顶层的声明传给中端，
+以至于它们能被编译和生成目标文件。对于一个简单的程序语言，
+顶层的每个声明和定义都能找到，因此这样做非常方便。
+另外，对于生成函数代码和生成完全的调试信息，也有差别。
+对于函数代码，唯一必须的是将函数和数据定义传给中端。
+对于完全的调试信息，函数，数据和类型的声明也都需要被传递。
 
 @findex rest_of_decl_compilation
 @findex rest_of_type_compilation
 @findex cgraph_finalize_function
-In any case, the front end needs each complete top-level function or
-data declaration, and each data definition should be passed to
-@code{rest_of_decl_compilation}.  Each complete type definition should
-be passed to @code{rest_of_type_compilation}.  Each function definition
-should be passed to @code{cgraph_finalize_function}.
+任何情况下，如果前端需要每个完全的顶层函数或数据声明，
+则每个数据定义应该传给@code{rest_of_decl_compilation}。
+每个完全的类型定义应该传给@code{rest_of_type_compilation}。
+每个函数定义应给传给@code{cgraph_finalize_function}。
 
-TODO: I know rest_of_compilation currently has all sorts of
-rtl-generation semantics.  I plan to move all code generation
-bits (both tree and rtl) to compile_function.  Should we hide
-cgraph from the front ends and move back to rest_of_compilation
-as the official interface?  Possibly we should rename all three
-interfaces such that the names match in some meaningful way and
-that is more descriptive than "rest_of".
+中端根据自己的选择，将会立即生成函数和数据的定义，
+或者放入队列中以便后面的处理。
 
-The middle-end will, at its option, emit the function and data
-definitions immediately or queue them for later processing.
-
-@node Gimplification pass
-@section Gimplification pass
+@node Gimplification过程
+@section Gimplification过程
 
 @cindex gimplification
 @cindex GIMPLE
-@dfn{Gimplification} is a whimsical term for the process of converting
-the intermediate representation of a function into the GIMPLE language
-(CROSSREF).  The term stuck, and so words like ``gimplification'',
-``gimplify'', ``gimplifier'' and the like are sprinkled throughout this
-section of code.
+@dfn{Gimplification}是一个离奇的术语，
+用来表示将函数的中间表示转换为GIMPLE语言的过程。
+The term stuck，所以像“gimplification”, “gimplify”, 
+“gimplifier” 等类似的单词会分布在这部分代码中。
 
 @cindex GENERIC
-While a front end may certainly choose to generate GIMPLE directly if
-it chooses, this can be a moderately complex process unless the
-intermediate language used by the front end is already fairly simple.
-Usually it is easier to generate GENERIC trees plus extensions
-and let the language-independent gimplifier do most of the work.
+当然，尽管前端可以选择直接生成GIMPLE，但如果这样，
+则处理起来可能会有些复杂，除非前端使用的中间语言非常简单。
+通常生成GENERIC树以及其扩展会相对容易些，
+并且让语言独立的gimplifier来多大部分的工作。
 
 @findex gimplify_function_tree
 @findex gimplify_expr
 @findex lang_hooks.gimplify_expr
-The main entry point to this pass is @code{gimplify_function_tree}
-located in @file{gimplify.c}.  From here we process the entire
-function gimplifying each statement in turn.  The main workhorse
-for this pass is @code{gimplify_expr}.  Approximately everything
-passes through here at least once, and it is from here that we
-invoke the @code{lang_hooks.gimplify_expr} callback.
+这个过程的主入口点是@code{gimplify_function_tree}，
+位于@file{gimplify.c}中。我们从这里处理整个函数，
+依次的对每条语句进行gimplify。
+这个过程的主要工作是@code{gimplify_expr}。
+几乎每个处理都需要经过这里一次，
+并且我们是从这里来调用@code{lang_hooks.gimplify_expr}回调的。
 
-The callback should examine the expression in question and return
-@code{GS_UNHANDLED} if the expression is not a language specific
-construct that requires attention.  Otherwise it should alter the
-expression in some way to such that forward progress is made toward
-producing valid GIMPLE@.  If the callback is certain that the
-transformation is complete and the expression is valid GIMPLE, it
-should return @code{GS_ALL_DONE}.  Otherwise it should return
-@code{GS_OK}, which will cause the expression to be processed again.
-If the callback encounters an error during the transformation (because
-the front end is relying on the gimplification process to finish
-semantic checks), it should return @code{GS_ERROR}.
+回调函数应该考虑检查表达式，
+并且当表达式不是一个需要注意的语言特定的结构，
+则返回@code{GS_UNHANDLES}。
+否则，应该通过某种方式修改表达式使得可以产生合法的GIMPLE。
+如果回调函数确定已经完全转换，并且表达式是合法的GIMPLE，
+则应该返回@code{GS_ALL_DONE}。
+否则，应该返回@code{GS_OK}，这将会使得表达式会被再次处理。
+如果回调函数在转换过程中遇到一个错误
+（因为前端依赖于gimplification处理来完成语义检测），
+则应该返回@code{GS_ERROR}。
 
-@node Pass manager
-@section Pass manager
+@node 过程管理器
+@section 过程管理器
 
-The pass manager is located in @file{passes.c}, @file{tree-optimize.c}
-and @file{tree-pass.h}.
-Its job is to run all of the individual passes in the correct order,
-and take care of standard bookkeeping that applies to every pass.
+过程管理器在@file{passes.c}，
+@file{tree-optimize.c}和@file{tree-pass.h}中。
+它的工作是按照正确的顺序来运行所有单独的过程，
+并且处理应用到每个过程的标准薄记（standard bookkeeping）。
 
-The theory of operation is that each pass defines a structure that
-represents everything we need to know about that pass---when it
-should be run, how it should be run, what intermediate language
-form or on-the-side data structures it needs.  We register the pass
-to be run in some particular order, and the pass manager arranges
-for everything to happen in the correct order.
+工作原理是每个过程定义了一个结构体，
+用来表示我们需要知道的关于该过程的每件事情——应该什么运行，
+应该如何运行，需要什么中间语言或者附加的数据结构。
+我们按照某种特定的运行顺序来注册过程，
+过程管理器来安排所有的事情都按正确的顺序发生。
 
-The actuality doesn't completely live up to the theory at present.
-Command-line switches and @code{timevar_id_t} enumerations must still
-be defined elsewhere.  The pass manager validates constraints but does
-not attempt to (re-)generate data structures or lower intermediate
-language form based on the requirements of the next pass.  Nevertheless,
-what is present is useful, and a far sight better than nothing at all.
+目前实际的实现并不是完全做到了理论上所描述的。
+命令行开关和@code{timevar_id_t}枚举还必须定义在其它地方。
+过程管理器。。。不管怎样，现在的实现是有用的，比没有强。
 
-Each pass may have its own dump file (for GCC debugging purposes).
-Passes without any names, or with a name starting with a star, do not
-dump anything.
+TODO：描述由过程管理器建立的全局变量，以及对一个新的过程应该如何使用。
 
-TODO: describe the global variables set up by the pass manager,
-and a brief description of how a new pass should use it.
-I need to look at what info rtl passes use first@enddots{}
-
-@node Tree-SSA passes
-@section Tree-SSA passes
+@node Tree-SSA过程
+@section Tree-SSA过程
 
 The following briefly describes the tree optimization passes that are
 run after gimplification and what source files they are located in.
@@ -649,8 +608,8 @@ registers don't need to be saved.  This pass is located in
 
 @end itemize
 
-@node RTL passes
-@section RTL passes
+@node RTL过程
+@section RTL过程
 
 The following briefly describes the rtl generation and optimization
 passes that are run after tree optimization.
