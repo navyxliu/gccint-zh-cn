@@ -798,22 +798,17 @@ Binfos用于表示基类。由@code{TYPE_BINFO}给出的binfo是退化情况，
 @findex DECL_SIZE
 @findex DECL_ALIGN
 @findex DECL_EXTERNAL
-
-This section covers the various kinds of declarations that appear in the
-internal representation, except for declarations of functions
-(represented by @code{FUNCTION_DECL} nodes), which are described in
-@ref{Functions}.
+这一节涵盖了出现在内部表示中的各种声明。
+函数声明（由@code{FUNCTION_DECL}节点表示）除外，其在@ref{函数}一节中描述。
 
 @menu
-* Working with declarations::  Macros and functions that work on
-declarations.
-* Internal structure:: How declaration nodes are represented. 
+* 关于声明的操作::  作用于声明的宏和函数。
+* 内部结构::        声明节点是如何表示的。 
 @end menu
 
-@node Working with declarations
-@subsection Working with declarations
-
-Some macros can be used with any kind of declaration.  These include:
+@node 关于声明的操作
+@subsection 关于声明的操作
+一些宏可以用于任何种类的声明。这包括：
 @ftable @code
 @item DECL_NAME
 This macro returns an @code{IDENTIFIER_NODE} giving the name of the
@@ -965,81 +960,72 @@ Back ends can safely ignore these nodes.
 
 @end table
 
-@node Internal structure
-@subsection Internal structure
+@node 内部结构
+@subsection 内部结构
 
-@code{DECL} nodes are represented internally as a hierarchy of
-structures.
+@code{DECL}节点在内部被表示为层次结构体。
 
 @menu
-* Current structure hierarchy::  The current DECL node structure
-hierarchy.
-* Adding new DECL node types:: How to add a new DECL node to a
-frontend.
+* 目前的结构层次::     目前DECL节点的结构层次。
+* 添加新的DECL节点类型:: 如何给前端添加一个新的DECL节点。
 @end menu
 
-@node Current structure hierarchy
-@subsubsection Current structure hierarchy
+@node 目前的结构层次
+@subsubsection 目前的结构层次
 
 @table @code
 
 @item struct tree_decl_minimal
-This is the minimal structure to inherit from in order for common
-@code{DECL} macros to work.  The fields it contains are a unique ID,
-source location, context, and name.
+这是用于继承的最小结构体，从而使得@code{DECL}宏更加通用。
+所包含的域为一个唯一的ID，源位置，上下文和名字。 
 
 @item struct tree_decl_common
-This structure inherits from @code{struct tree_decl_minimal}.  It
-contains fields that most @code{DECL} nodes need, such as a field to
-store alignment, machine mode, size, and attributes.
+该结构体继承于@code{struct tree_decl_minimal}。
+包含了大多@code{DECL}节点需要的域，像存储对齐信息，机器模式，大小和属性的域。 
 
 @item struct tree_field_decl
-This structure inherits from @code{struct tree_decl_common}.  It is
-used to represent @code{FIELD_DECL}.
+该结构体继承于@code{struct tree_decl_common}。用于表示@code{FIELD_DECL}。
 
 @item struct tree_label_decl
-This structure inherits from @code{struct tree_decl_common}.  It is
-used to represent @code{LABEL_DECL}.
+该结构体继承于@code{struct tree_decl_common}。用于表示@code{LABEL_DECL}。 
 
 @item struct tree_translation_unit_decl
-This structure inherits from @code{struct tree_decl_common}.  It is
-used to represent @code{TRANSLATION_UNIT_DECL}.
+该结构体继承于@code{struct tree_decl_common}。
+用于表示@code{TRANSLATION_UNIT_DECL}。 
 
 @item struct tree_decl_with_rtl
-This structure inherits from @code{struct tree_decl_common}.  It
-contains a field to store the low-level RTL associated with a
-@code{DECL} node.
+该结构体继承于@code{struct tree_decl_common}。
+包含了一个存储与@code{DECL}节点相关的低层次RTL。
 
 @item struct tree_result_decl
-This structure inherits from @code{struct tree_decl_with_rtl}.  It is
-used to represent @code{RESULT_DECL}.
+该结构体继承于@code{struct tree_decl_with_rtl}。
+用于表示@code{RESULT_DECL}。 
 
 @item struct tree_const_decl
-This structure inherits from @code{struct tree_decl_with_rtl}.  It is
-used to represent @code{CONST_DECL}.
+该结构体继承于@code{struct tree_decl_with_rtl}。
+用于表示@code{CONST_DECL}。 
 
 @item struct tree_parm_decl
-This structure inherits from @code{struct tree_decl_with_rtl}.  It is
-used to represent @code{PARM_DECL}.  
+该结构体继承于@code{struct tree_decl_with_rtl}。
+用于表示@code{PARM_DECL}。 
 
 @item struct tree_decl_with_vis
-This structure inherits from @code{struct tree_decl_with_rtl}.  It
-contains fields necessary to store visibility information, as well as
-a section name and assembler name.
+该结构体继承于@code{struct tree_decl_with_rtl}。
+包含了存储可视性信息所需要的域，还有一个section名和汇编名。 
 
 @item struct tree_var_decl
-This structure inherits from @code{struct tree_decl_with_vis}.  It is
-used to represent @code{VAR_DECL}.  
+该结构体继承于@code{struct tree_decl_with_vis}。
+用于表示@code{VAR_DECL}。
 
 @item struct tree_function_decl
-This structure inherits from @code{struct tree_decl_with_vis}.  It is
-used to represent @code{FUNCTION_DECL}.  
-
+该结构体继承于@code{struct tree_decl_with_vis}。
+用于表示@code{FUNCTION_DECL}。
 @end table
-@node Adding new DECL node types
-@subsubsection Adding new DECL node types
 
-Adding a new @code{DECL} tree consists of the following steps
+@node 添加新的DECL节点类型
+@subsubsection 添加新的DECL节点类型
+
+增加一个新的@code{DECL}树包含下列步骤
 
 @table @asis
 
@@ -1401,8 +1387,8 @@ optimization options specified on the command line.
 @c Function Bodies
 @c ---------------------------------------------------------------------
 
-@node Function Bodies
-@subsection Function Bodies
+@node 函数体
+@subsection 函数体
 @cindex function body
 @cindex statements
 @tindex BREAK_STMT
@@ -1445,46 +1431,37 @@ optimization options specified on the command line.
 @findex WHILE_BODY
 @findex WHILE_COND
 
-A function that has a definition in the current translation unit will
-have a non-@code{NULL} @code{DECL_INITIAL}.  However, back ends should not make
-use of the particular value given by @code{DECL_INITIAL}.
+在当前转换单元中定义的函数将会有一个非@code{NULL}的@code{DECL_INITIAL}。
+但是，后端不应该使用@code{DECL_INITIAL}给出的该特定值。
 
-The @code{DECL_SAVED_TREE} macro will give the complete body of the
-function.
+宏@code{DECL_SAVED_TREE}将会给出完整的函数体。
 
-@subsubsection Statements
+@subsubsection 语句
 
-There are tree nodes corresponding to all of the source-level
-statement constructs, used within the C and C++ frontends.  These are
-enumerated here, together with a list of the various macros that can
-be used to obtain information about them.  There are a few macros that
-can be used with all statements:
+C和C++前端，使用了对应于所有源级的语句构造的树节点。
+这些都列举在这里，并附上能够用来获得它们的信息的各种宏的列表。
+有一些宏能用于所有的语句：
 
 @ftable @code
 @item STMT_IS_FULL_EXPR_P
-In C++, statements normally constitute ``full expressions''; temporaries
-created during a statement are destroyed when the statement is complete.
-However, G++ sometimes represents expressions by statements; these
-statements will not have @code{STMT_IS_FULL_EXPR_P} set.  Temporaries
-created during such statements should be destroyed when the innermost
-enclosing statement with @code{STMT_IS_FULL_EXPR_P} set is exited.
-
+在C++里，语句通常构成“充分表达式（full expressions）”；
+在语句中创建的临时事物会在声明完成时被销毁。
+然而，G++有时通过语句来表示表达式；
+这些语句将不会设置@code{STMT_IS_FULL_EXPR_P}。
+在这样的语句中创建的临时事物将会在最内层设置了
+@code{STMT_IS_FULL_EXPR_P}的语句退出时被销毁。
 @end ftable
 
-Here is the list of the various statement nodes, and the macros used to
-access them.  This documentation describes the use of these nodes in
-non-template functions (including instantiations of template functions).
-In template functions, the same nodes are used, but sometimes in
-slightly different ways.
+这里有一个各种语句节点的列表，以及访问它们的宏。
+该文档描述了在非模板函数（包括模板函数的实例）中这些节点的用法。
+在模板函数里，使用相同的节点，但是有时方法略有不同。
 
-Many of the statements have substatements.  For example, a @code{while}
-loop will have a body, which is itself a statement.  If the substatement
-is @code{NULL_TREE}, it is considered equivalent to a statement
-consisting of a single @code{;}, i.e., an expression statement in which
-the expression has been omitted.  A substatement may in fact be a list
-of statements, connected via their @code{TREE_CHAIN}s.  So, you should
-always process the statement tree by looping over substatements, like
-this:
+许多语句具有子语句。例如，一个@code{while}循环将会有一个循环体，
+其本身也是一个语句。如果子语句是@code{NULL_TREE}，
+则被认为相当于一个@code{;}组成的语句，即一个表达式语句，其中表达式为空。
+一个子语句实际上可以为一个语句列表，通过它们的@code{TREE_CHAIN}连接一起。
+所以，你应该总是通过循环所有的子语句来处理语句树，像这样：
+
 @smallexample
 void process_stmt (stmt)
      tree stmt;
@@ -1505,258 +1482,192 @@ void process_stmt (stmt)
     @}
 @}
 @end smallexample
-In other words, while the @code{then} clause of an @code{if} statement
-in C++ can be only one statement (although that one statement may be a
-compound statement), the intermediate representation will sometimes use
-several statements chained together.
+换句话说，虽然C++中@code{if}语句的@code{then}子句可以只是一个语句，
+但中间表示有时会使用多个语句连接在一起。
 
 @table @code
 @item ASM_EXPR
-
-Used to represent an inline assembly statement.  For an inline assembly
-statement like:
+用来表示一条内联的汇编语句。一条内联汇编语句形如： 
 @smallexample
 asm ("mov x, y");
 @end smallexample
-The @code{ASM_STRING} macro will return a @code{STRING_CST} node for
-@code{"mov x, y"}.  If the original statement made use of the
-extended-assembly syntax, then @code{ASM_OUTPUTS},
-@code{ASM_INPUTS}, and @code{ASM_CLOBBERS} will be the outputs, inputs,
-and clobbers for the statement, represented as @code{STRING_CST} nodes.
-The extended-assembly syntax looks like:
+@code{ASM_STRING}宏将会为@code{"mov x, y"}返回一个@code{STRING_CST}节点。
+如果原始的语句使用了扩展汇编语法，则@code{ASM_OUTPUTS}, 
+@code{ASM_INPUTS}和@code{ASM_CLOBBERS}为用@code{STRING_CST}表示的语句的输出，
+输入和clobber。扩展汇编语法形如：
+
 @smallexample
 asm ("fsinx %1,%0" : "=f" (result) : "f" (angle));
 @end smallexample
-The first string is the @code{ASM_STRING}, containing the instruction
-template.  The next two strings are the output and inputs, respectively;
-this statement has no clobbers.  As this example indicates, ``plain''
-assembly statements are merely a special case of extended assembly
-statements; they have no cv-qualifiers, outputs, inputs, or clobbers.
-All of the strings will be @code{NUL}-terminated, and will contain no
-embedded @code{NUL}-characters.
+第一个字符串是@code{ASM_STRING}，包含指令模板。
+接下来的两个字符串分别是输出和输入。该语句没有clobbers。
+这个例子表明，普通的汇编语句只是扩展汇编语句的一个特例；
+它们没有限定符，输出，输入或者clobbers。
+所有的字符串都为@code{NUL}结尾，并且不包含嵌入的@code{NUL}字符。
 
-If the assembly statement is declared @code{volatile}, or if the
-statement was not an extended assembly statement, and is therefore
-implicitly volatile, then the predicate @code{ASM_VOLATILE_P} will hold
-of the @code{ASM_EXPR}.
+如果汇编语句被声明为@code{volatile}，或者语句不是扩展汇编语句，
+因此是一个隐式的@code{volatile}，
+则断言@code{ASM_VOLATILE_P}将会保存@code{ASM_EXPR}。
 
 @item BREAK_STMT
-
-Used to represent a @code{break} statement.  There are no additional
-fields.
+用来表示一条@code{break}语句。没有额外的域。 
 
 @item CASE_LABEL_EXPR
+用来表示一个@code{case}标号，@code{case}标号的范围或者一个@code{default}标号。
+如果@code{CASE_LOW}是@code{NULL_TREE}，则为一个@code{default}标号。
+否则，如果@code{CASE_HIGH}是@code{NULL_TREE}，则为一个普通的@code{case}标号。
+这种情况下，@code{CASE_LOW}是一个表达式，给出了标号的值。
+@code{CASE_LOW}和@code{CASE_HIGH}都是@code{INTEGER_CST}节点。
+这些值跟在@code{switch}语句中的条件表达式具有相同的类型。 
 
-Use to represent a @code{case} label, range of @code{case} labels, or a
-@code{default} label.  If @code{CASE_LOW} is @code{NULL_TREE}, then this is a
-@code{default} label.  Otherwise, if @code{CASE_HIGH} is @code{NULL_TREE}, then
-this is an ordinary @code{case} label.  In this case, @code{CASE_LOW} is
-an expression giving the value of the label.  Both @code{CASE_LOW} and
-@code{CASE_HIGH} are @code{INTEGER_CST} nodes.  These values will have
-the same type as the condition expression in the switch statement.
+否则，如果同时定义了@code{CASE_LOW}和@code{CASE_HIGH}，则语句为一个@code{case}标号的范围。这样的语句源于允许用户使用如下形式的扩展：
 
-Otherwise, if both @code{CASE_LOW} and @code{CASE_HIGH} are defined, the
-statement is a range of case labels.  Such statements originate with the
-extension that allows users to write things of the form:
 @smallexample
 case 2 ... 5:
 @end smallexample
-The first value will be @code{CASE_LOW}, while the second will be
-@code{CASE_HIGH}.
+第一个值为@code{CASE_LOW}，第二个为@code{CASE_HIGH}。
 
 @item CLEANUP_STMT
-
-Used to represent an action that should take place upon exit from the
-enclosing scope.  Typically, these actions are calls to destructors for
-local objects, but back ends cannot rely on this fact.  If these nodes
-are in fact representing such destructors, @code{CLEANUP_DECL} will be
-the @code{VAR_DECL} destroyed.  Otherwise, @code{CLEANUP_DECL} will be
-@code{NULL_TREE}.  In any case, the @code{CLEANUP_EXPR} is the
-expression to execute.  The cleanups executed on exit from a scope
-should be run in the reverse order of the order in which the associated
-@code{CLEANUP_STMT}s were encountered.
+用来表示在封闭作用域的出口上执行的动作。
+通常，这些动作是为局部对象调用析构函数，但是后端不能依靠这个事实。
+如果这些节点确实是表示了这样的析构函数，
+@code{CLEANUP_DECL}将为销毁的@code{VAR_DECL}。
+否则@code{CLEANUP_DECL}为@code{NULL_TREE}。
+无论哪种情况，@code{CLEANUP_EXPR}都是要被执行的表达式。
+清除工作在作用域的出口被执行，
+并且按照所遇到的@code{CLEANUP_STMT}的相反顺序进行。
 
 @item CONTINUE_STMT
-
-Used to represent a @code{continue} statement.  There are no additional
-fields.
+用来表示一条@code{continue}语句。没有额外的域。 
 
 @item CTOR_STMT
-
-Used to mark the beginning (if @code{CTOR_BEGIN_P} holds) or end (if
-@code{CTOR_END_P} holds of the main body of a constructor.  See also
-@code{SUBOBJECT} for more information on how to use these nodes.
+用于标记构建函数体的起始（@code{CTOR_BEGIN_P}）或结尾（@code{CTOR_END_P}）。关于如何使用这些节点的更多信息，参见@code{SUBOBJECT}。 
 
 @item DECL_STMT
-
-Used to represent a local declaration.  The @code{DECL_STMT_DECL} macro
-can be used to obtain the entity declared.  This declaration may be a
-@code{LABEL_DECL}, indicating that the label declared is a local label.
-(As an extension, GCC allows the declaration of labels with scope.)  In
-C, this declaration may be a @code{FUNCTION_DECL}, indicating the
-use of the GCC nested function extension.  For more information,
-@pxref{Functions}.
+用来表示一个局部声明。宏@code{DECL_STMT_DECL}可以用来获得整个声明。
+该声明可以为一个@code{LABEL_DECL}，表示声明了一个局部标号。
+（作为扩展，GCC允许声明具有作用域的标号。）
+在C中，该声明可以为一个@code{FUNCTION_DECL}，表示使用GCC嵌套函数扩展。
+更多信息，参见 @ref{函数}。
 
 @item DO_STMT
-
-Used to represent a @code{do} loop.  The body of the loop is given by
-@code{DO_BODY} while the termination condition for the loop is given by
-@code{DO_COND}.  The condition for a @code{do}-statement is always an
-expression.
+用来表示@code{do}循环。循环体由@code{DO_BODY}给出，
+终止条件由@code{DO_COND}给出。@code{do}语句的条件总是一个表达式。
 
 @item EMPTY_CLASS_EXPR
-
-Used to represent a temporary object of a class with no data whose
-address is never taken.  (All such objects are interchangeable.)  The
-@code{TREE_TYPE} represents the type of the object.
+用来表示类的临时对象。（所有这样的对象都是可互换的。）
+@code{TREE_TYPE}表示对象的类型。 
 
 @item EXPR_STMT
-
-Used to represent an expression statement.  Use @code{EXPR_STMT_EXPR} to
-obtain the expression.
+用来表示表达式语句。使用@code{EXPR_STMT_EXPR}来获得表达式。 
 
 @item FOR_STMT
-
-Used to represent a @code{for} statement.  The @code{FOR_INIT_STMT} is
-the initialization statement for the loop.  The @code{FOR_COND} is the
-termination condition.  The @code{FOR_EXPR} is the expression executed
-right before the @code{FOR_COND} on each loop iteration; often, this
-expression increments a counter.  The body of the loop is given by
-@code{FOR_BODY}.  Note that @code{FOR_INIT_STMT} and @code{FOR_BODY}
-return statements, while @code{FOR_COND} and @code{FOR_EXPR} return
-expressions.
+用来表示一条@code{for}语句。@code{FOR_INIT_STMT}是循环的初始语句。
+@code{FOR_COND}是终止条件。
+@code{FOR_INIT_STMT}是在每次循环迭代@code{FOR_COND}之前执行的表达式，
+该表达式常常是增加计数器。循环体由@code{FOR_BODY}给出。
+注意@code{FOR_INIT_STMT}和@code{FOR_BODY}返回语句，
+而@code{FOR_COND}和@code{FOR_EXPR}返回表达式。
 
 @item GOTO_EXPR
-
-Used to represent a @code{goto} statement.  The @code{GOTO_DESTINATION} will
-usually be a @code{LABEL_DECL}.  However, if the ``computed goto'' extension
-has been used, the @code{GOTO_DESTINATION} will be an arbitrary expression
-indicating the destination.  This expression will always have pointer type.
+用来表示一条@code{goto}语句。
+@code{GOTO_DESTINATION}通常为一个@code{LABEL_DECL}。
+然而，如果使用了扩展的“computed goto”，将为一个随机表达式用来指示目的地。
+该表达式总是具有一个指针类型。 
 
 @item HANDLER
-
-Used to represent a C++ @code{catch} block.  The @code{HANDLER_TYPE}
-is the type of exception that will be caught by this handler; it is
-equal (by pointer equality) to @code{NULL} if this handler is for all
-types.  @code{HANDLER_PARMS} is the @code{DECL_STMT} for the catch
-parameter, and @code{HANDLER_BODY} is the code for the block itself.
+用来表示C++ @code{catch}块。@code{HANDLER_TYPE}是由该处理者捕捉的异常类型。
+如果该处理者是针对所有类型的，则等于（指针等于）@code{NULL}。
+@code{HANDLER_PARMS}是@code{catch}参数，是一个@code{DECL_STMT}。
+@code{HANDLER_BODY}是块本身的代码。 
 
 @item IF_STMT
-
-Used to represent an @code{if} statement.  The @code{IF_COND} is the
-expression.
-
-If the condition is a @code{TREE_LIST}, then the @code{TREE_PURPOSE} is
-a statement (usually a @code{DECL_STMT}).  Each time the condition is
-evaluated, the statement should be executed.  Then, the
-@code{TREE_VALUE} should be used as the conditional expression itself.
-This representation is used to handle C++ code like this:
+用来表示一条@code{if}语句。@code{IF_COND}是表达式。
+如果条件是一个@code{TREE_LIST}，
+则@code{TREE_PURPOSE}是一条语句（通常为 @code{DECL_STMT}）。
+每次评估条件的时候，都要执行该语句。
+然后，@code{TREE_VALUE}应该作为条件表达式本身来使用。
+该表示用来处理C++代码，如： 
 
 @smallexample
 if (int i = 7) @dots{}
 @end smallexample
 
-where there is a new local variable (or variables) declared within the
-condition.
-
-The @code{THEN_CLAUSE} represents the statement given by the @code{then}
-condition, while the @code{ELSE_CLAUSE} represents the statement given
-by the @code{else} condition.
+其中，在条件中声明了一个（或多个）新的局部变量。
 
 @item LABEL_EXPR
-
-Used to represent a label.  The @code{LABEL_DECL} declared by this
-statement can be obtained with the @code{LABEL_EXPR_LABEL} macro.  The
-@code{IDENTIFIER_NODE} giving the name of the label can be obtained from
-the @code{LABEL_DECL} with @code{DECL_NAME}.
+用来表示一个标号。
+可以通过@code{LABEL_EXPR_LABEL}宏获得该语句声明的@code{LABEL_DECL}。
+可以通过@code{LABEL_DECL}的@code{DECL_NAME}获得给出的标号名字。
 
 @item RETURN_STMT
-
-Used to represent a @code{return} statement.  The @code{RETURN_EXPR} is
-the expression returned; it will be @code{NULL_TREE} if the statement
-was just
+用来表示一条@code{return}语句。@code{RETURN_EXPR}是返回的表达式，
+其将会返回@code{NULL_TREE}，如果语句只是 
 @smallexample
 return;
 @end smallexample
 
 @item SUBOBJECT
-
-In a constructor, these nodes are used to mark the point at which a
-subobject of @code{this} is fully constructed.  If, after this point, an
-exception is thrown before a @code{CTOR_STMT} with @code{CTOR_END_P} set
-is encountered, the @code{SUBOBJECT_CLEANUP} must be executed.  The
-cleanups must be executed in the reverse order in which they appear.
+在构造函数中，这些节点用来标记在某一点子对象被完全构造。如果，这一点之后，在遇到设置了@code{CTOR_END_P}的@code{CTOR_STMT}之前，有异常抛出，则必须执行@code{SUBOBJECT_CLEANUP}。清除工作必须按照它们出现的顺序反向执行。 
 
 @item SWITCH_STMT
-
-Used to represent a @code{switch} statement.  The @code{SWITCH_STMT_COND}
-is the expression on which the switch is occurring.  See the documentation
-for an @code{IF_STMT} for more information on the representation used
-for the condition.  The @code{SWITCH_STMT_BODY} is the body of the switch
-statement.   The @code{SWITCH_STMT_TYPE} is the original type of switch
-expression as given in the source, before any compiler conversions.
+用来表示一个@code{switch}语句。
+@code{SWITCH_STMT_COND}是发生@code{switch}的表达式。
+更多关于条件表示的信息，参见@code{IF_STMT}文档。
+@code{SWITCH_STMT_BODY}是@code{switch}语句主体。
+@code{SWITCH_STMT_TYPE}是源代码中给出的@code{switch}表达式的，
+在任何编译器转换之前的原始类型。
 
 @item TRY_BLOCK
-Used to represent a @code{try} block.  The body of the try block is
-given by @code{TRY_STMTS}.  Each of the catch blocks is a @code{HANDLER}
-node.  The first handler is given by @code{TRY_HANDLERS}.  Subsequent
-handlers are obtained by following the @code{TREE_CHAIN} link from one
-handler to the next.  The body of the handler is given by
-@code{HANDLER_BODY}.
+用来表示一个@code{try}块。@code{try}块的主体由@code{TRY_STMTS}给出。
+每个@code{catch}块都是一个@code{HANDLER}节点。
+第一个@code{handler}由 @code{TRY_HANDLERS}给出。
+后续的@code{handlers}可以通过@code{TREE_CHAIN}获得。
+@code{handler}的主体由@code{HANDLER_BODY}给出。
 
-If @code{CLEANUP_P} holds of the @code{TRY_BLOCK}, then the
-@code{TRY_HANDLERS} will not be a @code{HANDLER} node.  Instead, it will
-be an expression that should be executed if an exception is thrown in
-the try block.  It must rethrow the exception after executing that code.
-And, if an exception is thrown while the expression is executing,
-@code{terminate} must be called.
+如果@code{CLEANUP_P}持有@code{TRY_BLOCK}，
+则@code{TRY_HANDLERS}将不是一个@code{HANDLER}节点。
+相反的，其将会是一个表达式，并且如果在@code{try}块中抛出异常时则被执行。
+其必须在执行完那些代码之后再重新抛出异常。
+并且，如果当表达式正在执行的时候，如果有异常抛出，则必须终止。
 
 @item USING_STMT
-Used to represent a @code{using} directive.  The namespace is given by
-@code{USING_STMT_NAMESPACE}, which will be a NAMESPACE_DECL@.  This node
-is needed inside template functions, to implement using directives
-during instantiation.
+用来表示@code{using}指示符。命名空间为一个NAMESPACE_DECL，
+由@code{USING_STMT_NAMESPACE}给出。该节点在模板函数内部需要，
+用来在实例化时实现@code{using}指示符。 
 
 @item WHILE_STMT
-
-Used to represent a @code{while} loop.  The @code{WHILE_COND} is the
-termination condition for the loop.  See the documentation for an
-@code{IF_STMT} for more information on the representation used for the
-condition.
-
-The @code{WHILE_BODY} is the body of the loop.
-
+用来表示一个@code{while}循环。@code{WHILE_COND}是循环的终止条件。
+关于用来表示条件的更多信息，参见@code{IF_STMT}的文档。
+ 
+@code{WHILE_BODY}是循环体。 
 @end table
 
 @c ---------------------------------------------------------------------
 @c Attributes
 @c ---------------------------------------------------------------------
 @node 属性
-@section Attributes in trees
+@section 树中的属性
 @cindex attributes
 
-Attributes, as specified using the @code{__attribute__} keyword, are
-represented internally as a @code{TREE_LIST}.  The @code{TREE_PURPOSE}
-is the name of the attribute, as an @code{IDENTIFIER_NODE}.  The
-@code{TREE_VALUE} is a @code{TREE_LIST} of the arguments of the
-attribute, if any, or @code{NULL_TREE} if there are no arguments; the
-arguments are stored as the @code{TREE_VALUE} of successive entries in
-the list, and may be identifiers or expressions.  The @code{TREE_CHAIN}
-of the attribute is the next attribute in a list of attributes applying
-to the same declaration or type, or @code{NULL_TREE} if there are no
-further attributes in the list.
+使用关键字@code{__attribute__}指定的属性，在内部作为@code{TREE_LIST}来表示。
+@code{TREE_PURPOSE} ，作为一个@code{IDENTIFIER_NODE}，是属性的名字。
+如果有参数的话，@code{TREE_VALUE}是一个属性参数的@code{TREE_LIST}，
+或者在没有参数时，为@code{NULL_TREE}。
+参数作为列表中的@code{TREE_VALUE}后继项存储，并且可以为标识符或者表达式。
+属性的@code{TREE_CHAIN}是在属性列表中应用到同一声明或类型的下一个属性，
+或者为@code{NULL_TREE}如果列表中没有更多的属性。
 
-Attributes may be attached to declarations and to types; these
-attributes may be accessed with the following macros.  All attributes
-are stored in this way, and many also cause other changes to the
-declaration or type or to other internal compiler data structures.
+属性可以附加到声明和类型上；这些属性可以通过下列宏来访问。
+所有的属性都通过这种方式存储，并且许多还对声明和类型，
+或者其它内部编译器数据结构体，引起其它的变化。
 
 @deftypefn {Tree Macro} tree DECL_ATTRIBUTES (tree @var{decl})
-This macro returns the attributes on the declaration @var{decl}.
+该宏返回声明@var{decl}上的属性。
 @end deftypefn
 
 @deftypefn {Tree Macro} tree TYPE_ATTRIBUTES (tree @var{type})
-This macro returns the attributes on the type @var{type}.
+该宏返回类型@var{type}上的属性。
 @end deftypefn
 
 @c ---------------------------------------------------------------------
