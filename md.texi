@@ -104,7 +104,7 @@ insn列表创建一个新的insn，并且调用 @code{DONE}。对于某些命名
 被用来标识RTL dump中的指令，其它的都与没有命名的模式一样。
 
 @item
-@dfn{RTL template}（@pxref{RTL Template}）是一个不完全的RTL表达式向量，展示了这
+@dfn{RTL template}（@pxref{RTL模板}）是一个不完全的RTL表达式向量，展示了这
 条指令的样子。所谓不完全是因为它可以包含 @code{match_operand}, 
 @code{match_operator} 和 @code{match_dup} 表达式，用来表示指令的操作数。
 
@@ -127,13 +127,13 @@ insn列表创建一个新的insn，并且调用 @code{DONE}。对于某些命名
 
 @item
 @dfn{output template}：一个字符串，说明了如何将匹配的insn输出为汇编代码。字符串
-中的 @samp{%} 指定了替换一个操作数值的地方。@pxref{Output Template}。
+中的 @samp{%} 指定了替换一个操作数值的地方。@pxref{输出模板}。
 
 当简单替换无法满足需求的时候，你可以指定一块C代码来计算输出。
-@pxref{Output Statement}。
+@pxref{输出语句}。
 
 @item
-一个可选的向量，包含了匹配该模式的insn的属性值。@pxref{Insn Attributes}。
+一个可选的向量，包含了匹配该模式的insn的属性值。@pxref{Insn属性}。
 
 @end enumerate
 
@@ -207,7 +207,7 @@ RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们�
 的值。
 
 @var{predicate} 为一个字符串，为一个函数的名字，其接受两个参数，一个表达式和一个
-机器模式。@pxref{Predicates}。在匹配过程中，函数将会被调用，使用假定的操作数作为
+机器模式。@pxref{判定条件}。在匹配过程中，函数将会被调用，使用假定的操作数作为
 表达式并且 @var{m} 作为机器模式参数（如果 @var{m} 没有被指定，则使用 
 @code{VOIDmode}，这通常会使得 @var{predicate} 可以接受任何机器模式）。如果其返
 回0，则该指令模式匹配失败。@var{predicate} 可以为一个空字符串；这意味着不对操作
@@ -218,7 +218,7 @@ RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们�
 接受 @code{const_int} 节点，即使它们的机器模式为 @code{VOIDmode}。
 
 @var{constraint} 控制重载以及针对一个值选择最好的寄存器类别来使用，将在后面解释
-（@pxref{Constraints}）。如果约束为空字符串，则可以忽略掉。
+（@pxref{约束条件}）。如果约束为空字符串，则可以忽略掉。
 
 人们经常弄不清楚约束和断言的区别。断言帮助决定一个给定的insn是否匹配指令模式。约束在该决定中不发挥作用；替代的，其控制已经匹配的insn的各种决定。
 
@@ -237,7 +237,7 @@ RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们�
 
 如果在一个 @code{parallel} 中的最后几个表达式为 @code{clobber} 表达式，其操作数
 为一个硬寄存器或者 @code{match_scratch}，则组合器可以在需要的时候增加或删除它
-们。@pxref{Side Effects}。
+们。@pxref{副作用}。
 
 @findex match_dup
 @item (match_dup @var{n})
@@ -251,7 +251,7 @@ RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们�
 
 注意 @code{match_dup} 不要用来告诉编译器特定寄存器被用于两个操作数（例如：
 @code{add} 将一个寄存器加到另一个之上；第二个寄存器即为输入操作数，同样也为输
-出操作数）。可以为此使用匹配约束（@pxref{Simple Constraints}）。@code{match_dup}
+出操作数）。可以为此使用匹配约束（@pxref{简单约束}）。@code{match_dup}
 是用于一个操作数在模板中的两个地方被使用的情况，例如一条指令同时计算商和余数，
 其中操作码接受两个输入操作数，但是RTL模板不得不引用它们两次；一次用于求商指令
 模式，一次用于求余数指令模式。
@@ -451,7 +451,7 @@ instructions.
 If the macro @code{ASSEMBLER_DIALECT} is defined, you can use construct
 of the form @samp{@{option0|option1|option2@}} in the templates.  These
 describe multiple variants of assembler language syntax.
-@xref{Instruction Output}.
+@xref{指令输出}.
 
 @node 输出语句
 @section 用于汇编输出的C语句
@@ -465,7 +465,7 @@ describe multiple variants of assembler language syntax.
 
 如果输出控制字符串起始于 @samp{@@}，则其实际为一系列模板，每一个单独一行。
 （空行，以及开头的空格和tab被忽略掉。）这些模板对应于模式的各个约束
-（@pxref{Multi-Alternative}）。例如，如果一个目标机有一个二址（two-address）
+（@pxref{多个可选项}）。例如，如果一个目标机有一个二址（two-address）
 加法指令 @samp{addr}相加到寄存器中，另外还有一个 @samp{addm} 将寄存器的值相加
 到内存中，你可能会这样写模式：
 
@@ -554,7 +554,7 @@ describe multiple variants of assembler language syntax.
 的函数，由C来调用；这可以用于输出模板或者其它机器特定代码中。
 
 操作数断言能够允许硬件实际上无法接受的操作数，只要约束提供重载的能力，能够修复
-它们（@pxref{Constraints}）。然而，只要断言指定的机器指令要求尽可能的严密，GCC
+它们（@pxref{约束条件}）。然而，只要断言指定的机器指令要求尽可能的严密，GCC
 通常便会生成较好的代码。重载不能修复必须为常量的操作数（立即数）；你必须使用只
 允许常量的断言，或者使用额外的条件来加强必要条件。
 
@@ -639,7 +639,7 @@ means exactly what
 would mean, if the machine-description reader accepted @samp{:P}
 mode suffixes.  Unfortunately, it cannot, because @code{Pmode} is an
 alias for some other mode, and might vary with machine-specific
-options.  @xref{Misc}.
+options.  @xref{其它}.
 @end defun
 
 @defun scratch_operand
@@ -654,7 +654,7 @@ The third category of predicates allow only some kind of memory reference.
 @defun memory_operand
 This predicate allows any valid reference to a quantity of mode
 @var{mode} in memory, as determined by the weak form of
-@code{GO_IF_LEGITIMATE_ADDRESS} (@pxref{Addressing Modes}).
+@code{GO_IF_LEGITIMATE_ADDRESS} (@pxref{寻址模式}).
 @end defun
 
 @defun address_operand
@@ -684,7 +684,7 @@ This predicate allows a memory reference suitable for pushing a value
 onto the stack.  This will be a @code{MEM} which refers to
 @code{stack_pointer_rtx}, with a side-effect in its address expression
 (@pxref{Incdec}); which one is determined by the
-@code{STACK_PUSH_CODE} macro (@pxref{Frame Layout}).
+@code{STACK_PUSH_CODE} macro (@pxref{帧布局}).
 @end defun
 
 @defun pop_operand
@@ -899,28 +899,28 @@ have.  Constraints can also require two operands to match.
 
 @ifset INTERNALS
 @menu
-* Simple Constraints::  Basic use of constraints.
-* Multi-Alternative::   When an insn has two alternative constraint-patterns.
-* Class Preferences::   Constraints guide which hard register to put things in.
-* Modifiers::           More precise control over effects of constraints.
-* Disable Insn Alternatives:: Disable insn alternatives using the @code{enabled} attribute.
-* Machine Constraints:: Existing constraints for some particular machines.
-* Define Constraints::  How to define machine-specific constraints.
-* C Constraint Interface:: How to test constraints from C code.
+* 简单约束::       约束的基本用法
+* 多个可选项::     当insn具有两个可选的约束模式
+* 类别优先选择::   约束可以指导用哪个硬件寄存器来存放事物
+* 修饰符::         对约束效果更精确的控制
+* 禁止Insn可选项:: 使用@code{enabled}属性来禁止insn可选项
+* 机器约束::       一些特定机器现有的约束
+* 定义约束::       如何定义机器特定的约束
+* C约束接口::      如何测试C代码的约束
 @end menu
 @end ifset
 
 @ifclear INTERNALS
 @menu
-* Simple Constraints::  Basic use of constraints.
-* Multi-Alternative::   When an insn has two alternative constraint-patterns.
-* Modifiers::           More precise control over effects of constraints.
-* Machine Constraints:: Special constraints for some particular machines.
+* 简单约束::   约束的基本用法
+* 多个可选项:: 当insn具有两个可选的约束模式
+* 修饰符::     对约束效果更精确的控制
+* 机器约束::   一些特定机器现有的约束
 @end menu
 @end ifclear
 
-@node Simple Constraints
-@subsection Simple Constraints
+@node 简单约束
+@subsection 简单约束
 @cindex simple constraints
 
 The simplest kind of constraint is a string full of letters, each of
@@ -1261,8 +1261,8 @@ to indicate the type of register that is required for the operand of the
 @code{sign_extend}.
 @end ifset
 
-@node Multi-Alternative
-@subsection Multiple Alternative Constraints
+@node 多个可选项
+@subsection 多个可选的约束
 @cindex multiple alternative constraints
 
 Sometimes a single instruction has multiple alternative sets of possible
@@ -1326,12 +1326,12 @@ the appearance of the assembler code is determined mostly by which
 alternative was matched.  When this is so, the C code for writing the
 assembler code can use the variable @code{which_alternative}, which is
 the ordinal number of the alternative that was actually satisfied (0 for
-the first, 1 for the second alternative, etc.).  @xref{Output Statement}.
+the first, 1 for the second alternative, etc.).  @xref{输出语句}.
 @end ifset
 
 @ifset INTERNALS
-@node Class Preferences
-@subsection Register Class Preferences
+@node 类别优先选择
+@subsection 寄存器类别优先选择
 @cindex class preference constraints
 @cindex register class preference constraints
 
@@ -1350,8 +1350,8 @@ Of course, on some machines all registers are equivalent, and no register
 classes are defined.  Then none of this complexity is relevant.
 @end ifset
 
-@node Modifiers
-@subsection Constraint Modifier Characters
+@node 修饰符
+@subsection 约束修饰符
 @cindex modifiers in constraints
 @cindex constraint modifier characters
 
@@ -1459,8 +1459,8 @@ register preferences.
 @end ifset
 @end table
 
-@node Machine Constraints
-@subsection Constraints for Particular Machines
+@node 机器约束
+@subsection 机器特定的约束
 @cindex machine specific constraints
 @cindex constraints, machine specific
 
@@ -1469,7 +1469,7 @@ in @code{asm} arguments, since they will convey meaning more readily to
 people reading your code.  Failing that, use the constraint letters
 that usually have very similar meanings across architectures.  The most
 commonly used constraints are @samp{m} and @samp{r} (for memory and
-general-purpose registers respectively; @pxref{Simple Constraints}), and
+general-purpose registers respectively; @pxref{简单约束}), and
 @samp{I}, usually the letter indicating the most common
 immediate-constant format.
 
@@ -2972,8 +2972,8 @@ Unsigned constant valid for BccUI instructions
 @end table
 
 @ifset INTERNALS
-@node Disable Insn Alternatives
-@subsection Disable insn alternatives using the @code{enabled} attribute
+@node 禁止Insn可选项
+@subsection 使用@code{enabled}属性来禁止insn可选项
 @cindex enabled
 
 The @code{enabled} insn attribute may be used to disable certain insn
@@ -3065,8 +3065,8 @@ with the @code{enabled} attribute defined like this:
 @end ifset
 
 @ifset INTERNALS
-@node Define Constraints
-@subsection Defining Machine-Specific Constraints
+@node 定义约束
+@subsection 定义机器特定的约束
 @cindex defining constraints
 @cindex constraints, defining
 
@@ -3088,7 +3088,7 @@ no constraint may begin with one of the generic constraint letters:
 @samp{E F V X g i m n o p r s}.
 
 Register constraints correspond directly to register classes.
-@xref{Register Classes}.  There is thus not much flexibility in their
+@xref{寄存器类别}.  There is thus not much flexibility in their
 definitions.
 
 @deffn {MD Expression} define_register_constraint name regclass docstring
@@ -3097,7 +3097,7 @@ All three arguments are string constants.
 @code{match_operand} expressions.  If @var{name} is a multi-letter
 constraint its length shall be the same for all constraints starting
 with the same letter.  @var{regclass} can be either the
-name of the corresponding register class (@pxref{Register Classes}),
+name of the corresponding register class (@pxref{寄存器类别}),
 or a C expression which evaluates to the appropriate register class.
 If it is an expression, it must have no side effects, and it cannot
 look at the operand.  The usual use of expressions is to map some
@@ -3117,7 +3117,7 @@ The @var{name} and @var{docstring} arguments are the same as for
 @code{define_register_constraint}, but note that the docstring comes
 immediately after the name for these expressions.  @var{exp} is an RTL
 expression, obeying the same rules as the RTL expressions in predicate
-definitions.  @xref{Defining Predicates}, for details.  If it
+definitions.  @xref{定义判定条件}, for details.  If it
 evaluates true, the constraint matches; if it evaluates false, it
 doesn't. Constraint expressions should indicate which RTL codes they
 might match, just like predicate expressions.
@@ -3158,7 +3158,7 @@ Use this expression for constraints that match a subset of all memory
 operands: that is, @code{reload} can make them match by converting the
 operand to the form @samp{@w{(mem (reg @var{X}))}}, where @var{X} is a
 base register (from the register class specified by
-@code{BASE_REG_CLASS}, @pxref{Register Classes}).
+@code{BASE_REG_CLASS}, @pxref{寄存器类别}).
 
 For example, on the S/390, some instructions do not accept arbitrary
 memory references, but only those that do not make use of an index
@@ -3211,8 +3211,7 @@ that match @code{const_double}s or @code{const_int}s.
 
 Each docstring in a constraint definition should be one or more complete
 sentences, marked up in Texinfo format.  @emph{They are currently unused.}
-In the future they will be copied into the GCC manual, in @ref{Machine
-Constraints}, replacing the hand-maintained tables currently found in
+In the future they will be copied into the GCC manual, in @ref{机器约束}, replacing the hand-maintained tables currently found in
 that section.  Also, in the future the compiler may use this to give
 more helpful diagnostics when poor choice of @code{asm} constraints
 causes a reload failure.
@@ -3222,8 +3221,8 @@ beginning of a docstring, then (in the future) it will appear only in
 the internals manual's version of the machine-specific constraint tables.
 Use this for constraints that should not appear in @code{asm} statements.
 
-@node C Constraint Interface
-@subsection Testing constraints from C
+@node C约束接口
+@subsection 从C中测试约束
 @cindex testing constraints
 @cindex constraints, testing
 
@@ -3231,7 +3230,7 @@ It is occasionally useful to test a constraint from C code rather than
 implicitly via the constraint string in a @code{match_operand}.  The
 generated file @file{tm_p.h} declares a few interfaces for working
 with machine-specific constraints.  None of these interfaces work with
-the generic constraints described in @ref{Simple Constraints}.  This
+the generic constraints described in @ref{简单约束}.  This
 may change in the future.
 
 @strong{Warning:} @file{tm_p.h} may declare other functions that
@@ -3296,7 +3295,7 @@ currently selected subtarget, returns @code{NO_REGS}.
 @end deftypefun
 
 Here is an example use of @code{satisfies_constraint_@var{m}}.  In
-peephole optimizations (@pxref{Peephole Definitions}), operand
+peephole optimizations (@pxref{窥孔定义}), operand
 constraint strings are ignored, so if there are relevant constraints,
 they must be tested in the C condition.  In the example, the
 optimization is applied if operand 2 does @emph{not} satisfy the
@@ -3319,7 +3318,7 @@ definition from the i386 machine description.)
 @end smallexample
 
 @node 标准名字
-@section Standard Pattern Names For Generation
+@section 用于生成的标准指令模式名
 @cindex standard pattern names
 @cindex pattern names
 @cindex names, pattern
@@ -3427,7 +3426,7 @@ These named patterns have been obsoleted by the target hook
 Like @samp{mov@var{m}}, but used when a scratch register is required to
 move between operand 0 and operand 1.  Operand 2 describes the scratch
 register.  See the discussion of the @code{SECONDARY_RELOAD_CLASS}
-macro in @pxref{Register Classes}.
+macro in @pxref{寄存器类别}.
 
 There are special restrictions on the form of the @code{match_operand}s
 used in these patterns.  First, only the predicate for the reload
@@ -3472,13 +3471,13 @@ registers from memory is to do them one at a time.
 On some machines, there are restrictions as to which consecutive
 registers can be stored into memory, such as particular starting or
 ending register numbers or only a range of valid counts.  For those
-machines, use a @code{define_expand} (@pxref{Expander Definitions})
+machines, use a @code{define_expand} (@pxref{扩展定义})
 and make the pattern fail if the restrictions are not met.
 
 Write the generated insn as a @code{parallel} with elements being a
 @code{set} of one register from the appropriate memory location (you may
 also need @code{use} or @code{clobber} elements).  Use a
-@code{match_parallel} (@pxref{RTL Template}) to recognize the insn.  See
+@code{match_parallel} (@pxref{RTL模板}) to recognize the insn.  See
 @file{rs6000.md} for examples of the use of this insn pattern.
 
 @cindex @samp{store_multiple} instruction pattern
@@ -5505,7 +5504,7 @@ Further canonicalization rules are defined in the function
 @end ifset
 @ifset INTERNALS
 @node 扩展定义
-@section Defining RTL Sequences for Code Generation
+@section 为代码生成定义RTL序列
 @cindex expander definitions
 @cindex code generation RTL sequences
 @cindex defining RTL sequences for code generation
@@ -6009,7 +6008,7 @@ Specifying an absolute path for the include file such as;
 @end smallexample
 is permitted but is not encouraged.
 
-@subsection RTL Generation Tool Options for Directory Search
+@subsection 用于目录搜索的RTL生成工具选项
 @cindex directory options .md
 @cindex options, directory search
 @cindex search options
@@ -6343,7 +6342,7 @@ assembler code as appropriate.
 @end ifset
 @ifset INTERNALS
 @node 定义属性
-@subsection Defining Attributes and their Values
+@subsection 定义属性以及它们的值
 @cindex defining attributes and their values
 @cindex attributes, defining
 
@@ -6621,7 +6620,7 @@ produce more efficient code for non-numeric attributes.
 @end ifset
 @ifset INTERNALS
 @node 给Insns打标签
-@subsection Assigning Attribute Values to Insns
+@subsection 给Insns赋予属性值
 @cindex tagging insns
 @cindex assigning attribute values to insns
 
@@ -6728,7 +6727,7 @@ of a single machine instruction.
 @end ifset
 @ifset INTERNALS
 @node 属性例子
-@subsection Example of Attribute Specifications
+@subsection 关于属性说明的例子
 @cindex attribute specifications example
 @cindex attribute specifications
 
@@ -6785,7 +6784,7 @@ full-word result.
 @end ifset
 @ifset INTERNALS
 @node Insn长度
-@subsection Computing the Length of an Insn
+@subsection 计算一个Insn的长度
 @cindex insn lengths, computing
 @cindex computing the length of an insn
 
@@ -6871,7 +6870,7 @@ as follows:
 @end ifset
 @ifset INTERNALS
 @node 常量属性
-@subsection Constant Attributes
+@subsection 常量属性
 @cindex constant attributes
 
 一个@code{define_attr}的特殊形式，是其缺省值的表达式为一个@code{const}表达式，
@@ -6899,7 +6898,7 @@ as follows:
 @end ifset
 @ifset INTERNALS
 @node 延迟槽
-@subsection Delay Slot Scheduling
+@subsection 延迟槽调度
 @cindex delay slots, defining
 
 The insn attribute mechanism can be used to specify the requirements for
@@ -7619,7 +7618,7 @@ GCC提供了一些简单的迭代机制使得该处理变的很容易。
 会变的很重要。@pxref{Substitutions}。
 
 @node 替换
-@subsubsection Substitution in Mode Iterators
+@subsubsection 机器模式迭代器中的替换
 @findex define_mode_attr
 如果一个 @file{.md} 文件结构使用了机器模式迭代器，则结构的每个版本将通常
 需要轻微不同的字符串或机器模式。例如：
