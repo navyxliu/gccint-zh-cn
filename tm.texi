@@ -6789,9 +6789,7 @@ position independent code.
 @node 汇编格式
 @section 定义汇编语言输出
 
-This section describes macros whose principal purpose is to describe how
-to write instructions in assembler language---rather than what the
-instructions do.
+这一节描述的宏，主要用于描述如何使用汇编语言书写指令，而不是指令本身。
 
 @menu
 * 文件框架::                   汇编文件的结构化信息  
@@ -8539,7 +8537,7 @@ a C expression of type @code{int}.
 @section 控制调试信息格式
 
 @c prevent bad page break with this line
-This describes how to specify debugging information.
+描述了如何指定调试信息。
 
 @menu
 * 所有调试器::  影响所有调试信息的宏   
@@ -8554,60 +8552,54 @@ This describes how to specify debugging information.
 @subsection 影响所有调试格式的宏
 
 @c prevent bad page break with this line
-These macros affect all debugging formats.
+这些宏影响所有的调试格式。
 
 @defmac DBX_REGISTER_NUMBER (@var{regno})
-A C expression that returns the DBX register number for the compiler
-register number @var{regno}.  In the default macro provided, the value
-of this expression will be @var{regno} itself.  But sometimes there are
-some registers that the compiler knows about and DBX does not, or vice
-versa.  In such cases, some register may need to have one number in the
-compiler and another for DBX@.
+一个C表达式，返回编译器寄存器号@var{regno}的DBX寄存器号。
+在提供的缺省宏中，该表达式的值将为@var{regno}本身。
+但是有时候，有些寄存器编译器知道但是DBX不知道，或者相反。
+对于这种情况，寄存器可能需要在编译器中具有一个编号，
+而在DBX中具有另一个。
 
-If two registers have consecutive numbers inside GCC, and they can be
-used as a pair to hold a multiword value, then they @emph{must} have
-consecutive numbers after renumbering with @code{DBX_REGISTER_NUMBER}.
-Otherwise, debuggers will be unable to access such a pair, because they
-expect register pairs to be consecutive in their own numbering scheme.
+如果两个寄存器在GCC中具有连续的编号，
+并且可以作为一对用来保存多字的值，
+则它们在使用@code{DBX_REGISTER_NUMBER}重新编号之后
+@emph{必须}还具有连续的编号。
+否则，调试器将无法访问这样的寄存器对，
+因为调试器期望寄存器对在自己的编号方案下也是连续的。
 
-If you find yourself defining @code{DBX_REGISTER_NUMBER} in way that
-does not preserve register pairs, then what you must do instead is
-redefine the actual register numbering scheme.
+如果你发现自己定义的@code{DBX_REGISTER_NUMBER}不能保持寄存器对，
+则必须重定义实际的寄存器编号方案。
 @end defmac
 
 @defmac DEBUGGER_AUTO_OFFSET (@var{x})
-A C expression that returns the integer offset value for an automatic
-variable having address @var{x} (an RTL expression).  The default
-computation assumes that @var{x} is based on the frame-pointer and
-gives the offset from the frame-pointer.  This is required for targets
-that produce debugging output for DBX or COFF-style debugging output
-for SDB and allow the frame-pointer to be eliminated when the
-@option{-g} options is used.
+一个C表达式，返回具有地址@var{x}（RTL表达式）的自动变量的整数偏移量。
+缺省计算是假设@var{x}基于帧指针的，并会给出相对帧指针的偏移量。
+这对于产生DBX调试输出或COFF风格的SDB调试输出，
+并且在使用@option{-g}选项时也允许消除帧指针的目标，会有需要。
 @end defmac
 
 @defmac DEBUGGER_ARG_OFFSET (@var{offset}, @var{x})
-A C expression that returns the integer offset value for an argument
-having address @var{x} (an RTL expression).  The nominal offset is
-@var{offset}.
+一个C表达式，返回具有地址@var{x}（RTL表达式）的参数的整数偏移量。
+名义上的偏移量为@var{offset}。
 @end defmac
 
 @defmac PREFERRED_DEBUGGING_TYPE
-A C expression that returns the type of debugging output GCC should
-produce when the user specifies just @option{-g}.  Define
-this if you have arranged for GCC to support more than one format of
-debugging output.  Currently, the allowable values are @code{DBX_DEBUG},
-@code{SDB_DEBUG}, @code{DWARF_DEBUG}, @code{DWARF2_DEBUG},
-@code{XCOFF_DEBUG}, @code{VMS_DEBUG}, and @code{VMS_AND_DWARF2_DEBUG}.
+一个C表达式，返回当用户只指定@opption{-g}时，
+GCC应该产生的调试输出类型。
+如果你已经使得GCC支持多种调试输出格式的时候，则定义该宏。
+目前，允许的值为@code{DBX_DEBUG}, @code{SDB_DEBUG}, @code{DWARF_DEBUG}, 
+@code{DWARF2_DEBUG}, @code{XCOFF_DEBUG}, 
+@code{VMS_DEBUG}和@code{VMS_AND_DWARF2_DEBUG}。
 
-When the user specifies @option{-ggdb}, GCC normally also uses the
-value of this macro to select the debugging output format, but with two
-exceptions.  If @code{DWARF2_DEBUGGING_INFO} is defined, GCC uses the
-value @code{DWARF2_DEBUG}.  Otherwise, if @code{DBX_DEBUGGING_INFO} is
-defined, GCC uses @code{DBX_DEBUG}.
+当用户指定@option{-ggdb}时，GCC通常还使用该宏的值来选择调试输出格式，
+但是有两个例外。如果定义了@code{DWARF2_DEBUGGING_INFO}，
+则GCC使用值@code{DWARF2_DEBUG}，如果定义了@code{DBX_DEBUGGING_INFO}，
+则GCC使用@code{DBX_DEBUG}。
 
-The value of this macro only affects the default debugging output; the
-user can always get a specific type of output by using @option{-gstabs},
-@option{-gcoff}, @option{-gdwarf-2}, @option{-gxcoff}, or @option{-gvms}.
+该宏的值只影响缺省调试输出；用户总是可以通过使用@option{-gstabs},
+@option{-gcoff}, @option{-gdwarf-2}, 
+@option{-gxcoff}或@option{-gvms}来获得指定类型的输出。
 @end defmac
 
 @node DBX选项
@@ -8942,15 +8934,13 @@ number @var{line} of the current source file to the stdio stream
 @subsection 用于VMS调试格式的宏
 
 @c prevent bad page break with this line
-Here are macros for VMS debug format.
+这是用于VMS调试格式的宏。
 
 @defmac VMS_DEBUGGING_INFO
-Define this macro if GCC should produce debugging output for VMS
-in response to the @option{-g} option.  The default behavior for VMS
-is to generate minimal debug info for a traceback in the absence of
-@option{-g} unless explicitly overridden with @option{-g0}.  This
-behavior is controlled by @code{OPTIMIZATION_OPTIONS} and
-@code{OVERRIDE_OPTIONS}.
+定义该宏，如果GCC应该为@option{-g}选项产生VMS调试输出。
+VMS的缺省行为是在没有@option{-g}时，生成可以回溯的最少调试信息，
+除非使用@option{-g0}显示的覆盖。
+该行为由@code{OPTIMIZATION_OPTIONS}和@code{OVERRIDE_OPTIONS}控制。
 @end defmac
 
 @node 浮点
