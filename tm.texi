@@ -11,19 +11,17 @@
 @cindex macros, target description
 @cindex @file{tm.h} macros
 
- In addition to the file @file{@var{machine}.md}, a machine description
-includes a C header file conventionally given the name
-@file{@var{machine}.h} and a C source file named @file{@var{machine}.c}.
-The header file defines numerous macros that convey the information
-about the target machine that does not fit into the scheme of the
-@file{.md} file.  The file @file{tm.h} should be a link to
-@file{@var{machine}.h}.  The header file @file{config.h} includes
-@file{tm.h} and most compiler source files include @file{config.h}.  The
-source file defines a variable @code{targetm}, which is a structure
-containing pointers to functions and data relating to the target
-machine.  @file{@var{machine}.c} should also contain their definitions,
-if they are not defined elsewhere in GCC, and other functions called
-through the macros defined in the @file{.h} file.
+除了文件@file{@var{machine}.md}，
+机器描述还包括一个通常名为@file{@var{machine}.h}的C头文件和
+一个名为@file{@var{machine}.c}的C源文件。
+头文件定义了许多用来传达不适合@file{.md}文件框架的目标机器信息的宏。
+文件@file{tm.h}应该为@file{@var{machine}.h}的一个链接。
+头文件@file{config.h}包含@file{tm.h}，
+并且大多数编译器源文件包含@file{config.h}。
+源文件定义了变量@code{targetm}，
+其为一个包含了与目标机器相关的函数指针和数据的结构体。
+如果它们没有在GCC中的其它地方定义，@file{@var{machine}.c}还应该包含它们的定义，
+其它通过宏调用的函数在@file{.h}文件中定义。
 
 @menu
 * 目标机结构::      @code{targetm}变量
@@ -64,13 +62,10 @@ through the macros defined in the @file{.h} file.
 @cindex target functions
 
 @deftypevar {struct gcc_target} targetm
-The target @file{.c} file must define the global @code{targetm} variable
-which contains pointers to functions and data relating to the target
-machine.  The variable is declared in @file{target.h};
-@file{target-def.h} defines the macro @code{TARGET_INITIALIZER} which is
-used to initialize the variable, and macros for the default initializers
-for elements of the structure.  The @file{.c} file should override those
-macros for which the default definition is inappropriate.  For example:
+目标@file{.c}文件必须定义包含了目标机器相关的函数指针和数据的全局变量
+@code{targetm}。变量在@file{target.h}中声明；
+@file{target-def.h}定义了用来初始化变量的宏@code{TARGET_INITIALIZER}，
+和结构体元素的缺省初始化。@file{.c}文件应该覆盖这些缺省定义不合适的宏。例如：
 @smallexample
 #include "target.h"
 #include "target-def.h"
@@ -84,11 +79,10 @@ struct gcc_target targetm = TARGET_INITIALIZER;
 @end smallexample
 @end deftypevar
 
-Where a macro should be defined in the @file{.c} file in this manner to
-form part of the @code{targetm} structure, it is documented below as a
-``Target Hook'' with a prototype.  Many macros will change in future
-from being defined in the @file{.h} file to being part of the
-@code{targetm} structure.
+其中应该在@file{.c}文件中定义的，
+使用这种方式成为@code{targetm}结构体一部分的宏，
+将在下面被记述为“目标钩子”和函数原形。
+在@file{.h}.h文件中定义的许多宏将来将会改为@code{targetm}结构体的一部分。
 
 @node 驱动器
 @section 控制编译驱动器，@file{gcc}
@@ -861,55 +855,45 @@ pointer.  If this macro is defined, GCC will turn on the
 @cindex per-function data
 @cindex data structures
 
-If the target needs to store information on a per-function basis, GCC
-provides a macro and a couple of variables to allow this.  Note, just
-using statics to store the information is a bad idea, since GCC supports
-nested functions, so you can be halfway through encoding one function
-when another one comes along.
+如果target需要存储基于每个函数的信息，则GCC为此提供了一个宏和一些变量。
+注意，只是使用静态变量来保存信息是一个糟糕的想法，因为GCC支持嵌套函数，
+所以可能会在编码一个函数的中途遇到另一个。
 
-GCC defines a data structure called @code{struct function} which
-contains all of the data specific to an individual function.  This
-structure contains a field called @code{machine} whose type is
-@code{struct machine_function *}, which can be used by targets to point
-to their own specific data.
+GCC定义了称为@code{struct function}的数据结构体，
+包含了特定于单个函数的所有数据。该结构体包含一个称为@code{machine}的域，
+其类型为@code{struct machine_function *}，
+可以被target用于指向它们自己的特定数据。
 
-If a target needs per-function specific data it should define the type
-@code{struct machine_function} and also the macro @code{INIT_EXPANDERS}.
-This macro should be used to initialize the function pointer
-@code{init_machine_status}.  This pointer is explained below.
+如果一个target需要基于每个函数的特定数据，
+则应该定义类型@code{struct machine_function}，
+以及宏@code{INIT_EXPANDERS}。
+该宏将被用于初始化函数指针@code{init_machine_status}。
+该指针将在下面说明。
 
-One typical use of per-function, target specific data is to create an
-RTX to hold the register containing the function's return address.  This
-RTX can then be used to implement the @code{__builtin_return_address}
-function, for level 0.
+一个典型的基于每个函数的target特定数据，
+是用于创建一个RTX来存放含有函数返回地址的寄存器。
+该RTX随后可以被用于实现@code{__builtin_return_address}函数。
 
-Note---earlier implementations of GCC used a single data area to hold
-all of the per-function information.  Thus when processing of a nested
-function began the old per-function data had to be pushed onto a
-stack, and when the processing was finished, it had to be popped off the
-stack.  GCC used to provide function pointers called
-@code{save_machine_status} and @code{restore_machine_status} to handle
-the saving and restoring of the target specific information.  Since the
-single data area approach is no longer used, these pointers are no
-longer supported.
+注意，早期的GCC实现使用了单个数据区域来存放所有的基于每个函数的信息。
+因此当开始处理嵌套函数时，旧式的基于每个函数的数据不得不被压入栈中，
+并且当处理完成，还要出栈。
+GCC曾经提供名为@code{save_machine_status}和@code{restore_machine_status}
+函数指针来处理target特定信息的保存和恢复。
+由于单数据区域的方法不再被使用了，这些指针也不再被支持。
 
 @defmac INIT_EXPANDERS
-Macro called to initialize any target specific information.  This macro
-is called once per function, before generation of any RTL has begun.
-The intention of this macro is to allow the initialization of the
-function pointer @code{init_machine_status}.
+被调用的宏，用来初始化任何target特定信息。
+该宏在任何RTL生成开始之前，基于每个函数被调用一次。
+该宏的目的是允许函数指针@code{init_machine_status}的初始化。
 @end defmac
 
 @deftypevar {void (*)(struct function *)} init_machine_status
-If this function pointer is non-@code{NULL} it will be called once per
-function, before function compilation starts, in order to allow the
-target to perform any target specific initialization of the
-@code{struct function} structure.  It is intended that this would be
-used to initialize the @code{machine} of that structure.
+如果该函数指针非空，则会在函数编译开始之前，基于每个函数被调用一次，
+用于允许target来执行对@code{struct function}结构体的任何target特定初始化。
+它将被用于初始化那个结构体的@code{machine}域。
 
-@code{struct machine_function} structures are expected to be freed by GC@.
-Generally, any memory that they reference must be allocated by using
-@code{ggc_alloc}, including the structure itself.
+结构体@code{struct machine_function}将期望被GC来释放。通常，
+它们所引用的任何内存都必须使用@code{ggc_alloc}来分配，包括结构体本身。
 @end deftypevar
 
 @node 存储布局
@@ -1851,14 +1835,14 @@ of words in each data entry.
 @section 寄存器的用法
 @cindex register usage
 
-This section explains how to describe what registers the target machine
-has, and how (in general) they can be used.
+这一节说明了如何描述目标机器具有什么寄存器，
+以及它们（通常）可以被如何使用。
 
-The description of which registers a specific instruction can use is
-done with register classes; see @ref{寄存器类别}.  For information
-on using registers to access a stack frame, see @ref{帧寄存器}.
-For passing values in registers, see @ref{寄存器参数}.
-For returning values in registers, see @ref{标量返回}.
+寄存器类别用来描述一个特定指令可以使用哪些寄存器；
+参见 @ref{寄存器类别}。
+关于使用寄存器来访问栈帧的信息，参见 @ref{帧寄存器}。
+关于使用寄存器来传值，参见 @ref{寄存器参数}。
+关于使用寄存器来返回值，参见 @ref{标量返回}。
 
 @menu
 * 寄存器基础::          寄存器编号和种类
@@ -2013,35 +1997,31 @@ register number.  Otherwise, do not define it.
 @cindex register allocation order
 
 @c prevent bad page break with this line
-Registers are allocated in order.
+寄存器按照顺序进行分配。
 
 @defmac REG_ALLOC_ORDER
-If defined, an initializer for a vector of integers, containing the
-numbers of hard registers in the order in which GCC should prefer
-to use them (from most preferred to least).
+如果定义，则为一个整数向量的初始化值，包含了硬件寄存器号，
+GCC将按该照顺序来使用它们（前面的优先）。
 
-If this macro is not defined, registers are used lowest numbered first
-(all else being equal).
+如果没有定义该宏，则寄存器按照低编号优先的方式使用。
 
-One use of this macro is on machines where the highest numbered
-registers must always be saved and the save-multiple-registers
-instruction supports only sequences of consecutive registers.  On such
-machines, define @code{REG_ALLOC_ORDER} to be an initializer that lists
-the highest numbered allocable register first.
+该宏的一个用处是在一些机器上，
+高编号的寄存器必须总是被保存并且save-multiple-registers指令
+只支持连续序列的寄存器。在这些机器上，
+可以定义@code{REG_ALLOC_ORDER}来初始化列表，
+使得高编号寄存器优先分配。
 @end defmac
 
 @defmac ORDER_REGS_FOR_LOCAL_ALLOC
-A C statement (sans semicolon) to choose the order in which to allocate
-hard registers for pseudo-registers local to a basic block.
+一条C语句（无分号），
+用来选择按照什么顺序来为局部于一个基本块的伪寄存器分配硬件寄存器。
 
-Store the desired register order in the array @code{reg_alloc_order}.
-Element 0 should be the register to allocate first; element 1, the next
-register; and so on.
+将想要的寄存器顺序存储在数组@code{reg_alloc_order}中。
+元素0为先分配的寄存器；元素1为下一个；等等。
 
-The macro body should not assume anything about the contents of
-@code{reg_alloc_order} before execution of the macro.
+在执行宏之前，宏的内容体不应该对@code{reg_alloc_order}的内容作任何假设。
 
-On most machines, it is not necessary to define this macro.
+在大多数机器上，不需要定义该宏。
 @end defmac
 
 @defmac IRA_HARD_REGNO_ADD_COST_MULTIPLIER (@var{regno})
@@ -2053,7 +2033,7 @@ be increased by approximately the pseudo's usage frequency times the
 value returned by this macro.  Not defining this macro is equivalent
 to having it always return @code{0.0}.
 
-On most machines, it is not necessary to define this macro.
+在大多数机器上，不需要定义该宏。
 @end defmac
 
 @node 寄存器中的值
@@ -2225,96 +2205,77 @@ registers.  You should only define this macro if support for copying to/from
 
 @cindex leaf functions
 @cindex functions, leaf
-On some machines, a leaf function (i.e., one which makes no calls) can run
-more efficiently if it does not make its own register window.  Often this
-means it is required to receive its arguments in the registers where they
-are passed by the caller, instead of the registers where they would
-normally arrive.
+在一些机器上，一个叶子函数（即，不做任何调用的函数）可以运行的更加有效，
+如果其使用它自己的寄存器窗口。通常这意味着，
+需要通过调用者传递参数的寄存器来接收它的参数，而不是它们通常到达的寄存器。
 
-The special treatment for leaf functions generally applies only when
-other conditions are met; for example, often they may use only those
-registers for its own variables and temporaries.  We use the term ``leaf
-function'' to mean a function that is suitable for this special
-handling, so that functions with no calls are not necessarily ``leaf
-functions''.
+对叶子函数的特殊处理通常只在其它条件满足时才被执行；例如，
+通常它们可能只用于它自己的变量和临时对象的那些寄存器。
+我们使用词语“叶子函数”来指一个适合这样的处理的函数，
+所以没有函数调用的函数并不一定是“叶子函数”。
 
-GCC assigns register numbers before it knows whether the function is
-suitable for leaf function treatment.  So it needs to renumber the
-registers in order to output a leaf function.  The following macros
-accomplish this.
+GCC在它知道函数是否适合作为叶子函数来对待之前分配寄存器编号。
+所以它需要重编号寄存器，以便输出一个叶子函数。下面的宏用来完成此事。
 
 @defmac LEAF_REGISTERS
-Name of a char vector, indexed by hard register number, which
-contains 1 for a register that is allowable in a candidate for leaf
-function treatment.
+一个char向量的名字，按照硬件寄存器编号进行索引，
+对于允许作为叶子函数处理的候选的寄存器，其值为1。
 
-If leaf function treatment involves renumbering the registers, then the
-registers marked here should be the ones before renumbering---those that
-GCC would ordinarily allocate.  The registers which will actually be
-used in the assembler code, after renumbering, should not be marked with 1
-in this vector.
+如果叶子函数处理涉及到重编号寄存器，
+则这里标记的寄存器应该是重编号之前的——那些GCC普通分配的。
+重编号后，在汇编代码中实际被使用的寄存器，不要在该向量中被标记为1。
 
-Define this macro only if the target machine offers a way to optimize
-the treatment of leaf functions.
+定义该宏，只当target机器提供了优化叶子函数处理的方法。
 @end defmac
 
 @defmac LEAF_REG_REMAP (@var{regno})
-A C expression whose value is the register number to which @var{regno}
-should be renumbered, when a function is treated as a leaf function.
+一个C表达式，当函数作为叶子函数来处理时，
+其值为应该对@var{regno}进行重编号的寄存器编号。
 
-If @var{regno} is a register number which should not appear in a leaf
-function before renumbering, then the expression should yield @minus{}1, which
-will cause the compiler to abort.
+如果@var{regno}为一个在重编号前不应该出现在叶子函数中的寄存器编号，
+则表达式应该求值为-1，这将造成编译器中断退出。
 
-Define this macro only if the target machine offers a way to optimize the
-treatment of leaf functions, and registers need to be renumbered to do
-this.
+定义该宏，只当target机器提供了优化叶子函数处理的方法，
+并且寄存器需要被重编号。
 @end defmac
 
 @findex current_function_is_leaf
 @findex current_function_uses_only_leaf_regs
-@code{TARGET_ASM_FUNCTION_PROLOGUE} and
-@code{TARGET_ASM_FUNCTION_EPILOGUE} must usually treat leaf functions
-specially.  They can test the C variable @code{current_function_is_leaf}
-which is nonzero for leaf functions.  @code{current_function_is_leaf} is
-set prior to local register allocation and is valid for the remaining
-compiler passes.  They can also test the C variable
-@code{current_function_uses_only_leaf_regs} which is nonzero for leaf
-functions which only use leaf registers.
-@code{current_function_uses_only_leaf_regs} is valid after all passes
-that modify the instructions have been run and is only useful if
-@code{LEAF_REGISTERS} is defined.
+@code{TARGET_ASM_FUNCTION_PROLOGUE}和@code{TARGET_ASM_FUNCTION_EPILOGUE}
+通常需要单独处理叶子函数。
+它们可以测试C变量@code{current_function_is_leaf}，其对于叶子函数非0。
+@code{current_function_is_leaf}在局部寄存器分配之前被设置，
+并且可以用于剩余的编译器过程。
+它们还可以测试C变量@code{current_function_uses_only_leaf_regs}，
+其对于只用叶子寄存器的叶子函数为非0。
+@code{current_function_uses_only_leaf_regs}在所有修改指令的过程被运行完
+之后可用，并且只有当@code{LEAF_REGISTERS}被定义时才有用。
+
 @c changed this to fix overfull.  ALSO:  why the "it" at the beginning
 @c of the next paragraph?!  --mew 2feb93
 
 @node 栈寄存器
 @subsection 形成栈的寄存器
 
-There are special features to handle computers where some of the
-``registers'' form a stack.  Stack registers are normally written by
-pushing onto the stack, and are numbered relative to the top of the
-stack.
+有一些特性用来处理计算机中形成栈的寄存器。
+栈寄存器通常写成被压入一个栈中，并相对于栈顶进行编号。
 
-Currently, GCC can only handle one group of stack-like registers, and
-they must be consecutively numbered.  Furthermore, the existing
-support for stack-like registers is specific to the 80387 floating
-point coprocessor.  If you have a new architecture that uses
-stack-like registers, you will need to do substantial work on
-@file{reg-stack.c} and write your machine description to cooperate
-with it, as well as defining these macros.
+目前，GCC只能处理一组类栈的寄存器，并且它们的编号必须是连续的。
+而且，现存的对类栈寄存器的支持是特定于80387浮点协处理器。
+如果你有一个新的体系结构使用了类栈寄存器，
+你将需要在@file{reg-stack.c}上做大量的工作，并书写你自己的机器描述，
+同时还要定义这些宏。
 
 @defmac STACK_REGS
-Define this if the machine has any stack-like registers.
+如果机器具有任何类栈寄存器，则定义该宏。
 @end defmac
 
 @defmac FIRST_STACK_REG
-The number of the first stack-like register.  This one is the top
-of the stack.
+第一个类栈寄存器的编号。这是栈顶。
 @end defmac
 
 @defmac LAST_STACK_REG
-The number of the last stack-like register.  This one is the bottom of
-the stack.
+最后一个类栈寄存器的编号，这是栈底。
 @end defmac
 
 @node 寄存器类别
@@ -3018,7 +2979,7 @@ analogously to the @samp{p} constraint.
 @cindex calling conventions
 
 @c prevent bad page break with this line
-This describes the stack layout and calling conventions.
+这一节描述了栈的布局和调用约定。
 
 @menu
 * 帧布局::
@@ -4381,104 +4342,84 @@ or 3-byte structure is returned at the most significant end of a
 @cindex returning aggregate values
 @cindex structure value address
 
-When a function value's mode is @code{BLKmode} (and in some other
-cases), the value is not returned according to
-@code{TARGET_FUNCTION_VALUE} (@pxref{标量返回}).  Instead, the
-caller passes the address of a block of memory in which the value
-should be stored.  This address is called the @dfn{structure value
-address}.
+当函数值的机器模式为@code{BLKmode}（并且在一些其它情况下），
+值不根据@code{TARGET_FUNCTION_VALUE}来返回（参见 @ref{标量返回}）。
+替代的，调用者传递内存块的地址。
+该地址被称为结构体地址（@dfn{structure value address}）。
 
-This section describes how to control returning structure values in
-memory.
+这一节描述了如何控制在内存中返回结构体值。
 
 @deftypefn {Target Hook} bool TARGET_RETURN_IN_MEMORY (tree @var{type}, tree @var{fntype})
-This target hook should return a nonzero value to say to return the
-function value in memory, just as large structures are always returned.
-Here @var{type} will be the data type of the value, and @var{fntype}
-will be the type of the function doing the returning, or @code{NULL} for
-libcalls.
+该target钩子应该返回一个非零值，来指明在内存中返回函数值，
+正如返回大的结构体的方式。这里@var{type}为值的数据类型，
+@var{fntype}为函数的类型，或者@code{NULL}，如果是libcall。
 
-Note that values of mode @code{BLKmode} must be explicitly handled
-by this function.  Also, the option @option{-fpcc-struct-return}
-takes effect regardless of this macro.  On most systems, it is
-possible to leave the hook undefined; this causes a default
-definition to be used, whose value is the constant 1 for @code{BLKmode}
-values, and 0 otherwise.
+注意模式@code{BLKmode}的值必须被该函数显示的处理。
+而且，选项@option{-fpcc-struct-return}将会其作用，
+而不管该宏如何定义。在大多数系统上，可能会没有定义该钩子；
+这将使用一个缺省定义，其值为常数1对于@code{BLKmode}值，其它的为0。
 
-Do not use this hook to indicate that structures and unions should always
-be returned in memory.  You should instead use @code{DEFAULT_PCC_STRUCT_RETURN}
-to indicate this.
+不要使用该宏来指示结构体和联合体应该总是在内存中返回。
+你应该使用@code{DEFAULT_PCC_STRUCT_RETURN}来做这件事情。
 @end deftypefn
 
 @defmac DEFAULT_PCC_STRUCT_RETURN
-Define this macro to be 1 if all structure and union return values must be
-in memory.  Since this results in slower code, this should be defined
-only if needed for compatibility with other compilers or with an ABI@.
-If you define this macro to be 0, then the conventions used for structure
-and union return values are decided by the @code{TARGET_RETURN_IN_MEMORY}
-target hook.
+定义该宏为1，如果所有的结构体和联合体返回值必须在内存中。
+由于这将使得代码变慢，所以应该只有需要与其它编译器或者ABI兼容时才定义。
+如果你定义了该宏为0，
+则对于结构体和联合体返回值的约定则由@code{TARGET_RETURN_IN_MEMORY} target钩子来决定。
 
-If not defined, this defaults to the value 1.
+如果没有定义，将缺省为1。
 @end defmac
 
 @deftypefn {Target Hook} rtx TARGET_STRUCT_VALUE_RTX (tree @var{fndecl}, int @var{incoming})
-This target hook should return the location of the structure value
-address (normally a @code{mem} or @code{reg}), or 0 if the address is
-passed as an ``invisible'' first argument.  Note that @var{fndecl} may
-be @code{NULL}, for libcalls.  You do not need to define this target
-hook if the address is always passed as an ``invisible'' first
-argument.
+该target钩子应该返回结构体值的地址位置（通常为@code{mem}或者@code{reg}），
+或者0，如果地址作为“不可视”的第一个参数传递。
+注意@var{fndecl}可以为@code{NULL}，对于libcall。
+你不需要定义该target钩子，如果地址总是作为“不可视”的第一个参数传递。
 
-On some architectures the place where the structure value address
-is found by the called function is not the same place that the
-caller put it.  This can be due to register windows, or it could
-be because the function prologue moves it to a different place.
-@var{incoming} is @code{1} or @code{2} when the location is needed in
-the context of the called function, and @code{0} in the context of
-the caller.
+在一些体系结构上，
+被调用函数寻找结构体值地址的地方与调用者放入的地方不相同。
+这可能是由于寄存器窗口，或者函数序言将其移动到一个不同的地方。
+@var{incoming}为@code{1}或者@code{2}，
+当地址在被调用函数的上下文中需要，
+为@code{0}如果在调用者的上下文中需要。
 
-If @var{incoming} is nonzero and the address is to be found on the
-stack, return a @code{mem} which refers to the frame pointer. If
-@var{incoming} is @code{2}, the result is being used to fetch the
-structure value address at the beginning of a function.  If you need
-to emit adjusting code, you should do it at this point.
+如果@var{incoming}为非0并且地址是在栈中找到，
+则返回一个@code{mem}，其引用帧指针。
+如果@var{incoming}为@code{2}，
+则结果用于在函数的起始处获取结构体值的地址。
+如果你需要输出调整代码，你应该在这里进行。
 @end deftypefn
 
 @defmac PCC_STATIC_STRUCT_RETURN
-Define this macro if the usual system convention on the target machine
-for returning structures and unions is for the called function to return
-the address of a static variable containing the value.
+定义该宏，如果在target机器上的通常的系统约定，
+对于返回结构体和联合体，为被调用函数返回包含该值的静态变量的地址。
 
-Do not define this if the usual system convention is for the caller to
-pass an address to the subroutine.
+不要定义该宏，如果通常的系统约定为调用者将地址传给子程序。
 
-This macro has effect in @option{-fpcc-struct-return} mode, but it does
-nothing when you use @option{-freg-struct-return} mode.
+该宏具有@option{-fpcc-struct-return}模式下的效果，
+但是当你使用@option{-freg-struct-return}模式时，其将不做任何事。
 @end defmac
 
 @node 调用者保存
 @subsection 调用者保存的寄存器分配
 
-If you enable it, GCC can save registers around function calls.  This
-makes it possible to use call-clobbered registers to hold variables that
-must live across calls.
+如果你使用这种功能，GCC可以将寄存器保存在函数调用附近。
+这使得可以使用调用破坏的（call-clobbered）寄存器来存放必须活跃于调用之间的变量。
 
 @defmac CALLER_SAVE_PROFITABLE (@var{refs}, @var{calls})
-A C expression to determine whether it is worthwhile to consider placing
-a pseudo-register in a call-clobbered hard register and saving and
-restoring it around each function call.  The expression should be 1 when
-this is worth doing, and 0 otherwise.
+一个C表达式来确定是否值得考虑将一个伪寄存器放在一个调用破坏的硬件寄存器中，
+并在每个函数调用的附近进行保存和恢复。表达式应该为1，当值得去做，否则为0。
 
-If you don't define this macro, a default is used which is good on most
-machines: @code{4 * @var{calls} < @var{refs}}.
+如果没有定义该宏，缺省值将被使用，
+其在大多数机器上都是好的：@code{4 * @var{calls} < @var{refs}}。
 @end defmac
 
 @defmac HARD_REGNO_CALLER_SAVE_MODE (@var{regno}, @var{nregs})
-A C expression specifying which mode is required for saving @var{nregs}
-of a pseudo-register in call-clobbered hard register @var{regno}.  If
-@var{regno} is unsuitable for caller save, @code{VOIDmode} should be
-returned.  For most machines this macro need not be defined since GCC
-will select the smallest suitable mode.
+一个C表达式指定了将伪寄存器@var{nregs}保存在调用破坏的硬件寄存器@var{regno}中，
+需要哪种机器模式。如果@var{regno}不适合调用者保存，则应该返回@code{VOIDmode}。
+对于大多数机器，该宏不需要被定义，因为GCC将选择最小的合适的机器模式。
 @end defmac
 
 @node 函数入口
@@ -4744,41 +4685,37 @@ previously exposed.
 @subsection 为profiling生成代码
 @cindex profiling, code generation
 
-These macros will help you generate code for profiling.
+这些宏将帮助你为profiling生成代码。
 
 @defmac FUNCTION_PROFILER (@var{file}, @var{labelno})
-A C statement or compound statement to output to @var{file} some
-assembler code to call the profiling subroutine @code{mcount}.
+一条C语句或者复合语句，来输出到@var{file}中一些汇编代码，
+来调用profiling子程序@code{mcount}。
 
 @findex mcount
-The details of how @code{mcount} expects to be called are determined by
-your operating system environment, not by GCC@.  To figure them out,
-compile a small program for profiling using the system's installed C
-compiler and look at the assembler code that results.
+关于@code{mcount}期望如何被调用的细节，由你的操作系统环境来决定，
+而不是GCC。要弄清楚它们，可以编译一个小程序，
+使用系统安装的C编译进行profiling，并查看生成的汇编代码。
 
-Older implementations of @code{mcount} expect the address of a counter
-variable to be loaded into some register.  The name of this variable is
-@samp{LP} followed by the number @var{labelno}, so you would generate
-the name using @samp{LP%d} in a @code{fprintf}.
+@code{mcount}的旧的实现，期望一个计数变量的地址被加载到某个寄存器中。
+该变量的名字为@samp{LP}，后面跟随数字@var{labelno}，
+所以你应该生成该名字，在@code{fprintf}中使用@samp{LP%d}。
 @end defmac
 
 @defmac PROFILE_HOOK
-A C statement or compound statement to output to @var{file} some assembly
-code to call the profiling subroutine @code{mcount} even the target does
-not support profiling.
+一条C语句或者复合语句，来输出到@var{file}中一些汇编代码，
+来调用profiling子程序@code{mcount}，即使target不支持profiling。
 @end defmac
 
 @defmac NO_PROFILE_COUNTERS
-Define this macro to be an expression with a nonzero value if the
-@code{mcount} subroutine on your system does not need a counter variable
-allocated for each function.  This is true for almost all modern
-implementations.  If you define this macro, you must not use the
-@var{labelno} argument to @code{FUNCTION_PROFILER}.
+定义该宏为一个表达式，具有一个非0的值，
+如果你系统上的@code{mcount}子程序不需要为每个函数分配一个计数变量。
+这对于大多数现代实现都是正确的。如果你定义了该宏，
+你一定不要使用@code{FUNCTION_PROFILER}的@var{labelno}参数。
 @end defmac
 
 @defmac PROFILE_BEFORE_PROLOGUE
-Define this macro if the code for function profiling should come before
-the function prologue.  Normally, the profiling code comes after.
+定义该宏，如果函数profiling的代码应该位于函数序言之前。
+通常profiling代码位于之后。
 @end defmac
 
 @node 尾调用
@@ -4786,25 +4723,21 @@ the function prologue.  Normally, the profiling code comes after.
 @cindex tail calls
 
 @deftypefn {Target Hook} bool TARGET_FUNCTION_OK_FOR_SIBCALL (tree @var{decl}, tree @var{exp})
-True if it is ok to do sibling call optimization for the specified
-call expression @var{exp}.  @var{decl} will be the called function,
-or @code{NULL} if this is an indirect call.
+如果可以为指定的调用表达式@var{exp}做sibling call优化，则为真。
+@var{decl}为被调用的函数，或者为@var{NULL}，如果这是一个间接调用。
 
-It is not uncommon for limitations of calling conventions to prevent
-tail calls to functions outside the current unit of translation, or
-during PIC compilation.  The hook is used to enforce these restrictions,
-as the @code{sibcall} md pattern can not fail, or fall over to a
-``normal'' call.  The criteria for successful sibling call optimization
-may vary greatly between different architectures.
+通常调用约定的限制不会阻止当前转换单元之外的或者PIC编译过程中的函数尾调用。
+钩子用来加强这些限制，由于@code{sibcall} md模式不能fail。
+成功的sibling call优化的标准可能在不同的体系结构上有很大的差别。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_EXTRA_LIVE_ON_ENTRY (bitmap *@var{regs})
-Add any hard registers to @var{regs} that are live on entry to the
-function.  This hook only needs to be defined to provide registers that
-cannot be found by examination of FUNCTION_ARG_REGNO_P, the callee saved
-registers, STATIC_CHAIN_INCOMING_REGNUM, STATIC_CHAIN_REGNUM,
-TARGET_STRUCT_VALUE_RTX, FRAME_POINTER_REGNUM, EH_USES,
-FRAME_POINTER_REGNUM, ARG_POINTER_REGNUM, and the PIC_OFFSET_TABLE_REGNUM.
+增加任何在函数入口为活跃的硬件寄存器到@var{regs}。
+该钩子只需要被定义来提供不能通过检查FUNCTION_ARG_REGNO_P，
+callee保存的寄存器，STATIC_CHAIN_INCOMING_REGNUM，
+STATIC_CHAIN_REGNUM， TARGET_STRUCT_VALUE_RTX，FRAME_POINTER_REGNUM，
+EH_USES， FRAME_POINTER_REGNUM，
+ARG_POINTER_REGNUM和PIC_OFFSET_TABLE_REGNUM来发现的寄存器。
 @end deftypefn
 
 @node 栈冲突保护
@@ -4812,24 +4745,21 @@ FRAME_POINTER_REGNUM, ARG_POINTER_REGNUM, and the PIC_OFFSET_TABLE_REGNUM.
 @cindex stack smashing protection
 
 @deftypefn {Target Hook} tree TARGET_STACK_PROTECT_GUARD (void)
-This hook returns a @code{DECL} node for the external variable to use
-for the stack protection guard.  This variable is initialized by the
-runtime to some random value and is used to initialize the guard value
-that is placed at the top of the local stack frame.  The type of this
-variable must be @code{ptr_type_node}.
+该钩子返回一个外部变量的@code{DECL}节点，用作栈保护者。
+该变量在运行时被初始化为某个随即值，
+并用于初始化放在局部栈帧顶端的警卫值。
+该变量的类型必须为@code{ptr_type_node}。
 
-The default version of this hook creates a variable called
-@samp{__stack_chk_guard}, which is normally defined in @file{libgcc2.c}.
+该钩子的缺省版本创建一个叫做@samp{__stack_chk_guard}的变量，
+其通常在@file{libgcc2.c}中被定义。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_STACK_PROTECT_FAIL (void)
-This hook returns a tree expression that alerts the runtime that the
-stack protect guard variable has been modified.  This expression should
-involve a call to a @code{noreturn} function.
+该钩子返回一个tree表达式，用以警告运行时，栈保护者变量被修改了。
+该表达式应该包括一个对无返回的（@code{noreturn}）函数的调用。
 
-The default version of this hook invokes a function called
-@samp{__stack_chk_fail}, taking no arguments.  This function is
-normally defined in @file{libgcc2.c}.
+该钩子的缺省版本调用一个叫做@samp{__stack_chk_fail}的函数，
+不接受任何参数。该函数通常在@file{libgcc2.c}中被定义。
 @end deftypefn
 
 @node Varargs
