@@ -90,9 +90,13 @@ struct gcc_target targetm = TARGET_INITIALIZER;
 @cindex controlling the compilation driver
 
 @c prevent bad page break with this line
-You can control the compilation driver.
+你可以控制编译驱动器。 
 
 @defmac SWITCH_TAKES_ARG (@var{char})
+    一个C表达式，用来确定选项-char是否接受参数。值应该为选项接受的参数个数，0表示为许多选项。
+
+    缺省情况下，该宏被定义为DEFAULT_SWITCH_TAKES_ARG，可以正常处理标准的选项。除非希望增加额外的接受参数的选项，否则不需要定义SWITCH_TAKES_ARG。任何定义都应该先调用DEFAULT_SWITCH_TAKES_ARG，然后再检查额外的选项。
+
 A C expression which determines whether the option @option{-@var{char}}
 takes arguments.  The value should be the number of arguments that
 option takes--zero, for many options.
@@ -106,6 +110,10 @@ additional options.
 @end defmac
 
 @defmac WORD_SWITCH_TAKES_ARG (@var{name})
+    一个C表达式，用来确定选项-name是否接受参数。值应该为选项接受的参数个数，0表示为许多选项。该宏与SWITCH_TAKES_ARG不同的是用于多字符的选项名。
+
+    缺省情况下，该宏被定义为DEFAULT_WORD_SWITCH_TAKES_ARG，可以正常处理标准的选项。除非希望增加额外的接受参数的选项，否则不需要定义WORD_SWITCH_TAKES_ARG。任何定义都应该先调用DEFAULT_WORD_SWITCH_TAKES_ARG，然后再检查额外的选项。
+
 A C expression which determines whether the option @option{-@var{name}}
 takes arguments.  The value should be the number of arguments that
 option takes--zero, for many options.  This macro rather than
@@ -120,6 +128,10 @@ additional options.
 @end defmac
 
 @defmac SWITCH_CURTAILS_COMPILATION (@var{char})
+    一个C表达式，用来确定选项-char是否在生成可执行程序之前停止编译。值为布尔的，如果选项确实停止生成可执行程序则为非0，否则为0。
+
+    缺省情况下，该宏被定义为DEFAULT_SWITCH_CURTAILS_COMPILATION，可以正常处理标准的选项。除非希望增加额外的影响可执行程序生成的选项，否则不需要定义SWITCH_CURTAILS_COMPILATION。任何定义都应该先调用 DEFAULT_SWITCH_CURTAILS_COMPILATION，然后再检查额外的选项。
+
 A C expression which determines whether the option @option{-@var{char}}
 stops compilation before the generation of an executable.  The value is
 boolean, nonzero if the option does stop an executable from being
@@ -135,6 +147,10 @@ for additional options.
 @end defmac
 
 @defmac SWITCHES_NEED_SPACES
+    一个字符串形式的C表达式，用来枚举连接器在选项和它的参数之间需要一个空格的那些选项。
+
+    如果该宏没有被定义，则缺省值为""。
+
 A string-valued C expression which enumerates the options for which
 the linker needs a space between the option and its argument.
 
@@ -142,6 +158,7 @@ If this macro is not defined, the default value is @code{""}.
 @end defmac
 
 @defmac TARGET_OPTION_TRANSLATE_TABLE
+如果定义，则为字符串对列表，其中第一个为gcc驱动程序的一个可能的命令行target，第二个为空格分隔的（不支持tab和其它 whitespace）选项列表，用来替换第一个选项。定义该列表的target负责确认结果是有效的。替换选项不可以为--opt风格的，它们必须为 -opt风格的。该宏的目的是为多版本库选择提供一种替换机制，像可以启用许多选项一个选项。例如，在一个无实际意义的定义中，-malt-abi, -EB, 和 -mspoo会造成不同的多版本库被选择：
 If defined, a list of pairs of strings, the first of which is a
 potential command line target to the @file{gcc} driver program, and the
 second of which is a space-separated (tabs and other whitespace are not
@@ -162,6 +179,14 @@ multilibs.  Example nonsensical definition, where @option{-malt-abi},
 @end defmac
 
 @defmac DRIVER_SELF_SPECS
+    驱动器本身的specs列表。其应该为一个字符串数组的适当的初始化值，并不使用大括号包裹。
+
+    驱动器将这些specs应用到它自己的命令行上，位于加载缺省specs（不是命令行指定的）和选择多版本库目录或者运行任何子命令之间。将按照给定的顺序来应用它们，所以每个spec可以依赖于先前增加的选项。还可以使用通常的方式，用`%<option'来移除选项。
+
+    当一个port具有多个相互依赖的target选项时，该宏会有一些用处。它提供了一个标准化命令行的方法，使得其它specs的书写变得容易些。
+
+    如果不需要做任何事情的话，则不要定义该宏。
+
 A list of specs for the driver itself.  It should be a suitable
 initializer for an array of strings, with no surrounding braces.
 
@@ -180,6 +205,14 @@ Do not define this macro if it does not need to do anything.
 @end defmac
 
 @defmac OPTION_DEFAULT_SPECS
+    用于在驱动器中支持配置时（configure-time）缺省选项（即，--with选项）的specs列表。其应该为一个结构体数组的适当的初始化值，每个元素包含两个字符串，并不使用大括号包裹字符串对。
+
+    字符串对的第一项为缺省名字。其必须匹配target的config.gcc中的代码。第二项为一个spec，当指定那个名字的时候会被应用。在spec中的字符串`%(VALUE)'将被它的缺省值替换。
+
+    驱动器将这些specs应用到它自己的命令行上，位于加载缺省specs文件和处理DRIVER_SELF_SPECS之间，使用与DRIVER_SELF_SPECS相同的机制。
+
+    如果不需要做任何事情的话，则不要定义该宏。
+
 A list of specs used to support configure-time default options (i.e.@:
 @option{--with} options) in the driver.  It should be a suitable initializer
 for an array of structures, each containing two strings, without the
@@ -199,6 +232,10 @@ Do not define this macro if it does not need to do anything.
 @end defmac
 
 @defmac CPP_SPEC
+    一个C字符串常理，告诉GCC驱动程序要传给CPP的选项。还可以指定如何将你给GCC的选项转换成GCC传给CPP的选项。
+
+    如果不需要做任何事情的话，则不要定义该宏。
+
 A C string constant that tells the GCC driver program options to
 pass to CPP@.  It can also specify how to translate options you
 give to GCC into options for GCC to pass to the CPP@.
@@ -207,12 +244,17 @@ Do not define this macro if it does not need to do anything.
 @end defmac
 
 @defmac CPLUSPLUS_CPP_SPEC
+该宏类似于CPP_SPEC，只不过是用于C++而不是C。如果你不定义该宏，则会使用CPP_SPEC的值（如果存在）来替代。
 This macro is just like @code{CPP_SPEC}, but is used for C++, rather
 than C@.  If you do not define this macro, then the value of
 @code{CPP_SPEC} (if any) will be used instead.
 @end defmac
 
 @defmac CC1_SPEC
+    一个C字符串常量，告诉GCC驱动程序要传给cc1, cc1plus, f771, 和其它语言前端的选项。还可以指定如何将你给GCC的选项转换成GCC传给前端的选项。
+
+    如果不需要做任何事情的话，则不要定义该宏。
+
 A C string constant that tells the GCC driver program options to
 pass to @code{cc1}, @code{cc1plus}, @code{f771}, and the other language
 front ends.
@@ -223,6 +265,10 @@ Do not define this macro if it does not need to do anything.
 @end defmac
 
 @defmac CC1PLUS_SPEC
+    一个C字符串常量，告诉GCC驱动程序要传给cc1plus的选项。还可以指定如何将你给GCC的选项转换成GCC传给cc1plus的选项。
+
+    如果不需要做任何事情的话，则不要定义该宏。注意在CC1_SPEC中定义的所有选项已经被传给cc1plus，所以不需要在CC1PLUS_SPEC中重复CC1_SPEC的内容。
+
 A C string constant that tells the GCC driver program options to
 pass to @code{cc1plus}.  It can also specify how to translate options you
 give to GCC into options for GCC to pass to the @code{cc1plus}.
@@ -234,6 +280,10 @@ CC1_SPEC in CC1PLUS_SPEC@.
 @end defmac
 
 @defmac ASM_SPEC
+    一个C字符串常量，告诉GCC驱动程序要传给汇编器的选项。还可以指定如何将你给GCC的选项转换成GCC传给汇编器的选项。参见文件sun3.h中的例子。
+
+    如果不需要做任何事情的话，则不要定义该宏。
+
 A C string constant that tells the GCC driver program options to
 pass to the assembler.  It can also specify how to translate options
 you give to GCC into options for GCC to pass to the assembler.
@@ -243,6 +293,10 @@ Do not define this macro if it does not need to do anything.
 @end defmac
 
 @defmac ASM_FINAL_SPEC
+    一个C字符串常理，告诉GCC驱动程序如何在正常的汇编之后运行任何清除程序。通常，不需要该宏。参见文件mips.h中的例子。
+
+    如果不需要做任何事情的话，则不要定义该宏。
+
 A C string constant that tells the GCC driver program how to
 run any programs which cleanup after the normal assembler.
 Normally, this is not needed.  See the file @file{mips.h} for
@@ -252,6 +306,10 @@ Do not define this macro if it does not need to do anything.
 @end defmac
 
 @defmac AS_NEEDS_DASH_FOR_PIPED_INPUT
+    定义该宏，不需要任何值，如果驱动器需要给汇编器一个由单横线“-”组成的参数，来指示它从标准输入（其将为一个与编译器输出连接的管道）读取时。该参数在任何指定输出文件名字的-o选项后面被给出。
+
+    如果不定义该宏，则汇编器被认为在没有给任何参数时，才从标准输入读取。如果你的汇编器根本不能从标准输入读取，则使用`%{pipe:%e}'子句；参见mips.h中的例子。
+
 Define this macro, with no value, if the driver should give the assembler
 an argument consisting of a single dash, @option{-}, to instruct it to
 read from its standard input (which will be a pipe connected to the
@@ -265,6 +323,11 @@ see @file{mips.h} for instance.
 @end defmac
 
 @defmac LINK_SPEC
+    一个C字符串常量，告诉GCC驱动程序要传给连接器的选项。还可以指定如何将你给GCC的选项转换成GCC传给连接器的选项。
+
+    如果不需要做任何事情的话，则不要定义该宏。
+
+
 A C string constant that tells the GCC driver program options to
 pass to the linker.  It can also specify how to translate options you
 give to GCC into options for GCC to pass to the linker.
@@ -273,6 +336,9 @@ Do not define this macro if it does not need to do anything.
 @end defmac
 
 @defmac LIB_SPEC
+另一个C字符串常理，与LINK_SPEC的用法很相似。两者的区别是LIB_SPEC用于传给连接器的命令的结尾处。
+
+如果该宏没有被定义，则提供缺省的方式从通常的地方来加载标准C库。参见gcc.c。
 Another C string constant used much like @code{LINK_SPEC}.  The difference
 between the two is that @code{LIB_SPEC} is used at the end of the
 command given to the linker.
@@ -282,6 +348,9 @@ loads the standard C library from the usual place.  See @file{gcc.c}.
 @end defmac
 
 @defmac LIBGCC_SPEC
+另一个C字符串常理，告诉GCC驱动程序如何以及什么时候将对libgcc.a的引用放到连接器的命令行中。该常量同时被放在LIB_SPEC的值的前面和后面。
+
+如果该宏没有被定义，则GCC驱动器提供了一个缺省的方式，将字符串-lgcc传给连接器。
 Another C string constant that tells the GCC driver program
 how and when to place a reference to @file{libgcc.a} into the
 linker command line.  This constant is placed both before and after
@@ -292,6 +361,7 @@ passes the string @option{-lgcc} to the linker.
 @end defmac
 
 @defmac REAL_LIBGCC_SPEC
+缺省情况下，如果ENABLE_SHARED_LIBGCC被定义，则LIBGCC_SPEC不直接被驱动程序使用，而是根据命令行标记-static, -shared, -static-libgcc, 和 -shared-libgcc的值，被修改来引用libgcc.a的不同版本。在一些target上，这些修改并不合适，这样就可以定义 REAL_LIBGCC_SPEC。REAL_LIBGCC_SPEC告诉驱动器如何将对libgcc的引用放到连接器命令行中，不过不像 LIBGCC_SPEC，它的使用不会被修改。
 By default, if @code{ENABLE_SHARED_LIBGCC} is defined, the
 @code{LIBGCC_SPEC} is not directly used by the driver program but is
 instead modified to refer to different versions of @file{libgcc.a}
@@ -304,6 +374,7 @@ line, but, unlike @code{LIBGCC_SPEC}, it is used unmodified.
 @end defmac
 
 @defmac USE_LD_AS_NEEDED
+一个宏，用于控制对在REAL_LIBGCC_SPEC中提到的LIBGCC_SPEC的修改。如果非0，则会创建一个spec，当不使用任何 -static, -static-libgcc, 或 -shared-libgcc来连接的时候，将使用–as-needed和静态异常处理库所在位置的共享libgcc。
 A macro that controls the modifications to @code{LIBGCC_SPEC}
 mentioned in @code{REAL_LIBGCC_SPEC}.  If nonzero, a spec will be
 generated that uses --as-needed and the shared libgcc in place of the
@@ -312,6 +383,7 @@ static exception handler library, when linking without any of
 @end defmac
 
 @defmac LINK_EH_SPEC
+如果定义，则该C字符串常理被增加到LINK_SPEC中。当USE_LD_AS_NEEDED为0或者未定义时，它仍然影响对在REAL_LIBGCC_SPEC中提到的LIBGCC_SPEC的修改。
 If defined, this C string constant is added to @code{LINK_SPEC}.
 When @code{USE_LD_AS_NEEDED} is zero or undefined, it also affects
 the modifications to @code{LIBGCC_SPEC} mentioned in
@@ -319,6 +391,9 @@ the modifications to @code{LIBGCC_SPEC} mentioned in
 @end defmac
 
 @defmac STARTFILE_SPEC
+另一个C字符串常理，与LINK_SPEC用法很相似。两者的不同之处是STARTFILE_SPEC用于传给连接器的命令的最开始处。
+
+如果该宏没有被定义，则会提供一个缺省方式，从通常的地方来加载标准C起始（startup）文件。参见gcc.c。
 Another C string constant used much like @code{LINK_SPEC}.  The
 difference between the two is that @code{STARTFILE_SPEC} is used at
 the very beginning of the command given to the linker.
@@ -328,6 +403,9 @@ standard C startup file from the usual place.  See @file{gcc.c}.
 @end defmac
 
 @defmac ENDFILE_SPEC
+另一个C字符串常理，与LINK_SPEC用法很相似。两者的不同之处是ENDFILE_SPEC用于传给连接器的命令的最末尾处。
+
+如果不需要做任何事情的话，则不要定义该宏。
 Another C string constant used much like @code{LINK_SPEC}.  The
 difference between the two is that @code{ENDFILE_SPEC} is used at
 the very end of the command given to the linker.
@@ -336,6 +414,7 @@ Do not define this macro if it does not need to do anything.
 @end defmac
 
 @defmac THREAD_MODEL_SPEC
+“GCC -v”将会打印GCC被配置使用的线程模式。然而，在有些平台上这是无法工作的，像AIX 4.3。对于这样的平台，将THREAD_MODEL_SPEC定义为没有空格的字符串来命名可识别的线程模式的名字。%*为该宏的缺省值，将扩展为在 config.gcc中设置的thread_file的值。
 GCC @code{-v} will print the thread model GCC was configured to use.
 However, this doesn't work on platforms that are multilibbed on thread
 models, such as AIX 4.3.  On such platforms, define
@@ -346,12 +425,16 @@ default value of this macro, will expand to the value of
 @end defmac
 
 @defmac SYSROOT_SUFFIX_SPEC
+定义该宏，当GCC使用一个sysroot被配置时，来为target sysroot增加一个后缀。这将造成GCC在sysroot+suffix下查找usr/lib等。
 Define this macro to add a suffix to the target sysroot when GCC is
 configured with a sysroot.  This will cause GCC to search for usr/lib,
 et al, within sysroot+suffix.
 @end defmac
 
 @defmac SYSROOT_HEADERS_SUFFIX_SPEC
+    定义该宏，当GCC使用一个sysroot被配置时，来为target sysroot增加一个头文件后缀。这将造成GCC将更新的sysroot+headers_suffix传给CPP，使得在 sysroot+headers_suffix下查找usr/include等。
+
+
 Define this macro to add a headers_suffix to the target sysroot when
 GCC is configured with a sysroot.  This will cause GCC to pass the
 updated sysroot+headers_suffix to CPP, causing it to search for
@@ -359,6 +442,17 @@ usr/include, et al, within sysroot+headers_suffix.
 @end defmac
 
 @defmac EXTRA_SPECS
+定义该宏，来提供放在specs文件中的，可以被各种规范像CC1_SPEC使用的额外的规范。
+
+定义应该为一个结构体数组的初始化值，其包含一个字符串常量，定义了规范的名字，以及一个字符串常量，提供相应的规范。
+
+如果不需要做任何事情的话，则不要定义该宏。
+
+当一种体系结构包含多个相关的target，所具有的各种..._SPECS彼此很相似的时候，EXTRA_SPECS会很有用，维护者可以有一个集中的地方来存放这些定义。
+
+例如，PowerPC System V.4的target使用EXTRA_SPECS，在System V调用序列被使用时，来定义_CALL_SYSV，当较老的基于AIX的调用序列被使用时，来定义_CALL_AIX。
+
+config/rs6000/rs6000.h的target文件这样定义:
 Define this macro to provide additional specifications to put in the
 @file{specs} file that can be used in various specifications like
 @code{CC1_SPEC}.
@@ -388,6 +482,7 @@ The @file{config/rs6000/rs6000.h} target file defines:
 #define CPP_SYS_DEFAULT ""
 @end smallexample
 
+config/rs6000/sysv.h的target文件这样定义:
 The @file{config/rs6000/sysv.h} target file defines:
 @smallexample
 #undef CPP_SPEC
@@ -401,6 +496,7 @@ The @file{config/rs6000/sysv.h} target file defines:
 #define CPP_SYSV_DEFAULT "-D_CALL_SYSV"
 @end smallexample
 
+而config/rs6000/eabiaix.h的target文件将CPP_SYSV_DEFAULT定义为:
 while the @file{config/rs6000/eabiaix.h} target file defines
 @code{CPP_SYSV_DEFAULT} as:
 
@@ -411,17 +507,20 @@ while the @file{config/rs6000/eabiaix.h} target file defines
 @end defmac
 
 @defmac LINK_LIBGCC_SPECIAL_1
+定义该宏，如果驱动程序应该找到库libgcc.a。如果没有定义该宏，则驱动程序将参数-lgcc传给连接器，并告诉连接器来查找。
 Define this macro if the driver program should find the library
 @file{libgcc.a}.  If you do not define this macro, the driver program will pass
 the argument @option{-lgcc} to tell the linker to do the search.
 @end defmac
 
 @defmac LINK_GCC_C_SEQUENCE_SPEC
+指定给连接器的libgcc和libc的顺序。缺省为%G %L %G。
 The sequence in which libgcc and libc are specified to the linker.
 By default this is @code{%G %L %G}.
 @end defmac
 
 @defmac LINK_COMMAND_SPEC
+一个C字符串常量，给出执行连接器所需的全部的命令行。当定义时，每次在gcc.c中对连接器命令行的修改，你都需要更新你的port。因此，只有当你需要完全重定义所调用的连接器的命令行，并且没有其他方式来完成时，才定义该宏。可以通过LINK_GCC_C_SEQUENCE_SPEC来替代该宏。
 A C string constant giving the complete command line need to execute the
 linker.  When you do this, you will need to update your port each time a
 change is made to the link command line within @file{gcc.c}.  Therefore,
@@ -432,12 +531,17 @@ the effect you need.  Overriding this macro may be avoidable by overriding
 @end defmac
 
 @defmac LINK_ELIMINATE_DUPLICATE_LDIRECTORIES
+一个非零值，使得collect2从连接命令中移除重复的-Ldirectory搜寻目录。如果移除重复的搜索目录会改变连接器的语法，则不要定义为非零。
 A nonzero value causes @command{collect2} to remove duplicate @option{-L@var{directory}} search
 directories from linking commands.  Do not give it a nonzero value if
 removing duplicate search directories changes the linker's semantics.
 @end defmac
 
 @defmac MULTILIB_DEFAULTS
+    定义该宏为字符串数组的初始化C表达式，用来告诉驱动器程序对于该target，哪些选项是缺省的，因此当使用MULTILIB_OPTIONS时，不需要单独处理。
+
+    如果在target makefile片段中没有定义MULTILIB_OPTIONS，或者如果在MULTILIB_OPTIONS中列出的选项中没有被设为缺省的，则不要定义该宏。参见“目标片段”。
+
 Define this macro as a C expression for the initializer of an array of
 string to tell the driver program which options are defaults for this
 target and thus do not need to be handled specially when using
@@ -450,12 +554,14 @@ the target makefile fragment or if none of the options listed in
 @end defmac
 
 @defmac RELATIVE_PREFIX_NOT_LINKDIR
+定义该宏来告诉gcc，其应该只将-B的前缀转换成-L连接器选项，如果前缀指示了一个绝对的文件名。
 Define this macro to tell @command{gcc} that it should only translate
 a @option{-B} prefix into a @option{-L} linker option if the prefix
 indicates an absolute file name.
 @end defmac
 
 @defmac MD_EXEC_PREFIX
+如果定义，该宏为一个可选前缀，其在STANDARD_EXEC_PREFIX之后进行尝试。当使用-b选项，或者编译器被构建为交叉编译器时，将不搜寻 MD_EXEC_PREFIX。如果你定义了MD_EXEC_PREFIX，则要确保将其增加到configure.in中用于查找汇编器的目录列表中。
 If defined, this macro is an additional prefix to try after
 @code{STANDARD_EXEC_PREFIX}.  @code{MD_EXEC_PREFIX} is not searched
 when the @option{-b} option is used, or the compiler is built as a cross
@@ -464,6 +570,7 @@ to the list of directories used to find the assembler in @file{configure.in}.
 @end defmac
 
 @defmac STANDARD_STARTFILE_PREFIX
+定义该宏为C字符串常量，如果你希望覆盖将libdir作为前缀来搜寻起始文件crt0.o等的标准选择。当构建为交叉编译器时，STANDARD_STARTFILE_PREFIX不被搜寻。
 Define this macro as a C string constant if you wish to override the
 standard choice of @code{libdir} as the default prefix to
 try when searching for startup files such as @file{crt0.o}.
@@ -472,6 +579,7 @@ is built as a cross compiler.
 @end defmac
 
 @defmac STANDARD_STARTFILE_PREFIX_1
+定义该宏为C字符串常量，如果你希望覆盖在缺省前缀之后，将/lib作为前缀来搜寻起始文件crt0.o等的标准选择。当构建为交叉编译器时，STANDARD_STARTFILE_PREFIX1不被搜寻。
 Define this macro as a C string constant if you wish to override the
 standard choice of @code{/lib} as a prefix to try after the default prefix
 when searching for startup files such as @file{crt0.o}.
@@ -480,6 +588,9 @@ is built as a cross compiler.
 @end defmac
 
 @defmac STANDARD_STARTFILE_PREFIX_2
+    定义该宏为C字符串常量，如果你希望覆盖在缺省前缀之后，将/lib作为前缀来搜寻起始文件crt0.o等的标准选择。当构建为交叉编译器时，STANDARD_STARTFILE_PREFIX2不被搜寻。
+
+
 Define this macro as a C string constant if you wish to override the
 standard choice of @code{/lib} as yet another prefix to try after the
 default prefix when searching for startup files such as @file{crt0.o}.
@@ -488,6 +599,7 @@ is built as a cross compiler.
 @end defmac
 
 @defmac MD_STARTFILE_PREFIX
+如果定义，该宏提供了额外的前缀，在标准前缀之后被尝试。当使用-b选项，或者编译器被构建为交叉编译器时，将不搜寻MD_EXEC_PREFIX。
 If defined, this macro supplies an additional prefix to try after the
 standard prefixes.  @code{MD_EXEC_PREFIX} is not searched when the
 @option{-b} option is used, or when the compiler is built as a cross
@@ -495,12 +607,14 @@ compiler.
 @end defmac
 
 @defmac MD_STARTFILE_PREFIX_1
+如果定义，该宏提供了另一个额外的前缀，在标准前缀之后被尝试。当使用-b选项，或者编译器被构建为交叉编译器时，其将不被搜寻。
 If defined, this macro supplies yet another prefix to try after the
 standard prefixes.  It is not searched when the @option{-b} option is
 used, or when the compiler is built as a cross compiler.
 @end defmac
 
 @defmac INIT_ENVIRONMENT
+定义该宏为C字符串常量，如果你希望驱动器调用的程序，例如汇编器和连接器，的环境变量。驱动器将该宏的值传给putenv来初始化需要的环境变量。
 Define this macro as a C string constant if you wish to set environment
 variables for programs called by the driver, such as the assembler and
 loader.  The driver passes the value of this macro to @code{putenv} to
@@ -508,6 +622,9 @@ initialize the necessary environment variables.
 @end defmac
 
 @defmac LOCAL_INCLUDE_DIR
+义该宏为C字符串常量，如果你希望覆盖当搜索局部头文件时，将/usr/local/include作为缺省前缀的标准选择。在搜索顺序中，LOCAL_INCLUDE_DIR位于SYSTEM_INCLUDE_DIR之前。
+
+交叉编译器既不搜寻/usr/local/include，也不搜寻它的替换者。
 Define this macro as a C string constant if you wish to override the
 standard choice of @file{/usr/local/include} as the default prefix to
 try when searching for local header files.  @code{LOCAL_INCLUDE_DIR}
@@ -518,6 +635,11 @@ replacement.
 @end defmac
 
 @defmac MODIFY_TARGET_NAME
+定义该宏，如果你希望定义命令行开关来修改缺省的target名字。
+
+对于每个开关，你可以包含一个字符串，用来追加到配置名字的第一部分，或者如果有的话，从配置名字中删除。该定义为一个结构体数组的初始化。每个数组元素具有三个元素：开关名（字符串常量，包括起始的横线），一个枚举常量ADD或者DELETE，来表示插入或者删除字符串，以及要插入或者删除的字符串（字符串常量）。
+
+例如，在一台机器上，配置名字的结尾为'64'表示其为64位target，你想使用-32和-64开关来选择32位和64位target，则代码为
 Define this macro if you wish to define command-line switches that
 modify the default target name.
 
@@ -543,6 +665,10 @@ code
 @end defmac
 
 @defmac SYSTEM_INCLUDE_DIR
+    定义该宏作为C字符串常量，如果你希望指定一个系统特定的目录在标准目录之前来搜寻头文件。在搜索顺序中，SYSTEM_INCLUDE_DIR位于STANDARD_INCLUDE_DIR之前。
+
+    交叉编译器不使用该宏，并且不搜寻所指定的目录。
+
 Define this macro as a C string constant if you wish to specify a
 system-specific directory to search for header files before the standard
 directory.  @code{SYSTEM_INCLUDE_DIR} comes before
@@ -553,6 +679,10 @@ specified.
 @end defmac
 
 @defmac STANDARD_INCLUDE_DIR
+    定义该宏为C字符串常量，如果你希望覆盖将/usr/include作为缺省前缀来搜寻头文件的标准选择。
+
+    交叉编译器忽略该宏，并且不搜寻/usr/include和它的替换者。
+
 Define this macro as a C string constant if you wish to override the
 standard choice of @file{/usr/include} as the default prefix to
 try when searching for header files.
@@ -562,12 +692,20 @@ Cross compilers ignore this macro and do not search either
 @end defmac
 
 @defmac STANDARD_INCLUDE_COMPONENT
+“component”对应于STANDARD_INCLUDE_DIR。关于组件的描述，参见下面的INCLUDE_DEFAULTS。如果你没有定义该宏，则不使用组件。
 The ``component'' corresponding to @code{STANDARD_INCLUDE_DIR}.
 See @code{INCLUDE_DEFAULTS}, below, for the description of components.
 If you do not define this macro, no component is used.
 @end defmac
 
 @defmac INCLUDE_DEFAULTS
+定义该宏，如果你希望覆盖整个的include文件的缺省搜寻路径。对于一个本地编译器，缺省搜索路径通常由GCC_INCLUDE_DIR, LOCAL_INCLUDE_DIR, SYSTEM_INCLUDE_DIR, GPLUSPLUS_INCLUDE_DIR, 和 STANDARD_INCLUDE_DIR组成。另外，GPLUSPLUS_INCLUDE_DIR 和 GCC_INCLUDE_DIR由Makefile自动定义，并指定为GCC的私有搜索区域。目录GPLUSPLUS_INCLUDE_DIR只用于 C++程序。
+
+该定义为一个结构体数组的初始化。每个数组元素具有四个元素：目录名（字符串常量），组件名（也是字符串常量），一个标志用来指示只用于C++，以及一个标志用来表示当编译C++时，在extern 'C'中。使用空元素来标记数组的结尾。
+
+组件名指出了include文件属于什么GNU包，使用大写字母。例如可能为'GCC'或'BINUTILS'。如果程序包是商家提供的操作系统的一部分，则名字为'0'。
+
+例如，这是用于VAX/VMS的定义:
 Define this macro if you wish to override the entire default search path
 for include files.  For a native compiler, the default search path
 usually consists of @code{GCC_INCLUDE_DIR}, @code{LOCAL_INCLUDE_DIR},
@@ -604,82 +742,75 @@ For example, here is the definition used for VAX/VMS:
 @end smallexample
 @end defmac
 
-Here is the order of prefixes tried for exec files:
+这些是查找exec文件的前缀顺序：
 
 @enumerate
 @item
-Any prefixes specified by the user with @option{-B}.
+用户使用@option{-B}指定的前缀。
 
 @item
-The environment variable @code{GCC_EXEC_PREFIX} or, if @code{GCC_EXEC_PREFIX}
-is not set and the compiler has not been installed in the configure-time 
-@var{prefix}, the location in which the compiler has actually been installed.
+环境变量@code{GCC_EXEC_PREFIX}，
+或者如果@code{GCC_EXEC_PREFIX}没有被设置并且编译器没有被安装到配置时的@var{prefix}，
+则搜寻编译器实际被安装的位置。
 
 @item
-The directories specified by the environment variable @code{COMPILER_PATH}.
+环境变量@code{COMPILER_PATH}指定的目录。
 
 @item
-The macro @code{STANDARD_EXEC_PREFIX}, if the compiler has been installed
-in the configured-time @var{prefix}. 
+宏@code{STANDARD_EXEC_PREFIX}，如果编译器安装在配置时的@var{prefix}。
 
 @item
-The location @file{/usr/libexec/gcc/}, but only if this is a native compiler. 
+位置@file{/usr/libexec/gcc/}，仅当是本地编译器。
 
 @item
-The location @file{/usr/lib/gcc/}, but only if this is a native compiler. 
+位置@file{/usr/lib/gcc/}，仅当是本地编译器。
 
 @item
-The macro @code{MD_EXEC_PREFIX}, if defined, but only if this is a native 
-compiler.
+宏@code{MD_EXEC_PREFIX}，如果定义，仅当是本地编译器。
 @end enumerate
 
-Here is the order of prefixes tried for startfiles:
+这些是查找起始文件的前缀顺序：
 
 @enumerate
 @item
-Any prefixes specified by the user with @option{-B}.
+用户使用@option{-B}指定的前缀。
 
 @item
-The environment variable @code{GCC_EXEC_PREFIX} or its automatically determined
-value based on the installed toolchain location.
+环境变量@code{GCC_EXEC_PREFIX}，或者基于工具链的安装位置被自动确定的值。
 
 @item
-The directories specified by the environment variable @code{LIBRARY_PATH}
-(or port-specific name; native only, cross compilers do not use this).
+由环境变量@code{LIBRARY_PATH}指定的目录；只用于本地编译器。
 
 @item
-The macro @code{STANDARD_EXEC_PREFIX}, but only if the toolchain is installed
-in the configured @var{prefix} or this is a native compiler. 
+宏@code{STANDARD_EXEC_PREFIX}，但只当工具链被安装在配置的@var{prefix}处，
+或者为本地编译器。
 
 @item
-The location @file{/usr/lib/gcc/}, but only if this is a native compiler.
+位置@file{/usr/lib/gcc/}，仅当是本地编译器。
 
 @item
-The macro @code{MD_EXEC_PREFIX}, if defined, but only if this is a native 
-compiler.
+宏@code{MD_EXEC_PREFIX}，如果定义，仅当是本地编译器。
 
 @item
-The macro @code{MD_STARTFILE_PREFIX}, if defined, but only if this is a 
-native compiler, or we have a target system root.
+宏@code{MD_STARTFILE_PREFIX}，如果定义，
+仅当为本地编译器，或者具有target系统根目录。
 
 @item
-The macro @code{MD_STARTFILE_PREFIX_1}, if defined, but only if this is a 
-native compiler, or we have a target system root.
+宏@code{MD_STARTFILE_PREFIX_1}，如果定义，
+仅当为本地编译器，或者具有target系统根目录。
 
 @item
-The macro @code{STANDARD_STARTFILE_PREFIX}, with any sysroot modifications.
-If this path is relative it will be prefixed by @code{GCC_EXEC_PREFIX} and
-the machine suffix or @code{STANDARD_EXEC_PREFIX} and the machine suffix.
+宏@code{STANDARD_STARTFILE_PREFIX}，带有任何sysroot的修改。
+如果该路径相关，则会加上@code{GCC_EXEC_PREFIX}前缀和机器后缀，
+或者@code{STANDARD_EXEC_PREFIX}和机器后缀。
 
 @item
-The macro @code{STANDARD_STARTFILE_PREFIX_1}, but only if this is a native
-compiler, or we have a target system root. The default for this macro is
-@file{/lib/}.
+宏@code{STANDARD_STARTFILE_PREFIX_1}，仅当为本地编译器，
+或者具有target系统根目录。缺省为@file{/lib/}。
 
 @item
-The macro @code{STANDARD_STARTFILE_PREFIX_2}, but only if this is a native
-compiler, or we have a target system root. The default for this macro is
-@file{/usr/lib/}.
+宏@code{STANDARD_STARTFILE_PREFIX_2}，仅当为本地编译器，
+或者具有target系统根目录。缺省为@file{/usr/lib/}。
 @end enumerate
 
 @node 运行时目标机
@@ -5533,19 +5664,16 @@ argument types should be @var{vec_type_in}.
 @cindex anchored addresses
 @cindex @option{-fsection-anchors}
 
-GCC usually addresses every static object as a separate entity.
-For example, if we have:
+GCC通常将每一个静态对象作为一个单独的实体来寻址。例如，如果我们有：
 
 @smallexample
 static int a, b, c;
 int foo (void) @{ return a + b + c; @}
 @end smallexample
 
-the code for @code{foo} will usually calculate three separate symbolic
-addresses: those of @code{a}, @code{b} and @code{c}.  On some targets,
-it would be better to calculate just one symbolic address and access
-the three variables relative to it.  The equivalent pseudocode would
-be something like:
+@code{foo}的代码通常会计算三个独立的符号地址：@code{a}，@code{b}和@code{c}的。
+在一些target上，只计算一个符号地址并且通过相对地址来访问这三个变量会更好些。
+等价的伪代码可能为：
 
 @smallexample
 int foo (void)
@@ -5555,47 +5683,42 @@ int foo (void)
 @}
 @end smallexample
 
-(which isn't valid C).  We refer to shared addresses like @code{x} as
-``section anchors''.  Their use is controlled by @option{-fsection-anchors}.
+（这不是有效的C）。我们称像@code{x}这样的共享地址为“section anchors”。
+它们的用法由@option{-fsection-anchors}控制。
 
-The hooks below describe the target properties that GCC needs to know
-in order to make effective use of section anchors.  It won't use
-section anchors at all unless either @code{TARGET_MIN_ANCHOR_OFFSET}
-or @code{TARGET_MAX_ANCHOR_OFFSET} is set to a nonzero value.
+下面的钩子描述了GCC需要知道的target属性，以便有效利用section anchors。
+除非@code{TARGET_MIN_ANCHOR_OFFSET}或@code{TARGET_MAX_ANCHOR_OFFSET}
+被设为一个非0的值，否则section anchors根本不会被使用。
 
 @deftypevar {Target Hook} HOST_WIDE_INT TARGET_MIN_ANCHOR_OFFSET
-The minimum offset that should be applied to a section anchor.
-On most targets, it should be the smallest offset that can be
-applied to a base register while still giving a legitimate address
-for every mode.  The default value is 0.
+应该应用到section anchor的最小偏移量。在大多数target上，
+其应该为可以应用到基址寄存器并且对每种机器模式都可以给出合法地址的最小偏移量。
+缺省值为0。
 @end deftypevar
 
 @deftypevar {Target Hook} HOST_WIDE_INT TARGET_MAX_ANCHOR_OFFSET
-Like @code{TARGET_MIN_ANCHOR_OFFSET}, but the maximum (inclusive)
-offset that should be applied to section anchors.  The default
-value is 0.
+类似@code{TARGET_MIN_ANCHOR_OFFSET}，
+但是为可以应用到section anchors的最大(包括)偏移量。缺省为0。
 @end deftypevar
 
 @deftypefn {Target Hook} void TARGET_ASM_OUTPUT_ANCHOR (rtx @var{x})
-Write the assembly code to define section anchor @var{x}, which is a
-@code{SYMBOL_REF} for which @samp{SYMBOL_REF_ANCHOR_P (@var{x})} is true.
-The hook is called with the assembly output position set to the beginning
-of @code{SYMBOL_REF_BLOCK (@var{x})}.
+写汇编代码来定义section anchor @var{x}，其为一个@code{SYMBOL_REF}，
+并且@samp{SYMBOL_REF_ANCHOR_P (@var{x})}为真。该钩子被调用时，
+汇编输出位置被设为@code{SYMBOL_REF_BLOCK (@var{x})}的起始处。
 
-If @code{ASM_OUTPUT_DEF} is available, the hook's default definition uses
-it to define the symbol as @samp{. + SYMBOL_REF_BLOCK_OFFSET (@var{x})}.
-If @code{ASM_OUTPUT_DEF} is not available, the hook's default definition
-is @code{NULL}, which disables the use of section anchors altogether.
+如果@code{ASM_OUTPUT_DEF}可用，
+则钩子的缺省定义使用它来定义符号为@samp{. + SYMBOL_REF_BLOCK_OFFSET (@var{x})}。
+如果@code{ASM_OUTPUT_DEF}不可用，则钩子的缺省定义为@code{NULL}，
+其禁止了section anchors的使用。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_USE_ANCHORS_FOR_SYMBOL_P (rtx @var{x})
-Return true if GCC should attempt to use anchors to access @code{SYMBOL_REF}
-@var{x}.  You can assume @samp{SYMBOL_REF_HAS_BLOCK_INFO_P (@var{x})} and
-@samp{!SYMBOL_REF_ANCHOR_P (@var{x})}.
+返回真，如果GCC应该尝试使用anchors来访问@code{SYMBOL_REF} @var{x}。
+你可以假设@samp{SYMBOL_REF_HAS_BLOCK_INFO_P (@var{x})}和
+@samp{!SYMBOL_REF_ANCHOR_P (@var{x})}。
 
-The default version is correct for most targets, but you might need to
-intercept this hook to handle things like target-specific attributes
-or target-specific sections.
+缺省版本对于大多数target都正确，
+但是你可能需要截取该钩子来处理target特定的属性或者target特定的section。
 @end deftypefn
 
 @node 条件代码
@@ -6748,42 +6871,37 @@ The default value is false.
 @cindex position independent code
 @cindex PIC
 
-This section describes macros that help implement generation of position
-independent code.  Simply defining these macros is not enough to
-generate valid PIC; you must also add support to the macros
-@code{GO_IF_LEGITIMATE_ADDRESS} and @code{PRINT_OPERAND_ADDRESS}, as
-well as @code{LEGITIMIZE_ADDRESS}.  You must modify the definition of
-@samp{movsi} to do something appropriate when the source operand
-contains a symbolic address.  You may also need to alter the handling of
-switch statements so that they use relative addresses.
+这一节描述了帮助实现位置独立代码生成的宏。
+简单的定义这些宏并不足以生成有效的PIC；
+你必须还要增加对宏@code{GO_IF_LEGITIMATE_ADDRESS}和
+@code{PRINT_OPERAND_ADDRESS}的支持，还有@code{LEGITIMIZE_ADDRESS}。
+你必须修改@samp{movsi}的定义，
+当源操作数包含一个符号地址时来做一些适当的处理。
+还可能需要修改switch语句的处理，使得它们使用相对地址。
+
 @c i rearranged the order of the macros above to try to force one of
 @c them to the next line, to eliminate an overfull hbox. --mew 10feb93
 
 @defmac PIC_OFFSET_TABLE_REGNUM
-The register number of the register used to address a table of static
-data addresses in memory.  In some cases this register is defined by a
-processor's ``application binary interface'' (ABI)@.  When this macro
-is defined, RTL is generated for this register once, as with the stack
-pointer and frame pointer registers.  If this macro is not defined, it
-is up to the machine-dependent files to allocate such a register (if
-necessary).  Note that this register must be fixed when in use (e.g.@:
-when @code{flag_pic} is true).
+用于寻址内存中静态数据地址表的寄存器的编号。一些情况下，
+该寄存器由处理器的“应用二进制接口”（ABI）定义。当该宏被定义时，
+会为该寄存器生成一次 RTL，使用栈指针和帧指针寄存器。如果该宏没有被定义，
+则需要机器相关文件来分配这样的寄存器（如果需要的话）。
+注意该寄存器在使用时（即当@code{flag_pic}为真时）必须为固定的。
 @end defmac
 
 @defmac PIC_OFFSET_TABLE_REG_CALL_CLOBBERED
-Define this macro if the register defined by
-@code{PIC_OFFSET_TABLE_REGNUM} is clobbered by calls.  Do not define
-this macro if @code{PIC_OFFSET_TABLE_REGNUM} is not defined.
+定义该宏，如果由@code{PIC_OFFSET_TABLE_REGNUM}定义的寄存器被调用破坏。
+如果@code{PIC_OFFSET_TABLE_REGNUM}没有被定义，则不要定义该宏。
 @end defmac
 
 @defmac LEGITIMATE_PIC_OPERAND_P (@var{x})
-A C expression that is nonzero if @var{x} is a legitimate immediate
-operand on the target machine when generating position independent code.
-You can assume that @var{x} satisfies @code{CONSTANT_P}, so you need not
-check this.  You can also assume @var{flag_pic} is true, so you need not
-check it either.  You need not define this macro if all constants
-(including @code{SYMBOL_REF}) can be immediate operands when generating
-position independent code.
+一个C表达式，如果当生成位置独立代码时，
+@var{x}为target机器上的合法的立即数操作数，则为非零。
+你可以假设@var{x}满足@code{CONSTANT_P}，所以不需要进行检查。
+你还可以假设@var{flag_pic}为真，所以也不需要进行检查。
+如果当生成位置独立代码时，
+所有的常量（包括@code{SYMBOL_REF}）都可以为立即操作数，则不需要定义该宏。
 @end defmac
 
 @node 汇编格式
@@ -7263,477 +7381,381 @@ the variable's decl in order to chose what to output.
 @subsection 标号的生成和输出
 
 @c prevent bad page break with this line
-This is about outputting labels.
+这节是关于标号输出的。
 
 @findex assemble_name
 @defmac ASM_OUTPUT_LABEL (@var{stream}, @var{name})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} the assembler definition of a label named @var{name}.
-Use the expression @code{assemble_name (@var{stream}, @var{name})} to
-output the name itself; before and after that, output the additional
-assembler syntax for defining the name, and a newline.  A default
-definition of this macro is provided which is correct for most systems.
+一条C语句（没有分号），
+用来将名字为@var{name}的标号的汇编定义输出到stdio流@var{stream}中。
+使用表达式@code{assemble_name (@var{stream}, @var{name})}来输出name本身；
+在此之前和之后，输出定义name的额外的汇编语法，以及换行。
+该宏的缺省定义被提供，其对于多数系统都是正确的。
 @end defmac
 
 @findex assemble_name_raw
 @defmac ASM_OUTPUT_INTERNAL_LABEL (@var{stream}, @var{name})
-Identical to @code{ASM_OUTPUT_LABEL}, except that @var{name} is known
-to refer to a compiler-generated label.  The default definition uses
-@code{assemble_name_raw}, which is like @code{assemble_name} except
-that it is more efficient.
+等同于@code{ASM_OUTPUT_LABEL}，除了@var{name}为已知的，引用了编译器生成的标号。
+缺省定义使用@code{assemble_name_raw}，其类似于@code{assemble_name}，
+只不过更加高效。
 @end defmac
 
 @defmac SIZE_ASM_OP
-A C string containing the appropriate assembler directive to specify the
-size of a symbol, without any arguments.  On systems that use ELF, the
-default (in @file{config/elfos.h}) is @samp{"\t.size\t"}; on other
-systems, the default is not to define this macro.
+一个C字符串，包含了适当的汇编伪指令，用于指定符号的大小，不需要任何参数。
+在使用ELF的系统上，缺省为（在@file{config/elfos.h}中）@samp{"\t.size\t"}；
+在其它系统上，缺省为不定义该宏。
 
-Define this macro only if it is correct to use the default definitions
-of @code{ASM_OUTPUT_SIZE_DIRECTIVE} and @code{ASM_OUTPUT_MEASURED_SIZE}
-for your system.  If you need your own custom definitions of those
-macros, or if you do not need explicit symbol sizes at all, do not
-define this macro.
+只有在你的系统上可以正确的使用@code{ASM_OUTPUT_SIZE_DIRECTIVE}和
+@code{ASM_OUTPUT_MEASURED_SIZE}的缺省定义时，才定义该宏。
+如果对于那些宏，你需要自己特定的定义，或者如果你根本不需要显式的符号大小，
+则不要定义该宏。
 @end defmac
 
 @defmac ASM_OUTPUT_SIZE_DIRECTIVE (@var{stream}, @var{name}, @var{size})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} a directive telling the assembler that the size of the
-symbol @var{name} is @var{size}.  @var{size} is a @code{HOST_WIDE_INT}.
-If you define @code{SIZE_ASM_OP}, a default definition of this macro is
-provided.
+一条C语句（没有分号），用来将一条伪指令输出到stdio流@var{stream}中，
+以告诉汇编器符号@var{name}的大小为@var{size}。@var{size}为@code{HOST_WIDE_INT}。
+如果你定义了@code{SIZE_ASM_OP}，则该宏的缺省定义会被提供。
 @end defmac
 
 @defmac ASM_OUTPUT_MEASURED_SIZE (@var{stream}, @var{name})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} a directive telling the assembler to calculate the size of
-the symbol @var{name} by subtracting its address from the current
-address.
+一条C语句（没有分号），用来将一条伪指令输出到stdio流@var{stream}中，
+以告诉汇编器通过从当前地址减去符号@var{name}的地址，来计算符号的大小。
 
-If you define @code{SIZE_ASM_OP}, a default definition of this macro is
-provided.  The default assumes that the assembler recognizes a special
-@samp{.} symbol as referring to the current address, and can calculate
-the difference between this and another symbol.  If your assembler does
-not recognize @samp{.} or cannot do calculations with it, you will need
-to redefine @code{ASM_OUTPUT_MEASURED_SIZE} to use some other technique.
+如果你定义了@code{SIZE_ASM_OP}，则该宏的缺省定义会被提供。
+缺省定义假设汇编器可以识别特殊的@samp{.}符号，作为引用当前地址，
+并能够计算该处和其它符号的差。如果你的汇编器不识别@samp{.}，或者不能计算差，
+你需要重定义@code{ASM_OUTPUT_MEASURED_SIZE}来使用其它技术。
 @end defmac
 
 @defmac TYPE_ASM_OP
-A C string containing the appropriate assembler directive to specify the
-type of a symbol, without any arguments.  On systems that use ELF, the
-default (in @file{config/elfos.h}) is @samp{"\t.type\t"}; on other
-systems, the default is not to define this macro.
+一个C字符串，包含了适当的汇编伪指令，用于指定符号的类型，不需要任何参数。
+在使用ELF的系统上，缺省为（在@file{config/elfos.h}中）@samp{"\t.type\t"}；
+在其它系统上，缺省为不定义该宏。
 
-Define this macro only if it is correct to use the default definition of
-@code{ASM_OUTPUT_TYPE_DIRECTIVE} for your system.  If you need your own
-custom definition of this macro, or if you do not need explicit symbol
-types at all, do not define this macro.
+只有在你的系统上可以正确的使用@code{ASM_OUTPUT_TYPE_DIRECTIVE}的缺省定义时，
+才定义该宏。如果对于该宏，你需要自己特定的定义，
+或者如果你根本不需要显式的符号类型，则不要定义该宏。
 @end defmac
 
 @defmac TYPE_OPERAND_FMT
-A C string which specifies (using @code{printf} syntax) the format of
-the second operand to @code{TYPE_ASM_OP}.  On systems that use ELF, the
-default (in @file{config/elfos.h}) is @samp{"@@%s"}; on other systems,
-the default is not to define this macro.
+一个C字符串，
+指定了@code{TYPE_ASM_OP}的第二个操作数的格式（使用@code{printf}语法）。
+在使用ELF的系统上，缺省为（在@file{config/elfos.h}中）@samp{"@@%s"}；
+在其它系统上，缺省为不定义该宏。
 
-Define this macro only if it is correct to use the default definition of
-@code{ASM_OUTPUT_TYPE_DIRECTIVE} for your system.  If you need your own
-custom definition of this macro, or if you do not need explicit symbol
-types at all, do not define this macro.
+只有在你的系统上可以正确的使用@code{ASM_OUTPUT_TYPE_DIRECTIVE}的缺省定义时，
+才定义该宏。如果对于该宏，你需要自己特定的定义，
+或者如果你根本不需要显式的符号类型，则不要定义该宏。
 @end defmac
 
 @defmac ASM_OUTPUT_TYPE_DIRECTIVE (@var{stream}, @var{type})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} a directive telling the assembler that the type of the
-symbol @var{name} is @var{type}.  @var{type} is a C string; currently,
-that string is always either @samp{"function"} or @samp{"object"}, but
-you should not count on this.
+一条C语句（没有分号），用以将一条伪指令输出到stdio流@var{stream}中，
+以告诉汇编器符号@var{name}的类型为@var{type}。@var{type}是一个C字符串；
+目前该字符串总是@samp{"function"}或者@samp{"object"}，但你不要依赖于此。
 
-If you define @code{TYPE_ASM_OP} and @code{TYPE_OPERAND_FMT}, a default
-definition of this macro is provided.
+如果你定义了@code{TYPE_ASM_OP}和@code{TYPE_OPERAND_FMT}，
+则该宏的缺省定义会被提供。
 @end defmac
 
 @defmac ASM_DECLARE_FUNCTION_NAME (@var{stream}, @var{name}, @var{decl})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} any text necessary for declaring the name @var{name} of a
-function which is being defined.  This macro is responsible for
-outputting the label definition (perhaps using
-@code{ASM_OUTPUT_LABEL}).  The argument @var{decl} is the
-@code{FUNCTION_DECL} tree node representing the function.
+一条C语句（没有分号），用以将任何声明被定义的函数名字@var{name}所需要的文本，
+输出到stdio流@var{stream}中。
+该宏负责输出标号定义（或者使用@code{ASM_OUTPUT_LABEL}）。
+参数@var{decl}为表示函数的@code{FUNCTION_DECL}树结点。
 
-If this macro is not defined, then the function name is defined in the
-usual manner as a label (by means of @code{ASM_OUTPUT_LABEL}).
+如果该宏没有被定义，
+则函数名被作为标号按照通常的方式来定义（使用@code{ASM_OUTPUT_LABEL}）。
 
-You may wish to use @code{ASM_OUTPUT_TYPE_DIRECTIVE} in the definition
-of this macro.
+你可能希望在定义该宏时使用@code{ASM_OUTPUT_TYPE_DIRECTIVE}。
 @end defmac
 
 @defmac ASM_DECLARE_FUNCTION_SIZE (@var{stream}, @var{name}, @var{decl})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} any text necessary for declaring the size of a function
-which is being defined.  The argument @var{name} is the name of the
-function.  The argument @var{decl} is the @code{FUNCTION_DECL} tree node
-representing the function.
+一条C语句（没有分号），用以将任何声明被定义的函数的大小所需要的文本，
+输出到stdio流@var{stream}中。参数@var{name}为函数的名字。
+参数@var{decl}为表示函数的@code{FUNCTION_DECL}树结点。
 
-If this macro is not defined, then the function size is not defined.
+如果该宏没有被定义，则函数大小没有被定义。
 
-You may wish to use @code{ASM_OUTPUT_MEASURED_SIZE} in the definition
-of this macro.
+你可能希望在定义该宏时使用@code{ASM_OUTPUT_MEASURED_SIZE}。
 @end defmac
 
 @defmac ASM_DECLARE_OBJECT_NAME (@var{stream}, @var{name}, @var{decl})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} any text necessary for declaring the name @var{name} of an
-initialized variable which is being defined.  This macro must output the
-label definition (perhaps using @code{ASM_OUTPUT_LABEL}).  The argument
-@var{decl} is the @code{VAR_DECL} tree node representing the variable.
+一条C语句（没有分号），
+用以将任何声明被定义的初始化变量名字@var{name}所需要的文本，
+输出到stdio流@var{stream}中。
+该宏必须输出标号定义（可能使用@code{ASM_OUTPUT_LABEL}）。
+参数@var{decl}为表示变量的@code{VAR_DECL}树结点。
 
-If this macro is not defined, then the variable name is defined in the
-usual manner as a label (by means of @code{ASM_OUTPUT_LABEL}).
+如果该宏没有被定义，
+则变量名被作为标号按照通常的方式来定义（使用@code{ASM_OUTPUT_LABEL}）。
 
-You may wish to use @code{ASM_OUTPUT_TYPE_DIRECTIVE} and/or
-@code{ASM_OUTPUT_SIZE_DIRECTIVE} in the definition of this macro.
+你可能希望在定义该宏时使用@code{ASM_OUTPUT_TYPE_DIRECTIVE}和/或@code{ASM_OUTPUT_SIZE_DIRECTIVE}。
 @end defmac
 
 @defmac ASM_DECLARE_CONSTANT_NAME (@var{stream}, @var{name}, @var{exp}, @var{size})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} any text necessary for declaring the name @var{name} of a
-constant which is being defined.  This macro is responsible for
-outputting the label definition (perhaps using
-@code{ASM_OUTPUT_LABEL}).  The argument @var{exp} is the
-value of the constant, and @var{size} is the size of the constant
-in bytes.  @var{name} will be an internal label.
+一条C语句（没有分号），用以将任何声明被定义的常量名字@var{name}所需要的文本，
+输出到stdio流@var{stream}中。
+该宏负责输出标号定义（可能使用@code{ASM_OUTPUT_LABEL}）。
+参数@var{exp}为常量的值，@var{size}为常量的大小，以字节为单位。
+@var{name}为内部标号。
 
-If this macro is not defined, then the @var{name} is defined in the
-usual manner as a label (by means of @code{ASM_OUTPUT_LABEL}).
+如果该宏没有被定义，
+则@var{name}被作为标号按照通常的方式来定义（使用@code{ASM_OUTPUT_LABEL}）。
 
-You may wish to use @code{ASM_OUTPUT_TYPE_DIRECTIVE} in the definition
-of this macro.
+你可能希望在定义该宏时使用@code{ASM_OUTPUT_TYPE_DIRECTIVE}。
 @end defmac
 
 @defmac ASM_DECLARE_REGISTER_GLOBAL (@var{stream}, @var{decl}, @var{regno}, @var{name})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} any text necessary for claiming a register @var{regno}
-for a global variable @var{decl} with name @var{name}.
+一条C语句（没有分号），用以将任何为具有名字@var{name}的全局变量声明一个寄存器@var{regno}所需要的文本，输出到stdio流@var{stream}中。
 
-If you don't define this macro, that is equivalent to defining it to do
-nothing.
+如果没有定义该宏，则相当于定义其什么都不做。
 @end defmac
 
 @defmac ASM_FINISH_DECLARE_OBJECT (@var{stream}, @var{decl}, @var{toplevel}, @var{atend})
-A C statement (sans semicolon) to finish up declaring a variable name
-once the compiler has processed its initializer fully and thus has had a
-chance to determine the size of an array when controlled by an
-initializer.  This is used on systems where it's necessary to declare
-something about the size of the object.
+一条C语句（没有分号），用于在编译器完全处理了初始化者之后，
+来完成声明一个变量名，这样当数组的大小由初始化者控制的时候，
+就有机会来确定数组的大小。这用于需要声明对象的大小的系统上。
 
-If you don't define this macro, that is equivalent to defining it to do
-nothing.
+如果没有定义该宏，则相当于定义其什么都不做。
 
-You may wish to use @code{ASM_OUTPUT_SIZE_DIRECTIVE} and/or
-@code{ASM_OUTPUT_MEASURED_SIZE} in the definition of this macro.
+你可能希望在定义该宏时使用@code{ASM_OUTPUT_SIZE_DIRECTIVE}和/或@code{ASM_OUTPUT_MEASURED_SIZE}。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_GLOBALIZE_LABEL (FILE *@var{stream}, const char *@var{name})
-This target hook is a function to output to the stdio stream
-@var{stream} some commands that will make the label @var{name} global;
-that is, available for reference from other files.
+该target钩子为一个函数，用于将一些命令输出到stdio流@var{stream}中，
+从而使得标号@var{name}为全局的；也就是，可以从其它文件中引用。
 
-The default implementation relies on a proper definition of
-@code{GLOBAL_ASM_OP}.
+缺省实现依赖于@code{GLOBAL_ASM_OP}的适当定义。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_GLOBALIZE_DECL_NAME (FILE *@var{stream}, tree @var{decl})
-This target hook is a function to output to the stdio stream
-@var{stream} some commands that will make the name associated with @var{decl}
-global; that is, available for reference from other files.
+该target钩子为一个函数，用于将一些命令输出到stdio流@var{stream}中，
+从而使得@var{decl}相关联的名字为全局的；也就是，可以从其它文件中引用。
 
-The default implementation uses the TARGET_ASM_GLOBALIZE_LABEL target hook.
+缺省实现使用TARGET_ASM_GLOBALIZE_LABEL target钩子。
 @end deftypefn
 
 @defmac ASM_WEAKEN_LABEL (@var{stream}, @var{name})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} some commands that will make the label @var{name} weak;
-that is, available for reference from other files but only used if
-no other definition is available.  Use the expression
-@code{assemble_name (@var{stream}, @var{name})} to output the name
-itself; before and after that, output the additional assembler syntax
-for making that name weak, and a newline.
+一条C语句（没有分号），用于将一些命令输出到stdio流@var{stream}中，
+从而使得标号@var{name}为弱的；也就是，可以从其它文件中引用，
+但只有在没有其它定义的时候。
+使用表达式@code{assemble_name (@var{stream}, @var{name})}来输出name本身；
+在此之前和之后，输出使得name为弱的额外的汇编语法，以及换行。
 
-If you don't define this macro or @code{ASM_WEAKEN_DECL}, GCC will not
-support weak symbols and you should not define the @code{SUPPORTS_WEAK}
-macro.
+如果没有定义该宏或者@code{ASM_WEAKEN_DECL}，
+GCC将不支持弱符号并且你不要定义宏@code{SUPPORTS_WEAK}。
 @end defmac
 
 @defmac ASM_WEAKEN_DECL (@var{stream}, @var{decl}, @var{name}, @var{value})
-Combines (and replaces) the function of @code{ASM_WEAKEN_LABEL} and
-@code{ASM_OUTPUT_WEAK_ALIAS}, allowing access to the associated function
-or variable decl.  If @var{value} is not @code{NULL}, this C statement
-should output to the stdio stream @var{stream} assembler code which
-defines (equates) the weak symbol @var{name} to have the value
-@var{value}.  If @var{value} is @code{NULL}, it should output commands
-to make @var{name} weak.
+组合（并替换）了函数@code{ASM_WEAKEN_LABEL}和@code{ASM_OUTPUT_WEAK_ALIAS}，
+允许访问相关的函数或变量decl。如果@var{value}不为@code{NULL}，
+该C语句应该将定义弱符号@var{name}具有值@var{value}的汇编代码，
+输出到stdio流@var{stream}中。如果@var{value}为@code{NULL}，
+其应该输出命令来使得@var{name}为弱的。
 @end defmac
 
 @defmac ASM_OUTPUT_WEAKREF (@var{stream}, @var{decl}, @var{name}, @var{value})
-Outputs a directive that enables @var{name} to be used to refer to
-symbol @var{value} with weak-symbol semantics.  @code{decl} is the
-declaration of @code{name}.
+输出一条伪指令，使得@var{name}被用来使用弱符号语义引用符号@var{value}。
+@code{decl}为@code{name}的声明。
 @end defmac
 
 @defmac SUPPORTS_WEAK
-A C expression which evaluates to true if the target supports weak symbols.
+一个C表达式，如果target支持弱符号，则求值为真。
 
-If you don't define this macro, @file{defaults.h} provides a default
-definition.  If either @code{ASM_WEAKEN_LABEL} or @code{ASM_WEAKEN_DECL}
-is defined, the default definition is @samp{1}; otherwise, it is
-@samp{0}.  Define this macro if you want to control weak symbol support
-with a compiler flag such as @option{-melf}.
+如果你没有定义该宏，@file{defaults.h}会提供一个缺省的定义。
+如果@code{ASM_WEAKEN_LABEL}或者@code{ASM_WEAKEN_DECL}被定义，
+则缺省定义为@samp{1}；否则为@samp{0}。如果你想使用编译器标记，
+例如@option{-melf}，来控制弱符号的支持，则定义该宏。
 @end defmac
 
 @defmac MAKE_DECL_ONE_ONLY (@var{decl})
-A C statement (sans semicolon) to mark @var{decl} to be emitted as a
-public symbol such that extra copies in multiple translation units will
-be discarded by the linker.  Define this macro if your object file
-format provides support for this concept, such as the @samp{COMDAT}
-section flags in the Microsoft Windows PE/COFF format, and this support
-requires changes to @var{decl}, such as putting it in a separate section.
+一条C语句（没有分号），用来标记@var{decl}作为public符号生成，
+这样在多个转换单元中额外的副本将被连接器丢弃。
+如果你的目标文件格式提供了这样的支持，
+例如在Microsoft Windows PE/COFF格式中的@samp{COMDAT} section标记，
+并且这种支持需要对@var{decl}进行改动，例如将其放到独立的section中，则定义该宏。
 @end defmac
 
 @defmac SUPPORTS_ONE_ONLY
-A C expression which evaluates to true if the target supports one-only
-semantics.
+一个C表达式，如果target支持one-only语义，则其求值为真。
 
-If you don't define this macro, @file{varasm.c} provides a default
-definition.  If @code{MAKE_DECL_ONE_ONLY} is defined, the default
-definition is @samp{1}; otherwise, it is @samp{0}.  Define this macro if
-you want to control one-only symbol support with a compiler flag, or if
-setting the @code{DECL_ONE_ONLY} flag is enough to mark a declaration to
-be emitted as one-only.
+如果你没有定义该宏，@file{varasm.c}会提供一个缺省的定义。
+如果@code{MAKE_DECL_ONE_ONLY}被定义，则缺省定义为@samp{1}；否则为@samp{0}。
+如果你想使用编译器标记来控制one-only符号的支持，
+或者如果设置@code{DECL_ONE_ONLY}标记就足以标记声明被作为one-only生成时，
+定义该宏。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_ASSEMBLE_VISIBILITY (tree @var{decl}, const char *@var{visibility})
-This target hook is a function to output to @var{asm_out_file} some
-commands that will make the symbol(s) associated with @var{decl} have
-hidden, protected or internal visibility as specified by @var{visibility}.
+该target钩子为一个函数，用来将一些命令输出到@var{asm_out_file}，
+其将使得与@var{decl}相关的符号具有通过@var{visibility}指定的隐藏，
+保护或者内部可见的属性。
 @end deftypefn
 
 @defmac TARGET_WEAK_NOT_IN_ARCHIVE_TOC
-A C expression that evaluates to true if the target's linker expects
-that weak symbols do not appear in a static archive's table of contents.
-The default is @code{0}.
+一个C表达式，如果target的连接器期望弱符号不出现在静态归档的目录表中，
+则其求值为真。缺省为@code{0}。
 
-Leaving weak symbols out of an archive's table of contents means that,
-if a symbol will only have a definition in one translation unit and
-will have undefined references from other translation units, that
-symbol should not be weak.  Defining this macro to be nonzero will
-thus have the effect that certain symbols that would normally be weak
-(explicit template instantiations, and vtables for polymorphic classes
-with noninline key methods) will instead be nonweak.
+将弱符号置于归档的目录表之外，意味着如果符号将只在一个转换单元中有一个定义，
+并且有从其它转换单元中进行未定义的引用，则该符号将不为弱的。定义该宏为非零，
+将使得这样通常为弱的符号成为非弱的。
 
-The C++ ABI requires this macro to be zero.  Define this macro for
-targets where full C++ ABI compliance is impossible and where linker
-restrictions require weak symbols to be left out of a static archive's
-table of contents.
+C++ ABI要求该宏为0。当target不能完全遵守C++ ABI，
+并且连接器要求弱符号在静态归档的目录表外面时，定义该宏。
 @end defmac
 
 @defmac ASM_OUTPUT_EXTERNAL (@var{stream}, @var{decl}, @var{name})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} any text necessary for declaring the name of an external
-symbol named @var{name} which is referenced in this compilation but
-not defined.  The value of @var{decl} is the tree node for the
-declaration.
+一条C语句（没有分号），
+用于将声明在该编译中被引用但没有被定义的外部符号名字@var{name}，
+所需要的任何文本输出到stdio流@var{stream}中。@var{decl}的值为声明的树结点。
 
-This macro need not be defined if it does not need to output anything.
-The GNU assembler and most Unix assemblers don't require anything.
+如果不需要输出任何东西，则不需要定义该宏。
+GNU汇编器和大多数Unix汇编器不需要做任何事情。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_EXTERNAL_LIBCALL (rtx @var{symref})
-This target hook is a function to output to @var{asm_out_file} an assembler
-pseudo-op to declare a library function name external.  The name of the
-library function is given by @var{symref}, which is a @code{symbol_ref}.
+该target钩子是一个函数，用于将一条汇编伪指令输出到@var{asm_out_file}中，
+用以声明一个库函数名字为外部的。库函数的名字由@var{symref}给出，
+@var{symref}为一个@code{symbol_ref}。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_MARK_DECL_PRESERVED (tree @var{decl})
-This target hook is a function to output to @var{asm_out_file} an assembler
-directive to annotate used symbol.  Darwin target use .no_dead_code_strip
-directive.
+该target钩子为一个函数，用于将一条汇编伪指令输出到@var{asm_out_file}中，
+用以注释使用的符号。Darwin target使用.no_dead_code_strip伪指令。
 @end deftypefn
 
 @defmac ASM_OUTPUT_LABELREF (@var{stream}, @var{name})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} a reference in assembler syntax to a label named
-@var{name}.  This should add @samp{_} to the front of the name, if that
-is customary on your operating system, as it is in most Berkeley Unix
-systems.  This macro is used in @code{assemble_name}.
+一条C语句（没有分号），
+用于将名为@var{name}的标号的引用的汇编语法输出到stdio流@var{stream}中。
+这应该在name前加上@samp{_}。该宏用于@code{assemble_name}。
 @end defmac
 
 @defmac ASM_OUTPUT_SYMBOL_REF (@var{stream}, @var{sym})
-A C statement (sans semicolon) to output a reference to
-@code{SYMBOL_REF} @var{sym}.  If not defined, @code{assemble_name}
-will be used to output the name of the symbol.  This macro may be used
-to modify the way a symbol is referenced depending on information
-encoded by @code{TARGET_ENCODE_SECTION_INFO}.
+一条C语句（没有分号），用于输出对@code{SYMBOL_REF} @var{sym}的引用。
+如果没有定义，@code{assemble_name}将被用来输出符号的名字。
+该宏可以用于修改符号被引用的方式，根据@code{TARGET_ENCODE_SECTION_INFO}的信息。
 @end defmac
 
 @defmac ASM_OUTPUT_LABEL_REF (@var{stream}, @var{buf})
-A C statement (sans semicolon) to output a reference to @var{buf}, the
-result of @code{ASM_GENERATE_INTERNAL_LABEL}.  If not defined,
-@code{assemble_name} will be used to output the name of the symbol.
-This macro is not used by @code{output_asm_label}, or the @code{%l}
-specifier that calls it; the intention is that this macro should be set
-when it is necessary to output a label differently when its address is
-being taken.
+一条C语句（没有分号），用于输出对@code{ASM_GENERATE_INTERNAL_LABEL}的结果，
+@var{buf}的引用。如果没有定义，@code{assemble_name}将被用来输出符号的名字。
+该宏不被调用它的@code{output_asm_label}或者@code{%l}指示符使用；
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_INTERNAL_LABEL (FILE *@var{stream}, const char *@var{prefix}, unsigned long @var{labelno})
-A function to output to the stdio stream @var{stream} a label whose
-name is made from the string @var{prefix} and the number @var{labelno}.
+一个函数，将标号输出到stdio流@var{stream}中，
+标号的名字由字符串@var{prefix}和编号@var{labelno}组成。
 
-It is absolutely essential that these labels be distinct from the labels
-used for user-level functions and variables.  Otherwise, certain programs
-will have name conflicts with internal labels.
+当然这些标号应该与用户级别函数和变量使用的标号不同。
+否则，程序将具有与内部标号的命名冲突。
 
-It is desirable to exclude internal labels from the symbol table of the
-object file.  Most assemblers have a naming convention for labels that
-should be excluded; on many systems, the letter @samp{L} at the
-beginning of a label has this effect.  You should find out what
-convention your system uses, and follow it.
+通常要求内部标号不包含在目标文件的符号表中。大多数汇编器具有命名约定，
+来处理这些标号。在许多系统上，位于标号的起始处的字母@samp{L}，具有这样的效果。
+你应该找到你的系统使用的约定，并遵守。
 
-The default version of this function utilizes @code{ASM_GENERATE_INTERNAL_LABEL}.
+该函数的缺省版本利用@code{ASM_GENERATE_INTERNAL_LABEL}了。
 @end deftypefn
 
 @defmac ASM_OUTPUT_DEBUG_LABEL (@var{stream}, @var{prefix}, @var{num})
-A C statement to output to the stdio stream @var{stream} a debug info
-label whose name is made from the string @var{prefix} and the number
-@var{num}.  This is useful for VLIW targets, where debug info labels
-may need to be treated differently than branch target labels.  On some
-systems, branch target labels must be at the beginning of instruction
-bundles, but debug info labels can occur in the middle of instruction
-bundles.
+一条C语句，用来将调试信息标号输出到stdio流@var{stream}中，
+标号的名字由字符串@var{prefix}和编号@var{num}组成。这对VLIW target很有用，
+因为调试信息标号可能需要与分支目标标号进行不同的处理。在一些系统上，
+分支目标标号必须在指令束的起始处，但是调试信息标号可以出现在指令束的中间。
 
-If this macro is not defined, then @code{(*targetm.asm_out.internal_label)} will be
-used.
+如果该宏没有被定义，则会使用@code{(*targetm.asm_out.internal_label)}。
 @end defmac
 
 @defmac ASM_GENERATE_INTERNAL_LABEL (@var{string}, @var{prefix}, @var{num})
-A C statement to store into the string @var{string} a label whose name
-is made from the string @var{prefix} and the number @var{num}.
+一条C语句，用于将标号存储到字符串@var{string}中，
+标号的名字由字符串@var{prefix}和编号@var{num}组成。
 
-This string, when output subsequently by @code{assemble_name}, should
-produce the output that @code{(*targetm.asm_out.internal_label)} would produce
-with the same @var{prefix} and @var{num}.
-
-If the string begins with @samp{*}, then @code{assemble_name} will
-output the rest of the string unchanged.  It is often convenient for
-@code{ASM_GENERATE_INTERNAL_LABEL} to use @samp{*} in this way.  If the
-string doesn't start with @samp{*}, then @code{ASM_OUTPUT_LABELREF} gets
-to output the string, and may change it.  (Of course,
-@code{ASM_OUTPUT_LABELREF} is also part of your machine description, so
-you should know what it does on your machine.)
+如果字符串起始于@samp{*}，
+则@code{assemble_name}将按照不改变剩余字符串的方式被输出。
+这对于@code{ASM_GENERATE_INTERNAL_LABEL}非常方便。
+如果字符串不起始于@samp{*}，则会使用@code{ASM_OUTPUT_LABELREF}来输出字符串，
+并且可能会做改变。（当然，@code{ASM_OUTPUT_LABELREF}也是你的机器描述的一部分，
+所以你知道它在你的机器上做了什么。）
 @end defmac
 
 @defmac ASM_FORMAT_PRIVATE_NAME (@var{outvar}, @var{name}, @var{number})
-A C expression to assign to @var{outvar} (which is a variable of type
-@code{char *}) a newly allocated string made from the string
-@var{name} and the number @var{number}, with some suitable punctuation
-added.  Use @code{alloca} to get space for the string.
+一个C表达式，给@var{outvar}（类型为@code{char *}*的变量）
+赋值一个新分配的字符串，该字符串由字符串@var{name}和编号@var{number}组成，
+并增加适当的标点符号。使用@code{alloca}为字符串获得空间。
 
-The string will be used as an argument to @code{ASM_OUTPUT_LABELREF} to
-produce an assembler label for an internal static variable whose name is
-@var{name}.  Therefore, the string must be such as to result in valid
-assembler code.  The argument @var{number} is different each time this
-macro is executed; it prevents conflicts between similarly-named
-internal static variables in different scopes.
+字符串将被@code{ASM_OUTPUT_LABELREF}作为参数使用，
+来产生一个名字为@var{name}的内部静态变量的汇编标号。
+因此，字符串必须为有效的汇编代码。参数@var{number}在每次执行该宏时都不相同；
+其使得在不同作用域下的内部静态变量的名字不会有冲突。
 
-Ideally this string should not be a valid C identifier, to prevent any
-conflict with the user's own symbols.  Most assemblers allow periods
-or percent signs in assembler symbols; putting at least one of these
-between the name and the number will suffice.
+理想情况下，该字符串应该不是一个有效的C标识符，
+以阻止任何与用户自己的符号的冲突。大多数汇编器运行点或者百分号在汇编符号中；
+在名字和编号之间加入至少一个这样的字符便可以。
 
-If this macro is not defined, a default definition will be provided
-which is correct for most systems.
+如果该宏没有被定义，一个缺省的定义将被提供，其在大多数系统上都是正确的。
 @end defmac
 
 @defmac ASM_OUTPUT_DEF (@var{stream}, @var{name}, @var{value})
-A C statement to output to the stdio stream @var{stream} assembler code
-which defines (equates) the symbol @var{name} to have the value @var{value}.
+一条C语句，用于将定义符号@var{name}具有值@var{value}的汇编代码输出到stdio流@var{stream}中。
 
 @findex SET_ASM_OP
-If @code{SET_ASM_OP} is defined, a default definition is provided which is
-correct for most systems.
+如果定义了@code{SET_ASM_OP}，一个缺省的定义将被提供，
+其在大多数系统上都是正确的。
 @end defmac
 
 @defmac ASM_OUTPUT_DEF_FROM_DECLS (@var{stream}, @var{decl_of_name}, @var{decl_of_value})
-A C statement to output to the stdio stream @var{stream} assembler code
-which defines (equates) the symbol whose tree node is @var{decl_of_name}
-to have the value of the tree node @var{decl_of_value}.  This macro will
-be used in preference to @samp{ASM_OUTPUT_DEF} if it is defined and if
-the tree nodes are available.
+一条C语句，用于将定义树结点为@var{decl_of_name}的符号，
+具有树结点@var{decl_of_value}的值的汇编代码输出到stdio流@var{stream}中。
+该宏将优先于`ASM_OUTPUT_DEF'被使用，如果其被定义，并且如果树结点有效。
 
 @findex SET_ASM_OP
-If @code{SET_ASM_OP} is defined, a default definition is provided which is
-correct for most systems.
+如果定义了@code{SET_ASM_OP}，一个缺省的定义将被提供，
+其在大多数系统上都是正确的。
 @end defmac
 
 @defmac TARGET_DEFERRED_OUTPUT_DEFS (@var{decl_of_name}, @var{decl_of_value})
-A C statement that evaluates to true if the assembler code which defines
-(equates) the symbol whose tree node is @var{decl_of_name} to have the value
-of the tree node @var{decl_of_value} should be emitted near the end of the
-current compilation unit.  The default is to not defer output of defines.
-This macro affects defines output by @samp{ASM_OUTPUT_DEF} and
-@samp{ASM_OUTPUT_DEF_FROM_DECLS}.
+一条C语句，如果定义树结点为@var{decl_of_name}的符号具有树结点为
+@var{decl_of_value}的值的汇编代码，应该在当前编译单元结尾处被生成，
+则求值为真。缺省为不推迟定义的输出。
+该宏影响`ASM_OUTPUT_DEF' 和 `ASM_OUTPUT_DEF_FROM_DECLS'的定义输出。
 @end defmac
 
 @defmac ASM_OUTPUT_WEAK_ALIAS (@var{stream}, @var{name}, @var{value})
-A C statement to output to the stdio stream @var{stream} assembler code
-which defines (equates) the weak symbol @var{name} to have the value
-@var{value}.  If @var{value} is @code{NULL}, it defines @var{name} as
-an undefined weak symbol.
+一条C语句，用来将定义弱符号@var{name}具有值@var{value}的汇编代码输出
+到stdio流@var{stream}中。如果@var{value}为@code{NULL}，
+其定义@var{name}为未定义的符号。
 
-Define this macro if the target only supports weak aliases; define
-@code{ASM_OUTPUT_DEF} instead if possible.
+如果target只支持弱别名时，定义该宏；否则尽量定义@code{ASM_OUTPUT_DEF}。
 @end defmac
 
 @defmac OBJC_GEN_METHOD_LABEL (@var{buf}, @var{is_inst}, @var{class_name}, @var{cat_name}, @var{sel_name})
-Define this macro to override the default assembler names used for
-Objective-C methods.
+定义该宏来覆盖缺省的用于Objective-C方法的汇编名。
 
-The default name is a unique method number followed by the name of the
-class (e.g.@: @samp{_1_Foo}).  For methods in categories, the name of
-the category is also included in the assembler name (e.g.@:
-@samp{_1_Foo_Bar}).
+缺省名为一个唯一的方法编号，跟随class的名字（例如@samp{_1_Foo}）。
+对于在category中的方法，category也包含在汇编名中（例如@samp{_1_Foo_Bar}）。
 
-These names are safe on most systems, but make debugging difficult since
-the method's selector is not present in the name.  Therefore, particular
-systems define other ways of computing names.
+这些名字在大多数系统上是安全的，但是使得调试变得困难，
+因为方法selector不在名字中。因此一些特定的系统定义了其它计算名字的方式。
 
-@var{buf} is an expression of type @code{char *} which gives you a
-buffer in which to store the name; its length is as long as
-@var{class_name}, @var{cat_name} and @var{sel_name} put together, plus
-50 characters extra.
+@var{buf}为@code{char *}类型的表达式，给出一个缓存来存储名字；
+其长度等于@var{class_name}，@var{cat_name}和@var{sel_name}的和，
+再加上额外的50个字符。
 
-The argument @var{is_inst} specifies whether the method is an instance
-method or a class method; @var{class_name} is the name of the class;
-@var{cat_name} is the name of the category (or @code{NULL} if the method is not
-in a category); and @var{sel_name} is the name of the selector.
+参数@var{is_inst}指定了方法是一个实例方法，还是一个类方法；
+@var{class_name}为类的名字；@var{cat_name}为category的名字（或者为空，
+如果方法不在category中）；@var{sel_name}为selector的名字。
 
-On systems where the assembler can handle quoted names, you can use this
-macro to provide more human-readable names.
+在汇编器可以处理带引号的名字的系统上，你可以使用该宏来提供更加可读的名字。
 @end defmac
 
 @defmac ASM_DECLARE_CLASS_REFERENCE (@var{stream}, @var{name})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} commands to declare that the label @var{name} is an
-Objective-C class reference.  This is only needed for targets whose
-linkers have special support for NeXT-style runtimes.
+一条C语句（没有分号），用于将命令输出到stdio流@var{stream}中，
+来声明标号@var{name}为Objective-C class引用。
+这只在连接器具有对NeXT-style运行时的特殊支持的target上需要。
 @end defmac
 
 @defmac ASM_DECLARE_UNRESOLVED_REFERENCE (@var{stream}, @var{name})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} commands to declare that the label @var{name} is an
-unresolved Objective-C class reference.  This is only needed for targets
-whose linkers have special support for NeXT-style runtimes.
+一条C语句（没有分号），用于将命令输出到stdio流@var{stream}中，
+来声明标号@var{name}为未解决的Objective-C class引用。
+这只在连接器具有对NeXT-style运行时的特殊支持的target上需要。
 @end defmac
 
 @node 初始化
@@ -7743,116 +7765,96 @@ whose linkers have special support for NeXT-style runtimes.
 @cindex constructors, output of
 @cindex destructors, output of
 
-The compiled code for certain languages includes @dfn{constructors}
-(also called @dfn{initialization routines})---functions to initialize
-data in the program when the program is started.  These functions need
-to be called before the program is ``started''---that is to say, before
-@code{main} is called.
+一些语言被编译后的代码中会包含构造者（也称为初始化例程）---当程序启动时，
+用来初始化程序中的数据的函数。这些函数需要在程序开始前被调用---也就是说，
+在调用@code{main}之前。
 
-Compiling some languages generates @dfn{destructors} (also called
-@dfn{termination routines}) that should be called when the program
-terminates.
+编译一些语言还会生成析构者（也成为终止例程），将在程序终止时被调用。
 
-To make the initialization and termination functions work, the compiler
-must output something in the assembler code to cause those functions to
-be called at the appropriate time.  When you port the compiler to a new
-system, you need to specify how to do this.
+为了让初始化和终止函数工作，编译器必须在汇编代码中输出一些东西，
+使得那些函数在适当的时候被调用。当你将编译器移植到一个新的系统时，
+你需要指定如何做。
 
-There are two major ways that GCC currently supports the execution of
-initialization and termination functions.  Each way has two variants.
-Much of the structure is common to all four variations.
+GCC目前支持两种主要的方式，来执行初始化和终止函数。
+每种方式都有两个变体。大多数结构体对于这四个变体都是通用的。
 
 @findex __CTOR_LIST__
 @findex __DTOR_LIST__
-The linker must build two lists of these functions---a list of
-initialization functions, called @code{__CTOR_LIST__}, and a list of
-termination functions, called @code{__DTOR_LIST__}.
+连接器必须构建两个这些函数的链表---一个是初始化函数链表，
+叫做@code{__CTOR_LIST__}，一个是终止函数，叫做@code{__DTOR_LIST__}。
 
-Each list always begins with an ignored function pointer (which may hold
-0, @minus{}1, or a count of the function pointers after it, depending on
-the environment).  This is followed by a series of zero or more function
-pointers to constructors (or destructors), followed by a function
-pointer containing zero.
+每个列表总是起始于一个被忽略的函数指针（其可能为0，-1，
+或者之后的函数指针的个数，这取决于具体环境）。
+随后是一系列指向构造者（或析构者）的零个或多个函数指针，
+然后是一个包含0的函数指针。
 
-Depending on the operating system and its executable file format, either
-@file{crtstuff.c} or @file{libgcc2.c} traverses these lists at startup
-time and exit time.  Constructors are called in reverse order of the
-list; destructors in forward order.
+取决于操作系统和它的可执行文件格式，或者@file{crtstuff.c}，
+或者@file{libgcc2.c}会在起始时间和退出时间遍历这些列表。
+构造者按照列表相反的顺序被调用；析构者按照向前的顺序。
 
-The best way to handle static constructors works only for object file
-formats which provide arbitrarily-named sections.  A section is set
-aside for a list of constructors, and another for a list of destructors.
-Traditionally these are called @samp{.ctors} and @samp{.dtors}.  Each
-object file that defines an initialization function also puts a word in
-the constructor section to point to that function.  The linker
-accumulates all these words into one contiguous @samp{.ctors} section.
-Termination functions are handled similarly.
+处理静态构造者的最好的方式，
+只有在目标文件格式提供任意命名section的时候才可以工作。
+这会在构造者列表旁边设置一个section，析构者列表旁边设置另一个，
+通常称作@samp{.ctors}和@samp{.dtors}。
+每个定义了初始化函数的目标文件，还在构造section中放入一个字，
+以指向那个函数。
+连接器将所有这些字累积放入到一个邻近的@samp{.ctors} section中。
+终止函数按照类似的方式处理。
 
-This method will be chosen as the default by @file{target-def.h} if
-@code{TARGET_ASM_NAMED_SECTION} is defined.  A target that does not
-support arbitrary sections, but does support special designated
-constructor and destructor sections may define @code{CTORS_SECTION_ASM_OP}
-and @code{DTORS_SECTION_ASM_OP} to achieve the same effect.
+如果定义了TARGET_ASM_NAMED_SECTION，
+则该方法将被@file{target-def.h}作为缺省方式选择。
+不支持任意section，但是支持特定的构造者和析构者section的target，
+可以定义@code{CTORS_SECTION_ASM_OP}和@code{DTORS_SECTION_ASM_OP}
+来达到相同的效果。
 
-When arbitrary sections are available, there are two variants, depending
-upon how the code in @file{crtstuff.c} is called.  On systems that
-support a @dfn{.init} section which is executed at program startup,
-parts of @file{crtstuff.c} are compiled into that section.  The
-program is linked by the @command{gcc} driver like this:
+当支持任意section时，有两个变体，
+取决于如何调用@file{crtstuff.c}中的代码。
+在支持@dfn{.init} section（其在程序起始时被执行）的系统上，
+@file{crtstuff.c}的部分代码被编译到那个section中。
+程序按照类似于下面的方式被@command{gcc}驱动连接：
 
 @smallexample
 ld -o @var{output_file} crti.o crtbegin.o @dots{} -lgcc crtend.o crtn.o
 @end smallexample
 
-The prologue of a function (@code{__init}) appears in the @code{.init}
-section of @file{crti.o}; the epilogue appears in @file{crtn.o}.  Likewise
-for the function @code{__fini} in the @dfn{.fini} section.  Normally these
-files are provided by the operating system or by the GNU C library, but
-are provided by GCC for a few targets.
+函数（@code{__init}）的序言出现在@file{crti.o}的@code{.init} section中；
+尾声出现在@file{crtn.o}中。同样的，函数@code{__fini}在@dfn{.fini} section中。
+通常这些文件由操作系统或者GNU C库提供，但GCC也为一些target提供。
 
-The objects @file{crtbegin.o} and @file{crtend.o} are (for most targets)
-compiled from @file{crtstuff.c}.  They contain, among other things, code
-fragments within the @code{.init} and @code{.fini} sections that branch
-to routines in the @code{.text} section.  The linker will pull all parts
-of a section together, which results in a complete @code{__init} function
-that invokes the routines we need at startup.
+目标文件@file{crtbegin.o}和@file{crtend.o}是从@file{crtstuff.c}
+中编译出来的（对于大多target）。它们包含了，在@code{.init}和@code{.fini} 
+section中的代码片断，用于跳转到@code{.text} section中的例程中。
+连接器会把section的所有部分放在一起，形成完整的@code{__init}函数，
+其可以在起始处调用我们需要的例程。
 
-To use this variant, you must define the @code{INIT_SECTION_ASM_OP}
-macro properly.
+要使用这个变体，你必须适当的定义@code{INIT_SECTION_ASM_OP}宏。
 
-If no init section is available, when GCC compiles any function called
-@code{main} (or more accurately, any function designated as a program
-entry point by the language front end calling @code{expand_main_function}),
-it inserts a procedure call to @code{__main} as the first executable code
-after the function prologue.  The @code{__main} function is defined
-in @file{libgcc2.c} and runs the global constructors.
+如果init section不可用，GCC在编译任何叫做@code{main}（或者更加确切的说，
+任何被语言前端@code{expand_main_function}指定为程序入口点的函数）的函数时，
+其会插入一个调用@code{__main}的程序，以作为在函数序言之后首先执行的代码。
+@code{__main}函数在@file{libgcc2.c}中定义，并运行全局的构造者。
 
-In file formats that don't support arbitrary sections, there are again
-two variants.  In the simplest variant, the GNU linker (GNU @code{ld})
-and an `a.out' format must be used.  In this case,
-@code{TARGET_ASM_CONSTRUCTOR} is defined to produce a @code{.stabs}
-entry of type @samp{N_SETT}, referencing the name @code{__CTOR_LIST__},
-and with the address of the void function containing the initialization
-code as its value.  The GNU linker recognizes this as a request to add
-the value to a @dfn{set}; the values are accumulated, and are eventually
-placed in the executable as a vector in the format described above, with
-a leading (ignored) count and a trailing zero element.
-@code{TARGET_ASM_DESTRUCTOR} is handled similarly.  Since no init
-section is available, the absence of @code{INIT_SECTION_ASM_OP} causes
-the compilation of @code{main} to call @code{__main} as above, starting
-the initialization process.
+对于文件格式不支持任意section的，也有两个变体。对于最简单的变体，
+必须使用GNU连接器（GNU @code{ld}）和'a.out'格式。在这种情况下，
+@code{TARGET_ASM_CONSTRUCTOR}被定义，
+用来生成一个@samp{N_SETT}类型的@code{.stabs}条目，
+来引用名字@code{__CTOR_LIST__}，
+并且其值为一个包含了初始化代码的void函数地址。
+GNU连接器将其识别为一个要设定的值；该值会被累积，
+并最终作为一个向量放在可执行程序中，
+一个前导（被忽略的）数目和一个尾部的0元素。
+@code{TARGET_ASM_DESTRUCTOR}按照类似的情况被处理。
+由于init section不可用，所以使得编译@code{main}来调用@code{__main}，
+以开始初始化。
 
-The last variant uses neither arbitrary sections nor the GNU linker.
-This is preferable when you want to do dynamic linking and when using
-file formats which the GNU linker does not support, such as `ECOFF'@.  In
-this case, @code{TARGET_HAVE_CTORS_DTORS} is false, initialization and
-termination functions are recognized simply by their names.  This requires
-an extra program in the linkage step, called @command{collect2}.  This program
-pretends to be the linker, for use with GCC; it does its job by running
-the ordinary linker, but also arranges to include the vectors of
-initialization and termination functions.  These functions are called
-via @code{__main} as described above.  In order to use this method,
-@code{use_collect2} must be defined in the target in @file{config.gcc}.
+最后一个变体既不使用任意section，也不使用GNU连接器。这适合于，
+你想进行动态连接并使用GNU连接器不支持的文件格式的时候，例如 'ECOFF'。
+在这种情况下，@code{TARGET_HAVE_CTORS_DTORS}为假，
+初始化和终止函数简单的通过它们的名字来识别。这要求在连接过程中的额外程序，
+叫做@command{collect2}。该程序作为GCC使用的连接器；
+它通过运行普通的连接器来完成工作，但是还负责包含初始化和终止函数的向量。
+这些函数通过@code{__main}调用。要使用这种方式，
+必须在@file{config.gcc}中定义@code{use_collect2}。
 
 @ifinfo
 The following section describes the specific macros that control and
@@ -7862,387 +7864,309 @@ customize the handling of initialization and termination functions.
 @node 用于初始化的宏
 @subsection 控制初始化例程的宏
 
-Here are the macros that control how the compiler handles initialization
-and termination functions:
+这里是控制编译器如何处理初始化和终止函数的宏：
 
 @defmac INIT_SECTION_ASM_OP
-If defined, a C string constant, including spacing, for the assembler
-operation to identify the following data as initialization code.  If not
-defined, GCC will assume such a section does not exist.  When you are
-using special sections for initialization and termination functions, this
-macro also controls how @file{crtstuff.c} and @file{libgcc2.c} arrange to
-run the initialization functions.
+如果定义，为一个C字符串常量，包括空格，
+用于将随后的数据作为初始化代码的汇编操作。如果没有定义，
+GCC将假设这样的section不存在。当你使用用于初始化和终止函数的特定的section时，
+该宏还控制@file{crtstuff.c}和@file{libgcc2.c}如何运行初始化函数。
 @end defmac
 
 @defmac HAS_INIT_SECTION
-If defined, @code{main} will not call @code{__main} as described above.
-This macro should be defined for systems that control start-up code
-on a symbol-by-symbol basis, such as OSF/1, and should not
-be defined explicitly for systems that support @code{INIT_SECTION_ASM_OP}.
+如果定义，@code{main}将不会调用@code{__main}。对于控制起始代码，
+像OSF/1这样的系统，应该定义该宏，
+对于支持@code{INIT_SECTION_ASM_OP}的系统不应该显式的定义。
 @end defmac
 
 @defmac LD_INIT_SWITCH
-If defined, a C string constant for a switch that tells the linker that
-the following symbol is an initialization routine.
+如果定义，为一个C字符串，作为一个开关，告诉连接器后面的符号为一个初始化例程。
 @end defmac
 
 @defmac LD_FINI_SWITCH
-If defined, a C string constant for a switch that tells the linker that
-the following symbol is a finalization routine.
+如果定义，为一个C字符串常量，作为一个开关，告诉连接器后面的符号为一个结束例程。
 @end defmac
 
 @defmac COLLECT_SHARED_INIT_FUNC (@var{stream}, @var{func})
-If defined, a C statement that will write a function that can be
-automatically called when a shared library is loaded.  The function
-should call @var{func}, which takes no arguments.  If not defined, and
-the object format requires an explicit initialization function, then a
-function called @code{_GLOBAL__DI} will be generated.
+如果定义，为一条C语句，其将写一个在加载共享库时可以被自动调用的函数。
+函数应该调用@var{func}，其不接受任何参数。如果没有定义，
+并且目标格式要求显示的初始化函数，则将会生成一个叫做@code{_GLOBAL__DI}的函数。
 
-This function and the following one are used by collect2 when linking a
-shared library that needs constructors or destructors, or has DWARF2
-exception tables embedded in the code.
+该函数和下面的一个，被collect2使用，用于连接一个需要构造者或者析构者，
+或者代码中具有DWARF2异常表嵌入的共享库的时候。
 @end defmac
 
 @defmac COLLECT_SHARED_FINI_FUNC (@var{stream}, @var{func})
-If defined, a C statement that will write a function that can be
-automatically called when a shared library is unloaded.  The function
-should call @var{func}, which takes no arguments.  If not defined, and
-the object format requires an explicit finalization function, then a
-function called @code{_GLOBAL__DD} will be generated.
+如果定义，为一条C语句，其将写一个在卸载共享库时可以被自动调用的函数。
+函数应该调用@var{func}，其不接受任何参数。如果没有定义，
+并且目标格式要求显示的初始化函数，则将会生成一个叫做@code{_GLOBAL__DD}的函数。
 @end defmac
 
 @defmac INVOKE__main
-If defined, @code{main} will call @code{__main} despite the presence of
-@code{INIT_SECTION_ASM_OP}.  This macro should be defined for systems
-where the init section is not actually run automatically, but is still
-useful for collecting the lists of constructors and destructors.
+如果定义，@code{main}将调用@code{__main}，
+而不管@code{INIT_SECTION_ASM_OP}的存在。对于init section不被自动运行，
+但是仍可以用于搜集构建者和析构者列表的系统，该宏应该被定义。
 @end defmac
 
 @defmac SUPPORTS_INIT_PRIORITY
-If nonzero, the C++ @code{init_priority} attribute is supported and the
-compiler should emit instructions to control the order of initialization
-of objects.  If zero, the compiler will issue an error message upon
-encountering an @code{init_priority} attribute.
+如果非零，则支持C++ @code{init_priority}属性，
+并且编译器应该生成指令来控制对象初始化的顺序。
+如果为0，编译器遇到@code{init_priority}属性时，将产生一条错误信息。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_HAVE_CTORS_DTORS
-This value is true if the target supports some ``native'' method of
-collecting constructors and destructors to be run at startup and exit.
-It is false if we must use @command{collect2}.
+该值为真，如果target支持一些搜集构造者和析构者在起始和退出时运行的本地方法。
+如果我们必须使用@command{collect2}，则为假。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_CONSTRUCTOR (rtx @var{symbol}, int @var{priority})
-If defined, a function that outputs assembler code to arrange to call
-the function referenced by @var{symbol} at initialization time.
+如果定义，为一个函数，输出汇编代码来调用在初始化时@var{symbol}引用的函数。
 
-Assume that @var{symbol} is a @code{SYMBOL_REF} for a function taking
-no arguments and with no return value.  If the target supports initialization
-priorities, @var{priority} is a value between 0 and @code{MAX_INIT_PRIORITY};
-otherwise it must be @code{DEFAULT_INIT_PRIORITY}.
+假定@var{symbol}为一个没有参数并没有返回值的函数的@code{SYMBOL_REF}。
+如果target支持初始化优先级，
+@var{priority}为一个0到@code{MAX_INIT_PRIORITY}之间的值；
+否则，其必须为@code{DEFAULT_INIT_PRIORITY}。
 
-If this macro is not defined by the target, a suitable default will
-be chosen if (1) the target supports arbitrary section names, (2) the
-target defines @code{CTORS_SECTION_ASM_OP}, or (3) @code{USE_COLLECT2}
-is not defined.
+如果该宏没有被taret定义，则一个适当的缺省将被选择，
+如果（1）target支持任意section名，
+（2）target定义了@code{CTORS_SECTION_ASM_OP}，
+或者（3）没有定义@code{USE_COLLECT2}。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_DESTRUCTOR (rtx @var{symbol}, int @var{priority})
-This is like @code{TARGET_ASM_CONSTRUCTOR} but used for termination
-functions rather than initialization functions.
+类似于@code{TARGET_ASM_CONSTRUCTOR}，不过用于终止函数，而不是初始化函数。
 @end deftypefn
 
-If @code{TARGET_HAVE_CTORS_DTORS} is true, the initialization routine
-generated for the generated object file will have static linkage.
+如果@code{TARGET_HAVE_CTORS_DTORS}为真，
+对于生成的目标文件的初始化例程将具有静态连接。
 
-If your system uses @command{collect2} as the means of processing
-constructors, then that program normally uses @command{nm} to scan
-an object file for constructor functions to be called.
+如果你的系统使用@command{collec2}作为处理构造者的方法，
+则那个程序通常使用@command{nm}来扫描目标文件，寻找被调用的构造者。
 
-On certain kinds of systems, you can define this macro to make
-@command{collect2} work faster (and, in some cases, make it work at all):
+在一些特定的系统上，你可以定义该宏，使得@command{collect2}工作的更快。
 
 @defmac OBJECT_FORMAT_COFF
-Define this macro if the system uses COFF (Common Object File Format)
-object files, so that @command{collect2} can assume this format and scan
-object files directly for dynamic constructor/destructor functions.
+定义该宏，如果系统使用COFF（Common Object File Format）目标文件，
+这样@command{collect2}能够假设为该格式，并扫描直接目标文件的构造/析构函数。
 
-This macro is effective only in a native compiler; @command{collect2} as
-part of a cross compiler always uses @command{nm} for the target machine.
+该宏只有在本地编译器上才有效率；
+对于交叉编译器，@command{collect2}总是使用@command{nm}。
 @end defmac
 
 @defmac REAL_NM_FILE_NAME
-Define this macro as a C string constant containing the file name to use
-to execute @command{nm}.  The default is to search the path normally for
-@command{nm}.
+定义该宏为一个C字符串常量，包含用来执行@command{nm}的文件名。
+缺省为搜寻通常的路径。
 
-If your system supports shared libraries and has a program to list the
-dynamic dependencies of a given library or executable, you can define
-these macros to enable support for running initialization and
-termination functions in shared libraries:
+如果你的系统支持共享库，并具有一个程序能够列出给定库或可执行程序的动态依赖，
+你可以定义这些宏使得能够运行共享库中的初始化和终止函数。
 @end defmac
 
 @defmac LDD_SUFFIX
-Define this macro to a C string constant containing the name of the program
-which lists dynamic dependencies, like @command{"ldd"} under SunOS 4.
+定义该宏为一个C字符串常量，包含程序的名字，其可以列出动态依赖，
+像SunOS 4中的@command{"ldd"}。
 @end defmac
 
 @defmac PARSE_LDD_OUTPUT (@var{ptr})
-Define this macro to be C code that extracts filenames from the output
-of the program denoted by @code{LDD_SUFFIX}.  @var{ptr} is a variable
-of type @code{char *} that points to the beginning of a line of output
-from @code{LDD_SUFFIX}.  If the line lists a dynamic dependency, the
-code must advance @var{ptr} to the beginning of the filename on that
-line.  Otherwise, it must set @var{ptr} to @code{NULL}.
+定义该宏为C代码，从@code{LDD_SUFFIX}指定的程序的输出中抽取文件名。
+@var{ptr}为@code{char *}类型的变量，指向@code{LDD_SUFFIX}的输出中的一行。
+如果行中列出的是动态依赖，则代码必须将@var{ptr}前进到那一行的文件名起始处。
+否则，其必须设置@var{ptr}为@code{NULL}。
 @end defmac
 
 @defmac SHLIB_SUFFIX
-Define this macro to a C string constant containing the default shared
-library extension of the target (e.g., @samp{".so"}).  @command{collect2}
-strips version information after this suffix when generating global
-constructor and destructor names.  This define is only needed on targets
-that use @command{collect2} to process constructors and destructors.
+定义该宏为一个C字符串常量，包含了target缺省的共享库扩展名（例如@samp{".so"}）。
+当生成全局构造者和析构者名字时，@command{collect2}从该后缀的后面剥去版本信息。
+该定义只在使用@command{collect2}来处理构造者和析构者的target上需要。
 @end defmac
 
 @node 指令输出
 @subsection 汇编指令的输出
 
 @c prevent bad page break with this line
-This describes assembler instruction output.
+这章描述了汇编指令的输出。
 
 @defmac REGISTER_NAMES
-A C initializer containing the assembler's names for the machine
-registers, each one as a C string constant.  This is what translates
-register numbers in the compiler into assembler language.
+一段C初始化程序，包含了机器寄存器的汇编名字，每个名字使用C字符串常量表示。
+这用来将编译器中的寄存器编号转换成汇编语言。
 @end defmac
 
 @defmac ADDITIONAL_REGISTER_NAMES
-If defined, a C initializer for an array of structures containing a name
-and a register number.  This macro defines additional names for hard
-registers, thus allowing the @code{asm} option in declarations to refer
-to registers using alternate names.
+如果定义，则为结构体数组的初始化程序，结构体包含了名字和寄存器编号。
+该宏定义了硬件寄存器的附加名字，这样就可以允许在声明中的@code{asm}选项，
+来使用附加名引用寄存器。
 @end defmac
 
 @defmac ASM_OUTPUT_OPCODE (@var{stream}, @var{ptr})
-Define this macro if you are using an unusual assembler that
-requires different names for the machine instructions.
+定义该宏，如果你在使用一个不常见的汇编器，其需要不一样的机器指令名字。
 
-The definition is a C statement or statements which output an
-assembler instruction opcode to the stdio stream @var{stream}.  The
-macro-operand @var{ptr} is a variable of type @code{char *} which
-points to the opcode name in its ``internal'' form---the form that is
-written in the machine description.  The definition should output the
-opcode name to @var{stream}, performing any translation you desire, and
-increment the variable @var{ptr} to point at the end of the opcode
-so that it will not be output twice.
+定义为C语句，输出一个汇编指令代码到标准输入输出流@var{stream}中。
+宏操作数@var{ptr}为类型是@code{char *}的变量，其指向内部形式中的指令码名字，
+内部形式使用机器描述来表示。该定义应该输出操作码名字到@var{stream}中，
+执行你想要的任何转换，并且将变量@var{ptr}增加到指向opcode的尾部，
+这样其才不会被输出两次。
 
-In fact, your macro definition may process less than the entire opcode
-name, or more than the opcode name; but if you want to process text
-that includes @samp{%}-sequences to substitute operands, you must take
-care of the substitution yourself.  Just be sure to increment
-@var{ptr} over whatever text should not be output normally.
+实际上，相对于整个指令码的名字，你的宏定义可以处理或多或少的部分；
+但是如果你想处理包含@samp{%}序列的文本，则必须小心你所做的替换。
+要保证增加@var{ptr}，使得不会输出不应该被输出的文本。
 
 @findex recog_data.operand
-If you need to look at the operand values, they can be found as the
-elements of @code{recog_data.operand}.
+如果需要查看操作数的值，它们可以作为@code{recog_data.operand}的元素被找到。
 
-If the macro definition does nothing, the instruction is output
-in the usual way.
+如果宏定义不做任何事情，则指令使用通常的方式来输出。
 @end defmac
 
 @defmac FINAL_PRESCAN_INSN (@var{insn}, @var{opvec}, @var{noperands})
-If defined, a C statement to be executed just prior to the output of
-assembler code for @var{insn}, to modify the extracted operands so
-they will be output differently.
+如果定义，则为一条C语句，其就在为@var{insn}输出汇编代码之前将被执行，
+用来修改被抽取的操作数，从而可以被不同方式的输出。
 
-Here the argument @var{opvec} is the vector containing the operands
-extracted from @var{insn}, and @var{noperands} is the number of
-elements of the vector which contain meaningful data for this insn.
-The contents of this vector are what will be used to convert the insn
-template into assembler code, so you can change the assembler output
-by changing the contents of the vector.
+这里的参数@var{opvec}为一个向量，包含了从@var{insn}中抽取的操作数，
+@var{noperands}为向量的元素个数。该向量的内容用于将insn模板转换成汇编代码，
+所以你可以通过修改向量的内容来改变汇编输出。
 
-This macro is useful when various assembler syntaxes share a single
-file of instruction patterns; by defining this macro differently, you
-can cause a large class of instructions to be output differently (such
-as with rearranged operands).  Naturally, variations in assembler
-syntax affecting individual insn patterns ought to be handled by
-writing conditional output routines in those patterns.
+该宏当有多个汇编语法共用一个指令模式文件时很有用；通过定义该宏，
+你可以使大量类别的指令按照不同的方式输出（例如重组操作）。
+自然的，影响单个insn模式的汇编语法，
+应该通过在那些指令模式中写条件输出程序来处理。
 
-If this macro is not defined, it is equivalent to a null statement.
+如果没有定义该宏，则其相当于一条空语句。
 @end defmac
 
 @defmac PRINT_OPERAND (@var{stream}, @var{x}, @var{code})
-A C compound statement to output to stdio stream @var{stream} the
-assembler syntax for an instruction operand @var{x}.  @var{x} is an
-RTL expression.
+C复合语句，用来将指令操作数@var{x}的汇编语法输出到标准输入输出流@var{stream}中。
+@var{x}为RTL表达式。
 
-@var{code} is a value that can be used to specify one of several ways
-of printing the operand.  It is used when identical operands must be
-printed differently depending on the context.  @var{code} comes from
-the @samp{%} specification that was used to request printing of the
-operand.  If the specification was just @samp{%@var{digit}} then
-@var{code} is 0; if the specification was @samp{%@var{ltr}
-@var{digit}} then @var{code} is the ASCII code for @var{ltr}.
+@var{code}值可以用来指定打印操作数的方式。
+用于当操作数必须根据上下文进行不同的打印的时候。
+@var{code}来自用于打印操作数的@samp{%}指定语句。
+如果指定语句只是@samp{%@var{digit}}，则@var{code}为0；
+如果指定语句为@samp{%@var{ltr}@var{digit}}，则@var{code}为@var{ltr}的ASCII码。
 
 @findex reg_names
-If @var{x} is a register, this macro should print the register's name.
-The names can be found in an array @code{reg_names} whose type is
-@code{char *[]}.  @code{reg_names} is initialized from
-@code{REGISTER_NAMES}.
+如果@var{x}为寄存器，则该宏应该打印寄存器的名字。
+名字可以在数组@code{reg_names}中找到，数组的类型为@code{char *[]}。
+@code{reg_names}通过@code{REGISTER_NAMES}来初始化。
 
-When the machine description has a specification @samp{%@var{punct}}
-(a @samp{%} followed by a punctuation character), this macro is called
-with a null pointer for @var{x} and the punctuation character for
-@var{code}.
+当机器描述具有一个@samp{%@var{punct}}指定语句时
+（@samp{%}后面跟随一个标点符号字符），则该宏被调用时，@var{x}为空指针，
+@var{code}为标点符号字符。
 @end defmac
 
 @defmac PRINT_OPERAND_PUNCT_VALID_P (@var{code})
-A C expression which evaluates to true if @var{code} is a valid
-punctuation character for use in the @code{PRINT_OPERAND} macro.  If
-@code{PRINT_OPERAND_PUNCT_VALID_P} is not defined, it means that no
-punctuation characters (except for the standard one, @samp{%}) are used
-in this way.
+一个C表达式，
+当@var{code}为在@code{PRINT_OPERAND}宏中使用的有效的标点符号字符时，
+其计算为真。如果没有定义@code{PRINT_OPERAND_PUNCT_VALID_P}，
+则意味着不以这种方式使用标点符号字符（除了标准的@samp{%}以外）。
 @end defmac
 
 @defmac PRINT_OPERAND_ADDRESS (@var{stream}, @var{x})
-A C compound statement to output to stdio stream @var{stream} the
-assembler syntax for an instruction operand that is a memory reference
-whose address is @var{x}.  @var{x} is an RTL expression.
+C复合语句，用来将指令操作数为内存引用，其地址为@var{x}的汇编语法，
+输出到标准输入输出流@var{stream}中。@var{x}为一个RTL表达式。
 
 @cindex @code{TARGET_ENCODE_SECTION_INFO} usage
-On some machines, the syntax for a symbolic address depends on the
-section that the address refers to.  On these machines, define the hook
-@code{TARGET_ENCODE_SECTION_INFO} to store the information into the
-@code{symbol_ref}, and then check for it here.  @xref{汇编格式}.
+在一些机器上，符号地址的语法取决于地址所引用的section。在这些机器上，
+定义钩子@code{TARGET_ENCODE_SECTION_INFO}来将信息存储到@code{symbol_ref}，
+并在这里进行检查。参见 @ref{汇编格式}。
 @end defmac
 
 @findex dbr_sequence_length
 @defmac DBR_OUTPUT_SEQEND (@var{file})
-A C statement, to be executed after all slot-filler instructions have
-been output.  If necessary, call @code{dbr_sequence_length} to
-determine the number of slots filled in a sequence (zero if not
-currently outputting a sequence), to decide how many no-ops to output,
-or whatever.
+C语句，在所有的栈槽填充指令被输出之后执行。如果需要的话，
+调用@code{dbr_sequence_length}来判定在序列中被填充的栈槽数目
+（如果当前不是输出一个序列，则为0），用来决定输出多少个no-ops，或其它。
 
-Don't define this macro if it has nothing to do, but it is helpful in
-reading assembly output if the extent of the delay sequence is made
-explicit (e.g.@: with white space).
+如果不做任何事情，就不要定义该宏，但是如果将延迟序列显示化，
+则会有助于阅读汇编输出（例如，使用空格）。
 @end defmac
 
 @findex final_sequence
-Note that output routines for instructions with delay slots must be
-prepared to deal with not being output as part of a sequence
-(i.e.@: when the scheduling pass is not run, or when no slot fillers could be
-found.)  The variable @code{final_sequence} is null when not
-processing a sequence, otherwise it contains the @code{sequence} rtx
-being output.
+注意，用于带有延迟槽的指令的输出程序，
+必须准备好处理没有被作为序列输出的情况（即，当没有运行调度过程，
+或者没有找到栈槽填充者）。当没有处理序列时，变量@code{final_sequence}为空，
+否则其包含了被输出的rtx @code{sequence}。
 
 @findex asm_fprintf
 @defmac REGISTER_PREFIX
 @defmacx LOCAL_LABEL_PREFIX
 @defmacx USER_LABEL_PREFIX
 @defmacx IMMEDIATE_PREFIX
-If defined, C string expressions to be used for the @samp{%R}, @samp{%L},
-@samp{%U}, and @samp{%I} options of @code{asm_fprintf} (see
-@file{final.c}).  These are useful when a single @file{md} file must
-support multiple assembler formats.  In that case, the various @file{tm.h}
-files can define these macros differently.
+如果定义，则为C字符串表达式，用于@code{asm_fprintf}（参见 @file{final.c}）
+的选项@samp{%R}, @samp{%L}, @samp{%U}和 @samp{%I}。
+这在单个@file{md}文件必须支持多个汇编格式时很有用。这种情况下，
+不同的@file{tm.h}文件可以定义不同的这些宏。
 @end defmac
 
 @defmac ASM_FPRINTF_EXTENSIONS (@var{file}, @var{argptr}, @var{format})
-If defined this macro should expand to a series of @code{case}
-statements which will be parsed inside the @code{switch} statement of
-the @code{asm_fprintf} function.  This allows targets to define extra
-printf formats which may useful when generating their assembler
-statements.  Note that uppercase letters are reserved for future
-generic extensions to asm_fprintf, and so are not available to target
-specific code.  The output file is given by the parameter @var{file}.
-The varargs input pointer is @var{argptr} and the rest of the format
-string, starting the character after the one that is being switched
-upon, is pointed to by @var{format}.
+如果定义，该宏应该被扩展为一系列@code{case}语句，
+其将在@code{asm_fprintf}函数中的@code{switch}语句里被解析。
+这将应允许target来定义额外的printf格式，其在生成它们的汇编语句时很有帮助。
+注意，大写字母被保留用于@code{asm_fprintf}将来的通用扩展，
+所以不要用于target特定代码中。输出文件由参数@var{file}给定。
+varargs输出指针为@var{argptr}，格式字符串的其余部分，由@var{format}指向。
 @end defmac
 
 @defmac ASSEMBLER_DIALECT
-If your target supports multiple dialects of assembler language (such as
-different opcodes), define this macro as a C expression that gives the
-numeric index of the assembler language dialect to use, with zero as the
-first variant.
+如果你的target支持多个汇编语言方言（例如不同的操作码），
+可以定义该宏作为C表达式，给出汇编语言方言的索引，0作为第一个。
 
-If this macro is defined, you may use constructs of the form
+如果该宏被定义，你可以在指令模式的输出模版中（参见输出模版）或者asm_fprintf的第一个参数中使用如下的结构形式
+
 @smallexample
 @samp{@{option0|option1|option2@dots{}@}}
 @end smallexample
 @noindent
-in the output templates of patterns (@pxref{输出模板}) or in the
-first argument of @code{asm_fprintf}.  This construct outputs
-@samp{option0}, @samp{option1}, @samp{option2}, etc., if the value of
-@code{ASSEMBLER_DIALECT} is zero, one, two, etc.  Any special characters
-within these strings retain their usual meaning.  If there are fewer
-alternatives within the braces than the value of
-@code{ASSEMBLER_DIALECT}, the construct outputs nothing.
+该结构输出@samp{option0}, @samp{option1}, @samp{option2}等等，
+如果@code{ASSEMBLER_DIALECT}的值为0，1，2，等等。
+这些字符串中的任何特殊字符将保留它们通常的含义。
+如果括号中的可选项多于@code{ASSEMBLER_DIALECT}的值，则什么也不输出。
 
-If you do not define this macro, the characters @samp{@{}, @samp{|} and
-@samp{@}} do not have any special meaning when used in templates or
-operands to @code{asm_fprintf}.
+如果没有定义该宏，字符@samp{{}, @samp{|}和@samp{}}在模版中或
+@code{asm_fprintf}的操作数中不具有任何特殊含义。
 
-Define the macros @code{REGISTER_PREFIX}, @code{LOCAL_LABEL_PREFIX},
-@code{USER_LABEL_PREFIX} and @code{IMMEDIATE_PREFIX} if you can express
-the variations in assembler language syntax with that mechanism.  Define
-@code{ASSEMBLER_DIALECT} and use the @samp{@{option0|option1@}} syntax
-if the syntax variant are larger and involve such things as different
-opcodes or operand order.
+如果你能够通过定义宏@code{REGISTER_PREFIX}, @code{LOCAL_LABEL_PREFIX}, 
+@code{USER_LABEL_PREFIX}和@code{IMMEDIATE_PREFIX}来表达出汇编语言语法的
+不同之处，则定义这些宏。如果语法差异比较大，涉及到操作码不同或操作数顺序，
+则定义@code{ASSEMBLER_DIALECT}，使用@samp{{option0|option1}}语法。
 @end defmac
 
 @defmac ASM_OUTPUT_REG_PUSH (@var{stream}, @var{regno})
-A C expression to output to @var{stream} some assembler code
-which will push hard register number @var{regno} onto the stack.
-The code need not be optimal, since this macro is used only when
-profiling.
+C表达式，向@var{stream}中输出汇编代码，用于将硬件寄存器编号@var{regno}压入栈中。
+代码不需要为最优的，因为该宏只在profiling的时候使用。
 @end defmac
 
 @defmac ASM_OUTPUT_REG_POP (@var{stream}, @var{regno})
-A C expression to output to @var{stream} some assembler code
-which will pop hard register number @var{regno} off of the stack.
-The code need not be optimal, since this macro is used only when
-profiling.
+C表达式，向@var{stream}中输出汇编代码，用于将硬件寄存器编号@var{regno}弹出栈中。
+代码不需要为最优的，因为该宏只在profiling的时候使用。
 @end defmac
 
 @node 派遣表
 @subsection 派遣表的输出
 
 @c prevent bad page break with this line
-This concerns dispatch tables.
+这些是关于派遣表的。
 
 @cindex dispatch table
 @defmac ASM_OUTPUT_ADDR_DIFF_ELT (@var{stream}, @var{body}, @var{value}, @var{rel})
-A C statement to output to the stdio stream @var{stream} an assembler
-pseudo-instruction to generate a difference between two labels.
-@var{value} and @var{rel} are the numbers of two internal labels.  The
-definitions of these labels are output using
-@code{(*targetm.asm_out.internal_label)}, and they must be printed in the same
-way here.  For example,
+一条C语句，用来将汇编伪指令输出到stdio流@var{stream}中，
+以生成两个标号间的距离。@var{value}和@var{rel}为两个内部标号的编号。
+这些标号的定义通过使用@code{(*targetm.asm_out.internal_label)}来输出，
+并且它们必须使用相同的方式打印。例如，
 
 @smallexample
 fprintf (@var{stream}, "\t.word L%d-L%d\n",
          @var{value}, @var{rel})
 @end smallexample
 
-You must provide this macro on machines where the addresses in a
-dispatch table are relative to the table's own address.  If defined, GCC
-will also use this macro on all machines when producing PIC@.
-@var{body} is the body of the @code{ADDR_DIFF_VEC}; it is provided so that the
-mode and flags can be read.
+在一些机器上，派遣表中的地址是相对于表自己的地址，对此你必须提供该宏。
+如果定义，GCC还将在生成PIC的所有机器上使用该宏。
+@var{body}为@code{ADDR_DIFF_VEC}的主体；提供它使得可以读取模式和标记。
 @end defmac
 
 @defmac ASM_OUTPUT_ADDR_VEC_ELT (@var{stream}, @var{value})
-This macro should be provided on machines where the addresses
-in a dispatch table are absolute.
+在一些机器上，派遣表中的地址为绝对地址，对此应该提供该宏。
 
-The definition should be a C statement to output to the stdio stream
-@var{stream} an assembler pseudo-instruction to generate a reference to
-a label.  @var{value} is the number of an internal label whose
-definition is output using @code{(*targetm.asm_out.internal_label)}.
-For example,
+定义应该为一条C语句，用来将汇编伪指令输出到stdio流@var{stream}中，
+以生成对一个标号的引用。@var{value}为内部标号的编号，
+其定义应该使用@code{(*targetm.asm_out.internal_label)}输出。例如，
 
 @smallexample
 fprintf (@var{stream}, "\t.word L%d\n", @var{value})
@@ -8250,54 +8174,43 @@ fprintf (@var{stream}, "\t.word L%d\n", @var{value})
 @end defmac
 
 @defmac ASM_OUTPUT_CASE_LABEL (@var{stream}, @var{prefix}, @var{num}, @var{table})
-Define this if the label before a jump-table needs to be output
-specially.  The first three arguments are the same as for
-@code{(*targetm.asm_out.internal_label)}; the fourth argument is the
-jump-table which follows (a @code{jump_insn} containing an
-@code{addr_vec} or @code{addr_diff_vec}).
+定义该宏，如果在跳转表之前的标号需要被特殊输出。
+前三个参数跟@code{(*targetm.asm_out.internal_label)}相同；
+第四个参数为随后的跳转表（一个包含@code{addr_vec}或@code{addr_diff_vec}
+的@code{jump_insn}）。
 
-This feature is used on system V to output a @code{swbeg} statement
-for the table.
+该特点用于system V，来为table输出一条@code{swbeg}语句。
 
-If this macro is not defined, these labels are output with
-@code{(*targetm.asm_out.internal_label)}.
+如果没有定义该宏，这些标号使用@code{(*targetm.asm_out.internal_label)}输出。
 @end defmac
 
 @defmac ASM_OUTPUT_CASE_END (@var{stream}, @var{num}, @var{table})
-Define this if something special must be output at the end of a
-jump-table.  The definition should be a C statement to be executed
-after the assembler code for the table is written.  It should write
-the appropriate code to stdio stream @var{stream}.  The argument
-@var{table} is the jump-table insn, and @var{num} is the label-number
-of the preceding label.
+定义该宏，如果在跳转表的结尾必须输出一些特殊的东西。定义应该为一条C语句，
+在写完table的汇编代码后被执行。其应该将适当的代码写入到stdio流@var{stream}中。
+参数@var{table}为jump-table insn，@var{num}为前面的标号的编号。
 
-If this macro is not defined, nothing special is output at the end of
-the jump-table.
+如果没有定义该宏，在跳转表的结尾不输出任何特殊的东西。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_EMIT_UNWIND_LABEL (@var{stream}, @var{decl}, @var{for_eh}, @var{empty})
-This target hook emits a label at the beginning of each FDE@.  It
-should be defined on targets where FDEs need special labels, and it
-should write the appropriate label, for the FDE associated with the
-function declaration @var{decl}, to the stdio stream @var{stream}.
-The third argument, @var{for_eh}, is a boolean: true if this is for an
-exception table.  The fourth argument, @var{empty}, is a boolean:
-true if this is a placeholder label for an omitted FDE@.
+该target钩子在每个FDE的起始处生成一个标号。在一些target上，FDE需要特殊的标号，
+对此应该定义该宏。其应该为函数声明@var{decl}相关联的FDE写入适当的标号到stdio流
+@var{stream}中。第三个参数，@var{for_eh}，为一个布尔值；当是异常表时为真。
+第四个参数@var{empty}，为一个布尔值；当是一个省略掉的FDE的占位符标号时为真。
 
-The default is that FDEs are not given nonlocal labels.
+缺省为FDE不给出非局部标号。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_EMIT_EXCEPT_TABLE_LABEL (@var{stream})
-This target hook emits a label at the beginning of the exception table.
-It should be defined on targets where it is desirable for the table
-to be broken up according to function.
+该target钩子在异常表的起始处生成一个标号。在一些target上，
+异常表需要根据函数被分割开，对此应该定义该宏。
 
-The default is that no label is emitted.
+缺省为不生成标号。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_UNWIND_EMIT (FILE * @var{stream}, rtx @var{insn})
-This target hook emits and assembly directives required to unwind the
-given instruction.  This is only used when TARGET_UNWIND_INFO is set.
+该target钩子生成需要展开给定指定的汇编伪指令。
+这只在设置了TARGET_UNWIND_INFO的时候才被使用。
 @end deftypefn
 
 @node 异常区域输出
@@ -8305,231 +8218,197 @@ given instruction.  This is only used when TARGET_UNWIND_INFO is set.
 
 @c prevent bad page break with this line
 
-This describes commands marking the start and the end of an exception
-region.
+这一节描述了标记异常区域的起始和结束的命令。
 
 @defmac EH_FRAME_SECTION_NAME
-If defined, a C string constant for the name of the section containing
-exception handling frame unwind information.  If not defined, GCC will
-provide a default definition if the target supports named sections.
-@file{crtstuff.c} uses this macro to switch to the appropriate section.
+如果定义，为一个C字符串常量，包含异常处理帧展开信息的section名字。
+如果没有定义，GCC将提供一个缺省定义，如果target支持命名section。
+@file{crtstuff.c}使用该宏来切换到适当的section。
 
-You should define this symbol if your target supports DWARF 2 frame
-unwind information and the default definition does not work.
+你应该定义该符号，如果你的target支持DWARF2帧展开信息并且缺省定义不工作。
 @end defmac
 
 @defmac EH_FRAME_IN_DATA_SECTION
-If defined, DWARF 2 frame unwind information will be placed in the
-data section even though the target supports named sections.  This
-might be necessary, for instance, if the system linker does garbage
-collection and sections cannot be marked as not to be collected.
+如果定义，DWARF2帧展开信息将被放到data section，即使target支持命名section。
+例如当系统连接器进行垃圾搜集并且section不能被标记为不被搜集的时候，
+可能需要这样。
 
-Do not define this macro unless @code{TARGET_ASM_NAMED_SECTION} is
-also defined.
+不要定义该宏，除非@code{TARGET_ASM_NAMED_SECTION}也被定义。
 @end defmac
 
 @defmac EH_TABLES_CAN_BE_READ_ONLY
-Define this macro to 1 if your target is such that no frame unwind
-information encoding used with non-PIC code will ever require a
-runtime relocation, but the linker may not support merging read-only
-and read-write sections into a single read-write section.
+定义该宏为1，如果你的target对于没有使用non-PIC代码编码的帧展开信息，
+将总是要求运行时重定位，
+但是连接器可能不支持将只读和读写section合并到单独的读写section中。
 @end defmac
 
 @defmac MASK_RETURN_ADDR
-An rtx used to mask the return address found via @code{RETURN_ADDR_RTX}, so
-that it does not contain any extraneous set bits in it.
+一个rtx，用于对通过@code{RETURN_ADDR_RTX}发现的返回地址进行掩码操作，
+使得其不包含任何无关的位。
 @end defmac
 
 @defmac DWARF2_UNWIND_INFO
-Define this macro to 0 if your target supports DWARF 2 frame unwind
-information, but it does not yet work with exception handling.
-Otherwise, if your target supports this information (if it defines
-@samp{INCOMING_RETURN_ADDR_RTX} and either @samp{UNALIGNED_INT_ASM_OP}
-or @samp{OBJECT_FORMAT_ELF}), GCC will provide a default definition of 1.
+定义该宏为0，如果你的target支持DWARF2帧展开信息，
+但是其还不能与异常处理一起工作。否则，
+如果你的target支持这样的信息（如果定义了@samp{INCOMING_RETURN_ADDR_RTX}，
+并且@samp{UNALIGNED_INT_ASM_OP}和@samp{OBJECT_FORMAT_ELF}之一），
+GCC将提供缺省的定义，1。
 
-If @code{TARGET_UNWIND_INFO} is defined, the target specific unwinder
-will be used in all cases.  Defining this macro will enable the generation
-of DWARF 2 frame debugging information.
+如果定义了@code{TARGET_UNWIND_INFO}，target特定的展开者将用于所有情况。
+定义该宏将使得可以生成DWARF2帧调试信息。
 
-If @code{TARGET_UNWIND_INFO} is not defined, and this macro is defined to 1,
-the DWARF 2 unwinder will be the default exception handling mechanism;
-otherwise, the @code{setjmp}/@code{longjmp}-based scheme will be used by
-default.
+如果没有定义@code{TARGET_UNWIND_INFO}，并且该宏被定义为1，
+则DWARF2 unwider将为缺省的异常处理机制；
+否则基于@code{setjmp}/@code{longjmp}的框架将被缺省使用。
 @end defmac
 
 @defmac TARGET_UNWIND_INFO
-Define this macro if your target has ABI specified unwind tables.  Usually
-these will be output by @code{TARGET_UNWIND_EMIT}.
+定义该宏，如果你的target具有ABI指定的unwind表。
+通常这些将由@code{TARGET_UNWIND_EMIT}输出。
 @end defmac
 
 @deftypevar {Target Hook} bool TARGET_UNWIND_TABLES_DEFAULT
-This variable should be set to @code{true} if the target ABI requires unwinding
-tables even when exceptions are not used.
+该变量应该被设为@code{true}，如果target ABI即使不使用异常的时候也要求展开表。
 @end deftypevar
 
 @defmac MUST_USE_SJLJ_EXCEPTIONS
-This macro need only be defined if @code{DWARF2_UNWIND_INFO} is
-runtime-variable.  In that case, @file{except.h} cannot correctly
-determine the corresponding definition of @code{MUST_USE_SJLJ_EXCEPTIONS},
-so the target must provide it directly.
+该宏只有当@code{DWARF2_UNWIND_INFO}为运行时变量时才需要被定义。那种情况下，
+@file{except.h}不能正确的确定@code{MUST_USE_SJLJ_EXCEPTIONS}的相应定义，
+所以target必须直接提供。
 @end defmac
 
 @defmac DONT_USE_BUILTIN_SETJMP
-Define this macro to 1 if the @code{setjmp}/@code{longjmp}-based scheme
-should use the @code{setjmp}/@code{longjmp} functions from the C library
-instead of the @code{__builtin_setjmp}/@code{__builtin_longjmp} machinery.
+定义该宏为1，如果基于@code{setjmp}/@code{longjmp}的框架应该使用C库中的
+@code{setjmp}/@code{longjmp}，
+而不是@code{__builtin_setjmp}/@code{__builtin_longjmp}。
 @end defmac
 
 @defmac DWARF_CIE_DATA_ALIGNMENT
-This macro need only be defined if the target might save registers in the
-function prologue at an offset to the stack pointer that is not aligned to
-@code{UNITS_PER_WORD}.  The definition should be the negative minimum
-alignment if @code{STACK_GROWS_DOWNWARD} is defined, and the positive
-minimum alignment otherwise.  @xref{SDB和DWARF}.  Only applicable if
-the target supports DWARF 2 frame unwind information.
+该宏只有当target可能会在函数序言中存储寄存器，
+并且相对栈指针的偏移量没有对齐于@code{UNITS_PER_WORD}的时候，才需要被定义。
+定义应该为负的最小对齐数，如果@code{STACK_GROWS_DOWNWARD}被定义，
+否则为正的最小对齐数。参见 @ref{SDB和DWARF}。
+只有当target支持DWARF2帧展开信息的时候才有用。
 @end defmac
 
 @deftypevar {Target Hook} bool TARGET_TERMINATE_DW2_EH_FRAME_INFO
-Contains the value true if the target should add a zero word onto the
-end of a Dwarf-2 frame info section when used for exception handling.
-Default value is false if @code{EH_FRAME_SECTION_NAME} is defined, and
-true otherwise.
+值为真，如果target应该增加一个0字到Dwarf-2帧信息section的结尾，
+当用于异常处理时。缺省值为假，如果@code{EH_FRAME_SECTION_NAME}被定义，否则为真。
 @end deftypevar
 
 @deftypefn {Target Hook} rtx TARGET_DWARF_REGISTER_SPAN (rtx @var{reg})
-Given a register, this hook should return a parallel of registers to
-represent where to find the register pieces.  Define this hook if the
-register and its mode are represented in Dwarf in non-contiguous
-locations, or if the register should be represented in more than one
-register in Dwarf.  Otherwise, this hook should return @code{NULL_RTX}.
-If not defined, the default is to return @code{NULL_RTX}.
+给定一个寄存器，该钩子应该返回一个并行的寄存器，来表示到哪里发现寄存器块。
+定义该钩子，如果寄存器和它的机器模式在Dwarf中被表示为非连接的位置，
+或者如果在Dwarf中寄存器应该被表示为多于一个寄存器。
+否则该钩子应该返回@code{NULL_RTX}。如果没有定义，缺省为返回@code{NULL_RTX}。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_INIT_DWARF_REG_SIZES_EXTRA (tree @var{address})
-If some registers are represented in Dwarf-2 unwind information in
-multiple pieces, define this hook to fill in information about the
-sizes of those pieces in the table used by the unwinder at runtime.
-It will be called by @code{expand_builtin_init_dwarf_reg_sizes} after
-filling in a single size corresponding to each hard register;
-@var{address} is the address of the table.
+如果一些寄存器在Dwarf-2展开信息中按照多个块来表示，
+定义该钩子在运行时来填充信息。
+其将被@code{expand_builtin_init_dwarf_reg_sizes}调用。@var{address}为表的地址。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_ASM_TTYPE (rtx @var{sym})
-This hook is used to output a reference from a frame unwinding table to
-the type_info object identified by @var{sym}.  It should return @code{true}
-if the reference was output.  Returning @code{false} will cause the
-reference to be output using the normal Dwarf2 routines.
+该钩子被用于从帧展开表中输出一个引用到由@var{sym}标识的type_info对象中。
+其应该返回@code{true}，如果引用被输出。
+返回@code{false}将会造成引用使用通常的Dwarf2例程被输出。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_ARM_EABI_UNWINDER
-This hook should be set to @code{true} on targets that use an ARM EABI
-based unwinding library, and @code{false} on other targets.  This effects
-the format of unwinding tables, and how the unwinder in entered after
-running a cleanup.  The default is @code{false}.
+该钩子应该被设为@code{true}，在使用基于ARM EABI的展开库的target上，
+并且在其它target上为@code{false}。这将影响展开表的格式。缺省为@code{false}。
 @end deftypefn
 
 @node 对齐输出
 @subsection 用于对齐的汇编命令
 
 @c prevent bad page break with this line
-This describes commands for alignment.
+这一节描述了用于对齐的命令。
 
 @defmac JUMP_ALIGN (@var{label})
-The alignment (log base 2) to put in front of @var{label}, which is
-a common destination of jumps and has no fallthru incoming edge.
+在@var{label}前放入的对齐数（基于2的log），
+label为跳转的普通目的地并且不具有fallthru入边。
 
-This macro need not be defined if you don't want any special alignment
-to be done at such a time.  Most machine descriptions do not currently
-define the macro.
+如果你目前不想做任何特殊的对齐，则不需要定义该宏。
+大多数机器描述目前都没有定义该宏。
 
-Unless it's necessary to inspect the @var{label} parameter, it is better
-to set the variable @var{align_jumps} in the target's
-@code{OVERRIDE_OPTIONS}.  Otherwise, you should try to honor the user's
-selection in @var{align_jumps} in a @code{JUMP_ALIGN} implementation.
+除非需要检查@var{label}参数，
+最好在target的@code{OVERRIDE_OPTIONS}中设置变量@var{align_jumps}。
+否则应该尽量在@code{JUMP_ALIGN}实现中尊重用户在@var{align_jumps}中的选择。
 @end defmac
 
 @defmac LABEL_ALIGN_AFTER_BARRIER (@var{label})
-The alignment (log base 2) to put in front of @var{label}, which follows
-a @code{BARRIER}.
+在@var{label}前放入的对齐数（基于2的log），@var{label}后跟随一个@code{BARRIER}。
 
-This macro need not be defined if you don't want any special alignment
-to be done at such a time.  Most machine descriptions do not currently
-define the macro.
+如果你目前不想做任何特殊的对齐，则不需要定义该宏。
+大多数机器描述目前都没有定义该宏。
 @end defmac
 
 @defmac LABEL_ALIGN_AFTER_BARRIER_MAX_SKIP
-The maximum number of bytes to skip when applying
-@code{LABEL_ALIGN_AFTER_BARRIER}.  This works only if
-@code{ASM_OUTPUT_MAX_SKIP_ALIGN} is defined.
+当应用@code{LABEL_ALIGN_AFTER_BARRIER}时，要跳过的最大字节个数。
+这只在定义了@code{ASM_OUTPUT_MAX_SKIP_ALIGN}时才起作用。
 @end defmac
 
 @defmac LOOP_ALIGN (@var{label})
-The alignment (log base 2) to put in front of @var{label}, which follows
-a @code{NOTE_INSN_LOOP_BEG} note.
+在@var{label}前放入的对齐数（基于2的log），
+@var{label}后跟随一个@code{NOTE_INSN_LOOP_BEG}注解。
 
-This macro need not be defined if you don't want any special alignment
-to be done at such a time.  Most machine descriptions do not currently
-define the macro.
+如果你目前不想做任何特殊的对齐，则不需要定义该宏。
+大多数机器描述目前都没有定义该宏。
 
-Unless it's necessary to inspect the @var{label} parameter, it is better
-to set the variable @code{align_loops} in the target's
-@code{OVERRIDE_OPTIONS}.  Otherwise, you should try to honor the user's
-selection in @code{align_loops} in a @code{LOOP_ALIGN} implementation.
+除非需要检查@var{label}参数，
+最好在target的@code{OVERRIDE_OPTIONS}中设置变量@code{align_loops}。
+否则应该尽量在@code{LOOP_ALIGN}实现中尊重用户在@code{align_loops}中的选择。
 @end defmac
 
 @defmac LOOP_ALIGN_MAX_SKIP
-The maximum number of bytes to skip when applying @code{LOOP_ALIGN}.
-This works only if @code{ASM_OUTPUT_MAX_SKIP_ALIGN} is defined.
+当应用@code{LOOP_ALIGN}时，要跳过的最大字节个数。
+这只在定义了@code{ASM_OUTPUT_MAX_SKIP_ALIGN}时才起作用。
 @end defmac
 
 @defmac LABEL_ALIGN (@var{label})
-The alignment (log base 2) to put in front of @var{label}.
-If @code{LABEL_ALIGN_AFTER_BARRIER} / @code{LOOP_ALIGN} specify a different alignment,
-the maximum of the specified values is used.
+在@var{label}前放入的对齐数（基于2的log），
+如果@code{LABEL_ALIGN_AFTER_BARRIER} / @code{LOOP_ALIGN}指定了不相同的对齐，
+则使用最大的值。
 
-Unless it's necessary to inspect the @var{label} parameter, it is better
-to set the variable @code{align_labels} in the target's
-@code{OVERRIDE_OPTIONS}.  Otherwise, you should try to honor the user's
-selection in @code{align_labels} in a @code{LABEL_ALIGN} implementation.
+除非需要检查@var{label}参数，
+最好在target的@code{OVERRIDE_OPTIONS}中设置变量@code{align_labels}。
+否则应该尽量在@code{LABEL_ALIGN}实现中尊重用户在@code{align_labels}中的选择。
 @end defmac
 
 @defmac LABEL_ALIGN_MAX_SKIP
-The maximum number of bytes to skip when applying @code{LABEL_ALIGN}.
-This works only if @code{ASM_OUTPUT_MAX_SKIP_ALIGN} is defined.
+当应用@code{LABEL_ALIGN}时，要跳过的最大字节个数。
+这只在定义了@code{ASM_OUTPUT_MAX_SKIP_ALIGN}时才起作用。
 @end defmac
 
 @defmac ASM_OUTPUT_SKIP (@var{stream}, @var{nbytes})
-A C statement to output to the stdio stream @var{stream} an assembler
-instruction to advance the location counter by @var{nbytes} bytes.
-Those bytes should be zero when loaded.  @var{nbytes} will be a C
-expression of type @code{unsigned HOST_WIDE_INT}.
+一条C语句，将一条汇编指令输出到stdio流@var{stream}中，
+使得将位置计数器前移@var{nbytes}个字节。那些字节在加载时应该为0。
+@var{nbytes}将为@code{unsigned HOST_WIDE_INT}类型的C表达式。
 @end defmac
 
 @defmac ASM_NO_SKIP_IN_TEXT
-Define this macro if @code{ASM_OUTPUT_SKIP} should not be used in the
-text section because it fails to put zeros in the bytes that are skipped.
-This is true on many Unix systems, where the pseudo--op to skip bytes
-produces no-op instructions rather than zeros when used in the text
-section.
+定义该宏，如果@code{ASM_OUTPUT_SKIP}不应该在text section中使用，
+因为无法在跳过的字节中放入0。这在许多Unix系统上都为，
+当在text section中使用时，跳过字节的伪指令会产生no-op指令，而不是0。
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGN (@var{stream}, @var{power})
-A C statement to output to the stdio stream @var{stream} an assembler
-command to advance the location counter to a multiple of 2 to the
-@var{power} bytes.  @var{power} will be a C expression of type @code{int}.
+一条C语句，将一条汇编指令输出到stdio流@var{stream}中，
+使得将位置计数器前移2的@var{power}次幂个字节。
+@var{power}为@code{int}类型的表达式。
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGN_WITH_NOP (@var{stream}, @var{power})
-Like @code{ASM_OUTPUT_ALIGN}, except that the ``nop'' instruction is used
-for padding, if necessary.
+类似@code{ASM_OUTPUT_ALIGN}，除了使用“nop”指令来填充，如果需要的话。
 @end defmac
 
 @defmac ASM_OUTPUT_MAX_SKIP_ALIGN (@var{stream}, @var{power}, @var{max_skip})
-A C statement to output to the stdio stream @var{stream} an assembler
-command to advance the location counter to a multiple of 2 to the
-@var{power} bytes, but only if @var{max_skip} or fewer bytes are needed to
-satisfy the alignment request.  @var{power} and @var{max_skip} will be
-a C expression of type @code{int}.
+一条C语句，将一条汇编指令输出到stdio流@var{stream}中，
+使得将位置计数器前移2的@var{power}次幂个字节，
+但只有当需要@var{max_skip}个或者更少的字节来满足对齐要求的时候才行。
+@var{power}和@var{max_skip}为@code{int}类型的表达式。
 @end defmac
 
 @need 3000
@@ -8585,7 +8464,7 @@ a C expression of type @code{int}.
 @end defmac
 
 @defmac PREFERRED_DEBUGGING_TYPE
-一个C表达式，返回当用户只指定@opption{-g}时，
+一个C表达式，返回当用户只指定@option{-g}时，
 GCC应该产生的调试输出类型。
 如果你已经使得GCC支持多种调试输出格式的时候，则定义该宏。
 目前，允许的值为@code{DBX_DEBUG}, @code{SDB_DEBUG}, @code{DWARF_DEBUG}, 
@@ -8606,230 +8485,201 @@ GCC应该产生的调试输出类型。
 @subsection 用于DBX输出的特定选项
 
 @c prevent bad page break with this line
-These are specific options for DBX output.
+这些是用于DBX输出的特定选项。
 
 @defmac DBX_DEBUGGING_INFO
-Define this macro if GCC should produce debugging output for DBX
-in response to the @option{-g} option.
+定义该宏，如果对于@option{-g}选项，GCC应该产生DBX的调试输出。
 @end defmac
 
 @defmac XCOFF_DEBUGGING_INFO
-Define this macro if GCC should produce XCOFF format debugging output
-in response to the @option{-g} option.  This is a variant of DBX format.
+定义该宏，如果对于@option{-g}选项，GCC应该产生XCOFF格式的调试输出。
+这是DBX格式的变体。
 @end defmac
 
 @defmac DEFAULT_GDB_EXTENSIONS
-Define this macro to control whether GCC should by default generate
-GDB's extended version of DBX debugging information (assuming DBX-format
-debugging information is enabled at all).  If you don't define the
-macro, the default is 1: always generate the extended information
-if there is any occasion to.
+定义该宏来控制GCC是否缺省的生成GDB的扩展版本DBX调试信息
+（假设是使用DBX格式的调试信息）。如果没有定义该宏，则缺省为1：
+如果可能的话，总是生成扩展信息。
 @end defmac
 
 @defmac DEBUG_SYMS_TEXT
-Define this macro if all @code{.stabs} commands should be output while
-in the text section.
+定义该宏，如果所有@code{.stabs}命令应该输出在text section中。
 @end defmac
 
 @defmac ASM_STABS_OP
-A C string constant, including spacing, naming the assembler pseudo op to
-use instead of @code{"\t.stabs\t"} to define an ordinary debugging symbol.
-If you don't define this macro, @code{"\t.stabs\t"} is used.  This macro
-applies only to DBX debugging information format.
+一个C字符串常量，包括空格，
+命名了用来替代@code{"\t.stabs\t"}的汇编伪指令，
+来定义一个普通调试符号。
+如果没有定义该宏，则使用@code{"\t.stabs\t"}。
+该宏只用于DBX调试信息格式。
 @end defmac
 
 @defmac ASM_STABD_OP
-A C string constant, including spacing, naming the assembler pseudo op to
-use instead of @code{"\t.stabd\t"} to define a debugging symbol whose
-value is the current location.  If you don't define this macro,
-@code{"\t.stabd\t"} is used.  This macro applies only to DBX debugging
-information format.
+一个C字符串常量，包括空格，
+命名了用来替代@code{"\t.stabd\t"}的汇编伪指令，
+来定义一个普通调试符号。
+如果没有定义该宏，则使用@code{"\t.stabd\t"}。
+该宏只用于DBX调试信息格式。
 @end defmac
 
 @defmac ASM_STABN_OP
-A C string constant, including spacing, naming the assembler pseudo op to
-use instead of @code{"\t.stabn\t"} to define a debugging symbol with no
-name.  If you don't define this macro, @code{"\t.stabn\t"} is used.  This
-macro applies only to DBX debugging information format.
+一个C字符串常量，包括空格，
+命名了用来替代@code{"\t.stabn\t"}的汇编伪指令，来定义一个普通调试符号。
+如果没有定义该宏，则使用@code{"\t.stabn\t"}。该宏只用于DBX调试信息格式。
 @end defmac
 
 @defmac DBX_NO_XREFS
-Define this macro if DBX on your system does not support the construct
-@samp{xs@var{tagname}}.  On some systems, this construct is used to
-describe a forward reference to a structure named @var{tagname}.
-On other systems, this construct is not supported at all.
+定义该宏，如果DBX在你的系统上不支持@samp{xs@var{tagname}}结构。
+在一些系统上，该结构被用于描述对名字叫@var{tagname}的结构体的向前引用。
+在其它系统上，该结构根本不被支持。
 @end defmac
 
 @defmac DBX_CONTIN_LENGTH
-A symbol name in DBX-format debugging information is normally
-continued (split into two separate @code{.stabs} directives) when it
-exceeds a certain length (by default, 80 characters).  On some
-operating systems, DBX requires this splitting; on others, splitting
-must not be done.  You can inhibit splitting by defining this macro
-with the value zero.  You can override the default splitting-length by
-defining this macro as an expression for the length you desire.
+DBX格式的调试信息中的符号名被连续的处理
+（分成两个独立的@code{.stabs}指令）
+当其达到一个特定长度时（缺省为80个字符）。
+在一些操作系统上，DBX 要求做这样的分割；在其它上面，则不能进行分割。
+你可以通过定义该宏为0来约束分割。
+你可以覆盖缺省的分割长度，通过定义该宏为一个长度的表达式。
 @end defmac
 
 @defmac DBX_CONTIN_CHAR
-Normally continuation is indicated by adding a @samp{\} character to
-the end of a @code{.stabs} string when a continuation follows.  To use
-a different character instead, define this macro as a character
-constant for the character you want to use.  Do not define this macro
-if backslash is correct for your system.
+通常通过在@code{.stabs}字符串的结尾增加一个@samp{\}字符来表示连续的处理。
+要是用不用的字符，定义该宏为一个你想使用的字符常量。
+不要定义该宏，如果反斜杠在你的系统上是正确的。
 @end defmac
 
 @defmac DBX_STATIC_STAB_DATA_SECTION
-Define this macro if it is necessary to go to the data section before
-outputting the @samp{.stabs} pseudo-op for a non-global static
-variable.
+定义该宏，如果需要在为非全局的静态变量输出@samp{.stabs}伪操作符之前进入data section。
 @end defmac
 
 @defmac DBX_TYPE_DECL_STABS_CODE
-The value to use in the ``code'' field of the @code{.stabs} directive
-for a typedef.  The default is @code{N_LSYM}.
+对于typedef，@code{.stabs}指令的“code”域所使用的值。
+缺省为@code{N_LSYM}。
 @end defmac
 
 @defmac DBX_STATIC_CONST_VAR_CODE
-The value to use in the ``code'' field of the @code{.stabs} directive
-for a static variable located in the text section.  DBX format does not
-provide any ``right'' way to do this.  The default is @code{N_FUN}.
+对于位于text section的静态变量，@code{.stabs}指令的“code”域所使用的值。
+DBX格式不提供任何正确是方式。缺省为@code{N_FUN}。
 @end defmac
 
 @defmac DBX_REGPARM_STABS_CODE
-The value to use in the ``code'' field of the @code{.stabs} directive
-for a parameter passed in registers.  DBX format does not provide any
-``right'' way to do this.  The default is @code{N_RSYM}.
+对于寄存器中传递的参数，@code{.stabs}指令的“code”域所使用的值。
+DBX格式不提供任何正确是方式。缺省为@code{N_RSYM}。
 @end defmac
 
 @defmac DBX_REGPARM_STABS_LETTER
-The letter to use in DBX symbol data to identify a symbol as a parameter
-passed in registers.  DBX format does not customarily provide any way to
-do this.  The default is @code{'P'}.
+在DBX符号数据中使用的字母，用来标识一个符号为在寄存器中传递的参数。
+DBX格式目前没有提供任何这样做的方式。缺省为@code{'P'}。
 @end defmac
 
 @defmac DBX_FUNCTION_FIRST
-Define this macro if the DBX information for a function and its
-arguments should precede the assembler code for the function.  Normally,
-in DBX format, the debugging information entirely follows the assembler
-code.
+定义该宏，如果对于函数和它的参数的DBX信息应该位于函数的汇编代码之前。
+通常，在DBX格式中，调试信息完全位于汇编代码之后。
 @end defmac
 
 @defmac DBX_BLOCKS_FUNCTION_RELATIVE
-Define this macro, with value 1, if the value of a symbol describing
-the scope of a block (@code{N_LBRAC} or @code{N_RBRAC}) should be
-relative to the start of the enclosing function.  Normally, GCC uses
-an absolute address.
+定义该宏为1，
+如果描述块（@code{N_LBRAC}或@code{N_RBRAC}）的作用域的符号的值，
+应该相对于函数括号的起始处。通常GCC使用绝对值。
 @end defmac
 
 @defmac DBX_LINES_FUNCTION_RELATIVE
-Define this macro, with value 1, if the value of a symbol indicating
-the current line number (@code{N_SLINE}) should be relative to the
-start of the enclosing function.  Normally, GCC uses an absolute address.
+定义该宏为1，如果指示当前行（@code{N_SLINE}）的符号的值，
+应该相对于函数括号的起始处。通常GCC使用绝对值。
 @end defmac
 
 @defmac DBX_USE_BINCL
-Define this macro if GCC should generate @code{N_BINCL} and
-@code{N_EINCL} stabs for included header files, as on Sun systems.  This
-macro also directs GCC to output a type number as a pair of a file
-number and a type number within the file.  Normally, GCC does not
-generate @code{N_BINCL} or @code{N_EINCL} stabs, and it outputs a single
-number for a type number.
+定义该宏，
+如果GCC应该为被包含的头文件生成@code{N_BINCL}和@code{N_EINCL} stabs，
+如Sun系统。通常，GCC不生成@code{N_BINCL}或@code{N_EINCL} stabs。
 @end defmac
 
 @node DBX钩子 
 @subsection 针对DBX格式的钩子
 
 @c prevent bad page break with this line
-These are hooks for DBX format.
+这些是针对DBX格式的钩子。
 
 @defmac DBX_OUTPUT_LBRAC (@var{stream}, @var{name})
-Define this macro to say how to output to @var{stream} the debugging
-information for the start of a scope level for variable names.  The
-argument @var{name} is the name of an assembler symbol (for use with
-@code{assemble_name}) whose value is the address where the scope begins.
+定义该宏，
+以告知如何将变量名的作用域级别的起始调试信息输出到@var{stream}中。
+参数@var{name}为一个汇编符号的名字（使用@code{assemble_name}），
+其值为作用域起始的地址。
 @end defmac
 
 @defmac DBX_OUTPUT_RBRAC (@var{stream}, @var{name})
-Like @code{DBX_OUTPUT_LBRAC}, but for the end of a scope level.
+类似@code{DBX_OUTPUT_LBRAC}，不过是作用域级别的结尾。
 @end defmac
 
 @defmac DBX_OUTPUT_NFUN (@var{stream}, @var{lscope_label}, @var{decl})
-Define this macro if the target machine requires special handling to
-output an @code{N_FUN} entry for the function @var{decl}.
+定义该宏，
+如果target机器要求对函数@var{decl}输出一个@code{N_FUN}条目进行特殊处理。
 @end defmac
 
 @defmac DBX_OUTPUT_SOURCE_LINE (@var{stream}, @var{line}, @var{counter})
-A C statement to output DBX debugging information before code for line
-number @var{line} of the current source file to the stdio stream
-@var{stream}.  @var{counter} is the number of time the macro was
-invoked, including the current invocation; it is intended to generate
-unique labels in the assembly output.
+一条C语句，将DBX调试信息在当前源文件行号@var{line}的代码前，
+输出到stdio流@var{stream}中。@var{counter}为宏被调用的次数，
+包括当前调用；其用于在汇编输出中生成为一个标号。
 
-This macro should not be defined if the default output is correct, or
-if it can be made correct by defining @code{DBX_LINES_FUNCTION_RELATIVE}.
+如果缺省输出是正确的，
+或者其能够通过定义@code{DBX_LINES_FUNCTION_RELATIVE}而变的正确，
+则不要定义该宏。
 @end defmac
 
 @defmac NO_DBX_FUNCTION_END
-Some stabs encapsulation formats (in particular ECOFF), cannot handle the
-@code{.stabs "",N_FUN,,0,0,Lscope-function-1} gdb dbx extension construct.
-On those machines, define this macro to turn this feature off without
-disturbing the rest of the gdb extensions.
+一些stab封装格式（特别是ECOFF），
+不能处理@code{.stabs "",N_FUN,,0,0,Lscope-function-1} gdb dbx扩展结构。
+在那些机器上，定义该宏来关掉这个特点，并且不影响其它gdb扩展。
 @end defmac
 
 @defmac NO_DBX_BNSYM_ENSYM
-Some assemblers cannot handle the @code{.stabd BNSYM/ENSYM,0,0} gdb dbx
-extension construct.  On those machines, define this macro to turn this
-feature off without disturbing the rest of the gdb extensions.
+一些汇编器不能处理@code{.stabd BNSYM/ENSYM,0,0} gdb dbx扩展结构。
+在那些机器上，定义该宏来关掉这个特点，并且不影响其它gdb扩展。
 @end defmac
 
 @node 文件名和DBX
 @subsection DBX格式的文件名
 
 @c prevent bad page break with this line
-This describes file names in DBX format.
+这一节描述了DBX格式的文件名。
 
 @defmac DBX_OUTPUT_MAIN_SOURCE_FILENAME (@var{stream}, @var{name})
-A C statement to output DBX debugging information to the stdio stream
-@var{stream}, which indicates that file @var{name} is the main source
-file---the file specified as the input file for compilation.
-This macro is called only once, at the beginning of compilation.
+一条C语句，
+将DBX调试信息输出到标准输入输出（stdio）流@var{stream}上，
+其中文件@var{name}为主源文件——被指定为被编译的输入文件。
+该宏只被调用一次，在编译的开始处。
 
-This macro need not be defined if the standard form of output
-for DBX debugging information is appropriate.
+如果DBX调试信息输出的标准形式合适，则该宏不需要被定义。
 
-It may be necessary to refer to a label equal to the beginning of the
-text section.  You can use @samp{assemble_name (stream, ltext_label_name)}
-to do so.  If you do this, you must also set the variable
-@var{used_ltext_label_name} to @code{true}.
+有时可能需要引用相当与text段起始处的标号。
+这时可以使用@samp{assemble_name (stream, ltext_label_name)}来完成。
+如果这样做，则必须还要将变量@var{used_ltext_label_name}设为@code{true}。
 @end defmac
 
 @defmac NO_DBX_MAIN_SOURCE_DIRECTORY
-Define this macro, with value 1, if GCC should not emit an indication
-of the current directory for compilation and current source language at
-the beginning of the file.
+定义该宏的值为1，
+如果不让GCC在文件起始处产生对当前的编译目录和当前的源语言的指示。
 @end defmac
 
 @defmac NO_DBX_GCC_MARKER
-Define this macro, with value 1, if GCC should not emit an indication
-that this object file was compiled by GCC@.  The default is to emit
-an @code{N_OPT} stab at the beginning of every source file, with
-@samp{gcc2_compiled.} for the string and value 0.
+定义该宏的值为1，如果不让GCC产生该目标文件是由GCC编译的指示。
+缺省情况是在每个源文件的起始处产生一个@code{N_OPT} stab，
+其中字符串为@samp{gcc2_compiled.}，值为0。
 @end defmac
 
 @defmac DBX_OUTPUT_MAIN_SOURCE_FILE_END (@var{stream}, @var{name})
-A C statement to output DBX debugging information at the end of
-compilation of the main source file @var{name}.  Output should be
-written to the stdio stream @var{stream}.
+一条C语句，用来在主源文件@var{name}的编译结尾输出DBX调试信息。
+输出将被写入标准输入输出流@var{stream}中。
 
-If you don't define this macro, nothing special is output at the end
-of compilation, which is correct for most machines.
+如果没有定义该宏，则在编译的结尾将不做任何特定的输出，
+这对于大多数机器都是正确的。
 @end defmac
 
 @defmac DBX_OUTPUT_NULL_N_SO_AT_MAIN_SOURCE_FILE_END
-Define this macro @emph{instead of} defining
-@code{DBX_OUTPUT_MAIN_SOURCE_FILE_END}, if what needs to be output at
-the end of compilation is a @code{N_SO} stab with an empty string,
-whose value is the highest absolute text address in the file.
+定义该宏而不是定义@code{DBX_OUTPUT_MAIN_SOURCE_FILE_END}，
+如果要在编译结尾输出的是一个@code{N_SO} stab，
+其具有空字符串，值为文件中最高的绝对text地址。
 @end defmac
 
 @need 2000
@@ -8837,96 +8687,82 @@ whose value is the highest absolute text address in the file.
 @subsection 用于SDB和DWARF输出的宏
 
 @c prevent bad page break with this line
-Here are macros for SDB and DWARF output.
+这些是用于SDB和DWARF输出的宏。
 
 @defmac SDB_DEBUGGING_INFO
-Define this macro if GCC should produce COFF-style debugging output
-for SDB in response to the @option{-g} option.
+定义该宏，如果对于@option{-g}选项，GCC应该为SDB产生COFF风格的调试输出。
 @end defmac
 
 @defmac DWARF2_DEBUGGING_INFO
-Define this macro if GCC should produce dwarf version 2 format
-debugging output in response to the @option{-g} option.
+定义该宏，如果对于@option{-g}选项，GCC应该产生dwarf本版2格式的调试输出。
 
 @deftypefn {Target Hook} int TARGET_DWARF_CALLING_CONVENTION (tree @var{function})
-Define this to enable the dwarf attribute @code{DW_AT_calling_convention} to
-be emitted for each function.  Instead of an integer return the enum
-value for the @code{DW_CC_} tag.
+定义该钩子，使得为个函数输出dwarf属性@code{DW_AT_calling_convention}。
+返回@code{DW_CC_}标记的enum值。
 @end deftypefn
 
-To support optional call frame debugging information, you must also
-define @code{INCOMING_RETURN_ADDR_RTX} and either set
-@code{RTX_FRAME_RELATED_P} on the prologue insns if you use RTL for the
-prologue, or call @code{dwarf2out_def_cfa} and @code{dwarf2out_reg_save}
-as appropriate from @code{TARGET_ASM_FUNCTION_PROLOGUE} if you don't.
+要支持可选的调用帧调试信息，
+你必须还要定义@code{INCOMING_RETURN_ADDR_RTX}，并如果在序言中使用RTL，
+则设置@code{RTX_FRAME_RELATED_P}，或者如果没有使用RTL，
+则从@code{TARGET_ASM_FUNCTION_PROLOGUE}中调用@code{dwarf2out_def_cfa}
+和@code{dwarf2out_reg_save}。
 @end defmac
 
 @defmac DWARF2_FRAME_INFO
-Define this macro to a nonzero value if GCC should always output
-Dwarf 2 frame information.  If @code{DWARF2_UNWIND_INFO}
-(@pxref{异常区域输出} is nonzero, GCC will output this
-information not matter how you define @code{DWARF2_FRAME_INFO}.
+定义该宏为非0值，如果GCC应该总是输出Dwarf2帧信息。
+如果@code{DWARF2_UNWIND_INFO}（参见 @ref{异常区域输出}）为非0，
+则GCC将不管你如何定义@code{DWARF2_FRAME_INFO}，都会输出该信息。
 @end defmac
 
 @defmac DWARF2_ASM_LINE_DEBUG_INFO
-Define this macro to be a nonzero value if the assembler can generate Dwarf 2
-line debug info sections.  This will result in much more compact line number
-tables, and hence is desirable if it works.
+定义该宏为非0值，如果汇编器能够生成Dwarf2行调试信息section。
 @end defmac
 
 @defmac ASM_OUTPUT_DWARF_DELTA (@var{stream}, @var{size}, @var{label1}, @var{label2})
-A C statement to issue assembly directives that create a difference
-@var{lab1} minus @var{lab2}, using an integer of the given @var{size}.
+一条C语句，来输出汇编伪指令，
+以创建一个@var{lab1}减去@var{lab2}的差，使用给定的@var{size}。
 @end defmac
 
 @defmac ASM_OUTPUT_DWARF_OFFSET (@var{stream}, @var{size}, @var{label}, @var{section})
-A C statement to issue assembly directives that create a
-section-relative reference to the given @var{label}, using an integer of the
-given @var{size}.  The label is known to be defined in the given @var{section}.
+一条C语句，来输出汇编伪指令，
+以创建一个相对的@var{section}的给定@var{label}的引用，
+使用给定的@var{size}。@var{label}为在给定@var{section}中定义的@var{label}。
 @end defmac
 
 @defmac ASM_OUTPUT_DWARF_PCREL (@var{stream}, @var{size}, @var{label})
-A C statement to issue assembly directives that create a self-relative
-reference to the given @var{label}, using an integer of the given @var{size}.
+一条C语句，来输出汇编伪指令，
+以创建一个给定@var{label}的引用，使用给定的@var{size}。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_OUTPUT_DWARF_DTPREL (FILE *@var{FILE}, int @var{size}, rtx @var{x})
-If defined, this target hook is a function which outputs a DTP-relative
-reference to the given TLS symbol of the specified size.
+如果定义，该target钩子为一个函数，其输出一个相对DTP的引用，对给定的TLS符号。
 @end deftypefn
 
 @defmac PUT_SDB_@dots{}
-Define these macros to override the assembler syntax for the special
-SDB assembler directives.  See @file{sdbout.c} for a list of these
-macros and their arguments.  If the standard syntax is used, you need
-not define them yourself.
+定义这些宏来覆盖汇编语法，为特定的SDB汇编伪指令。
+参见@file{sdbout.c}，关于这些宏和它们的参数的列表。
+如果使用标准语法，你不需要定义它们。
 @end defmac
 
 @defmac SDB_DELIM
-Some assemblers do not support a semicolon as a delimiter, even between
-SDB assembler directives.  In that case, define this macro to be the
-delimiter to use (usually @samp{\n}).  It is not necessary to define
-a new set of @code{PUT_SDB_@var{op}} macros if this is the only change
-required.
+一些汇编器不支持分号作为分隔符，即使在SDB汇编伪指令之间。
+这种情况下，定义该宏为要使用的分隔符（通常为@samp{\n}）。
+如果只需要改变该宏，则不需要定义新的@code{PUT_SDB_@var{op}}宏集合。
 @end defmac
 
 @defmac SDB_ALLOW_UNKNOWN_REFERENCES
-Define this macro to allow references to unknown structure,
-union, or enumeration tags to be emitted.  Standard COFF does not
-allow handling of unknown references, MIPS ECOFF has support for
-it.
+定义该宏以允许对未知结构体，联合体和枚举标记的引用，被输出。
+标准的COFF不允许处理未知的引用，MIPS ECOFF支持该特定。
 @end defmac
 
 @defmac SDB_ALLOW_FORWARD_REFERENCES
-Define this macro to allow references to structure, union, or
-enumeration tags that have not yet been seen to be handled.  Some
-assemblers choke if forward tags are used, while some require it.
+定义该宏以允许对未遇到的结构体，联合体和枚举标记的引用，被输出。
+一些汇编器对此会出错。
 @end defmac
 
 @defmac SDB_OUTPUT_SOURCE_LINE (@var{stream}, @var{line})
-A C statement to output SDB debugging information before code for line
-number @var{line} of the current source file to the stdio stream
-@var{stream}.  The default is to emit an @code{.ln} directive.
+一条C语句，输出当前源文件的行号的SDB调试信息在代码前。
+缺省为输出一个@code{.ln}伪指令。
 @end defmac
 
 @need 2000
@@ -8948,60 +8784,51 @@ VMS的缺省行为是在没有@option{-g}时，生成可以回溯的最少调试
 @cindex cross compilation and floating point
 @cindex floating point and cross compilation
 
-While all modern machines use twos-complement representation for integers,
-there are a variety of representations for floating point numbers.  This
-means that in a cross-compiler the representation of floating point numbers
-in the compiled program may be different from that used in the machine
-doing the compilation.
+虽然所有现代机器都使用二进制补码来表示整数，但对于浮点数却有不同的表示。
+这意味着在交叉编译器中，
+被编译的程序中的浮点数的表示可能与执行编译的机器上的表示不相同。
 
-Because different representation systems may offer different amounts of
-range and precision, all floating point constants must be represented in
-the target machine's format.  Therefore, the cross compiler cannot
-safely use the host machine's floating point arithmetic; it must emulate
-the target's arithmetic.  To ensure consistency, GCC always uses
-emulation to work with floating point values, even when the host and
-target floating point formats are identical.
+因为不同的表示方式可能会提供不同的取值范围和精度，
+所以所有的浮点常量必须被表示成target机器的格式。
+因此，交叉编译器不能使用host机器的浮点算术；其必须模拟target的算术运算。
+为了确保一致性，GCC总是使用模拟方式来处理浮点值，
+即使host和target的浮点格式相同。
 
-The following macros are provided by @file{real.h} for the compiler to
-use.  All parts of the compiler which generate or optimize
-floating-point calculations must use these macros.  They may evaluate
-their operands more than once, so operands must not have side effects.
+下列宏由@file{real.h}提供给编译器使用。
+编译器的生成或者优化浮点计算的所有部分必须使用这些宏。
+它们可能会计算操作数多次，所以操作数一定不要有副作用。
 
 @defmac REAL_VALUE_TYPE
-The C data type to be used to hold a floating point value in the target
-machine's format.  Typically this is a @code{struct} containing an
-array of @code{HOST_WIDE_INT}, but all code should treat it as an opaque
-quantity.
+C数据类型，用于存放target机器格式的浮点值。
+通常为一个包含@code{HOST_WIDE_INT}型数组的结构体，
+但是所有的代码应该将其作为不透明的量。
 @end defmac
 
 @deftypefn Macro int REAL_VALUES_EQUAL (REAL_VALUE_TYPE @var{x}, REAL_VALUE_TYPE @var{y})
-Compares for equality the two values, @var{x} and @var{y}.  If the target
-floating point format supports negative zeroes and/or NaNs,
-@samp{REAL_VALUES_EQUAL (-0.0, 0.0)} is true, and
-@samp{REAL_VALUES_EQUAL (NaN, NaN)} is false.
+比较两个值是否相等，@var{x}和@var{y}。如果target浮点格式支持负0和/或NaN，
+则@samp{REAL_VALUES_EQUAL (-0.0, 0.0)} 为真, 
+@samp{REAL_VALUES_EQUAL (NaN, NaN)}为假。
 @end deftypefn
 
 @deftypefn Macro int REAL_VALUES_LESS (REAL_VALUE_TYPE @var{x}, REAL_VALUE_TYPE @var{y})
-Tests whether @var{x} is less than @var{y}.
+测试@var{x}是否小于@var{y}。
 @end deftypefn
 
 @deftypefn Macro HOST_WIDE_INT REAL_VALUE_FIX (REAL_VALUE_TYPE @var{x})
-Truncates @var{x} to a signed integer, rounding toward zero.
+将@var{x}截取为有符号整数，向0舍入。
 @end deftypefn
 
 @deftypefn Macro {unsigned HOST_WIDE_INT} REAL_VALUE_UNSIGNED_FIX (REAL_VALUE_TYPE @var{x})
-Truncates @var{x} to an unsigned integer, rounding toward zero.  If
-@var{x} is negative, returns zero.
+将@var{x}截取为无符号整数，向0舍入。如果@var{x}为负，则返回0。
 @end deftypefn
 
 @deftypefn Macro REAL_VALUE_TYPE REAL_VALUE_ATOF (const char *@var{string}, enum machine_mode @var{mode})
-Converts @var{string} into a floating point number in the target machine's
-representation for mode @var{mode}.  This routine can handle both
-decimal and hexadecimal floating point constants, using the syntax
-defined by the C language for both.
+将@var{string}转换为target机器模式@var{mode}所表示的浮点数。
+该程序可以处理十进制和十六进制的浮点常量，使用C语言定义的语法。
 @end deftypefn
 
 @deftypefn Macro int REAL_VALUE_NEGATIVE (REAL_VALUE_TYPE @var{x})
+
 Returns 1 if @var{x} is negative (including negative zero), 0 otherwise.
 @end deftypefn
 
@@ -9058,84 +8885,66 @@ value is truncated to fit in mode @var{mode}.
 @node 机器模式切换
 @section 机器模式切换指令
 @cindex mode switching
-The following macros control mode switching optimizations:
+下列的宏用来控制模式切换优化：
 
 @defmac OPTIMIZE_MODE_SWITCHING (@var{entity})
-Define this macro if the port needs extra instructions inserted for mode
-switching in an optimizing compilation.
+定义该宏，如果在优化编译中，port需要为机器模式切换插入额外的指令。
 
-For an example, the SH4 can perform both single and double precision
-floating point operations, but to perform a single precision operation,
-the FPSCR PR bit has to be cleared, while for a double precision
-operation, this bit has to be set.  Changing the PR bit requires a general
-purpose register as a scratch register, hence these FPSCR sets have to
-be inserted before reload, i.e.@: you can't put this into instruction emitting
-or @code{TARGET_MACHINE_DEPENDENT_REORG}.
+例如，SH4可以执行单精度和双精度的浮点运算，但是执行单精度运算时，
+必须清除FPSCR PR位，而执行双精度运算时，必须设置该位。
+改变PR位需要一个通用寄存器来作为草稿寄存器，
+因此这些FPSCR设置必须在重载之前被插入，
+即你不能将它放在指令输出或者@code{TARGET_MACHINE_DEPENDENT_REORG}阶段。
 
-You can have multiple entities that are mode-switched, and select at run time
-which entities actually need it.  @code{OPTIMIZE_MODE_SWITCHING} should
-return nonzero for any @var{entity} that needs mode-switching.
-If you define this macro, you also have to define
-@code{NUM_MODES_FOR_MODE_SWITCHING}, @code{MODE_NEEDED},
-@code{MODE_PRIORITY_TO_MODE} and @code{EMIT_MODE_SET}.
-@code{MODE_AFTER}, @code{MODE_ENTRY}, and @code{MODE_EXIT}
-are optional.
+你可以具有多个具有模式切换的实体，并且在运行时选择哪些实体实际需要。
+对于任何需要模式切换的@var{entity}，@code{OPTIMIZE_MODE_SWITCHING}应该返回非零。
+如果你定义了该宏，你还必须定义@code{NUM_MODES_FOR_MODE_SWITCHING}, 
+@code{MODE_NEEDED}, @code{MODE_PRIORITY_TO_MODE}和@code{EMIT_MODE_SET}。
+@code{MODE_AFTER}, @code{MODE_ENTRY}和@code{MODE_EXIT}是可选的。
 @end defmac
 
 @defmac NUM_MODES_FOR_MODE_SWITCHING
-If you define @code{OPTIMIZE_MODE_SWITCHING}, you have to define this as
-initializer for an array of integers.  Each initializer element
-N refers to an entity that needs mode switching, and specifies the number
-of different modes that might need to be set for this entity.
-The position of the initializer in the initializer---starting counting at
-zero---determines the integer that is used to refer to the mode-switched
-entity in question.
-In macros that take mode arguments / yield a mode result, modes are
-represented as numbers 0 @dots{} N @minus{} 1.  N is used to specify that no mode
-switch is needed / supplied.
+如果你定义了@code{OPTIMIZE_MODE_SWITCHING}，你必须定义该宏，
+作为整数数组的初始化。每个初始化元素N引用一个需要模式切换的实体，
+并且指定了该实体可能需要被设置的不同模式的数目。
+初始化的位置——起始于0——确定了被用于引用有问题的模式切换实体的整数。
 @end defmac
 
 @defmac MODE_NEEDED (@var{entity}, @var{insn})
-@var{entity} is an integer specifying a mode-switched entity.  If
-@code{OPTIMIZE_MODE_SWITCHING} is defined, you must define this macro to
-return an integer value not larger than the corresponding element in
-@code{NUM_MODES_FOR_MODE_SWITCHING}, to denote the mode that @var{entity} must
-be switched into prior to the execution of @var{insn}.
+@var{entity}为一个整数指定了模式切换的实体。
+如果定义了@code{OPTIMIZE_MODE_SWITCHING}，
+则必须定义该宏来返回一个不大于在@code{NUM_MODES_FOR_MODE_SWITCHING}
+中相应元素的整数值，来指示@var{entity}在执行@var{insn}前必须被切换成的模式。
 @end defmac
 
 @defmac MODE_AFTER (@var{mode}, @var{insn})
-If this macro is defined, it is evaluated for every @var{insn} during
-mode switching.  It determines the mode that an insn results in (if
-different from the incoming mode).
+如果定义该宏，其在模式切换过程中对于每个@var{insn}进行求值。
+其确定一个insn的结果时的模式（如果与输入时的模式不同）。
 @end defmac
 
 @defmac MODE_ENTRY (@var{entity})
-If this macro is defined, it is evaluated for every @var{entity} that needs
-mode switching.  It should evaluate to an integer, which is a mode that
-@var{entity} is assumed to be switched to at function entry.  If @code{MODE_ENTRY}
-is defined then @code{MODE_EXIT} must be defined.
+如果定义该宏，其对每个需要模式切换的@var{entity}进行求值。
+结果为一个整数，为@var{entity}在函数入口处被假定切换成的模式。
+如果定义了@code{MODE_ENTRY}，则必须定义@code{MODE_EXIT}。
 @end defmac
 
 @defmac MODE_EXIT (@var{entity})
-If this macro is defined, it is evaluated for every @var{entity} that needs
-mode switching.  It should evaluate to an integer, which is a mode that
-@var{entity} is assumed to be switched to at function exit.  If @code{MODE_EXIT}
-is defined then @code{MODE_ENTRY} must be defined.
+如果定义该宏，其对每个需要模式切换的实体进行求值。结果为一个整数，
+为实体在函数出口处被假定切换成的模式。如果定义了@code{MODE_EXIT}，
+则必须定义@code{MODE_ENTRY}。
 @end defmac
 
 @defmac MODE_PRIORITY_TO_MODE (@var{entity}, @var{n})
-This macro specifies the order in which modes for @var{entity} are processed.
-0 is the highest priority, @code{NUM_MODES_FOR_MODE_SWITCHING[@var{entity}] - 1} the
-lowest.  The value of the macro should be an integer designating a mode
-for @var{entity}.  For any fixed @var{entity}, @code{mode_priority_to_mode}
-(@var{entity}, @var{n}) shall be a bijection in 0 @dots{}
-@code{num_modes_for_mode_switching[@var{entity}] - 1}.
+该宏指定了被处理的@var{entity}的模式顺序。0为最高优先级，
+@code{NUM_MODES_FOR_MODE_SWITCHING[@var{entity}] - 1}为最低。
+宏的值应该为一个整数，表示@var{entity}的一个模式。对于任何固定的@var{entity}，
+@code{mode_priority_to_mode}(@var{entity}, @var{n}))应该为0@dots{}
+@code{num_modes_for_mode_switching[@var{entity}] - 1}之间的双向影射。
 @end defmac
 
 @defmac EMIT_MODE_SET (@var{entity}, @var{mode}, @var{hard_regs_live})
-Generate one or more insns to set @var{entity} to @var{mode}.
-@var{hard_reg_live} is the set of hard registers live at the point where
-the insn(s) are to be inserted.
+生成一个或多个insn来将@var{entity}设为@var{mode}。
+@var{hard_reg_live}是在insn被插入点处的硬件寄存器活跃集。
 @end defmac
 
 @node 目标机属性
@@ -9144,96 +8953,78 @@ the insn(s) are to be inserted.
 @cindex machine attributes
 @cindex attributes, target-specific
 
-Target-specific attributes may be defined for functions, data and types.
-These are described using the following target hooks; they also need to
-be documented in @file{extend.texi}.
+可以为函数，数据和类型定义target特定的属性。
+这些使用下列target钩子来描述；它们还需要在@file{extend.texi}中被记述。
 
 @deftypevr {Target Hook} {const struct attribute_spec *} TARGET_ATTRIBUTE_TABLE
-If defined, this target hook points to an array of @samp{struct
-attribute_spec} (defined in @file{tree.h}) specifying the machine
-specific attributes for this target and some of the restrictions on the
-entities to which these attributes are applied and the arguments they
-take.
+如果定义，
+该目标钩子指向一个@samp{struct attribute_spec} (在@file{tree.h}中定义) 数组，
+用来指定该目标的机器特定的属性，
+以及这些属性被应用到的实体和它们接受的参数的一些限制。
 @end deftypevr
 
 @deftypefn {Target Hook} int TARGET_COMP_TYPE_ATTRIBUTES (tree @var{type1}, tree @var{type2})
-If defined, this target hook is a function which returns zero if the attributes on
-@var{type1} and @var{type2} are incompatible, one if they are compatible,
-and two if they are nearly compatible (which causes a warning to be
-generated).  If this is not defined, machine-specific attributes are
-supposed always to be compatible.
+如果定义，该目标钩子为一个函数，
+如果@var{type1}和@var{type2}的属性不匹配则返回0，匹配则返回1，
+几乎匹配则返回2（这将产生一个warning）。如果没有被定义，
+则机器特定的属性总被假定为匹配的。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SET_DEFAULT_TYPE_ATTRIBUTES (tree @var{type})
-If defined, this target hook is a function which assigns default attributes to
-newly defined @var{type}.
+如果定义，该目标钩子为一个函数，其将缺省属性赋予新定义的类型@var{type}。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_MERGE_TYPE_ATTRIBUTES (tree @var{type1}, tree @var{type2})
-Define this target hook if the merging of type attributes needs special
-handling.  If defined, the result is a list of the combined
-@code{TYPE_ATTRIBUTES} of @var{type1} and @var{type2}.  It is assumed
-that @code{comptypes} has already been called and returned 1.  This
-function may call @code{merge_attributes} to handle machine-independent
-merging.
+定义该target钩子，如果合并类型属性需要进行特殊的处理。
+如果定义，则结果为@var{type1}和@var{type2}的组合@code{TYPE_ATTRIBUTES}列表。
+其假设@code{comptypes}总是被调用并返回1。
+该函数可以调用@code{merge_attributes}来处理机器无关的合并。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_MERGE_DECL_ATTRIBUTES (tree @var{olddecl}, tree @var{newdecl})
-Define this target hook if the merging of decl attributes needs special
-handling.  If defined, the result is a list of the combined
-@code{DECL_ATTRIBUTES} of @var{olddecl} and @var{newdecl}.
-@var{newdecl} is a duplicate declaration of @var{olddecl}.  Examples of
-when this is needed are when one attribute overrides another, or when an
-attribute is nullified by a subsequent definition.  This function may
-call @code{merge_attributes} to handle machine-independent merging.
+定义该target钩子，如果合并decl属性需要进行特殊的处理。如果定义，
+则结果为@var{olddecl}和@var{newdecl}的组合@code{DECL_ATTRIBUTES}列表。
+@var{newdecl}为@var{olddecl}的拷贝。这样的例子是当一个属性覆盖另一个，
+或者当一个属性被后续的属性置空的情况。
+该函数可以调用@code{merge_attributes}来处理机器无关的合并。
 
 @findex TARGET_DLLIMPORT_DECL_ATTRIBUTES
-If the only target-specific handling you require is @samp{dllimport}
-for Microsoft Windows targets, you should define the macro
-@code{TARGET_DLLIMPORT_DECL_ATTRIBUTES} to @code{1}.  The compiler
-will then define a function called
-@code{merge_dllimport_decl_attributes} which can then be defined as
-the expansion of @code{TARGET_MERGE_DECL_ATTRIBUTES}.  You can also
-add @code{handle_dll_attribute} in the attribute table for your port
-to perform initial processing of the @samp{dllimport} and
-@samp{dllexport} attributes.  This is done in @file{i386/cygwin.h} and
-@file{i386/i386.c}, for example.
+如果唯一需要target特定的处理是Microsoft Windows target的@samp{dllimport}，
+则你应该定义宏@code{TARGET_DLLIMPORT_DECL_ATTRIBUTES}为@code{1}。
+然后编译器将会定义一个叫做@code{merge_dllimport_decl_attributes}的函数，
+其可以被定义为@code{TARGET_MERGE_DECL_ATTRIBUTES}的扩展。
+你还可以为你的port在属性表中增加@code{handle_dll_attribute}，
+来执行@samp{dllimport}和@samp{dllexport}属性的初始化处理。
+例如，在@file{i386/cygwin.h}和@file{i386/i386.c}中。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_VALID_DLLIMPORT_ATTRIBUTE_P (tree @var{decl})
-@var{decl} is a variable or function with @code{__attribute__((dllimport))}
-specified. Use this hook if the target needs to add extra validation
-checks to @code{handle_dll_attribute}.
+@var{decl}为一个指定为@code{__attribute__((dllimport))}的变量或者函数。
+使用该钩子，如果target需要给@code{handle_dll_attribute}增加额外的有效性检查。
 @end deftypefn
 
 @defmac TARGET_DECLSPEC
-Define this macro to a nonzero value if you want to treat
-@code{__declspec(X)} as equivalent to @code{__attribute((X))}.  By
-default, this behavior is enabled only for targets that define
-@code{TARGET_DLLIMPORT_DECL_ATTRIBUTES}.  The current implementation
-of @code{__declspec} is via a built-in macro, but you should not rely
-on this implementation detail.
+定义该宏为非零，
+如果你想将@code{__declspec(X)}与@code{__attribute((X))}等同对待。
+缺省下，只有在定义了@code{TARGET_DLLIMPORT_DECL_ATTRIBUTES}的target上才可以。
+目前对于@code{__declspec}的实现是通过一个内建的宏，但是你不应该依赖于实现细节。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_INSERT_ATTRIBUTES (tree @var{node}, tree *@var{attr_ptr})
-Define this target hook if you want to be able to add attributes to a decl
-when it is being created.  This is normally useful for back ends which
-wish to implement a pragma by using the attributes which correspond to
-the pragma's effect.  The @var{node} argument is the decl which is being
-created.  The @var{attr_ptr} argument is a pointer to the attribute list
-for this decl.  The list itself should not be modified, since it may be
-shared with other decls, but attributes may be chained on the head of
-the list and @code{*@var{attr_ptr}} modified to point to the new
-attributes, or a copy of the list may be made if further changes are
-needed.
+定义该target钩子，如果你想在decl被创建时，能够为其增加属性。
+这在后端想要实现一个pragma，并且用到与pragma相关的属性的时候，
+通常很有用。参数@var{node}是正在创建的decl。
+参数@var{attr_ptr}是指向该decl的属性列表的指针。不要修改列表本身，
+因为其可能与其它decl共享，但是可以将属性链接到列表的头部，
+并且修改@code{*@var{attr_ptr}}以指向新的属性，或者如果需要进一步的修改，
+创建一个列表的拷贝。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_FUNCTION_ATTRIBUTE_INLINABLE_P (tree @var{fndecl})
 @cindex inlining
-This target hook returns @code{true} if it is ok to inline @var{fndecl}
-into the current function, despite its having target-specific
-attributes, @code{false} otherwise.  By default, if a function has a
-target specific attribute attached to it, it will not be inlined.
+该target钩子返回@code{true}，如果可以将@var{fndecl}内联到当前函数中，
+而不管它具有的target特定属性，否则为@code{false}。
+缺省下，如果函数具有一个target特定属性，则不会被内联。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_VALID_OPTION_ATTRIBUTE_P (tree @var{fndecl}, tree @var{name}, tree @var{args}, int @var{flags})
@@ -9363,10 +9154,8 @@ may be used to describe emulated TLS control objects.
 @section 定义MIPS target的协处理器的规范
 @cindex MIPS coprocessor-definition macros
 
-The MIPS specification allows MIPS implementations to have as many as 4
-coprocessors, each with as many as 32 private registers.  GCC supports
-accessing these registers and transferring values between the registers
-and memory using asm-ized variables.  For example:
+MIPS规范允许MIPS的实现最多具有4个协处理器，其中每个最多具有32个私有寄存器。
+GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以及内存间的传值。例如：
 
 @smallexample
   register unsigned int cp0count asm ("c0r1");
@@ -9375,28 +9164,25 @@ and memory using asm-ized variables.  For example:
   d = cp0count + 3;
 @end smallexample
 
-(``c0r1'' is the default name of register 1 in coprocessor 0; alternate
-names may be added as described below, or the default names may be
-overridden entirely in @code{SUBTARGET_CONDITIONAL_REGISTER_USAGE}.)
+(“c0r1”是协处理器0的寄存器1的缺省名；可以按照下面的描述来增加可选名字，
+或者可以通过@code{SUBTARGET_CONDITIONAL_REGISTER_USAGE}来覆写全部的缺省名字。)
 
-Coprocessor registers are assumed to be epilogue-used; sets to them will
-be preserved even if it does not appear that the register is used again
-later in the function.
+协处理器寄存器被假设为epilogue-used；对它们的赋值将被保存，
+即使在函数中的后面不会再使用该寄存器。
 
-Another note: according to the MIPS spec, coprocessor 1 (if present) is
-the FPU@.  One accesses COP1 registers through standard mips
-floating-point support; they are not included in this mechanism.
+另一个需要注意的是：根据MIPS spec，协处理器1（如果存在）为FPU。
+标准mips浮点支持的对COP1寄存器的访问，不包含在这个机制中。
 
-There is one macro used in defining the MIPS coprocessor interface which
-you may want to override in subtargets; it is described below.
+下面描述的一个宏，用于定义MIPS协处理器接口，
+可能在子目标（subtarget）中需要被覆写。
 
 @defmac ALL_COP_ADDITIONAL_REGISTER_NAMES
-A comma-separated list (with leading comma) of pairs describing the
-alternate names of coprocessor registers.  The format of each entry should be
+一个逗号分隔的列表（起始于逗号），是用于描述可选的协处理器寄存器的名字对。
+每项的格式应该为
 @smallexample
 @{ @var{alternatename}, @var{register_number}@}
 @end smallexample
-Default: empty.
+缺省情况: 空
 @end defmac
 
 @node PCH Target
@@ -9404,31 +9190,27 @@ Default: empty.
 @cindex parameters, precompiled headers
 
 @deftypefn {Target Hook} void *TARGET_GET_PCH_VALIDITY (size_t *@var{sz})
-This hook returns the data needed by @code{TARGET_PCH_VALID_P} and sets
-@samp{*@var{sz}} to the size of the data in bytes.
+该钩子返回@code{TARGET_PCH_VALID_P}所需要的数据，
+并且将@samp{*@var{sz}}设为以字节为单位的数据大小。
 @end deftypefn
 
 @deftypefn {Target Hook} const char *TARGET_PCH_VALID_P (const void *@var{data}, size_t @var{sz})
-This hook checks whether the options used to create a PCH file are
-compatible with the current settings.  It returns @code{NULL}
-if so and a suitable error message if not.  Error messages will
-be presented to the user and must be localized using @samp{_(@var{msg})}.
+该钩子检查用于创建PCH文件的选项是否与现在的设置兼容。
+如果是则返回@code{NULL}，否则为一个适当的错误消息。
+错误消息将会展现给用户，所以必须使用@samp{_(@var{msg})}来本地化。
 
-@var{data} is the data that was returned by @code{TARGET_GET_PCH_VALIDITY}
-when the PCH file was created and @var{sz} is the size of that data in bytes.
-It's safe to assume that the data was created by the same version of the
-compiler, so no format checking is needed.
+@var{data}为当PCH文件被创建时，@code{TARGET_GET_PCH_VALIDITY}所返回的数据，
+@var{sz}为以字节为单位的数据大小。是可以假设data由同一版本的编译器所创建的，
+所以不需要格式检查。
 
-The default definition of @code{default_pch_valid_p} should be
-suitable for most targets.
+@code{default_pch_valid_p}的缺省定义应该适合于大多数target。
 @end deftypefn
 
 @deftypefn {Target Hook} const char *TARGET_CHECK_PCH_TARGET_FLAGS (int @var{pch_flags})
-If this hook is nonnull, the default implementation of
-@code{TARGET_PCH_VALID_P} will use it to check for compatible values
-of @code{target_flags}.  @var{pch_flags} specifies the value that
-@code{target_flags} had when the PCH file was created.  The return
-value is the same as for @code{TARGET_PCH_VALID_P}.
+如果该钩子为非空，
+则@code{TARGET_PCH_VALID_P}的缺省实现将用它来检查@code{target_flags}的兼容值。
+@var{pch_flags}指定了当PCH文件被创建时，@code{target_flags}所具有的值。
+返回值与@code{TARGET_PCH_VALID_P}的相同。
 @end deftypefn
 
 @node C++ ABI
@@ -9436,96 +9218,79 @@ value is the same as for @code{TARGET_PCH_VALID_P}.
 @cindex parameters, c++ abi
 
 @deftypefn {Target Hook} tree TARGET_CXX_GUARD_TYPE (void)
-Define this hook to override the integer type used for guard variables.
-These are used to implement one-time construction of static objects.  The
-default is long_long_integer_type_node.
+定义该钩子来覆盖用于guard变量的整数类型。
+这些被用于实现静态对象的一次构建。缺省为long_long_integer_type_node。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_GUARD_MASK_BIT (void)
-This hook determines how guard variables are used.  It should return
-@code{false} (the default) if first byte should be used.  A return value of
-@code{true} indicates the least significant bit should be used.
+该钩子确定如何使用guard变量。如果第一个字节应该被使用，
+则应该返回@code{false}（缺省）。返回值为@code{true}表明应该使用最低有效位。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_CXX_GET_COOKIE_SIZE (tree @var{type})
-This hook returns the size of the cookie to use when allocating an array
-whose elements have the indicated @var{type}.  Assumes that it is already
-known that a cookie is needed.  The default is
-@code{max(sizeof (size_t), alignof(type))}, as defined in section 2.7 of the
-IA64/Generic C++ ABI@.
+该钩子返回cookie的大小，其中cookie为当分配一个数组其元素具有@var{type}类型，
+所使用的cookie。假设已经知道需要一个cookie。
+缺省为@code{max(sizeof (size_t), alignof(type))}，
+在2.7节IA64/Generic C++ ABI中定义。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_COOKIE_HAS_SIZE (void)
-This hook should return @code{true} if the element size should be stored in
-array cookies.  The default is to return @code{false}.
+该钩子应该返回@code{true}，如果元素大小应该被存放在数组cookie中。
+缺省为返回@code{false}。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_CXX_IMPORT_EXPORT_CLASS (tree  @var{type}, int @var{import_export})
-If defined by a backend this hook allows the decision made to export
-class @var{type} to be overruled.  Upon entry @var{import_export}
-will contain 1 if the class is going to be exported, @minus{}1 if it is going
-to be imported and 0 otherwise.  This function should return the
-modified value and perform any other actions necessary to support the
-backend's targeted operating system.
+如果后端定义了该钩子，则允许覆盖对导出类@var{type}的决定。
+@var{import_export}将包含1，如果类将被导出，@minus{}1如果其将被导入，否则为0.
+该函数应该返回修改后的值，并执行其它需要的操作来支持后端的操作系统。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_CDTOR_RETURNS_THIS (void)
-This hook should return @code{true} if constructors and destructors return
-the address of the object created/destroyed.  The default is to return
-@code{false}.
+该钩子应该返回@code{true}，如果构造者和析构者返回创建/销毁对象的地址。
+缺省为返回@code{false}。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_KEY_METHOD_MAY_BE_INLINE (void)
-This hook returns true if the key method for a class (i.e., the method
-which, if defined in the current translation unit, causes the virtual
-table to be emitted) may be an inline function.  Under the standard
-Itanium C++ ABI the key method may be an inline function so long as
-the function is not declared inline in the class definition.  Under
-some variants of the ABI, an inline function can never be the key
-method.  The default is to return @code{true}.
+该钩子返回真，如果类的关键方法（即，如果方法在当前转换单元中定义，
+其使得虚拟表被输出）可以为内联函数。对于标准的Itanium C++ ABI，
+关键方法可以为内联函数，只要函数不在类定义中声明为内联的。
+其它ABI的变体中，内联函数不能为关键方法。缺省为返回@code{true}。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_CXX_DETERMINE_CLASS_DATA_VISIBILITY (tree @var{decl})
-@var{decl} is a virtual table, virtual table table, typeinfo object,
-or other similar implicit class data object that will be emitted with
-external linkage in this translation unit.  No ELF visibility has been
-explicitly specified.  If the target needs to specify a visibility
-other than that of the containing class, use this hook to set
-@code{DECL_VISIBILITY} and @code{DECL_VISIBILITY_SPECIFIED}.
+@var{decl}为虚拟表，类型信息对象，或其它类似的隐含类数据对象，
+其将在该转换单元中作为外部链接被输出。ELF的可视性不会被显示的指定。
+如果target需要指定可视性，
+可以使用该钩子来设置@code{DECL_VISIBILITY}和@code{DECL_VISIBILITY_SPECIFIED}。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT (void)
-This hook returns true (the default) if virtual tables and other
-similar implicit class data objects are always COMDAT if they have
-external linkage.  If this hook returns false, then class data for
-classes whose virtual table will be emitted in only one translation
-unit will not be COMDAT.
+该钩子返回真（缺省情况）如果虚拟表和其它类似的隐式类数据对象总是为COMDAT，
+如果它们具有外部连接。如果该钩子返回假，
+则只在一个转换单元中被输出的虚拟表的类的类数据将不是COMDAT。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_LIBRARY_RTTI_COMDAT (void)
-This hook returns true (the default) if the RTTI information for
-the basic types which is defined in the C++ runtime should always
-be COMDAT, false if it should not be COMDAT.
+该钩子返回真（缺省情况），
+如果在C++运行时定义的基本类型的RTTI信息应该总是为COMDAT，否则为假。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_USE_AEABI_ATEXIT (void)
-This hook returns true if @code{__aeabi_atexit} (as defined by the ARM EABI)
-should be used to register static destructors when @option{-fuse-cxa-atexit}
-is in effect.  The default is to return false to use @code{__cxa_atexit}.
+该钩子返回真，
+如果@code{__aeabi_atexit}（如被ARM EABI定义）应该用于注册静态析构者，
+当@option{-fuse-cxa-atexit}为有效时。缺省是返回假，使用@code{__cxa_atexit}。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_USE_ATEXIT_FOR_CXA_ATEXIT (void)
-This hook returns true if the target @code{atexit} function can be used
-in the same manner as @code{__cxa_atexit} to register C++ static
-destructors. This requires that @code{atexit}-registered functions in
-shared libraries are run in the correct order when the libraries are
-unloaded. The default is to return false.
+该钩子返回真，
+如果target的@code{atexit}函数可以跟@code{__cxa_atexit}一样被用于注册静态析构者。
+这要求在共享库中@code{atexit}注册的函数要按照正确的顺序运行，当库被卸载时。
+缺省为返回假。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_CXX_ADJUST_CLASS_AT_DEFINITION (tree @var{type})
-@var{type} is a C++ class (i.e., RECORD_TYPE or UNION_TYPE) that has just been
-defined.  Use this hook to make adjustments to the class (eg, tweak
-visibility or perform any other required target modifications).
+@var{type}为一个刚被定义的C++类（即RECORD_TYPE 或 UNION_TYPE）。
+使用该钩子来调整类（例如tweak可视性或者执行其它target需要的修改）。
 @end deftypefn
 
 @node 其它
@@ -9533,86 +9298,65 @@ visibility or perform any other required target modifications).
 @cindex parameters, miscellaneous
 
 @c prevent bad page break with this line
-Here are several miscellaneous parameters.
+这是一些其它参数。
 
 @defmac HAS_LONG_COND_BRANCH
-Define this boolean macro to indicate whether or not your architecture
-has conditional branches that can span all of memory.  It is used in
-conjunction with an optimization that partitions hot and cold basic
-blocks into separate sections of the executable.  If this macro is
-set to false, gcc will convert any conditional branches that attempt
-to cross between sections into unconditional branches or indirect jumps.
+定义该布尔值的宏用来指示你的体系结构是否具有可以跨越所有内存的条件分支。
+它用于将可执行程序hot和cold基本块分割到单独的段的优化。
+如果该宏被设为false，则gcc将任何穿越段的条件分支转换为无条件分支或间接跳转。
 @end defmac
 
 @defmac HAS_LONG_UNCOND_BRANCH
-Define this boolean macro to indicate whether or not your architecture
-has unconditional branches that can span all of memory.  It is used in
-conjunction with an optimization that partitions hot and cold basic
-blocks into separate sections of the executable.  If this macro is
-set to false, gcc will convert any unconditional branches that attempt
-to cross between sections into indirect jumps.
+定义该布尔值的宏用来指示你的体系结构是否具有可以跨越所有内存的无条件分支。
+它用于将可执行程序hot和cold基本块分割到单独的段的优化。
+如果该宏被设为false，则gcc将任何穿越段的无条件分支转换为间接跳转。
 @end defmac
 
 @defmac CASE_VECTOR_MODE
-An alias for a machine mode name.  This is the machine mode that
-elements of a jump-table should have.
+机器模式名字的一个别名。这是跳转表（jump-table）的元素应该具有的机器模式。
 @end defmac
 
 @defmac CASE_VECTOR_SHORTEN_MODE (@var{min_offset}, @var{max_offset}, @var{body})
-Optional: return the preferred mode for an @code{addr_diff_vec}
-when the minimum and maximum offset are known.  If you define this,
-it enables extra code in branch shortening to deal with @code{addr_diff_vec}.
-To make this work, you also have to define @code{INSN_ALIGN} and
-make the alignment for @code{addr_diff_vec} explicit.
-The @var{body} argument is provided so that the offset_unsigned and scale
-flags can be updated.
+可选的：当最小值和最大值位移已知时，返回@code{addr_diff_vec}的首选机器模式。
+如果定义了该宏，这使得在分支缩短中增加了额外的代码来处理@code{addr_diff_vec}。
+要使其工作，还必须要定义@code{INSN_ALIGN}，
+并且显示的对@code{addr_diff_vec}进行对齐。参数@var{body}被提供，
+使得可以更新@code{offset_unsigned}和标量标记。
 @end defmac
 
 @defmac CASE_VECTOR_PC_RELATIVE
-Define this macro to be a C expression to indicate when jump-tables
-should contain relative addresses.  You need not define this macro if
-jump-tables never contain relative addresses, or jump-tables should
-contain relative addresses only when @option{-fPIC} or @option{-fPIC}
-is in effect.
+定义该宏为一个C表达式，来指示跳转表什么时候应该包含相对地址。
+你不需要定义该宏，如果跳转表从来不包含相对地址，
+或者跳转表只在@option{-fPIC}或者@option{-fPIC}有效时才包含相对地址。
 @end defmac
 
 @defmac CASE_VALUES_THRESHOLD
-Define this to be the smallest number of different values for which it
-is best to use a jump-table instead of a tree of conditional branches.
-The default is four for machines with a @code{casesi} instruction and
-five otherwise.  This is best for most machines.
+定义其为一个最小差值数，用于选择是使用跳转表来替代条件分支树。
+缺省为4，对于具有@code{casesi}指令的机器，其它的为5。这对大多数机器是最好的。
 @end defmac
 
 @defmac CASE_USE_BIT_TESTS
-Define this macro to be a C expression to indicate whether C switch
-statements may be implemented by a sequence of bit tests.  This is
-advantageous on processors that can efficiently implement left shift
-of 1 by the number of bits held in a register, but inappropriate on
-targets that would require a loop.  By default, this macro returns
-@code{true} if the target defines an @code{ashlsi3} pattern, and
-@code{false} otherwise.
+定义该宏为一个C表达式，来指示C switch语句是否可以通过位测试序列来实现。
+这在可以通过寄存器中的位数来有效实现左移1位的处理器上很有利，
+但不适合需要循环的target。缺省下，该宏返回@code{true}，
+如果target定义了@code{ashlsi3}指令模式，否则返回@code{false}。
 @end defmac
 
 @defmac WORD_REGISTER_OPERATIONS
-Define this macro if operations between registers with integral mode
-smaller than a word are always performed on the entire register.
-Most RISC machines have this property and most CISC machines do not.
+定义该宏，如果整数机器模式的小于一个字的寄存器间的运算总是在整个寄存器中执行。
+大多数RISC机器具有这个属性，大多数CISC机器不具有。
 @end defmac
 
 @defmac LOAD_EXTEND_OP (@var{mem_mode})
-Define this macro to be a C expression indicating when insns that read
-memory in @var{mem_mode}, an integral mode narrower than a word, set the
-bits outside of @var{mem_mode} to be either the sign-extension or the
-zero-extension of the data read.  Return @code{SIGN_EXTEND} for values
-of @var{mem_mode} for which the
-insn sign-extends, @code{ZERO_EXTEND} for which it zero-extends, and
-@code{UNKNOWN} for other modes.
+定义该宏为一个C表达式，
+指示当insn使用比一个字窄的的整数模式的@var{mem_mode}模式读取内存时，
+将读取的数据的@var{mem_mode}外的位进行符号扩展或者零扩展。
+返回@code{SIGN_EXTEND}，对于那些要符号扩展的insn，
+返回@code{ZERO_EXTEND}对那些零扩展的，对于其它的机器模式返回@code{UNKNOWN}。
 
-This macro is not called with @var{mem_mode} non-integral or with a width
-greater than or equal to @code{BITS_PER_WORD}, so you may return any
-value in this case.  Do not define this macro if it would always return
-@code{UNKNOWN}.  On machines where this macro is defined, you will normally
-define it as the constant @code{SIGN_EXTEND} or @code{ZERO_EXTEND}.
+该宏不会被非整型的，或者宽度大于等于@code{BITS_PER_WORD}的@var{mem_mode}调用，
+所以对于这种情况你可以返回任何值。如果总是返回@code{UNKNOWN}，则不要定义该宏。
+在定义该宏的机器上，你通常要定义其为常量@code{SIGN_EXTEND}或者@code{ZERO_EXTEND}。
 
 You may return a non-@code{UNKNOWN} value even if for some hard registers
 the sign extension is not performed, if for the @code{REGNO_REG_CLASS}
@@ -9627,36 +9371,28 @@ is larger then @var{mem_mode} but still smaller than @code{word_mode}.
 @end defmac
 
 @defmac SHORT_IMMEDIATES_SIGN_EXTEND
-Define this macro if loading short immediate values into registers sign
-extends.
+定义该宏，如果将short立即数加载到寄存器中要进行符号扩展。
 @end defmac
 
 @defmac FIXUNS_TRUNC_LIKE_FIX_TRUNC
-Define this macro if the same instructions that convert a floating
-point number to a signed fixed point number also convert validly to an
-unsigned one.
+定义该宏，如果将浮点数转换为有符号定点数的指令，
+同样可以有效的转换为无符号的。
 @end defmac
 
 @deftypefn {Target Hook} int TARGET_MIN_DIVISIONS_FOR_RECIP_MUL (enum machine_mode @var{mode})
-When @option{-ffast-math} is in effect, GCC tries to optimize
-divisions by the same divisor, by turning them into multiplications by
-the reciprocal.  This target hook specifies the minimum number of divisions
-that should be there for GCC to perform the optimization for a variable
-of mode @var{mode}.  The default implementation returns 3 if the machine
-has an instruction for the division, and 2 if it does not.
+当@option{-ffast-math}有效时，GCC尝试使用相同的除数来优化除法，
+通过将它们转换为乘以倒数的方式。
+缺省实现返回3，如果机器具有除法指令，否则为2。
 @end deftypefn
 
 @defmac MOVE_MAX
-The maximum number of bytes that a single instruction can move quickly
-between memory and registers or between two memory locations.
+单个指令可以在内存和寄存器间，或者两个内存位置间快速移动的最大字节数。
 @end defmac
 
 @defmac MAX_MOVE_MAX
-The maximum number of bytes that a single instruction can move quickly
-between memory and registers or between two memory locations.  If this
-is undefined, the default is @code{MOVE_MAX}.  Otherwise, it is the
-constant value that is the largest value that @code{MOVE_MAX} can have
-at run-time.
+单个指令可以在内存和寄存器间，或者两个内存位置间快速移动的最大字节数。
+如果没有定义，则缺省为@code{MOVE_MAX}。
+否则，其为@code{MOVE_MAX}在运行时可以具有的最大常数值。
 @end defmac
 
 @defmac SHIFT_COUNT_TRUNCATED
