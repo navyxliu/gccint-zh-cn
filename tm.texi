@@ -2964,145 +2964,110 @@ See the documentation for @code{TARGET_IRA_COVER_CLASSES}.
 @cindex defining constraints, obsolete method
 @cindex constraints, defining, obsolete method
 
-Machine-specific constraints can be defined with these macros instead
-of the machine description constructs described in @ref{定义约束}.  This mechanism is obsolete.  New ports should not use
-it; old ports should convert to the new mechanism.
+机器特定的约束可以使用这些宏来定义，来替代在@ref{定义约束}中描述的机器描述结构。
+这种机制已经被废弃；旧的port应该转换为新的机制。
 
 @defmac CONSTRAINT_LEN (@var{char}, @var{str})
-For the constraint at the start of @var{str}, which starts with the letter
-@var{c}, return the length.  This allows you to have register class /
-constant / extra constraints that are longer than a single letter;
-you don't need to define this macro if you can do with single-letter
-constraints only.  The definition of this macro should use
-DEFAULT_CONSTRAINT_LEN for all the characters that you don't want
-to handle specially.
-There are some sanity checks in genoutput.c that check the constraint lengths
-for the md file, so you can also use this macro to help you while you are
-transitioning from a byzantine single-letter-constraint scheme: when you
-return a negative length for a constraint you want to re-use, genoutput
-will complain about every instance where it is used in the md file.
+对于起始于@var{str}，其起始字母为@var{c}的约束，返回其长度。
+这允许你具有比单个字母更长的寄存器类别/常量/额外约束；
+你不需要定义该宏，如果你只用单个字母的约束。
+该宏的定义应该使用DEFAULT_CONSTRAINT_LEN，对于你不想特别处理的所有字符。
+在genoutput.c中有一些合理性检查，用来为md文件检查约束的长度。
 @end defmac
 
 @defmac REG_CLASS_FROM_LETTER (@var{char})
-A C expression which defines the machine-dependent operand constraint
-letters for register classes.  If @var{char} is such a letter, the
-value should be the register class corresponding to it.  Otherwise,
-the value should be @code{NO_REGS}.  The register letter @samp{r},
-corresponding to class @code{GENERAL_REGS}, will not be passed
-to this macro; you do not need to handle it.
+一个C表达式，其为寄存器类别定义了机器相关的操作数约束字母。
+如果@var{char}为这样的字母，则值应该为对应的寄存器类别。否则，
+值应该为@code{NO_REGS}。寄存器字母@samp{r}，对应于类别@code{GENERAL_REGS}，
+将不被传给该宏；你不需要处理它。
 @end defmac
 
 @defmac REG_CLASS_FROM_CONSTRAINT (@var{char}, @var{str})
-Like @code{REG_CLASS_FROM_LETTER}, but you also get the constraint string
-passed in @var{str}, so that you can use suffixes to distinguish between
-different variants.
+类似于@code{REG_CLASS_FROM_LETTER}，不过你还得到在@var{str}中传递的字符串，
+所以你可以使用后缀来区别不同的变种。
 @end defmac
 
 @defmac CONST_OK_FOR_LETTER_P (@var{value}, @var{c})
-A C expression that defines the machine-dependent operand constraint
-letters (@samp{I}, @samp{J}, @samp{K}, @dots{} @samp{P}) that specify
-particular ranges of integer values.  If @var{c} is one of those
-letters, the expression should check that @var{value}, an integer, is in
-the appropriate range and return 1 if so, 0 otherwise.  If @var{c} is
-not one of those letters, the value should be 0 regardless of
-@var{value}.
+一个C表达式，其定义了机器相关操作数约束字母（@samp{I}, @samp{J}, @samp{K}, 
+@dots{} @samp{P}），指定了整数值的特定范围。如果@var{c}为那些字母中的，
+则表达式应该检查@var{value}，一个整数，如果在合适的范围中则返回1，否则返回0。
+如果@var{c}不是那些字母中的，则值应该为0，而不管@var{value}是多少。
 @end defmac
 
 @defmac CONST_OK_FOR_CONSTRAINT_P (@var{value}, @var{c}, @var{str})
-Like @code{CONST_OK_FOR_LETTER_P}, but you also get the constraint
-string passed in @var{str}, so that you can use suffixes to distinguish
-between different variants.
+类似@code{CONST_OK_FOR_LETTER_P}，但是你还得到在@var{str}中传递的字符串，
+所以你可以使用后缀来区别不同的变种。
 @end defmac
 
 @defmac CONST_DOUBLE_OK_FOR_LETTER_P (@var{value}, @var{c})
-A C expression that defines the machine-dependent operand constraint
-letters that specify particular ranges of @code{const_double} values
-(@samp{G} or @samp{H}).
+一个C表达式，定义了机器相关操作数约束字母，
+指定了@code{const_double}值的特定范围（@samp{G}或@samp{H}）。
 
-If @var{c} is one of those letters, the expression should check that
-@var{value}, an RTX of code @code{const_double}, is in the appropriate
-range and return 1 if so, 0 otherwise.  If @var{c} is not one of those
-letters, the value should be 0 regardless of @var{value}.
+如果@var{c}为那些字母中的，则表达式应该检查@var{value}，
+一个代码为@code{const_double}的RTX，如果在合适的范围中则返回1，否则返回0。
+如果@var{c}不是那些字母中的，则值应该为0，而不管@var{value}是多少。
 
-@code{const_double} is used for all floating-point constants and for
-@code{DImode} fixed-point constants.  A given letter can accept either
-or both kinds of values.  It can use @code{GET_MODE} to distinguish
-between these kinds.
+@code{const_double}用于所有的浮点常量和@code{DImode}定点常量。
+一个给定的字母可以接受一种或者这两种类型的值。
+其可以使用@code{GET_MODE}来区别这些类型。
 @end defmac
 
 @defmac CONST_DOUBLE_OK_FOR_CONSTRAINT_P (@var{value}, @var{c}, @var{str})
-Like @code{CONST_DOUBLE_OK_FOR_LETTER_P}, but you also get the constraint
-string passed in @var{str}, so that you can use suffixes to distinguish
-between different variants.
+类似@code{CONST_DOUBLE_OK_FOR_LETTER_P}，但是你还得到在@var{str}中传递的字符串，
+所以你可以使用后缀来区别不同的变种。
 @end defmac
 
 @defmac EXTRA_CONSTRAINT (@var{value}, @var{c})
-A C expression that defines the optional machine-dependent constraint
-letters that can be used to segregate specific types of operands, usually
-memory references, for the target machine.  Any letter that is not
-elsewhere defined and not matched by @code{REG_CLASS_FROM_LETTER} /
-@code{REG_CLASS_FROM_CONSTRAINT}
-may be used.  Normally this macro will not be defined.
+一个C表达式，定义了可选的机器相关约束字母，
+其可以用于为target机器隔离特定类型的操作数，通常为内存引用。
+任何没有在其它地方定义并且不被
+@code{REG_CLASS_FROM_LETTER} / REG_CLASS_FROM_CONSTRAINT匹配的字母都可以使用。
+通常该宏将不被定义。
 
-If it is required for a particular target machine, it should return 1
-if @var{value} corresponds to the operand type represented by the
-constraint letter @var{c}.  If @var{c} is not defined as an extra
-constraint, the value returned should be 0 regardless of @var{value}.
+如果对于特定的target机器需要该宏，则应该返回1，
+如果@var{value}对应于由约束字母@var{c}表示的操作数类型。
+如果@var{c}没有作为extra约束定义，则值应该为0，而不管@var{value}是多少。
 
-For example, on the ROMP, load instructions cannot have their output
-in r0 if the memory reference contains a symbolic address.  Constraint
-letter @samp{Q} is defined as representing a memory address that does
-@emph{not} contain a symbolic address.  An alternative is specified with
-a @samp{Q} constraint on the input and @samp{r} on the output.  The next
-alternative specifies @samp{m} on the input and a register class that
-does not include r0 on the output.
+例如，则ROMP上，加载指令不能将它们的输出放在r0中，
+如果内存引用包含了一个符号地址。
+约束字母@samp{Q}被定义来表示不包含符号地址的内存地址。
+一个可选项使用@samp{Q}约束在输入上并且@samp{r}在输出上来指定。
+下一个可选项指定了@samp{m}在输入上并且不包含r0的寄存器类别在输出上。
 @end defmac
 
 @defmac EXTRA_CONSTRAINT_STR (@var{value}, @var{c}, @var{str})
-Like @code{EXTRA_CONSTRAINT}, but you also get the constraint string passed
-in @var{str}, so that you can use suffixes to distinguish between different
-variants.
+类似@code{EXTRA_CONSTRAINT}，但是你还得到在@var{str}中传递的字符串，
+所以你可以使用后缀来区别不同的变种。
 @end defmac
 
 @defmac EXTRA_MEMORY_CONSTRAINT (@var{c}, @var{str})
-A C expression that defines the optional machine-dependent constraint
-letters, amongst those accepted by @code{EXTRA_CONSTRAINT}, that should
-be treated like memory constraints by the reload pass.
+一个C表达式，定义了可选的机器相关约束字母，
+在那些由@code{EXTRA_CONSTRAINT}接受的字母中，
+其应该被重载过程作为内存约束来对待。
 
-It should return 1 if the operand type represented by the constraint
-at the start of @var{str}, the first letter of which is the letter @var{c},
-comprises a subset of all memory references including
-all those whose address is simply a base register.  This allows the reload
-pass to reload an operand, if it does not directly correspond to the operand
-type of @var{c}, by copying its address into a base register.
+其应该返回1，如果由@var{str}起始，并且第一个字母为@var{c}的约束所表示的操作数
+类型所包含的所有内存引用为简单的基址寄存器。这允许重载过程来重载操作数，
+如果其不直接对应于操作数类型@var{c}，通过将其地址复制到基址寄存器中。
 
-For example, on the S/390, some instructions do not accept arbitrary
-memory references, but only those that do not make use of an index
-register.  The constraint letter @samp{Q} is defined via
-@code{EXTRA_CONSTRAINT} as representing a memory address of this type.
-If the letter @samp{Q} is marked as @code{EXTRA_MEMORY_CONSTRAINT},
-a @samp{Q} constraint can handle any memory operand, because the
-reload pass knows it can be reloaded by copying the memory address
-into a base register if required.  This is analogous to the way
-a @samp{o} constraint can handle any memory operand.
+例如，在S/390上，一些指令不接受任意的内存引用，只接受那些不使用索引寄存器的。
+约束字母@samp{Q}被通过@code{EXTRA_CONSTRAINT}定义，来表示这种类型的内存地址。
+如果字母@samp{Q}被标记为@code{EXTRA_MEMORY_CONSTRAINT}，
+则一个@samp{Q}常量可以处理任何内存操作数，
+因为重载过程知道其可以通过将内存地址复制到基址寄存器中如果需要的话。
+这类似于可以处理任何内存操作数的@samp{o}约束的方式。
 @end defmac
 
 @defmac EXTRA_ADDRESS_CONSTRAINT (@var{c}, @var{str})
-A C expression that defines the optional machine-dependent constraint
-letters, amongst those accepted by @code{EXTRA_CONSTRAINT} /
-@code{EXTRA_CONSTRAINT_STR}, that should
-be treated like address constraints by the reload pass.
+一个C表达式，定义了可选的机器相关约束字母，在那些由
+@code{EXTRA_CONSTRAINT} / @code{EXTRA_CONSTRAINT_STR}接受的字母中，
+其应该被重载过程作为地址约束来对待。
 
-It should return 1 if the operand type represented by the constraint
-at the start of @var{str}, which starts with the letter @var{c}, comprises
-a subset of all memory addresses including
-all those that consist of just a base register.  This allows the reload
-pass to reload an operand, if it does not directly correspond to the operand
-type of @var{str}, by copying it into a base register.
+其应该返回1，如果由@var{str}起始，并且第一个字母为@var{c}的约束所表示的操作数
+类型所包含的所有内存引用为简单的基址寄存器。这允许重载过程来重载操作数，
+如果其不直接对应于操作数类型@var{str}，通过将其地址复制到基址寄存器中。
 
-Any constraint marked as @code{EXTRA_ADDRESS_CONSTRAINT} can only
-be used with the @code{address_operand} predicate.  It is treated
-analogously to the @samp{p} constraint.
+标记为@code{EXTRA_ADDRESS_CONSTRAINT}的约束只能与@code{address_operand}断言
+一起使用。其类似于@samp{p}约束。
 @end defmac
 
 @node 栈和调用
