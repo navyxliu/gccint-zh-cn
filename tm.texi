@@ -1,4 +1,4 @@
-@c Copyright (C) 1988,1989,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,
+
 @c 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
 @c Free Software Foundation, Inc.
 @c This is part of the GCC manual.
@@ -4897,159 +4897,120 @@ ARG_POINTER_REGNUM和PIC_OFFSET_TABLE_REGNUM来发现的寄存器。
 @section 实现Varargs宏
 @cindex varargs implementation
 
-GCC comes with an implementation of @code{<varargs.h>} and
-@code{<stdarg.h>} that work without change on machines that pass arguments
-on the stack.  Other machines require their own implementations of
-varargs, and the two machine independent header files must have
-conditionals to include it.
+GCC自带了@code{<varargs.h>}和@code{<stdarg.h>}的实现，
+可直接用于在栈上传递参数的机器上。其它机器需要它们自己的varargs实现，
+并且两个机器独立的头文件必须条件包含它。
 
-ISO @code{<stdarg.h>} differs from traditional @code{<varargs.h>} mainly in
-the calling convention for @code{va_start}.  The traditional
-implementation takes just one argument, which is the variable in which
-to store the argument pointer.  The ISO implementation of
-@code{va_start} takes an additional second argument.  The user is
-supposed to write the last named argument of the function here.
+ISO @code{<stdarg.h>}与传统@code{<varargs.h>}的区别主要在@code{va_start}的调用
+约定上。传统的实现只接受一个参数，其为存储参数指针的变量。
+ISO的实现接受额外的第二个参数。用户应该将函数的最后一个命名参数写在这里。
 
-However, @code{va_start} should not use this argument.  The way to find
-the end of the named arguments is with the built-in functions described
-below.
+然而，@code{va_start}不应该使用这个参数。
+发现命名参数结尾的方法为使用下面描述的内建函数。
 
 @defmac __builtin_saveregs ()
-Use this built-in function to save the argument registers in memory so
-that the varargs mechanism can access them.  Both ISO and traditional
-versions of @code{va_start} must use @code{__builtin_saveregs}, unless
-you use @code{TARGET_SETUP_INCOMING_VARARGS} (see below) instead.
+使用该内建函数来将参数寄存器保存在内存中，使得varargs机制可以访问它们。
+@code{va_start}的ISO版本和传统版本都必须使用@code{__builtin_saveregs}，
+除非你使用@code{TARGET_SETUP_INCOMING_VARARGS}来替代（参见下面）。
 
-On some machines, @code{__builtin_saveregs} is open-coded under the
-control of the target hook @code{TARGET_EXPAND_BUILTIN_SAVEREGS}.  On
-other machines, it calls a routine written in assembler language,
-found in @file{libgcc2.c}.
+在一些机器上，@code{__builtin_saveregs}为开放编码的，
+在target钩子@code{TARGET_EXPAND_BUILTIN_SAVEREGS}的控制下。
+在其它机器上，其调用了汇编语言写的例程，可以在@file{libgcc2.c}中找到。
 
-Code generated for the call to @code{__builtin_saveregs} appears at the
-beginning of the function, as opposed to where the call to
-@code{__builtin_saveregs} is written, regardless of what the code is.
-This is because the registers must be saved before the function starts
-to use them for its own purposes.
+不管怎样，调用@code{__builtin_saveregs}的生成代码都出现在函数的起始处。
+这是因为寄存器必须在函数开始使用它们前被保存。
 @c i rewrote the first sentence above to fix an overfull hbox. --mew
 @c 10feb93
 @end defmac
 
 @defmac __builtin_args_info (@var{category})
-Use this built-in function to find the first anonymous arguments in
-registers.
+使用该内建函数来找到寄存器中第一个匿名参数。
 
-In general, a machine may have several categories of registers used for
-arguments, each for a particular category of data types.  (For example,
-on some machines, floating-point registers are used for floating-point
-arguments while other arguments are passed in the general registers.)
-To make non-varargs functions use the proper calling convention, you
-have defined the @code{CUMULATIVE_ARGS} data type to record how many
-registers in each category have been used so far
+通常，机器可以具有多个用于参数的寄存器类别，每一个用于特定的数据类型。
+（例如，在一些机器上，浮点寄存器用于浮点参数，而其它参数在通用寄存器中传递。）
+要使非varargs函数使用合适的调用约定，你已经定义了@code{CUMULATIVE_ARGS}数据类型
+来记录在每个类别中有多少寄存器已被使用。
 
-@code{__builtin_args_info} accesses the same data structure of type
-@code{CUMULATIVE_ARGS} after the ordinary argument layout is finished
-with it, with @var{category} specifying which word to access.  Thus, the
-value indicates the first unused register in a given category.
+@code{__builtin_args_info}在普通参数布局完成之后，
+访问同一数据结构体@code{CUMULATIVE_ARGS}，使用@var{category}来指定访问哪个字。
+因此，其值指示了在给定category中的第一个未使用的寄存器。
 
-Normally, you would use @code{__builtin_args_info} in the implementation
-of @code{va_start}, accessing each category just once and storing the
-value in the @code{va_list} object.  This is because @code{va_list} will
-have to update the values, and there is no way to alter the
-values accessed by @code{__builtin_args_info}.
+通常，你会在@code{va_start}的实现中使用@code{__builtin_args_info}，
+访问每个类一次，并将值存储到@code{va_list}对象中。
+这是因为@code{va_list}将必须更新值，
+因此无法修改通过@code{__builtin_args_info}访问的值。
 @end defmac
 
 @defmac __builtin_next_arg (@var{lastarg})
-This is the equivalent of @code{__builtin_args_info}, for stack
-arguments.  It returns the address of the first anonymous stack
-argument, as type @code{void *}.  If @code{ARGS_GROW_DOWNWARD}, it
-returns the address of the location above the first anonymous stack
-argument.  Use it in @code{va_start} to initialize the pointer for
-fetching arguments from the stack.  Also use it in @code{va_start} to
-verify that the second parameter @var{lastarg} is the last named argument
-of the current function.
+这与@code{__builtin_args_info}等价，用于栈参数。其返回第一个匿名栈参数的地址，
+类型为@code{void *}。如果@code{ARGS_GROW_DOWNWARD}，
+其返回第一个匿名栈参数的上面的位置地址。在@code{va_start}中使用它来初始化指针，
+来从栈中获得参数。同样，在@code{va_start}中使用它来验证第二个参数@var{lastarg}
+为当前函数的最后一个命名参数。
 @end defmac
 
 @defmac __builtin_classify_type (@var{object})
-Since each machine has its own conventions for which data types are
-passed in which kind of register, your implementation of @code{va_arg}
-has to embody these conventions.  The easiest way to categorize the
-specified data type is to use @code{__builtin_classify_type} together
-with @code{sizeof} and @code{__alignof__}.
+由于每个机器具有它自己的约定，对于哪些数据类型在哪种寄存器中传递，
+因此你的@code{va_arg}实现必须包含这些约定。
+将指定数据类型归类的最简单方法是使用@code{__builtin_classify_type}，
+加上@code{sizeof}和@code{__alignof__}。
 
-@code{__builtin_classify_type} ignores the value of @var{object},
-considering only its data type.  It returns an integer describing what
-kind of type that is---integer, floating, pointer, structure, and so on.
+@code{__builtin_classify_type}忽略@var{object}的值，只考虑它的数据类型。
+其返回一个整数来描述什么类型为，整型，浮点，指针，结构体等。
 
-The file @file{typeclass.h} defines an enumeration that you can use to
-interpret the values of @code{__builtin_classify_type}.
+文件@file{typeclass.h}定义了一个枚举，
+你可以用来解析@code{__builtin_classify_type}的值。
 @end defmac
 
-These machine description macros help implement varargs:
+这些机器描述宏用来帮助实现varargs：
 
 @deftypefn {Target Hook} rtx TARGET_EXPAND_BUILTIN_SAVEREGS (void)
-If defined, this hook produces the machine-specific code for a call to
-@code{__builtin_saveregs}.  This code will be moved to the very
-beginning of the function, before any parameter access are made.  The
-return value of this function should be an RTX that contains the value
-to use as the return of @code{__builtin_saveregs}.
+如果定义，该钩子产生机器特定代码，用于调用@code{__builtin_saveregs}。
+该代码将被移动到函数的最开始处，在访问任何参数之前。
+该函数的返回值应该为一个RTX，其包含了@code{__builtin_saveregs}的返回值。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SETUP_INCOMING_VARARGS (CUMULATIVE_ARGS *@var{args_so_far}, enum machine_mode @var{mode}, tree @var{type}, int *@var{pretend_args_size}, int @var{second_time})
-This target hook offers an alternative to using
-@code{__builtin_saveregs} and defining the hook
-@code{TARGET_EXPAND_BUILTIN_SAVEREGS}.  Use it to store the anonymous
-register arguments into the stack so that all the arguments appear to
-have been passed consecutively on the stack.  Once this is done, you can
-use the standard implementation of varargs that works for machines that
-pass all their arguments on the stack.
+该target钩子提供了使用@code{__builtin_saveregs}和定义
+@code{TARGET_EXPAND_BUILTIN_SAVEREGS}钩子的替代。
+使用它来将匿名寄存器参数存储到栈中，使得所有参数都像是通过栈连续的传递。
+当这样做时，你可以使用varargs的标准实现，其用于将所有参数在栈上传递的机器上。
 
-The argument @var{args_so_far} points to the @code{CUMULATIVE_ARGS} data
-structure, containing the values that are obtained after processing the
-named arguments.  The arguments @var{mode} and @var{type} describe the
-last named argument---its machine mode and its data type as a tree node.
+参数@var{args_so_far}指向@code{CUMULATIVE_ARGS}数据结构体，
+包含了处理完命名参数之后所获得的值。
+参数@var{mode}和@var{type}描述了最后一个命名参数的机器模式和作为树结点的数据类型。
 
-The target hook should do two things: first, push onto the stack all the
-argument registers @emph{not} used for the named arguments, and second,
-store the size of the data thus pushed into the @code{int}-valued
-variable pointed to by @var{pretend_args_size}.  The value that you
-store here will serve as additional offset for setting up the stack
-frame.
+该target钩子应该做两件事：第一，将所有不用于命名参数的参数寄存器压入栈中，
+第二，存储数据的大小，把@var{pretend_args_size}指向的@code{int}值得变量压入。
+这里你存储的值将作为额外的偏移量，用来建立栈帧。
 
-Because you must generate code to push the anonymous arguments at
-compile time without knowing their data types,
-@code{TARGET_SETUP_INCOMING_VARARGS} is only useful on machines that
-have just a single category of argument register and use it uniformly
-for all data types.
+因为你必须生成代码来将匿名参数在编译时压入，而不需要知道它们的数据类型，
+所以@code{TARGET_SETUP_INCOMING_VARARGS}只在只有一种参数寄存器类别并用于所有
+数据类型的机器上有用。
 
-If the argument @var{second_time} is nonzero, it means that the
-arguments of the function are being analyzed for the second time.  This
-happens for an inline function, which is not actually compiled until the
-end of the source file.  The hook @code{TARGET_SETUP_INCOMING_VARARGS} should
-not generate any instructions in this case.
+如果参数@var{second_time}非0，其以为着函数的参数被第二次分析。
+这发生于内联函数，其直到源文件结尾才被实际编译。对于这种情况，
+钩子@code{TARGET_SETUP_INCOMING_VARARGS}不应该产生任何指令。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_STRICT_ARGUMENT_NAMING (CUMULATIVE_ARGS *@var{ca})
-Define this hook to return @code{true} if the location where a function
-argument is passed depends on whether or not it is a named argument.
+定义该钩子来返回@code{true}，如果函数参数传递的位置依赖于其是否为一个命名参数。
 
-This hook controls how the @var{named} argument to @code{FUNCTION_ARG}
-is set for varargs and stdarg functions.  If this hook returns
-@code{true}, the @var{named} argument is always true for named
-arguments, and false for unnamed arguments.  If it returns @code{false},
-but @code{TARGET_PRETEND_OUTGOING_VARARGS_NAMED} returns @code{true},
-then all arguments are treated as named.  Otherwise, all named arguments
-except the last are treated as named.
+该钩子控制对于varargs和stdarg函数，如何设置FUNCTION_ARG的@var{named}参数。
+如果该钩子返回@code{true}，则@var{named}参数总是为命名参数，未命名参数总是未假。
+如果返回@code{false}，但是@code{TARGET_PRETEND_OUTGOING_VARARGS_NAMED}返回
+@code{true}，则所有参数都被作为命名的对待。否则所有命名参数，除了最后一个，
+被作为命名的对待。
 
-You need not define this hook if it always returns zero.
+如果其总是返回0，则不需要定义该钩子。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_PRETEND_OUTGOING_VARARGS_NAMED
-If you need to conditionally change ABIs so that one works with
-@code{TARGET_SETUP_INCOMING_VARARGS}, but the other works like neither
-@code{TARGET_SETUP_INCOMING_VARARGS} nor @code{TARGET_STRICT_ARGUMENT_NAMING} was
-defined, then define this hook to return @code{true} if
-@code{TARGET_SETUP_INCOMING_VARARGS} is used, @code{false} otherwise.
-Otherwise, you should not define this hook.
+如果你需要条件的改变ABI，使得一种工作于@code{TARGET_SETUP_INCOMING_VARARGS}，
+另一种工作于@code{TARGET_SETUP_INCOMING_VARARGS}和
+@code{TARGET_STRICT_ARGUMENT_NAMING}都没有被定义，则定义该钩子返回@code{true}，
+如果使用@code{TARGET_SETUP_INCOMING_VARARGS}，否则返回@code{false}。
+否则，你不需要定义该钩子。
 @end deftypefn
 
 @node Trampolines
@@ -5057,143 +5018,96 @@ Otherwise, you should not define this hook.
 @cindex trampolines for nested functions
 @cindex nested functions, trampolines for
 
-A @dfn{trampoline} is a small piece of code that is created at run time
-when the address of a nested function is taken.  It normally resides on
-the stack, in the stack frame of the containing function.  These macros
-tell GCC how to generate code to allocate and initialize a
-trampoline.
+一个蹦床@dfn{trampoline}为在运行时，当使用嵌套函数的地址时，创建的一小块代码。其通常驻于栈上，在包含函数的栈帧中。这些宏告诉GCC如何生成代码来分配和初始化一个蹦床。
 
-The instructions in the trampoline must do two things: load a constant
-address into the static chain register, and jump to the real address of
-the nested function.  On CISC machines such as the m68k, this requires
-two instructions, a move immediate and a jump.  Then the two addresses
-exist in the trampoline as word-long immediate operands.  On RISC
-machines, it is often necessary to load each address into a register in
-two parts.  Then pieces of each address form separate immediate
-operands.
+在蹦床中的指令必须做两件事情：将一个常量地址加载到静态链寄存器中，并跳转到嵌套函数的实际地址。在CISC机器，像m68k上，这要求两条指令，一个move立即数和一个jump。然后两个地址存放在蹦床中作为字长的立即操作数。在RISC机器上，其通常需要分成两部分加载每个地址到寄存器中。然后地址的各部分形成独立的立即操作数。
 
-The code generated to initialize the trampoline must store the variable
-parts---the static chain value and the function address---into the
-immediate operands of the instructions.  On a CISC machine, this is
-simply a matter of copying each address to a memory reference at the
-proper offset from the start of the trampoline.  On a RISC machine, it
-may be necessary to take out pieces of the address and store them
-separately.
+用来初始化蹦床的代码必须将变量的组成部分——静态链值和函数地址——存储到指令的立即操作数中。在CISC机器上，这是简单的复制每个地址到一个内存引用，在蹦床起始处的合适偏移量上。在RISC机器上，其可能需要拿出部分地址并单独存储它们。
 
 @defmac TRAMPOLINE_TEMPLATE (@var{file})
-A C statement to output, on the stream @var{file}, assembler code for a
-block of data that contains the constant parts of a trampoline.  This
-code should not include a label---the label is taken care of
-automatically.
+一条C语句，来在流@var{file}上，为一个包含蹦床常量部分的数据块输出汇编代码。
+该代码应该不包括标号——标号被自动考虑。
 
-If you do not define this macro, it means no template is needed
-for the target.  Do not define this macro on systems where the block move
-code to copy the trampoline into place would be larger than the code
-to generate it on the spot.
+如果没有定义该宏，其意味着target不需要模版。
+不要在将蹦床复制到一个地方的块移动代码会比在该处生成它的代码大的系统上定义该宏。
 @end defmac
 
 @defmac TRAMPOLINE_SECTION
-Return the section into which the trampoline template is to be placed
-(@pxref{段}).  The default value is @code{readonly_data_section}.
+返回蹦床模版被放入的section（参见@ref{段}）。
+缺省值为@code{readonly_data_section}。
 @end defmac
 
 @defmac TRAMPOLINE_SIZE
-A C expression for the size in bytes of the trampoline, as an integer.
+一个C表达式，蹦床的字节单位的大小，为整数。
 @end defmac
 
 @defmac TRAMPOLINE_ALIGNMENT
-Alignment required for trampolines, in bits.
+蹦床需要的对齐，以位为单位。
 
-If you don't define this macro, the value of @code{BIGGEST_ALIGNMENT}
-is used for aligning trampolines.
+如果没有定义该宏，则使用@code{BIGGEST_ALIGNMENT}的值来对齐蹦床。
 @end defmac
 
 @defmac INITIALIZE_TRAMPOLINE (@var{addr}, @var{fnaddr}, @var{static_chain})
-A C statement to initialize the variable parts of a trampoline.
-@var{addr} is an RTX for the address of the trampoline; @var{fnaddr} is
-an RTX for the address of the nested function; @var{static_chain} is an
-RTX for the static chain value that should be passed to the function
-when it is called.
+一条C语句用来初始化蹦床的可变部分。@var{addr}为一个RTX，蹦床的地址；
+@var{fnaddr}为一个RTX，嵌套函数的地址；@var{static_chain}为一个RTX，
+当其被调用时，应该传递给函数的静态链值。
 @end defmac
 
 @defmac TRAMPOLINE_ADJUST_ADDRESS (@var{addr})
-A C statement that should perform any machine-specific adjustment in
-the address of the trampoline.  Its argument contains the address that
-was passed to @code{INITIALIZE_TRAMPOLINE}.  In case the address to be
-used for a function call should be different from the address in which
-the template was stored, the different address should be assigned to
-@var{addr}.  If this macro is not defined, @var{addr} will be used for
-function calls.
+一条C语句，应该执行任何机器特定的调整，对蹦床的地址。
+其参数包含传给@code{INITIALIZE_TRAMPOLINE}的地址。
+对于用于函数调用的地址应该不同于模版被存储的地址的情况，
+应该赋给@var{addr}不同的地址。如果没有定义该宏，则@var{addr}将被用于函数调用。
 
 @cindex @code{TARGET_ASM_FUNCTION_EPILOGUE} and trampolines
 @cindex @code{TARGET_ASM_FUNCTION_PROLOGUE} and trampolines
-If this macro is not defined, by default the trampoline is allocated as
-a stack slot.  This default is right for most machines.  The exceptions
-are machines where it is impossible to execute instructions in the stack
-area.  On such machines, you may have to implement a separate stack,
-using this macro in conjunction with @code{TARGET_ASM_FUNCTION_PROLOGUE}
-and @code{TARGET_ASM_FUNCTION_EPILOGUE}.
+如果没有定义该宏，缺省的蹦床作为一个栈槽被分配。这对于大多数机器是正确的。
+例外的是一些机器，其不可能在栈区域中执行指令。在这样的机器上，
+你可能必须实行一个独立的栈，使用该宏，
+并结合@code{TARGET_ASM_FUNCTION_PROLOGUE}和@code{TARGET_ASM_FUNCTION_EPILOGUE}。
 
-@var{fp} points to a data structure, a @code{struct function}, which
-describes the compilation status of the immediate containing function of
-the function which the trampoline is for.  The stack slot for the
-trampoline is in the stack frame of this containing function.  Other
-allocation strategies probably must do something analogous with this
-information.
+@var{fp}指向一个数据结构体，一个@code{struct function}，
+其描述了对直接包含蹦床所对应函数的函数的编译状态。
+蹦床的栈槽在该包含函数的栈帧中。其它分配策略可能也必须作一些类似的事情。
 @end defmac
 
-Implementing trampolines is difficult on many machines because they have
-separate instruction and data caches.  Writing into a stack location
-fails to clear the memory in the instruction cache, so when the program
-jumps to that location, it executes the old contents.
+在许多机器上实现蹦床是困难的，因为它们具有独立的指令和数据缓存。
+写到栈位置中使得无法清除指令缓存中的内存，所以当程序跳转到那个位置时，
+其执行了旧的内容。
 
-Here are two possible solutions.  One is to clear the relevant parts of
-the instruction cache whenever a trampoline is set up.  The other is to
-make all trampolines identical, by having them jump to a standard
-subroutine.  The former technique makes trampoline execution faster; the
-latter makes initialization faster.
+有两种可能的解决方法。一种是清除指令缓存的相关部分，当蹦床被建立的时候。
+另一种是使所有蹦床为等同的，通过使它们跳转到一个标准的子程序中。
+前者使得蹦床执行更快；后者使得初始化更快。
 
-To clear the instruction cache when a trampoline is initialized, define
-the following macro.
+要在初始化蹦床时清除指令缓存，定义下列宏。
 
 @defmac CLEAR_INSN_CACHE (@var{beg}, @var{end})
-If defined, expands to a C expression clearing the @emph{instruction
-cache} in the specified interval.  The definition of this macro would
-typically be a series of @code{asm} statements.  Both @var{beg} and
-@var{end} are both pointer expressions.
+如果被定义，将扩展为一个C表达式，在指定的间隔处来清除指令缓存。
+该宏的定义通常为一系列@code{asm}语句。@var{beg}和@var{end}都为指针表达式。
 @end defmac
 
-The operating system may also require the stack to be made executable
-before calling the trampoline.  To implement this requirement, define
-the following macro.
+操作系统可能还需要栈被设为可执行的，在调用蹦床之前。要实现这种需求，定义下列宏。
 
 @defmac ENABLE_EXECUTE_STACK
-Define this macro if certain operations must be performed before executing
-code located on the stack.  The macro should expand to a series of C
-file-scope constructs (e.g.@: functions) and provide a unique entry point
-named @code{__enable_execute_stack}.  The target is responsible for
-emitting calls to the entry point in the code, for example from the
-@code{INITIALIZE_TRAMPOLINE} macro.
+定义该宏，如果在执行位于栈上的代码之前必须执行特定的操作。
+宏应该扩展为一系列的C文件作用域的结构（例如函数）并提供一个唯一的如何口点名
+为@code{__enable_execute_stack}。target负责生成对入口点的调用，
+例如从@code{INITIALIZE_TRAMPOLINE}宏中。
 @end defmac
 
-To use a standard subroutine, define the following macro.  In addition,
-you must make sure that the instructions in a trampoline fill an entire
-cache line with identical instructions, or else ensure that the
-beginning of the trampoline code is always aligned at the same point in
-its cache line.  Look in @file{m68k.h} as a guide.
+要使用标准的子程序，定义下列宏。另外，
+你必须确信在蹦床中的指令使用相同的指令来填充整个缓存行，
+或者蹦床代码的起始处总是在缓存行的某点被对齐。查看@file{m68k.h}作为参考。
 
 @defmac TRANSFER_FROM_TRAMPOLINE
-Define this macro if trampolines need a special subroutine to do their
-work.  The macro should expand to a series of @code{asm} statements
-which will be compiled with GCC@.  They go in a library function named
-@code{__transfer_from_trampoline}.
+定义该宏，如果蹦床需要一个特定的子程序来做它们的工作。
+该宏应该扩展为一系列的@code{asm}语句，其将由GCC来编译。
+它们放在名为@code{__transfer_from_trampoline}的库函数中。
 
-If you need to avoid executing the ordinary prologue code of a compiled
-C function when you jump to the subroutine, you can do so by placing a
-special label of your own in the assembler code.  Use one @code{asm}
-statement to generate an assembler label, and another to make the label
-global.  Then trampolines can use that label to jump directly to your
-special assembler code.
+如果当你跳转到子程序时，你需要避免普通的被编译的C函数的序言代码，
+你可以通过在汇编代码中放一个你自己的特定标号。
+使用一条@code{asm}语句来生成汇编标号，另一条语句使得标号为global的。
+然后蹦床可以使用该标号直接跳到你特定的汇编代码上。
 @end defmac
 
 @node 库调用
@@ -5202,46 +5116,39 @@ special assembler code.
 @cindex @file{libgcc.a}
 
 @c prevent bad page break with this line
-Here is an explanation of implicit calls to library routines.
+这是库函数的隐式调用的说明。
 
 @defmac DECLARE_LIBRARY_RENAMES
-This macro, if defined, should expand to a piece of C code that will get
-expanded when compiling functions for libgcc.a.  It can be used to
-provide alternate names for GCC's internal library functions if there
-are ABI-mandated names that the compiler should provide.
+该宏，如果被定义，应该扩展为一块C代码，当编译libgcc.a的函数时被扩展。
+其可以被用于提供GCC内部库函数的替代名字，如果有编译应该提供的ABI名字。
 @end defmac
 
 @findex init_one_libfunc
 @findex set_optab_libfunc
 @deftypefn {Target Hook} void TARGET_INIT_LIBFUNCS (void)
-This hook should declare additional library routines or rename
-existing ones, using the functions @code{set_optab_libfunc} and
-@code{init_one_libfunc} defined in @file{optabs.c}.
-@code{init_optabs} calls this macro after initializing all the normal
-library routines.
+该钩子应该声明额外的库函数或者重命名存在的，
+使用@file{optabs.c}中定义的函数@code{set_optab_libfunc}和
+@code{init_one_libfunc}。
+@code{init_optabs}调用该宏，在初始化所有正常的库函数之后。
 
-The default is to do nothing.  Most ports don't need to define this hook.
+缺省为不作任何事情。大多数port不需要定义该钩子。
 @end deftypefn
 
 @defmac FLOAT_LIB_COMPARE_RETURNS_BOOL (@var{mode}, @var{comparison})
-This macro should return @code{true} if the library routine that
-implements the floating point comparison operator @var{comparison} in
-mode @var{mode} will return a boolean, and @var{false} if it will
-return a tristate.
+该宏应该返回@code{true}，如果实现在模式@var{mode}下的浮点比较操作符
+@var{comparison}的库函数应该返回一个布尔值，
+如果应该返回一个三态值则返回@var{false}。
 
-GCC's own floating point libraries return tristates from the
-comparison operators, so the default returns false always.  Most ports
-don't need to define this macro.
+GCC本身的浮点库从比较运算符中返回三态值，所以缺省总是返回假。
+大多数port不需要定义该宏。
 @end defmac
 
 @defmac TARGET_LIB_INT_CMP_BIASED
-This macro should evaluate to @code{true} if the integer comparison
-functions (like @code{__cmpdi2}) return 0 to indicate that the first
-operand is smaller than the second, 1 to indicate that they are equal,
-and 2 to indicate that the first operand is greater than the second.
-If this macro evaluates to @code{false} the comparison functions return
-@minus{}1, 0, and 1 instead of 0, 1, and 2.  If the target uses the routines
-in @file{libgcc.a}, you do not need to define this macro.
+该宏应该求解为@code{true}，如果整型比较函数（像@code{__cmpdi2}）
+应该返回0来指示第一个操作数比第二个小，1来指示相等，
+2来指示第一个操作数大于第二个。如果该宏求解为@code{false}，
+则比较函数返回-1，0和1，来替代0，1和2。如果target使用@file{libgcc.a}中的函数，
+则不需要定义该宏。
 @end defmac
 
 @cindex US Software GOFAST, floating point emulation library
@@ -5249,59 +5156,50 @@ in @file{libgcc.a}, you do not need to define this macro.
 @cindex GOFAST, floating point emulation library
 @findex gofast_maybe_init_libfuncs
 @defmac US_SOFTWARE_GOFAST
-Define this macro if your system C library uses the US Software GOFAST
-library to provide floating point emulation.
+定义该宏，如果你的系统C库使用US Software GOFAST库来提供浮点模拟。
 
-In addition to defining this macro, your architecture must set
-@code{TARGET_INIT_LIBFUNCS} to @code{gofast_maybe_init_libfuncs}, or
-else call that function from its version of that hook.  It is defined
-in @file{config/gofast.h}, which must be included by your
-architecture's @file{@var{cpu}.c} file.  See @file{sparc/sparc.c} for
-an example.
+除了定义该宏以外，你的体系结构必须将@code{TARGET_INIT_LIBFUNCS}设为
+@code{gofast_maybe_init_libfuncs}，或者从那个钩子版本中调用该函数。
+其在@file{config/gofast.h}中定义，
+且必须被你的体系结构的@file{@var{cpu}.c}文件包含进来。
+例如参见@file{sparc/sparc.c}。
 
-If this macro is defined, the
-@code{TARGET_FLOAT_LIB_COMPARE_RETURNS_BOOL} target hook must return
-false for @code{SFmode} and @code{DFmode} comparisons.
+如果该宏被定义，
+则@code{TARGET_FLOAT_LIB_COMPARE_RETURNS_BOOL} target钩子必须返回假，
+对于@code{SFmode}和@code{DFmode}比较。
 @end defmac
 
 @cindex @code{EDOM}, implicit usage
 @findex matherr
 @defmac TARGET_EDOM
-The value of @code{EDOM} on the target machine, as a C integer constant
-expression.  If you don't define this macro, GCC does not attempt to
-deposit the value of @code{EDOM} into @code{errno} directly.  Look in
-@file{/usr/include/errno.h} to find the value of @code{EDOM} on your
-system.
+target机器上的@code{EDOM}的值，作为一个C整型常量表达式。如果没有定义该宏，
+则GCC不尝试将@code{EDOM}的值直接存放到@code{errno}中。
+查看@file{/usr/include/errno.h}来查找你的系统上的@code{EDOM}的值。
 
-If you do not define @code{TARGET_EDOM}, then compiled code reports
-domain errors by calling the library function and letting it report the
-error.  If mathematical functions on your system use @code{matherr} when
-there is an error, then you should leave @code{TARGET_EDOM} undefined so
-that @code{matherr} is used normally.
+如果没有定义@code{TARGET_EDOM}则被编译的代码通过调用库函数并使其报告错误，
+来报告domain错误。如果对于这样的错误，你系统上的数学函数使用@code{matherr}，
+则应该不定义@code{TARGET_EDOM}，以便@code{matherr}被正常使用。
 @end defmac
 
 @cindex @code{errno}, implicit usage
 @defmac GEN_ERRNO_RTX
-Define this macro as a C expression to create an rtl expression that
-refers to the global ``variable'' @code{errno}.  (On certain systems,
-@code{errno} may not actually be a variable.)  If you don't define this
-macro, a reasonable default is used.
+定义该宏为C表达式来创建一个rtl表达式，来引用全局“变量”@code{errno}。
+（在一些系统上，@code{errno}可能实际不是一个变量。）如果没有定义该宏，
+则会使用一个合理的缺省。
 @end defmac
 
 @cindex C99 math functions, implicit usage
 @defmac TARGET_C99_FUNCTIONS
-When this macro is nonzero, GCC will implicitly optimize @code{sin} calls into
-@code{sinf} and similarly for other functions defined by C99 standard.  The
-default is zero because a number of existing systems lack support for these
-functions in their runtime so this macro needs to be redefined to one on
-systems that do support the C99 runtime.
+当该宏非0时，GCC将隐式的优化@code{sin}调用为@code{sinf}，
+类似的还有C99标准中定义的其它函数。缺省为非0，这对于大多现代系统是合适的，
+然而有一些系统缺少对这些函数的运行时支持，所以它们需要该宏被重定义为0。
 @end defmac
 
 @cindex sincos math function, implicit usage
 @defmac TARGET_HAS_SINCOS
-When this macro is nonzero, GCC will implicitly optimize calls to @code{sin}
-and @code{cos} with the same argument to a call to @code{sincos}.  The
-default is zero.  The target has to provide the following functions:
+当该宏非0时，
+GCC将隐式的优化@code{sin}和@code{cos}调用为使用相同参数的@code{sincos}调用。
+缺省为0。target必须提供下列函数：
 @smallexample
 void sincos(double x, double *sin, double *cos);
 void sincosf(float x, float *sin, float *cos);
@@ -5310,13 +5208,10 @@ void sincosl(long double x, long double *sin, long double *cos);
 @end defmac
 
 @defmac NEXT_OBJC_RUNTIME
-Define this macro to generate code for Objective-C message sending using
-the calling convention of the NeXT system.  This calling convention
-involves passing the object, the selector and the method arguments all
-at once to the method-lookup library function.
+定义该宏来使用NeXT系统约定为Objective-C消息发送生成代码。
+该调用约定包括将对象，选择者和方法一起传递给方法查询库函数。
 
-The default calling convention passes just the object and the selector
-to the lookup function, which returns a pointer to the method.
+缺省调用约定只将对象和选择者传递给查询函数，其返回一个指向方法的指针。
 @end defmac
 
 @node 寻址模式
@@ -5324,102 +5219,80 @@ to the lookup function, which returns a pointer to the method.
 @cindex addressing modes
 
 @c prevent bad page break with this line
-This is about addressing modes.
+这是关于寻址模式的宏。
 
 @defmac HAVE_PRE_INCREMENT
 @defmacx HAVE_PRE_DECREMENT
 @defmacx HAVE_POST_INCREMENT
 @defmacx HAVE_POST_DECREMENT
-A C expression that is nonzero if the machine supports pre-increment,
-pre-decrement, post-increment, or post-decrement addressing respectively.
+一个C表达式，为非0，如果机器分别支持前增，前减，后增，或者后减寻址。
 @end defmac
 
 @defmac HAVE_PRE_MODIFY_DISP
 @defmacx HAVE_POST_MODIFY_DISP
-A C expression that is nonzero if the machine supports pre- or
-post-address side-effect generation involving constants other than
-the size of the memory operand.
+一个C表达式，非零，如果机器支持pre-或者post-address，
+除了生成内存操作数的大小以外，还有常量副作用生成。
 @end defmac
 
 @defmac HAVE_PRE_MODIFY_REG
 @defmacx HAVE_POST_MODIFY_REG
-A C expression that is nonzero if the machine supports pre- or
-post-address side-effect generation involving a register displacement.
+一个C表达式，非零，如果机器支持pre-或者post-address，
+除了生成内存操作数的大小以外，还有寄存器置换的副作用生成。
 @end defmac
 
 @defmac CONSTANT_ADDRESS_P (@var{x})
-A C expression that is 1 if the RTX @var{x} is a constant which
-is a valid address.  On most machines, this can be defined as
-@code{CONSTANT_P (@var{x})}, but a few machines are more restrictive
-in which constant addresses are supported.
+一个C表达式，为1，如果RTX @var{x}为一个常量，其为一个有效地址。
+在大多数机器上，这可以被定义为@code{CONSTANT_P (@var{x})}，
+但一些机器在支持哪些常量地址方面更加严格。
 @end defmac
 
 @defmac CONSTANT_P (@var{x})
-@code{CONSTANT_P}, which is defined by target-independent code,
-accepts integer-values expressions whose values are not explicitly
-known, such as @code{symbol_ref}, @code{label_ref}, and @code{high}
-expressions and @code{const} arithmetic expressions, in addition to
-@code{const_int} and @code{const_double} expressions.
+@code{CONSTANT_P}，其由target无关代码定义，接受整数值表达式，
+其值不被显示的知道，例如@code{symbol_ref}, @code{label_ref}，@code{high}表达式，
+以及@code{const}算术表达式，@code{const_int}和@code{const_double}表达式。
 @end defmac
 
 @defmac MAX_REGS_PER_ADDRESS
-A number, the maximum number of registers that can appear in a valid
-memory address.  Note that it is up to you to specify a value equal to
-the maximum number that @code{GO_IF_LEGITIMATE_ADDRESS} would ever
-accept.
+一个数，为可以出现在一个有效的内存地址中的最大寄存器编号。
+注意需要你来指定@code{GO_IF_LEGITIMATE_ADDRESS}应该能够接受的等于该最大值的值。
 @end defmac
 
 @defmac GO_IF_LEGITIMATE_ADDRESS (@var{mode}, @var{x}, @var{label})
-A C compound statement with a conditional @code{goto @var{label};}
-executed if @var{x} (an RTX) is a legitimate memory address on the
-target machine for a memory operand of mode @var{mode}.
+一个C复合语句，带有条件@code{goto @var{label};}；
+如果对于一个模式为@var{mode}的内存操作数，
+@var{x}（一个RTX）为一个在target机器上的合法内存地址时，被执行。
 
-It usually pays to define several simpler macros to serve as
-subroutines for this one.  Otherwise it may be too complicated to
-understand.
+通常定义多个相对简单的宏来作为该宏的子程序。否则其可能会太复杂，难以理解。
 
-This macro must exist in two variants: a strict variant and a
-non-strict one.  The strict variant is used in the reload pass.  It
-must be defined so that any pseudo-register that has not been
-allocated a hard register is considered a memory reference.  In
-contexts where some kind of register is required, a pseudo-register
-with no hard register must be rejected.
+该宏必须按照两种方式退出：一种严格的方式和一种非严格的。严格的方式用于重载阶段。
+其必须被定义，以便任何没有被分配硬件寄存器的伪寄存器被作为内存引用考虑。
+在需要某种寄存器的上下文中，一个没有硬件寄存器的伪寄存器必须被拒绝。
 
-The non-strict variant is used in other passes.  It must be defined to
-accept all pseudo-registers in every context where some kind of
-register is required.
+非严格的方式用于其它过程。其必须被定义来接受所有伪寄存器，
+在每个需要某种寄存器的上下文中。
 
 @findex REG_OK_STRICT
-Compiler source files that want to use the strict variant of this
-macro define the macro @code{REG_OK_STRICT}.  You should use an
-@code{#ifdef REG_OK_STRICT} conditional to define the strict variant
-in that case and the non-strict variant otherwise.
+想要使用该宏的严格方式的编译器源文件定义宏@code{REG_OK_STRICT}。
+你应该使用一个@code{#ifdef REG_OK_STRICT}条件来定义严格方式，反之定义非严格的。
 
-Subroutines to check for acceptable registers for various purposes (one
-for base registers, one for index registers, and so on) are typically
-among the subroutines used to define @code{GO_IF_LEGITIMATE_ADDRESS}.
-Then only these subroutine macros need have two variants; the higher
-levels of macros may be the same whether strict or not.
+出于不同目的（对于基址寄存器，对于索引寄存器等等）来检查可接受的寄存器的子程序通常用于定义@code{GO_IF_LEGITIMATE_ADDRESS}。
+那么只有这些子程序宏需要这两种方式；高级别的宏对于严格的或者不严格的可以相同。
 
-Normally, constant addresses which are the sum of a @code{symbol_ref}
-and an integer are stored inside a @code{const} RTX to mark them as
-constant.  Therefore, there is no need to recognize such sums
-specifically as legitimate addresses.  Normally you would simply
-recognize any @code{const} as legitimate.
+通常常量地址，其为一个@code{symbol_ref}和一个整数的和，
+被存储在一个@code{const} RTX中，来标记它们为一个常量。
+因此，不需要专门识别这样的和是否为合法地址。
+通常你应该简化识别任何合法的@code{const}。
 
-Usually @code{PRINT_OPERAND_ADDRESS} is not prepared to handle constant
-sums that are not marked with  @code{const}.  It assumes that a naked
-@code{plus} indicates indexing.  If so, then you @emph{must} reject such
-naked constant sums as illegitimate addresses, so that none of them will
-be given to @code{PRINT_OPERAND_ADDRESS}.
+通常@code{PRINT_OPERAND_ADDRESS}不准备处理没有标记为@code{const}的常量和。
+其假设@code{plus}表示为索引。如果是这样，
+你@emph{必须}作为非法地址来拒绝这样的常量sum，
+以便不会提供给@code{PRINT_OPERAND_ADDRESS}。
 
 @cindex @code{TARGET_ENCODE_SECTION_INFO} and address validation
-On some machines, whether a symbolic address is legitimate depends on
-the section that the address refers to.  On these machines, define the
-target hook @code{TARGET_ENCODE_SECTION_INFO} to store the information
-into the @code{symbol_ref}, and then check for it here.  When you see a
-@code{const}, you will have to look inside it to find the
-@code{symbol_ref} in order to determine the section.  @xref{汇编格式}.
+在一些机器上，一个符号地址是否为合法的，依赖于地址所引用的section。
+在这些机器上，定义target钩子@code{TARGET_ENCODE_SECTION_INFO}来将信息存储
+到@code{symbol_ref}中，然后在此处检查。当你遇到一个@code{const}，
+你将必须查看内部，来找到@code{symbol_ref}，以便确定section。参见@ref{汇编格式}。
 @end defmac
 
 @defmac TARGET_MEM_CONSTRAINT
@@ -5434,229 +5307,182 @@ preserve functionality of inline assembly constructs using the
 @end defmac
 
 @defmac FIND_BASE_TERM (@var{x})
-A C expression to determine the base term of address @var{x},
-or to provide a simplified version of @var{x} from which @file{alias.c}
-can easily find the base term.  This macro is used in only two places:
-@code{find_base_value} and @code{find_base_term} in @file{alias.c}.
+一个C表达式，用来确定地址@var{x}的base term。该宏只在两个地方使用：
+@file{alias.c}的@code{find_base_value}和 @code{find_base_term}。
 
-It is always safe for this macro to not be defined.  It exists so
-that alias analysis can understand machine-dependent addresses.
+不定义该宏也总是安全的。它的存在是为了别名分析可以理解机器相关的地址。
 
-The typical use of this macro is to handle addresses containing
-a label_ref or symbol_ref within an UNSPEC@.
+该宏的典型用法是处理在UNSPEC中包含label_ref或symbol_ref的地址。
 @end defmac
 
 @defmac LEGITIMIZE_ADDRESS (@var{x}, @var{oldx}, @var{mode}, @var{win})
-A C compound statement that attempts to replace @var{x} with a valid
-memory address for an operand of mode @var{mode}.  @var{win} will be a
-C statement label elsewhere in the code; the macro definition may use
+一个c复合语句，对于模式为@var{mode}的操作数，
+尝试使用有效的内存地址来替换@var{x}。@var{win}为代码中某处的一个c语句标号；
+宏定义可以使用
 
 @smallexample
 GO_IF_LEGITIMATE_ADDRESS (@var{mode}, @var{x}, @var{win});
 @end smallexample
 
 @noindent
-to avoid further processing if the address has become legitimate.
+来避免进一步的处理，如果地址已经变为合法的。
 
 @findex break_out_memory_refs
-@var{x} will always be the result of a call to @code{break_out_memory_refs},
-and @var{oldx} will be the operand that was given to that function to produce
-@var{x}.
+@var{x}总是为调用@code{break_out_memory_refs}的结果，
+@var{oldx}将为传给那个函数来生成@var{x}的操作数。
 
-The code generated by this macro should not alter the substructure of
-@var{x}.  If it transforms @var{x} into a more legitimate form, it
-should assign @var{x} (which will always be a C variable) a new value.
+该宏生成的代码不应该修改@var{x}的子结构。
+如果其将@var{x}转换为一个更加合法的形式，
+其应该为@var{x}（其总为一个c变量）赋予一个新的值。
 
-It is not necessary for this macro to come up with a legitimate
-address.  The compiler has standard ways of doing so in all cases.  In
-fact, it is safe to omit this macro.  But often a
-machine-dependent strategy can generate better code.
+该宏不必要产生一个合法的地址。编译器具有做这件事的标准方法。
+实际上省略掉该宏是安全的。但是通常机器相关的策略可以产生更好的代码。
 @end defmac
 
 @defmac LEGITIMIZE_RELOAD_ADDRESS (@var{x}, @var{mode}, @var{opnum}, @var{type}, @var{ind_levels}, @var{win})
-A C compound statement that attempts to replace @var{x}, which is an address
-that needs reloading, with a valid memory address for an operand of mode
-@var{mode}.  @var{win} will be a C statement label elsewhere in the code.
-It is not necessary to define this macro, but it might be useful for
-performance reasons.
+一条C复合语句，其尝试使用一个机器模式为@var{mode}的操作数的有效内存地址，
+来替换地址需要重载的@var{x}。@var{win}为代码中的一个C语句标号。
+不必要定义该宏，但其可能会对性能有帮助。
 
-For example, on the i386, it is sometimes possible to use a single
-reload register instead of two by reloading a sum of two pseudo
-registers into a register.  On the other hand, for number of RISC
-processors offsets are limited so that often an intermediate address
-needs to be generated in order to address a stack slot.  By defining
-@code{LEGITIMIZE_RELOAD_ADDRESS} appropriately, the intermediate addresses
-generated for adjacent some stack slots can be made identical, and thus
-be shared.
+例如，在i386上，有时可能通过将两个伪寄存器的和重载到一个寄存器中，
+从而只使用一个重载寄存器，而不是两个。另一方面，
+许多RISC处理器的偏移量是有限制的，使得经常要生成一个中间地址来寻址一个栈槽。
+通过适当的定义@code{LEGITIMIZE_RELOAD_ADDRESS}，
+为邻近的一些栈槽生成的中间地址可以为同一个，实现共享。
 
-@emph{Note}: This macro should be used with caution.  It is necessary
-to know something of how reload works in order to effectively use this,
-and it is quite easy to produce macros that build in too much knowledge
-of reload internals.
+注意：该宏应该慎重使用。有必要了解重载是如何工作的，以便有效的使用该宏。
 
-@emph{Note}: This macro must be able to reload an address created by a
-previous invocation of this macro.  If it fails to handle such addresses
-then the compiler may generate incorrect code or abort.
+注意：该宏必须能够重载由该宏的之前调用所创建的地址。
+如果不能处理这样的地址，则编译器可能会产生不正确的代码或者中断退出。
 
 @findex push_reload
-The macro definition should use @code{push_reload} to indicate parts that
-need reloading; @var{opnum}, @var{type} and @var{ind_levels} are usually
-suitable to be passed unaltered to @code{push_reload}.
+宏定义应该使用@code{push_reload}来指示需要重载的部分；
+@var{opnum}，@var{type}和@var{ind_levels}通常无需更改而直接传给@code{push_reload}。
 
-The code generated by this macro must not alter the substructure of
-@var{x}.  If it transforms @var{x} into a more legitimate form, it
-should assign @var{x} (which will always be a C variable) a new value.
-This also applies to parts that you change indirectly by calling
-@code{push_reload}.
+该宏生成的代码必须不要修改@var{x}的子结构体。如果其将@var{x}转换成更合法的形式，
+则其必须为@var{x}（其总为一个c变量）赋予一个新的值。
+这也通常应用于你通过调用@code{push_reload}而间接改变的部分。
 
 @findex strict_memory_address_p
-The macro definition may use @code{strict_memory_address_p} to test if
-the address has become legitimate.
+宏定义可以使用@code{strict_memory_address_p}来测试地址是否已经为合法的。
 
 @findex copy_rtx
-If you want to change only a part of @var{x}, one standard way of doing
-this is to use @code{copy_rtx}.  Note, however, that it unshares only a
-single level of rtl.  Thus, if the part to be changed is not at the
-top level, you'll need to replace first the top level.
-It is not necessary for this macro to come up with a legitimate
-address;  but often a machine-dependent strategy can generate better code.
+如果你只想改变@var{x}的一部分，一种标准的方法是使用@code{copy_rtx}。
+但是注意，其只与rtl同一级不共享。因此，如果改变的部分不在顶层，
+则你要首先替换顶层。
+
+该宏不必要产生一个合法的地址；但是通常机器相关的策略可以产生更好的代码。
 @end defmac
 
 @defmac GO_IF_MODE_DEPENDENT_ADDRESS (@var{addr}, @var{label})
-A C statement or compound statement with a conditional @code{goto
-@var{label};} executed if memory address @var{x} (an RTX) can have
-different meanings depending on the machine mode of the memory
-reference it is used for or if the address is valid for some modes
-but not others.
+一条C语句或者复合语句，具有一个条件@code{goto @var{label};}；
+当内存地址@var{x}（一个RTX）可以具有不同的含义，
+该含义取决于内存引用的机器模式时，被执行。
 
-Autoincrement and autodecrement addresses typically have mode-dependent
-effects because the amount of the increment or decrement is the size
-of the operand being addressed.  Some machines have other mode-dependent
-addresses.  Many RISC machines have no mode-dependent addresses.
+自动递增和自动递减地址通常具有机器模式相关的效果，
+因为递增或递减的数量为被寻址的操作数的大小。
+一些机器具有其它机器模式相关的地址。许多RISC机器没有机器模式相关的地址。
 
-You may assume that @var{addr} is a valid address for the machine.
+你可以假设@var{addr}对于机器是一个有效的地址。
 @end defmac
 
 @defmac LEGITIMATE_CONSTANT_P (@var{x})
-A C expression that is nonzero if @var{x} is a legitimate constant for
-an immediate operand on the target machine.  You can assume that
-@var{x} satisfies @code{CONSTANT_P}, so you need not check this.  In fact,
-@samp{1} is a suitable definition for this macro on machines where
-anything @code{CONSTANT_P} is valid.
+一个C表达式，如果@var{x}对于target机器上的一个立即操作数为合法的常量，
+则为非0。你可以假设@var{x}满足@code{CONSTANT_P}，所以不需要进行检查。
+实际上，在任何@code{CONSTANT_P}都是有效的机器上，为该宏定义为@samp{1}是合适的。
 @end defmac
 
 @deftypefn {Target Hook} rtx TARGET_DELEGITIMIZE_ADDRESS (rtx @var{x})
-This hook is used to undo the possibly obfuscating effects of the
-@code{LEGITIMIZE_ADDRESS} and @code{LEGITIMIZE_RELOAD_ADDRESS} target
-macros.  Some backend implementations of these macros wrap symbol
-references inside an @code{UNSPEC} rtx to represent PIC or similar
-addressing modes.  This target hook allows GCC's optimizers to understand
-the semantics of these opaque @code{UNSPEC}s by converting them back
-into their original form.
+该钩子用于撤销@code{LEGITIMIZE_ADDRESS}和@code{LEGITIMIZE_RELOAD_ADDRESS} target
+宏可能造成的模糊效果。这些宏的一些后端实现，
+将符号引用包含在一个@code{UNSPEC} rtx中来表示PIC或者类似的寻址模式。
+该target钩子允许GCC的优化器来理解这些透明的@code{UNSPEC}的语义，
+通过将它们转换回到它们最初的形式。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CANNOT_FORCE_CONST_MEM (rtx @var{x})
-This hook should return true if @var{x} is of a form that cannot (or
-should not) be spilled to the constant pool.  The default version of
-this hook returns false.
+该钩子应该返回真，如果@var{x}不能够（或不应该）被溢出到常量池中。
+该钩子的缺省版本返回假。
 
-The primary reason to define this hook is to prevent reload from
-deciding that a non-legitimate constant would be better reloaded
-from the constant pool instead of spilling and reloading a register
-holding the constant.  This restriction is often true of addresses
-of TLS symbols for various targets.
+定义该钩子的主要原因是阻止重载决定将一个不合法的常量从常量池中重载，
+而不是溢出并重载一个寄存器来保存常量。对于不同的target，
+该限制对于TLS符号的地址常常是真。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_USE_BLOCKS_FOR_CONSTANT_P (enum machine_mode @var{mode}, rtx @var{x})
-This hook should return true if pool entries for constant @var{x} can
-be placed in an @code{object_block} structure.  @var{mode} is the mode
-of @var{x}.
+该钩子应该返回真，
+如果常量@var{x}的池实体（pool entries）可以放在一个@code{object_block}结构体中。
+@var{mode}为@var{x}的机器模式。
 
-The default version returns false for all constants.
+缺省版本为所有的常量返回假。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_BUILTIN_RECIPROCAL (enum tree_code @var{fn}, bool @var{tm_fn}, bool @var{sqrt})
-This hook should return the DECL of a function that implements reciprocal of
-the builtin function with builtin function code @var{fn}, or
-@code{NULL_TREE} if such a function is not available.  @var{tm_fn} is true
-when @var{fn} is a code of a machine-dependent builtin function.  When
-@var{sqrt} is true, additional optimizations that apply only to the reciprocal
-of a square root function are performed, and only reciprocals of @code{sqrt}
-function are valid.
+该钩子应该返回一个函数的decl，该函数实现了代码为@var{fn}的内建函数的倒数，
+或者如果没有这样的函数，则返回@code{NULL_TREE}。
+当@var{fn}为一个机器相关的内建函数的代码时，@var{tm_fn}为真。
+当@var{sqrt}为真时，只对平方根函数进行额外的优化，
+并且只有@var{sqrt}函数的倒数可用。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_MASK_FOR_LOAD (void)
-This hook should return the DECL of a function @var{f} that given an
-address @var{addr} as an argument returns a mask @var{m} that can be
-used to extract from two vectors the relevant data that resides in
-@var{addr} in case @var{addr} is not properly aligned.
+该钩子应该返回一个函数@var{f}的decl，给定一个地址@var{addr}作为参数，
+该函数返回一个掩码@var{m}，在@var{addr}没有被适当的对齐时，
+其可以用于从两个向量中抽取位于@var{addr}中的相关数据。
 
-The autovectorizer, when vectorizing a load operation from an address
-@var{addr} that may be unaligned, will generate two vector loads from
-the two aligned addresses around @var{addr}. It then generates a
-@code{REALIGN_LOAD} operation to extract the relevant data from the
-two loaded vectors. The first two arguments to @code{REALIGN_LOAD},
-@var{v1} and @var{v2}, are the two vectors, each of size @var{VS}, and
-the third argument, @var{OFF}, defines how the data will be extracted
-from these two vectors: if @var{OFF} is 0, then the returned vector is
-@var{v2}; otherwise, the returned vector is composed from the last
-@var{VS}-@var{OFF} elements of @var{v1} concatenated to the first
-@var{OFF} elements of @var{v2}.
+自动向量化，当向量化一个加载操作，且地址@var{addr}可以没有对齐，
+则会生成两个向量加载，从@var{addr}附件的两个对齐的地址。
+其然后生成一个@code{REALIGN_LOAD}操作，来从两个加载的向量中抽取相关数据。
+@code{REALIGN_LOAD}的前两个参数，@var{v1}和@var{v2}，为两个向量，
+每个的大小为@var{VS}，第三个参数，@var{OFF}，定义了数据如何从这两个向量中抽取：
+如果@var{OFF}为0，则返回的向量为@var{V2}；
+否则返回的向量由@var{v1}的后@var{VS}-@var{OFF}个元素连接到@var{v2}的前@var{OFF}个元素而组成。
 
-If this hook is defined, the autovectorizer will generate a call
-to @var{f} (using the DECL tree that this hook returns) and will
-use the return value of @var{f} as the argument @var{OFF} to
-@code{REALIGN_LOAD}. Therefore, the mask @var{m} returned by @var{f}
-should comply with the semantics expected by @code{REALIGN_LOAD}
-described above.
-If this hook is not defined, then @var{addr} will be used as
-the argument @var{OFF} to @code{REALIGN_LOAD}, in which case the low
-log2(@var{VS})-1 bits of @var{addr} will be considered.
+如果定义了该钩子，则自动向量化会生成一个对@var{f}的调用（使用该钩子返回的DECL）
+并使用@var{f}的返回值作为@code{REALIGN_LOAD}的参数@var{OFF}。因此，
+@var{f}返回的掩码@var{m}应该遵守@code{REALIGN_LOAD}所期望的上面描述的语义。
+如果该钩子没有被定义，
+则@var{addr}将作为@code{REALIGN_LOAD}的参数@var{OFF}来使用，
+这种情况下将会考虑@var{addr}的低log2(@var{VS})-1位。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_EVEN (tree @var{x})
-This hook should return the DECL of a function @var{f} that implements
-widening multiplication of the even elements of two input vectors of type @var{x}.
+该钩子应该返回一个函数@var{f}的decl，
+该函数实现了两个类型为@var{x}的输入向量作为偶数元素的加宽乘法。
 
-If this hook is defined, the autovectorizer will use it along with the
-@code{TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_ODD} target hook when vectorizing
-widening multiplication in cases that the order of the results does not have to be
-preserved (e.g.@: used only by a reduction computation). Otherwise, the
-@code{widen_mult_hi/lo} idioms will be used.
+如果定义了该钩子，则自动化向量当进行向量化加宽乘法时，
+将会使用它和@code{TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_ODD} target钩子，
+以防结果顺序不需要被保存（例如，只用于减法计算）。
+否则将使用@code{widen_mult_hi/lo}。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_ODD (tree @var{x})
-This hook should return the DECL of a function @var{f} that implements
-widening multiplication of the odd elements of two input vectors of type @var{x}.
+该钩子应该返回一个函数@var{f}的decl，
+该函数实现了两个类型为@var{x}的输入向量作为奇数元素的加宽乘法。
 
-If this hook is defined, the autovectorizer will use it along with the
-@code{TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_EVEN} target hook when vectorizing
-widening multiplication in cases that the order of the results does not have to be
-preserved (e.g.@: used only by a reduction computation). Otherwise, the
-@code{widen_mult_hi/lo} idioms will be used.
+如果定义了该钩子，则自动化向量当进行向量化加宽乘法时，
+将会使用它和@code{TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_EVEN} target钩子，
+以防结果顺序不需要被保存（例如，只用于减法计算）。
+否则将使用@code{widen_mult_hi/lo}。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_CONVERSION (enum tree_code @var{code}, tree @var{type})
-This hook should return the DECL of a function that implements conversion of the
-input vector of type @var{type}.
-If @var{type} is an integral type, the result of the conversion is a vector of
-floating-point type of the same size.
-If @var{type} is a floating-point type, the result of the conversion is a vector
-of integral type of the same size.
-@var{code} specifies how the conversion is to be applied
-(truncation, rounding, etc.).
+该钩子应该返回一个函数的decl，该函数实现了类型为@var{type}的输入向量的转换。
+如果@var{type}为一个整数类型，则转换结果为一个同样大小的浮点类型的向量。
+如果@var{type}为浮点类型，则转换结果为一个同样大小的整数类型的向量。
+@var{code}指定了如何应用转换（截断，舍入，等）。
 
-If this hook is defined, the autovectorizer will use the
-@code{TARGET_VECTORIZE_BUILTIN_CONVERSION} target hook when vectorizing
-conversion. Otherwise, it will return @code{NULL_TREE}.
+如果定义了该钩子，则自动向量化当进行向量化转换时，
+会使用@code{TARGET_VECTORIZE_BUILTIN_CONVERSION} target钩子。
+否则，其应该返回@code{NULL_TREE}。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_VECTORIZED_FUNCTION (enum built_in_function @var{code}, tree @var{vec_type_out}, tree @var{vec_type_in})
-This hook should return the decl of a function that implements the vectorized
-variant of the builtin function with builtin function code @var{code} or
-@code{NULL_TREE} if such a function is not available.  The return type of
-the vectorized function shall be of vector type @var{vec_type_out} and the
-argument types should be @var{vec_type_in}.
+该钩子应该返回一个函数的decl，
+该函数实现了代码为@var{code}的内建函数的向量化变体，
+或者如果没有这样的函数则返回@code{NULL_TREE}。
+向量化的函数的返回类型应该为向量类型@var{vec_type_out}，
+并且参数类型应该为@var{vec_type_in}。
 @end deftypefn
 
 @node Anchored地址
@@ -5726,78 +5552,60 @@ int foo (void)
 @cindex condition code status
 
 @c prevent bad page break with this line
-This describes the condition code status.
+这节描述了条件代码状态。
 
 @findex cc_status
-The file @file{conditions.h} defines a variable @code{cc_status} to
-describe how the condition code was computed (in case the interpretation of
-the condition code depends on the instruction that it was set by).  This
-variable contains the RTL expressions on which the condition code is
-currently based, and several standard flags.
+文件@file{conditions.h}定义了变量@code{cc_status}，
+用来描述条件代码如何被计算（对于条件代码的解释取决于设置它的指令的情况）。
+该变量包含了条件码目前基于的RTL表达式，以及一些标准的标记。
 
-Sometimes additional machine-specific flags must be defined in the machine
-description header file.  It can also add additional machine-specific
-information by defining @code{CC_STATUS_MDEP}.
+有时额外的机器特定的标记必须被定义，在机器描述头文件中。
+其还可以增加额外的机器特定信息，通过定义@code{CC_STATUS_MDEP}。
 
 @defmac CC_STATUS_MDEP
-C code for a data type which is used for declaring the @code{mdep}
-component of @code{cc_status}.  It defaults to @code{int}.
+一个数据类型的C代码，其用于声明@code{cc_status}的@code{mdep}部件。
+缺省为@code{int}。
 
-This macro is not used on machines that do not use @code{cc0}.
+该宏在不使用@code{cc0}的机器上不被使用。
 @end defmac
 
 @defmac CC_STATUS_MDEP_INIT
-A C expression to initialize the @code{mdep} field to ``empty''.
-The default definition does nothing, since most machines don't use
-the field anyway.  If you want to use the field, you should probably
-define this macro to initialize it.
+一个C表达式，用来初始化@code{mdep}域为“空”。缺省定义不做任何事，
+因为大多数机器不使用该域。如果你想使用该域，则可能应该定义该宏来初始化它。
 
-This macro is not used on machines that do not use @code{cc0}.
+该宏在不使用@code{cc0}的机器上不被使用。
 @end defmac
 
 @defmac NOTICE_UPDATE_CC (@var{exp}, @var{insn})
-A C compound statement to set the components of @code{cc_status}
-appropriately for an insn @var{insn} whose body is @var{exp}.  It is
-this macro's responsibility to recognize insns that set the condition
-code as a byproduct of other activity as well as those that explicitly
-set @code{(cc0)}.
+一个C复合语句，用来适当的为主体为@var{exp}的@var{insn}，
+设置@code{cc_status}的部件。
+该宏负责识别insn将条件码设置作为副产品以及显示的set @code{(cc0)}。
 
-This macro is not used on machines that do not use @code{cc0}.
+该宏在不使用@code{cc0}的机器上不被使用。
 
-If there are insns that do not set the condition code but do alter
-other machine registers, this macro must check to see whether they
-invalidate the expressions that the condition code is recorded as
-reflecting.  For example, on the 68000, insns that store in address
-registers do not set the condition code, which means that usually
-@code{NOTICE_UPDATE_CC} can leave @code{cc_status} unaltered for such
-insns.  But suppose that the previous insn set the condition code
-based on location @samp{a4@@(102)} and the current insn stores a new
-value in @samp{a4}.  Although the condition code is not changed by
-this, it will no longer be true that it reflects the contents of
-@samp{a4@@(102)}.  Therefore, @code{NOTICE_UPDATE_CC} must alter
-@code{cc_status} in this case to say that nothing is known about the
-condition code value.
+如果insn不设置条件码，但修改其它机器寄存器，
+则该宏必须检查它们是否使得记录条件码的表达式变为无效。例如，在68000上，
+在地址寄存器上存储insn不设置条件码，
+其意味着通常@code{NOTICE_UPDATE_CC}对于这样的insn可以不修改@code{cc_status}。
+但是假设之前的insn将条件码设成基于位置@samp{a4@@(102)}，
+并且当前insn在@samp{a4}上存储了一个新值。虽然条件码没有被改变，
+但其不再为真，因为其反映了@samp{a4@@(102)}的内容。因此对于这种情况，
+@code{NOTICE_UPDATE_CC}必须修改@code{cc_status}，来表示条件码值不可知。
 
-The definition of @code{NOTICE_UPDATE_CC} must be prepared to deal
-with the results of peephole optimization: insns whose patterns are
-@code{parallel} RTXs containing various @code{reg}, @code{mem} or
-constants which are just the operands.  The RTL structure of these
-insns is not sufficient to indicate what the insns actually do.  What
-@code{NOTICE_UPDATE_CC} should do when it sees one is just to run
-@code{CC_STATUS_INIT}.
+@code{NOTICE_UPDATE_CC}的定义必须要准备处理窥孔优化的结果：
+insn的指令模式为@code{parallel} RTXs，其包含了不同的@code{reg}，
+@code{mem}或者常量操作数。这些insn的RTL结构体不足以表明insn实际要做的事情。
+@code{NOTICE_UPDATE_CC}应该做的是当遇到这样的，就直接运行@code{CC_STATUS_INIT}。
 
-A possible definition of @code{NOTICE_UPDATE_CC} is to call a function
-that looks at an attribute (@pxref{Insn属性}) named, for example,
-@samp{cc}.  This avoids having detailed information about patterns in
-two places, the @file{md} file and in @code{NOTICE_UPDATE_CC}.
+@code{NOTICE_UPDATE_CC}可能的定义为调用一个函数，
+来查看一个属性（参见 @ref{Insn属性}），例如名为@samp{cc}。这避免了在两个地方，
+@file{md}文件和@code{NOTICE_UPDATE_CC}中具有指令模式的详细信息。
 @end defmac
 
 @defmac SELECT_CC_MODE (@var{op}, @var{x}, @var{y})
-Returns a mode from class @code{MODE_CC} to be used when comparison
-operation code @var{op} is applied to rtx @var{x} and @var{y}.  For
-example, on the SPARC, @code{SELECT_CC_MODE} is defined as (see
-@pxref{跳转指令模式} for a description of the reason for this
-definition)
+当比较运算代码@var{op}应用到rtx @var{x}和@var{y}上时，
+从@code{MODE_CC}类中返回一个机器模式。例如，在SPARC上，
+@code{SELECT_CC_MODE}被定义为（该定义的描述，参见 @ref{跳转指令模式}）
 
 @smallexample
 #define SELECT_CC_MODE(OP,X,Y) \
@@ -5808,40 +5616,32 @@ definition)
       ? CC_NOOVmode : CCmode))
 @end smallexample
 
-You should define this macro if and only if you define extra CC modes
-in @file{@var{machine}-modes.def}.
+你应该定义该宏，当且仅当你在@file{@var{machine}-modes.def}中定义了额外的CC机器模式。
 @end defmac
 
 @defmac CANONICALIZE_COMPARISON (@var{code}, @var{op0}, @var{op1})
-On some machines not all possible comparisons are defined, but you can
-convert an invalid comparison into a valid one.  For example, the Alpha
-does not have a @code{GT} comparison, but you can use an @code{LT}
-comparison instead and swap the order of the operands.
+在一些机器上，并不是所有可能的比较都被定义，
+但你可以将一个无效的比较转换为一个有效的。例如，Alpha没有@code{GT}比较，
+但你可以使用@code{LT}比较来替代，并且交换操作数的顺序。
 
-On such machines, define this macro to be a C statement to do any
-required conversions.  @var{code} is the initial comparison code
-and @var{op0} and @var{op1} are the left and right operands of the
-comparison, respectively.  You should modify @var{code}, @var{op0}, and
-@var{op1} as required.
+在一些机器上，定义该宏为一条C语句来做任何需要的转换。
+@var{code}为初始化比较代码，@var{op0}和@var{op1}为比较的左，右操作数。
+你应该根据需要来修改@var{code}，@var{op0}和@var{op1}。
 
-GCC will not assume that the comparison resulting from this macro is
-valid but will see if the resulting insn matches a pattern in the
-@file{md} file.
+GCC将不假设该宏的比较结果为有效的，
+但会查看结果insn是否匹配@file{md}文件中的指令模式。
 
-You need not define this macro if it would never change the comparison
-code or operands.
+你不需要定义该宏，如果其不会改变比较代码或者操作数。
 @end defmac
 
 @defmac REVERSIBLE_CC_MODE (@var{mode})
-A C expression whose value is one if it is always safe to reverse a
-comparison whose mode is @var{mode}.  If @code{SELECT_CC_MODE}
-can ever return @var{mode} for a floating-point inequality comparison,
-then @code{REVERSIBLE_CC_MODE (@var{mode})} must be zero.
+一个C表达式，其值为1，如果总是可以安全的将模式为@var{mode}的比较运算逆转。
+如果@code{SELECT_CC_MODE}可以为浮点不等于比较返回@var{mode}，
+则@code{REVERSIBLE_CC_MODE (@var{mode})}必须为0。
 
-You need not define this macro if it would always returns zero or if the
-floating-point format is anything other than @code{IEEE_FLOAT_FORMAT}.
-For example, here is the definition used on the SPARC, where floating-point
-inequality comparisons are always given @code{CCFPEmode}:
+你不需要定义该宏，如果其总是返回0，
+或者如果浮点格式不是@code{IEEE_FLOAT_FORMAT}。
+例如，这是在SPARC上的定义，其中浮点不等于比较总是为@code{CCFPEmode}：
 
 @smallexample
 #define REVERSIBLE_CC_MODE(MODE)  ((MODE) != CCFPEmode)
@@ -5849,13 +5649,11 @@ inequality comparisons are always given @code{CCFPEmode}:
 @end defmac
 
 @defmac REVERSE_CONDITION (@var{code}, @var{mode})
-A C expression whose value is reversed condition code of the @var{code} for
-comparison done in CC_MODE @var{mode}.  The macro is used only in case
-@code{REVERSIBLE_CC_MODE (@var{mode})} is nonzero.  Define this macro in case
-machine has some non-standard way how to reverse certain conditionals.  For
-instance in case all floating point conditions are non-trapping, compiler may
-freely convert unordered compares to ordered one.  Then definition may look
-like:
+一个C表达式，其值为按照CC_MODE模式进行比较的条件码的逆转。
+宏只用于@code{REVERSIBLE_CC_MODE (@var{mode})}为非0的情况。
+当机器具有某种非标准的方式来反转特定条件时，定义该宏。
+例如，当所有浮点条件为非陷阱的，编译器可以自由的转换未排序的比较为排序的。
+则定义可以为：
 
 @smallexample
 #define REVERSE_CONDITION(CODE, MODE) \
@@ -5865,12 +5663,9 @@ like:
 @end defmac
 
 @defmac REVERSE_CONDEXEC_PREDICATES_P (@var{op1}, @var{op2})
-A C expression that returns true if the conditional execution predicate
-@var{op1}, a comparison operation, is the inverse of @var{op2} and vice
-versa.  Define this to return 0 if the target has conditional execution
-predicates that cannot be reversed safely.  There is no need to validate
-that the arguments of op1 and op2 are the same, this is done separately.
-If no expansion is specified, this macro is defined as follows:
+C表达式，返回真，如果条件执行断言@var{op1}，一个比较操作，为@var{op2}的反转，
+反之亦然。定义该宏返回0，如果target具有条件执行断言，且不能被安全的反转。
+不需要验证参数op1和op2相等，这已经被单独执行过。如果没有指定，该宏被定义为：
 
 @smallexample
 #define REVERSE_CONDEXEC_PREDICATES_P (x, y) \
@@ -5879,31 +5674,23 @@ If no expansion is specified, this macro is defined as follows:
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_FIXED_CONDITION_CODE_REGS (unsigned int *, unsigned int *)
-On targets which do not use @code{(cc0)}, and which use a hard
-register rather than a pseudo-register to hold condition codes, the
-regular CSE passes are often not able to identify cases in which the
-hard register is set to a common value.  Use this hook to enable a
-small pass which optimizes such cases.  This hook should return true
-to enable this pass, and it should set the integers to which its
-arguments point to the hard register numbers used for condition codes.
-When there is only one such register, as is true on most systems, the
-integer pointed to by the second argument should be set to
-@code{INVALID_REGNUM}.
+对于一些target，其不使用@code{(cc0)}，而是使用硬件寄存器来存放条件码，
+而不是伪寄存器，则正规的CSE过程通常不能识别硬件寄存器被设为一个普通值的情况。
+使用该钩子来开启一个小的过程，来优化这种情况。该钩子应该返回真，来开启该过程，
+并且应该将参数设置成指向用于条件码的硬件寄存器编号。当只有一个这样的寄存器时，
+这在大多数系统上都为真，则第二个参数指向的整数应该被设为@code{INVALID_REGNUM}。
 
-The default version of this hook returns false.
+该钩子的缺省版本返回假。
 @end deftypefn
 
 @deftypefn {Target Hook} enum machine_mode TARGET_CC_MODES_COMPATIBLE (enum machine_mode, enum machine_mode)
-On targets which use multiple condition code modes in class
-@code{MODE_CC}, it is sometimes the case that a comparison can be
-validly done in more than one mode.  On such a system, define this
-target hook to take two mode arguments and to return a mode in which
-both comparisons may be validly done.  If there is no such mode,
-return @code{VOIDmode}.
+对于一些target，其使用@code{MODE_CC}类别中的多个条件码机器模式，
+有时比较可以对多个机器模式都有效。在这样的系统上，
+定义该target钩子来接收两个mode参数并返回一个mode，
+对于该模式两个比较都可以被有效执行。如果没有这样的模式，则返回@code{VOIDmode}。
 
-The default version of this hook checks whether the modes are the
-same.  If they are, it returns that mode.  If they are different, it
-returns @code{VOIDmode}.
+该钩子的缺省版本检查模式是否相同。如果是，则返回该模式。如果不同，
+则返回@code{VOIDmode}。
 @end deftypefn
 
 @node 代价
@@ -5912,535 +5699,421 @@ returns @code{VOIDmode}.
 @cindex relative costs
 @cindex speed of instructions
 
-These macros let you describe the relative speed of various operations
-on the target machine.
+这些宏让你描述target机器上各种操作的相对速度。
 
 @defmac REGISTER_MOVE_COST (@var{mode}, @var{from}, @var{to})
-A C expression for the cost of moving data of mode @var{mode} from a
-register in class @var{from} to one in class @var{to}.  The classes are
-expressed using the enumeration values such as @code{GENERAL_REGS}.  A
-value of 2 is the default; other values are interpreted relative to
-that.
+一个C表达式，
+为从寄存器类别@var{from}到类别@var{to}移动模式为@var{mode}的数据的代价。
+类别使用枚举值表示，例如@code{GENERAL_REGS}。缺省值为2；其它值相对于它来解析。
 
-It is not required that the cost always equal 2 when @var{from} is the
-same as @var{to}; on some machines it is expensive to move between
-registers if they are not general registers.
+当@var{from}与@var{to}相同时，并不要求代价总是为2；在一些机器上，
+如果不是通用寄存器，则寄存器之间的移动代价是昂贵的。
 
-If reload sees an insn consisting of a single @code{set} between two
-hard registers, and if @code{REGISTER_MOVE_COST} applied to their
-classes returns a value of 2, reload does not check to ensure that the
-constraints of the insn are met.  Setting a cost of other than 2 will
-allow reload to verify that the constraints are met.  You should do this
-if the @samp{mov@var{m}} pattern's constraints do not allow such copying.
+如果重载遇到一个insn，由两个硬件寄存器之间的单个@code{set}组成，
+并且如果@code{REGISTER_MOVE_COST}应用到它们的类别上返回2，
+则重载不检查insn的约束是否满足。将代价设为2以外的值将允许重载验证约束是否满足。
+如果@samp{mov@var{m}}模式的约束不允许这样的复制，则你应该这样做。
 @end defmac
 
 @defmac MEMORY_MOVE_COST (@var{mode}, @var{class}, @var{in})
-A C expression for the cost of moving data of mode @var{mode} between a
-register of class @var{class} and memory; @var{in} is zero if the value
-is to be written to memory, nonzero if it is to be read in.  This cost
-is relative to those in @code{REGISTER_MOVE_COST}.  If moving between
-registers and memory is more expensive than between two registers, you
-should define this macro to express the relative cost.
+一个C表达式，
+为在寄存器类别@var{class}和内存之间移动模式为@var{mode}的数据的代价；
+@var{in}为0，如果值要被写到内存中，非0，如果要从内存中读进。
+该代价为@code{REGISTER_MOVE_COST}的相对值。
+如果在寄存器和内存间移动比两个寄存器之间更昂贵，则应该定义该宏来表示相对代价。
 
-If you do not define this macro, GCC uses a default cost of 4 plus
-the cost of copying via a secondary reload register, if one is
-needed.  If your machine requires a secondary reload register to copy
-between memory and a register of @var{class} but the reload mechanism is
-more complex than copying via an intermediate, define this macro to
-reflect the actual cost of the move.
+如果你没有定义该宏，如果需要的话，
+则GCC使用缺省值4加上通过第二个重载寄存器复制的代价。
+如果你的机器需要第二个重载寄存器在内存和寄存器类别@var{class}直接复制，
+但是重载机制比通过中间物质复制更复杂，则定义该宏来反映move的实际代价。
 
-GCC defines the function @code{memory_move_secondary_cost} if
-secondary reloads are needed.  It computes the costs due to copying via
-a secondary register.  If your machine copies from memory using a
-secondary register in the conventional way but the default base value of
-4 is not correct for your machine, define this macro to add some other
-value to the result of that function.  The arguments to that function
-are the same as to this macro.
+GCC定义函数@code{memory_move_secondary_cost}，如果需要第二次重载。
+其根据通过第二个寄存器复制来计算代价。
+如果你的机器使用第二个寄存器按照约定的方式从内存中复制，
+但是缺省值4对你的机器不正确，则定义该宏来增加某个其它值作为那个函数的结果。
+函数的参数与该宏相同。
 @end defmac
 
 @defmac BRANCH_COST (@var{speed_p}, @var{predictable_p})
-A C expression for the cost of a branch instruction.  A value of 1 is the
-default; other values are interpreted relative to that. Parameter @var{speed_p}
-is true when the branch in question should be optimized for speed.  When
-it is false, @code{BRANCH_COST} should be returning value optimal for code size
-rather then performance considerations.  @var{predictable_p} is true for well
-predictable branches. On many architectures the @code{BRANCH_COST} can be
-reduced then.
+一个C表达式，为分支指令的代价。缺省值为1；其它值相对于它来解析。
 @end defmac
 
-Here are additional macros which do not specify precise relative costs,
-but only that certain actions are more expensive than GCC would
-ordinarily expect.
+这些是额外的宏，其不指定确切的相对代价，而只是指定特定的动作比GCC通常期望的要昂贵。
 
 @defmac SLOW_BYTE_ACCESS
-Define this macro as a C expression which is nonzero if accessing less
-than a word of memory (i.e.@: a @code{char} or a @code{short}) is no
-faster than accessing a word of memory, i.e., if such access
-require more than one instruction or if there is no difference in cost
-between byte and (aligned) word loads.
+定义该宏为一个C表达式，如果访问小于一个字的内存
+（即@code{char}或者@code{short}）不如访问一个字的内存快，即，
+如果这样的访问需要多于一条的指令，并且如果字节和（对齐的）字加载的代价没有区别，
+则值为非零。
 
-When this macro is not defined, the compiler will access a field by
-finding the smallest containing object; when it is defined, a fullword
-load will be used if alignment permits.  Unless bytes accesses are
-faster than word accesses, using word accesses is preferable since it
-may eliminate subsequent memory access if subsequent accesses occur to
-other fields in the same word of the structure, but to different bytes.
+当该宏没有被定义，则编译器将通过找到最小的包含对象来访问一个域；当其被定义，
+如果允许对齐，则会使用全字的加载。除非字节访问比字访问快，则使用字访问比较好，
+因为其可以消除后续的内存访问，如果后续的访问发生在结构体的相同字的其它域。
 @end defmac
 
 @defmac SLOW_UNALIGNED_ACCESS (@var{mode}, @var{alignment})
-Define this macro to be the value 1 if memory accesses described by the
-@var{mode} and @var{alignment} parameters have a cost many times greater
-than aligned accesses, for example if they are emulated in a trap
-handler.
+定义该宏的值为1，
+如果由@var{mode}和@var{alignment}参数描述的内存访问比对齐的访问具有多倍的代价，
+例如如果它们在陷阱处理中被模拟。
 
-When this macro is nonzero, the compiler will act as if
-@code{STRICT_ALIGNMENT} were nonzero when generating code for block
-moves.  This can cause significantly more instructions to be produced.
-Therefore, do not set this macro nonzero if unaligned accesses only add a
-cycle or two to the time for a memory access.
+当该宏为非0时，编译器在为块移动生成代码时，
+将按照@code{STRICT_ALIGNMENT}为非0的方式执行。这可以引起相当多的指令被产生。
+因此如果非对齐访问只是增加一个周期或者两个，则不要设置该宏为非零。
 
-If the value of this macro is always zero, it need not be defined.  If
-this macro is defined, it should produce a nonzero value when
-@code{STRICT_ALIGNMENT} is nonzero.
+如果该宏的值总是0，则不需要被定义。如果该宏被定义，其应该产生一个非0值，
+当@code{STRICT_ALIGNMENT}非0时。
 @end defmac
 
 @defmac MOVE_RATIO
-The threshold of number of scalar memory-to-memory move insns, @emph{below}
-which a sequence of insns should be generated instead of a
-string move insn or a library call.  Increasing the value will always
-make code faster, but eventually incurs high cost in increased code size.
+标量的内存到内存的move insn的临界数，@emph{低于}其值的时候，
+应该生成一个insn序列，而不是字符串move insn或者库调用。
+增加值将总是使得代码更快，但是会最终由于代码大小的增加而产生高的代价。
 
-Note that on machines where the corresponding move insn is a
-@code{define_expand} that emits a sequence of insns, this macro counts
-the number of such sequences.
+注意在一些机器上，对应的move insn为一个@code{define_expand}，
+其产生一个insn序列，则该宏为该序列的个数。
 
-If you don't define this, a reasonable default is used.
+如果没有定义，则会使用一个合理的缺省值。
 @end defmac
 
 @defmac MOVE_BY_PIECES_P (@var{size}, @var{alignment})
-A C expression used to determine whether @code{move_by_pieces} will be used to
-copy a chunk of memory, or whether some other block move mechanism
-will be used.  Defaults to 1 if @code{move_by_pieces_ninsns} returns less
-than @code{MOVE_RATIO}.
+一个C表达式，用于确定是否使用@code{move_by_pieces}来复制一块内存，
+或者使用其它某种块移动机制。缺省为1，
+如果@code{move_by_pieces_ninsns}返回值小于@code{MOVE_RATIO}。
 @end defmac
 
 @defmac MOVE_MAX_PIECES
-A C expression used by @code{move_by_pieces} to determine the largest unit
-a load or store used to copy memory is.  Defaults to @code{MOVE_MAX}.
+一个C表达式，
+由@code{move_by_pieces}使用用于确定load或者store用于复制内存的最大单元。
+缺省为@code{MOVE_MAX}。
 @end defmac
 
 @defmac CLEAR_RATIO
-The threshold of number of scalar move insns, @emph{below} which a sequence
-of insns should be generated to clear memory instead of a string clear insn
-or a library call.  Increasing the value will always make code faster, but
-eventually incurs high cost in increased code size.
+标量move insn的临界数，@emph{低于}其值时，应该生成一个insn序列来清除内存，
+而不是字符串clear insn或者库调用。增加值将总是使得代码更快，
+但是会最终由于代码大小的增加而产生高的代价。
 
-If you don't define this, a reasonable default is used.
+如果没有定义，则会使用一个合理的缺省值。
 @end defmac
 
 @defmac CLEAR_BY_PIECES_P (@var{size}, @var{alignment})
-A C expression used to determine whether @code{clear_by_pieces} will be used
-to clear a chunk of memory, or whether some other block clear mechanism
-will be used.  Defaults to 1 if @code{move_by_pieces_ninsns} returns less
-than @code{CLEAR_RATIO}.
+一个C表达式，用于确定是否使用@code{clear_by_pieces}来清除一块内存，
+或者使用其它块清楚机制。缺省为1，
+如果@code{move_by_pieces_ninsns}返回值小于@code{CLEAR_RATIO}。
 @end defmac
 
 @defmac SET_RATIO
-The threshold of number of scalar move insns, @emph{below} which a sequence
-of insns should be generated to set memory to a constant value, instead of
-a block set insn or a library call.  
-Increasing the value will always make code faster, but
-eventually incurs high cost in increased code size.
+标量move insn的临界数，@emph{低于}其值时，
+应该生成一个insn序列来将内存设为一个常量值，而不是一个块设置insn或者库调用。
+增加值将总是使得代码更快，但是会最终由于代码大小的增加而产生高的代价。
 
-If you don't define this, it defaults to the value of @code{MOVE_RATIO}.
+如果没有定义，缺省值为@code{MOVE_RATIO}。
 @end defmac
 
 @defmac SET_BY_PIECES_P (@var{size}, @var{alignment})
-A C expression used to determine whether @code{store_by_pieces} will be
-used to set a chunk of memory to a constant value, or whether some 
-other mechanism will be used.  Used by @code{__builtin_memset} when 
-storing values other than constant zero.
-Defaults to 1 if @code{move_by_pieces_ninsns} returns less
-than @code{SET_RATIO}.
+一个C表达式用来确定是否使用@code{store_by_pieces}来设置内存块为常量值，
+或者使用其它机制。当存储非常数0的值时，由@code{__builtin_memset}使用。
+缺省为1，如果@code{move_by_pieces_ninsns}返回值小于@code{SET_RATIO}。
 @end defmac
 
 @defmac STORE_BY_PIECES_P (@var{size}, @var{alignment})
-A C expression used to determine whether @code{store_by_pieces} will be
-used to set a chunk of memory to a constant string value, or whether some 
-other mechanism will be used.  Used by @code{__builtin_strcpy} when
-called with a constant source string.
-Defaults to 1 if @code{move_by_pieces_ninsns} returns less
-than @code{MOVE_RATIO}.
+一个C表达式用来确定是否使用@code{store_by_pieces}来设置内存块为常量字符串，
+或者使用其它的机制。当使用常量源字符串调用时，被@code{__builtin_strcpy}使用。
+缺省为1，如果@code{move_by_pieces_ninsns}返回值小于@code{MOVE_RATIO}。
 @end defmac
 
 @defmac USE_LOAD_POST_INCREMENT (@var{mode})
-A C expression used to determine whether a load postincrement is a good
-thing to use for a given mode.  Defaults to the value of
-@code{HAVE_POST_INCREMENT}.
+一个C表达式用于确定对于给定的mode，后增加载是否好。
+缺省值为@code{HAVE_POST_INCREMENT}。
 @end defmac
 
 @defmac USE_LOAD_POST_DECREMENT (@var{mode})
-A C expression used to determine whether a load postdecrement is a good
-thing to use for a given mode.  Defaults to the value of
-@code{HAVE_POST_DECREMENT}.
+一个C表达式用于确定对于给定的mode，后减加载是否好。
+缺省值为@code{HAVE_POST_DECREMENT}。
 @end defmac
 
 @defmac USE_LOAD_PRE_INCREMENT (@var{mode})
-A C expression used to determine whether a load preincrement is a good
-thing to use for a given mode.  Defaults to the value of
-@code{HAVE_PRE_INCREMENT}.
+一个C表达式用于确定对于给定的mode，前增加载是否好。
+缺省值为@code{HAVE_PRE_INCREMENT}。
 @end defmac
 
 @defmac USE_LOAD_PRE_DECREMENT (@var{mode})
-A C expression used to determine whether a load predecrement is a good
-thing to use for a given mode.  Defaults to the value of
-@code{HAVE_PRE_DECREMENT}.
+一个C表达式用于确定对于给定的mode，前减加载是否好。
+缺省值为@code{HAVE_PRE_DECREMENT}。
 @end defmac
 
 @defmac USE_STORE_POST_INCREMENT (@var{mode})
-A C expression used to determine whether a store postincrement is a good
-thing to use for a given mode.  Defaults to the value of
-@code{HAVE_POST_INCREMENT}.
+一个C表达式用于确定对于给定的mode，后增存储是否好。
+缺省值为@code{HAVE_POST_INCREMENT}。
 @end defmac
 
 @defmac USE_STORE_POST_DECREMENT (@var{mode})
-A C expression used to determine whether a store postdecrement is a good
-thing to use for a given mode.  Defaults to the value of
-@code{HAVE_POST_DECREMENT}.
+一个C表达式用于确定对于给定的mode，后减存储是否好。
+缺省值为@code{HAVE_POST_DECREMENT}。
 @end defmac
 
 @defmac USE_STORE_PRE_INCREMENT (@var{mode})
-This macro is used to determine whether a store preincrement is a good
-thing to use for a given mode.  Defaults to the value of
-@code{HAVE_PRE_INCREMENT}.
+一个C表达式用于确定对于给定的mode，前增存储是否好。
+缺省值为@code{HAVE_PRE_INCREMENT}。
 @end defmac
 
 @defmac USE_STORE_PRE_DECREMENT (@var{mode})
-This macro is used to determine whether a store predecrement is a good
-thing to use for a given mode.  Defaults to the value of
-@code{HAVE_PRE_DECREMENT}.
+一个C表达式用于确定对于给定的mode，前减存储是否好。
+缺省值为@code{HAVE_PRE_DECREMENT}。
 @end defmac
 
 @defmac NO_FUNCTION_CSE
-Define this macro if it is as good or better to call a constant
-function address than to call an address kept in a register.
+定义该宏，如果调用常量函数地址要比调用保存在寄存器中的地址好些。
 @end defmac
 
 @defmac RANGE_TEST_NON_SHORT_CIRCUIT
-Define this macro if a non-short-circuit operation produced by
-@samp{fold_range_test ()} is optimal.  This macro defaults to true if
-@code{BRANCH_COST} is greater than or equal to the value 2.
+定义该宏，如果由@samp{fold_range_test ()}产生的non-short-circuit操作为可选的。
+该宏缺省为真，如果@code{BRANCH_COST}大于或等于2。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_RTX_COSTS (rtx @var{x}, int @var{code}, int @var{outer_code}, int *@var{total})
-This target hook describes the relative costs of RTL expressions.
+该target钩子描述了RTL表达式的相对代价。
 
-The cost may depend on the precise form of the expression, which is
-available for examination in @var{x}, and the rtx code of the expression
-in which it is contained, found in @var{outer_code}.  @var{code} is the
-expression code---redundant, since it can be obtained with
-@code{GET_CODE (@var{x})}.
+代价可以依赖于表达式的确切形式，可以通过检查@var{x}来获得表达式的形式，
+表达式包含的rtx的代码为@var{outer_code}。@var{code}为表达式代码，冗余的，
+因为其可以使用@code{GET_CODE (@var{x})}获得。
 
-In implementing this hook, you can use the construct
-@code{COSTS_N_INSNS (@var{n})} to specify a cost equal to @var{n} fast
-instructions.
+实现该钩子时，
+你可以使用结构@code{COSTS_N_INSNS (@var{n})}来指定代价等价于@var{n}个指令。
 
-On entry to the hook, @code{*@var{total}} contains a default estimate
-for the cost of the expression.  The hook should modify this value as
-necessary.  Traditionally, the default costs are @code{COSTS_N_INSNS (5)}
-for multiplications, @code{COSTS_N_INSNS (7)} for division and modulus
-operations, and @code{COSTS_N_INSNS (1)} for all other operations.
+在钩子的入口处，@code{*@var{total}}包含了缺省的表达式代价的估值。需要的话，
+钩子应该修改该值。传统的，缺省代价对于乘法为@code{COSTS_N_INSNS (5)}，
+对于除法和求模为@code{COSTS_N_INSNS (7)}，
+对于其它操作为@code{COSTS_N_INSNS (1)}。
 
-When optimizing for code size, i.e.@: when @code{optimize_size} is
-nonzero, this target hook should be used to estimate the relative
-size cost of an expression, again relative to @code{COSTS_N_INSNS}.
+当优化代码大小时，即，当@code{optimize_size}非0时，
+该target钩子应该用于估计一个表达式的相对大小代价，
+同样也是相对于@code{COSTS_N_INSNS}。
 
-The hook returns true when all subexpressions of @var{x} have been
-processed, and false when @code{rtx_cost} should recurse.
+钩子返回真，当所有@var{x}的子表达式都被处理，当@code{rtx_cost}应该递归时返回假。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_ADDRESS_COST (rtx @var{address})
-This hook computes the cost of an addressing mode that contains
-@var{address}.  If not defined, the cost is computed from
-the @var{address} expression and the @code{TARGET_RTX_COST} hook.
+该钩子计算包含@var{address}的寻址模式的代价。如果没有定义，
+代价通过@var{address}表达式和@code{TARGET_RTX_COST}钩子来计算。
 
-For most CISC machines, the default cost is a good approximation of the
-true cost of the addressing mode.  However, on RISC machines, all
-instructions normally have the same length and execution time.  Hence
-all addresses will have equal costs.
+对于大多数CISC机器，缺省代价为寻址模式的真实代价的合理近似值。
+然而，在RISC机器上，所有指令通常具有相同的长度和执行时间。
+因此所有寻址将具有相等的代价。
 
-In cases where more than one form of an address is known, the form with
-the lowest cost will be used.  If multiple forms have the same, lowest,
-cost, the one that is the most complex will be used.
+对于多于一个的形式的寻址，将会使用最低代价的形式。
+如果多个形式具有相同的，最低的代价，则使用最复杂的。
 
-For example, suppose an address that is equal to the sum of a register
-and a constant is used twice in the same basic block.  When this macro
-is not defined, the address will be computed in a register and memory
-references will be indirect through that register.  On machines where
-the cost of the addressing mode containing the sum is no higher than
-that of a simple indirect reference, this will produce an additional
-instruction and possibly require an additional register.  Proper
-specification of this macro eliminates this overhead for such machines.
+例如，假设地址等于寄存器和常量的和，并在同一基本块中使用两次。
+当该宏没有被定义，地址将在寄存器中计算，并且内存引用将通过寄存器间接实现。
+在一些机器上，包含该和的寻址模式的代价不比简单的间接引用高，
+这样则会产生一条额外的指令，并且可能需要一个额外的寄存器。
+对该宏进行合适的指定，会消除这样的情况。
 
-This hook is never called with an invalid address.
+该钩子从不会被无效地址调用。
 
-On machines where an address involving more than one register is as
-cheap as an address computation involving only one register, defining
-@code{TARGET_ADDRESS_COST} to reflect this can cause two registers to
-be live over a region of code where only one would have been if
-@code{TARGET_ADDRESS_COST} were not defined in that manner.  This effect
-should be considered in the definition of this macro.  Equivalent costs
-should probably only be given to addresses with different numbers of
-registers on machines with lots of registers.
+在一些机器上，地址包括多于一个寄存器的代价，
+跟只包含一个寄存器的地址计算代价一样低，
+则定义@code{TARGET_ADDRESS_COST}来反映这种情况，
+可以使得两个寄存器在代码域中为活跃的，如果没有定义则可能只有一个为活跃的。
+这种效果在定义该宏时应该被考虑。
+可能只有对于有大量寄存器的机器才可能会有相等的代价。
 @end deftypefn
 
 @node 调度
 @section 调整指令调度器
 
-The instruction scheduler may need a fair amount of machine-specific
-adjustment in order to produce good code.  GCC provides several target
-hooks for this purpose.  It is usually enough to define just a few of
-them: try the first ones in this list first.
+指令调度器可能需要一些机器特定的调整，来产生好的代码。GCC为此提供了几个target钩子。通常定义它们的一部分就足够了：先尝试该列表中最前面的。
 
 @deftypefn {Target Hook} int TARGET_SCHED_ISSUE_RATE (void)
-This hook returns the maximum number of instructions that can ever
-issue at the same time on the target machine.  The default is one.
-Although the insn scheduler can define itself the possibility of issue
-an insn on the same cycle, the value can serve as an additional
-constraint to issue insns on the same simulated processor cycle (see
-hooks @samp{TARGET_SCHED_REORDER} and @samp{TARGET_SCHED_REORDER2}).
-This value must be constant over the entire compilation.  If you need
-it to vary depending on what the instructions are, you must use
-@samp{TARGET_SCHED_VARIABLE_ISSUE}.
+该钩子返回在target机器上同一时间可以发射的最大指令数目。缺省为1。
+虽然insn调度器本身可以定义同一周期发射一个insn的可能能性，
+但该值可以作为额外的约束，用于相同模拟处理器周期的insn发射
+（参见钩子@samp{TARGET_SCHED_REORDER}和@samp{TARGET_SCHED_REORDER2}）。
+该值在整个编译过程中必须为常量。如果你需要其依赖指令是什么而变化，
+则必须使用@samp{TARGET_SCHED_VARIABLE_ISSUE}。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_VARIABLE_ISSUE (FILE *@var{file}, int @var{verbose}, rtx @var{insn}, int @var{more})
-This hook is executed by the scheduler after it has scheduled an insn
-from the ready list.  It should return the number of insns which can
-still be issued in the current cycle.  The default is
-@samp{@w{@var{more} - 1}} for insns other than @code{CLOBBER} and
-@code{USE}, which normally are not counted against the issue rate.
-You should define this hook if some insns take more machine resources
-than others, so that fewer insns can follow them in the same cycle.
-@var{file} is either a null pointer, or a stdio stream to write any
-debug output to.  @var{verbose} is the verbose level provided by
-@option{-fsched-verbose-@var{n}}.  @var{insn} is the instruction that
-was scheduled.
+该钩子在调度器从就绪列表中调度了一个insn之后被执行。
+其应该返回在当前周期仍然可以被发射的insn数目。
+对于@code{CLOBBER}和@code{USE}之外的insn，缺省为@samp{@w{@var{more} - 1}}，
+其通常不根据发射频率来计数。你应该定义该钩子，
+如果一些insn比其它的需要更多的机器资源，
+使得在同一周期它们后面可以跟随较少的insn。@var{file}或者为一个null指针，
+或者一个stdio流，用来写入调试输出。
+@var{verbose}为@option{-fsched-verbose-@var{n}}提供的详细级别。
+@var{insn}为被调度的指针。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_ADJUST_COST (rtx @var{insn}, rtx @var{link}, rtx @var{dep_insn}, int @var{cost})
-This function corrects the value of @var{cost} based on the
-relationship between @var{insn} and @var{dep_insn} through the
-dependence @var{link}.  It should return the new value.  The default
-is to make no adjustment to @var{cost}.  This can be used for example
-to specify to the scheduler using the traditional pipeline description
-that an output- or anti-dependence does not incur the same cost as a
-data-dependence.  If the scheduler using the automaton based pipeline
-description, the cost of anti-dependence is zero and the cost of
-output-dependence is maximum of one and the difference of latency
-times of the first and the second insns.  If these values are not
-acceptable, you could use the hook to modify them too.  See also
-@pxref{处理器流水线描述}.
+该函数根据@var{insn}和@var{dep_insn}通过依赖链接的关系来更正@var{cost}值。
+其应该返回新的值。缺省为不对@var{cost}进行调整。
+例如这可以用于指定调度器使用传统的流水线描述，
+即输出或反向依赖不产生与数据依赖相同的代价。
+如果调度器使用基于流水线描述的自动机，则反向依赖的代码为0，
+输出依赖的代价为1和第一个insn与第二个insn之间的延迟时间的最大值。
+如果这些值无法接受，你应该使用该钩子来修改它们。参见 @ref{处理器流水线描述}。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_ADJUST_PRIORITY (rtx @var{insn}, int @var{priority})
-This hook adjusts the integer scheduling priority @var{priority} of
-@var{insn}.  It should return the new priority.  Increase the priority to
-execute @var{insn} earlier, reduce the priority to execute @var{insn}
-later.  Do not define this hook if you do not need to adjust the
-scheduling priorities of insns.
+该钩子调整@var{insn}的整数调度有限级@var{priority}。其应该返回新的priority。
+增加优先级来提前执行@var{insn}，减少优先级来推迟执行@var{insn}。
+如果不需要调整insn的调度优先级，则不需要定义该钩子。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_REORDER (FILE *@var{file}, int @var{verbose}, rtx *@var{ready}, int *@var{n_readyp}, int @var{clock})
-This hook is executed by the scheduler after it has scheduled the ready
-list, to allow the machine description to reorder it (for example to
-combine two small instructions together on @samp{VLIW} machines).
-@var{file} is either a null pointer, or a stdio stream to write any
-debug output to.  @var{verbose} is the verbose level provided by
-@option{-fsched-verbose-@var{n}}.  @var{ready} is a pointer to the ready
-list of instructions that are ready to be scheduled.  @var{n_readyp} is
-a pointer to the number of elements in the ready list.  The scheduler
-reads the ready list in reverse order, starting with
-@var{ready}[@var{*n_readyp}-1] and going to @var{ready}[0].  @var{clock}
-is the timer tick of the scheduler.  You may modify the ready list and
-the number of ready insns.  The return value is the number of insns that
-can issue this cycle; normally this is just @code{issue_rate}.  See also
-@samp{TARGET_SCHED_REORDER2}.
+该钩子在调度器调度完就绪列表后被执行，
+以允许机器描述来重新排序（例如在@samp{VLIW}机器上，将两个小指令合并一起）。
+@var{file}或者为一个null指针，或者一个stdio流，用来写入调试输出。
+@var{verbose}为@option{-fsched-verbose-@var{n}}提供的详细级别。
+@var{ready}为指向已经被调度的指令就绪列表的指针。
+@var{n_readyp}为指向在就绪列表中的元素个数的指针。
+调度器按照相反的顺序读取就绪列表，从@var{ready}[@var{*n_readyp}-1]开始，
+到@var{ready}[0]。@var{clock}为调度器的时钟tick。你可以修改就绪列表和insn。
+返回值为这个周期可以发射的insn数；这通常只是为@code{issue_rate}。
+参见@samp{TARGET_SCHED_REORDER2}。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_REORDER2 (FILE *@var{file}, int @var{verbose}, rtx *@var{ready}, int *@var{n_ready}, @var{clock})
-Like @samp{TARGET_SCHED_REORDER}, but called at a different time.  That
-function is called whenever the scheduler starts a new cycle.  This one
-is called once per iteration over a cycle, immediately after
-@samp{TARGET_SCHED_VARIABLE_ISSUE}; it can reorder the ready list and
-return the number of insns to be scheduled in the same cycle.  Defining
-this hook can be useful if there are frequent situations where
-scheduling one insn causes other insns to become ready in the same
-cycle.  These other insns can then be taken into account properly.
+类似于@samp{TARGET_SCHED_REORDER}，只不过在不同的时间被调用。
+该函数每当调度器开始一个新的周期时被调用。其在每个周期都被调用一次，
+紧跟在@samp{TARGET_SCHED_VARIABLE_ISSUE}之后；
+其可以重排就绪列表并返回在同一周期被调度的insn数目。
+如果常常调度一个insn会引起其他insn可以在同一周期就绪，则定义该钩子会很有用。
+这样其它insn便可以被适当的考虑进来。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SCHED_DEPENDENCIES_EVALUATION_HOOK (rtx @var{head}, rtx @var{tail})
-This hook is called after evaluation forward dependencies of insns in
-chain given by two parameter values (@var{head} and @var{tail}
-correspondingly) but before insns scheduling of the insn chain.  For
-example, it can be used for better insn classification if it requires
-analysis of dependencies.  This hook can use backward and forward
-dependencies of the insn scheduler because they are already
-calculated.
+该钩子在由两个参数值给出的链中向前评估完insn的依赖关系之后，
+但在insn链的调度之前被调用。例如，其可以被用于更好的insn分类，
+如果其需要依赖分析。该钩子可以使用insn调度器的向后和向前依赖，
+因为它们已经被计算好了。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SCHED_INIT (FILE *@var{file}, int @var{verbose}, int @var{max_ready})
-This hook is executed by the scheduler at the beginning of each block of
-instructions that are to be scheduled.  @var{file} is either a null
-pointer, or a stdio stream to write any debug output to.  @var{verbose}
-is the verbose level provided by @option{-fsched-verbose-@var{n}}.
-@var{max_ready} is the maximum number of insns in the current scheduling
-region that can be live at the same time.  This can be used to allocate
-scratch space if it is needed, e.g.@: by @samp{TARGET_SCHED_REORDER}.
+该钩子在每个要被调度的指令块的起始处被调用。@var{file}或者为一个null指针，
+或者一个stdio流，用来写入调试输出。
+@var{verbose}为@option{-fsched-verbose-@var{n}}提供的详细级别。
+@var{max_ready}为在当前调度域中可以同时活跃的insn最大数。
+这可以用来分配需要的草稿空间，例如，@samp{TARGET_SCHED_REORDER}。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SCHED_FINISH (FILE *@var{file}, int @var{verbose})
-This hook is executed by the scheduler at the end of each block of
-instructions that are to be scheduled.  It can be used to perform
-cleanup of any actions done by the other scheduling hooks.  @var{file}
-is either a null pointer, or a stdio stream to write any debug output
-to.  @var{verbose} is the verbose level provided by
-@option{-fsched-verbose-@var{n}}.
+该钩子在每个要被调度的指令块的起始处被调用。
+其可以用于执行清除由其它调度钩子完成的任何动作。@var{file}或者为一个null指针，
+或者一个stdio流，用来写入调试输出。
+@var{verbose}为@option{-fsched-verbose-@var{n}}提供的详细级别。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SCHED_INIT_GLOBAL (FILE *@var{file}, int @var{verbose}, int @var{old_max_uid})
-This hook is executed by the scheduler after function level initializations.
-@var{file} is either a null pointer, or a stdio stream to write any debug output to.
-@var{verbose} is the verbose level provided by @option{-fsched-verbose-@var{n}}.
-@var{old_max_uid} is the maximum insn uid when scheduling begins.
+该钩子在函数级初始化的时候被调度器执行。@var{file}或者为一个null指针，
+或者一个stdio流，用来写入调试输出。
+@var{verbose}为@option{-fsched-verbose-@var{n}}提供的详细级别。
+@var{old_max_uid}为调度开始时，最大的insn uid。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SCHED_FINISH_GLOBAL (FILE *@var{file}, int @var{verbose})
-This is the cleanup hook corresponding to @code{TARGET_SCHED_INIT_GLOBAL}.
-@var{file} is either a null pointer, or a stdio stream to write any debug output to.
-@var{verbose} is the verbose level provided by @option{-fsched-verbose-@var{n}}.
+这是一个清除钩子，对应于@code{TARGET_SCHED_INIT_GLOBAL}。
+@var{file}或者为一个null指针，或者一个stdio流，用来写入调试输出。
+@var{verbose}为@option{-fsched-verbose-@var{n}}提供的详细级别。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_DFA_PRE_CYCLE_INSN (void)
-The hook returns an RTL insn.  The automaton state used in the
-pipeline hazard recognizer is changed as if the insn were scheduled
-when the new simulated processor cycle starts.  Usage of the hook may
-simplify the automaton pipeline description for some @acronym{VLIW}
-processors.  If the hook is defined, it is used only for the automaton
-based pipeline description.  The default is not to change the state
-when the new simulated processor cycle starts.
+该钩子返回一个RTL insn。流水线冒险识别器中的自动机状态，
+按照当新的模拟处理器周期开始，insn被调度的样子被改变。
+该钩子的用法可以简化一些@acronym{VLIW}处理器的自动机流水线描述。
+如果钩子被定义，其只用于基于自动机的流水线描述。缺省为不改变状态，
+当新的模拟处理器周期开始时。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SCHED_INIT_DFA_PRE_CYCLE_INSN (void)
-The hook can be used to initialize data used by the previous hook.
+该钩子可以用于初始化先前的钩子所使用的数据。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_DFA_POST_CYCLE_INSN (void)
-The hook is analogous to @samp{TARGET_SCHED_DFA_PRE_CYCLE_INSN} but used
-to changed the state as if the insn were scheduled when the new
-simulated processor cycle finishes.
+该钩子与@samp{TARGET_SCHED_DFA_PRE_CYCLE_INSN}类似，但用于改变状态，
+按照当新的模拟处理器周期结束时insn被调度的方式。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SCHED_INIT_DFA_POST_CYCLE_INSN (void)
-The hook is analogous to @samp{TARGET_SCHED_INIT_DFA_PRE_CYCLE_INSN} but
-used to initialize data used by the previous hook.
+该钩子与@samp{TARGET_SCHED_INIT_DFA_PRE_CYCLE_INSN}类似，
+但用于初始化先前的钩子所使用的数据。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SCHED_DFA_PRE_CYCLE_ADVANCE (void)
-The hook to notify target that the current simulated cycle is about to finish.
-The hook is analogous to @samp{TARGET_SCHED_DFA_PRE_CYCLE_INSN} but used
-to change the state in more complicated situations - e.g., when advancing
-state on a single insn is not enough.
+该钩子用来通报target，当前模拟周期将要完成。
+该钩子类似于@samp{TARGET_SCHED_DFA_PRE_CYCLE_INSN}，
+但用于在更复杂的情况下改变状态，例如当在一个单独的insn上前移一个状态并不足够时。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SCHED_DFA_POST_CYCLE_ADVANCE (void)
-The hook to notify target that new simulated cycle has just started.
-The hook is analogous to @samp{TARGET_SCHED_DFA_POST_CYCLE_INSN} but used
-to change the state in more complicated situations - e.g., when advancing
-state on a single insn is not enough.
+该钩子用来通报target，新的模拟周期刚刚开始。
+该钩子类似于@samp{TARGET_SCHED_DFA_POST_CYCLE_INSN}，
+但用于在更复杂的情况下改变状态，例如当在一个单独的insn上前移一个状态并不足够时。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD (void)
-This hook controls better choosing an insn from the ready insn queue
-for the @acronym{DFA}-based insn scheduler.  Usually the scheduler
-chooses the first insn from the queue.  If the hook returns a positive
-value, an additional scheduler code tries all permutations of
-@samp{TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD ()}
-subsequent ready insns to choose an insn whose issue will result in
-maximal number of issued insns on the same cycle.  For the
-@acronym{VLIW} processor, the code could actually solve the problem of
-packing simple insns into the @acronym{VLIW} insn.  Of course, if the
-rules of @acronym{VLIW} packing are described in the automaton.
+该钩子控制基于@acronym{DFA}的insn调度器来更好的选择一个insn，
+从就绪insn队列中。通常调度器从队列中选择第一个insn。如果钩子返回一个正值，
+则会有额外的调度器代码来尝试所有的@samp{TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD ()}的排列组合，
+来选择一个insn，使得发射该insn将在同一周期产生最大的insn发射数。
+对于@acronym{VLIW}处理器，
+代码实际上解决了将简单insn打包成@acronym{VLIW} insn的问题。
+当然，如果@acronym{VLIW}打包规则在自动机中有描述。
 
-This code also could be used for superscalar @acronym{RISC}
-processors.  Let us consider a superscalar @acronym{RISC} processor
-with 3 pipelines.  Some insns can be executed in pipelines @var{A} or
-@var{B}, some insns can be executed only in pipelines @var{B} or
-@var{C}, and one insn can be executed in pipeline @var{B}.  The
-processor may issue the 1st insn into @var{A} and the 2nd one into
-@var{B}.  In this case, the 3rd insn will wait for freeing @var{B}
-until the next cycle.  If the scheduler issues the 3rd insn the first,
-the processor could issue all 3 insns per cycle.
+该代码还能用于超标量@acronym{RISC}处理器。
+让我们考虑一个具有3级流水的超标量@acronym{RISC}处理器。
+一些insn可以在流水线@var{A}或@var{B}中被执行，
+一些insn只能在流水线@var{B}或@var{C}中执行，
+并且有一个insn可以在流水线@var{B}中被执行。处理器可以发射第一个insn到@var{A}，
+第二个到@var{B}。这种情况下，第三个insn将会等待释放@var{B}，直到下一个周期。
+如果调度器先发射第三个insn，则处理器可以一个周期发射所有的3个insn。
 
-Actually this code demonstrates advantages of the automaton based
-pipeline hazard recognizer.  We try quickly and easy many insn
-schedules to choose the best one.
+实际上该代码证明了基于自动机的流水线冒险识别器的优点。
+我们最快且最容易的尝试许多insn调度，并选择最好的一种。
 
-The default is no multipass scheduling.
+缺省为不进行多遍的调度。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD_GUARD (rtx)
+该钩子控制了对于多遍insn调度，就绪insn队列中的什么样的insn将被考虑。
+如果钩子返回0，对于最为参数传递的insn，则insn将不被选择发射。
 
-This hook controls what insns from the ready insn queue will be
-considered for the multipass insn scheduling.  If the hook returns
-zero for insn passed as the parameter, the insn will be not chosen to
-be issued.
-
-The default is that any ready insns can be chosen to be issued.
+缺省为所有的就绪insn都可以被选择发射。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_DFA_NEW_CYCLE (FILE *, int, rtx, int, int, int *)
-
-This hook is called by the insn scheduler before issuing insn passed
-as the third parameter on given cycle.  If the hook returns nonzero,
-the insn is not issued on given processors cycle.  Instead of that,
-the processor cycle is advanced.  If the value passed through the last
-parameter is zero, the insn ready queue is not sorted on the new cycle
-start as usually.  The first parameter passes file for debugging
-output.  The second one passes the scheduler verbose level of the
-debugging output.  The forth and the fifth parameter values are
-correspondingly processor cycle on which the previous insn has been
-issued and the current processor cycle.
+该钩子在给定的周期，在发射作为第三个参数传递的insn之前被insn调度器调用。
+如果钩子返回非零，则insn在给定的处理器周期将不被发射。替代的，
+处理器周期将前移。如果最后一个参数的值为0，
+则insn就绪队列没有在新的周期开始时按照通常的方式被排序。
+第一个参数传递了调试输出的文件。第二个参数传递了调试输出的详细级别。
+第四个和第五个参数值分别对应于之前insn被发射的处理器周期，以及当前处理器周期。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_SCHED_IS_COSTLY_DEPENDENCE (struct dep_def *@var{_dep}, int @var{cost}, int @var{distance})
-This hook is used to define which dependences are considered costly by
-the target, so costly that it is not advisable to schedule the insns that
-are involved in the dependence too close to one another.  The parameters
-to this hook are as follows:  The first parameter @var{_dep} is the dependence
-being evaluated.  The second parameter @var{cost} is the cost of the
-dependence, and the third
-parameter @var{distance} is the distance in cycles between the two insns.
-The hook returns @code{true} if considering the distance between the two
-insns the dependence between them is considered costly by the target,
-and @code{false} otherwise.
+该钩子用于定义哪种依赖被target认为是具有昂贵代价的，
+以至于将insn调度成依赖太近是不明智的。参数为：
+第一个参数@var{_dep}为被评估的依赖。第二个参数@var{cost}为依赖的代价，
+第三个参数@var{distance}为两个insn的周期距离。钩子返回@code{true}，
+如果考虑两个insn间的距离，它们间的依赖被 target认为是昂贵的，
+否则为@code{false}。
 
-Defining this hook can be useful in multiple-issue out-of-order machines,
-where (a) it's practically hopeless to predict the actual data/resource
-delays, however: (b) there's a better chance to predict the actual grouping
-that will be formed, and (c) correctly emulating the grouping can be very
-important.  In such targets one may want to allow issuing dependent insns
-closer to one another---i.e., closer than the dependence distance;  however,
-not in cases of "costly dependences", which this hooks allows to define.
+在多发射，乱序机器上，定义该钩子可以有用，
+（a）实际中是无法预测真实的数据/资源延迟，
+但是（b）有一个更好的机会来预测实际要被执行的组，
+并且（c）正确模拟分组会非常重要。在这样的target上，
+可能想要允许发射距离较近的依赖insn，即，比依赖距离近；
+但是对于“昂贵的依赖”不这样做，这样就可以定义该钩子。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SCHED_H_I_D_EXTENDED (void)
-This hook is called by the insn scheduler after emitting a new instruction to
-the instruction stream.  The hook notifies a target backend to extend its
-per instruction data structures.
+该钩子在输出一个新的指令到指令流之后被insn调度器调用。
+钩子通知target后端来延伸它的每个指令的数据结构。
 @end deftypefn
 
 @deftypefn {Target Hook} void * TARGET_SCHED_ALLOC_SCHED_CONTEXT (void)
+
 Return a pointer to a store large enough to hold target scheduling context.
 @end deftypefn
 
@@ -6487,62 +6160,49 @@ Deallocate a store for target scheduling context pointed to by @var{tc}.
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_SPECULATE_INSN (rtx @var{insn}, int @var{request}, rtx *@var{new_pat})
-This hook is called by the insn scheduler when @var{insn} has only
-speculative dependencies and therefore can be scheduled speculatively.
-The hook is used to check if the pattern of @var{insn} has a speculative
-version and, in case of successful check, to generate that speculative
-pattern.  The hook should return 1, if the instruction has a speculative form,
-or -1, if it doesn't.  @var{request} describes the type of requested
-speculation.  If the return value equals 1 then @var{new_pat} is assigned
-the generated speculative pattern.
+该钩子当@var{insn}只有投机依赖，并因此可以被投机的调度时，被调用。
+钩子用于检查@var{insn}的指令模式是否具有一个投机版本，并且如果检查成功，
+则生成那个投机模式。钩子应该返回1，如果具有投机形式，或者-1，如果不具有。
+@var{request}描述了请求投机的类型。如果返回值等于1，
+则@var{new_pat}被赋值为生成的投机指令模式。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_NEEDS_BLOCK_P (rtx @var{insn})
-This hook is called by the insn scheduler during generation of recovery code
-for @var{insn}.  It should return nonzero, if the corresponding check
-instruction should branch to recovery code, or zero otherwise.
+该钩子在为@var{insn}生成恢复代码时，被insn调度器调用。其应该返回非零，
+如果相应的检查指令应该分支跳转到回复代码，否则为0.
 @end deftypefn
 
 @deftypefn {Target Hook} rtx TARGET_SCHED_GEN_CHECK (rtx @var{insn}, rtx @var{label}, int @var{mutate_p})
-This hook is called by the insn scheduler to generate a pattern for recovery
-check instruction.  If @var{mutate_p} is zero, then @var{insn} is a
-speculative instruction for which the check should be generated.
-@var{label} is either a label of a basic block, where recovery code should
-be emitted, or a null pointer, when requested check doesn't branch to
-recovery code (a simple check).  If @var{mutate_p} is nonzero, then
-a pattern for a branchy check corresponding to a simple check denoted by
-@var{insn} should be generated.  In this case @var{label} can't be null.
+该钩子被insn调度器调用，来为恢复检查指令产生一个指令模式。
+如果@var{mutate_p}为0，则@var{insn}为一个投机指令，对此应该生成检查。
+@var{label}或者为一个基本快的标号，恢复代码应该被生成的地方，
+或者为一个null指针，当请求的检查没有分支到恢复代码（简单的检查）。
+如果@var{mutate_p}为非 0，
+则由@var{insn}注解的对应于一个简单检查的指令模式应该被生成。
+这种情况下，@var{label}不能为null。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD_GUARD_SPEC (rtx @var{insn})
-This hook is used as a workaround for
-@samp{TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD_GUARD} not being
-called on the first instruction of the ready list.  The hook is used to
-discard speculative instruction that stand first in the ready list from
-being scheduled on the current cycle.  For non-speculative instructions,
-the hook should always return nonzero.  For example, in the ia64 backend
-the hook is used to cancel data speculative insns when the ALAT table
-is nearly full.
+该钩子用于在就绪列表中第一个指令上没有调用@samp{TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD_GUARD}的情况。
+钩子用于丢弃从当前周期调度的起始于就绪列表的投机指令。对于非投机指令，
+钩子应该总是返回非零。例如，在ia64后端，钩子用于取消数据投机insn，
+当ALAT表将满时。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SCHED_SET_SCHED_FLAGS (unsigned int *@var{flags}, spec_info_t @var{spec_info})
-This hook is used by the insn scheduler to find out what features should be
-enabled/used.  @var{flags} initially may have either the SCHED_RGN or SCHED_EBB
-bit set.  This denotes the scheduler pass for which the data should be
-provided.  The target backend should modify @var{flags} by modifying
-the bits corresponding to the following features: USE_DEPS_LIST, USE_GLAT,
-DETACH_LIFE_INFO, and DO_SPECULATION@.  For the DO_SPECULATION feature
-an additional structure @var{spec_info} should be filled by the target.
-The structure describes speculation types that can be used in the scheduler.
+该钩子被insn调度器用于查找什么特点应该被启用。
+@var{flags}初始时可以设置了SCHED_RGN或SCHED_EBB位。这指示调度器过程，
+应该提供什么数据。target后端应该修改@var{flags}，通过修改对应于下列特点的位：
+USE_DEPS_LIST, USE_GLAT, DETACH_LIFE_INFO和DO_SPECULATION。
+对于DO_SPECULATION特点，一个额外的结构体@var{spec_info}应该由target来填充。
+该结构体描述了调度器中可以使用的投机类型。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_SMS_RES_MII (struct ddg *@var{g})
-This hook is called by the swing modulo scheduler to calculate a
-resource-based lower bound which is based on the resources available in
-the machine and the resources required by each instruction.  The target
-backend can use @var{g} to calculate such bound.  A very simple lower
-bound will be used in case this hook is not implemented: the total number
-of instructions divided by the issue rate.
+该钩子被swing modulo调度器调用，来计算基于资源的下界，
+其基于在机器上可用的资源以及每个指令要求的资源。
+target后端可以使用@var{g}来计算这个边界。如果没有实现该钩子，
+则会使用一个非常简单的下界：指令总数除以发射率。
 @end deftypefn
 
 @node 段
@@ -6550,319 +6210,259 @@ of instructions divided by the issue rate.
 @c the above section title is WAY too long.  maybe cut the part between
 @c the (...)?  --mew 10feb93
 
-An object file is divided into sections containing different types of
-data.  In the most common case, there are three sections: the @dfn{text
-section}, which holds instructions and read-only data; the @dfn{data
-section}, which holds initialized writable data; and the @dfn{bss
-section}, which holds uninitialized data.  Some systems have other kinds
-of sections.
+目标文件被划分到包含不同类型数据的section中。大多数情况下，
+有三个section：@dfn{text section}，存放指令和只读数据；@dfn{data section}，
+存放初始化的可写数据；@dfn{bss section}，存放未初始化的数据。
+一些系统还具有其它类型的section。
 
-@file{varasm.c} provides several well-known sections, such as
-@code{text_section}, @code{data_section} and @code{bss_section}.
-The normal way of controlling a @code{@var{foo}_section} variable
-is to define the associated @code{@var{FOO}_SECTION_ASM_OP} macro,
-as described below.  The macros are only read once, when @file{varasm.c}
-initializes itself, so their values must be run-time constants.
-They may however depend on command-line flags.
+@file{varasm.c}提供了一些已知的section，例如@code{text_section}, 
+@code{data_section}和@code{bss_section}。
+通常控制一个@code{@var{foo}_section}变量的方式是定义一个相关联的
+宏@code{@var{FOO}_SECTION_ASM_OP}，正如下面将要描述的。
+宏只在@file{varasm.c}初始化时被读一次，
+所以它们的值必须为运行时常量。不过它们可以依赖于命令行标记。
 
-@emph{Note:} Some run-time files, such @file{crtstuff.c}, also make
-use of the @code{@var{FOO}_SECTION_ASM_OP} macros, and expect them
-to be string literals.
+注意：一些运行时文件，例如@file{crtstuff.c}，
+也使用@code{@var{FOO}_SECTION_ASM_OP}宏，并且将它们作为字符串文字。
 
-Some assemblers require a different string to be written every time a
-section is selected.  If your assembler falls into this category, you
-should define the @code{TARGET_ASM_INIT_SECTIONS} hook and use
-@code{get_unnamed_section} to set up the sections.
+一些汇编器要求每次选择section时，都要写入一个不同的字符串。
+如果你的汇编器属于这类，
+你应该定义@code{TARGET_ASM_INIT_SECTIONS}钩子并使用
+@code{get_unnamed_section}来建立section。
 
-You must always create a @code{text_section}, either by defining
-@code{TEXT_SECTION_ASM_OP} or by initializing @code{text_section}
-in @code{TARGET_ASM_INIT_SECTIONS}.  The same is true of
-@code{data_section} and @code{DATA_SECTION_ASM_OP}.  If you do not
-create a distinct @code{readonly_data_section}, the default is to
-reuse @code{text_section}.
+你必须总是创建一个@code{text_section}，
+或者通过定义@code{TEXT_SECTION_ASM_OP}，
+或者通过在@code{TARGET_ASM_INIT_SECTIONS}中初始化@code{text_section}。
+同样对于@code{data_section}和@code{DATA_SECTION_ASM_OP}。
+如果你没有创建一个独立的@code{readonly_data_section}，
+则缺省使用@code{text_section}。
 
-All the other @file{varasm.c} sections are optional, and are null
-if the target does not provide them.
+所有其他@file{varasm.c} section都是可选的，如果target不提供则为null。
 
 @defmac TEXT_SECTION_ASM_OP
-A C expression whose value is a string, including spacing, containing the
-assembler operation that should precede instructions and read-only data.
-Normally @code{"\t.text"} is right.
+一个C表达式，值为一个字符串，包括空格，
+其包含了在指令和只读数据之前的汇编操作。通常为@code{"\t.text"}。
 @end defmac
 
 @defmac HOT_TEXT_SECTION_NAME
-If defined, a C string constant for the name of the section containing most
-frequently executed functions of the program.  If not defined, GCC will provide
-a default definition if the target supports named sections.
+如果定义，则为一个C字符串常量，为包含最频繁被执行的程序的函数的section名字。
+如果没有定义，GCC将会提供一个缺省定义，如果target支持命名section。
 @end defmac
 
 @defmac UNLIKELY_EXECUTED_TEXT_SECTION_NAME
-If defined, a C string constant for the name of the section containing unlikely
-executed functions in the program.
+如果定义，则为一个C字符串常量，为包含程序中不太可能被执行的函数的section名字。
 @end defmac
 
 @defmac DATA_SECTION_ASM_OP
-A C expression whose value is a string, including spacing, containing the
-assembler operation to identify the following data as writable initialized
-data.  Normally @code{"\t.data"} is right.
+一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为可写的初始化数据的汇编操作。通常为@code{"\t.data"}。
 @end defmac
 
 @defmac SDATA_SECTION_ASM_OP
-If defined, a C expression whose value is a string, including spacing,
-containing the assembler operation to identify the following data as
-initialized, writable small data.
+如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为初始化的，可写的小数据的汇编操作。
 @end defmac
 
 @defmac READONLY_DATA_SECTION_ASM_OP
-A C expression whose value is a string, including spacing, containing the
-assembler operation to identify the following data as read-only initialized
-data.
+一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为只读的初始化数据的汇编操作。
 @end defmac
 
 @defmac BSS_SECTION_ASM_OP
-If defined, a C expression whose value is a string, including spacing,
-containing the assembler operation to identify the following data as
-uninitialized global data.  If not defined, and neither
-@code{ASM_OUTPUT_BSS} nor @code{ASM_OUTPUT_ALIGNED_BSS} are defined,
-uninitialized global data will be output in the data section if
-@option{-fno-common} is passed, otherwise @code{ASM_OUTPUT_COMMON} will be
-used.
+如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为未初始化的，global数据的汇编操作。如果没有定义，
+并且@code{ASM_OUTPUT_BSS}和@code{ASM_OUTPUT_ALIGNED_BSS}也都没有定义，
+则为初始化的global数据将被输出在data section，如果使用了@option{-fno-common}，
+否则将使用@code{ASM_OUTPUT_COMMON}。
 @end defmac
 
 @defmac SBSS_SECTION_ASM_OP
-If defined, a C expression whose value is a string, including spacing,
-containing the assembler operation to identify the following data as
-uninitialized, writable small data.
+如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为未初始化的，可写的小数据的汇编操作。
 @end defmac
 
 @defmac INIT_SECTION_ASM_OP
-If defined, a C expression whose value is a string, including spacing,
-containing the assembler operation to identify the following data as
-initialization code.  If not defined, GCC will assume such a section does
-not exist.  This section has no corresponding @code{init_section}
-variable; it is used entirely in runtime code.
+如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为初始化代码的汇编操作。如果没有定义，
+GCC将假设这样的section不存在。该section没有相应的@code{init_section}变量；
+其完全在运行时代码中使用。
 @end defmac
 
 @defmac FINI_SECTION_ASM_OP
-If defined, a C expression whose value is a string, including spacing,
-containing the assembler operation to identify the following data as
-finalization code.  If not defined, GCC will assume such a section does
-not exist.  This section has no corresponding @code{fini_section}
-variable; it is used entirely in runtime code.
+如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为结束代码的汇编操作。如果没有定义，
+GCC将假设这样的section不存在。该section没有相应的@code{fini_section}变量；
+其完全在运行时代码中使用。
 @end defmac
 
 @defmac INIT_ARRAY_SECTION_ASM_OP
-If defined, a C expression whose value is a string, including spacing,
-containing the assembler operation to identify the following data as
-part of the @code{.init_array} (or equivalent) section.  If not
-defined, GCC will assume such a section does not exist.  Do not define
-both this macro and @code{INIT_SECTION_ASM_OP}.
+如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为@code{.init_array}（或相当的） section的一部分的
+汇编操作。如果没有定义，GCC将假设这样的section不存在。
+不要同时定义该宏和@code{INIT_SECTION_ASM_OP}。
 @end defmac
 
 @defmac FINI_ARRAY_SECTION_ASM_OP
-If defined, a C expression whose value is a string, including spacing,
-containing the assembler operation to identify the following data as
-part of the @code{.fini_array} (or equivalent) section.  If not
-defined, GCC will assume such a section does not exist.  Do not define
-both this macro and @code{FINI_SECTION_ASM_OP}.
+如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为@code{.fini_array}（或相当的） section的一部分的
+汇编操作。如果没有定义，GCC将假设这样的section不存在。
+不要同时定义该宏和@code{FINI_SECTION_ASM_OP}。
 @end defmac
 
 @defmac CRT_CALL_STATIC_FUNCTION (@var{section_op}, @var{function})
-If defined, an ASM statement that switches to a different section
-via @var{section_op}, calls @var{function}, and switches back to
-the text section.  This is used in @file{crtstuff.c} if
-@code{INIT_SECTION_ASM_OP} or @code{FINI_SECTION_ASM_OP} to calls
-to initialization and finalization functions from the init and fini
-sections.  By default, this macro uses a simple function call.  Some
-ports need hand-crafted assembly code to avoid dependencies on
-registers initialized in the function prologue or to ensure that
-constant pools don't end up too far way in the text section.
+如果定义，为一个ASM语句，其通过@var{section_op}来切换到不同的section，
+调用@var{function}，然后切换回到text section。这在@file{crtstuff.c}中使用，
+如果@code{INIT_SECTION_ASM_OP}或@code{FINI_SECTION_ASM_OP}从init和
+fini section中调用初始化和结束函数。缺省下，该宏使用简单的函数调用。
+一些port需要手工的代码来避免在函数前奏中对寄存器初始化的依赖，
+或者确保常量池在text section中不要结束的太远。
 @end defmac
 
 @defmac TARGET_LIBGCC_SDATA_SECTION
-If defined, a string which names the section into which small
-variables defined in crtstuff and libgcc should go.  This is useful
-when the target has options for optimizing access to small data, and
-you want the crtstuff and libgcc routines to be conservative in what
-they expect of your application yet liberal in what your application
-expects.  For example, for targets with a @code{.sdata} section (like
-MIPS), you could compile crtstuff with @code{-G 0} so that it doesn't
-require small data support from your application, but use this macro
-to put small data into @code{.sdata} so that your application can
-access these variables whether it uses small data or not.
+如果定义，则为一个字符串，
+其命名了在crtstuff和libgcc中定义的小变量应该存放的section。
+这在target具有选项来优化访问小数据的时候很有用。例如，
+对于具有@code{.sdata} section（像MIPS）的target，
+你可以使用@code{-G 0}来编译crtstuff，使得其不需要小数据的支持，
+但是使用该宏将小数据放到@code{.sdata}中，
+这样你的应用程序不管是否使用小数据，都可以访问到这些变量。
 @end defmac
 
 @defmac FORCE_CODE_SECTION_ALIGN
-If defined, an ASM statement that aligns a code section to some
-arbitrary boundary.  This is used to force all fragments of the
-@code{.init} and @code{.fini} sections to have to same alignment
-and thus prevent the linker from having to add any padding.
+如果定义，则为一个ASM语句，其将code section对齐到某个任意的边界。
+这用于使得所有@code{.init}和@code{.fini} section的fragment都具有同样的对齐，
+这样就可以阻止连接器增加任何padding。
 @end defmac
 
 @defmac JUMP_TABLES_IN_TEXT_SECTION
-Define this macro to be an expression with a nonzero value if jump
-tables (for @code{tablejump} insns) should be output in the text
-section, along with the assembler instructions.  Otherwise, the
-readonly data section is used.
+定义该宏为一个表达式，具有非零值，如果跳转表（对于@code{tablejump} insn）
+应该被输出到text secton中，以及汇编指令。否则，使用只读data section。
 
-This macro is irrelevant if there is no separate readonly data section.
+如果没有独立的只读data section，则该宏不相关。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_INIT_SECTIONS (void)
-Define this hook if you need to do something special to set up the
-@file{varasm.c} sections, or if your target has some special sections
-of its own that you need to create.
+定义该钩子，如果你需要在建立@file{varasm.c} section时做一些特殊的处理，
+或者你的target具有一些特殊的section需要创建。
 
-GCC calls this hook after processing the command line, but before writing
-any assembly code, and before calling any of the section-returning hooks
-described below.
+GCC在处理完命令行之后，在写任何汇编代码之前，
+并在调用任何下面描述的返回section的钩子之前调用该钩子。
 @end deftypefn
 
 @deftypefn {Target Hook} TARGET_ASM_RELOC_RW_MASK (void)
-Return a mask describing how relocations should be treated when
-selecting sections.  Bit 1 should be set if global relocations
-should be placed in a read-write section; bit 0 should be set if
-local relocations should be placed in a read-write section.
+返回一个掩码，用来描述当选择section时，应该如何对待重定位。
+如果全局重定位应该放在读写section中，则应该设置位1；
+如果局部重定位应该被放在读写section中，则应该设置位0。
 
-The default version of this function returns 3 when @option{-fpic}
-is in effect, and 0 otherwise.  The hook is typically redefined
-when the target cannot support (some kinds of) dynamic relocations
-in read-only sections even in executables.
+该函数的缺省版本返回3，当@option{-fpic}有效时，否则返回0。
+当target不支持（某种）在只读section中，甚至在可执行程序中的动态重定位时，
+通常会重定义该钩子。
 @end deftypefn
 
 @deftypefn {Target Hook} {section *} TARGET_ASM_SELECT_SECTION (tree @var{exp}, int @var{reloc}, unsigned HOST_WIDE_INT @var{align})
-Return the section into which @var{exp} should be placed.  You can
-assume that @var{exp} is either a @code{VAR_DECL} node or a constant of
-some sort.  @var{reloc} indicates whether the initial value of @var{exp}
-requires link-time relocations.  Bit 0 is set when variable contains
-local relocations only, while bit 1 is set for global relocations.
-@var{align} is the constant alignment in bits.
+返回@var{exp}应该被放入的section。
+你可以假设@var{exp}为@code{VAR_DECL}节点或者一个常量。
+@var{reloc}指示@var{exp}的初始化值是否需要连接时重定位。
+当变量只包含局部重定位时位0被设置，对于全局重定位位1被设置。
+@var{align}为常量对齐位数。
 
-The default version of this function takes care of putting read-only
-variables in @code{readonly_data_section}.
+该函数的缺省版本只关心将只读变量放到@code{readonly_data_section}中。
 
-See also @var{USE_SELECT_SECTION_FOR_FUNCTIONS}.
+参见@var{USE_SELECT_SECTION_FOR_FUNCTIONS}.
 @end deftypefn
 
 @defmac USE_SELECT_SECTION_FOR_FUNCTIONS
-Define this macro if you wish TARGET_ASM_SELECT_SECTION to be called
-for @code{FUNCTION_DECL}s as well as for variables and constants.
+如果你希望对于@code{FUNCTION_DECL}，
+将会调用TARGET_ASM_SELECT_SECTION，则定义该宏。同样对于变量和常量。
 
-In the case of a @code{FUNCTION_DECL}, @var{reloc} will be zero if the
-function has been determined to be likely to be called, and nonzero if
-it is unlikely to be called.
+对于@code{FUNCTION_DECL}，@var{reloc}将为0，如果函数被确定有可能被调用，
+非零如果其不能被调用。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_UNIQUE_SECTION (tree @var{decl}, int @var{reloc})
-Build up a unique section name, expressed as a @code{STRING_CST} node,
-and assign it to @samp{DECL_SECTION_NAME (@var{decl})}.
-As with @code{TARGET_ASM_SELECT_SECTION}, @var{reloc} indicates whether
-the initial value of @var{exp} requires link-time relocations.
+构建一个唯一的section名，使用@code{STRING_CST}节点表示，
+并赋值为@samp{DECL_SECTION_NAME (@var{decl})}。
+跟@code{TARGET_ASM_SELECT_SECTION}一样，
+@var{reloc}指示@var{exp}的初始化值是否需要连接时重定位。
 
-The default version of this function appends the symbol name to the
-ELF section name that would normally be used for the symbol.  For
-example, the function @code{foo} would be placed in @code{.text.foo}.
-Whatever the actual target object format, this is often good enough.
+该函数的缺省版本向ELF section名中追加一个符号名。例如，
+函数@code{foo}将被放在@code{.text.foo}中。
+这对于实际的target目标格式通常是可以的。
 @end deftypefn
 
 @deftypefn {Target Hook} {section *} TARGET_ASM_FUNCTION_RODATA_SECTION (tree @var{decl})
-Return the readonly data section associated with
-@samp{DECL_SECTION_NAME (@var{decl})}.
-The default version of this function selects @code{.gnu.linkonce.r.name} if
-the function's section is @code{.gnu.linkonce.t.name}, @code{.rodata.name}
-if function is in @code{.text.name}, and the normal readonly-data section
-otherwise.
+返回与@samp{DECL_SECTION_NAME (@var{decl})}关联的只读data section。
+该函数的缺省版本选择@code{.gnu.linkonce.r.name}，
+如果函数的section为@code{.gnu.linkonce.t.name}，
+@code{.rodata.name}如果函数在@code{.text.name}中，
+否则为通常的只读data section。
 @end deftypefn
 
 @deftypefn {Target Hook} {section *} TARGET_ASM_SELECT_RTX_SECTION (enum machine_mode @var{mode}, rtx @var{x}, unsigned HOST_WIDE_INT @var{align})
-Return the section into which a constant @var{x}, of mode @var{mode},
-should be placed.  You can assume that @var{x} is some kind of
-constant in RTL@.  The argument @var{mode} is redundant except in the
-case of a @code{const_int} rtx.  @var{align} is the constant alignment
-in bits.
+返回具有机器模式mode的常量x应该放入的section。
+你可以假设@var{x}为RTL形式的某种常量。参数@var{mode}除了@code{const_int}之外，
+是冗余的。@var{align}为常量对齐位数。
 
-The default version of this function takes care of putting symbolic
-constants in @code{flag_pic} mode in @code{data_section} and everything
-else in @code{readonly_data_section}.
+该函数的缺省版本考虑将符号常量@code{flag_pic}模式的，放在@code{data_section}中，
+其它放在@code{readonly_data_section}中。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_MANGLE_DECL_ASSEMBLER_NAME (tree @var{decl}, tree @var{id})
-Define this hook if you need to postprocess the assembler name generated
-by target-independent code.  The @var{id} provided to this hook will be
-the computed name (e.g., the macro @code{DECL_NAME} of the @var{decl} in C,
-or the mangled name of the @var{decl} in C++).  The return value of the
-hook is an @code{IDENTIFIER_NODE} for the appropriate mangled name on
-your target system.  The default implementation of this hook just
-returns the @var{id} provided.
+定义该钩子，如果你需要处理由target无关的代码生成的汇编名。
+提供给该钩子的@var{id}将为被计算的名字（例如C中的@code{DECL_NAME}宏，
+或者C++中的mangled name）。该钩子的返回值为一个@code{IDENTIFIER_NODE}。
+该钩子的缺省实现只是返回提供的@var{id}。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ENCODE_SECTION_INFO (tree @var{decl}, rtx @var{rtl}, int @var{new_decl_p})
-Define this hook if references to a symbol or a constant must be
-treated differently depending on something about the variable or
-function named by the symbol (such as what section it is in).
+定义该钩子，如果对符号或者常量的引用必须根据符号所命名的变量或者函数来不同处理
+（例如其在哪个section中）。
 
-The hook is executed immediately after rtl has been created for
-@var{decl}, which may be a variable or function declaration or
-an entry in the constant pool.  In either case, @var{rtl} is the
-rtl in question.  Do @emph{not} use @code{DECL_RTL (@var{decl})}
-in this hook; that field may not have been initialized yet.
+钩子在为@var{decl}创建@var{rtl}之后立即被执行，
+@var{decl}可能为一个变量或者函数声明，或者常量池的入口。@emph{不要}在该钩子中
+使用@code{DECL_RTL (@var{decl})}；那个域可能还没有被初始化。
 
-In the case of a constant, it is safe to assume that the rtl is
-a @code{mem} whose address is a @code{symbol_ref}.  Most decls
-will also have this form, but that is not guaranteed.  Global
-register variables, for instance, will have a @code{reg} for their
-rtl.  (Normally the right thing to do with such unusual rtl is
-leave it alone.)
+对于常量，可以假设rtl为一个@code{mem}，其地址为一个 @code{symbol_ref}。
+大多数decl将具有这种形式，但不被保证。全局寄存器变量，例如，
+它们的rtl将具有一个@code{reg}。（对于这样不寻常的rtl通常是将其放在一边）。
 
-The @var{new_decl_p} argument will be true if this is the first time
-that @code{TARGET_ENCODE_SECTION_INFO} has been invoked on this decl.  It will
-be false for subsequent invocations, which will happen for duplicate
-declarations.  Whether or not anything must be done for the duplicate
-declaration depends on whether the hook examines @code{DECL_ATTRIBUTES}.
-@var{new_decl_p} is always true when the hook is called for a constant.
+参数@var{new_decl_p}将为真，
+如果这是第一次对于该decl调用@code{TARGET_ENCODE_SECTION_INFO}。
+对于后续的调用其将为假，这放生在复制的声明中。对于复制声明，是否需要做什么，
+取决于钩子是否检查@code{DECL_ATTRIBUTES}。当钩子对于常量被调用，
+则@var{new_decl_p}总为真。
 
 @cindex @code{SYMBOL_REF_FLAG}, in @code{TARGET_ENCODE_SECTION_INFO}
-The usual thing for this hook to do is to record flags in the
-@code{symbol_ref}, using @code{SYMBOL_REF_FLAG} or @code{SYMBOL_REF_FLAGS}.
-Historically, the name string was modified if it was necessary to
-encode more than one bit of information, but this practice is now
-discouraged; use @code{SYMBOL_REF_FLAGS}.
+该钩子通常做的事情是记录@code{symbol_ref}中的标记，
+使用@code{SYMBOL_REF_FLAG}或@code{SYMBOL_REF_FLAGS}。
 
-The default definition of this hook, @code{default_encode_section_info}
-in @file{varasm.c}, sets a number of commonly-useful bits in
-@code{SYMBOL_REF_FLAGS}.  Check whether the default does what you need
-before overriding it.
+该钩子的缺省定义，@file{varasm.c}中的@code{default_encode_section_info}，
+设置了@code{SYMBOL_REF_FLAGS}中通常有用的位。
+在覆盖它之前检查缺省代码是否做了你所需要的。
 @end deftypefn
 
 @deftypefn {Target Hook} const char *TARGET_STRIP_NAME_ENCODING (const char *name)
-Decode @var{name} and return the real name part, sans
-the characters that @code{TARGET_ENCODE_SECTION_INFO}
-may have added.
+解析@var{name}并返回真实的名字部分，
+没有@code{TARGET_ENCODE_SECTION_INFO}可能加进去的字符。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_IN_SMALL_DATA_P (tree @var{exp})
-Returns true if @var{exp} should be placed into a ``small data'' section.
-The default version of this hook always returns false.
+返回真，如果@var{exp}应该被放到“小数据”section中。该钩子的缺省版本总是返回假。
 @end deftypefn
 
 @deftypevar {Target Hook} bool TARGET_HAVE_SRODATA_SECTION
-Contains the value true if the target places read-only
-``small data'' into a separate section.  The default value is false.
+如果target将只读“小数据”放到单独的section中，则包含值为真。缺省值为假。
 @end deftypevar
 
 @deftypefn {Target Hook} bool TARGET_BINDS_LOCAL_P (tree @var{exp})
-Returns true if @var{exp} names an object for which name resolution
-rules must resolve to the current ``module'' (dynamic shared library
-or executable image).
+返回真，如果@var{exp}命名了一个对象，其名字解析规则必须
 
-The default version of this hook implements the name resolution rules
-for ELF, which has a looser model of global name binding than other
-currently supported object file formats.
+该钩子的缺省版本实现了ELF的名字解析规则，
+其具有一个比目前支持的其它目标文件格式较松散的全局名字绑定模型。
 @end deftypefn
 
 @deftypevar {Target Hook} bool TARGET_HAVE_TLS
-Contains the value true if the target supports thread-local storage.
-The default value is false.
+如果target支持thread-local storage，则包含值为真。缺省值为假。
 @end deftypevar
 
 
@@ -6928,180 +6528,147 @@ The default value is false.
 @cindex output of assembler code
 
 @c prevent bad page break with this line
-This describes the overall framework of an assembly file.
+这章描述了汇编文件的总体框架。
 
 @deftypefn {Target Hook} void TARGET_ASM_FILE_START ()
 @findex default_file_start
-Output to @code{asm_out_file} any text which the assembler expects to
-find at the beginning of a file.  The default behavior is controlled
-by two flags, documented below.  Unless your target's assembler is
-quite unusual, if you override the default, you should call
-@code{default_file_start} at some point in your target hook.  This
-lets other target files rely on these variables.
+将汇编器期望在文件起始处发现的任何文本输出到@code{asm_out_file}。
+缺省行为由两个标志控制，将在下面介绍。除非你target的汇编器十分不常见，
+如果你覆盖了缺省，则应该在你的target钩子上的某处调用@code{default_file_start}。
+这将让其它target文件依赖于这些变量。
 @end deftypefn
 
 @deftypevr {Target Hook} bool TARGET_ASM_FILE_START_APP_OFF
-If this flag is true, the text of the macro @code{ASM_APP_OFF} will be
-printed as the very first line in the assembly file, unless
-@option{-fverbose-asm} is in effect.  (If that macro has been defined
-to the empty string, this variable has no effect.)  With the normal
-definition of @code{ASM_APP_OFF}, the effect is to notify the GNU
-assembler that it need not bother stripping comments or extra
-whitespace from its input.  This allows it to work a bit faster.
+如果该标记为真，则宏@code{ASM_APP_OFF}的文本将作为汇编文本的第一行被打印，
+除非正在使用@option{-fverbose-asm}。（如果那个宏被定义为空字符串，
+则该变量将不起作用。）对于@code{ASM_APP_OFF}的通常定义，
+其效果是告知GNU汇编器不需要费功夫从输入中去除掉注释或额外的空格。
+这将使得运行更快些。
 
-The default is false.  You should not set it to true unless you have
-verified that your port does not generate any extra whitespace or
-comments that will cause GAS to issue errors in NO_APP mode.
+缺省为假。不要将其设为真，除非你已经核实你的port不会产生任何额外的空格或者注释，
+这将使得GAS在NO_APP模式下产生错误。
 @end deftypevr
 
 @deftypevr {Target Hook} bool TARGET_ASM_FILE_START_FILE_DIRECTIVE
-If this flag is true, @code{output_file_directive} will be called
-for the primary source file, immediately after printing
-@code{ASM_APP_OFF} (if that is enabled).  Most ELF assemblers expect
-this to be done.  The default is false.
+如果该标记为真，对于主源文件，@code{output_file_directive}将被调用，
+就在打印了@code{ASM_APP_OFF}之后（如果启用了该功能）。
+大多数ELF汇编器期望做这件事。缺省为假。
 @end deftypevr
 
 @deftypefn {Target Hook} void TARGET_ASM_FILE_END ()
-Output to @code{asm_out_file} any text which the assembler expects
-to find at the end of a file.  The default is to output nothing.
+将汇编器期望在文件结尾发现的任何文本输出到中。缺省为什么也不输出。
 @end deftypefn
 
 @deftypefun void file_end_indicate_exec_stack ()
-Some systems use a common convention, the @samp{.note.GNU-stack}
-special section, to indicate whether or not an object file relies on
-the stack being executable.  If your system uses this convention, you
-should define @code{TARGET_ASM_FILE_END} to this function.  If you
-need to do other things in that hook, have your hook function call
-this function.
+一些系统使用通用的约定，用特定的@samp{.note.GNU-stack} section，
+来指示一个依赖栈的目标文件是否被执行。如果你的系统使用了该约定，
+你应该将@code{TARGET_ASM_FILE_END}定义为该函数。
+如果你需要在钩子中做其它事情，则要在你的钩子函数中调用该函数。
 @end deftypefun
 
 @defmac ASM_COMMENT_START
-A C string constant describing how to begin a comment in the target
-assembler language.  The compiler assumes that the comment will end at
-the end of the line.
+一个C字符串常量，描述了如何在target汇编语言中起始一条注释。
+编译器假设注释将结束于行尾。
 @end defmac
 
 @defmac ASM_APP_ON
-A C string constant for text to be output before each @code{asm}
-statement or group of consecutive ones.  Normally this is
-@code{"#APP"}, which is a comment that has no effect on most
-assemblers but tells the GNU assembler that it must check the lines
-that follow for all valid assembler constructs.
+一个C字符串常量，将在每个@code{asm}语句或者一组连续的@code{asm}语句之前被输出。
+通常为@code{"#APP"}，其为一条注释，对于多数汇编器不起作用，
+但可以告诉GNU汇编器必须对随后的行检查所有的有效汇编结构。
 @end defmac
 
 @defmac ASM_APP_OFF
-A C string constant for text to be output after each @code{asm}
-statement or group of consecutive ones.  Normally this is
-@code{"#NO_APP"}, which tells the GNU assembler to resume making the
-time-saving assumptions that are valid for ordinary compiler output.
+一个C字符串常量，将在每个@code{asm}语句或者一组连续的@code{asm}语句之前被输出。
+通常为@code{"#NO_APP"}，告诉GNU汇编器继续进行省时的假设，
+认为通常的编译器输出是有效的。
 @end defmac
 
 @defmac ASM_OUTPUT_SOURCE_FILENAME (@var{stream}, @var{name})
-A C statement to output COFF information or DWARF debugging information
-which indicates that filename @var{name} is the current source file to
-the stdio stream @var{stream}.
+一条C语句，输出COFF信息或者DWARF调试信息，
+用来指示文件名@var{name}为当前的对于标准输入输出流@var{stream}的源文件。
 
-This macro need not be defined if the standard form of output
-for the file format in use is appropriate.
+该宏不需要被定义，如果输出的标准形式适用于正在使用的文件格式。
 @end defmac
 
 @defmac OUTPUT_QUOTED_STRING (@var{stream}, @var{string})
-A C statement to output the string @var{string} to the stdio stream
-@var{stream}.  If you do not call the function @code{output_quoted_string}
-in your config files, GCC will only call it to output filenames to
-the assembler source.  So you can use it to canonicalize the format
-of the filename using this macro.
+一条C语句，将字符串@var{string}输出到stdio流@var{stream}中。
+如果你不在你的配置文件中调用函数@code{output_quoted_string}，
+则GCC将只调用它来输出文件名到汇编源文件中。
+所以你可以使用它来规范使用该宏的文件名的格式。
 @end defmac
 
 @defmac ASM_OUTPUT_IDENT (@var{stream}, @var{string})
-A C statement to output something to the assembler file to handle a
-@samp{#ident} directive containing the text @var{string}.  If this
-macro is not defined, nothing is output for a @samp{#ident} directive.
+一条C语句，用来输出一些东西到汇编文件中，
+以处理包含文本@var{string}的@samp{#ident}伪指令。如果没有定义该宏，
+对于@samp{#ident}伪指令，将不输出任何东西。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_NAMED_SECTION (const char *@var{name}, unsigned int @var{flags}, unsigned int @var{align})
-Output assembly directives to switch to section @var{name}.  The section
-should have attributes as specified by @var{flags}, which is a bit mask
-of the @code{SECTION_*} flags defined in @file{output.h}.  If @var{align}
-is nonzero, it contains an alignment in bytes to be used for the section,
-otherwise some target default should be used.  Only targets that must
-specify an alignment within the section directive need pay attention to
-@var{align} -- we will still use @code{ASM_OUTPUT_ALIGN}.
+输出汇编伪指令来切换section名字。section应该具有@var{flags}指定的属性，
+其为@file{output.h}中定义的@code{SECTION_*}标记的位掩码。如果@var{align}非零，
+则其包含了用于section的对齐字节数，否则将使用target缺省的。
+只有那些必须在section伪指令里指定对齐的target才需要关注@var{align}
+ — 我们仍然使用@code{ASM_OUTPUT_ALIGN}。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_HAVE_NAMED_SECTIONS
-This flag is true if the target supports @code{TARGET_ASM_NAMED_SECTION}.
+该标记为真，如果target支持@code{TARGET_ASM_NAMED_SECTION}。
 @end deftypefn
 
 @anchor{TARGET_HAVE_SWITCHABLE_BSS_SECTIONS}
 @deftypefn {Target Hook} bool TARGET_HAVE_SWITCHABLE_BSS_SECTIONS
-This flag is true if we can create zeroed data by switching to a BSS
-section and then using @code{ASM_OUTPUT_SKIP} to allocate the space.
-This is true on most ELF targets.
+该标记为真，如果我们能够通过切换到BSS section来创建初始化为0的数据，
+并且使用@code{ASM_OUTPUT_SKIP}来分配空间。这在大多数ELF target上为真。
 @end deftypefn
 
 @deftypefn {Target Hook} {unsigned int} TARGET_SECTION_TYPE_FLAGS (tree @var{decl}, const char *@var{name}, int @var{reloc})
-Choose a set of section attributes for use by @code{TARGET_ASM_NAMED_SECTION}
-based on a variable or function decl, a section name, and whether or not the
-declaration's initializer may contain runtime relocations.  @var{decl} may be
-null, in which case read-write data should be assumed.
+根据变量或函数decl，section名name，和声明的初始化是否可以包含运行时重定位，
+来选择供@code{TARGET_ASM_NAMED_SECTION}使用的section属性集。
+@var{decl}可以为null，这种情况下，将假设为可读写数据。
 
-The default version of this function handles choosing code vs data,
-read-only vs read-write data, and @code{flag_pic}.  You should only
-need to override this if your target has special flags that might be
-set via @code{__attribute__}.
+该函数的缺省版本用来处理选择代码和数据，只读数据和可读写数据，
+以及@code{flag_pic}。
+你应该只有在你的target具有通过@code{__attribute__}设置的特定标记时，
+才需要覆盖该函数。
 @end deftypefn
 
 @deftypefn {Target Hook} {int} TARGET_ASM_RECORD_GCC_SWITCHES (print_switch_type @var{type}, const char * @var{text})
-Provides the target with the ability to record the gcc command line
-switches that have been passed to the compiler, and options that are
-enabled.  The @var{type} argument specifies what is being recorded.
-It can take the following values:
+使得target能够记录传给编译器的gcc命令行开关，和打开的选项。
+参数@var{type}指定了要记录的内容。其可以为下面的值：
 
 @table @gcctabopt
 @item SWITCH_TYPE_PASSED
-@var{text} is a command line switch that has been set by the user.
+@var{text}为用户设置的命令行开关。 
 
 @item SWITCH_TYPE_ENABLED
-@var{text} is an option which has been enabled.  This might be as a
-direct result of a command line switch, or because it is enabled by
-default or because it has been enabled as a side effect of a different
-command line switch.  For example, the @option{-O2} switch enables
-various different individual optimization passes.
+@var{text}为开启的选项。这可能为命令行开关的直接结果，或者是因为其被缺省打开，
+或者因为其被不同的命令行开关的副作用打开。例如，
+@option{-O2}开关打开了各种不同的独立的优化过程。 
 
 @item SWITCH_TYPE_DESCRIPTIVE
-@var{text} is either NULL or some descriptive text which should be
-ignored.  If @var{text} is NULL then it is being used to warn the
-target hook that either recording is starting or ending.  The first
-time @var{type} is SWITCH_TYPE_DESCRIPTIVE and @var{text} is NULL, the
-warning is for start up and the second time the warning is for
-wind down.  This feature is to allow the target hook to make any
-necessary preparations before it starts to record switches and to
-perform any necessary tidying up after it has finished recording
-switches.
+@var{text}或者为NULL，或者为一些应该被忽略的描述文本。如果@var{text}text为NULL，
+则其被用来警告target钩子记录开始或者结束。第一次，
+@var{type}为SWITCH_TYPE_DESCRIPTIVE并且@var{text}为NULL，这是警告记录开始了，
+第二次，是警告结束了。该特征可以允许target钩子来做任何需要的准备，
+在其开始记录开关的时候，并执行一些比较的整理，在其完成记录开关之后。
 
 @item SWITCH_TYPE_LINE_START
-This option can be ignored by this target hook.
+该选项可以被该target钩子忽略掉。 
 
 @item  SWITCH_TYPE_LINE_END
-This option can be ignored by this target hook.
+该选项可以被该target钩子忽略掉。 
 @end table
 
-The hook's return value must be zero.  Other return values may be
-supported in the future.
+钩子的返回值必须为0。其它返回值可能在将来被支持。
 
-By default this hook is set to NULL, but an example implementation is
-provided for ELF based targets.  Called @var{elf_record_gcc_switches},
-it records the switches as ASCII text inside a new, string mergeable
-section in the assembler output file.  The name of the new section is
-provided by the @code{TARGET_ASM_RECORD_GCC_SWITCHES_SECTION} target
-hook.
+缺省下，该钩子被设为NULL，但是对于基于ELF的target，有一个实现例子。
+叫做@var{elf_record_gcc_switches}，其记录了开关，
+并作为ASCII文本放在汇编输出文件中一个新的，可以字符串合并的section。
+新section的名字由target钩子@code{TARGET_ASM_RECORD_GCC_SWITCHES_SECTION}提供。
 @end deftypefn
 
 @deftypefn {Target Hook} {const char *} TARGET_ASM_RECORD_GCC_SWITCHES_SECTION
-This is the name of the section that will be created by the example
-ELF implementation of the @code{TARGET_ASM_RECORD_GCC_SWITCHES} target
-hook.
+这是@code{TARGET_ASM_RECORD_GCC_SWITCHES} target钩子的ELF实现的例子所创建的section名字。
 @end deftypefn
 
 @need 2000
@@ -7118,138 +6685,111 @@ hook.
 @deftypevrx {Target Hook} {const char *} TARGET_ASM_UNALIGNED_SI_OP
 @deftypevrx {Target Hook} {const char *} TARGET_ASM_UNALIGNED_DI_OP
 @deftypevrx {Target Hook} {const char *} TARGET_ASM_UNALIGNED_TI_OP
-These hooks specify assembly directives for creating certain kinds
-of integer object.  The @code{TARGET_ASM_BYTE_OP} directive creates a
-byte-sized object, the @code{TARGET_ASM_ALIGNED_HI_OP} one creates an
-aligned two-byte object, and so on.  Any of the hooks may be
-@code{NULL}, indicating that no suitable directive is available.
+这些钩子指定了用于创建特定类型的整数对象的汇编伪指令。
+@code{TARGET_ASM_BYTE_OP}伪指令创建一个字节大小的对象，
+@code{TARGET_ASM_ALIGNED_HI_OP}创建一个两个字节对齐的对象，等等。
+这些钩子都可以为@code{NULL}，这表示没有合适的伪指令。
 
-The compiler will print these strings at the start of a new line,
-followed immediately by the object's initial value.  In most cases,
-the string should contain a tab, a pseudo-op, and then another tab.
+编译器将在一个新行中的起始处打印这些字符串，随后紧跟对象的初始化值。
+大多数情况下，字符串应该包含一个tab，一个伪操作符，然后是另一个tab。
 @end deftypevr
 
 @deftypefn {Target Hook} bool TARGET_ASM_INTEGER (rtx @var{x}, unsigned int @var{size}, int @var{aligned_p})
-The @code{assemble_integer} function uses this hook to output an
-integer object.  @var{x} is the object's value, @var{size} is its size
-in bytes and @var{aligned_p} indicates whether it is aligned.  The
-function should return @code{true} if it was able to output the
-object.  If it returns false, @code{assemble_integer} will try to
-split the object into smaller parts.
+函数@code{assemble_integer}使用该钩子来输出一个整数对象。@var{x}为对象的值，
+@var{size}为它的以字节为单位的大小，@var{aligned_p}指示其是否为对齐的。
+函数应该返回真，如果它能够输出对象。如果返回假，
+则@code{assemble_integer}将尝试把对象分割为更小的部分。
 
-The default implementation of this hook will use the
-@code{TARGET_ASM_BYTE_OP} family of strings, returning @code{false}
-when the relevant string is @code{NULL}.
+该钩子的缺省实现将使用@code{TARGET_ASM_BYTE_OP}字符串家族，
+当相应字符串为@code{NULL}时返回假。
 @end deftypefn
 
 @defmac OUTPUT_ADDR_CONST_EXTRA (@var{stream}, @var{x}, @var{fail})
-A C statement to recognize @var{rtx} patterns that
-@code{output_addr_const} can't deal with, and output assembly code to
-@var{stream} corresponding to the pattern @var{x}.  This may be used to
-allow machine-dependent @code{UNSPEC}s to appear within constants.
+一条C语句用来识别@code{output_addr_const}不能处理的@var{rtx}模式，
+并输出汇编代码到模式@var{x}对应的@var{stream}中。
+这可以用来允许在常量中出现机器相关的@code{UNSPEC}。
 
-If @code{OUTPUT_ADDR_CONST_EXTRA} fails to recognize a pattern, it must
-@code{goto fail}, so that a standard error message is printed.  If it
-prints an error message itself, by calling, for example,
-@code{output_operand_lossage}, it may just complete normally.
+如果@code{OUTPUT_ADDR_CONST_EXTRA}没有能够识别出指令模式，
+其必须@code{goto fail}， 这样就会打印出一个标准错误消息。
+如果其本身打印了一个错误消息，
+例如通过调用@code{output_operand_lossage}，其可以正常的结束。
 @end defmac
 
 @defmac ASM_OUTPUT_ASCII (@var{stream}, @var{ptr}, @var{len})
-A C statement to output to the stdio stream @var{stream} an assembler
-instruction to assemble a string constant containing the @var{len}
-bytes at @var{ptr}.  @var{ptr} will be a C expression of type
-@code{char *} and @var{len} a C expression of type @code{int}.
+一条C语句，用来输出到stdio流@var{stream}中一条汇编指令，
+以组合一个在@var{ptr}处包含@var{len}个字节的字符串常量。
+@var{ptr}将为一个@code{char *}类型的C表达式，
+@var{len}为一个@code{int}型的C表达式。
 
-If the assembler has a @code{.ascii} pseudo-op as found in the
-Berkeley Unix assembler, do not define the macro
-@code{ASM_OUTPUT_ASCII}.
+如果汇编器具有一个@code{.ascii}伪指令，正如在Berkeley Unix汇编器上的，
+则不要定义宏@code{ASM_OUTPUT_ASCII}。
 @end defmac
 
 @defmac ASM_OUTPUT_FDESC (@var{stream}, @var{decl}, @var{n})
-A C statement to output word @var{n} of a function descriptor for
-@var{decl}.  This must be defined if @code{TARGET_VTABLE_USES_DESCRIPTORS}
-is defined, and is otherwise unused.
+一条C语句，用来输出@var{decl}的函数描述符的字@var{n}。
+这必须在定义@code{TARGET_VTABLE_USES_DESCRIPTORS}时被定义，否则将不起作用。
 @end defmac
 
 @defmac CONSTANT_POOL_BEFORE_FUNCTION
-You may define this macro as a C expression.  You should define the
-expression to have a nonzero value if GCC should output the constant
-pool for a function before the code for the function, or a zero value if
-GCC should output the constant pool after the function.  If you do
-not define this macro, the usual case, GCC will output the constant
-pool before the function.
+你可以定义该宏为一个C表达式。你应该定义表达式具有非零值，
+如果GCC应该在输出函数的代码前，输出常量池，或者定义为0，
+如果GCC应该在函数后输出常量池。如果你不定义该宏，则通常情况下，
+GCC将在函数前输出常量池。
 @end defmac
 
 @defmac ASM_OUTPUT_POOL_PROLOGUE (@var{file}, @var{funname}, @var{fundecl}, @var{size})
-A C statement to output assembler commands to define the start of the
-constant pool for a function.  @var{funname} is a string giving
-the name of the function.  Should the return type of the function
-be required, it can be obtained via @var{fundecl}.  @var{size}
-is the size, in bytes, of the constant pool that will be written
-immediately after this call.
+一条C语句，用来输出汇编命令，以定义函数的常量池的起始。
+@var{funname}为一个字符串，给定了函数的名字。如果需要函数的返回类型，
+则可以通过@var{fundecl}来获得。
+@var{size}为在该调用之后要立即写入的常量池的大小，以字节为单位。
 
-If no constant-pool prefix is required, the usual case, this macro need
-not be defined.
+通常情况下，如果不需要常量池前缀，该宏不需要被定义。
 @end defmac
 
 @defmac ASM_OUTPUT_SPECIAL_POOL_ENTRY (@var{file}, @var{x}, @var{mode}, @var{align}, @var{labelno}, @var{jumpto})
-A C statement (with or without semicolon) to output a constant in the
-constant pool, if it needs special treatment.  (This macro need not do
-anything for RTL expressions that can be output normally.)
+一条C语句（带有或者不带有分号），用来输出一个常量在常量池中，
+如果其需要特殊的处理。（该宏对于可以正常输出的RTL表达式不需要做任何事情。）
 
-The argument @var{file} is the standard I/O stream to output the
-assembler code on.  @var{x} is the RTL expression for the constant to
-output, and @var{mode} is the machine mode (in case @var{x} is a
-@samp{const_int}).  @var{align} is the required alignment for the value
-@var{x}; you should output an assembler directive to force this much
-alignment.
+参数@var{file}为将汇编代码输出到的标准I/O流。@var{x}为要输出的常量的RTL表达式，
+@var{mode}为机器模式（用于@var{x}为@samp{const_int}时）。
+@var{align}为值@var{x}所需要的对齐；你应该输出一个汇编伪指令来执行该对齐。
 
-The argument @var{labelno} is a number to use in an internal label for
-the address of this pool entry.  The definition of this macro is
-responsible for outputting the label definition at the proper place.
-Here is how to do this:
+参数@var{labelno}为该池中实体的地址的内部标号的编号。
+该宏的定义负责在合适的地方输出标号的定义。这里有一个实现的例子：
 
 @smallexample
 @code{(*targetm.asm_out.internal_label)} (@var{file}, "LC", @var{labelno});
 @end smallexample
 
-When you output a pool entry specially, you should end with a
-@code{goto} to the label @var{jumpto}.  This will prevent the same pool
-entry from being output a second time in the usual manner.
+当你专门输出一个池中实体时，你应该结束于一个@code{goto}，
+以跳转到标号@var{jumpto}。这将阻止相同的池中实体通过通常的方式被再一次输出。
 
-You need not define this macro if it would do nothing.
+如果不做任何事情，则不要定义该宏。
 @end defmac
 
 @defmac ASM_OUTPUT_POOL_EPILOGUE (@var{file} @var{funname} @var{fundecl} @var{size})
-A C statement to output assembler commands to at the end of the constant
-pool for a function.  @var{funname} is a string giving the name of the
-function.  Should the return type of the function be required, you can
-obtain it via @var{fundecl}.  @var{size} is the size, in bytes, of the
-constant pool that GCC wrote immediately before this call.
+一条C语句，用来输出汇编命令到函数常量池的结尾。@var{funname}为一个字符串，
+给出了函数的名字。如果需要函数的返回类型，可以通过@var{fundecl}来获得。
+@var{size}为GCC在该调用之前立即写入的常量池的大小，以字节为单位。
 
-If no constant-pool epilogue is required, the usual case, you need not
-define this macro.
+通常情况下，如果不需要常量池结束语，则不需要定义该宏。
 @end defmac
 
 @defmac IS_ASM_LOGICAL_LINE_SEPARATOR (@var{C}, @var{STR})
-Define this macro as a C expression which is nonzero if @var{C} is
-used as a logical line separator by the assembler.  @var{STR} points
-to the position in the string where @var{C} was found; this can be used if
-a line separator uses multiple characters.
+定义该宏为一个C表达式，其为非零，如果@var{C}被汇编器用作逻辑行分隔符。
+@var{STR}指向在字符串中@var{C}被发现的位置；
+这可以用于行分隔符使用多个字符的时候。
 
-If you do not define this macro, the default is that only
-the character @samp{;} is treated as a logical line separator.
+如果你不定义该宏，则缺省的为只将字符@samp{;}作为逻辑行的分隔符。
 @end defmac
 
 @deftypevr {Target Hook} {const char *} TARGET_ASM_OPEN_PAREN
 @deftypevrx {Target Hook} {const char *} TARGET_ASM_CLOSE_PAREN
-These target hooks are C string constants, describing the syntax in the
-assembler for grouping arithmetic expressions.  If not overridden, they
-default to normal parentheses, which is correct for most assemblers.
+这些target钩子为C字符串常量，描述了算术表达式组合的汇编语法。
+如果没有被覆盖，它们缺省为通常的括号，这对大多数汇编器都是正确的。
 @end deftypevr
 
-These macros are provided by @file{real.h} for writing the definitions
-of @code{ASM_OUTPUT_DOUBLE} and the like:
+这些宏由@file{real.h}提供，用于写@code{ASM_OUTPUT_DOUBLE}等的定义：
 
 @defmac REAL_VALUE_TO_TARGET_SINGLE (@var{x}, @var{l})
 @defmacx REAL_VALUE_TO_TARGET_DOUBLE (@var{x}, @var{l})
@@ -7257,124 +6797,101 @@ of @code{ASM_OUTPUT_DOUBLE} and the like:
 @defmacx REAL_VALUE_TO_TARGET_DECIMAL32 (@var{x}, @var{l})
 @defmacx REAL_VALUE_TO_TARGET_DECIMAL64 (@var{x}, @var{l})
 @defmacx REAL_VALUE_TO_TARGET_DECIMAL128 (@var{x}, @var{l})
-These translate @var{x}, of type @code{REAL_VALUE_TYPE}, to the
-target's floating point representation, and store its bit pattern in
-the variable @var{l}.  For @code{REAL_VALUE_TO_TARGET_SINGLE} and
-@code{REAL_VALUE_TO_TARGET_DECIMAL32}, this variable should be a
-simple @code{long int}.  For the others, it should be an array of
-@code{long int}.  The number of elements in this array is determined
-by the size of the desired target floating point data type: 32 bits of
-it go in each @code{long int} array element.  Each array element holds
-32 bits of the result, even if @code{long int} is wider than 32 bits
-on the host machine.
+这些将类型为@code{REAL_VALUE_TYPE}的@var{x}，转换为target的浮点表示，
+并将其存储在变量@var{l}中。
+对于@code{REAL_VALUE_TO_TARGET_SINGLE}和@code{REAL_VALUE_TO_TARGET_DECIMAL32}，
+该变量应该为一个简单的@code{long int}。对于其它的，
+其应该为一个@code{long int}的数组。
+该数组的元素个数由所需要的target浮点数据类型的大小决定：
+每个@code{long int}数组元素有32位。每个数组元素存放32位的结果，
+即使@code{long int}在host机器上比32位宽。
 
-The array element values are designed so that you can print them out
-using @code{fprintf} in the order they should appear in the target
-machine's memory.
+数组元素值被设计成，
+可以使用@code{fprintf}按照在target机器内存中的顺序来打印它们。
 @end defmac
 
 @node 未初始化的数据
 @subsection 未初始化变量的输出
 
-Each of the macros in this section is used to do the whole job of
-outputting a single uninitialized variable.
+这一节的每个宏都是用于输出单个未初始化变量的整个工作中。
 
 @defmac ASM_OUTPUT_COMMON (@var{stream}, @var{name}, @var{size}, @var{rounded})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} the assembler definition of a common-label named
-@var{name} whose size is @var{size} bytes.  The variable @var{rounded}
-is the size rounded up to whatever alignment the caller wants.
+一条C语句（没有分号），用来将大小为@var{size}，
+名字为@var{name}的通用标号的汇编定义，输出到stdio流@var{stream}中。
+变量@var{rounded}为调用者想要对齐而舍入的大小。
 
-Use the expression @code{assemble_name (@var{stream}, @var{name})} to
-output the name itself; before and after that, output the additional
-assembler syntax for defining the name, and a newline.
+使用表达式@code{assemble_name (@var{stream}, @var{name})}来输出name本身；
+在这之前和之后，输出额外的定义name的汇编语法，以及换行。
 
-This macro controls how the assembler definitions of uninitialized
-common global variables are output.
+该宏控制如何输出未初始化的通用全局变量的汇编定义。
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGNED_COMMON (@var{stream}, @var{name}, @var{size}, @var{alignment})
-Like @code{ASM_OUTPUT_COMMON} except takes the required alignment as a
-separate, explicit argument.  If you define this macro, it is used in
-place of @code{ASM_OUTPUT_COMMON}, and gives you more flexibility in
-handling the required alignment of the variable.  The alignment is specified
-as the number of bits.
+类似@code{ASM_OUTPUT_COMMON}，除了其接受一个alignment，作为独立，显式的参数。
+如果你定义了该宏，其被用于替换@code{ASM_OUTPUT_COMMON}，
+使得你在处理变量对齐方面变得更加灵活。aligment被指定为位的数目。
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGNED_DECL_COMMON (@var{stream}, @var{decl}, @var{name}, @var{size}, @var{alignment})
-Like @code{ASM_OUTPUT_ALIGNED_COMMON} except that @var{decl} of the
-variable to be output, if there is one, or @code{NULL_TREE} if there
-is no corresponding variable.  If you define this macro, GCC will use it
-in place of both @code{ASM_OUTPUT_COMMON} and
-@code{ASM_OUTPUT_ALIGNED_COMMON}.  Define this macro when you need to see
-the variable's decl in order to chose what to output.
+类似@code{ASM_OUTPUT_ALIGNED_COMMON}，除了要被输出的变量的@var{decl}，
+如果存在的话，或者为@code{NULL_TREE}如果没有相应的变量。如果你定义了该宏，
+GCC将替换@code{ASM_OUTPUT_COMMON}和@code{ASM_OUTPUT_ALIGNED_COMMON}。
+当你需要看到变量的decl，以便选择如何输出时，可以定义该宏。
 @end defmac
 
 @defmac ASM_OUTPUT_BSS (@var{stream}, @var{decl}, @var{name}, @var{size}, @var{rounded})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} the assembler definition of uninitialized global @var{decl} named
-@var{name} whose size is @var{size} bytes.  The variable @var{rounded}
-is the size rounded up to whatever alignment the caller wants.
+一条C语句（没有分号），用来将名字为@var{name}，
+大小为@var{size}个字节的未初始化的全局@var{decl}的汇编定义输出到stdio流
+@var{stream}中。变量@var{rounded}为调用者想要对齐而舍入的大小。
 
-Try to use function @code{asm_output_bss} defined in @file{varasm.c} when
-defining this macro.  If unable, use the expression
-@code{assemble_name (@var{stream}, @var{name})} to output the name itself;
-before and after that, output the additional assembler syntax for defining
-the name, and a newline.
+当定义该宏时，可以尝试使用@file{varasm.c}中定义的@code{asm_output_bss}。
+如果不行，
+使用表达式@code{assemble_name (@var{stream}, @var{name})}来输出name本身；
+在此之前和之后，输出额外的定义name的汇编语法，以及换行。
 
-There are two ways of handling global BSS@.  One is to define either
-this macro or its aligned counterpart, @code{ASM_OUTPUT_ALIGNED_BSS}.
-The other is to have @code{TARGET_ASM_SELECT_SECTION} return a
-switchable BSS section (@pxref{TARGET_HAVE_SWITCHABLE_BSS_SECTIONS}).
-You do not need to do both.
+有两种方式来处理全局BSS。一种是定义该宏或者它的对齐副本，
+@code{ASM_OUTPUT_ALIGNED_BSS}。
+另一种是让@code{TARGET_ASM_SELECT_SECTION}返回一个可切换的BSS section
+（参见 @ref{TARGET_HAVE_SWITCHABLE_BSS_SECTIONS}）。你不需要两者都做。
 
-Some languages do not have @code{common} data, and require a
-non-common form of global BSS in order to handle uninitialized globals
-efficiently.  C++ is one example of this.  However, if the target does
-not support global BSS, the front end may choose to make globals
-common in order to save space in the object file.
+一些语言不具有@code{common}数据，并且要求全局BSS为non-common的，
+以便高效的处理未初始化全局变量。C++就是这样的例子。然而，
+如果target不支持全局BSS，则前端可以选择生成全局common，
+以便在目标文件中节省空间。
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGNED_BSS (@var{stream}, @var{decl}, @var{name}, @var{size}, @var{alignment})
-Like @code{ASM_OUTPUT_BSS} except takes the required alignment as a
-separate, explicit argument.  If you define this macro, it is used in
-place of @code{ASM_OUTPUT_BSS}, and gives you more flexibility in
-handling the required alignment of the variable.  The alignment is specified
-as the number of bits.
+类似@code{ASM_OUTPUT_BSS}，除了其接受需要的aligment作为单独，显式的参数。
+如果你定义了该宏，其被用于替换@code{ASM_OUTPUT_BSS}，
+这使得你在处理变量所需的对齐方面更加灵活。aligment被指定为位数。
 
-Try to use function @code{asm_output_aligned_bss} defined in file
+当定义该宏时，
+尝试使用在文件@file{varasm.c}中定义的函数@code{asm_output_aligned_bss}。
 @file{varasm.c} when defining this macro.
 @end defmac
 
 @defmac ASM_OUTPUT_LOCAL (@var{stream}, @var{name}, @var{size}, @var{rounded})
-A C statement (sans semicolon) to output to the stdio stream
-@var{stream} the assembler definition of a local-common-label named
-@var{name} whose size is @var{size} bytes.  The variable @var{rounded}
-is the size rounded up to whatever alignment the caller wants.
+一条C语句（没有分号），用来将名字为@var{name}，
+大小为@var{size}个字节的local-common标号的汇编定义输出到stdio流@var{stream}中。
+变量@var{rounded}为调用者想要对齐而舍入的大小。
 
-Use the expression @code{assemble_name (@var{stream}, @var{name})} to
-output the name itself; before and after that, output the additional
-assembler syntax for defining the name, and a newline.
+使用表达式@code{assemble_name (@var{stream}, @var{name})}来输出name本身；
+在此之前和之后，输出额外的定义name的汇编语法，以及换行。
 
-This macro controls how the assembler definitions of uninitialized
-static variables are output.
+该宏控制如何输出未初始化的静态变量的汇编定义。
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGNED_LOCAL (@var{stream}, @var{name}, @var{size}, @var{alignment})
-Like @code{ASM_OUTPUT_LOCAL} except takes the required alignment as a
-separate, explicit argument.  If you define this macro, it is used in
-place of @code{ASM_OUTPUT_LOCAL}, and gives you more flexibility in
-handling the required alignment of the variable.  The alignment is specified
-as the number of bits.
+类似@code{ASM_OUTPUT_LOCAL}，除了其接受需要的aligment作为单独，显式的参数。
+如果你定义了该宏，其被用于替换@code{ASM_OUTPUT_LOCAL}，
+这使得你在处理变量所需的对齐方面更加灵活。aligment被指定为位数。
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGNED_DECL_LOCAL (@var{stream}, @var{decl}, @var{name}, @var{size}, @var{alignment})
-Like @code{ASM_OUTPUT_ALIGNED_DECL} except that @var{decl} of the
-variable to be output, if there is one, or @code{NULL_TREE} if there
-is no corresponding variable.  If you define this macro, GCC will use it
-in place of both @code{ASM_OUTPUT_DECL} and
-@code{ASM_OUTPUT_ALIGNED_DECL}.  Define this macro when you need to see
-the variable's decl in order to chose what to output.
+类似@code{ASM_OUTPUT_ALIGNED_DECL}，除了要被输出的变量的@var{decl}，
+如果存在的话，或者为@code{NULL_TREE}如果没有相应的变量。如果你定义了该宏，
+GCC将替换@code{ASM_OUTPUT_DECL}和@code{ASM_OUTPUT_ALIGNED_DECL}。
+当你需要看到变量的decl，以便选择如何输出时，可以定义该宏。
 @end defmac
 
 @node 标号输出
