@@ -1987,71 +1987,60 @@ of words in each data entry.
 @subsection 寄存器的基本特征
 
 @c prevent bad page break with this line
-Registers have various characteristics.
+寄存器具有不同的特征。
 
 @defmac FIRST_PSEUDO_REGISTER
-Number of hardware registers known to the compiler.  They receive
-numbers 0 through @code{FIRST_PSEUDO_REGISTER-1}; thus, the first
-pseudo register's number really is assigned the number
-@code{FIRST_PSEUDO_REGISTER}.
+编译器知道的硬件寄存器个数。它们包括编号0到@code{FIRST_PSEUDO_REGISTER-1}；
+因此，第一个伪寄存器的编号实际被赋值为@code{FIRST_PSEUDO_REGISTER}。
 @end defmac
 
 @defmac FIXED_REGISTERS
 @cindex fixed register
-An initializer that says which registers are used for fixed purposes
-all throughout the compiled code and are therefore not available for
-general allocation.  These would include the stack pointer, the frame
-pointer (except on machines where that can be used as a general
-register when no frame pointer is needed), the program counter on
-machines where that is considered one of the addressable registers,
-and any other numbered register with a standard use.
+一个初始化，说明哪些寄存器在整个编译代码中都用于固定用途，
+因此不能用于通用分配。这些将包括栈指针，帧指针（在当不需要帧指针时，
+可以用于通用寄存器的机器上除外），
+在一些机器上被认为是可寻址的寄存器的程序计数器，
+以及其它具有标准用法的编号寄存器。
 
-This information is expressed as a sequence of numbers, separated by
-commas and surrounded by braces.  The @var{n}th number is 1 if
-register @var{n} is fixed, 0 otherwise.
+这些信息作为一个序列编号来表示，由逗号分隔并由大括号包括。
+第@var{n}个编号为1，如果寄存器@var{n}为固定的，否则为0。
 
-The table initialized from this macro, and the table initialized by
-the following one, may be overridden at run time either automatically,
-by the actions of the macro @code{CONDITIONAL_REGISTER_USAGE}, or by
-the user with the command options @option{-ffixed-@var{reg}},
-@option{-fcall-used-@var{reg}} and @option{-fcall-saved-@var{reg}}.
+从该宏初始化的表，以及由下面的初始化的表，都可以在运行时被覆盖，
+或者通过执行宏@code{CONDITIONAL_REGISTER_USAGE}自动完成，
+或者通过用户使用命令选项@option{-ffixed-@var{reg}}, 
+@option{-fcall-used-@var{reg}}和@option{-fcall-saved-@var{reg}}。
 @end defmac
 
 @defmac CALL_USED_REGISTERS
 @cindex call-used register
 @cindex call-clobbered register
 @cindex call-saved register
-Like @code{FIXED_REGISTERS} but has 1 for each register that is
-clobbered (in general) by function calls as well as for fixed
-registers.  This macro therefore identifies the registers that are not
-available for general allocation of values that must live across
-function calls.
+类似@code{FIXED_REGISTERS}，但是对于被函数调用破坏的每个寄存器，
+以及固定寄存器，值为1。因此，
+该宏标识了哪些寄存器不适合用于必须活跃于整个函数调用的值的通用分配。
 
-If a register has 0 in @code{CALL_USED_REGISTERS}, the compiler
-automatically saves it on function entry and restores it on function
-exit, if the register is used within the function.
+如果寄存器在@code{CALL_USED_REGISTERS}中具有值0，
+如果寄存器在函数中被使用，则编译器会自动的在函数入口保存它，
+并在函数出口恢复它。
 @end defmac
 
 @defmac CALL_REALLY_USED_REGISTERS
 @cindex call-used register
 @cindex call-clobbered register
 @cindex call-saved register
-Like @code{CALL_USED_REGISTERS} except this macro doesn't require
-that the entire set of @code{FIXED_REGISTERS} be included.
-(@code{CALL_USED_REGISTERS} must be a superset of @code{FIXED_REGISTERS}).
-This macro is optional.  If not specified, it defaults to the value
-of @code{CALL_USED_REGISTERS}.
+类似@code{CALL_USED_REGISTERS}，除了该宏不需要包含整个@code{FIXED_REGISTERS}集。
+（@code{CALL_USED_REGISTERS}必须为@code{FIXED_REGISTERS}的超集）。
+该宏为可选的。如果没有被指定，其缺省为@code{CALL_USED_REGISTERS}的值。
 @end defmac
 
 @defmac HARD_REGNO_CALL_PART_CLOBBERED (@var{regno}, @var{mode})
 @cindex call-used register
 @cindex call-clobbered register
 @cindex call-saved register
-A C expression that is nonzero if it is not permissible to store a
-value of mode @var{mode} in hard register number @var{regno} across a
-call without some part of it being clobbered.  For most machines this
-macro need not be defined.  It is only required for machines that do not
-preserve the entire contents of a register across a call.
+一个C表达式，值为非0，
+如果不允许将机器模式为@var{mode}的值存储在编号为@var{regno}的硬件寄存器中，
+并且整个调用中没有破坏其某个部分。对于大多数机器，该宏不需要被定义。
+其只用于一些在调用中不保护寄存器的整个内容的机器上。
 @end defmac
 
 @findex fixed_regs
@@ -2060,66 +2049,55 @@ preserve the entire contents of a register across a call.
 @findex reg_names
 @findex reg_class_contents
 @defmac CONDITIONAL_REGISTER_USAGE
-Zero or more C statements that may conditionally modify five variables
-@code{fixed_regs}, @code{call_used_regs}, @code{global_regs},
-@code{reg_names}, and @code{reg_class_contents}, to take into account
-any dependence of these register sets on target flags.  The first three
-of these are of type @code{char []} (interpreted as Boolean vectors).
-@code{global_regs} is a @code{const char *[]}, and
-@code{reg_class_contents} is a @code{HARD_REG_SET}.  Before the macro is
-called, @code{fixed_regs}, @code{call_used_regs},
-@code{reg_class_contents}, and @code{reg_names} have been initialized
-from @code{FIXED_REGISTERS}, @code{CALL_USED_REGISTERS},
-@code{REG_CLASS_CONTENTS}, and @code{REGISTER_NAMES}, respectively.
-@code{global_regs} has been cleared, and any @option{-ffixed-@var{reg}},
-@option{-fcall-used-@var{reg}} and @option{-fcall-saved-@var{reg}}
-command options have been applied.
+0条或者多条C语句，其可以条件修改5个变量@code{fixed_regs}, 
+@code{call_used_rehs}, @code{global_regs}, @code{reg_names} 和
+@code{reg_class_contents}，来考虑这些寄存器集对target标号的任何依赖。
+前3个为@code{char []}类型（作为布尔向量来解析）。
+@code{global_regs}为一个@code{const char *[]}，
+@code{reg_class_contents}为一个@code{HARD_REG_SET}。
+在宏被调用之前，@code{fixed_regs}, @code{call_used_regs}, 
+@code{reg_class_contents}和@code{reg_names}已经分别通过@code{FIXED_REGISTERS},
+@code{CALL_USED_REGISTERS}, @code{REG_CLASS_CONTENTS}和@code{REGISTER_NAMES}被初始化。
+@code{global_regs}已经被清除，并且任何@option{-ffixed-@var{reg}}, 
+@option{-fcall-used-@var{reg}}和@option{-fcall-saved-@var{reg}}选项已经被应用。
 
-You need not define this macro if it has no work to do.
+如果不需要做什么工作，则不必定义该宏。
 
 @cindex disabling certain registers
 @cindex controlling register usage
-If the usage of an entire class of registers depends on the target
-flags, you may indicate this to GCC by using this macro to modify
-@code{fixed_regs} and @code{call_used_regs} to 1 for each of the
-registers in the classes which should not be used by GCC@.  Also define
-the macro @code{REG_CLASS_FROM_LETTER} / @code{REG_CLASS_FROM_CONSTRAINT}
-to return @code{NO_REGS} if it
-is called with a letter for a class that shouldn't be used.
+如果整个寄存器的类别的使用，取决于target标记，
+则你可以通过使用该宏来指示GCC修改@code{fixed_regs}和@code{call_used_regs}为1，
+对于类别中的每个不应由GCC使用的寄存器。还有就是，
+定义宏@code{REG_CLASS_FROM_LETTER} / @code{REG_CLASS_FROM_CONSTRAINT}来返回@code{NO_REGS}，
+如果其被调用，并带有一个不应该被使用的类别字母。
 
-(However, if this class is not included in @code{GENERAL_REGS} and all
-of the insn patterns whose constraints permit this class are
-controlled by target switches, then GCC will automatically avoid using
-these registers when the target switches are opposed to them.)
+（然而，如果该类没有包含在@code{GENERAL_REGS}中，
+并且所有的insn指令模式的约束允许该类通过target开关来控制，
+则GCC将自动避免使用这些寄存器，当target开关与它们相反时。）
 @end defmac
 
 @defmac INCOMING_REGNO (@var{out})
-Define this macro if the target machine has register windows.  This C
-expression returns the register number as seen by the called function
-corresponding to the register number @var{out} as seen by the calling
-function.  Return @var{out} if register number @var{out} is not an
-outbound register.
+定义该宏，如果target机器具有寄存器窗口。
+该C表达式根据调用函数能看到的寄存器编号@var{out}，
+返回被调用函数所能看到的寄存器编号。
+返回@var{out}，如果寄存器编号@var{out}不是发送寄存器（outbound register）。
 @end defmac
 
 @defmac OUTGOING_REGNO (@var{in})
-Define this macro if the target machine has register windows.  This C
-expression returns the register number as seen by the calling function
-corresponding to the register number @var{in} as seen by the called
-function.  Return @var{in} if register number @var{in} is not an inbound
-register.
+定义该宏，如果target机器具有寄存器窗口。
+该C表达式根据被调用函数能看到的寄存器编号@var{in}，
+返回调用函数所能看到的寄存器编号。
+返回@var{in}，如果寄存器编号@var{in}不是运入寄存器（inbound register）。
 @end defmac
 
 @defmac LOCAL_REGNO (@var{regno})
-Define this macro if the target machine has register windows.  This C
-expression returns true if the register is call-saved but is in the
-register window.  Unlike most call-saved registers, such registers
-need not be explicitly restored on function exit or during non-local
-gotos.
+定义该宏，如果target机器具有寄存器窗口。该C表达式返回真，
+如果寄存器为调用保存的，但是在寄存器窗口中。不像大多调用保存的寄存器，
+这样的寄存器不需要在函数出口或者非局部调转中被显示的恢复。
 @end defmac
 
 @defmac PC_REGNUM
-If the program counter has a register number, define this as that
-register number.  Otherwise, do not define it.
+如果程序计数器具有一个寄存器编号，则定义其为那个寄存器编号。否则不要定义它。
 @end defmac
 
 @node 分配顺序
@@ -2170,19 +2148,16 @@ to having it always return @code{0.0}.
 @node 寄存器中的值
 @subsection 如何使值适合寄存器
 
-This section discusses the macros that describe which kinds of values
-(specifically, which machine modes) each register can hold, and how many
-consecutive registers are needed for a given mode.
+这节讨论的宏，描述了每个寄存器可以存放哪类的值（明确的说，
+是哪些机器模式的），以及对于给定的机器模式需要多少个连续的寄存器。
 
 @defmac HARD_REGNO_NREGS (@var{regno}, @var{mode})
-A C expression for the number of consecutive hard registers, starting
-at register number @var{regno}, required to hold a value of mode
-@var{mode}.  This macro must never return zero, even if a register
-cannot hold the requested mode - indicate that with HARD_REGNO_MODE_OK
-and/or CANNOT_CHANGE_MODE_CLASS instead.
+一个C表达式，为存放模式@var{mode}的值所需要的连续的硬件寄存器，
+起始于寄存器编号@var{regno}。该宏不要返回0，
+即使寄存器不能存放指定的mode —— 替代的，
+使用HARD_REGNO_MODE_OK 和/或 CANNOT_CHANGE_MODE_CLASS。
 
-On a machine where all registers are exactly one word, a suitable
-definition of this macro is
+在所有寄存器都是一个字大小的机器上，该宏的一个合适的定义为
 
 @smallexample
 #define HARD_REGNO_NREGS(REGNO, MODE)            \
@@ -2192,127 +2167,101 @@ definition of this macro is
 @end defmac
 
 @defmac HARD_REGNO_NREGS_HAS_PADDING (@var{regno}, @var{mode})
-A C expression that is nonzero if a value of mode @var{mode}, stored
-in memory, ends with padding that causes it to take up more space than
-in registers starting at register number @var{regno} (as determined by
-multiplying GCC's notion of the size of the register when containing
-this mode by the number of registers returned by
-@code{HARD_REGNO_NREGS}).  By default this is zero.
+一个C表达式，为非0，如果模式为@var{mode}的值，存储在内存中，
+并由padding结尾，这使得其占有更多的空间，
+比在起始于寄存器编号@var{regno}的寄存器中。缺省的为0。
 
-For example, if a floating-point value is stored in three 32-bit
-registers but takes up 128 bits in memory, then this would be
-nonzero.
+例如，如果浮点值存储在三个32位寄存器中，但是在内存中占有128位，则该宏应该为非0。
 
-This macros only needs to be defined if there are cases where
-@code{subreg_get_info}
-would otherwise wrongly determine that a @code{subreg} can be
-represented by an offset to the register number, when in fact such a
-@code{subreg} would contain some of the padding not stored in
-registers and so not be representable.
+该宏只有当@code{subreg_get_info}会错误的确定一个@code{subreg}可以通过寄存器编号的偏移量来表示，
+而实际上这样的@code{subreg}将会保存一些不应该被表示的padding时，
+才需要被定义。
 @end defmac
 
 @defmac HARD_REGNO_NREGS_WITH_PADDING (@var{regno}, @var{mode})
-For values of @var{regno} and @var{mode} for which
-@code{HARD_REGNO_NREGS_HAS_PADDING} returns nonzero, a C expression
-returning the greater number of registers required to hold the value
-including any padding.  In the example above, the value would be four.
+对于@code{HARD_REGNO_NREGS_HAS_PADDING}会返回非0的@var{regno}和@var{mode}的值，
+其为一个C表达式，返回保存包括任何padding的值所需要的寄存器的最大数。
+在上面的例子中，值将为4。
 @end defmac
 
 @defmac REGMODE_NATURAL_SIZE (@var{mode})
-Define this macro if the natural size of registers that hold values
-of mode @var{mode} is not the word size.  It is a C expression that
-should give the natural size in bytes for the specified mode.  It is
-used by the register allocator to try to optimize its results.  This
-happens for example on SPARC 64-bit where the natural size of
-floating-point registers is still 32-bit.
+定义该宏，如果存放模式@var{mode}的值的寄存器的自然大小，不是word大小。
+其为一个C表达式，对于指定的mode给出以字节为单位的自然的大小。
+其被寄存器分配用于尝试优化它的结果。
+例如这出现在SPARC 64位机器上，其浮点寄存器的自然大小仍然是32位。
 @end defmac
 
 @defmac HARD_REGNO_MODE_OK (@var{regno}, @var{mode})
-A C expression that is nonzero if it is permissible to store a value
-of mode @var{mode} in hard register number @var{regno} (or in several
-registers starting with that one).  For a machine where all registers
-are equivalent, a suitable definition is
+一个C表达式，其为非0，
+如果允许将一个@var{mode}模式的值存储在硬件寄存器编号@var{regno}
+（或者起始于它的多个寄存器）中。对于所有寄存器都是等价的机器上，
+一个合适的定义为
 
 @smallexample
 #define HARD_REGNO_MODE_OK(REGNO, MODE) 1
 @end smallexample
 
-You need not include code to check for the numbers of fixed registers,
-because the allocation mechanism considers them to be always occupied.
+你不需要包含检查固定寄存器编号的代码，
+因为分配机制总是认为它们已经被占用了。
 
 @cindex register pairs
-On some machines, double-precision values must be kept in even/odd
-register pairs.  You can implement that by defining this macro to reject
-odd register numbers for such modes.
+在一些机器上，双精度值必须放在偶/奇寄存器对。
+你可以通过定义该宏来拒绝这样模式的奇数寄存器编号。
 
-The minimum requirement for a mode to be OK in a register is that the
-@samp{mov@var{mode}} instruction pattern support moves between the
-register and other hard register in the same class and that moving a
-value into the register and back out not alter it.
+对于一个模式可以放在寄存器中的最小需求为，
+@samp{mov@var{mode}}指令模式支持在寄存器和同一类别的其它硬件寄存器之间的移动，
+并且将一个值移动到寄存器中并移动回来，而不会改变。
 
-Since the same instruction used to move @code{word_mode} will work for
-all narrower integer modes, it is not necessary on any machine for
-@code{HARD_REGNO_MODE_OK} to distinguish between these modes, provided
-you define patterns @samp{movhi}, etc., to take advantage of this.  This
-is useful because of the interaction between @code{HARD_REGNO_MODE_OK}
-and @code{MODES_TIEABLE_P}; it is very desirable for all integer modes
-to be tieable.
+由于用于move @code{word_mode}的同一指令，也可以用于所有更窄的整数模式，
+所以@code{HARD_REGNO_MODE_OK}不必要在任何机器上对于这些模式都不同，
+假定你定义了指令模式@samp{movhi}等。
 
-Many machines have special registers for floating point arithmetic.
-Often people assume that floating point machine modes are allowed only
-in floating point registers.  This is not true.  Any registers that
-can hold integers can safely @emph{hold} a floating point machine
-mode, whether or not floating arithmetic can be done on it in those
-registers.  Integer move instructions can be used to move the values.
+许多机器对于浮点算术具有特定的寄存器。
+通常人们假设浮点机器模式只在浮点寄存器中被允许。这并不真实。
+任何可以存放整数的寄存器都可以安全的存放一个浮点机器模式，
+而不管是否可以在这些寄存器上进行浮点算术。
+整数move指令可以用于移动这些值。
 
-On some machines, though, the converse is true: fixed-point machine
-modes may not go in floating registers.  This is true if the floating
-registers normalize any value stored in them, because storing a
-non-floating value there would garble it.  In this case,
-@code{HARD_REGNO_MODE_OK} should reject fixed-point machine modes in
-floating registers.  But if the floating registers do not automatically
-normalize, if you can store any bit pattern in one and retrieve it
-unchanged without a trap, then any machine mode may go in a floating
-register, so you can define this macro to say so.
+然而在一些机器上，定点机器模式不可以放在浮点寄存器中。
+比如如果浮点寄存器对任何存储的值进行标准化，
+因为存储一个非浮点值将会使值变得混淆。这种情况下，
+@code{HARD_REGNO_MODE_OK}应该拒绝定点机器模式放在浮点寄存器中。
+但是，如果浮点寄存器不自动标准化，
+如果你可以存储任何位的指令模式并无需改动的获得它，
+则任何机器模式都可以放在浮点寄存器中，这样你可以定义该宏来表明可以这么做。
 
-The primary significance of special floating registers is rather that
-they are the registers acceptable in floating point arithmetic
-instructions.  However, this is of no concern to
-@code{HARD_REGNO_MODE_OK}.  You handle it by writing the proper
-constraints for those instructions.
+当然，特定的浮点寄存器的主要意义是它们在浮点算术指令中可以使用。
+但是，这根@code{HARD_REGNO_MODE_OK}没有关系。
+你可以通过对那些执行写合适的约束来处理。
 
-On some machines, the floating registers are especially slow to access,
-so that it is better to store a value in a stack frame than in such a
-register if floating point arithmetic is not being done.  As long as the
-floating registers are not in class @code{GENERAL_REGS}, they will not
-be used unless some pattern's constraint asks for one.
+在一些机器上，浮点寄存器访问起来特别慢，所以如果浮点算术没有完成前，
+最好将值存在栈帧中，而不是在这样的寄存器中。
+只要浮点寄存器不在@code{GENERAL_REGS}类别中，它们将不会被使用，
+除非某个指令模式的约束要求这样。
 @end defmac
 
 @defmac HARD_REGNO_RENAME_OK (@var{from}, @var{to})
-A C expression that is nonzero if it is OK to rename a hard register
-@var{from} to another hard register @var{to}.
+一个C表达式，为非0，
+如果可以将一个硬件寄存器@var{from}重命名为另一个寄存器@var{to}。
 
-One common use of this macro is to prevent renaming of a register to
-another register that is not saved by a prologue in an interrupt
-handler.
+该宏的一个通用的用法是防止将一个寄存器重命名为另一个寄存器，
+而其在中断处理函数的序言中没有被保存。
 
-The default is always nonzero.
+缺省总是为非0。
 @end defmac
 
 @defmac MODES_TIEABLE_P (@var{mode1}, @var{mode2})
-A C expression that is nonzero if a value of mode
-@var{mode1} is accessible in mode @var{mode2} without copying.
+一个C表达式，其为非0，如果一个模式@var{mode1}的值，
+不需要复制便可以按照模式@var{mode2}来访问。
 
-If @code{HARD_REGNO_MODE_OK (@var{r}, @var{mode1})} and
-@code{HARD_REGNO_MODE_OK (@var{r}, @var{mode2})} are always the same for
-any @var{r}, then @code{MODES_TIEABLE_P (@var{mode1}, @var{mode2})}
-should be nonzero.  If they differ for any @var{r}, you should define
-this macro to return zero unless some other mechanism ensures the
-accessibility of the value in a narrower mode.
+如果@code{HARD_REGNO_MODE_OK (@var{r}, @var{mode1})}和
+@code{HARD_REGNO_MODE_OK (@var{r}, @var{mode2})}对于任何@var{r}总是相同，
+则@code{MODES_TIEABLE_P (@var{mode1}, @var{mode2})}应该为非0。
+如果它们对于任何@var{r}都不同，则你应该定义该宏来返回0，
+除非某个其它机制能够确保值可以按照更窄的模式来访问。
 
-You should define this macro to return nonzero in as many cases as
-possible since doing so will allow GCC to perform better register
-allocation.
+你应该定义该宏来尽可能情况的返回非0，
+因为这样会使得GCC执行更好的寄存器分配。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_HARD_REGNO_SCRATCH_OK (unsigned int @var{regno})
@@ -2326,9 +2275,8 @@ The default version of this hook always returns @code{true}.
 @end deftypefn
 
 @defmac AVOID_CCMODE_COPIES
-Define this macro if the compiler should avoid copies to/from @code{CCmode}
-registers.  You should only define this macro if support for copying to/from
-@code{CCmode} is incomplete.
+定义该宏，如果编译器应该避免复制从/到@code{CCmode}寄存器。
+你应该只当对复制从/到@code{CCmode}寄存器的支持不完善的时候定义该宏。
 @end defmac
 
 @node 叶子函数
@@ -2414,78 +2362,68 @@ GCC在它知道函数是否适合作为叶子函数来对待之前分配寄存�
 @cindex register class definitions
 @cindex class definitions, register
 
-On many machines, the numbered registers are not all equivalent.
-For example, certain registers may not be allowed for indexed addressing;
-certain registers may not be allowed in some instructions.  These machine
-restrictions are described to the compiler using @dfn{register classes}.
+在许多机器上，编号寄存器并不都是等价的。例如，一些寄存器不可以用作索引寻址；
+一些寄存器不可以用于某些指令。
+这些机器限制使用寄存器类别(@dfn{register classes})来描述给编译器。
 
-You define a number of register classes, giving each one a name and saying
-which of the registers belong to it.  Then you can specify register classes
-that are allowed as operands to particular instruction patterns.
+你定义一些寄存器类别，给出每个类别的名字并指名哪些寄存器属于它。然后，
+你可以指定哪些寄存器类别对于特定的指令模式可以用作操作数。
 
 @findex ALL_REGS
 @findex NO_REGS
-In general, each register will belong to several classes.  In fact, one
-class must be named @code{ALL_REGS} and contain all the registers.  Another
-class must be named @code{NO_REGS} and contain no registers.  Often the
-union of two classes will be another class; however, this is not required.
+总的来说，每个寄存器将属于多个类别。实际上，
+必须有一个名为@code{ALL_REGS}的类别，包含所有的寄存器。
+另外必须有一个名为@code{NO_REGS}的类别，不包含寄存器。
+通常两个类别的并集将成为另一个类别；但并不这么要求。
 
 @findex GENERAL_REGS
-One of the classes must be named @code{GENERAL_REGS}.  There is nothing
-terribly special about the name, but the operand constraint letters
-@samp{r} and @samp{g} specify this class.  If @code{GENERAL_REGS} is
-the same as @code{ALL_REGS}, just define it as a macro which expands
-to @code{ALL_REGS}.
+其中一个类别必须名为@code{GENERAL_REGS}。该名字没有什么特殊的，
+但是操作数约束字母@samp{r}和@samp{g}专门指定该类。
+如果@code{GENERAL_REGS}与@code{ALL_REGS}相同，
+则可以将其定义为扩展成@code{ALL_REGS}的宏。
 
-Order the classes so that if class @var{x} is contained in class @var{y}
-then @var{x} has a lower class number than @var{y}.
+对类别进行排序，使得如果类@var{x}包含在类@var{y}中，
+则@var{x}具有比@var{y}更低的类别编号。
 
-The way classes other than @code{GENERAL_REGS} are specified in operand
-constraints is through machine-dependent operand constraint letters.
-You can define such letters to correspond to various classes, then use
-them in operand constraints.
+在操作数约束中指定@code{GENERAL_REGS}之外的类别的方法，
+是通过机器相关的约束字母。你可以定义该字母来对应于不同的类别，
+然后在操作数约束中使用它们。
 
-You should define a class for the union of two classes whenever some
-instruction allows both classes.  For example, if an instruction allows
-either a floating point (coprocessor) register or a general register for a
-certain operand, you should define a class @code{FLOAT_OR_GENERAL_REGS}
-which includes both of them.  Otherwise you will get suboptimal code.
+只要有指令同时允许两个类别，就应该定义一个它们的并集的类别。
+例如，如果对于一个特定的操作数，
+有一条指令允许一个浮点（协处理器）寄存器或者一个通用寄存器，
+则应该定义一个类别@code{FLOAT_OR_GENERAL_REGS}，其包含它们两。
+否则你不会得到最优的代码。
 
-You must also specify certain redundant information about the register
-classes: for each class, which classes contain it and which ones are
-contained in it; for each pair of classes, the largest class contained
-in their union.
+你还必须指定关于寄存器类别的冗余信息：对于每个类别，
+有哪些类别包含它以及哪些被它包含；
+对于每个类别对，最大的类包含在它们的并集中。
 
-When a value occupying several consecutive registers is expected in a
-certain class, all the registers used must belong to that class.
-Therefore, register classes cannot be used to enforce a requirement for
-a register pair to start with an even-numbered register.  The way to
-specify this requirement is with @code{HARD_REGNO_MODE_OK}.
+当一个值占用多个连续的位于特定类别的寄存器时，
+所有被使用的寄存器必须属于那个类别。因此，
+寄存器类别不能用于要求寄存器对起始于偶数编号的寄存器。
+用来指定该要求的方法是使用@code{HARD_REGNO_MODE_OK}。
 
-Register classes used for input-operands of bitwise-and or shift
-instructions have a special requirement: each such class must have, for
-each fixed-point machine mode, a subclass whose registers can transfer that
-mode to or from memory.  For example, on some machines, the operations for
-single-byte values (@code{QImode}) are limited to certain registers.  When
-this is so, each register class that is used in a bitwise-and or shift
-instruction must have a subclass consisting of registers from which
-single-byte values can be loaded or stored.  This is so that
-@code{PREFERRED_RELOAD_CLASS} can always have a possible value to return.
+用于按位与或者移位指令的操作数的寄存器类别具有特殊的要求：
+对于每个定点机器模式，每个这样的类必须具有一个子类，
+它的寄存器可以按照该机器模式与内存进行传送值。例如，在一些机器上，
+对于单字节值的操作（@code{QImode}）被限制为特定的寄存器。这样的话，
+每个用于按位与或者移位指令的寄存器类别必须具有一个子类，
+组成它的寄存器可以用来加载或存储单字节值。
+这使得@code{PREFERRED_RELOAD_CLASS}总是具有一个可以返回的值。
 
 @deftp {Data type} {enum reg_class}
-An enumerated type that must be defined with all the register class names
-as enumerated values.  @code{NO_REGS} must be first.  @code{ALL_REGS}
-must be the last register class, followed by one more enumerated value,
-@code{LIM_REG_CLASSES}, which is not a register class but rather
-tells how many classes there are.
+一个枚举类型，必须使用所有的寄存器类别名作为枚举值来定义。
+@code{NO_REGS}必须位于最前面。@code{ALL_REGS}必须为最后一个寄存器类别，
+后面再跟随一个枚举值，@code{LIM_REG_CLASSES}，其不是一个寄存器类别，
+但是用来告诉有多少个类别。
 
-Each register class has a number, which is the value of casting
-the class name to type @code{int}.  The number serves as an index
-in many of the tables described below.
+每个寄存器类别具有一个编号，其为将类别名映射到@code{int}类型的值。
+编号在下面描述的许多表中用作索引。
 @end deftp
 
 @defmac N_REG_CLASSES
-The number of distinct register classes, defined as follows:
+不同寄存器类别的数目，定义为:
 
 @smallexample
 #define N_REG_CLASSES (int) LIM_REG_CLASSES
@@ -2493,101 +2431,86 @@ The number of distinct register classes, defined as follows:
 @end defmac
 
 @defmac REG_CLASS_NAMES
-An initializer containing the names of the register classes as C string
-constants.  These names are used in writing some of the debugging dumps.
+一个初始化值，包含了作为C字符串常量的寄存器类别的名字。
+这些名字用于书写一些调试转储。
 @end defmac
 
 @defmac REG_CLASS_CONTENTS
-An initializer containing the contents of the register classes, as integers
-which are bit masks.  The @var{n}th integer specifies the contents of class
-@var{n}.  The way the integer @var{mask} is interpreted is that
-register @var{r} is in the class if @code{@var{mask} & (1 << @var{r})} is 1.
+一个初始化值，包含了寄存器类别的内容，作为位掩码的整数。
+第@var{n}个整数指定了类别@var{n}的内容。整数掩码的解析方式为，
+寄存器@var{r}在类别中，如果@code{@var{mask} & (1 << @var{r})}为1。
 
-When the machine has more than 32 registers, an integer does not suffice.
-Then the integers are replaced by sub-initializers, braced groupings containing
-several integers.  Each sub-initializer must be suitable as an initializer
-for the type @code{HARD_REG_SET} which is defined in @file{hard-reg-set.h}.
-In this situation, the first integer in each sub-initializer corresponds to
-registers 0 through 31, the second integer to registers 32 through 63, and
-so on.
+当机器具有多于32个寄存器的时候，一个整数还不能满足。这时整数被替换为子初始化值，
+为括号包裹的多个整数。每个子初始化值必须适合类型@code{HARD_REG_SET}的初始化值，
+其在@file{hard-reg-set.h}中定义。这种情况下，
+每个子初始化值的第一个整数对应于寄存器0到31，第二个对应于32到63，等等。
 @end defmac
 
 @defmac REGNO_REG_CLASS (@var{regno})
-A C expression whose value is a register class containing hard register
-@var{regno}.  In general there is more than one such class; choose a class
-which is @dfn{minimal}, meaning that no smaller class also contains the
-register.
+一个C表达式，其值为包含了硬件寄存器@var{regno}的寄存器类别。总的来说，
+会有不止一个这样的类别；选择最小的那个，这意味着没有更小的类别包含该寄存器。
 @end defmac
 
 @defmac BASE_REG_CLASS
-A macro whose definition is the name of the class to which a valid
-base register must belong.  A base register is one used in an address
-which is the register value plus a displacement.
+一个宏，它的定义为有效的基址寄存器必须属于的类别名字。
+基址寄存器用于由寄存器的值加上一个偏移量来表示的地址中。
 @end defmac
 
 @defmac MODE_BASE_REG_CLASS (@var{mode})
-This is a variation of the @code{BASE_REG_CLASS} macro which allows
-the selection of a base register in a mode dependent manner.  If
-@var{mode} is VOIDmode then it should return the same value as
-@code{BASE_REG_CLASS}.
+这是宏@code{BASE_REG_CLASS}的变体，其允许在机器模式相关的方式下选择基址寄存器。
+如果@var{mode}为VOIDmode，则其应该返回根@code{BASE_REG_CLASS}同样的值。
 @end defmac
 
 @defmac MODE_BASE_REG_REG_CLASS (@var{mode})
-A C expression whose value is the register class to which a valid
-base register must belong in order to be used in a base plus index
-register address.  You should define this macro if base plus index
-addresses have different requirements than other base register uses.
+一个C表达式，其值为有效的基址寄存器必须属于的类别名字，
+且用于一个基址寄存器加上索引寄存器的地址中。你应该定义该宏，
+如果表示为基址寄存器加上索引寄存器的地址具有不同于其它基址寄存器的用法要求时。
 @end defmac
 
 @defmac MODE_CODE_BASE_REG_CLASS (@var{mode}, @var{outer_code}, @var{index_code})
-A C expression whose value is the register class to which a valid
-base register must belong.  @var{outer_code} and @var{index_code} define the
-context in which the base register occurs.  @var{outer_code} is the code of
-the immediately enclosing expression (@code{MEM} for the top level of an
-address, @code{ADDRESS} for something that occurs in an
-@code{address_operand}).  @var{index_code} is the code of the corresponding
-index expression if @var{outer_code} is @code{PLUS}; @code{SCRATCH} otherwise.
+一个C表达式，其值为有效的基址寄存器必须属于的类别名字。
+@var{outer_code}和@var{index_code}定义了基址寄存器出现的上下文。
+@var{outer_code}为。@var{index_code}为相应的索引表达式的代码，
+如果@var{outer_code}为@code{PLUS}；否则为@code{SCRATCH}。
 @end defmac
 
 @defmac INDEX_REG_CLASS
-A macro whose definition is the name of the class to which a valid
-index register must belong.  An index register is one used in an
-address where its value is either multiplied by a scale factor or
-added to another register (as well as added to a displacement).
+一个C表达式，其值为有效的索引寄存器必须属于的类别名字。
+索引寄存器为一个用于地址中的寄存器，
+它的值用于乘于一个标量因子或者加上另一个寄存器（也可以加上一个偏移量）。
 @end defmac
 
 @defmac REGNO_OK_FOR_BASE_P (@var{num})
-A C expression which is nonzero if register number @var{num} is
-suitable for use as a base register in operand addresses.  It may be
-either a suitable hard register or a pseudo register that has been
-allocated such a hard register.
+一个C表达式，其为非0，
+如果寄存器编号@var{num}适合在操作数地址中作为基址寄存器使用。
+其可以为一个合适的硬件寄存器，或者一个已经被分配了这样的硬件寄存器的伪寄存器。
 @end defmac
 
 @defmac REGNO_MODE_OK_FOR_BASE_P (@var{num}, @var{mode})
-A C expression that is just like @code{REGNO_OK_FOR_BASE_P}, except that
-that expression may examine the mode of the memory reference in
-@var{mode}.  You should define this macro if the mode of the memory
-reference affects whether a register may be used as a base register.  If
-you define this macro, the compiler will use it instead of
-@code{REGNO_OK_FOR_BASE_P}.  The mode may be @code{VOIDmode} for
-addresses that appear outside a @code{MEM}, i.e., as an
-@code{address_operand}.
-
+一个C表达式，类似于@code{REGNO_OK_FOR_BASE_P}，
+除了表达式可以检查内存引用的机器模式@var{mode}。你应该定义该宏，
+如果内存引用的机器模式影响了一个寄存器是否可以作为基址寄存器使用。
+如果你定义了该宏，则编译器将使用它来替代@code{REGNO_OK_FOR_BASE_P}。
+对于出现在@code{MEM}之外的地址，即作为一个@code{address_operand}，
+mode可以为@code{VOIDmode}。
 @end defmac
 
 @defmac REGNO_MODE_OK_FOR_REG_BASE_P (@var{num}, @var{mode})
-A C expression which is nonzero if register number @var{num} is suitable for
-use as a base register in base plus index operand addresses, accessing
-memory in mode @var{mode}.  It may be either a suitable hard register or a
-pseudo register that has been allocated such a hard register.  You should
-define this macro if base plus index addresses have different requirements
-than other base register uses.
+一个C表达式，其为非0，
+如果寄存器编号@var{num}适合在表示为基址加索引的地址中作为一个基址寄存器使用，
+并通过模式@var{mode}来访问。其可以为一个合适的硬件寄存器，
+或者一个已经被分配了这样的硬件寄存器的伪寄存器。你应该定义该宏，
+如果表示为基址寄存器加上索引寄存器的地址具有不同于其它基址寄存器的用法要求时。
 
-Use of this macro is deprecated; please use the more general
-@code{REGNO_MODE_CODE_OK_FOR_BASE_P}.
+不赞成使用该宏；请使用更加通用的@code{REGNO_MODE_CODE_OK_FOR_BASE_P}。
 @end defmac
 
 @defmac REGNO_MODE_CODE_OK_FOR_BASE_P (@var{num}, @var{mode}, @var{outer_code}, @var{index_code})
+一个C表达式，类似于@code{REGNO_MODE_OK_FOR_BASE_P}，
+除了表达式可以检查寄存器出现内存引用中的上下文。@var{outer_code}为。
+@var{index_code}为相应的索引表达式的代码，如果@var{outer_code}为@code{PLUS}；
+否则为@code{SCRATCH}。对于出现在@code{MEM}之外的地址，
+即作为一个@code{address_operand}，mode可以为@code{VOIDmode}。
 A C expression that is just like @code{REGNO_MODE_OK_FOR_BASE_P}, except
 that that expression may examine the context in which the register
 appears in the memory reference.  @var{outer_code} is the code of the
@@ -2600,167 +2523,123 @@ that appear outside a @code{MEM}, i.e., as an @code{address_operand}.
 @end defmac
 
 @defmac REGNO_OK_FOR_INDEX_P (@var{num})
-A C expression which is nonzero if register number @var{num} is
-suitable for use as an index register in operand addresses.  It may be
-either a suitable hard register or a pseudo register that has been
-allocated such a hard register.
+一个C表达式，其为非0，
+如果寄存器编号@var{num}适合作为索引寄存器用于操作数地址中。
+其可以为一个合适的硬件寄存器或者一个已经被分配了这样的硬件寄存器的伪寄存器。
 
-The difference between an index register and a base register is that
-the index register may be scaled.  If an address involves the sum of
-two registers, neither one of them scaled, then either one may be
-labeled the ``base'' and the other the ``index''; but whichever
-labeling is used must fit the machine's constraints of which registers
-may serve in each capacity.  The compiler will try both labelings,
-looking for one that is valid, and will reload one or both registers
-only if neither labeling works.
+索引寄存器和基址寄存器的区别是，索引寄存器可以被标量化。
+如果一个地址包含了两个寄存器的和，并且都不被标量化，
+则一个可以被标签为“base” 另一个为“index”；但是使用哪个标签，
+必须要适合机器的约束。编译器将尝试两种标签方式，来查找有效的一种，
+并且当两种方式都无法工作时，重载一个或两个寄存器。
 @end defmac
 
 @defmac PREFERRED_RELOAD_CLASS (@var{x}, @var{class})
-A C expression that places additional restrictions on the register class
-to use when it is necessary to copy value @var{x} into a register in class
-@var{class}.  The value is a register class; perhaps @var{class}, or perhaps
-another, smaller class.  On many machines, the following definition is
-safe:
+一个C表达式，对寄存器类别进行额外的限制，
+用于当需要复制值@var{x}到类别为@var{class}的寄存器中。
+值为一个寄存器类别；可能为@var{class}或者其它比@var{class}小的类别。
+在许多机器上，下列定义是安全的：
 
 @smallexample
 #define PREFERRED_RELOAD_CLASS(X,CLASS) CLASS
 @end smallexample
 
-Sometimes returning a more restrictive class makes better code.  For
-example, on the 68000, when @var{x} is an integer constant that is in range
-for a @samp{moveq} instruction, the value of this macro is always
-@code{DATA_REGS} as long as @var{class} includes the data registers.
-Requiring a data register guarantees that a @samp{moveq} will be used.
+有时返回一个更加限制的类别将会产生更好的代码。例如，在68000上，
+当@var{x}为一个整数常量，并且在@samp{moveq}指令的范围内，
+则该宏的值总是为@code{DATA_REGS}，只要@var{class}包含数据寄存器。
+需要一个数据寄存器保证了@samp{moveq}将使用。
 
-One case where @code{PREFERRED_RELOAD_CLASS} must not return
-@var{class} is if @var{x} is a legitimate constant which cannot be
-loaded into some register class.  By returning @code{NO_REGS} you can
-force @var{x} into a memory location.  For example, rs6000 can load
-immediate values into general-purpose registers, but does not have an
-instruction for loading an immediate value into a floating-point
-register, so @code{PREFERRED_RELOAD_CLASS} returns @code{NO_REGS} when
-@var{x} is a floating-point constant.  If the constant can't be loaded
-into any kind of register, code generation will be better if
-@code{LEGITIMATE_CONSTANT_P} makes the constant illegitimate instead
-of using @code{PREFERRED_RELOAD_CLASS}.
+一种@code{PREFERRED_RELOAD_CLASS}必须不返回@var{class}的情况为，
+如果@var{x}为一个合法常量其不能被加载到某个寄存器类别中。
+通过返回@code{NO_REGS}，你可以强迫@var{x}放入内存位置中。例如，
+rs6000可以加载立即数值到通用寄存器中，
+但没有指令可以加载立即数值到浮点寄存器中，
+所以@code{PREFERRED_RELOAD_CLASS}返回@code{NO_REGS}，
+当@var{x}为一个浮点常量时。如果常量不能被加载到任何种类的寄存器中，
+如果@code{LEGITIMATE_CONSTANT_P}使常量为非法的，
+而不是使用@code{PREFERRED_RELOAD_CLASS}，则代码生成将会更好。
 
-If an insn has pseudos in it after register allocation, reload will go
-through the alternatives and call repeatedly @code{PREFERRED_RELOAD_CLASS}
-to find the best one.  Returning @code{NO_REGS}, in this case, makes
-reload add a @code{!} in front of the constraint: the x86 back-end uses
-this feature to discourage usage of 387 registers when math is done in
-the SSE registers (and vice versa).
+如果一个insn在寄存器分配之后具有伪寄存器，
+则重载将遍历选择项并且反复调用@code{PREFERRED_RELOAD_CLASS}来找到最好的一个。
+返回@code{NO_REGS}，在这种情况下，使得重载在约束前增加一个@code{!}：
+x86后端使用该特征来劝阻使用387寄存器，当算术在SSE寄存器中进行时（反之亦然）。
 @end defmac
 
 @defmac PREFERRED_OUTPUT_RELOAD_CLASS (@var{x}, @var{class})
-Like @code{PREFERRED_RELOAD_CLASS}, but for output reloads instead of
-input reloads.  If you don't define this macro, the default is to use
-@var{class}, unchanged.
+类似于@code{PREFERRED_RELOAD_CLASS}，但是用于输出重载而不是输入重载。
+如果没有定义该宏，则缺省为使用不变的@var{class}。
 
-You can also use @code{PREFERRED_OUTPUT_RELOAD_CLASS} to discourage
-reload from using some alternatives, like @code{PREFERRED_RELOAD_CLASS}.
+你还可以使用@code{PREFERRED_OUTPUT_RELOAD_CLASS}来劝阻使用一些可选项的重载，
+类似于@code{PREFERRED_RELOAD_CLASS}。
 @end defmac
 
 @defmac LIMIT_RELOAD_CLASS (@var{mode}, @var{class})
-A C expression that places additional restrictions on the register class
-to use when it is necessary to be able to hold a value of mode
-@var{mode} in a reload register for which class @var{class} would
-ordinarily be used.
+一个C表达式，对寄存器类别实施额外的限制，
+用于当需要在一个类别为@var{class}的重载寄存器中保存机器模式为@var{mode}的值的时候。
 
-Unlike @code{PREFERRED_RELOAD_CLASS}, this macro should be used when
-there are certain modes that simply can't go in certain reload classes.
+不像@code{PREFERRED_RELOAD_CLASS}，
+该宏应该用于当有特定的机器模式不能简单的放入特定的重载类别中的时候。
 
-The value is a register class; perhaps @var{class}, or perhaps another,
-smaller class.
+值为一个寄存器类别；可能为@var{class}，或者其它更小的类别。
 
-Don't define this macro unless the target machine has limitations which
-require the macro to do something nontrivial.
+不要定义该宏，除非target机器具有一些限制，使得宏需要做一些事情。
 @end defmac
 
 @deftypefn {Target Hook} {enum reg_class} TARGET_SECONDARY_RELOAD (bool @var{in_p}, rtx @var{x}, enum reg_class @var{reload_class}, enum machine_mode @var{reload_mode}, secondary_reload_info *@var{sri})
-Many machines have some registers that cannot be copied directly to or
-from memory or even from other types of registers.  An example is the
-@samp{MQ} register, which on most machines, can only be copied to or
-from general registers, but not memory.  Below, we shall be using the
-term 'intermediate register' when a move operation cannot be performed
-directly, but has to be done by copying the source into the intermediate
-register first, and then copying the intermediate register to the
-destination.  An intermediate register always has the same mode as
-source and destination.  Since it holds the actual value being copied,
-reload might apply optimizations to re-use an intermediate register
-and eliding the copy from the source when it can determine that the
-intermediate register still holds the required value.
+许多机器具有一些寄存器，其不能直接和内存之间进行复制，
+甚至不能和其它类型的寄存器。一个例子是@samp{MQ}寄存器，
+在大多数机器上，只能与通用寄存器直接进行复制，而不能和内存之间。
+下面，我们将使用术语‘中途寄存器’，当一个move操作不能直接执行，
+而必须首先通过将源复制到中途寄存器中，然后再从中途寄存器复制到目的。
+一个中途寄存器总是具有与源和目的相同的机器模式。由于其存放了被复制的实际的值，
+所以重载可能进行优化来重用一个中途寄存器，并且省略掉从源进行复制的操作，
+当它可以确定中途寄存器还保留着所需要的值的时候。
 
-Another kind of secondary reload is required on some machines which
-allow copying all registers to and from memory, but require a scratch
-register for stores to some memory locations (e.g., those with symbolic
-address on the RT, and those with certain symbolic address on the SPARC
-when compiling PIC)@.  Scratch registers need not have the same mode
-as the value being copied, and usually hold a different value that
-that being copied.  Special patterns in the md file are needed to
-describe how the copy is performed with the help of the scratch register;
-these patterns also describe the number, register class(es) and mode(s)
-of the scratch register(s).
+另一种需要执行二次重载的情况是，在一些机器上，
+其允许所有的寄存器和内存之间进行复制，
+但要求一个scratch寄存器来存储一些内存的位置（例如，在RT上那些具有符号地址的，
+以及在SPARC上当编译PIC时那些具有特定符号地址的）。
+草稿寄存器不需要与被复制的值具有相同的机器模式，并且通常保留一个不同的值。
+在md文件中需要特殊的指令模式来描述复制在草稿寄存器的帮助下如何执行；
+这些指令模式还描述了草稿寄存器的编号，寄存器类别和机器模式。
 
-In some cases, both an intermediate and a scratch register are required.
+在一些情况下，同时需要中途寄存器和草稿寄存器。
 
-For input reloads, this target hook is called with nonzero @var{in_p},
-and @var{x} is an rtx that needs to be copied to a register of class
-@var{reload_class} in @var{reload_mode}.  For output reloads, this target
-hook is called with zero @var{in_p}, and a register of class @var{reload_class}
-needs to be copied to rtx @var{x} in @var{reload_mode}.
+对于输入重载，该target钩子使用非零的@var{in_p}来调用，并且@var{x}为一个rtx，
+其需要被复制到一个类别为@var{reload_class}，机器模式为@var{reload_mode}的寄存器中。
+对于输出重载，该target钩子使用为0的@var{in_p}调用，并且一个类别为@var{reload_class}，
+需要复制到机器模式为reload_mode的rtx @var{x}中。
 
-If copying a register of @var{reload_class} from/to @var{x} requires
-an intermediate register, the hook @code{secondary_reload} should
-return the register class required for this intermediate register.
-If no intermediate register is required, it should return NO_REGS.
-If more than one intermediate register is required, describe the one
-that is closest in the copy chain to the reload register.
+如果在类别为@var{reload_class}的寄存器和@var{x}直接进行复制需要一个中途寄存器，
+则钩子@code{secondary_reload}应该返回一个该中途寄存器需要的寄存器类别。
+如果不需要中途寄存器，则其应该返回NO_REGS。如果需要多个中途寄存器，
+则描述在复制链中最近的那个。
 
-If scratch registers are needed, you also have to describe how to
-perform the copy from/to the reload register to/from this
-closest intermediate register.  Or if no intermediate register is
-required, but still a scratch register is needed, describe the
-copy  from/to the reload register to/from the reload operand @var{x}.
+如果需要草稿寄存器，
+则还要描述如何如何在重载寄存器和这个最近的中途寄存器直接进行复制。
+或者如果不需要中途寄存器，但仍然需要一个草稿寄存器，
+则描述重载寄存器和重载操作数@var{x}之间的复制。
 
-You do this by setting @code{sri->icode} to the instruction code of a pattern
-in the md file which performs the move.  Operands 0 and 1 are the output
-and input of this copy, respectively.  Operands from operand 2 onward are
-for scratch operands.  These scratch operands must have a mode, and a
-single-register-class
-@c [later: or memory]
-output constraint.
+为此，你需要设置@code{sri->icode}为在md文件中执行move的指令模式的代码。
+操作数0和1分别为该复制的输出和输入。从2以后的操作数为草稿操作数。
+这些草稿操作数必须具有机器模式并且一个single-register-class的输出约束。
 
-When an intermediate register is used, the @code{secondary_reload}
-hook will be called again to determine how to copy the intermediate
-register to/from the reload operand @var{x}, so your hook must also
-have code to handle the register class of the intermediate operand.
+当使用中途寄存器的时候，@code{secondary_reload}钩子将会被再次调用，
+来确定如何在中途寄存器和重载操作数之间进行复制，
+所以你的钩子必须还要具有处理中途操作数的寄存器类别的代码。
 
-@c [For later: maybe we'll allow multi-alternative reload patterns -
-@c   the port maintainer could name a mov<mode> pattern that has clobbers -
-@c   and match the constraints of input and output to determine the required
-@c   alternative.  A restriction would be that constraints used to match
-@c   against reloads registers would have to be written as register class
-@c   constraints, or we need a new target macro / hook that tells us if an
-@c   arbitrary constraint can match an unknown register of a given class.
-@c   Such a macro / hook would also be useful in other places.]
+@var{x}可以为伪寄存器或者一个伪寄存器的@code{subreg}，
+其可以为一个硬件寄存器或者在内存中。使用@code{true_regnum}来查看；
+其将返回-1如果伪寄存器在内存中，以及硬件寄存器编号，如果其在一个寄存器中。
 
+在内存中的草稿操作数（约束@code{"=m"} / @code{"=&m"}）目前不被支持。
+为此，目前你必须继续使用@code{SECONDARY_MEMORY_NEEDED}。
 
-@var{x} might be a pseudo-register or a @code{subreg} of a
-pseudo-register, which could either be in a hard register or in memory.
-Use @code{true_regnum} to find out; it will return @minus{}1 if the pseudo is
-in memory and the hard register number if it is in a register.
-
-Scratch operands in memory (constraint @code{"=m"} / @code{"=&m"}) are
-currently not supported.  For the time being, you will have to continue
-to use @code{SECONDARY_MEMORY_NEEDED} for that purpose.
-
-@code{copy_cost} also uses this target hook to find out how values are
-copied.  If you want it to include some extra cost for the need to allocate
-(a) scratch register(s), set @code{sri->extra_cost} to the additional cost.
-Or if two dependent moves are supposed to have a lower cost than the sum
-of the individual moves due to expected fortuitous scheduling and/or special
-forwarding logic, you can set @code{sri->extra_cost} to a negative amount.
+@code{copy_cost}还是要该target钩子来查找值如何被复制。
+如果你想让其包含像分配草稿寄存器所需要的额外代价，
+则可以设置@code{sri->extra_cost}为额外代价。
+或者如果两个相关move会具有比两个单个move之和的代价要低，
+则可以设置@code{sri->extra_cost}为一个负数。
 @end deftypefn
 
 @defmac SECONDARY_RELOAD_CLASS (@var{class}, @var{mode}, @var{x})
@@ -2824,67 +2703,51 @@ general registers.
 @end defmac
 
 @defmac SECONDARY_MEMORY_NEEDED (@var{class1}, @var{class2}, @var{m})
-Certain machines have the property that some registers cannot be copied
-to some other registers without using memory.  Define this macro on
-those machines to be a C expression that is nonzero if objects of mode
-@var{m} in registers of @var{class1} can only be copied to registers of
-class @var{class2} by storing a register of @var{class1} into memory
-and loading that memory location into a register of @var{class2}.
+一些机器要求某些寄存器必须使用内存才能与其它寄存器进行复制。
+定义该宏在那些机器上，其为一个C表达式，
+为非0如果机器模式为@var{m}的对象在类别为@var{class1}的寄存器中，
+只能通过将@var{class1}的寄存器存储到内存中并且将内存位置加载到@var{class2}的寄存中。
 
-Do not define this macro if its value would always be zero.
+如果其值总是为0，则不要定义该宏。
 @end defmac
 
 @defmac SECONDARY_MEMORY_NEEDED_RTX (@var{mode})
-Normally when @code{SECONDARY_MEMORY_NEEDED} is defined, the compiler
-allocates a stack slot for a memory location needed for register copies.
-If this macro is defined, the compiler instead uses the memory location
-defined by this macro.
+通常当@code{SECONDARY_MEMORY_NEEDED}被定义时，
+编译器会分配一个栈槽为需要寄存器复制的内存位置。
+如果该宏被定义，则编译器会替代的使用该宏定义的内存位置。
 
-Do not define this macro if you do not define
-@code{SECONDARY_MEMORY_NEEDED}.
+如果没有定义@code{SECONDARY_MEMORY_NEEDED}，则不要定义该宏。
 @end defmac
 
 @defmac SECONDARY_MEMORY_NEEDED_MODE (@var{mode})
-When the compiler needs a secondary memory location to copy between two
-registers of mode @var{mode}, it normally allocates sufficient memory to
-hold a quantity of @code{BITS_PER_WORD} bits and performs the store and
-load operations in a mode that many bits wide and whose class is the
-same as that of @var{mode}.
+当编译器需要一个二级内存位置在机器模式为@var{mode}的寄存器之间进行复制的时候，
+其通常分配足够的内存来存放@code{BITS_PER_WORD}个位，
+并且执行该位数宽度的@var{mode}的存储和加载操作。
 
-This is right thing to do on most machines because it ensures that all
-bits of the register are copied and prevents accesses to the registers
-in a narrower mode, which some machines prohibit for floating-point
-registers.
+这在大多数机器上是正确的，
+因为其确保寄存器的所有位被复制并且阻止对寄存器按照较窄的机器模式来访问，
+这对于浮点寄存器通常是禁止的。
 
-However, this default behavior is not correct on some machines, such as
-the DEC Alpha, that store short integers in floating-point registers
-differently than in integer registers.  On those machines, the default
-widening will not work correctly and you must define this macro to
-suppress that widening in some cases.  See the file @file{alpha.h} for
-details.
+然而，该缺省行为在一些机器上是不正确的，例如DEC Alpha，
+其在浮点寄存器中存储short整数与在整数寄存器中是不同的。
+在那些机器上，缺省的宽度将不正确，你必须定义该宏来抑制这种宽度。
+详情参见@file{alpha.h}文件。
 
-Do not define this macro if you do not define
-@code{SECONDARY_MEMORY_NEEDED} or if widening @var{mode} to a mode that
-is @code{BITS_PER_WORD} bits wide is correct for your machine.
+如果没有定义，或者如果@code{BITS_PER_WORD}个位数的宽度是正确的，则不要定义该宏。
 @end defmac
 
 @defmac SMALL_REGISTER_CLASSES
-On some machines, it is risky to let hard registers live across arbitrary
-insns.  Typically, these machines have instructions that require values
-to be in specific registers (like an accumulator), and reload will fail
-if the required hard register is used for another purpose across such an
-insn.
+在一些机器上，让硬件寄存器的活跃性跨越任意的insn是危险的。
+特别是，这些机器具有要求值要在特定寄存器中的指令（像累加器），
+并且重载将会失败如果所要求的硬件寄存器用于其它目的。
 
-Define @code{SMALL_REGISTER_CLASSES} to be an expression with a nonzero
-value on these machines.  When this macro has a nonzero value, the
-compiler will try to minimize the lifetime of hard registers.
+定义@code{SMALL_REGISTER_CLASSES}为一个表达式，非0的值在这些机器上。
+当该宏具有非0值，则编译器尝试最小化硬件寄存器的生命期。
 
-It is always safe to define this macro with a nonzero value, but if you
-unnecessarily define it, you will reduce the amount of optimizations
-that can be performed in some cases.  If you do not define this macro
-with a nonzero value when it is required, the compiler will run out of
-spill registers and print a fatal error message.  For most machines, you
-should not define this macro at all.
+定义该宏为非0值总是安全的，但是如果你没必要定义它，则你将会减少优化数目。
+如果你没有定义该宏为非0，并且当其需要时，
+则编译器会产生寄存器溢出并且打印一个fatal error消息。
+对于大多数机器，你根本不需要定义该宏。
 @end defmac
 
 @defmac CLASS_LIKELY_SPILLED_P (@var{class})
@@ -2906,28 +2769,21 @@ allocation.
 @end defmac
 
 @defmac CLASS_MAX_NREGS (@var{class}, @var{mode})
-A C expression for the maximum number of consecutive registers
-of class @var{class} needed to hold a value of mode @var{mode}.
+一个C表达式，为需要存放机器模式为@var{mode}的值所需要的连续的类别为@var{class}的寄存器的最大数。
 
-This is closely related to the macro @code{HARD_REGNO_NREGS}.  In fact,
-the value of the macro @code{CLASS_MAX_NREGS (@var{class}, @var{mode})}
-should be the maximum value of @code{HARD_REGNO_NREGS (@var{regno},
-@var{mode})} for all @var{regno} values in the class @var{class}.
+这与宏@code{HARD_REGNO_NREGS}很相近。实际上，
+宏@code{CLASS_MAX_NREGS (@var{class}, @var{mode})}的值应该为@code{HARD_REGNO_NREGS (@var{regno},@var{mode})}的最大值。
 
-This macro helps control the handling of multiple-word values
-in the reload pass.
+该宏有助于处理多字的值，在重载过程中。
 @end defmac
 
 @defmac CANNOT_CHANGE_MODE_CLASS (@var{from}, @var{to}, @var{class})
-If defined, a C expression that returns nonzero for a @var{class} for which
-a change from mode @var{from} to mode @var{to} is invalid.
+如果被定义，为一个C表达式，其返回非0，对于一个@var{class}，
+其由机器模式@var{from}到@var{to}的改变是无效的。
 
-For the example, loading 32-bit integer or floating-point objects into
-floating-point registers on the Alpha extends them to 64 bits.
-Therefore loading a 64-bit object and then storing it as a 32-bit object
-does not store the low-order 32 bits, as would be the case for a normal
-register.  Therefore, @file{alpha.h} defines @code{CANNOT_CHANGE_MODE_CLASS}
-as below:
+例如，加载32位整数或者浮点对象到浮点寄存器中，在Alpha上将被扩展为64位。
+因此加载64位对象并存储为32位对象时将不保存第32位。
+因此，@file{alpha.h}定义@code{CANNOT_CHANGE_MODE_CLASS}如下：
 
 @smallexample
 #define CANNOT_CHANGE_MODE_CLASS(FROM, TO, CLASS) \
