@@ -93,83 +93,52 @@ struct gcc_target targetm = TARGET_INITIALIZER;
 你可以控制编译驱动器。 
 
 @defmac SWITCH_TAKES_ARG (@var{char})
-    一个C表达式，用来确定选项-char是否接受参数。值应该为选项接受的参数个数，0表示为许多选项。
+一个C表达式，用来确定选项@option{-@var{char}}是否接受参数。
+值应该为选项接受的参数个数，0表示为许多选项。
 
-    缺省情况下，该宏被定义为DEFAULT_SWITCH_TAKES_ARG，可以正常处理标准的选项。除非希望增加额外的接受参数的选项，否则不需要定义SWITCH_TAKES_ARG。任何定义都应该先调用DEFAULT_SWITCH_TAKES_ARG，然后再检查额外的选项。
-
-A C expression which determines whether the option @option{-@var{char}}
-takes arguments.  The value should be the number of arguments that
-option takes--zero, for many options.
-
-By default, this macro is defined as
-@code{DEFAULT_SWITCH_TAKES_ARG}, which handles the standard options
-properly.  You need not define @code{SWITCH_TAKES_ARG} unless you
-wish to add additional options which take arguments.  Any redefinition
-should call @code{DEFAULT_SWITCH_TAKES_ARG} and then check for
-additional options.
+缺省情况下，该宏被定义为@code{DEFAULT_SWITCH_TAKES_ARG}，
+可以正常处理标准的选项。除非希望增加额外的接受参数的选项，
+否则不需要定义@code{SWITCH_TAKES_ARG}。
+任何定义都应该先调用@code{DEFAULT_SWITCH_TAKES_ARG}，然后再检查额外的选项。
 @end defmac
 
 @defmac WORD_SWITCH_TAKES_ARG (@var{name})
-    一个C表达式，用来确定选项-name是否接受参数。值应该为选项接受的参数个数，0表示为许多选项。该宏与SWITCH_TAKES_ARG不同的是用于多字符的选项名。
+一个C表达式，用来确定选项@option{-@var{name}}是否接受参数。
+值应该为选项接受的参数个数，0表示为许多选项。
+该宏与@code{SWITCH_TAKES_ARG}不同的是用于多字符的选项名。
 
-    缺省情况下，该宏被定义为DEFAULT_WORD_SWITCH_TAKES_ARG，可以正常处理标准的选项。除非希望增加额外的接受参数的选项，否则不需要定义WORD_SWITCH_TAKES_ARG。任何定义都应该先调用DEFAULT_WORD_SWITCH_TAKES_ARG，然后再检查额外的选项。
-
-A C expression which determines whether the option @option{-@var{name}}
-takes arguments.  The value should be the number of arguments that
-option takes--zero, for many options.  This macro rather than
-@code{SWITCH_TAKES_ARG} is used for multi-character option names.
-
-By default, this macro is defined as
-@code{DEFAULT_WORD_SWITCH_TAKES_ARG}, which handles the standard options
-properly.  You need not define @code{WORD_SWITCH_TAKES_ARG} unless you
-wish to add additional options which take arguments.  Any redefinition
-should call @code{DEFAULT_WORD_SWITCH_TAKES_ARG} and then check for
-additional options.
+缺省情况下，该宏被定义为@code{DEFAULT_WORD_SWITCH_TAKES_ARG}，
+可以正常处理标准的选项。除非希望增加额外的接受参数的选项，
+否则不需要定义@code{WORD_SWITCH_TAKES_ARG}。
+任何定义都应该先调用@code{DEFAULT_WORD_SWITCH_TAKES_ARG}，然后再检查额外的选项。
 @end defmac
 
 @defmac SWITCH_CURTAILS_COMPILATION (@var{char})
-    一个C表达式，用来确定选项-char是否在生成可执行程序之前停止编译。值为布尔的，如果选项确实停止生成可执行程序则为非0，否则为0。
+一个C表达式，用来确定选项@option{-@var{char}}是否在生成可执行程序之前停止编译。
+值为布尔的，如果选项确实停止生成可执行程序则为非0，否则为0。
 
-    缺省情况下，该宏被定义为DEFAULT_SWITCH_CURTAILS_COMPILATION，可以正常处理标准的选项。除非希望增加额外的影响可执行程序生成的选项，否则不需要定义SWITCH_CURTAILS_COMPILATION。任何定义都应该先调用 DEFAULT_SWITCH_CURTAILS_COMPILATION，然后再检查额外的选项。
-
-A C expression which determines whether the option @option{-@var{char}}
-stops compilation before the generation of an executable.  The value is
-boolean, nonzero if the option does stop an executable from being
-generated, zero otherwise.
-
-By default, this macro is defined as
-@code{DEFAULT_SWITCH_CURTAILS_COMPILATION}, which handles the standard
-options properly.  You need not define
-@code{SWITCH_CURTAILS_COMPILATION} unless you wish to add additional
-options which affect the generation of an executable.  Any redefinition
-should call @code{DEFAULT_SWITCH_CURTAILS_COMPILATION} and then check
-for additional options.
+缺省情况下，该宏被定义为@code{DEFAULT_SWITCH_CURTAILS_COMPILATION}，
+可以正常处理标准的选项。除非希望增加额外的影响可执行程序生成的选项，
+否则不需要定义@code{SWITCH_CURTAILS_COMPILATION}。
+任何定义都应该先调用@code{DEFAULT_SWITCH_CURTAILS_COMPILATION}，
+然后再检查额外的选项。
 @end defmac
 
 @defmac SWITCHES_NEED_SPACES
-    一个字符串形式的C表达式，用来枚举连接器在选项和它的参数之间需要一个空格的那些选项。
+一个字符串形式的C表达式，
+用来枚举连接器在选项和它的参数之间需要一个空格的那些选项。
 
-    如果该宏没有被定义，则缺省值为""。
-
-A string-valued C expression which enumerates the options for which
-the linker needs a space between the option and its argument.
-
-If this macro is not defined, the default value is @code{""}.
+如果该宏没有被定义，则缺省值为@code{""}。
 @end defmac
 
 @defmac TARGET_OPTION_TRANSLATE_TABLE
-如果定义，则为字符串对列表，其中第一个为gcc驱动程序的一个可能的命令行target，第二个为空格分隔的（不支持tab和其它 whitespace）选项列表，用来替换第一个选项。定义该列表的target负责确认结果是有效的。替换选项不可以为--opt风格的，它们必须为 -opt风格的。该宏的目的是为多版本库选择提供一种替换机制，像可以启用许多选项一个选项。例如，在一个无实际意义的定义中，-malt-abi, -EB, 和 -mspoo会造成不同的多版本库被选择：
-If defined, a list of pairs of strings, the first of which is a
-potential command line target to the @file{gcc} driver program, and the
-second of which is a space-separated (tabs and other whitespace are not
-supported) list of options with which to replace the first option.  The
-target defining this list is responsible for assuring that the results
-are valid.  Replacement options may not be the @code{--opt} style, they
-must be the @code{-opt} style.  It is the intention of this macro to
-provide a mechanism for substitution that affects the multilibs chosen,
-such as one option that enables many options, some of which select
-multilibs.  Example nonsensical definition, where @option{-malt-abi},
-@option{-EB}, and @option{-mspoo} cause different multilibs to be chosen:
+如果定义，则为字符串对列表，
+其中第一个为@file{gcc}驱动程序的一个可能的命令行target，
+第二个为空格分隔的（不支持tab和其它 whitespace）选项列表，用来替换第一个选项。
+定义该列表的target负责确认结果是有效的。替换选项不可以为@code{--opt}风格的，
+它们必须为@code{-opt}风格的。该宏的目的是为多版本库选择提供一种替换机制，
+像可以启用许多选项一个选项。例如，在一个无实际意义的定义中，
+@option{-malt-abi}, @option{-EB}和@option{-mspoo}会造成不同的多版本库被选择：
 
 @smallexample
 #define TARGET_OPTION_TRANSLATE_TABLE \
@@ -179,301 +148,186 @@ multilibs.  Example nonsensical definition, where @option{-malt-abi},
 @end defmac
 
 @defmac DRIVER_SELF_SPECS
-    驱动器本身的specs列表。其应该为一个字符串数组的适当的初始化值，并不使用大括号包裹。
+驱动器本身的specs列表。其应该为一个字符串数组的适当的初始化值，
+并不使用大括号包裹。
 
-    驱动器将这些specs应用到它自己的命令行上，位于加载缺省specs（不是命令行指定的）和选择多版本库目录或者运行任何子命令之间。将按照给定的顺序来应用它们，所以每个spec可以依赖于先前增加的选项。还可以使用通常的方式，用`%<option'来移除选项。
+驱动器将这些specs应用到它自己的命令行上，位于加载缺省@file{specs}
+（不是命令行指定的）和选择多版本库目录或者运行任何子命令之间。
+将按照给定的顺序来应用它们，所以每个spec可以依赖于先前增加的选项。
+还可以使用通常的方式，用@samp{%<@var{option}}来移除选项。
 
-    当一个port具有多个相互依赖的target选项时，该宏会有一些用处。它提供了一个标准化命令行的方法，使得其它specs的书写变得容易些。
+当一个port具有多个相互依赖的target选项时，该宏会有一些用处。
+它提供了一个标准化命令行的方法，使得其它specs的书写变得容易些。
 
-    如果不需要做任何事情的话，则不要定义该宏。
-
-A list of specs for the driver itself.  It should be a suitable
-initializer for an array of strings, with no surrounding braces.
-
-The driver applies these specs to its own command line between loading
-default @file{specs} files (but not command-line specified ones) and
-choosing the multilib directory or running any subcommands.  It
-applies them in the order given, so each spec can depend on the
-options added by earlier ones.  It is also possible to remove options
-using @samp{%<@var{option}} in the usual way.
-
-This macro can be useful when a port has several interdependent target
-options.  It provides a way of standardizing the command line so
-that the other specs are easier to write.
-
-Do not define this macro if it does not need to do anything.
+如果不需要做任何事情的话，则不要定义该宏。
 @end defmac
 
 @defmac OPTION_DEFAULT_SPECS
-    用于在驱动器中支持配置时（configure-time）缺省选项（即，--with选项）的specs列表。其应该为一个结构体数组的适当的初始化值，每个元素包含两个字符串，并不使用大括号包裹字符串对。
+用于在驱动器中支持配置时（configure-time）缺省选项（即，@option{--with}选项）
+的specs列表。其应该为一个结构体数组的适当的初始化值，每个元素包含两个字符串，
+并不使用大括号包裹字符串对。
 
-    字符串对的第一项为缺省名字。其必须匹配target的config.gcc中的代码。第二项为一个spec，当指定那个名字的时候会被应用。在spec中的字符串`%(VALUE)'将被它的缺省值替换。
+字符串对的第一项为缺省名字。其必须匹配target的@file{config.gcc}中的代码。
+第二项为一个spec，当指定那个名字的时候会被应用。
+在spec中的字符串@samp{%(VALUE)}将被它的缺省值替换。
 
-    驱动器将这些specs应用到它自己的命令行上，位于加载缺省specs文件和处理DRIVER_SELF_SPECS之间，使用与DRIVER_SELF_SPECS相同的机制。
+驱动器将这些specs应用到它自己的命令行上，
+位于加载缺省@file{specs}文件和处理@code{DRIVER_SELF_SPECS}之间，
+使用与@code{DRIVER_SELF_SPECS}相同的机制。
 
-    如果不需要做任何事情的话，则不要定义该宏。
-
-A list of specs used to support configure-time default options (i.e.@:
-@option{--with} options) in the driver.  It should be a suitable initializer
-for an array of structures, each containing two strings, without the
-outermost pair of surrounding braces.
-
-The first item in the pair is the name of the default.  This must match
-the code in @file{config.gcc} for the target.  The second item is a spec
-to apply if a default with this name was specified.  The string
-@samp{%(VALUE)} in the spec will be replaced by the value of the default
-everywhere it occurs.
-
-The driver will apply these specs to its own command line between loading
-default @file{specs} files and processing @code{DRIVER_SELF_SPECS}, using
-the same mechanism as @code{DRIVER_SELF_SPECS}.
-
-Do not define this macro if it does not need to do anything.
+如果不需要做任何事情的话，则不要定义该宏。
 @end defmac
 
 @defmac CPP_SPEC
-    一个C字符串常理，告诉GCC驱动程序要传给CPP的选项。还可以指定如何将你给GCC的选项转换成GCC传给CPP的选项。
+一个C字符串常理，告诉GCC驱动程序要传给CPP的选项。
+还可以指定如何将你给GCC的选项转换成GCC传给CPP的选项。
 
-    如果不需要做任何事情的话，则不要定义该宏。
-
-A C string constant that tells the GCC driver program options to
-pass to CPP@.  It can also specify how to translate options you
-give to GCC into options for GCC to pass to the CPP@.
-
-Do not define this macro if it does not need to do anything.
+如果不需要做任何事情的话，则不要定义该宏。
 @end defmac
 
 @defmac CPLUSPLUS_CPP_SPEC
-该宏类似于CPP_SPEC，只不过是用于C++而不是C。如果你不定义该宏，则会使用CPP_SPEC的值（如果存在）来替代。
-This macro is just like @code{CPP_SPEC}, but is used for C++, rather
-than C@.  If you do not define this macro, then the value of
-@code{CPP_SPEC} (if any) will be used instead.
+该宏类似于@code{CPP_SPEC}，只不过是用于C++而不是C。如果你不定义该宏，
+则会使用@code{CPP_SPEC}的值（如果存在）来替代。
 @end defmac
 
 @defmac CC1_SPEC
-    一个C字符串常量，告诉GCC驱动程序要传给cc1, cc1plus, f771, 和其它语言前端的选项。还可以指定如何将你给GCC的选项转换成GCC传给前端的选项。
+一个C字符串常量，告诉GCC驱动程序要传给@code{cc1}, @code{cc1plus}, 
+@code{f771}和其它语言前端的选项。
+还可以指定如何将你给GCC的选项转换成GCC传给前端的选项。
 
-    如果不需要做任何事情的话，则不要定义该宏。
-
-A C string constant that tells the GCC driver program options to
-pass to @code{cc1}, @code{cc1plus}, @code{f771}, and the other language
-front ends.
-It can also specify how to translate options you give to GCC into options
-for GCC to pass to front ends.
-
-Do not define this macro if it does not need to do anything.
+如果不需要做任何事情的话，则不要定义该宏。
 @end defmac
 
 @defmac CC1PLUS_SPEC
-    一个C字符串常量，告诉GCC驱动程序要传给cc1plus的选项。还可以指定如何将你给GCC的选项转换成GCC传给cc1plus的选项。
+一个C字符串常量，告诉GCC驱动程序要传给@code{cc1plus}的选项。
+还可以指定如何将你给GCC的选项转换成GCC传给@code{cc1plus}的选项。
 
-    如果不需要做任何事情的话，则不要定义该宏。注意在CC1_SPEC中定义的所有选项已经被传给cc1plus，所以不需要在CC1PLUS_SPEC中重复CC1_SPEC的内容。
-
-A C string constant that tells the GCC driver program options to
-pass to @code{cc1plus}.  It can also specify how to translate options you
-give to GCC into options for GCC to pass to the @code{cc1plus}.
-
-Do not define this macro if it does not need to do anything.
-Note that everything defined in CC1_SPEC is already passed to
-@code{cc1plus} so there is no need to duplicate the contents of
-CC1_SPEC in CC1PLUS_SPEC@.
+如果不需要做任何事情的话，则不要定义该宏。
+注意在CC1_SPEC中定义的所有选项已经被传给@code{cc1plus}，
+所以不需要在CC1PLUS_SPEC中重复CC1_SPEC的内容。
 @end defmac
 
 @defmac ASM_SPEC
-    一个C字符串常量，告诉GCC驱动程序要传给汇编器的选项。还可以指定如何将你给GCC的选项转换成GCC传给汇编器的选项。参见文件sun3.h中的例子。
+一个C字符串常量，告诉GCC驱动程序要传给汇编器的选项。
+还可以指定如何将你给GCC的选项转换成GCC传给汇编器的选项。
+参见文件@file{sun3.h}中的例子。
 
-    如果不需要做任何事情的话，则不要定义该宏。
-
-A C string constant that tells the GCC driver program options to
-pass to the assembler.  It can also specify how to translate options
-you give to GCC into options for GCC to pass to the assembler.
-See the file @file{sun3.h} for an example of this.
-
-Do not define this macro if it does not need to do anything.
+如果不需要做任何事情的话，则不要定义该宏。
 @end defmac
 
 @defmac ASM_FINAL_SPEC
-    一个C字符串常理，告诉GCC驱动程序如何在正常的汇编之后运行任何清除程序。通常，不需要该宏。参见文件mips.h中的例子。
+一个C字符串常理，告诉GCC驱动程序如何在正常的汇编之后运行任何清除程序。
+通常，不需要该宏。参见文件@file{mips.h}中的例子。
 
-    如果不需要做任何事情的话，则不要定义该宏。
-
-A C string constant that tells the GCC driver program how to
-run any programs which cleanup after the normal assembler.
-Normally, this is not needed.  See the file @file{mips.h} for
-an example of this.
-
-Do not define this macro if it does not need to do anything.
+如果不需要做任何事情的话，则不要定义该宏。
 @end defmac
 
 @defmac AS_NEEDS_DASH_FOR_PIPED_INPUT
-    定义该宏，不需要任何值，如果驱动器需要给汇编器一个由单横线“-”组成的参数，来指示它从标准输入（其将为一个与编译器输出连接的管道）读取时。该参数在任何指定输出文件名字的-o选项后面被给出。
+定义该宏，不需要任何值，如果驱动器需要给汇编器一个由单横线@option{-}组成的参数，
+来指示它从标准输入（其将为一个与编译器输出连接的管道）读取时。
+该参数在任何指定输出文件名字的@option{-o}选项后面被给出。
 
-    如果不定义该宏，则汇编器被认为在没有给任何参数时，才从标准输入读取。如果你的汇编器根本不能从标准输入读取，则使用`%{pipe:%e}'子句；参见mips.h中的例子。
-
-Define this macro, with no value, if the driver should give the assembler
-an argument consisting of a single dash, @option{-}, to instruct it to
-read from its standard input (which will be a pipe connected to the
-output of the compiler proper).  This argument is given after any
-@option{-o} option specifying the name of the output file.
-
-If you do not define this macro, the assembler is assumed to read its
-standard input if given no non-option arguments.  If your assembler
-cannot read standard input at all, use a @samp{%@{pipe:%e@}} construct;
-see @file{mips.h} for instance.
+如果不定义该宏，则汇编器被认为在没有给任何参数时，才从标准输入读取。
+如果你的汇编器根本不能从标准输入读取，则使用@samp{%@{pipe:%e@}}子句；
+参见@file{mips.h}中的例子。
 @end defmac
 
 @defmac LINK_SPEC
-    一个C字符串常量，告诉GCC驱动程序要传给连接器的选项。还可以指定如何将你给GCC的选项转换成GCC传给连接器的选项。
+一个C字符串常量，告诉GCC驱动程序要传给连接器的选项。
+还可以指定如何将你给GCC的选项转换成GCC传给连接器的选项。
 
-    如果不需要做任何事情的话，则不要定义该宏。
-
-
-A C string constant that tells the GCC driver program options to
-pass to the linker.  It can also specify how to translate options you
-give to GCC into options for GCC to pass to the linker.
-
-Do not define this macro if it does not need to do anything.
+如果不需要做任何事情的话，则不要定义该宏。
 @end defmac
 
 @defmac LIB_SPEC
-另一个C字符串常理，与LINK_SPEC的用法很相似。两者的区别是LIB_SPEC用于传给连接器的命令的结尾处。
+另一个C字符串常理，与@code{LINK_SPEC}的用法很相似。
+两者的区别是@code{LIB_SPEC}用于传给连接器的命令的结尾处。
 
-如果该宏没有被定义，则提供缺省的方式从通常的地方来加载标准C库。参见gcc.c。
-Another C string constant used much like @code{LINK_SPEC}.  The difference
-between the two is that @code{LIB_SPEC} is used at the end of the
-command given to the linker.
-
-If this macro is not defined, a default is provided that
-loads the standard C library from the usual place.  See @file{gcc.c}.
+如果该宏没有被定义，则提供缺省的方式从通常的地方来加载标准C库。
+参见@file{gcc.c}。
 @end defmac
 
 @defmac LIBGCC_SPEC
-另一个C字符串常理，告诉GCC驱动程序如何以及什么时候将对libgcc.a的引用放到连接器的命令行中。该常量同时被放在LIB_SPEC的值的前面和后面。
+另一个C字符串常理，
+告诉GCC驱动程序如何以及什么时候将对@file{libgcc.a}的引用放到连接器的命令行中。
+该常量同时被放在@code{LIB_SPEC}的值的前面和后面。
 
-如果该宏没有被定义，则GCC驱动器提供了一个缺省的方式，将字符串-lgcc传给连接器。
-Another C string constant that tells the GCC driver program
-how and when to place a reference to @file{libgcc.a} into the
-linker command line.  This constant is placed both before and after
-the value of @code{LIB_SPEC}.
-
-If this macro is not defined, the GCC driver provides a default that
-passes the string @option{-lgcc} to the linker.
+如果该宏没有被定义，则GCC驱动器提供了一个缺省的方式，
+将字符串@option{-lgcc}传给连接器。
 @end defmac
 
 @defmac REAL_LIBGCC_SPEC
-缺省情况下，如果ENABLE_SHARED_LIBGCC被定义，则LIBGCC_SPEC不直接被驱动程序使用，而是根据命令行标记-static, -shared, -static-libgcc, 和 -shared-libgcc的值，被修改来引用libgcc.a的不同版本。在一些target上，这些修改并不合适，这样就可以定义 REAL_LIBGCC_SPEC。REAL_LIBGCC_SPEC告诉驱动器如何将对libgcc的引用放到连接器命令行中，不过不像 LIBGCC_SPEC，它的使用不会被修改。
-By default, if @code{ENABLE_SHARED_LIBGCC} is defined, the
-@code{LIBGCC_SPEC} is not directly used by the driver program but is
-instead modified to refer to different versions of @file{libgcc.a}
-depending on the values of the command line flags @option{-static},
-@option{-shared}, @option{-static-libgcc}, and @option{-shared-libgcc}.  On
-targets where these modifications are inappropriate, define
-@code{REAL_LIBGCC_SPEC} instead.  @code{REAL_LIBGCC_SPEC} tells the
-driver how to place a reference to @file{libgcc} on the link command
-line, but, unlike @code{LIBGCC_SPEC}, it is used unmodified.
+缺省情况下，如果@code{ENABLE_SHARED_LIBGCC}被定义，
+则@code{LIBGCC_SPEC}不直接被驱动程序使用，而是根据命令行标记@option{-static}, 
+@option{-shared}, @option{-static-libgcc}和@option{-shared-libgcc}的值，
+被修改来引用@file{libgcc.a}的不同版本。在一些target上，这些修改并不合适，
+这样就可以定义@code{REAL_LIBGCC_SPEC}。
+@code{REAL_LIBGCC_SPEC}告诉驱动器如何将对@file{libgcc}的引用放到连接器命令行中，
+不过不像@code{LIBGCC_SPEC}，它的使用不会被修改。
 @end defmac
 
 @defmac USE_LD_AS_NEEDED
-一个宏，用于控制对在REAL_LIBGCC_SPEC中提到的LIBGCC_SPEC的修改。如果非0，则会创建一个spec，当不使用任何 -static, -static-libgcc, 或 -shared-libgcc来连接的时候，将使用–as-needed和静态异常处理库所在位置的共享libgcc。
-A macro that controls the modifications to @code{LIBGCC_SPEC}
-mentioned in @code{REAL_LIBGCC_SPEC}.  If nonzero, a spec will be
-generated that uses --as-needed and the shared libgcc in place of the
-static exception handler library, when linking without any of
-@code{-static}, @code{-static-libgcc}, or @code{-shared-libgcc}.
+一个宏，用于控制对在@code{REAL_LIBGCC_SPEC}中提到的@code{LIBGCC_SPEC}的修改。
+如果非0，则会创建一个spec，当不使用任何@code{-static}, 
+@code{-static-libgcc}或@code{-shared-libgcc}来连接的时候，
+将使用–as-needed和静态异常处理库所在位置的共享libgcc。
 @end defmac
 
 @defmac LINK_EH_SPEC
-如果定义，则该C字符串常理被增加到LINK_SPEC中。当USE_LD_AS_NEEDED为0或者未定义时，它仍然影响对在REAL_LIBGCC_SPEC中提到的LIBGCC_SPEC的修改。
-If defined, this C string constant is added to @code{LINK_SPEC}.
-When @code{USE_LD_AS_NEEDED} is zero or undefined, it also affects
-the modifications to @code{LIBGCC_SPEC} mentioned in
-@code{REAL_LIBGCC_SPEC}.
+如果定义，则该C字符串常理被增加到@code{LINK_SPEC}中。
+当@code{USE_LD_AS_NEEDED}为0或者未定义时，
+它仍然影响对在@code{REAL_LIBGCC_SPEC}中提到的@code{LIBGCC_SPEC}的修改。
 @end defmac
 
 @defmac STARTFILE_SPEC
-另一个C字符串常理，与LINK_SPEC用法很相似。两者的不同之处是STARTFILE_SPEC用于传给连接器的命令的最开始处。
+另一个C字符串常理，与@code{LINK_SPEC}用法很相似。
+两者的不同之处是@code{STARTFILE_SPEC}用于传给连接器的命令的最开始处。
 
-如果该宏没有被定义，则会提供一个缺省方式，从通常的地方来加载标准C起始（startup）文件。参见gcc.c。
-Another C string constant used much like @code{LINK_SPEC}.  The
-difference between the two is that @code{STARTFILE_SPEC} is used at
-the very beginning of the command given to the linker.
-
-If this macro is not defined, a default is provided that loads the
-standard C startup file from the usual place.  See @file{gcc.c}.
+如果该宏没有被定义，则会提供一个缺省方式，
+从通常的地方来加载标准C起始（startup）文件。参见@file{gcc.c}。
 @end defmac
 
 @defmac ENDFILE_SPEC
-另一个C字符串常理，与LINK_SPEC用法很相似。两者的不同之处是ENDFILE_SPEC用于传给连接器的命令的最末尾处。
+另一个C字符串常理，与@code{LINK_SPEC}用法很相似。
+两者的不同之处是@code{ENDFILE_SPEC}用于传给连接器的命令的最末尾处。
 
 如果不需要做任何事情的话，则不要定义该宏。
-Another C string constant used much like @code{LINK_SPEC}.  The
-difference between the two is that @code{ENDFILE_SPEC} is used at
-the very end of the command given to the linker.
-
-Do not define this macro if it does not need to do anything.
 @end defmac
 
 @defmac THREAD_MODEL_SPEC
-“GCC -v”将会打印GCC被配置使用的线程模式。然而，在有些平台上这是无法工作的，像AIX 4.3。对于这样的平台，将THREAD_MODEL_SPEC定义为没有空格的字符串来命名可识别的线程模式的名字。%*为该宏的缺省值，将扩展为在 config.gcc中设置的thread_file的值。
-GCC @code{-v} will print the thread model GCC was configured to use.
-However, this doesn't work on platforms that are multilibbed on thread
-models, such as AIX 4.3.  On such platforms, define
-@code{THREAD_MODEL_SPEC} such that it evaluates to a string without
-blanks that names one of the recognized thread models.  @code{%*}, the
-default value of this macro, will expand to the value of
-@code{thread_file} set in @file{config.gcc}.
+GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些平台上这是无法工作的，
+像AIX 4.3。对于这样的平台，将@code{THREAD_MODEL_SPEC}定义为没有空格的字符串来
+命名可识别的线程模式的名字。@code{%*}为该宏的缺省值，
+将扩展为在@file{config.gcc}中设置的@code{thread_file}的值。
 @end defmac
 
 @defmac SYSROOT_SUFFIX_SPEC
-定义该宏，当GCC使用一个sysroot被配置时，来为target sysroot增加一个后缀。这将造成GCC在sysroot+suffix下查找usr/lib等。
-Define this macro to add a suffix to the target sysroot when GCC is
-configured with a sysroot.  This will cause GCC to search for usr/lib,
-et al, within sysroot+suffix.
+定义该宏，当GCC使用一个sysroot被配置时，来为target sysroot增加一个后缀。
+这将造成GCC在sysroot+suffix下查找usr/lib等。
 @end defmac
 
 @defmac SYSROOT_HEADERS_SUFFIX_SPEC
-    定义该宏，当GCC使用一个sysroot被配置时，来为target sysroot增加一个头文件后缀。这将造成GCC将更新的sysroot+headers_suffix传给CPP，使得在 sysroot+headers_suffix下查找usr/include等。
-
-
-Define this macro to add a headers_suffix to the target sysroot when
-GCC is configured with a sysroot.  This will cause GCC to pass the
-updated sysroot+headers_suffix to CPP, causing it to search for
-usr/include, et al, within sysroot+headers_suffix.
+定义该宏，当GCC使用一个sysroot被配置时，来为target sysroot增加一个头文件后缀。
+这将造成GCC将更新的sysroot+headers_suffix传给CPP，
+使得在sysroot+headers_suffix下查找usr/include等。
 @end defmac
 
 @defmac EXTRA_SPECS
-定义该宏，来提供放在specs文件中的，可以被各种规范像CC1_SPEC使用的额外的规范。
+定义该宏，来提供放在@file{specs}文件中的，
+可以被各种规范像@code{CC1_SPEC}使用的额外的规范。
 
-定义应该为一个结构体数组的初始化值，其包含一个字符串常量，定义了规范的名字，以及一个字符串常量，提供相应的规范。
+定义应该为一个结构体数组的初始化值，其包含一个字符串常量，
+定义了规范的名字，以及一个字符串常量，提供相应的规范。
 
 如果不需要做任何事情的话，则不要定义该宏。
 
-当一种体系结构包含多个相关的target，所具有的各种..._SPECS彼此很相似的时候，EXTRA_SPECS会很有用，维护者可以有一个集中的地方来存放这些定义。
+当一种体系结构包含多个相关的target，所具有的各种..._SPECS彼此很相似的时候，@code{EXTRA_SPECS}会很有用，维护者可以有一个集中的地方来存放这些定义。
 
-例如，PowerPC System V.4的target使用EXTRA_SPECS，在System V调用序列被使用时，来定义_CALL_SYSV，当较老的基于AIX的调用序列被使用时，来定义_CALL_AIX。
+例如，PowerPC System V.4的target使用@code{EXTRA_SPECS}，
+在System V调用序列被使用时，来定义@code{_CALL_SYSV}，
+当较老的基于AIX的调用序列被使用时，来定义@code{_CALL_AIX}。
 
-config/rs6000/rs6000.h的target文件这样定义:
-Define this macro to provide additional specifications to put in the
-@file{specs} file that can be used in various specifications like
-@code{CC1_SPEC}.
-
-The definition should be an initializer for an array of structures,
-containing a string constant, that defines the specification name, and a
-string constant that provides the specification.
-
-Do not define this macro if it does not need to do anything.
-
-@code{EXTRA_SPECS} is useful when an architecture contains several
-related targets, which have various @code{@dots{}_SPECS} which are similar
-to each other, and the maintainer would like one central place to keep
-these definitions.
-
-For example, the PowerPC System V.4 targets use @code{EXTRA_SPECS} to
-define either @code{_CALL_SYSV} when the System V calling sequence is
-used or @code{_CALL_AIX} when the older AIX-based calling sequence is
-used.
-
-The @file{config/rs6000/rs6000.h} target file defines:
+@file{config/rs6000/rs6000.h}的target文件这样定义:
 
 @smallexample
 #define EXTRA_SPECS \
@@ -482,8 +336,7 @@ The @file{config/rs6000/rs6000.h} target file defines:
 #define CPP_SYS_DEFAULT ""
 @end smallexample
 
-config/rs6000/sysv.h的target文件这样定义:
-The @file{config/rs6000/sysv.h} target file defines:
+@file{config/rs6000/sysv.h}的target文件这样定义:
 @smallexample
 #undef CPP_SPEC
 #define CPP_SPEC \
@@ -496,9 +349,7 @@ The @file{config/rs6000/sysv.h} target file defines:
 #define CPP_SYSV_DEFAULT "-D_CALL_SYSV"
 @end smallexample
 
-而config/rs6000/eabiaix.h的target文件将CPP_SYSV_DEFAULT定义为:
-while the @file{config/rs6000/eabiaix.h} target file defines
-@code{CPP_SYSV_DEFAULT} as:
+而@file{config/rs6000/eabiaix.h}的target文件将@code{CPP_SYSV_DEFAULT}定义为:
 
 @smallexample
 #undef CPP_SYSV_DEFAULT
@@ -507,155 +358,102 @@ while the @file{config/rs6000/eabiaix.h} target file defines
 @end defmac
 
 @defmac LINK_LIBGCC_SPECIAL_1
-定义该宏，如果驱动程序应该找到库libgcc.a。如果没有定义该宏，则驱动程序将参数-lgcc传给连接器，并告诉连接器来查找。
-Define this macro if the driver program should find the library
-@file{libgcc.a}.  If you do not define this macro, the driver program will pass
-the argument @option{-lgcc} to tell the linker to do the search.
+定义该宏，如果驱动程序应该找到库@file{libgcc.a}。
+如果没有定义该宏，则驱动程序将参数@option{-lgcc}传给连接器，并告诉连接器来查找。
 @end defmac
 
 @defmac LINK_GCC_C_SEQUENCE_SPEC
-指定给连接器的libgcc和libc的顺序。缺省为%G %L %G。
-The sequence in which libgcc and libc are specified to the linker.
-By default this is @code{%G %L %G}.
+指定给连接器的libgcc和libc的顺序。缺省为@code{%G %L %G}。
 @end defmac
 
 @defmac LINK_COMMAND_SPEC
-一个C字符串常量，给出执行连接器所需的全部的命令行。当定义时，每次在gcc.c中对连接器命令行的修改，你都需要更新你的port。因此，只有当你需要完全重定义所调用的连接器的命令行，并且没有其他方式来完成时，才定义该宏。可以通过LINK_GCC_C_SEQUENCE_SPEC来替代该宏。
-A C string constant giving the complete command line need to execute the
-linker.  When you do this, you will need to update your port each time a
-change is made to the link command line within @file{gcc.c}.  Therefore,
-define this macro only if you need to completely redefine the command
-line for invoking the linker and there is no other way to accomplish
-the effect you need.  Overriding this macro may be avoidable by overriding
-@code{LINK_GCC_C_SEQUENCE_SPEC} instead.
+一个C字符串常量，给出执行连接器所需的全部的命令行。当定义时，
+每次在@file{gcc.c}中对连接器命令行的修改，你都需要更新你的port。
+因此，只有当你需要完全重定义所调用的连接器的命令行，并且没有其他方式来完成时，
+才定义该宏。可以通过@code{LINK_GCC_C_SEQUENCE_SPEC}来替代该宏。
 @end defmac
 
 @defmac LINK_ELIMINATE_DUPLICATE_LDIRECTORIES
-一个非零值，使得collect2从连接命令中移除重复的-Ldirectory搜寻目录。如果移除重复的搜索目录会改变连接器的语法，则不要定义为非零。
-A nonzero value causes @command{collect2} to remove duplicate @option{-L@var{directory}} search
-directories from linking commands.  Do not give it a nonzero value if
-removing duplicate search directories changes the linker's semantics.
+一个非零值，
+使得@command{collect2}从连接命令中移除重复的@option{-L@var{directory}}搜寻目录。
+如果移除重复的搜索目录会改变连接器的语法，则不要定义为非零。
 @end defmac
 
 @defmac MULTILIB_DEFAULTS
-    定义该宏为字符串数组的初始化C表达式，用来告诉驱动器程序对于该target，哪些选项是缺省的，因此当使用MULTILIB_OPTIONS时，不需要单独处理。
+定义该宏为字符串数组的初始化C表达式，用来告诉驱动器程序对于该target，
+哪些选项是缺省的，因此当使用@code{MULTILIB_OPTIONS}时，不需要单独处理。
 
-    如果在target makefile片段中没有定义MULTILIB_OPTIONS，或者如果在MULTILIB_OPTIONS中列出的选项中没有被设为缺省的，则不要定义该宏。参见“目标片段”。
-
-Define this macro as a C expression for the initializer of an array of
-string to tell the driver program which options are defaults for this
-target and thus do not need to be handled specially when using
-@code{MULTILIB_OPTIONS}.
-
-Do not define this macro if @code{MULTILIB_OPTIONS} is not defined in
-the target makefile fragment or if none of the options listed in
-@code{MULTILIB_OPTIONS} are set by default.
-@xref{目标机片段}.
+如果在target makefile片段中没有定义@code{MULTILIB_OPTIONS}，
+或者如果在@code{MULTILIB_OPTIONS}中列出的选项中没有被设为缺省的，
+则不要定义该宏。参见@ref{目标机片段}。
 @end defmac
 
 @defmac RELATIVE_PREFIX_NOT_LINKDIR
-定义该宏来告诉gcc，其应该只将-B的前缀转换成-L连接器选项，如果前缀指示了一个绝对的文件名。
-Define this macro to tell @command{gcc} that it should only translate
-a @option{-B} prefix into a @option{-L} linker option if the prefix
-indicates an absolute file name.
+定义该宏来告诉@command{gcc}，
+其应该只将@option{-B}的前缀转换成@option{-L}连接器选项，
+如果前缀指示了一个绝对的文件名。
 @end defmac
 
 @defmac MD_EXEC_PREFIX
-如果定义，该宏为一个可选前缀，其在STANDARD_EXEC_PREFIX之后进行尝试。当使用-b选项，或者编译器被构建为交叉编译器时，将不搜寻 MD_EXEC_PREFIX。如果你定义了MD_EXEC_PREFIX，则要确保将其增加到configure.in中用于查找汇编器的目录列表中。
-If defined, this macro is an additional prefix to try after
-@code{STANDARD_EXEC_PREFIX}.  @code{MD_EXEC_PREFIX} is not searched
-when the @option{-b} option is used, or the compiler is built as a cross
-compiler.  If you define @code{MD_EXEC_PREFIX}, then be sure to add it
-to the list of directories used to find the assembler in @file{configure.in}.
+如果定义，该宏为一个可选前缀，其在@code{STANDARD_EXEC_PREFIX}之后进行尝试。
+当使用@option{-b}选项，或者编译器被构建为交叉编译器时，
+将不搜寻@code{MD_EXEC_PREFIX}。如果你定义了@code{MD_EXEC_PREFIX}，
+则要确保将其增加到@file{configure.in}中用于查找汇编器的目录列表中。
 @end defmac
 
 @defmac STANDARD_STARTFILE_PREFIX
-定义该宏为C字符串常量，如果你希望覆盖将libdir作为前缀来搜寻起始文件crt0.o等的标准选择。当构建为交叉编译器时，STANDARD_STARTFILE_PREFIX不被搜寻。
-Define this macro as a C string constant if you wish to override the
-standard choice of @code{libdir} as the default prefix to
-try when searching for startup files such as @file{crt0.o}.
-@code{STANDARD_STARTFILE_PREFIX} is not searched when the compiler
-is built as a cross compiler.
+定义该宏为C字符串常量，
+如果你希望覆盖将@code{libdir}作为前缀来搜寻起始文件@file{crt0.o}等的标准选择。
+当构建为交叉编译器时，@code{STANDARD_STARTFILE_PREFIX}不被搜寻。
 @end defmac
 
 @defmac STANDARD_STARTFILE_PREFIX_1
-定义该宏为C字符串常量，如果你希望覆盖在缺省前缀之后，将/lib作为前缀来搜寻起始文件crt0.o等的标准选择。当构建为交叉编译器时，STANDARD_STARTFILE_PREFIX1不被搜寻。
-Define this macro as a C string constant if you wish to override the
-standard choice of @code{/lib} as a prefix to try after the default prefix
-when searching for startup files such as @file{crt0.o}.
-@code{STANDARD_STARTFILE_PREFIX_1} is not searched when the compiler
-is built as a cross compiler.
+定义该宏为C字符串常量，如果你希望覆盖在缺省前缀之后，
+将@code{/lib}作为前缀来搜寻起始文件@file{crt0.o}等的标准选择。
+当构建为交叉编译器时，@code{STANDARD_STARTFILE_PREFIX_1}不被搜寻。
 @end defmac
 
 @defmac STANDARD_STARTFILE_PREFIX_2
-    定义该宏为C字符串常量，如果你希望覆盖在缺省前缀之后，将/lib作为前缀来搜寻起始文件crt0.o等的标准选择。当构建为交叉编译器时，STANDARD_STARTFILE_PREFIX2不被搜寻。
-
-
-Define this macro as a C string constant if you wish to override the
-standard choice of @code{/lib} as yet another prefix to try after the
-default prefix when searching for startup files such as @file{crt0.o}.
-@code{STANDARD_STARTFILE_PREFIX_2} is not searched when the compiler
-is built as a cross compiler.
+定义该宏为C字符串常量，如果你希望覆盖在缺省前缀之后，
+将@code{/lib}作为前缀来搜寻起始文件@file{crt0.o}等的标准选择。
+当构建为交叉编译器时，@code{STANDARD_STARTFILE_PREFIX_2}不被搜寻。
 @end defmac
 
 @defmac MD_STARTFILE_PREFIX
-如果定义，该宏提供了额外的前缀，在标准前缀之后被尝试。当使用-b选项，或者编译器被构建为交叉编译器时，将不搜寻MD_EXEC_PREFIX。
-If defined, this macro supplies an additional prefix to try after the
-standard prefixes.  @code{MD_EXEC_PREFIX} is not searched when the
-@option{-b} option is used, or when the compiler is built as a cross
-compiler.
+如果定义，该宏提供了额外的前缀，在标准前缀之后被尝试。
+当使用@option{-b}选项，或者编译器被构建为交叉编译器时，
+将不搜寻@code{MD_EXEC_PREFIX}。
 @end defmac
 
 @defmac MD_STARTFILE_PREFIX_1
-如果定义，该宏提供了另一个额外的前缀，在标准前缀之后被尝试。当使用-b选项，或者编译器被构建为交叉编译器时，其将不被搜寻。
-If defined, this macro supplies yet another prefix to try after the
-standard prefixes.  It is not searched when the @option{-b} option is
-used, or when the compiler is built as a cross compiler.
+如果定义，该宏提供了另一个额外的前缀，在标准前缀之后被尝试。
+当使用@option{-b}选项，或者编译器被构建为交叉编译器时，其将不被搜寻。
 @end defmac
 
 @defmac INIT_ENVIRONMENT
-定义该宏为C字符串常量，如果你希望驱动器调用的程序，例如汇编器和连接器，的环境变量。驱动器将该宏的值传给putenv来初始化需要的环境变量。
-Define this macro as a C string constant if you wish to set environment
-variables for programs called by the driver, such as the assembler and
-loader.  The driver passes the value of this macro to @code{putenv} to
-initialize the necessary environment variables.
+定义该宏为C字符串常量，如果你希望驱动器调用的程序，例如汇编器和连接器，
+的环境变量。驱动器将该宏的值传给@code{putenv}来初始化需要的环境变量。
 @end defmac
 
 @defmac LOCAL_INCLUDE_DIR
-义该宏为C字符串常量，如果你希望覆盖当搜索局部头文件时，将/usr/local/include作为缺省前缀的标准选择。在搜索顺序中，LOCAL_INCLUDE_DIR位于SYSTEM_INCLUDE_DIR之前。
+义该宏为C字符串常量，如果你希望覆盖当搜索局部头文件时，
+将@file{/usr/local/include}作为缺省前缀的标准选择。
+在搜索顺序中，@code{LOCAL_INCLUDE_DIR}位于@code{SYSTEM_INCLUDE_DIR}之前。
 
-交叉编译器既不搜寻/usr/local/include，也不搜寻它的替换者。
-Define this macro as a C string constant if you wish to override the
-standard choice of @file{/usr/local/include} as the default prefix to
-try when searching for local header files.  @code{LOCAL_INCLUDE_DIR}
-comes before @code{SYSTEM_INCLUDE_DIR} in the search order.
-
-Cross compilers do not search either @file{/usr/local/include} or its
-replacement.
+交叉编译器既不搜寻@file{/usr/local/include}，也不搜寻它的替换者。
 @end defmac
 
 @defmac MODIFY_TARGET_NAME
 定义该宏，如果你希望定义命令行开关来修改缺省的target名字。
 
-对于每个开关，你可以包含一个字符串，用来追加到配置名字的第一部分，或者如果有的话，从配置名字中删除。该定义为一个结构体数组的初始化。每个数组元素具有三个元素：开关名（字符串常量，包括起始的横线），一个枚举常量ADD或者DELETE，来表示插入或者删除字符串，以及要插入或者删除的字符串（字符串常量）。
+对于每个开关，你可以包含一个字符串，用来追加到配置名字的第一部分，
+或者如果有的话，从配置名字中删除。该定义为一个结构体数组的初始化。
+每个数组元素具有三个元素：开关名（字符串常量，包括起始的横线），
+一个枚举常量@code{ADD}或者@code{DELETE}，来表示插入或者删除字符串，
+以及要插入或者删除的字符串（字符串常量）。
 
-例如，在一台机器上，配置名字的结尾为'64'表示其为64位target，你想使用-32和-64开关来选择32位和64位target，则代码为
-Define this macro if you wish to define command-line switches that
-modify the default target name.
-
-For each switch, you can include a string to be appended to the first
-part of the configuration name or a string to be deleted from the
-configuration name, if present.  The definition should be an initializer
-for an array of structures.  Each array element should have three
-elements: the switch name (a string constant, including the initial
-dash), one of the enumeration codes @code{ADD} or @code{DELETE} to
-indicate whether the string should be inserted or deleted, and the string
-to be inserted or deleted (a string constant).
-
-For example, on a machine where @samp{64} at the end of the
-configuration name denotes a 64-bit target and you want the @option{-32}
-and @option{-64} switches to select between 32- and 64-bit targets, you would
-code
+例如，在一台机器上，配置名字的结尾为@samp{64}表示其为64位target，
+你想使用@option{-32}和@option{-64}开关来选择32位和64位target，则代码为
 
 @smallexample
 #define MODIFY_TARGET_NAME \
@@ -665,70 +463,43 @@ code
 @end defmac
 
 @defmac SYSTEM_INCLUDE_DIR
-    定义该宏作为C字符串常量，如果你希望指定一个系统特定的目录在标准目录之前来搜寻头文件。在搜索顺序中，SYSTEM_INCLUDE_DIR位于STANDARD_INCLUDE_DIR之前。
+定义该宏作为C字符串常量，
+如果你希望指定一个系统特定的目录在标准目录之前来搜寻头文件。
+在搜索顺序中，@code{SYSTEM_INCLUDE_DIR}位于@code{STANDARD_INCLUDE_DIR}之前。
 
-    交叉编译器不使用该宏，并且不搜寻所指定的目录。
-
-Define this macro as a C string constant if you wish to specify a
-system-specific directory to search for header files before the standard
-directory.  @code{SYSTEM_INCLUDE_DIR} comes before
-@code{STANDARD_INCLUDE_DIR} in the search order.
-
-Cross compilers do not use this macro and do not search the directory
-specified.
+交叉编译器不使用该宏，并且不搜寻所指定的目录。
 @end defmac
 
 @defmac STANDARD_INCLUDE_DIR
-    定义该宏为C字符串常量，如果你希望覆盖将/usr/include作为缺省前缀来搜寻头文件的标准选择。
+定义该宏为C字符串常量，
+如果你希望覆盖将@file{/usr/include}作为缺省前缀来搜寻头文件的标准选择。
 
-    交叉编译器忽略该宏，并且不搜寻/usr/include和它的替换者。
-
-Define this macro as a C string constant if you wish to override the
-standard choice of @file{/usr/include} as the default prefix to
-try when searching for header files.
-
-Cross compilers ignore this macro and do not search either
-@file{/usr/include} or its replacement.
+交叉编译器忽略该宏，并且不搜寻@file{/usr/include}和它的替换者。
 @end defmac
 
 @defmac STANDARD_INCLUDE_COMPONENT
-“component”对应于STANDARD_INCLUDE_DIR。关于组件的描述，参见下面的INCLUDE_DEFAULTS。如果你没有定义该宏，则不使用组件。
-The ``component'' corresponding to @code{STANDARD_INCLUDE_DIR}.
-See @code{INCLUDE_DEFAULTS}, below, for the description of components.
-If you do not define this macro, no component is used.
+“component”对应于@code{STANDARD_INCLUDE_DIR}。关于组件的描述，
+参见下面的@code{INCLUDE_DEFAULTS}。如果你没有定义该宏，则不使用组件。
 @end defmac
 
 @defmac INCLUDE_DEFAULTS
-定义该宏，如果你希望覆盖整个的include文件的缺省搜寻路径。对于一个本地编译器，缺省搜索路径通常由GCC_INCLUDE_DIR, LOCAL_INCLUDE_DIR, SYSTEM_INCLUDE_DIR, GPLUSPLUS_INCLUDE_DIR, 和 STANDARD_INCLUDE_DIR组成。另外，GPLUSPLUS_INCLUDE_DIR 和 GCC_INCLUDE_DIR由Makefile自动定义，并指定为GCC的私有搜索区域。目录GPLUSPLUS_INCLUDE_DIR只用于 C++程序。
+定义该宏，如果你希望覆盖整个的include文件的缺省搜寻路径。对于一个本地编译器，
+缺省搜索路径通常由@code{GCC_INCLUDE_DIR}, @code{LOCAL_INCLUDE_DIR}, 
+@code{SYSTEM_INCLUDE_DIR}, @code{GPLUSPLUS_INCLUDE_DIR}和
+@code{STANDARD_INCLUDE_DIR}组成。另外，@code{GPLUSPLUS_INCLUDE_DIR}和
+@code{GCC_INCLUDE_DIR}由@file{Makefile}自动定义，并指定为GCC的私有搜索区域。
+目录@code{GPLUSPLUS_INCLUDE_DIR}只用于 C++程序。
 
-该定义为一个结构体数组的初始化。每个数组元素具有四个元素：目录名（字符串常量），组件名（也是字符串常量），一个标志用来指示只用于C++，以及一个标志用来表示当编译C++时，在extern 'C'中。使用空元素来标记数组的结尾。
+该定义为一个结构体数组的初始化。每个数组元素具有四个元素：目录名（字符串常量），
+组件名（也是字符串常量），一个标志用来指示只用于C++，
+以及一个标志用来表示当编译C++时，在@code{extern @samp{C}}中。
+使用空元素来标记数组的结尾。
 
-组件名指出了include文件属于什么GNU包，使用大写字母。例如可能为'GCC'或'BINUTILS'。如果程序包是商家提供的操作系统的一部分，则名字为'0'。
+组件名指出了include文件属于什么GNU包，使用大写字母。
+例如可能为@samp{GCC}或@samp{BINUTILS}。
+如果程序包是商家提供的操作系统的一部分，则名字为@samp{0}。
 
 例如，这是用于VAX/VMS的定义:
-Define this macro if you wish to override the entire default search path
-for include files.  For a native compiler, the default search path
-usually consists of @code{GCC_INCLUDE_DIR}, @code{LOCAL_INCLUDE_DIR},
-@code{SYSTEM_INCLUDE_DIR}, @code{GPLUSPLUS_INCLUDE_DIR}, and
-@code{STANDARD_INCLUDE_DIR}.  In addition, @code{GPLUSPLUS_INCLUDE_DIR}
-and @code{GCC_INCLUDE_DIR} are defined automatically by @file{Makefile},
-and specify private search areas for GCC@.  The directory
-@code{GPLUSPLUS_INCLUDE_DIR} is used only for C++ programs.
-
-The definition should be an initializer for an array of structures.
-Each array element should have four elements: the directory name (a
-string constant), the component name (also a string constant), a flag
-for C++-only directories,
-and a flag showing that the includes in the directory don't need to be
-wrapped in @code{extern @samp{C}} when compiling C++.  Mark the end of
-the array with a null element.
-
-The component name denotes what GNU package the include file is part of,
-if any, in all uppercase letters.  For example, it might be @samp{GCC}
-or @samp{BINUTILS}.  If the package is part of a vendor-supplied
-operating system, code the component name as @samp{0}.
-
-For example, here is the definition used for VAX/VMS:
 
 @smallexample
 #define INCLUDE_DEFAULTS \
@@ -820,103 +591,78 @@ For example, here is the definition used for VAX/VMS:
 @cindex target specifications
 
 @c prevent bad page break with this line
-Here are run-time target specifications.
+这些是运行时的target指定。
 
 @defmac TARGET_CPU_CPP_BUILTINS ()
-This function-like macro expands to a block of code that defines
-built-in preprocessor macros and assertions for the target CPU, using
-the functions @code{builtin_define}, @code{builtin_define_std} and
-@code{builtin_assert}.  When the front end
-calls this macro it provides a trailing semicolon, and since it has
-finished command line option processing your code can use those
-results freely.
+该类函数的宏扩展成一块代码，其定义了target CPU内建的预处理器宏和断言，
+使用函数@code{builtin_define}, @code{builtin_define_std}和
+@code{builtin_assert}。当前端调用该宏时，其提供一个尾部的分号，
+由于其已经结束了命令行选项处理，所以你的代码可以自由的使用那些结果。
 
-@code{builtin_assert} takes a string in the form you pass to the
-command-line option @option{-A}, such as @code{cpu=mips}, and creates
-the assertion.  @code{builtin_define} takes a string in the form
-accepted by option @option{-D} and unconditionally defines the macro.
+@code{builtin_assert}接受一个字符串，按照传给命令行选项@option{-A}的形式，
+例如@code{cpu=mips}，并且创建一个断言。@code{builtin_define}接受一个字符串，
+按照传给命令行选项@option{-D}的形式，并且无条件的定义一个宏。
 
-@code{builtin_define_std} takes a string representing the name of an
-object-like macro.  If it doesn't lie in the user's namespace,
-@code{builtin_define_std} defines it unconditionally.  Otherwise, it
-defines a version with two leading underscores, and another version
-with two leading and trailing underscores, and defines the original
-only if an ISO standard was not requested on the command line.  For
-example, passing @code{unix} defines @code{__unix}, @code{__unix__}
-and possibly @code{unix}; passing @code{_mips} defines @code{__mips},
-@code{__mips__} and possibly @code{_mips}, and passing @code{_ABI64}
-defines only @code{_ABI64}.
+@code{builtin_define_std}接受一个字符串，来表示对象的名字。
+如果其不在用户命名空间，则@code{builtin_define_std}无条件的定义它。否则，
+定义一个具有两个前导下划线的版本，和另一个具有两个前导和后缀的下划线的版本。
+例如传递@code{unix}，将定义@code{__unix}, @code{__unix__}以及可能的@code{unix}；
+传递@code{_mips}，将定义@code{__mips}, @code{__mips__}和可能的@code{_mips}，
+传递@code{_ABI64}，将指定义@code{_ABI64}。
 
-You can also test for the C dialect being compiled.  The variable
-@code{c_language} is set to one of @code{clk_c}, @code{clk_cplusplus}
-or @code{clk_objective_c}.  Note that if we are preprocessing
-assembler, this variable will be @code{clk_c} but the function-like
-macro @code{preprocessing_asm_p()} will return true, so you might want
-to check for that first.  If you need to check for strict ANSI, the
-variable @code{flag_iso} can be used.  The function-like macro
-@code{preprocessing_trad_p()} can be used to check for traditional
-preprocessing.
+你还可以测试被编译的C方言。变量@code{c_language}被设为@code{clk_c}, 
+@code{clk_cplusplus}或者@code{clk_objective_c}。注意，如果我们在预处理汇编，
+则该变量将为@code{clk_c}，不过类函数的宏@code{preprocessing_asm_p()}将返回真，
+所以你可能要先检查它。如果你需要检查严格的ANSI，可以使用变量@code{flag_iso}。
+类函数的宏@code{preprocessing_trad_p()}可以用来检查传统的预处理。
 @end defmac
 
 @defmac TARGET_OS_CPP_BUILTINS ()
-Similarly to @code{TARGET_CPU_CPP_BUILTINS} but this macro is optional
-and is used for the target operating system instead.
+类似于@code{TARGET_CPU_CPP_BUILTINS}，不过该宏是可选的，用于target操作系统。
 @end defmac
 
 @defmac TARGET_OBJFMT_CPP_BUILTINS ()
-Similarly to @code{TARGET_CPU_CPP_BUILTINS} but this macro is optional
-and is used for the target object format.  @file{elfos.h} uses this
-macro to define @code{__ELF__}, so you probably do not need to define
-it yourself.
+类似于@code{TARGET_CPU_CPP_BUILTINS}，不过该宏是可选的，用于target目标文件格式。
+@file{elfos.h}使用该宏来定义@code{__ELF__}，所以你可能不需要自己定义。
 @end defmac
 
 @deftypevar {extern int} target_flags
-This variable is declared in @file{options.h}, which is included before
-any target-specific headers.
+该变量在@file{options.h}中声明，其在任何target特定的头文件之前被包含进来。
 @end deftypevar
 
 @deftypevar {Target Hook} int TARGET_DEFAULT_TARGET_FLAGS
-This variable specifies the initial value of @code{target_flags}.
-Its default setting is 0.
+该变量指定了@code{target_flags}的初始值。其缺省设置为0。
 @end deftypevar
 
 @cindex optional hardware or system features
 @cindex features, optional, in system conventions
 
 @deftypefn {Target Hook} bool TARGET_HANDLE_OPTION (size_t @var{code}, const char *@var{arg}, int @var{value})
-This hook is called whenever the user specifies one of the
-target-specific options described by the @file{.opt} definition files
-(@pxref{选项}).  It has the opportunity to do some option-specific
-processing and should return true if the option is valid.  The default
-definition does nothing but return true.
+该宏当用户指定了在@file{.opt}定义文件（参见@ref{选项}）中描述的target特定选项
+时被调用。其可以做一些选项特定的处理，并且如果选项有效时应该返回真。
+缺省的定义不做任何事情，只是返回真。
 
-@var{code} specifies the @code{OPT_@var{name}} enumeration value
-associated with the selected option; @var{name} is just a rendering of
-the option name in which non-alphanumeric characters are replaced by
-underscores.  @var{arg} specifies the string argument and is null if
-no argument was given.  If the option is flagged as a @code{UInteger}
-(@pxref{选项属性}), @var{value} is the numeric value of the
-argument.  Otherwise @var{value} is 1 if the positive form of the
-option was used and 0 if the ``no-'' form was.
+@var{code}指定了与选项相关的@code{OPT_@var{name}}枚举值；
+这里的@var{name}只是对选项名的重写，将非字母和数字的字符替换为下划线。
+@var{arg}指定了字符串参数，如果没有参数则为空。
+如果选项被标记为@code{UInteger}（参见@ref{选项属性}），
+则@var{value}为参数的数值。否则@var{value}为1，如果使用了正的选项，
+为0如果使用了“no-”形式。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_HANDLE_C_OPTION (size_t @var{code}, const char *@var{arg}, int @var{value})
-This target hook is called whenever the user specifies one of the
-target-specific C language family options described by the @file{.opt}
-definition files(@pxref{选项}).  It has the opportunity to do some
-option-specific processing and should return true if the option is
-valid.  The default definition does nothing but return false.
+宏当用户指定了在@file{.opt}定义文件（参见“选项”）中描述的target特定的C语言家族
+的选项时被调用。其可以做一些选项特定的处理，并且如果选项有效时应该返回真。
+缺省的定义不做任何事情，只是返回假。
 
-In general, you should use @code{TARGET_HANDLE_OPTION} to handle
-options.  However, if processing an option requires routines that are
-only available in the C (and related language) front ends, then you
-should use @code{TARGET_HANDLE_C_OPTION} instead.
+通常，你应该使用@code{TARGET_HANDLE_OPTION}来处理选项。然而，
+如果选项处理只需要在C（和相关语言）前端中有效时，
+你再使用@code{TARGET_HANDLE_C_OPTION}。
 @end deftypefn
 
 @defmac TARGET_VERSION
-This macro is a C statement to print on @code{stderr} a string
-describing the particular machine description choice.  Every machine
-description should define @code{TARGET_VERSION}.  For example:
+该宏为C语句，用来在@code{stderr}上打印表示特定机器描述选择的字符串。
+每个机器描述都应该定义@code{TARGET_VERSION}。例如：
 
 @smallexample
 #ifdef MOTOROLA
@@ -930,55 +676,44 @@ description should define @code{TARGET_VERSION}.  For example:
 @end defmac
 
 @defmac OVERRIDE_OPTIONS
-Sometimes certain combinations of command options do not make sense on
-a particular target machine.  You can define a macro
-@code{OVERRIDE_OPTIONS} to take account of this.  This macro, if
-defined, is executed once just after all the command options have been
-parsed.
+有时特定的命令选项组合在特定的target机器上没有意义。
+你可以定义该宏@code{OVERRIDE_OPTIONS}。
+如果定义，则在所有的命令选项被解析后执行。
 
-Don't use this macro to turn on various extra optimizations for
-@option{-O}.  That is what @code{OPTIMIZATION_OPTIONS} is for.
+不要使用该宏来打开@option{-O}额外的优化。
+使用@code{OPTIMIZATION_OPTIONS}来做这件事情。
 @end defmac
 
 @defmac C_COMMON_OVERRIDE_OPTIONS
-This is similar to @code{OVERRIDE_OPTIONS} but is only used in the C
-language frontends (C, Objective-C, C++, Objective-C++) and so can be
-used to alter option flag variables which only exist in those
-frontends.
+类似于@code{OVERRIDE_OPTIONS}，但只用于C语言的前端（C, Objective-C, C++, 
+Objective-C++），所以可以用于修改只存在于那些前端中的选项标志变量。
 @end defmac
 
 @defmac OPTIMIZATION_OPTIONS (@var{level}, @var{size})
-Some machines may desire to change what optimizations are performed for
-various optimization levels.   This macro, if defined, is executed once
-just after the optimization level is determined and before the remainder
-of the command options have been parsed.  Values set in this macro are
-used as the default values for the other command line options.
+一些机器可能需要改变不同优化级别所做的优化。该宏，如果定义，
+将在优化级别被确定后，剩余命令选项被解析前执行。
+该宏中设定的值将被作为其它命令行选项的缺省值。
 
-@var{level} is the optimization level specified; 2 if @option{-O2} is
-specified, 1 if @option{-O} is specified, and 0 if neither is specified.
+@var{level}为指定的优化级别；如果指定@option{-O2}则为2，
+如果指定@option{-O}则为1，如果都没指定则为0。
 
-@var{size} is nonzero if @option{-Os} is specified and zero otherwise.
+如果指定@option{-Os}则@var{size}为非零，否则为0。
 
-This macro is run once at program startup and when the optimization
-options are changed via @code{#pragma GCC optimize} or by using the
-@code{optimize} attribute.
+不要使用该宏来改变不是机器特定的选项。
+这些应该在所有支持的机器上的相同优化级别上被统一选择。
+使用该宏来打开机器特定的优化。
 
-@strong{Do not examine @code{write_symbols} in
-this macro!} The debugging options are not supposed to alter the
-generated code.
+不要在该宏中检查@code{write_symbols}！
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_HELP (void)
-This hook is called in response to the user invoking
-@option{--target-help} on the command line.  It gives the target a
-chance to display extra information on the target specific command
-line options found in its @file{.opt} file.
+该钩子当用户在命令行中执行@option{--target-help}时被调用。
+使得target可以显示在其@file{.opt}文件中找到的机器特定的命令行选项信息。
 @end deftypefn
 
 @defmac CAN_DEBUG_WITHOUT_FP
-Define this macro if debugging can be performed even without a frame
-pointer.  If this macro is defined, GCC will turn on the
-@option{-fomit-frame-pointer} option whenever @option{-O} is specified.
+定义该宏，如果没有帧指针也可以进行调试。如果定义了该宏，
+则只要指定@option{-O}，GCC便打开@option{-fomit-frame-pointer}选项。
 @end defmac
 
 @node 每个函数的数据
@@ -1031,173 +766,137 @@ GCC曾经提供名为@code{save_machine_status}和@code{restore_machine_status}
 @section 存储布局
 @cindex storage layout
 
-Note that the definitions of the macros in this table which are sizes or
-alignments measured in bits do not need to be constant.  They can be C
-expressions that refer to static variables, such as the @code{target_flags}.
-@xref{运行时目标机}.
+注意该表格中的宏定义中，对于以bit为单位的大小或对齐，不需要为常量。
+它们可以为引用了静态变量的C表达式，例如@code{target_flags}。
+参见@ref{运行时目标机}。
 
 @defmac BITS_BIG_ENDIAN
-Define this macro to have the value 1 if the most significant bit in a
-byte has the lowest number; otherwise define it to have the value zero.
-This means that bit-field instructions count from the most significant
-bit.  If the machine has no bit-field instructions, then this must still
-be defined, but it doesn't matter which value it is defined to.  This
-macro need not be a constant.
+定义该宏的值为1，如果字节中的最高有效位具有最低编号；否则定义其值为0。
+这意味着bit-field指令从最高有效位计数。如果机器没有bit-field指令，
+则该宏也需要被定义，但定义什么值都无所谓。该宏不需要为一个常量。
 
-This macro does not affect the way structure fields are packed into
-bytes or words; that is controlled by @code{BYTES_BIG_ENDIAN}.
+该宏不影响结构体域被打包成字节或者字的方式；
+那是由@code{BYTES_BIG_ENDIAN}来控制的。
 @end defmac
 
 @defmac BYTES_BIG_ENDIAN
-Define this macro to have the value 1 if the most significant byte in a
-word has the lowest number.  This macro need not be a constant.
+定义该宏的值为1，如果字中的最高有效字节具有最低编号。该宏不需要为一个常量。
 @end defmac
 
 @defmac WORDS_BIG_ENDIAN
-Define this macro to have the value 1 if, in a multiword object, the
-most significant word has the lowest number.  This applies to both
-memory locations and registers; GCC fundamentally assumes that the
-order of words in memory is the same as the order in registers.  This
-macro need not be a constant.
+定义该宏的值为1，如果在多字（multiword）对象中，最高有效字具有最低编号。
+这同时应用于内存位置和寄存器中；
+GCC从根本上假设在内存中的字的顺序与在寄存器中的一样。该宏不需要为一个常量。
 @end defmac
 
 @defmac LIBGCC2_WORDS_BIG_ENDIAN
-Define this macro if @code{WORDS_BIG_ENDIAN} is not constant.  This must be a
-constant value with the same meaning as @code{WORDS_BIG_ENDIAN}, which will be
-used only when compiling @file{libgcc2.c}.  Typically the value will be set
-based on preprocessor defines.
+定义该宏如果@code{WORDS_BIG_ENDIAN}不是常量。该宏必须为一个常量值，
+其与@code{WORDS_BIG_ENDIAN}的具有相同的含义，
+并只用于编译@file{libgcc2.c}的时候。通常该值会根据预处理器定义来设置。
 @end defmac
 
 @defmac FLOAT_WORDS_BIG_ENDIAN
-Define this macro to have the value 1 if @code{DFmode}, @code{XFmode} or
-@code{TFmode} floating point numbers are stored in memory with the word
-containing the sign bit at the lowest address; otherwise define it to
-have the value 0.  This macro need not be a constant.
+定义该宏值为1，如果@code{DFmode}, @code{XFmode}或@code{TFmode}浮点数被存储在
+内存中，并且包含符号位的字位于最低地址；否则值为0。该宏不需要为一个常量。
 
-You need not define this macro if the ordering is the same as for
-multi-word integers.
+你不需要定义该宏，如果顺序与多字整数相同。
 @end defmac
 
 @defmac BITS_PER_UNIT
-Define this macro to be the number of bits in an addressable storage
-unit (byte).  If you do not define this macro the default is 8.
+定义该宏为一个可寻址的存储单元（字节）中的位数。如果没有定义，缺省为8。
 @end defmac
 
 @defmac BITS_PER_WORD
-Number of bits in a word.  If you do not define this macro, the default
-is @code{BITS_PER_UNIT * UNITS_PER_WORD}.
+字的位数。如果没有定义，缺省为@code{BITS_PER_UNIT * UNITS_PER_WORD}。
 @end defmac
 
 @defmac MAX_BITS_PER_WORD
-Maximum number of bits in a word.  If this is undefined, the default is
-@code{BITS_PER_WORD}.  Otherwise, it is the constant value that is the
-largest value that @code{BITS_PER_WORD} can have at run-time.
+字的最大位数。如果没有定义，缺省为@code{BITS_PER_WORD}。
+否则其为一个常量，为@code{BITS_PER_WORD}在运行时可以具有的最大值。
 @end defmac
 
 @defmac UNITS_PER_WORD
-Number of storage units in a word; normally the size of a general-purpose
-register, a power of two from 1 or 8.
+字中的存储单元数；通常为通用目的寄存器的大小，2的1到8次幂。
 @end defmac
 
 @defmac MIN_UNITS_PER_WORD
-Minimum number of units in a word.  If this is undefined, the default is
-@code{UNITS_PER_WORD}.  Otherwise, it is the constant value that is the
-smallest value that @code{UNITS_PER_WORD} can have at run-time.
+字中的最小存储单元数。如果没有定义，缺省为@code{UNITS_PER_WORD}。否则，
+其为一个常量，为@code{UNITS_PER_WORD}在运行时可以具有的最小值。
 @end defmac
 
 @defmac UNITS_PER_SIMD_WORD (@var{mode})
-Number of units in the vectors that the vectorizer can produce for
-scalar mode @var{mode}.  The default is equal to @code{UNITS_PER_WORD},
-because the vectorizer can do some transformations even in absence of
-specialized @acronym{SIMD} hardware.
+向量化可以产生的向量的单元数。缺省等于@code{UNITS_PER_WORD}，
+因为向量化可以在即使没有专门的@acronym{SIMD}硬件的情况下做一些转换。
 @end defmac
 
 @defmac POINTER_SIZE
-Width of a pointer, in bits.  You must specify a value no wider than the
-width of @code{Pmode}.  If it is not equal to the width of @code{Pmode},
-you must define @code{POINTERS_EXTEND_UNSIGNED}.  If you do not specify
-a value the default is @code{BITS_PER_WORD}.
+指针的宽度，位数。必须指定不比@code{Pmode}宽的值。
+如果其不等于@code{Pmode}的宽度，则必须定义@code{POINTERS_EXTEND_UNSIGNED}。
+如果没有指定一个值，则缺省为@code{BITS_PER_WORD}。
 @end defmac
 
 @defmac POINTERS_EXTEND_UNSIGNED
-A C expression that determines how pointers should be extended from
-@code{ptr_mode} to either @code{Pmode} or @code{word_mode}.  It is
-greater than zero if pointers should be zero-extended, zero if they
-should be sign-extended, and negative if some other sort of conversion
-is needed.  In the last case, the extension is done by the target's
-@code{ptr_extend} instruction.
+一个C表达式，用来确定指针应该如何从@code{ptr_mode}扩展为@code{Pmode}或者
+@code{word_mode}。如果指针应该被0扩展，则其比0大，如果应该被符号扩展则为0，
+如果需要其它转换方式则为负。对于最后一种情况，
+扩展通过target的@code{ptr_extend}指令来完成。
 
-You need not define this macro if the @code{ptr_mode}, @code{Pmode}
-and @code{word_mode} are all the same width.
+你不需要定义该宏，如果@code{ptr_mode}, @code{Pmode}和@code{word_mode}都为相同的宽度。
 @end defmac
 
 @defmac PROMOTE_MODE (@var{m}, @var{unsignedp}, @var{type})
-A macro to update @var{m} and @var{unsignedp} when an object whose type
-is @var{type} and which has the specified mode and signedness is to be
-stored in a register.  This macro is only called when @var{type} is a
-scalar type.
+用来更新@var{m}和@var{unsignedp}，当一个类型为@var{type}并且具有特定的机器模式
+的对象要被存储到寄存器中时。该宏只在@var{type}为一个标量类型时才被调用。
 
-On most RISC machines, which only have operations that operate on a full
-register, define this macro to set @var{m} to @code{word_mode} if
-@var{m} is an integer mode narrower than @code{BITS_PER_WORD}.  In most
-cases, only integer modes should be widened because wider-precision
-floating-point operations are usually more expensive than their narrower
-counterparts.
+在大多数RISC机器上，只有作用于在整个寄存器上的运算，
+定义该宏将@var{m}设为为@code{word_mode}，
+如果@var{m}为一个比@code{BITS_PER_WORD}窄的整数模式。在大多数情况下，
+只有整数模式应该被加宽，因为宽精度的浮点运算通常比相应的窄精度的运算代价要更高。
 
-For most machines, the macro definition does not change @var{unsignedp}.
-However, some machines, have instructions that preferentially handle
-either signed or unsigned quantities of certain modes.  For example, on
-the DEC Alpha, 32-bit loads from memory and 32-bit add instructions
-sign-extend the result to 64 bits.  On such machines, set
-@var{unsignedp} according to which kind of extension is more efficient.
+大多数机器，宏定义不改变@var{unsignedp}。然而，
+一些机器具有优先处理特定模式的有符号或者无符号的指令。例如，在DEC Alpha上，
+32位load和32位add指令会将结果有符号扩展为64位。在这样的机器上，
+根据扩展的类型来设置@var{unsignedp}会更加有效。
 
-Do not define this macro if it would never modify @var{m}.
+如果从来不会修改@var{m}，则不要定义该宏。
 @end defmac
 
 @defmac PROMOTE_FUNCTION_MODE
-Like @code{PROMOTE_MODE}, but is applied to outgoing function arguments or
-function return values, as specified by @code{TARGET_PROMOTE_FUNCTION_ARGS}
-and @code{TARGET_PROMOTE_FUNCTION_RETURN}, respectively.
+类似于@code{PROMOTE_MODE}，但应用于输出的函数参数，或者函数返回值，
+分别由@code{TARGET_PROMOTE_FUNCTION_ARGS}和@code{TARGET_PROMOTE_FUNCTION_RETURN}指定。
 
-The default is @code{PROMOTE_MODE}.
+缺省为@code{PROMOTE_MODE}。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_PROMOTE_FUNCTION_ARGS (tree @var{fntype})
-This target hook should return @code{true} if the promotion described by
-@code{PROMOTE_FUNCTION_MODE} should be done for outgoing function
-arguments.
+该target钩子应该返回@code{true}，
+如果由@code{PROMOTE_FUNCTION_MODE}描述的提升应该应用于输出的函数参数。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_PROMOTE_FUNCTION_RETURN (tree @var{fntype})
-This target hook should return @code{true} if the promotion described by
-@code{PROMOTE_FUNCTION_MODE} should be done for the return value of
-functions.
+该target钩子应该返回@code{true}，
+如果由@code{PROMOTE_FUNCTION_MODE}描述的提升应该应用于函数返回值。
 
-If this target hook returns @code{true}, @code{TARGET_FUNCTION_VALUE}
-must perform the same promotions done by @code{PROMOTE_FUNCTION_MODE}.
+如果该target钩子返回@code{true}，
+则@code{TARGET_FUNCTION_VALUE}必须执行与@code{PROMOTE_FUNCTION_MODE}相同的提升。
 @end deftypefn
 
 @defmac PARM_BOUNDARY
-Normal alignment required for function parameters on the stack, in
-bits.  All stack parameters receive at least this much alignment
-regardless of data type.  On most machines, this is the same as the
-size of an integer.
+函数参数在栈上的对齐方式，位数。所有栈参数都接受这样的对齐，
+而不论数据类型是什么。在大多数机器上，这与整数的大小相同。
 @end defmac
 
 @defmac STACK_BOUNDARY
-Define this macro to the minimum alignment enforced by hardware for the
-stack pointer on this machine.  The definition is a C expression for the
-desired alignment (measured in bits).  This value is used as a default
-if @code{PREFERRED_STACK_BOUNDARY} is not defined.  On most machines,
-this should be the same as @code{PARM_BOUNDARY}.
+定义该宏为硬件要求的在该机器上的栈指针的最小对齐。定义为一个C表达式，
+为所要的对齐（位数）。该值作为缺省值使用，
+如果没有定义@code{PREFERRED_STACK_BOUNDARY}。在大多数机器上，
+这应该与@code{PARM_BOUNDARY}相同。
 @end defmac
 
 @defmac PREFERRED_STACK_BOUNDARY
-Define this macro if you wish to preserve a certain alignment for the
-stack pointer, greater than what the hardware enforces.  The definition
-is a C expression for the desired alignment (measured in bits).  This
-macro must evaluate to a value equal to or larger than
-@code{STACK_BOUNDARY}.
+定义该宏，如果你希望对栈指针维持一个特定的对齐，大于硬件要求的对齐。
+定义为一个C表达式，为所要的对齐（位数）。
+该宏必须等于或大于@code{STACK_BOUNDARY}。
 @end defmac
 
 @defmac INCOMING_STACK_BOUNDARY
@@ -1207,13 +906,12 @@ to a value equal to or larger than @code{STACK_BOUNDARY}.
 @end defmac
 
 @defmac FUNCTION_BOUNDARY
-Alignment required for a function entry point, in bits.
+函数入口点所需的对齐位数。
 @end defmac
 
 @defmac BIGGEST_ALIGNMENT
-Biggest alignment that any data type can require on this machine, in
-bits.  Note that this is not the biggest alignment that is supported,
-just the biggest alignment that, when violated, may cause a fault.
+该机器上任何数据类型可以需要的最大对齐位数。注意这不是所支持的最大对齐，
+而是如果违反该对齐则可能会造成错误。
 @end defmac
 
 @defmac MALLOC_ABI_ALIGNMENT
@@ -1227,26 +925,21 @@ not defined, the default value is @code{BIGGEST_ALIGNMENT}.
 @end defmac
 
 @defmac MINIMUM_ATOMIC_ALIGNMENT
-If defined, the smallest alignment, in bits, that can be given to an
-object that can be referenced in one operation, without disturbing any
-nearby object.  Normally, this is @code{BITS_PER_UNIT}, but may be larger
-on machines that don't have byte or half-word store operations.
+如果被定义，则为最小对齐位数，可以分给一个对象并且在一个操作中被应用，
+而不需要干扰任何附近的对象。通常为@code{BITS_PER_UNIT}，
+但在没有字节或半字的存储运算的机器上可以更大些。
 @end defmac
 
 @defmac BIGGEST_FIELD_ALIGNMENT
-Biggest alignment that any structure or union field can require on this
-machine, in bits.  If defined, this overrides @code{BIGGEST_ALIGNMENT} for
-structure and union fields only, unless the field alignment has been set
-by the @code{__attribute__ ((aligned (@var{n})))} construct.
+任何结构体或者联合体域在该机器上需要的最大对齐。如果被定义，
+这将只覆盖结构体和联合体的域的@code{BIGGEST_ALIGNMENT}，
+除非域对齐已经通过@code{__attribute__ ((aligned (@var{n})))}设置。
 @end defmac
 
 @defmac ADJUST_FIELD_ALIGN (@var{field}, @var{computed})
-An expression for the alignment of a structure field @var{field} if the
-alignment computed in the usual way (including applying of
-@code{BIGGEST_ALIGNMENT} and @code{BIGGEST_FIELD_ALIGNMENT} to the
-alignment) is @var{computed}.  It overrides alignment only if the
-field alignment has not been set by the
-@code{__attribute__ ((aligned (@var{n})))} construct.
+一个表达式，为结构体域@var{field}的对齐方式，如果对齐方式是按照通常方式计算
+（包括应用@code{BIGGEST_ALIGNMENT}和@code{BIGGEST_FIELD_ALIGNMENT}）。
+其只覆盖没有通过@code{__attribute__ ((aligned (@var{n})))}设置的域。
 @end defmac
 
 @defmac MAX_STACK_ALIGNMENT
@@ -1262,57 +955,46 @@ If not defined, the default value is @code{STACK_BOUNDARY}.
 @end defmac
 
 @defmac MAX_OFILE_ALIGNMENT
-Biggest alignment supported by the object file format of this machine.
-Use this macro to limit the alignment which can be specified using the
-@code{__attribute__ ((aligned (@var{n})))} construct.  If not defined,
-the default value is @code{BIGGEST_ALIGNMENT}.
+由该机器的目标文件格式所支持的最大对齐。使用该宏来限制可以使用
+@code{__attribute__ ((aligned (@var{n})))}结构来指定的对齐。
+如果没有定义，则缺省值为@code{BIGGEST_ALIGNMENT}。
 
-On systems that use ELF, the default (in @file{config/elfos.h}) is
-the largest supported 32-bit ELF section alignment representable on
-a 32-bit host e.g. @samp{(((unsigned HOST_WIDEST_INT) 1 << 28) * 8)}.
-On 32-bit ELF the largest supported section alignment in bits is
-@samp{(0x80000000 * 8)}, but this is not representable on 32-bit hosts.
+在使用ELF的系统上，缺省（在@file{config/elfos.h}中）为在32位host上可以表示的
+32位ELF section对齐，即@samp{(((unsigned HOST_WIDEST_INT) 1 << 28) * 8)}。
+在32位ELF上，最大支持的section对齐位数是@samp{(0x80000000 * 8)}，
+但这在32位host上无法表示。
 @end defmac
 
 @defmac DATA_ALIGNMENT (@var{type}, @var{basic-align})
-If defined, a C expression to compute the alignment for a variable in
-the static store.  @var{type} is the data type, and @var{basic-align} is
-the alignment that the object would ordinarily have.  The value of this
-macro is used instead of that alignment to align the object.
+如果定义，则为一个C表达式，来计算在静态存储中的变量的对齐。
+@var{type}为数据类型，@var{basic-align}为对象通常具有的对齐。
+该宏的值被用于替代那个对齐，并应用的对象上。
 
-If this macro is not defined, then @var{basic-align} is used.
+如果该宏没有定义，则使用@var{basic-align}。
 
 @findex strcpy
-One use of this macro is to increase alignment of medium-size data to
-make it all fit in fewer cache lines.  Another is to cause character
-arrays to be word-aligned so that @code{strcpy} calls that copy
-constants to character arrays can be done inline.
+该宏的一种用法是增加中等大小数据的对齐，使得可以放在最少的cache line中。
+另一种用法是使得字符数组按照字对齐，这样@code{strcpy}调用可以通过内联方式完成。
 @end defmac
 
 @defmac CONSTANT_ALIGNMENT (@var{constant}, @var{basic-align})
-If defined, a C expression to compute the alignment given to a constant
-that is being placed in memory.  @var{constant} is the constant and
-@var{basic-align} is the alignment that the object would ordinarily
-have.  The value of this macro is used instead of that alignment to
-align the object.
+如果定义，为一个C表达式，来计算放在内存中的常量的对齐。@var{constant}为常量，
+@var{basic-align}为该对象通常具有的对齐。该宏的值被用于替代那个对齐，
+并应用的对象上。
 
-If this macro is not defined, then @var{basic-align} is used.
+如果该宏没有定义，则使用@var{basic-align}。
 
-The typical use of this macro is to increase alignment for string
-constants to be word aligned so that @code{strcpy} calls that copy
-constants can be done inline.
+该宏的典型用法为增加字符串常量的对齐，使其为字对齐，
+这样@code{strcpy}调用可以通过内联方式完成。
 @end defmac
 
 @defmac LOCAL_ALIGNMENT (@var{type}, @var{basic-align})
-If defined, a C expression to compute the alignment for a variable in
-the local store.  @var{type} is the data type, and @var{basic-align} is
-the alignment that the object would ordinarily have.  The value of this
-macro is used instead of that alignment to align the object.
+如果定义，为一个C表达式，来计算在局部存储中的对象的对齐。@var{type}为数据类型，
+@var{basic-align}为对象通常的对齐。该宏的值被用于替代那个对齐，并应用的对象上。
 
-If this macro is not defined, then @var{basic-align} is used.
+如果该宏没有定义，则使用@var{basic-align}。
 
-One use of this macro is to increase alignment of medium-size data to
-make it all fit in fewer cache lines.
+该宏的一种用法是增加中等大小数据的对齐，使得可以放在最少的cache line中。
 @end defmac
 
 @defmac STACK_SLOT_ALIGNMENT (@var{type}, @var{mode}, @var{basic-align})
@@ -1343,63 +1025,48 @@ make it all fit in fewer cache lines.
 @end defmac
 
 @defmac EMPTY_FIELD_BOUNDARY
-Alignment in bits to be given to a structure bit-field that follows an
-empty field such as @code{int : 0;}.
+允许像@code{int : 0;}；这样的空域的结构体位域的对齐位数。
 
-If @code{PCC_BITFIELD_TYPE_MATTERS} is true, it overrides this macro.
+如果@code{PCC_BITFIELD_TYPE_MATTERS}为真，则其覆盖该宏。
 @end defmac
 
 @defmac STRUCTURE_SIZE_BOUNDARY
-Number of bits which any structure or union's size must be a multiple of.
-Each structure or union's size is rounded up to a multiple of this.
+任何结构体或联合体的大小必须为该位数的倍数。
+每个结构体或联合体的大小都将被舍入到该位数的一个倍数。
 
-If you do not define this macro, the default is the same as
-@code{BITS_PER_UNIT}.
+如果没有定义该宏，则缺省与@code{BITS_PER_UNIT}相同。
 @end defmac
 
 @defmac STRICT_ALIGNMENT
-Define this macro to be the value 1 if instructions will fail to work
-if given data not on the nominal alignment.  If instructions will merely
-go slower in that case, define this macro as 0.
+定义该宏值为1，如果给定数据不在通常对齐方式上，则指令无法工作。
+如果对于这种情况指令只不过是变慢，则定义该宏为0。
 @end defmac
 
 @defmac PCC_BITFIELD_TYPE_MATTERS
-Define this if you wish to imitate the way many other C compilers handle
-alignment of bit-fields and the structures that contain them.
+定义该宏，如果你希望仿效许多其它C编译器处理位域和包含它们的结构体的对齐方式。
 
-The behavior is that the type written for a named bit-field (@code{int},
-@code{short}, or other integer type) imposes an alignment for the entire
-structure, as if the structure really did contain an ordinary field of
-that type.  In addition, the bit-field is placed within the structure so
-that it would fit within such a field, not crossing a boundary for it.
+该行为是书写为命名位域（@code{int},@code{short}或其它整数类型）的类型被实施
+用于整个结构体的对齐，就好像结构体包含了一个该类型的普通的域。另外，
+位域放在结构体中，使得其将适合这样的域，而不会跨越边界。
 
-Thus, on most machines, a named bit-field whose type is written as
-@code{int} would not cross a four-byte boundary, and would force
-four-byte alignment for the whole structure.  (The alignment used may
-not be four bytes; it is controlled by the other alignment parameters.)
+这样，大多数机器上，书写为@code{int}的命名位域将不会跨越一个四字节的边界，
+并将使得整个结构体为四字节对齐。（可能不使用四字节对齐；其由其它对齐参数控制。）
 
-An unnamed bit-field will not affect the alignment of the containing
-structure.
+一个没有命名的位域将不会影响包含结构体的对齐。
 
-If the macro is defined, its definition should be a C expression;
-a nonzero value for the expression enables this behavior.
+如果定义了该宏，则其定义为一个C表达式；该表达式的非0值会使用这样方式。
 
-Note that if this macro is not defined, or its value is zero, some
-bit-fields may cross more than one alignment boundary.  The compiler can
-support such references if there are @samp{insv}, @samp{extv}, and
-@samp{extzv} insns that can directly reference memory.
+注意如果该宏没有定义，或者其值为0，则一些位域可能跨越多于一个的对齐边界。
+编译器可以支持这种引用，如果有@samp{insv}, 
+@samp{extv}和@samp{extzv} insns可以直接引用内存。
 
-The other known way of making bit-fields work is to define
-@code{STRUCTURE_SIZE_BOUNDARY} as large as @code{BIGGEST_ALIGNMENT}.
-Then every structure can be accessed with fullwords.
+其它已知的可以使位域工作的的方式为定义@code{STRUCTURE_SIZE_BOUNDARY}和@code{BIGGEST_ALIGNMENT}一样大。
 
-Unless the machine has bit-field instructions or you define
-@code{STRUCTURE_SIZE_BOUNDARY} that way, you must define
-@code{PCC_BITFIELD_TYPE_MATTERS} to have a nonzero value.
+除非机器具有位域指令或者你按照那种方式定义了@code{STRUCTURE_SIZE_BOUNDARY}，
+否则你必须定义@code{PCC_BITFIELD_TYPE_MATTERS}具有非0值。
 
-If your aim is to make GCC use the same conventions for laying out
-bit-fields as are used by another compiler, here is how to investigate
-what the other compiler does.  Compile and run this program:
+如果你的目标是使得GCC使用与其它编译器相同的约定来布局位域，
+则这里有一种方式可以调查其它编译器是如何做的。编译运行该程序：
 
 @smallexample
 struct foo1
@@ -1426,117 +1093,90 @@ main ()
 @}
 @end smallexample
 
-If this prints 2 and 5, then the compiler's behavior is what you would
-get from @code{PCC_BITFIELD_TYPE_MATTERS}.
+如果其打印2和5，则编译器的行为就是你通过@code{PCC_BITFIELD_TYPE_MATTERS}获得的效果。
 @end defmac
 
 @defmac BITFIELD_NBYTES_LIMITED
-Like @code{PCC_BITFIELD_TYPE_MATTERS} except that its effect is limited
-to aligning a bit-field within the structure.
+跟@code{PCC_BITFIELD_TYPE_MATTERS}相似，除了它只影响结构体中的位域的对齐。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_ALIGN_ANON_BITFIELD (void)
-When @code{PCC_BITFIELD_TYPE_MATTERS} is true this hook will determine
-whether unnamed bitfields affect the alignment of the containing
-structure.  The hook should return true if the structure should inherit
-the alignment requirements of an unnamed bitfield's type.
+当@code{PCC_BITFIELD_TYPE_MATTERS}为真，
+该钩子将确定未命名位域是否要影响包含它的结构体的对齐。
+钩子应该返回真，如果结构体应该继承未命名位域的类型所要求的对齐。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_NARROW_VOLATILE_BITFIELD (void)
-This target hook should return @code{true} if accesses to volatile bitfields
-should use the narrowest mode possible.  It should return @code{false} if
-these accesses should use the bitfield container type.
+该target钩子应该返回@code{true}，如果访问volatile位域应该尽可能使用最窄的机器模式。其应该返回@code{false}，如果这些访问应该使用位域的容器的类型。
 
-The default is @code{!TARGET_STRICT_ALIGN}.
+缺省为@code{!TARGET_STRICT_ALIGN}。
 @end deftypefn
 
 @defmac MEMBER_TYPE_FORCES_BLK (@var{field}, @var{mode})
-Return 1 if a structure or array containing @var{field} should be accessed using
-@code{BLKMODE}.
+返回1，如果一个包含@var{field}的结构体或者数组应该使用@code{BLKMODE}模式来访问。
 
-If @var{field} is the only field in the structure, @var{mode} is its
-mode, otherwise @var{mode} is VOIDmode.  @var{mode} is provided in the
-case where structures of one field would require the structure's mode to
-retain the field's mode.
+如果@var{field}为结构体中唯一的域，则@var{mode}为它的机器模式，
+否则@var{mode}为VOIDmode。
 
-Normally, this is not needed.
+通常，不需要该宏。
 @end defmac
 
 @defmac ROUND_TYPE_ALIGN (@var{type}, @var{computed}, @var{specified})
-Define this macro as an expression for the alignment of a type (given
-by @var{type} as a tree node) if the alignment computed in the usual
-way is @var{computed} and the alignment explicitly specified was
-@var{specified}.
+定义该宏为一个表达式，为一个类型（由作为树节点的@var{type}给定）的对齐，
+如果按照通常方式计算的对齐方式为@var{computed}并且显示指定的对齐方式为@var{specified}。
 
-The default is to use @var{specified} if it is larger; otherwise, use
-the smaller of @var{computed} and @code{BIGGEST_ALIGNMENT}
+缺省是使用@var{specified}，如果其更大；
+否则使用@var{computed}和@code{BIGGEST_ALIGNMENT}中较小的。
 @end defmac
 
 @defmac MAX_FIXED_MODE_SIZE
-An integer expression for the size in bits of the largest integer
-machine mode that should actually be used.  All integer machine modes of
-this size or smaller can be used for structures and unions with the
-appropriate sizes.  If this macro is undefined, @code{GET_MODE_BITSIZE
-(DImode)} is assumed.
+一个整数表达式，为实际应该被使用的最大的整数机器模式的位数。
+所有该大小或者更小一些的整数机器模式都可以用于结构体和联合体。
+如果哦没有定义该宏，则假设为@code{GET_MODE_BITSIZE (DImode)}。
 @end defmac
 
 @defmac STACK_SAVEAREA_MODE (@var{save_level})
-If defined, an expression of type @code{enum machine_mode} that
-specifies the mode of the save area operand of a
-@code{save_stack_@var{level}} named pattern (@pxref{标准名字}).
-@var{save_level} is one of @code{SAVE_BLOCK}, @code{SAVE_FUNCTION}, or
-@code{SAVE_NONLOCAL} and selects which of the three named patterns is
-having its mode specified.
+如果定义，则为一个@code{enum machine_mode}类型的表达式，
+指定名为@code{save_stack_@var{level}}的指令模式（参见@ref{标准名字}）的save区域操作数的机器模式。
+@var{save_level}为@code{SAVE_BLOCK}, @code{SAVE_FUNCTION}或@code{SAVE_NONLOCAL}中之一。
 
-You need not define this macro if it always returns @code{Pmode}.  You
-would most commonly define this macro if the
-@code{save_stack_@var{level}} patterns need to support both a 32- and a
-64-bit mode.
+你不需要定义该宏，如果其总是返回@code{Pmode}。你通常将会定义该宏，
+如果@code{save_stack_@var{level}}指令模式需要同时支持32和64位机器模式。
 @end defmac
 
 @defmac STACK_SIZE_MODE
-If defined, an expression of type @code{enum machine_mode} that
-specifies the mode of the size increment operand of an
-@code{allocate_stack} named pattern (@pxref{标准名字}).
+如果定义，为一个@code{enum machine_mode}类型的表达式，
+指定名为@code{allocate_stack}的指令模式（参见@ref{标准名字}）的size increment操作数的机器模式。
 
-You need not define this macro if it always returns @code{word_mode}.
-You would most commonly define this macro if the @code{allocate_stack}
-pattern needs to support both a 32- and a 64-bit mode.
+你不需要定义该宏，如果其总是返回@code{word_mode}。你通常将会定义该宏，
+如果@code{allocate_stack}指令模式需要同时支持32和64位机器模式。
 @end defmac
 
 @deftypefn {Target Hook} {enum machine_mode} TARGET_LIBGCC_CMP_RETURN_MODE ()
-This target hook should return the mode to be used for the return value
-of compare instructions expanded to libgcc calls.  If not defined
-@code{word_mode} is returned which is the right choice for a majority of
-targets.
+该target钩子应该返回扩展为libgcc调用的比较指令的返回值的机器模式。
+如果没有定义，则返回@code{word_mode}，其对于大多数target是正确的。
 @end deftypefn
 
 @deftypefn {Target Hook} {enum machine_mode} TARGET_LIBGCC_SHIFT_COUNT_MODE ()
-This target hook should return the mode to be used for the shift count operand
-of shift instructions expanded to libgcc calls.  If not defined
-@code{word_mode} is returned which is the right choice for a majority of
-targets.
+该target钩子应该返回扩展为libgcc调用的移位指令的shift count操作数的机器模式。
+如果没有定义，则返回@code{word_mode}，其对于大多数target是正确的。
 @end deftypefn
 
 @defmac ROUND_TOWARDS_ZERO
-If defined, this macro should be true if the prevailing rounding
-mode is towards zero.
+如果定义，该宏应该为真，如果舍入的模式是朝向0。
 
-Defining this macro only affects the way @file{libgcc.a} emulates
-floating-point arithmetic.
+定义该宏只影响@file{libgcc.a}模拟浮点算术的方式。
 
-Not defining this macro is equivalent to returning zero.
+不定义该宏，等价于其返回0。
 @end defmac
 
 @defmac LARGEST_EXPONENT_IS_NORMAL (@var{size})
-This macro should return true if floats with @var{size}
-bits do not have a NaN or infinity representation, but use the largest
-exponent for normal numbers instead.
+该宏应该返回真，如果具有@var{size}位数的浮点不具有NaN或无穷的表示，
+但是使用最大的普通数的指数来替代表示。
 
-Defining this macro only affects the way @file{libgcc.a} emulates
-floating-point arithmetic.
+定义该宏只影响@file{libgcc.a}模拟浮点算术的方式。
 
-The default definition of this macro returns false for all sizes.
+该宏缺省定义对所有的size都返回假。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_VECTOR_OPAQUE_P (tree @var{type})
@@ -1576,25 +1216,21 @@ may affect its placement.
 @end deftypefn
 
 @deftypefn {Target Hook} {bool} TARGET_DECIMAL_FLOAT_SUPPORTED_P (void)
-Returns true if the target supports decimal floating point.
+返回真，如果target支持十进制浮点。
 @end deftypefn
 
 @deftypefn {Target Hook} {bool} TARGET_FIXED_POINT_SUPPORTED_P (void)
-Returns true if the target supports fixed-point arithmetic.
+返回真，如果target支持定点算术。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_EXPAND_TO_RTL_HOOK (void)
-This hook is called just before expansion into rtl, allowing the target
-to perform additional initializations or analysis before the expansion.
-For example, the rs6000 port uses it to allocate a scratch stack slot
-for use in copying SDmode values between memory and floating point
-registers whenever the function being expanded has any SDmode
-usage.
+该钩子在扩展为rtl之前被调用，允许target在扩展前执行额外的实例化或者分析。
+例如，rs6000port使用它来分配scratch栈槽，当被扩展的函数具有任何SDmode使用时，
+用于在内存和浮点寄存器之间复制SDmode值。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_INSTANTIATE_DECLS (void)
-This hook allows the backend to perform additional instantiations on rtl
-that are not actually in any insns yet, but will be later.
+该钩子允许后端执行额外的rtl实例化，这些实际上不存在于任何insn中，但在之后会有。
 @end deftypefn
 
 @deftypefn {Target Hook} {const char *} TARGET_MANGLE_TYPE (tree @var{type})
@@ -1634,267 +1270,225 @@ types.
 @node 类型布局
 @section 源语言的数据类型布局
 
-These macros define the sizes and other characteristics of the standard
-basic data types used in programs being compiled.  Unlike the macros in
-the previous section, these apply to specific features of C and related
-languages, rather than to fundamental aspects of storage layout.
+这些宏定义了在被编译的程序中使用的标准基础数据类型的大小和其它特征。
+不像之前章节中的宏，这些是应用到C和相关语言的特定特征上，
+而不是存储布局的基础方面。
 
 @defmac INT_TYPE_SIZE
-A C expression for the size in bits of the type @code{int} on the
-target machine.  If you don't define this, the default is one word.
+一个C表达式，为在target机器上类型@code{int}的位大小。
+如果没有定义，缺省为一个字。
 @end defmac
 
 @defmac SHORT_TYPE_SIZE
-A C expression for the size in bits of the type @code{short} on the
-target machine.  If you don't define this, the default is half a word.
-(If this would be less than one storage unit, it is rounded up to one
-unit.)
+一个C表达式，为在target机器上类型@code{short}的位大小。如果没有定义，
+缺省为半个字。（如果比一个存储单元小，则会向上舍入为一个单元。）
 @end defmac
 
 @defmac LONG_TYPE_SIZE
-A C expression for the size in bits of the type @code{long} on the
-target machine.  If you don't define this, the default is one word.
+一个C表达式，为在target机器上类型@code{long}的位大小。
+如果没有定义，缺省为一个字。
 @end defmac
 
 @defmac ADA_LONG_TYPE_SIZE
-On some machines, the size used for the Ada equivalent of the type
-@code{long} by a native Ada compiler differs from that used by C@.  In
-that situation, define this macro to be a C expression to be used for
-the size of that type.  If you don't define this, the default is the
-value of @code{LONG_TYPE_SIZE}.
+在一些机器上，本地Ada编译器使用的类型@code{long}的大小与C使用的不相同。
+这种情况下，定义该宏为一个C表达式用于那个类型的大小。如果没有定义，
+则缺省为@code{LONG_TYPE_SIZE}的值。
 @end defmac
 
 @defmac LONG_LONG_TYPE_SIZE
-A C expression for the size in bits of the type @code{long long} on the
-target machine.  If you don't define this, the default is two
-words.  If you want to support GNU Ada on your machine, the value of this
-macro must be at least 64.
+一个C表达式，为在target机器上类型@code{long long}的位大小。如果没有定义，
+缺省为两个字。如果你想在你的机器上支持GNU Ada，则该宏的值最少必须为64。
 @end defmac
 
 @defmac CHAR_TYPE_SIZE
-A C expression for the size in bits of the type @code{char} on the
-target machine.  If you don't define this, the default is
-@code{BITS_PER_UNIT}.
+一个C表达式，为在target机器上类型@code{char}的位大小。
+如果没有定义，缺省为@code{BITS_PER_UNIT}。
 @end defmac
 
 @defmac BOOL_TYPE_SIZE
-A C expression for the size in bits of the C++ type @code{bool} and
-C99 type @code{_Bool} on the target machine.  If you don't define
-this, and you probably shouldn't, the default is @code{CHAR_TYPE_SIZE}.
+一个C表达式，为在target机器上C++类型@code{bool}和C99类型@code{_Bool}的位大小。
+如果没有定义，并且通常不会定义，缺省为@code{CHAR_TYPE_SIZE}。
 @end defmac
 
 @defmac FLOAT_TYPE_SIZE
-A C expression for the size in bits of the type @code{float} on the
-target machine.  If you don't define this, the default is one word.
+一个C表达式，为在target机器上类型@code{float}的位大小。
+如果没有定义，缺省为一个字。
 @end defmac
 
 @defmac DOUBLE_TYPE_SIZE
-A C expression for the size in bits of the type @code{double} on the
-target machine.  If you don't define this, the default is two
-words.
+一个C表达式，为在target机器上类型@code{double}的位大小。
+如果没有定义，缺省为两个字。
 @end defmac
 
 @defmac LONG_DOUBLE_TYPE_SIZE
-A C expression for the size in bits of the type @code{long double} on
-the target machine.  If you don't define this, the default is two
-words.
+一个C表达式，为在target机器上类型@code{long double}的位大小。
+如果没有定义，缺省为两个字。
 @end defmac
 
 @defmac SHORT_FRACT_TYPE_SIZE
-A C expression for the size in bits of the type @code{short _Fract} on
-the target machine.  If you don't define this, the default is
-@code{BITS_PER_UNIT}.
+一个C表达式，为在target机器上类型@code{short _Fract}的位大小。
+如果没有定义，缺省为@code{BITS_PER_UNIT}。
 @end defmac
 
 @defmac FRACT_TYPE_SIZE
-A C expression for the size in bits of the type @code{_Fract} on
-the target machine.  If you don't define this, the default is
-@code{BITS_PER_UNIT * 2}.
+一个C表达式，为在target机器上类型@code{_Fract}的位大小。如果没有定义，
+缺省为@code{BITS_PER_UNIT * 2}。
 @end defmac
 
 @defmac LONG_FRACT_TYPE_SIZE
-A C expression for the size in bits of the type @code{long _Fract} on
-the target machine.  If you don't define this, the default is
-@code{BITS_PER_UNIT * 4}.
+一个C表达式，为在target机器上类型@code{long _Fract}的位大小。
+如果没有定义，缺省为@code{BITS_PER_UNIT * 4}。
 @end defmac
 
 @defmac LONG_LONG_FRACT_TYPE_SIZE
-A C expression for the size in bits of the type @code{long long _Fract} on
-the target machine.  If you don't define this, the default is
-@code{BITS_PER_UNIT * 8}.
+一个C表达式，为在target机器上类型@code{long long _Fract}的位大小。
+如果没有定义，缺省为@code{BITS_PER_UNIT * 8}。
 @end defmac
 
 @defmac SHORT_ACCUM_TYPE_SIZE
-A C expression for the size in bits of the type @code{short _Accum} on
-the target machine.  If you don't define this, the default is
-@code{BITS_PER_UNIT * 2}.
+一个C表达式，为在target机器上类型@code{short _Accum}的位大小。
+如果没有定义，缺省为@code{BITS_PER_UNIT * 2}。
 @end defmac
 
 @defmac ACCUM_TYPE_SIZE
-A C expression for the size in bits of the type @code{_Accum} on
-the target machine.  If you don't define this, the default is
-@code{BITS_PER_UNIT * 4}.
+一个C表达式，为在target机器上类型@code{_Accum}的位大小。
+如果没有定义，缺省为@code{BITS_PER_UNIT * 4}。
 @end defmac
 
 @defmac LONG_ACCUM_TYPE_SIZE
-A C expression for the size in bits of the type @code{long _Accum} on
-the target machine.  If you don't define this, the default is
-@code{BITS_PER_UNIT * 8}.
+一个C表达式，为在target机器上类型@code{long _Accum}的位大小。
+如果没有定义，缺省为@code{BITS_PER_UNIT * 8}。
 @end defmac
 
 @defmac LONG_LONG_ACCUM_TYPE_SIZE
-A C expression for the size in bits of the type @code{long long _Accum} on
-the target machine.  If you don't define this, the default is
-@code{BITS_PER_UNIT * 16}.
+一个C表达式，为在target机器上类型@code{long long _Accum}的位大小。
+如果没有定义，缺省为@code{BITS_PER_UNIT * 16}。
 @end defmac
 
 @defmac LIBGCC2_LONG_DOUBLE_TYPE_SIZE
-Define this macro if @code{LONG_DOUBLE_TYPE_SIZE} is not constant or
-if you want routines in @file{libgcc2.a} for a size other than
-@code{LONG_DOUBLE_TYPE_SIZE}.  If you don't define this, the
-default is @code{LONG_DOUBLE_TYPE_SIZE}.
+定义该宏，如果@code{LONG_DOUBLE_TYPE_SIZE}不是常量或者如果你想让@file{libgcc2.a}
+中具有大小不是@code{LONG_DOUBLE_TYPE_SIZE}的程序。如果没有定义，
+缺省为@code{LONG_DOUBLE_TYPE_SIZE}。
 @end defmac
 
 @defmac LIBGCC2_HAS_DF_MODE
-Define this macro if neither @code{LIBGCC2_DOUBLE_TYPE_SIZE} nor
-@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is
-@code{DFmode} but you want @code{DFmode} routines in @file{libgcc2.a}
-anyway.  If you don't define this and either @code{LIBGCC2_DOUBLE_TYPE_SIZE}
-or @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is 64 then the default is 1,
-otherwise it is 0.
+定义该宏，如果@code{LIBGCC2_DOUBLE_TYPE_SIZE}和
+@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}都不是@code{DFmode}，
+但是你还想让@file{libgcc2.a}中具有@code{DFmode}的程序。如果没有定义，
+并且@code{LIBGCC2_DOUBLE_TYPE_SIZE}或@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}为64，
+则缺省为1，否则为0。
 @end defmac
 
 @defmac LIBGCC2_HAS_XF_MODE
-Define this macro if @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is not
-@code{XFmode} but you want @code{XFmode} routines in @file{libgcc2.a}
-anyway.  If you don't define this and @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}
-is 80 then the default is 1, otherwise it is 0.
+定义该宏，如果@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}不是@code{XFmode}，
+但是你还想让@file{libgcc2.a}中具有@code{XFmode}的程序。如果没有定义，
+并且@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}为80，则缺省为1，否则为0。
 @end defmac
 
 @defmac LIBGCC2_HAS_TF_MODE
-Define this macro if @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is not
-@code{TFmode} but you want @code{TFmode} routines in @file{libgcc2.a}
-anyway.  If you don't define this and @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}
-is 128 then the default is 1, otherwise it is 0.
+定义该宏，如果@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}不是@code{TFmode}，
+但是你还想让@file{libgcc2.a}中具有@code{TFmode}的程序。如果没有定义，
+并且@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}为128，则缺省为1，否则为0。
 @end defmac
 
 @defmac SF_SIZE
 @defmacx DF_SIZE
 @defmacx XF_SIZE
 @defmacx TF_SIZE
-Define these macros to be the size in bits of the mantissa of
-@code{SFmode}, @code{DFmode}, @code{XFmode} and @code{TFmode} values,
-if the defaults in @file{libgcc2.h} are inappropriate.  By default,
-@code{FLT_MANT_DIG} is used for @code{SF_SIZE}, @code{LDBL_MANT_DIG}
-for @code{XF_SIZE} and @code{TF_SIZE}, and @code{DBL_MANT_DIG} or
-@code{LDBL_MANT_DIG} for @code{DF_SIZE} according to whether
-@code{LIBGCC2_DOUBLE_TYPE_SIZE} or
-@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is 64.
+定义这些宏为@code{SFmode}, @code{DFmode}, @code{XFmode}和@code{TFmode}值的尾数
+位大小，如果在@file{libgcc2.h}中的缺省定义不合适。缺省的，
+@code{FLT_MANT_DIG}用于@code{SF_SIZE}, @code{LDBL_MANT_DIG}用于@code{XF_SIZE}和
+@code{TF_SIZE}，并且@code{DBL_MANT_DIG}或@code{LDBL_MANT_DIG}用于
+@code{DF_SIZE}，根据@code{LIBGCC2_DOUBLE_TYPE_SIZE}或
+@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}是否为64。
 @end defmac
 
 @defmac TARGET_FLT_EVAL_METHOD
-A C expression for the value for @code{FLT_EVAL_METHOD} in @file{float.h},
-assuming, if applicable, that the floating-point control word is in its
-default state.  If you do not define this macro the value of
-@code{FLT_EVAL_METHOD} will be zero.
+一个C表达式，为@file{float.h}中的@code{FLT_EVAL_METHOD}的值。
+如果没有定义，则@code{FLT_EVAL_METHOD}的值将为0。
 @end defmac
 
 @defmac WIDEST_HARDWARE_FP_SIZE
-A C expression for the size in bits of the widest floating-point format
-supported by the hardware.  If you define this macro, you must specify a
-value less than or equal to the value of @code{LONG_DOUBLE_TYPE_SIZE}.
-If you do not define this macro, the value of @code{LONG_DOUBLE_TYPE_SIZE}
-is the default.
+一个C表达式，为硬件支持的最宽浮点格式的位数。如果定义该宏，
+则必须指定一个小于或等于@code{LONG_DOUBLE_TYPE_SIZE}的值。如果没有定义，
+则缺省为@code{LONG_DOUBLE_TYPE_SIZE}的值。
 @end defmac
 
 @defmac DEFAULT_SIGNED_CHAR
-An expression whose value is 1 or 0, according to whether the type
-@code{char} should be signed or unsigned by default.  The user can
-always override this default with the options @option{-fsigned-char}
-and @option{-funsigned-char}.
+一个表达式，其值为1或者0，根据类型@code{char}缺省应该为有符号的还是无符号的。
+用户总是可以使用选项@option{-fsigned-char}和@option{-funsigned-char}来覆盖该缺省定义。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_DEFAULT_SHORT_ENUMS (void)
-This target hook should return true if the compiler should give an
-@code{enum} type only as many bytes as it takes to represent the range
-of possible values of that type.  It should return false if all
-@code{enum} types should be allocated like @code{int}.
+该target钩子应该返回真，如果编译器应该为@code{enum}类型设置为可以表示该类型值
+范围的字节数。其应该返回假，如果所有的@code{enum}类型应该按照@code{int}类型的
+方式来分配。
 
-The default is to return false.
+缺省为返回假。
 @end deftypefn
 
 @defmac SIZE_TYPE
-A C expression for a string describing the name of the data type to use
-for size values.  The typedef name @code{size_t} is defined using the
-contents of the string.
+一个C表达式，为一个字符串描述了用于size值的数据类型名。
+typedef名@code{size_t}使用该字符串的内容来定义。
 
-The string can contain more than one keyword.  If so, separate them with
-spaces, and write first any length keyword, then @code{unsigned} if
-appropriate, and finally @code{int}.  The string must exactly match one
-of the data type names defined in the function
-@code{init_decl_processing} in the file @file{c-decl.c}.  You may not
-omit @code{int} or change the order---that would cause the compiler to
-crash on startup.
+字符串可以包含多一个的关键字。如果是这样，则将它们使用空格分开，
+首先是任意长度的关键字，然后是合适@code{unsigned} 的，最后是@code{int}。
+字符串必须显示的匹配文件@file{c-decl.c}中函数@code{init_decl_processing}中
+定义的数据类型名。不可以省略掉@code{int}或者改变顺序，
+这将会使编译器在启动时崩溃。
 
-If you don't define this macro, the default is @code{"long unsigned
-int"}.
+如果没有定义，缺省为@code{"long unsigned int"}。
 @end defmac
 
 @defmac PTRDIFF_TYPE
-A C expression for a string describing the name of the data type to use
-for the result of subtracting two pointers.  The typedef name
-@code{ptrdiff_t} is defined using the contents of the string.  See
-@code{SIZE_TYPE} above for more information.
+一个C表达式，为一个字符串，描述了用于两个指针相减的结果的数据类型名。
+typedef名@code{ptrdiff_t}使用该字符串的内容来定义。更多信息，
+参见上面的@code{SIZE_TYPE}。
 
-If you don't define this macro, the default is @code{"long int"}.
+如果没有定义，则缺省为@code{"long int"}。
 @end defmac
 
 @defmac WCHAR_TYPE
-A C expression for a string describing the name of the data type to use
-for wide characters.  The typedef name @code{wchar_t} is defined using
-the contents of the string.  See @code{SIZE_TYPE} above for more
-information.
+一个C表达式，为一个字符串，描述了用于宽字符的数据类型名。
+typedef名@code{wchar_t}使用该字符串的内容来定义。更多信息，
+参见上面的@code{SIZE_TYPE}。
 
-If you don't define this macro, the default is @code{"int"}.
+如果没有定义，则缺省为@code{"int"}。
 @end defmac
 
 @defmac WCHAR_TYPE_SIZE
-A C expression for the size in bits of the data type for wide
-characters.  This is used in @code{cpp}, which cannot make use of
-@code{WCHAR_TYPE}.
+一个C表达式，为宽字符数据类型的位数。
+这用于不能使用@code{WCHAR_TYPE}的@code{cpp}中。
 @end defmac
 
 @defmac WINT_TYPE
-A C expression for a string describing the name of the data type to
-use for wide characters passed to @code{printf} and returned from
-@code{getwc}.  The typedef name @code{wint_t} is defined using the
-contents of the string.  See @code{SIZE_TYPE} above for more
-information.
+一个C表达式，为一个字符串，
+描述了传递给@code{printf}并且从@code{getwc}中返回的宽字符数据类型名。
+typedef名@code{wint_t}使用该字符串的内容来定义。更多信息，
+参见上面的@code{SIZE_TYPE}。
 
-If you don't define this macro, the default is @code{"unsigned int"}.
+如果没有定义，则缺省为@code{"unsigned int"}。
 @end defmac
 
 @defmac INTMAX_TYPE
-A C expression for a string describing the name of the data type that
-can represent any value of any standard or extended signed integer type.
-The typedef name @code{intmax_t} is defined using the contents of the
-string.  See @code{SIZE_TYPE} above for more information.
+一个C表达式，为一个字符串，
+描述了可以表示任何标准或者扩展的有符号整数类型值的数据类型名。
+typedef名@code{intmax_t}使用该字符串的内容来定义。更多信息，
+参见上面的@code{SIZE_TYPE}。
 
-If you don't define this macro, the default is the first of
-@code{"int"}, @code{"long int"}, or @code{"long long int"} that has as
-much precision as @code{long long int}.
+如果没有定义，则缺省为@code{"int"}, @code{"long int"}或
+@code{"long long int"}中第一个与@code{long long int}具有相同精度的字符串。
 @end defmac
 
 @defmac UINTMAX_TYPE
-A C expression for a string describing the name of the data type that
-can represent any value of any standard or extended unsigned integer
-type.  The typedef name @code{uintmax_t} is defined using the contents
-of the string.  See @code{SIZE_TYPE} above for more information.
+一个C表达式，为一个字符串，
+描述了可以表示任何标准或者扩展的无符号整数类型值的数据类型名。
+typedef名@code{uintmax_t}使用该字符串的内容来定义。更多信息，
+参见上面的@code{SIZE_TYPE}。
 
-If you don't define this macro, the default is the first of
-@code{"unsigned int"}, @code{"long unsigned int"}, or @code{"long long
-unsigned int"} that has as much precision as @code{long long unsigned
-int}.
+如果没有定义，则缺省为@code{"unsigned int"}, @code{"long unsigned int"}或
+@code{"long long unsigned int"}中第一个与@code{long long unsigned int}
+具有相同精度的字符串。
 @end defmac
 
 @defmac TARGET_PTRMEMFUNC_VBIT_LOCATION
