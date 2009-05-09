@@ -2941,212 +2941,156 @@ GCC使用该值来生成上面的警告消息。其表示函数使用的固定�
 这里讨论了用于栈帧寻址的寄存器。
 
 @defmac STACK_POINTER_REGNUM
-The register number of the stack pointer register, which must also be a
-fixed register according to @code{FIXED_REGISTERS}.  On most machines,
-the hardware determines which register this is.
+栈指针寄存器的寄存器编号，其还必须为一个@code{FIXED_REGISTERS}中的固定寄存器。
+在大多数机器上，硬件决定了这是哪个寄存器。
 @end defmac
 
 @defmac FRAME_POINTER_REGNUM
-The register number of the frame pointer register, which is used to
-access automatic variables in the stack frame.  On some machines, the
-hardware determines which register this is.  On other machines, you can
-choose any register you wish for this purpose.
+帧指针寄存器的寄存器编号，其用于访问在栈帧中的自动变量。
+在一些机器上，硬件决定了这是哪个寄存器。
+在其它机器上，你可以选择任意寄存器来达到该目的。
 @end defmac
 
 @defmac HARD_FRAME_POINTER_REGNUM
-On some machines the offset between the frame pointer and starting
-offset of the automatic variables is not known until after register
-allocation has been done (for example, because the saved registers are
-between these two locations).  On those machines, define
-@code{FRAME_POINTER_REGNUM} the number of a special, fixed register to
-be used internally until the offset is known, and define
-@code{HARD_FRAME_POINTER_REGNUM} to be the actual hard register number
-used for the frame pointer.
+在一些机器上，帧指针和自动变量的起始处之间的偏移量直到寄存器分配进行完之后才知道
+（例如，因为保存寄存器位于这两个位置之间）。这些机器上，
+定义@code{FRAME_POINTER_REGNUM}为一个特定的固定寄存器的编号，在内部使用，
+直到位移已知，并且定义@code{HARD_FRAME_POINTER_REGNUM}为实际的硬件寄存器，
+用于帧指针。
 
-You should define this macro only in the very rare circumstances when it
-is not possible to calculate the offset between the frame pointer and
-the automatic variables until after register allocation has been
-completed.  When this macro is defined, you must also indicate in your
-definition of @code{ELIMINABLE_REGS} how to eliminate
-@code{FRAME_POINTER_REGNUM} into either @code{HARD_FRAME_POINTER_REGNUM}
-or @code{STACK_POINTER_REGNUM}.
+你只需要在非常少见的情况下定义该宏，当不可能计算帧指针和自动变量的偏移时，
+并且直到寄存器分配完成。当该宏被定义，
+你必须还要在你的@code{ELIMINABLE_REGS}的定义中指示如果消除
+@code{FRAME_POINTER_REGNUM}为@code{HARD_FRAME_POINTER_REGNUM}或者
+@code{STACK_POINTER_REGNUM}。
 
-Do not define this macro if it would be the same as
-@code{FRAME_POINTER_REGNUM}.
+如果其与@code{FRAME_POINTER_REGNUM}相同，则不要定义该宏。
 @end defmac
 
 @defmac ARG_POINTER_REGNUM
-The register number of the arg pointer register, which is used to access
-the function's argument list.  On some machines, this is the same as the
-frame pointer register.  On some machines, the hardware determines which
-register this is.  On other machines, you can choose any register you
-wish for this purpose.  If this is not the same register as the frame
-pointer register, then you must mark it as a fixed register according to
-@code{FIXED_REGISTERS}, or arrange to be able to eliminate it
-(@pxref{消除}).
+arg指针寄存器的寄存器编号，其用于访问函数的参数列表。在大多数机器上，
+这与帧指针寄存器相同。在一些机器上，硬件决定了其为那个寄存器。在其它机器上，
+你可以选择任意的寄存器。如果这与帧指针寄存器不同，
+则你必须标记其为一个固定寄存器，
+根据@code{FIXED_REGISTERS}或者设法能够消除它（参见@ref{消除}）。
 @end defmac
 
 @defmac RETURN_ADDRESS_POINTER_REGNUM
-The register number of the return address pointer register, which is used to
-access the current function's return address from the stack.  On some
-machines, the return address is not at a fixed offset from the frame
-pointer or stack pointer or argument pointer.  This register can be defined
-to point to the return address on the stack, and then be converted by
-@code{ELIMINABLE_REGS} into either the frame pointer or stack pointer.
+返回地址指针寄存器的寄存器编号，其用于访问栈中当前函数的返回地址。
+在一些机器上，返回地址不在帧指针或栈指针或参数指针的固定偏移处。
+该寄存器被定义指向栈中的返回地址，
+并且然后通过@code{ELIMINABLE_REGS}转换为帧指针或者栈指针。
 
-Do not define this macro unless there is no other way to get the return
-address from the stack.
+不要定义该宏，除非没有其他的方式从栈中获得返回地址。
 @end defmac
 
 @defmac STATIC_CHAIN_REGNUM
 @defmacx STATIC_CHAIN_INCOMING_REGNUM
-Register numbers used for passing a function's static chain pointer.  If
-register windows are used, the register number as seen by the called
-function is @code{STATIC_CHAIN_INCOMING_REGNUM}, while the register
-number as seen by the calling function is @code{STATIC_CHAIN_REGNUM}.  If
-these registers are the same, @code{STATIC_CHAIN_INCOMING_REGNUM} need
-not be defined.
+用于传递函数static链指针的寄存器编号。如果寄存器窗口被使用，
+则寄存器编号由被调用函数所看到是@code{STATIC_CHAIN_INCOMING_REGNUM}，
+而由调用者函数看到的是@code{STATIC_CHAIN_REGNUM}。如果这些寄存器是相同的，
+则不需要定义@code{STATIC_CHAIN_INCOMING_REGNUM}。
 
-The static chain register need not be a fixed register.
+静态链寄存器不需要为一个固定寄存器。
 
-If the static chain is passed in memory, these macros should not be
-defined; instead, the next two macros should be defined.
+如果静态链在内存中传递，则这些宏不需要定义；替代的，应该定义下面的两个宏。
 @end defmac
 
 @defmac STATIC_CHAIN
 @defmacx STATIC_CHAIN_INCOMING
-If the static chain is passed in memory, these macros provide rtx giving
-@code{mem} expressions that denote where they are stored.
-@code{STATIC_CHAIN} and @code{STATIC_CHAIN_INCOMING} give the locations
-as seen by the calling and called functions, respectively.  Often the former
-will be at an offset from the stack pointer and the latter at an offset from
-the frame pointer.
+如果静态链在内存中传递，则这些宏提供了给出它们存储的@code{mem}表达式rtx。
+@code{STATIC_CHAIN}和@code{STATIC_CHAIN_INCOMING}分别给出了由调用者和被调用函数
+所看到的位置。通常前者将在栈指针的一个偏移处并且后者将在帧指针的一个偏移处。
 
 @findex stack_pointer_rtx
 @findex frame_pointer_rtx
 @findex arg_pointer_rtx
-The variables @code{stack_pointer_rtx}, @code{frame_pointer_rtx}, and
-@code{arg_pointer_rtx} will have been initialized prior to the use of these
-macros and should be used to refer to those items.
+变量@code{stack_pointer_rtx}, @code{frame_pointer_rtx}和@code{arg_pointer_rtx}将在使用这些宏之前被初始化，并可以引用。
 
-If the static chain is passed in a register, the two previous macros should
-be defined instead.
+如果静态链在寄存器中传递，则应该定义之前的两个宏。
 @end defmac
 
 @defmac DWARF_FRAME_REGISTERS
-This macro specifies the maximum number of hard registers that can be
-saved in a call frame.  This is used to size data structures used in
-DWARF2 exception handling.
+该宏指定了可以在一个调用帧中被保存的硬件寄存器的最大数。
+这用于DWARF2异常处理中的size数据结构体。
 
-Prior to GCC 3.0, this macro was needed in order to establish a stable
-exception handling ABI in the face of adding new hard registers for ISA
-extensions.  In GCC 3.0 and later, the EH ABI is insulated from changes
-in the number of hard registers.  Nevertheless, this macro can still be
-used to reduce the runtime memory requirements of the exception handling
-routines, which can be substantial if the ISA contains a lot of
-registers that are not call-saved.
+在GCC3.0之前，该宏需要用来建立一个稳定的异常处理ABI。
 
-If this macro is not defined, it defaults to
-@code{FIRST_PSEUDO_REGISTER}.
+如果该宏没有被定义，其缺省为@code{FIRST_PSEUDO_REGISTER}。
 @end defmac
 
 @defmac PRE_GCC3_DWARF_FRAME_REGISTERS
+该宏类似于@code{DWARF_FRAME_REGISTERS}，是为了向后兼容在GCC3.0之前编译的代码而提供。
 
-This macro is similar to @code{DWARF_FRAME_REGISTERS}, but is provided
-for backward compatibility in pre GCC 3.0 compiled code.
-
-If this macro is not defined, it defaults to
-@code{DWARF_FRAME_REGISTERS}.
+如果没有定义该宏，其缺省为@code{DWARF_FRAME_REGISTERS}。
 @end defmac
 
 @defmac DWARF_REG_TO_UNWIND_COLUMN (@var{regno})
+定义该宏，如果target对于dwarf寄存器的表示与对于unwind column的内部表示不相同。
+给定一个dwarf寄存器，该宏应该返回替代使用的内部unwind column编号。
 
-Define this macro if the target's representation for dwarf registers
-is different than the internal representation for unwind column.
-Given a dwarf register, this macro should return the internal unwind
-column number to use instead.
-
-See the PowerPC's SPE target for an example.
+例子参见PowerPC's SPE target。
 @end defmac
 
 @defmac DWARF_FRAME_REGNUM (@var{regno})
-
-Define this macro if the target's representation for dwarf registers
-used in .eh_frame or .debug_frame is different from that used in other
-debug info sections.  Given a GCC hard register number, this macro
-should return the .eh_frame register number.  The default is
-@code{DBX_REGISTER_NUMBER (@var{regno})}.
-
+定义该宏，如果target对于用在.eh_frame或者.debug_frame的dwarf寄存器的表示与用在
+其它调试信息section中的不同。给定一个GCC硬件寄存器编号，该宏应该返回.eh_frame
+寄存器编号。缺省为@code{DBX_REGISTER_NUMBER (@var{regno})}。
 @end defmac
 
 @defmac DWARF2_FRAME_REG_OUT (@var{regno}, @var{for_eh})
-
-Define this macro to map register numbers held in the call frame info
-that GCC has collected using @code{DWARF_FRAME_REGNUM} to those that
-should be output in .debug_frame (@code{@var{for_eh}} is zero) and
-.eh_frame (@code{@var{for_eh}} is nonzero).  The default is to
-return @code{@var{regno}}.
-
+定义该宏来影射在调用帧信息中存放的寄存器编号，
+其为GCC使用@code{DWARF_FRAME_REGNUM}来搜集的应该放在.debug_frame
+（@code{@var{for_eh}}为0）和.eh_frame（@code{@var{for_eh}}为非0）中的寄存器。
+缺省为返回@code{@var{regno}}。
 @end defmac
 
 @node 消除
 @subsection 消除帧指针和参数指针
 
 @c prevent bad page break with this line
-This is about eliminating the frame pointer and arg pointer.
+这些是关于消除帧指针和参数指针的。
 
 @defmac FRAME_POINTER_REQUIRED
-A C expression which is nonzero if a function must have and use a frame
-pointer.  This expression is evaluated  in the reload pass.  If its value is
-nonzero the function will have a frame pointer.
+一个C表达式，其为非0，如果函数必须具有并且使用帧指针。
+该表达式在重载过程被求值。如果值为非零，则函数将具有一个帧指针。
 
-The expression can in principle examine the current function and decide
-according to the facts, but on most machines the constant 0 or the
-constant 1 suffices.  Use 0 when the machine allows code to be generated
-with no frame pointer, and doing so saves some time or space.  Use 1
-when there is no possible advantage to avoiding a frame pointer.
+原则上表达式可以检查当前函数并根据事实来决定，但在大多数机器上，
+常量0或者1就足够了。使用0当机器允许生成的代码不具有帧指针，
+这将节省一些时间或空间。使用1当避免帧指针不会带来好处。
 
-In certain cases, the compiler does not know how to produce valid code
-without a frame pointer.  The compiler recognizes those cases and
-automatically gives the function a frame pointer regardless of what
-@code{FRAME_POINTER_REQUIRED} says.  You don't need to worry about
-them.
+在一些情况下，编译器不知道如何生成没有帧指针的有效的代码。
+编译器识别到哪些情况，并自动的给函数一个帧指针，
+而不管@code{FRAME_POINTER_REQUIRED}如何。你不需要为此担心。
 
-In a function that does not require a frame pointer, the frame pointer
-register can be allocated for ordinary usage, unless you mark it as a
-fixed register.  See @code{FIXED_REGISTERS} for more information.
+在不需要帧指针的函数中，帧指针寄存器可以被分配用于普通用法，
+除非你标记其为一个固定寄存器。更多信息，参见@code{FIXED_REGISTERS}。
 @end defmac
 
 @findex get_frame_size
 @defmac INITIAL_FRAME_POINTER_OFFSET (@var{depth-var})
-A C statement to store in the variable @var{depth-var} the difference
-between the frame pointer and the stack pointer values immediately after
-the function prologue.  The value would be computed from information
-such as the result of @code{get_frame_size ()} and the tables of
-registers @code{regs_ever_live} and @code{call_used_regs}.
+一条C语句，用来紧接着函数序言之后，
+将帧指针和栈指针值的差存储在@var{depth-var}中。
+该值应该通过像@code{get_frame_size ()}这样的结果信息以及寄存器表
+@code{regs_ever_live}和@code{call_used_regs}中被计算。
 
-If @code{ELIMINABLE_REGS} is defined, this macro will be not be used and
-need not be defined.  Otherwise, it must be defined even if
-@code{FRAME_POINTER_REQUIRED} is defined to always be true; in that
-case, you may set @var{depth-var} to anything.
+如果@code{ELIMINABLE_REGS}被定义，则该宏将不被使用并不需要被定义。
+否则，其必须被定义，即使@code{FRAME_POINTER_REQUIRED}被定义为总是为真；
+这这种情况下，你可以设置@var{depth-var}为任何值。
 @end defmac
 
 @defmac ELIMINABLE_REGS
-If defined, this macro specifies a table of register pairs used to
-eliminate unneeded registers that point into the stack frame.  If it is not
-defined, the only elimination attempted by the compiler is to replace
-references to the frame pointer with references to the stack pointer.
+如果被定义，则该宏指定了一个寄存器双对的表，用于消除不需要的指向栈帧的寄存器。
+如果没有被定义，则编译器唯一尝试去做的消除是将对帧指针的引用替换为对栈指针的引用。
 
-The definition of this macro is a list of structure initializations, each
-of which specifies an original and replacement register.
+该宏的定义为一个结构体初始化列表，每个指定了最初的和替换后的寄存器。
 
-On some machines, the position of the argument pointer is not known until
-the compilation is completed.  In such a case, a separate hard register
-must be used for the argument pointer.  This register can be eliminated by
-replacing it with either the frame pointer or the argument pointer,
-depending on whether or not the frame pointer has been eliminated.
+在一些机器上，参数指针的位置直到编译结束时才知道。这种情况下，
+一个单独的硬件寄存器必须用于参数指针。
+该寄存器可以通过替换为帧指针或者参数指针来消除，这取决于帧指针是否已经被消除。
 
-In this case, you might specify:
+这种情况下，你可能会指定：
+
 @smallexample
 #define ELIMINABLE_REGS  \
 @{@{ARG_POINTER_REGNUM, STACK_POINTER_REGNUM@}, \
@@ -3154,24 +3098,20 @@ In this case, you might specify:
  @{FRAME_POINTER_REGNUM, STACK_POINTER_REGNUM@}@}
 @end smallexample
 
-Note that the elimination of the argument pointer with the stack pointer is
-specified first since that is the preferred elimination.
+注意首先指定的是使用栈指针来消除参数指针，因为这是首选的消除方式。
 @end defmac
 
 @defmac CAN_ELIMINATE (@var{from-reg}, @var{to-reg})
-A C expression that returns nonzero if the compiler is allowed to try
-to replace register number @var{from-reg} with register number
-@var{to-reg}.  This macro need only be defined if @code{ELIMINABLE_REGS}
-is defined, and will usually be the constant 1, since most of the cases
-preventing register elimination are things that the compiler already
-knows about.
+一个C表达式，其返回非0，
+如果编译器被允许尝试使用寄存器编号@var{to-reg}来替换寄存器编号@var{from-reg}。
+该宏只在@code{ELIMINABLE_REGS}被定义时才需要定义，并且通常为常量1，
+因为大多数情况下编译器已经知道是否不该进行寄存器消除。
 @end defmac
 
 @defmac INITIAL_ELIMINATION_OFFSET (@var{from-reg}, @var{to-reg}, @var{offset-var})
-This macro is similar to @code{INITIAL_FRAME_POINTER_OFFSET}.  It
-specifies the initial difference between the specified pair of
-registers.  This macro must be defined if @code{ELIMINABLE_REGS} is
-defined.
+该宏类似于@code{INITIAL_FRAME_POINTER_OFFSET}。
+其指定了被指定的寄存器双对的初始差。该宏必须被定义，
+如果@code{ELIMINABLE_REGS}被定义。
 @end defmac
 
 @node 栈参数
@@ -3179,48 +3119,41 @@ defined.
 @cindex arguments on stack
 @cindex stack arguments
 
-The macros in this section control how arguments are passed
-on the stack.  See the following section for other macros that
-control passing certain arguments in registers.
+该节的宏控制如何在栈上传递参数。关于控制在寄存器中传递特定参数的其它宏，
+参见后续的章节。
 
 @deftypefn {Target Hook} bool TARGET_PROMOTE_PROTOTYPES (tree @var{fntype})
-This target hook returns @code{true} if an argument declared in a
-prototype as an integral type smaller than @code{int} should actually be
-passed as an @code{int}.  In addition to avoiding errors in certain
-cases of mismatch, it also makes for better code on certain machines.
-The default is to not promote prototypes.
+该target钩子返回@code{true}，如果在函数原型中声明的一个参数，
+为整型的并且比@code{int}小，应该作为@code{int}来传递。
+除了能够避免一些不匹配的错误以外，其还能在特定机器上生成更好的代码。
+缺省为不提升原型。
 @end deftypefn
 
 @defmac PUSH_ARGS
-A C expression.  If nonzero, push insns will be used to pass
-outgoing arguments.
-If the target machine does not have a push instruction, set it to zero.
-That directs GCC to use an alternate strategy: to
-allocate the entire argument block and then store the arguments into
-it.  When @code{PUSH_ARGS} is nonzero, @code{PUSH_ROUNDING} must be defined too.
+一个C表达式。如果非0，则将使用push insn来传递输出参数。
+如果target机器不具有push指令，则设置其为0。这将指示GCC使用替代的策略：
+分配整个参数块然后将参数存进去。当@code{PUSH_ARGS}为非0时，
+@code{PUSH_ROUNDING}也必须被定义。
 @end defmac
 
 @defmac PUSH_ARGS_REVERSED
-A C expression.  If nonzero, function arguments will be evaluated from
-last to first, rather than from first to last.  If this macro is not
-defined, it defaults to @code{PUSH_ARGS} on targets where the stack
-and args grow in opposite directions, and 0 otherwise.
+一个C表达式。如果非0，则函数参数将按照从最后一个到第一个的顺序来求值，
+而不是从第一个到最后一个。如果该宏没被定义，其缺省为@code{PUSH_ARGS}，
+在栈和args按照相反的顺序进行增长的target上，否则为0。
 @end defmac
 
 @defmac PUSH_ROUNDING (@var{npushed})
-A C expression that is the number of bytes actually pushed onto the
-stack when an instruction attempts to push @var{npushed} bytes.
+一个C表达式，其为当一个指令试图压入@var{npushed}个字节时，实际压入栈中的字节数。
 
-On some machines, the definition
+在一些机器上，定义
 
 @smallexample
 #define PUSH_ROUNDING(BYTES) (BYTES)
 @end smallexample
 
 @noindent
-will suffice.  But on other machines, instructions that appear
-to push one byte actually push two bytes in an attempt to maintain
-alignment.  Then the definition should be
+便可以满足。但是在其它机器上，指令压入一个字节时，
+而为了保持对齐实际压入了两个字节。则定义应该为
 
 @smallexample
 #define PUSH_ROUNDING(BYTES) (((BYTES) + 1) & ~1)
@@ -3229,109 +3162,79 @@ alignment.  Then the definition should be
 
 @findex current_function_outgoing_args_size
 @defmac ACCUMULATE_OUTGOING_ARGS
-A C expression.  If nonzero, the maximum amount of space required for outgoing arguments
-will be computed and placed into the variable
-@code{current_function_outgoing_args_size}.  No space will be pushed
-onto the stack for each call; instead, the function prologue should
-increase the stack frame size by this amount.
+一个C表达式。如果非0，则为输出参数中将被计算并放进变量
+@code{current_function_outgoing_args_size}所需要的空间最大数目。
+对于每个调用，将不会有空间被压入栈中；替代的，函数序言应该增加栈帧的大小。
 
-Setting both @code{PUSH_ARGS} and @code{ACCUMULATE_OUTGOING_ARGS}
-is not proper.
+同时设置@code{PUSH_ARGS}和@code{ACCUMULATE_OUTGOING_ARGS}是不合适的。
 @end defmac
 
 @defmac REG_PARM_STACK_SPACE (@var{fndecl})
-Define this macro if functions should assume that stack space has been
-allocated for arguments even when their values are passed in
-registers.
+定义该宏，如果函数应该假设参数的栈空间已经被分配，
+即使它们的值是在寄存器中被传递的。
 
-The value of this macro is the size, in bytes, of the area reserved for
-arguments passed in registers for the function represented by @var{fndecl},
-which can be zero if GCC is calling a library function.
-The argument @var{fndecl} can be the FUNCTION_DECL, or the type itself
-of the function.
+该宏的值是一个@var{fndecl}表示的函数在寄存器中传递的参数的保留空间的大小，
+字节为单位，其可以为0如果GCC在调用一个库函数。
 
-This space can be allocated by the caller, or be a part of the
-machine-dependent stack frame: @code{OUTGOING_REG_PARM_STACK_SPACE} says
-which.
+该空间可以被调用者分配，或者为机器相关的栈帧的一部分：
+这由@code{OUTGOING_REG_PARM_STACK_SPACE}决定。
 @end defmac
 @c above is overfull.  not sure what to do.  --mew 5feb93  did
 @c something, not sure if it looks good.  --mew 10feb93
 
 @defmac OUTGOING_REG_PARM_STACK_SPACE (@var{fntype})
-Define this to a nonzero value if it is the responsibility of the
-caller to allocate the area reserved for arguments passed in registers
-when calling a function of @var{fntype}.  @var{fntype} may be NULL
-if the function called is a library function.
+定义该宏为一个非0值，如果分配在寄存器中传递的参数的保留空间，是由调用者负责。
 
-If @code{ACCUMULATE_OUTGOING_ARGS} is defined, this macro controls
-whether the space for these arguments counts in the value of
-@code{current_function_outgoing_args_size}.
+如果@code{ACCUMULATE_OUTGOING_ARGS}被定义，
+则该宏控制这些参数的空间是否算在@code{current_function_outgoing_args_size}中。
 @end defmac
 
 @defmac STACK_PARMS_IN_REG_PARM_AREA
-Define this macro if @code{REG_PARM_STACK_SPACE} is defined, but the
-stack parameters don't skip the area specified by it.
-@c i changed this, makes more sens and it should have taken care of the
-@c overfull.. not as specific, tho.  --mew 5feb93
+定义该宏，如果@code{REG_PARM_STACK_SPACE}被定义，
+但是栈参数不跳过其所指定的区域。
 
-Normally, when a parameter is not passed in registers, it is placed on the
-stack beyond the @code{REG_PARM_STACK_SPACE} area.  Defining this macro
-suppresses this behavior and causes the parameter to be passed on the
-stack in its natural location.
+通常，当一个参数没有在寄存器中传递时，
+其被放在@code{REG_PARM_STACK_SPACE}区域之外的栈上。
+定义该宏来抑制这种行为并使得在栈上传递的参数按照它的自然位置。
 @end defmac
 
 @defmac RETURN_POPS_ARGS (@var{fundecl}, @var{funtype}, @var{stack-size})
-A C expression that should indicate the number of bytes of its own
-arguments that a function pops on returning, or 0 if the
-function pops no arguments and the caller must therefore pop them all
-after the function returns.
+一个C表达式，指示函数在返回时所弹出的它自己的参数的字节个数，
+或者为0如果函数不弹出参数并且调用者必须在函数返回后弹出它们。
 
-@var{fundecl} is a C variable whose value is a tree node that describes
-the function in question.  Normally it is a node of type
-@code{FUNCTION_DECL} that describes the declaration of the function.
-From this you can obtain the @code{DECL_ATTRIBUTES} of the function.
+@var{fundecl}为一个C变量，其值为一个树节点，描述了被讨论的函数。
+通常其为一个@code{FUNCTION_DECL}类型的节点，描述了函数的声明。
+你可以从中获得函数的@code{DECL_ATTRIBUTES}。
 
-@var{funtype} is a C variable whose value is a tree node that
-describes the function in question.  Normally it is a node of type
-@code{FUNCTION_TYPE} that describes the data type of the function.
-From this it is possible to obtain the data types of the value and
-arguments (if known).
+@var{funtype}为一个C变量，其值为一个树节点，描述了被讨论的函数。
+通常其为一个@code{FUNCTION_TYPE}类型的节点，描述了函数的数据类型。
+从中可以获得函数值和参数的数据类型（如果知道的话）。
 
-When a call to a library function is being considered, @var{fundecl}
-will contain an identifier node for the library function.  Thus, if
-you need to distinguish among various library functions, you can do so
-by their names.  Note that ``library function'' in this context means
-a function used to perform arithmetic, whose name is known specially
-in the compiler and was not mentioned in the C code being compiled.
+当正在被考虑的函数是一个库函数调用时，
+@var{fundecl}将包含一个库函数的标志符节点。这样，如果你需要区别不同的库函数，
+则可以通过它们的名字进行。注意该上下文中的“库函数”是指用于执行算术的库函数，
+其名字在编译器中是已知的并且在被编译的C代码中没有被提到。
 
-@var{stack-size} is the number of bytes of arguments passed on the
-stack.  If a variable number of bytes is passed, it is zero, and
-argument popping will always be the responsibility of the calling function.
+@var{stack-size}为在栈上传递的参数的字节数。如果是传递的字节数是可变的，
+则为0，并且参数弹出将总是为被调用函数的责任。
 
-On the VAX, all functions always pop their arguments, so the definition
-of this macro is @var{stack-size}.  On the 68000, using the standard
-calling convention, no functions pop their arguments, so the value of
-the macro is always 0 in this case.  But an alternative calling
-convention is available in which functions that take a fixed number of
-arguments pop them but other functions (such as @code{printf}) pop
-nothing (the caller pops all).  When this convention is in use,
-@var{funtype} is examined to determine whether a function takes a fixed
-number of arguments.
+在VAX上，所有的函数总是弹出它们的参数，所以该宏的定义为@var{stack-size}。
+在68000上，使用标准的调用约定，没有函数弹出它们的参数，
+所以对于这种情况该宏的值总是0。但是也可以使用可选的调用约定，
+这种情况下函数接受固定数目参数的将弹出它们，
+其它的函数（例如@code{printf}）则不弹出（由调用者来弹出所有参数）。
+当使用这种约定时，@var{funtype}被检查用来确定一个函数是否接受了固定数目的参数。
 @end defmac
 
 @defmac CALL_POPS_ARGS (@var{cum})
-A C expression that should indicate the number of bytes a call sequence
-pops off the stack.  It is added to the value of @code{RETURN_POPS_ARGS}
-when compiling a function call.
+一个C表达式，指示一个调用序列从栈中弹出的字节数目。
+其被加到@code{RETURN_POPS_ARGS}的值中，当编译一个函数调用时。
 
-@var{cum} is the variable in which all arguments to the called function
-have been accumulated.
+@var{cum}为一个变量，为被调用函数的所有参数的累积。
 
-On certain architectures, such as the SH5, a call trampoline is used
-that pops certain registers off the stack, depending on the arguments
-that have been passed to the function.  Since this is a property of the
-call site, not of the called function, @code{RETURN_POPS_ARGS} is not
-appropriate.
+在特定的体系结构上，例如SH5，一个调用蹦床被用于弹出栈上特定的寄存器，
+根据被传递给函数的参数。因为这是调用方的属性，而不是被调用函数的，
+所以@code{RETURN_POPS_ARGS}不太适合。
 @end defmac
 
 @node 寄存器参数
@@ -3339,146 +3242,110 @@ appropriate.
 @cindex arguments in registers
 @cindex registers arguments
 
-This section describes the macros which let you control how various
-types of arguments are passed in registers or how they are arranged in
-the stack.
+这节描述了让你控制不同类型的参数如何在寄存器中传递，
+或者它们如何被安排在栈中的宏。
 
 @defmac FUNCTION_ARG (@var{cum}, @var{mode}, @var{type}, @var{named})
-A C expression that controls whether a function argument is passed
-in a register, and which register.
+— Macro: FUNCTION_ARG (cum, mode, type, named)
 
-The arguments are @var{cum}, which summarizes all the previous
-arguments; @var{mode}, the machine mode of the argument; @var{type},
-the data type of the argument as a tree node or 0 if that is not known
-(which happens for C support library functions); and @var{named},
-which is 1 for an ordinary argument and 0 for nameless arguments that
-correspond to @samp{@dots{}} in the called function's prototype.
-@var{type} can be an incomplete type if a syntax error has previously
-occurred.
+一个C表达式，控制函数的参数是否在寄存器中传递，以及在那个寄存器中传递。
 
-The value of the expression is usually either a @code{reg} RTX for the
-hard register in which to pass the argument, or zero to pass the
-argument on the stack.
+参数为@var{cum}，其总结了所有之前的参数；@var{mode}，参数的机器模式；
+@var{type}，参数的数据类型，作为一个树节点或者0如果不知道（这发生于C支持库的
+函数）；@var{named}，其为1对于普通参数，0对于无名参数，
+对应于在被调用函数原型中的@samp{@dots{}}。@var{type}可以为一个不完全类型，
+如果之前产生了语法错误。
 
-For machines like the VAX and 68000, where normally all arguments are
-pushed, zero suffices as a definition.
+表达式的值通常为一个在其中传递参数的硬件寄存器的@code{reg} RTX，或者0，
+在栈上传递参数。
 
-The value of the expression can also be a @code{parallel} RTX@.  This is
-used when an argument is passed in multiple locations.  The mode of the
-@code{parallel} should be the mode of the entire argument.  The
-@code{parallel} holds any number of @code{expr_list} pairs; each one
-describes where part of the argument is passed.  In each
-@code{expr_list} the first operand must be a @code{reg} RTX for the hard
-register in which to pass this part of the argument, and the mode of the
-register RTX indicates how large this part of the argument is.  The
-second operand of the @code{expr_list} is a @code{const_int} which gives
-the offset in bytes into the entire argument of where this part starts.
-As a special exception the first @code{expr_list} in the @code{parallel}
-RTX may have a first operand of zero.  This indicates that the entire
-argument is also stored on the stack.
+对于像VAX和68000的机器，其通常所有参数被压栈，则定义为0就行。
 
-The last time this macro is called, it is called with @code{MODE ==
-VOIDmode}, and its result is passed to the @code{call} or @code{call_value}
-pattern as operands 2 and 3 respectively.
+表达式的值也可以为一个@code{parallel} RTX。这用于当参数在多个位置传递的时候。
+@code{parallel}的机器模式应该为整个参数的机器模式。
+@code{parallel}保存了任意数目的@code{expr_list}对；
+每一个描述了该部分参数在哪里传递，
+@code{reg} RTX的机器模式指示了该部分的参数有多大。
+@code{expr_list}的第二个操作数为一个const_int，
+其给出了该部分起始处与整个参数的偏移字节数。作为一个特例，
+@code{parallel} RTX中的第一个@code{expr_list}的第一个操作数可以为0。
+这意味着整个参数也在栈中存储。
+
+该宏最后一次被调用的时候，@code{MODE == VOIDmode}，
+并且结果被传递给@code{call}或者@code{call_value}指令模式，分别作为其操作数2和3。
 
 @cindex @file{stdarg.h} and register arguments
-The usual way to make the ISO library @file{stdarg.h} work on a machine
-where some arguments are usually passed in registers, is to cause
-nameless arguments to be passed on the stack instead.  This is done
-by making @code{FUNCTION_ARG} return 0 whenever @var{named} is 0.
+通常使ISO库@file{stdarg.h}在一些参数在寄存器中传递的机器上工作的方法，
+是使无名参数在栈上传递。这通过使@code{FUNCTION_ARG}当@var{named}为0时返回0来实现。
 
 @cindex @code{TARGET_MUST_PASS_IN_STACK}, and @code{FUNCTION_ARG}
 @cindex @code{REG_PARM_STACK_SPACE}, and @code{FUNCTION_ARG}
-You may use the hook @code{targetm.calls.must_pass_in_stack}
-in the definition of this macro to determine if this argument is of a
-type that must be passed in the stack.  If @code{REG_PARM_STACK_SPACE}
-is not defined and @code{FUNCTION_ARG} returns nonzero for such an
-argument, the compiler will abort.  If @code{REG_PARM_STACK_SPACE} is
-defined, the argument will be computed in the stack and then loaded into
-a register.
+你可以在该宏的定义中，使用钩子@code{targetm.calls.must_pass_in_stack}来确定该
+参数是否为一个必须在栈中传递的类型。如果@code{REG_PARM_STACK_SPACE}没有定义并且
+@code{FUNCTION_ARG}对于这样的参数返回非0，则编译器会abort。
+如果@code{REG_PARM_STACK_SPACE}被定义，则参数会在栈中计算并且然后加载到寄存器中。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_MUST_PASS_IN_STACK (enum machine_mode @var{mode}, tree @var{type})
-This target hook should return @code{true} if we should not pass @var{type}
-solely in registers.  The file @file{expr.h} defines a
-definition that is usually appropriate, refer to @file{expr.h} for additional
-documentation.
+该target钩子应该返回@code{true}，如果我们不应该只在寄存器中传递@var{type}。
+文件@file{expr.h}中有一个定义，其通常是合适的，更多的文档请参考@file{expr.h}。
 @end deftypefn
 
 @defmac FUNCTION_INCOMING_ARG (@var{cum}, @var{mode}, @var{type}, @var{named})
-Define this macro if the target machine has ``register windows'', so
-that the register in which a function sees an arguments is not
-necessarily the same as the one in which the caller passed the
-argument.
+定义该宏，如果target机器具有“寄存器窗口”，
+这样函数看到的参数寄存器没有必要与调用者传递参数的寄存器相同。
 
-For such machines, @code{FUNCTION_ARG} computes the register in which
-the caller passes the value, and @code{FUNCTION_INCOMING_ARG} should
-be defined in a similar fashion to tell the function being called
-where the arguments will arrive.
+对于这样的机器，@code{FUNCTION_ARG}计算调用者传递值的寄存器，
+@code{FUNCTION_INCOMING_ARG}应该按照类似的方式定义，
+来告诉被调用的函数参数在哪里到来。
 
-If @code{FUNCTION_INCOMING_ARG} is not defined, @code{FUNCTION_ARG}
-serves both purposes.
+如果@code{FUNCTION_INCOMING_ARG}没有定义，则@code{FUNCTION_ARG}具有这两种用途。
 @end defmac
 
 @deftypefn {Target Hook} int TARGET_ARG_PARTIAL_BYTES (CUMULATIVE_ARGS *@var{cum}, enum machine_mode @var{mode}, tree @var{type}, bool @var{named})
-This target hook returns the number of bytes at the beginning of an
-argument that must be put in registers.  The value must be zero for
-arguments that are passed entirely in registers or that are entirely
-pushed on the stack.
+该target钩子返回在参数的起始处必须被放入寄存器的字节数。
+值必须为0对于参数全部放在寄存器中或者全部压入栈中。
 
-On some machines, certain arguments must be passed partially in
-registers and partially in memory.  On these machines, typically the
-first few words of arguments are passed in registers, and the rest
-on the stack.  If a multi-word argument (a @code{double} or a
-structure) crosses that boundary, its first few words must be passed
-in registers and the rest must be pushed.  This macro tells the
-compiler when this occurs, and how many bytes should go in registers.
+一些机器上，特定的参数必须部分在寄存器中传递并且部分在内存中传递。
+在这些机器上，通常参数的起始一些字在寄存器中传递，其余的在栈上。
+如果一个多字的参数（@code{double}或者结构体）跨越了边界，
+则其起始的一些字必须在寄存器中传递并且剩余的被压栈。
+该宏告诉编译器这种情况什么时候发生，以及多少字节应该在寄存器中。
 
-@code{FUNCTION_ARG} for these arguments should return the first
-register to be used by the caller for this argument; likewise
-@code{FUNCTION_INCOMING_ARG}, for the called function.
+@code{FUNCTION_ARG}对于这些参数应该返回第一个寄存器，被调用者用于该参数；
+通常@code{FUNCTION_INCOMING_ARG}用于被调用的函数。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_PASS_BY_REFERENCE (CUMULATIVE_ARGS *@var{cum}, enum machine_mode @var{mode}, tree @var{type}, bool @var{named})
-This target hook should return @code{true} if an argument at the
-position indicated by @var{cum} should be passed by reference.  This
-predicate is queried after target independent reasons for being
-passed by reference, such as @code{TREE_ADDRESSABLE (type)}.
+该target钩子应该返回@code{true}，
+如果@var{cum}所指示的位置的参数应该按照引用的方式来传递。
 
-If the hook returns true, a copy of that argument is made in memory and a
-pointer to the argument is passed instead of the argument itself.
-The pointer is passed in whatever way is appropriate for passing a pointer
-to that type.
+如果钩子返回真，则参数的副本在内存中产生并且指向参数的指针被替代参数本身来传递。
+指针按照传递该类型的指针的方式来传递。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CALLEE_COPIES (CUMULATIVE_ARGS *@var{cum}, enum machine_mode @var{mode}, tree @var{type}, bool @var{named})
-The function argument described by the parameters to this hook is
-known to be passed by reference.  The hook should return true if the
-function argument should be copied by the callee instead of copied
-by the caller.
+由该钩子的参数所描述的函数的参数已知为通过引用来传递的。钩子应该返回真，
+如果函数参数应该由被调用者复制，而不是调用者。
 
-For any argument for which the hook returns true, if it can be
-determined that the argument is not modified, then a copy need
-not be generated.
+对于任何该钩子返回真的参数，如果其可以被确定参数没有被修改，则不需要产生副本。
 
-The default version of this hook always returns false.
+该钩子的缺省版本总是返回假。
 @end deftypefn
 
 @defmac CUMULATIVE_ARGS
-A C type for declaring a variable that is used as the first argument of
-@code{FUNCTION_ARG} and other related values.  For some target machines,
-the type @code{int} suffices and can hold the number of bytes of
-argument so far.
+一个C类型，用来声明一个变量，
+被用作@code{FUNCTION_ARG}的第一个参数以及其它相关的值。对于一些target机器，
+类型@code{int}可以满足并且目前可以保持参数的字节数。
 
-There is no need to record in @code{CUMULATIVE_ARGS} anything about the
-arguments that have been passed on the stack.  The compiler has other
-variables to keep track of that.  For target machines on which all
-arguments are passed on the stack, there is no need to store anything in
-@code{CUMULATIVE_ARGS}; however, the data structure must exist and
-should not be empty, so use @code{int}.
+不需要在@code{CUMULATIVE_ARGS}中记录任何已经在栈中传递的参数的信息。
+编译器有其它变量来记录。对于所有参数在栈上传递的target机器，
+不需要在@code{CUMULATIVE_ARGS}中保存任何事物；然而，
+数据结构体必须存在并且不能为空，因此可以使用@code{int}。
 @end defmac
 
 @defmac OVERRIDE_ABI_FORMAT (@var{fndecl})
+
 If defined, this macro is called before generating any code for a
 function, but after the @var{cfun} descriptor for the function has been
 created.  The back end may use this macro to update @var{cfun} to
@@ -3488,58 +3355,41 @@ If the compiler is generating code for a compiler-generated function,
 @end defmac
 
 @defmac INIT_CUMULATIVE_ARGS (@var{cum}, @var{fntype}, @var{libname}, @var{fndecl}, @var{n_named_args})
-A C statement (sans semicolon) for initializing the variable
-@var{cum} for the state at the beginning of the argument list.  The
-variable has type @code{CUMULATIVE_ARGS}.  The value of @var{fntype}
-is the tree node for the data type of the function which will receive
-the args, or 0 if the args are to a compiler support library function.
-For direct calls that are not libcalls, @var{fndecl} contain the
-declaration node of the function.  @var{fndecl} is also set when
-@code{INIT_CUMULATIVE_ARGS} is used to find arguments for the function
-being compiled.  @var{n_named_args} is set to the number of named
-arguments, including a structure return address if it is passed as a
-parameter, when making a call.  When processing incoming arguments,
-@var{n_named_args} is set to @minus{}1.
+一条C语句（没有分号），用于初始化变量@var{cum}，在参数列表的起始处。
+变量具有类型@code{CUMULATIVE_ARGS}。@var{fntype}的值为树节点，
+为将要接受参数的函数的数据类型，或者为0如果参数是传给编译器支持库的函数。
+对于直接调用，没有libcall，@var{fndecl}包含了被编译的函数。
+@var{fndecl}在当@code{INIT_CUMULATIVE_ARGS}被用于查找被编译的函数的参数时，
+也被设置。@var{n_named_args}被设为命名参数的个数，包括一个结构体返回地址，
+如果其作为参数被传递。当处理流入参数时，@var{n_named_args}被设为-1。
 
-When processing a call to a compiler support library function,
-@var{libname} identifies which one.  It is a @code{symbol_ref} rtx which
-contains the name of the function, as a string.  @var{libname} is 0 when
-an ordinary C function call is being processed.  Thus, each time this
-macro is called, either @var{libname} or @var{fntype} is nonzero, but
-never both of them at once.
+当处理对编译器支持库的函数的调用时，@var{libname}指示了为哪一个函数。
+其为一个@code{symbol_ref} rtx，包含了函数的名字，作为字符串。@var{libname}为0，
+当一个普通C函数被处理。因此，每次该宏被调用时，
+或者@var{libname}或者@var{fntype}为非 0，但不会同时非0。
 @end defmac
 
 @defmac INIT_CUMULATIVE_LIBCALL_ARGS (@var{cum}, @var{mode}, @var{libname})
-Like @code{INIT_CUMULATIVE_ARGS} but only used for outgoing libcalls,
-it gets a @code{MODE} argument instead of @var{fntype}, that would be
-@code{NULL}.  @var{indirect} would always be zero, too.  If this macro
-is not defined, @code{INIT_CUMULATIVE_ARGS (cum, NULL_RTX, libname,
-0)} is used instead.
+类似于@code{INIT_CUMULATIVE_ARGS}，但只用于流出的libcall，
+其接受一个@code{MODE}参数而不是@var{fntype}。如果该宏没有定义，
+则使用@code{INIT_CUMULATIVE_ARGS (cum, NULL_RTX, libname,0)}来替代。
 @end defmac
 
 @defmac INIT_CUMULATIVE_INCOMING_ARGS (@var{cum}, @var{fntype}, @var{libname})
-Like @code{INIT_CUMULATIVE_ARGS} but overrides it for the purposes of
-finding the arguments for the function being compiled.  If this macro is
-undefined, @code{INIT_CUMULATIVE_ARGS} is used instead.
+类似于@code{INIT_CUMULATIVE_ARGS}，但会覆盖其，用于查找被编译的函数的参数。
+如果该宏没有被定义，则使用@code{INIT_CUMULATIVE_ARGS}来替代。
 
-The value passed for @var{libname} is always 0, since library routines
-with special calling conventions are never compiled with GCC@.  The
-argument @var{libname} exists for symmetry with
-@code{INIT_CUMULATIVE_ARGS}.
-@c could use "this macro" in place of @code{INIT_CUMULATIVE_ARGS}, maybe.
-@c --mew 5feb93   i switched the order of the sentences.  --mew 10feb93
+传递给@var{libname}的值总是为0，因为库函数具有特定的调用约定，从来不被GCC编译。
+参数@var{libname}的存在是为了与@code{INIT_CUMULATIVE_ARGS}对称。
 @end defmac
 
 @defmac FUNCTION_ARG_ADVANCE (@var{cum}, @var{mode}, @var{type}, @var{named})
-A C statement (sans semicolon) to update the summarizer variable
-@var{cum} to advance past an argument in the argument list.  The
-values @var{mode}, @var{type} and @var{named} describe that argument.
-Once this is done, the variable @var{cum} is suitable for analyzing
-the @emph{following} argument with @code{FUNCTION_ARG}, etc.
+一条C语句（没有分号），来更新总结变量@var{cum}来在参数列表中前进一个参数。
+值@var{mode}, @var{type}和@var{named}描述了那个参数。一旦执行后，
+变量@var{cum}便适合分析随后的参数。
 
-This macro need not do anything if the argument in question was passed
-on the stack.  The compiler knows how to track the amount of stack space
-used for arguments without any special help.
+该宏不需要做任何事情，如果要询问的参数是在栈中传递的。
+编译器知道如何追踪用于参数的栈空间，不需要任何特殊帮助。
 @end defmac
 
 
@@ -3552,71 +3402,55 @@ top.
 @end defmac
 
 @defmac FUNCTION_ARG_PADDING (@var{mode}, @var{type})
-If defined, a C expression which determines whether, and in which direction,
-to pad out an argument with extra space.  The value should be of type
-@code{enum direction}: either @code{upward} to pad above the argument,
-@code{downward} to pad below, or @code{none} to inhibit padding.
+如果被定义，则为一个C表达式，其确定是否使用额外的空间来填补参数，
+以及按照什么方向。值应该为类型@code{enum direction}：或者@code{upward}，
+向上填补参数，@code{downward}向下，或者@code{none}不进行填补。
 
-The @emph{amount} of padding is always just enough to reach the next
-multiple of @code{FUNCTION_ARG_BOUNDARY}; this macro does not control
-it.
+填补的数目总是刚足够达到下一个@code{FUNCTION_ARG_BOUNDARY}的倍数；
+该宏不进行控制。
 
-This macro has a default definition which is right for most systems.
-For little-endian machines, the default is to pad upward.  For
-big-endian machines, the default is to pad downward for an argument of
-constant size shorter than an @code{int}, and upward otherwise.
+该宏具有一个缺省定义，其对大多数系统是对的。对于小端机器，缺省为向上填补。
+对于大端机器，缺省为如果参数的大小比@code{int}短则向下填补，否则向上。
 @end defmac
 
 @defmac PAD_VARARGS_DOWN
-If defined, a C expression which determines whether the default
-implementation of va_arg will attempt to pad down before reading the
-next argument, if that argument is smaller than its aligned space as
-controlled by @code{PARM_BOUNDARY}.  If this macro is not defined, all such
-arguments are padded down if @code{BYTES_BIG_ENDIAN} is true.
+如果定义，则为一个C表达式，其确定va_arg的缺省实现是否会尝试向下填补，
+在读取下一个参数之前，如果那个参数比@code{PARM_BOUNDARY}所控制的对齐空间要小。
+如果该宏没有定义，则所有这样的参数都被向下填补，
+如果@code{BYTES_BIG_ENDIAN}为真。
 @end defmac
 
 @defmac BLOCK_REG_PADDING (@var{mode}, @var{type}, @var{first})
-Specify padding for the last element of a block move between registers and
-memory.  @var{first} is nonzero if this is the only element.  Defining this
-macro allows better control of register function parameters on big-endian
-machines, without using @code{PARALLEL} rtl.  In particular,
-@code{MUST_PASS_IN_STACK} need not test padding and mode of types in
-registers, as there is no longer a "wrong" part of a register;  For example,
-a three byte aggregate may be passed in the high part of a register if so
-required.
+指定了寄存器和内存间移动的块的最后一个元素的填补。@var{first}为非0，
+如果这是唯一的元素。定义该宏，允许更好的处理在大端机器上寄存器函数参数，
+不使用@code{PARALLEL} rtl。特别的，
+@code{MUST_PASS_IN_STACK}不需要测试填充和寄存器中的类型的机器模式，
+因为在寄存器中不在有“错误的”部分；例如，
+一个三字节的聚合类型可能在寄存器的高部传递，如果需要的话。
 @end defmac
 
 @defmac FUNCTION_ARG_BOUNDARY (@var{mode}, @var{type})
-If defined, a C expression that gives the alignment boundary, in bits,
-of an argument with the specified mode and type.  If it is not defined,
-@code{PARM_BOUNDARY} is used for all arguments.
+如果定义，为一个C表达式，其给出了指定的mode和type的参数的对齐边界位数。
+如果没有定义，则@code{PARM_BOUNDARY}用于所有参数。
 @end defmac
 
 @defmac FUNCTION_ARG_REGNO_P (@var{regno})
-A C expression that is nonzero if @var{regno} is the number of a hard
-register in which function arguments are sometimes passed.  This does
-@emph{not} include implicit arguments such as the static chain and
-the structure-value address.  On many machines, no registers can be
-used for this purpose since all function arguments are pushed on the
-stack.
+一个C表达式，其为非0，如果@var{regno}为硬件寄存器的编号，
+函数参数有时在其中传递。这不包括隐式参数，像静态链和结构体值的地址。
+在许多机器上，没有寄存器可以用于此目的，因为所有函数参数都被压到栈上。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_SPLIT_COMPLEX_ARG (tree @var{type})
-This hook should return true if parameter of type @var{type} are passed
-as two scalar parameters.  By default, GCC will attempt to pack complex
-arguments into the target's word size.  Some ABIs require complex arguments
-to be split and treated as their individual components.  For example, on
-AIX64, complex floats should be passed in a pair of floating point
-registers, even though a complex float would fit in one 64-bit floating
-point register.
+该钩子应该返回真，如果参数@var{type}作为两个标量参数传递。缺省的，
+GCC将尝试将复数参数打包成target的字大小。
+一些ABI要求复数参数要被拆分开并且作为单独的部分对待。例如，在AIX64上，
+复数浮点应该在一对浮点寄存器中传递，即使复数浮点可以适合一个64位的浮点寄存器。
 
-The default value of this hook is @code{NULL}, which is treated as always
-false.
+该钩子的缺省值为@code{NULL}，其被最为假来对待。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_BUILD_BUILTIN_VA_LIST (void)
-This hook returns a type node for @code{va_list} for the target.
-The default version of the hook returns @code{void*}.
+该钩子返回一个target的@code{va_list}的类型节点。缺省版本返回@code{void*}。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_FN_ABI_VA_LIST (tree @var{fndecl})
@@ -3632,34 +3466,26 @@ type of @var{type}. If @var{type} is not a valid va_list type, it returns
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_GIMPLIFY_VA_ARG_EXPR (tree @var{valist}, tree @var{type}, tree *@var{pre_p}, tree *@var{post_p})
-This hook performs target-specific gimplification of
-@code{VA_ARG_EXPR}.  The first two parameters correspond to the
-arguments to @code{va_arg}; the latter two are as in
-@code{gimplify.c:gimplify_expr}.
+该钩子执行target特定的@code{VA_ARG_EXPR}的gimplification。
+前两个参数对应于@code{va_arg}的参数；后两个作为@code{gimplify.c:gimplify_expr}。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_VALID_POINTER_MODE (enum machine_mode @var{mode})
-Define this to return nonzero if the port can handle pointers
-with machine mode @var{mode}.  The default version of this
-hook returns true for both @code{ptr_mode} and @code{Pmode}.
+定义该钩子返回非0，如果port可以处理具有机器模式@var{mode}的指针。
+缺省版本对于@code{ptr_mode}和@code{Pmode}都返回真。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_SCALAR_MODE_SUPPORTED_P (enum machine_mode @var{mode})
-Define this to return nonzero if the port is prepared to handle
-insns involving scalar mode @var{mode}.  For a scalar mode to be
-considered supported, all the basic arithmetic and comparisons
-must work.
+定义该钩子来返回非0，如果port准备好了处理涉及标量机器模式@var{mode}的insn。
+对于被考虑支持的一个标量机器模式，所有的基本算术和比较都必须能工作。
 
-The default version of this hook returns true for any mode
-required to handle the basic C types (as defined by the port).
-Included here are the double-word arithmetic supported by the
-code in @file{optabs.c}.
+缺省版本返回真，对于任何要求处理基本C类型（被port定义）的机器模式。
+包括在@file{optabs.c}中的代码支持的双字算术。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_VECTOR_MODE_SUPPORTED_P (enum machine_mode @var{mode})
-Define this to return nonzero if the port is prepared to handle
-insns involving vector mode @var{mode}.  At the very least, it
-must have move patterns for this mode.
+定义该钩子来返回非0，如果port准备好了处理涉及向量模式@var{mode}的insn。
+最起码，其必须有该机器模式的move指令模式。
 @end deftypefn
 
 @node 标量返回
@@ -3668,89 +3494,73 @@ must have move patterns for this mode.
 @cindex values, returned by functions
 @cindex scalars, returned as values
 
-This section discusses the macros that control returning scalars as
-values---values that can fit in registers.
+这节讨论了控制返回标量值的宏，值可以放在寄存器中。
 
 @deftypefn {Target Hook} rtx TARGET_FUNCTION_VALUE (tree @var{ret_type}, tree @var{fn_decl_or_type}, bool @var{outgoing})
+定义该宏返回一个RTX，用来表示函数返回或者接受数据类型为@var{ret_type}的值的
+地方。@var{ret_type}为一个树节点，表示一个数据类型。 
+@var{fn_decl_or_type}为一个树节点，表示被调用的函数的@code{FUNCTION_DECL}或者
+@code{FUNCTION_TYPE}。如果@var{outgoing}为假，
+则钩子应该计算调用者将要看到返回值的寄存器。否则，钩子应该返回一个RTX，
+其表示函数在哪儿返回一个值。
 
-Define this to return an RTX representing the place where a function
-returns or receives a value of data type @var{ret_type}, a tree node
-node representing a data type.  @var{fn_decl_or_type} is a tree node
-representing @code{FUNCTION_DECL} or @code{FUNCTION_TYPE} of a
-function being called.  If @var{outgoing} is false, the hook should
-compute the register in which the caller will see the return value.
-Otherwise, the hook should return an RTX representing the place where
-a function returns a value.
+在许多机器上，只有@code{TYPE_MODE (@var{ret_type})}是相关的。
+（实际上，在大多数机器上，标量值不管机器模式如何，都在同一地方返回。）
+表达式的值通常为一个硬件寄存器的@code{reg} RTX，为存放返回值的地方。
+该值还可以为一个@code{parallel} RTX，如果返回值在多个地方。
+对于@code{parallel}形式的解释，参见@code{FUNCTION_ARG}。
+m68k port使用了这种@code{parallel}类型来返回指针，
+在@samp{%a0}(规范化位置) 和@samp{%d0}中。
 
-On many machines, only @code{TYPE_MODE (@var{ret_type})} is relevant.
-(Actually, on most machines, scalar values are returned in the same
-place regardless of mode.)  The value of the expression is usually a
-@code{reg} RTX for the hard register where the return value is stored.
-The value can also be a @code{parallel} RTX, if the return value is in
-multiple places.  See @code{FUNCTION_ARG} for an explanation of the
-@code{parallel} form.   Note that the callee will populate every
-location specified in the @code{parallel}, but if the first element of
-the @code{parallel} contains the whole return value, callers will use
-that element as the canonical location and ignore the others.  The m68k
-port uses this type of @code{parallel} to return pointers in both
-@samp{%a0} (the canonical location) and @samp{%d0}.
+如果@code{TARGET_PROMOTE_FUNCTION_RETURN}返回真，如果valtype为一个标量类型，
+则你必须应用在@code{PROMOTE_MODE}中指定的相同的提升规则。
 
-If @code{TARGET_PROMOTE_FUNCTION_RETURN} returns true, you must apply
-the same promotion rules specified in @code{PROMOTE_MODE} if
-@var{valtype} is a scalar type.
+如果确切的知道被调用的函数，则@var{func}为它的树节点（@code{FUNCTION_DECL}）；
+否则，@var{func}为一个空指针。这是的可以使用不同的值返回约定，
+对于所有调用都知道的特定的函数。
 
-If the precise function being called is known, @var{func} is a tree
-node (@code{FUNCTION_DECL}) for it; otherwise, @var{func} is a null
-pointer.  This makes it possible to use a different value-returning
-convention for specific functions when all their calls are
-known.
+一些target机器具有“寄存器窗口”，
+这使得函数返回它的值所用的寄存器与调用者看到值所在的寄存器不同。
+对于这样的机器，你应该返回不同的RTX，根据@var{outgoing}。
 
-Some target machines have ``register windows'' so that the register in
-which a function returns its value is not the same as the one in which
-the caller sees the value.  For such machines, you should return
-different RTX depending on @var{outgoing}.
-
-@code{TARGET_FUNCTION_VALUE} is not used for return values with
-aggregate data types, because these are returned in another way.  See
-@code{TARGET_STRUCT_VALUE_RTX} and related macros, below.
+@code{TARGET_FUNCTION_VALUE}不用于返回聚合数据类型的值，
+因为这些通过其它方式返回。参见下面的@code{TARGET_STRUCT_VALUE_RTX}以及相关的宏。
 @end deftypefn
 
 @defmac FUNCTION_VALUE (@var{valtype}, @var{func})
-This macro has been deprecated.  Use @code{TARGET_FUNCTION_VALUE} for
-a new target instead.
+该宏已经不赞成被使用。对于新的target，使用@code{TARGET_FUNCTION_VALUE}来替代。
 @end defmac
 
 @defmac FUNCTION_OUTGOING_VALUE (@var{valtype}, @var{func})
-This macro has been deprecated.  Use @code{TARGET_FUNCTION_VALUE} for
-a new target instead.
+该宏已经不赞成被使用。对于新的target，使用@code{TARGET_FUNCTION_VALUE}来替代。
 @end defmac
 
 @defmac LIBCALL_VALUE (@var{mode})
-A C expression to create an RTX representing the place where a library
-function returns a value of mode @var{mode}.
+一个C表达式，用来创建一个RTX，表示库函数返回模式@var{mode}的值的地方。
+如果确切的知道被调用的函数，则func为它的树节点（FUNCTION_DECL）；
+否则func为一个空指针。这使得可以使用不同的值返回约定，
+对于所有调用都知道的特定的函数。
 
-Note that ``library function'' in this context means a compiler
-support routine, used to perform arithmetic, whose name is known
-specially by the compiler and was not mentioned in the C code being
-compiled.
+注意“库函数”在该上下文中意味着是编译器支持的程序，用于执行算术运算，
+其名字由编译器知道并且没有在被编译的C代码中提到。
+
+LIBRARY_VALUE的定义不需要考虑聚合数据类型，因为没有库函数返回这样的类型。
 @end defmac
 
 @defmac FUNCTION_VALUE_REGNO_P (@var{regno})
-A C expression that is nonzero if @var{regno} is the number of a hard
-register in which the values of called function may come back.
+一个C表达式，为非0，如果@var{regno}为硬件寄存器的编号，
+且被调用的函数可以通过它来返回值。
 
-A register whose use for returning values is limited to serving as the
-second of a pair (for a value of type @code{double}, say) need not be
-recognized by this macro.  So for most machines, this definition
-suffices:
+用于返回值的寄存器，并且其被限制为一个寄存器对（比如，
+对于类型@code{double}的值）的第二个时，不需要被该宏识别。
+所以对于大多数机器，该定义可以为：
 
 @smallexample
 #define FUNCTION_VALUE_REGNO_P(N) ((N) == 0)
 @end smallexample
 
-If the machine has register windows, so that the caller and the called
-function use different registers for the return value, this macro
-should recognize only the caller's register numbers.
+如果机器具有寄存器窗口，使得调用者和被调用函数使用不同的寄存器来返回值，
+则该宏应该只是识别调用者的寄存器编号。
 @end defmac
 
 @defmac TARGET_ENUM_VA_LIST (@var{idx}, @var{pname}, @var{ptype})
@@ -3768,22 +3578,18 @@ macro to iterate through all types.
 @end defmac
 
 @defmac APPLY_RESULT_SIZE
-Define this macro if @samp{untyped_call} and @samp{untyped_return}
-need more space than is implied by @code{FUNCTION_VALUE_REGNO_P} for
-saving and restoring an arbitrary return value.
+定义该宏，如果@samp{untyped_call}和@samp{untyped_return}需要比
+@code{FUNCTION_VALUE_REGNO_P}用于保存和恢复一个任意返回地址所用的更多的空间。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_RETURN_IN_MSB (tree @var{type})
-This hook should return true if values of type @var{type} are returned
-at the most significant end of a register (in other words, if they are
-padded at the least significant end).  You can assume that @var{type}
-is returned in a register; the caller is required to check this.
+该钩子应该返回真，如果类型@var{type}的值按照在寄存器中的最高有效位返回
+（换句话说，如果他们在最低有效位进行被padded）。
+你可以假设该@var{type}在寄存器中被返回；调用者被要求进行该检查。
 
-Note that the register provided by @code{TARGET_FUNCTION_VALUE} must
-be able to hold the complete return value.  For example, if a 1-, 2-
-or 3-byte structure is returned at the most significant end of a
-4-byte register, @code{TARGET_FUNCTION_VALUE} should provide an
-@code{SImode} rtx.
+注意@code{TARGET_FUNCTION_VALUE}提供的寄存器必须能够保存完整的返回值。
+例如，如果一个1，2或者3字节的结构体被返回，按照4字节寄存器中的最高有效位的方式，
+则@code{TARGET_FUNCTION_VALUE}应该提供一个@code{SImode} rtx。
 @end deftypefn
 
 @node 聚合返回
@@ -3879,257 +3685,192 @@ or 3-byte structure is returned at the most significant end of a
 @cindex prologue
 @cindex epilogue
 
-This section describes the macros that output function entry
-(@dfn{prologue}) and exit (@dfn{epilogue}) code.
+这一章描述了输出函数入口（@dfn{prologue}）和出口（@dfn{epilogue}）代码的宏。
 
 @deftypefn {Target Hook} void TARGET_ASM_FUNCTION_PROLOGUE (FILE *@var{file}, HOST_WIDE_INT @var{size})
-If defined, a function that outputs the assembler code for entry to a
-function.  The prologue is responsible for setting up the stack frame,
-initializing the frame pointer register, saving registers that must be
-saved, and allocating @var{size} additional bytes of storage for the
-local variables.  @var{size} is an integer.  @var{file} is a stdio
-stream to which the assembler code should be output.
+如果被定义，则为一个函数，其为函数的入口输出汇编代码。序言负责设置栈帧，
+初始化帧指针寄存器，保存必须被保存的机器，并分配保存局部变量所需要的额外字节数
+@var{size}。@var{size}为一个整数。
+@var{file}为汇编代码应该被输出到的一个stdio流。
 
-The label for the beginning of the function need not be output by this
-macro.  That has already been done when the macro is run.
+函数起始处的标号不需要被该宏输出。其已经在该宏运行时被输出了。
 
 @findex regs_ever_live
-To determine which registers to save, the macro can refer to the array
-@code{regs_ever_live}: element @var{r} is nonzero if hard register
-@var{r} is used anywhere within the function.  This implies the function
-prologue should save register @var{r}, provided it is not one of the
-call-used registers.  (@code{TARGET_ASM_FUNCTION_EPILOGUE} must likewise use
-@code{regs_ever_live}.)
+要确定哪些寄存器要保存，该宏可以引用数组@code{regs_ever_live}：
+元素@var{r}为非零，如果硬件寄存器@var{r}在函数某处被使用。
+这意味着倘若其不是调用使用的（call-used）寄存器，
+则函数序言应该保存寄存器@var{r}。
+(同样@code{TARGET_ASM_FUNCTION_EPILOGUE}也必须使用@code{regs_ever_live}。)
 
-On machines that have ``register windows'', the function entry code does
-not save on the stack the registers that are in the windows, even if
-they are supposed to be preserved by function calls; instead it takes
-appropriate steps to ``push'' the register stack, if any non-call-used
-registers are used in the function.
+在具有“寄存器窗口”的机器上，函数入口代码不在栈中保存位于窗口中的寄存器，
+即使它们认为被函数调用保留；替代的，如果在函数中使用了任何非调用使用的寄存器，
+其使用适当的步骤来“压入”寄存器栈中。
 
 @findex frame_pointer_needed
-On machines where functions may or may not have frame-pointers, the
-function entry code must vary accordingly; it must set up the frame
-pointer if one is wanted, and not otherwise.  To determine whether a
-frame pointer is in wanted, the macro can refer to the variable
-@code{frame_pointer_needed}.  The variable's value will be 1 at run
-time in a function that needs a frame pointer.  @xref{消除}.
+在一些机器上，函数可以有帧指针，也可以没有，则函数入口代码必须相应的有所不同；
+如果需要则其必须建立帧指针，否则不建立。要确定是否想要帧指针，
+宏可以引用变量@code{frame_pointer_needed}。在运行时，如果函数需要帧指针，
+则变量的值将被设为1。参见@ref{消除}。
 
-The function entry code is responsible for allocating any stack space
-required for the function.  This stack space consists of the regions
-listed below.  In most cases, these regions are allocated in the
-order listed, with the last listed region closest to the top of the
-stack (the lowest address if @code{STACK_GROWS_DOWNWARD} is defined, and
-the highest address if it is not defined).  You can use a different order
-for a machine if doing so is more convenient or required for
-compatibility reasons.  Except in cases where required by standard
-or by a debugger, there is no reason why the stack layout used by GCC
-need agree with that used by other compilers for a machine.
+函数入口代码负责分配函数需要的任何栈空间。该栈空间包括下面列出的域。
+大多数情况下，这些域按照列出的顺序被分配，最后列出的域最靠近栈顶
+（如果@code{STACK_GROWS_DOWNWARD}被定义，则为最低地址，如果没有定义，
+则为最高地址）。你可以为一个机器使用不同的顺序，
+如果这样做更加方便或者出于兼容的原因。除了由于标准或者调试器的要求之外，
+没有理由GCC使用的栈布局需要适合机器上的其它编译器所使用的。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_FUNCTION_END_PROLOGUE (FILE *@var{file})
-If defined, a function that outputs assembler code at the end of a
-prologue.  This should be used when the function prologue is being
-emitted as RTL, and you have some extra assembler that needs to be
-emitted.  @xref{prologue instruction pattern}.
+如果被定义，则为一个函数，在序言的结尾处输出汇编代码。
+这应该被用于当函数序言作为RTL输出时，并且你需要输出一些额外的汇编语言。
+参见“序言指令模式”
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_FUNCTION_BEGIN_EPILOGUE (FILE *@var{file})
-If defined, a function that outputs assembler code at the start of an
-epilogue.  This should be used when the function epilogue is being
-emitted as RTL, and you have some extra assembler that needs to be
-emitted.  @xref{epilogue instruction pattern}.
+如果被定义，则为一个函数，在尾声的起始处输出汇编代码。
+这应该被用于当函数尾声作为RTL输出时，并且你需要输出一些额外的汇编语言。
+参见“尾声指令模式”
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_FUNCTION_EPILOGUE (FILE *@var{file}, HOST_WIDE_INT @var{size})
-If defined, a function that outputs the assembler code for exit from a
-function.  The epilogue is responsible for restoring the saved
-registers and stack pointer to their values when the function was
-called, and returning control to the caller.  This macro takes the
-same arguments as the macro @code{TARGET_ASM_FUNCTION_PROLOGUE}, and the
-registers to restore are determined from @code{regs_ever_live} and
-@code{CALL_USED_REGISTERS} in the same way.
+如果被定义，则为一个函数，其为函数的退出输出汇编代码。
+尾声负责恢复保存的寄存器和栈指针为函数被调用时的值，并将控制返回给调用者。
+该宏接受跟@code{TARGET_ASM_FUNCTION_PROLOGUE}相同的参数，
+并且要恢复的寄存器按照相同的方式通过@code{regs_ever_live}和
+@code{CALL_USED_REGISTERS}来确定。
 
-On some machines, there is a single instruction that does all the work
-of returning from the function.  On these machines, give that
-instruction the name @samp{return} and do not define the macro
-@code{TARGET_ASM_FUNCTION_EPILOGUE} at all.
+在一些机器上，有一个单独的指令，可以做从函数中返回的所有工作。
+在这些机器上，给出那个名为@samp{return}的指令，
+并且不要定义宏@code{TARGET_ASM_FUNCTION_EPILOGUE}。
 
-Do not define a pattern named @samp{return} if you want the
-@code{TARGET_ASM_FUNCTION_EPILOGUE} to be used.  If you want the target
-switches to control whether return instructions or epilogues are used,
-define a @samp{return} pattern with a validity condition that tests the
-target switches appropriately.  If the @samp{return} pattern's validity
-condition is false, epilogues will be used.
+如果你想使用@code{TARGET_ASM_FUNCTION_EPILOGUE}，
+则不要定义名为@samp{return}的指令模式。
+如果你想target切换使用return指令或者尾声，则定义一个@samp{return}指令模式，
+带有一个有效性条件用来测试target的适当的切换。
+如果@samp{return}指令模式的有效性条件为假，则使用尾声。
 
-On machines where functions may or may not have frame-pointers, the
-function exit code must vary accordingly.  Sometimes the code for these
-two cases is completely different.  To determine whether a frame pointer
-is wanted, the macro can refer to the variable
-@code{frame_pointer_needed}.  The variable's value will be 1 when compiling
-a function that needs a frame pointer.
+在一些机器上，函数可以有帧指针，也可以没有，则函数的退出代码必须相应有所不同。
+有时这两种情况的代码会完全不同。要确定是否需要帧指针，
+该宏可以引用变量@code{frame_pointer_needed}。当编译一个需要帧指针的函数时，
+变量的值将为1。
 
-Normally, @code{TARGET_ASM_FUNCTION_PROLOGUE} and
-@code{TARGET_ASM_FUNCTION_EPILOGUE} must treat leaf functions specially.
-The C variable @code{current_function_is_leaf} is nonzero for such a
-function.  @xref{叶子函数}.
+通常，@code{TARGET_ASM_FUNCTION_PROLOGUE}和@code{TARGET_ASM_FUNCTION_EPILOGUE}
+必须单独处理叶子函数。对于这样的函数，C变量@code{current_function_is_leaf}为
+非零。参见@ref{叶子函数}。
 
-On some machines, some functions pop their arguments on exit while
-others leave that for the caller to do.  For example, the 68020 when
-given @option{-mrtd} pops arguments in functions that take a fixed
-number of arguments.
+在一些机器上，一些函数在退出时弹出它们的参数，而其它的则将它们留给调用者来完成。
+例如，68020当给定@option{-mrtd}时会弹出具有固定参数个数的函数的参数。
 
 @findex current_function_pops_args
-Your definition of the macro @code{RETURN_POPS_ARGS} decides which
-functions pop their own arguments.  @code{TARGET_ASM_FUNCTION_EPILOGUE}
-needs to know what was decided.  The variable that is called
-@code{current_function_pops_args} is the number of bytes of its
-arguments that a function should pop.  @xref{标量返回}.
-@c what is the "its arguments" in the above sentence referring to, pray
-@c tell?  --mew 5feb93
+你对宏的定义决定了哪些函数弹出它们的自己的参数。
+@code{TARGET_ASM_FUNCTION_EPILOGUE}需要知道这些。
+称作@code{current_function_pops_args}的变量为函数应该弹出的参数的字节个数。
+参见@ref{标量返回}。
 @end deftypefn
 
 @itemize @bullet
 @item
 @findex current_function_pretend_args_size
-A region of @code{current_function_pretend_args_size} bytes of
-uninitialized space just underneath the first argument arriving on the
-stack.  (This may not be at the very start of the allocated stack region
-if the calling sequence has pushed anything else since pushing the stack
-arguments.  But usually, on such machines, nothing else has been pushed
-yet, because the function prologue itself does all the pushing.)  This
-region is used on machines where an argument may be passed partly in
-registers and partly in memory, and, in some cases to support the
-features in @code{<stdarg.h>}.
+@code{current_function_pretend_args_size}个字节大小的未初始化空间位于栈中第一个
+参数的下面。（这可能不是被分配的栈域的最起始处，如果调用序列在压入栈参数时还压入
+了其它东西。通常，在这样的机器上，并没有压入其它东西，因为函数序言本身来做所有的
+压栈操作）该域用于参数可以部分在寄存器中传递，部分在内存中传递的机器上，
+以及支持@code{<stdarg.h>}的特性的情况。
 
 @item
-An area of memory used to save certain registers used by the function.
-The size of this area, which may also include space for such things as
-the return address and pointers to previous stack frames, is
-machine-specific and usually depends on which registers have been used
-in the function.  Machines with register windows often do not require
-a save area.
+有一块内存用于保存函数使用的特定的寄存器。该区域的大小，
+可能还包括作为返回地址和指向之前栈帧的指针的一些空间，
+其为机器特定的并且通常取决于函数中已经使用了哪些寄存器。
+具有寄存器窗口的机器通常不需要这样的存储区域。
 
 @item
-A region of at least @var{size} bytes, possibly rounded up to an allocation
-boundary, to contain the local variables of the function.  On some machines,
-this region and the save area may occur in the opposite order, with the
-save area closer to the top of the stack.
+一块至少@var{size}个字节的区域，可能舍人到一个分配边界的大小，
+来保存函数的局部变量。在一些机器上，该域和保存域可以按照相反的顺序出现，
+使得保存域接近于栈顶。
 
 @item
 @cindex @code{ACCUMULATE_OUTGOING_ARGS} and stack frames
-Optionally, when @code{ACCUMULATE_OUTGOING_ARGS} is defined, a region of
-@code{current_function_outgoing_args_size} bytes to be used for outgoing
-argument lists of the function.  @xref{栈参数}.
+可选的，当@code{ACCUMULATE_OUTGOING_ARGS}被定义时，
+还有一块@code{current_function_outgoing_args_size}字节大小的区域用于函数的传出
+的参数列表。参见@ref{栈参数}。
 @end itemize
 
 @defmac EXIT_IGNORE_STACK
-Define this macro as a C expression that is nonzero if the return
-instruction or the function epilogue ignores the value of the stack
-pointer; in other words, if it is safe to delete an instruction to
-adjust the stack pointer before a return from the function.  The
-default is 0.
+定义该宏为一个C表达式，其为非0，如果返回指令或者函数尾声忽略栈指针的值；
+换句话说，如果在从函数中返回前，删除调整栈指针的指令是安全的。缺省为0。
 
-Note that this macro's value is relevant only for functions for which
-frame pointers are maintained.  It is never safe to delete a final
-stack adjustment in a function that has no frame pointer, and the
-compiler knows this regardless of @code{EXIT_IGNORE_STACK}.
+注意该宏的值只于维护帧指针的函数相关。
+在没有帧指针的函数中删除最后的栈调整是绝对不安全的，并且编译器知道这种情况，
+而不管@code{EXIT_IGNORE_STACK}定义如何。
 @end defmac
 
 @defmac EPILOGUE_USES (@var{regno})
-Define this macro as a C expression that is nonzero for registers that are
-used by the epilogue or the @samp{return} pattern.  The stack and frame
-pointer registers are already assumed to be used as needed.
+定义该宏为一个C表达式，其为非0，对于用于尾声或者@samp{return}指令模式的寄存器。
+栈和帧指针寄存器已经被假设需要使用。
 @end defmac
 
 @defmac EH_USES (@var{regno})
-Define this macro as a C expression that is nonzero for registers that are
-used by the exception handling mechanism, and so should be considered live
-on entry to an exception edge.
+定义该宏为一个C表达式，其为非0，对于用于异常处理机制的寄存器，
+所以其应该被考虑为在一个异常边的入口上是活跃的。
 @end defmac
 
 @defmac DELAY_SLOTS_FOR_EPILOGUE
-Define this macro if the function epilogue contains delay slots to which
-instructions from the rest of the function can be ``moved''.  The
-definition should be a C expression whose value is an integer
-representing the number of delay slots there.
+定义该宏，如果函数尾声包含延迟槽，并且函数其余的指令可以被移动过去。
+该定义应该为一个C表达式，其值为一个整数表示有多少个延迟槽。
 @end defmac
 
 @defmac ELIGIBLE_FOR_EPILOGUE_DELAY (@var{insn}, @var{n})
-A C expression that returns 1 if @var{insn} can be placed in delay
-slot number @var{n} of the epilogue.
+一个C表达式，返回1，如果@var{insn}可以放在尾声中的延迟槽编号@var{n}中。
 
-The argument @var{n} is an integer which identifies the delay slot now
-being considered (since different slots may have different rules of
-eligibility).  It is never negative and is always less than the number
-of epilogue delay slots (what @code{DELAY_SLOTS_FOR_EPILOGUE} returns).
-If you reject a particular insn for a given delay slot, in principle, it
-may be reconsidered for a subsequent delay slot.  Also, other insns may
-(at least in principle) be considered for the so far unfilled delay
-slot.
+参数@var{n}为一个整数，其标识了目前被考虑的延迟槽（由于不同的延迟槽可以具有不同
+的适任规则）。其从不为负，并且总是小于尾声延迟槽的总数
+（@code{DELAY_SLOTS_FOR_EPILOGUE}的返回值）。
+如果你为给定的延迟槽拒绝了一个特定的insn，原则上，其可以被后续的延迟槽重新考虑。
+而且，其它insn还可以（至少原则上）被目前为止还没有被填充的延迟槽考虑。
 
 @findex current_function_epilogue_delay_list
 @findex final_scan_insn
-The insns accepted to fill the epilogue delay slots are put in an RTL
-list made with @code{insn_list} objects, stored in the variable
-@code{current_function_epilogue_delay_list}.  The insn for the first
-delay slot comes first in the list.  Your definition of the macro
-@code{TARGET_ASM_FUNCTION_EPILOGUE} should fill the delay slots by
-outputting the insns in this list, usually by calling
-@code{final_scan_insn}.
+被接受填充尾声延迟槽的insn被放在一个RTL链表中，使用@code{insn_list}对象，
+并存储在变量@code{current_function_epilogue_delay_list}中。
+第一个延迟槽的insn位于链表中的第一个。你对宏@code{TARGET_ASM_FUNCTION_EPILOGUE}
+的定义应该通过输出该链表的insn来填充延迟槽，通常是调用@code{final_scan_insn}。
 
-You need not define this macro if you did not define
-@code{DELAY_SLOTS_FOR_EPILOGUE}.
+你不需要定义该宏，如果你没有定义@code{DELAY_SLOTS_FOR_EPILOGUE}。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_OUTPUT_MI_THUNK (FILE *@var{file}, tree @var{thunk_fndecl}, HOST_WIDE_INT @var{delta}, HOST_WIDE_INT @var{vcall_offset}, tree @var{function})
-A function that outputs the assembler code for a thunk
-function, used to implement C++ virtual function calls with multiple
-inheritance.  The thunk acts as a wrapper around a virtual function,
-adjusting the implicit object parameter before handing control off to
-the real function.
+一个函数，输出一个thunk函数的汇编代码，用于实现具有多继承的C++虚函数调用。
+thunk作为一个虚函数的封装，用来调整隐式对象参数，在将控制移交给实函数之前。
 
-First, emit code to add the integer @var{delta} to the location that
-contains the incoming first argument.  Assume that this argument
-contains a pointer, and is the one used to pass the @code{this} pointer
-in C++.  This is the incoming argument @emph{before} the function prologue,
-e.g.@: @samp{%o0} on a sparc.  The addition must preserve the values of
-all other incoming arguments.
+首选，输出代码来增加整数@var{delta}为包含传递进来的第一个参数的为。
+假设该参数包含一个指针，并用于在C++中传递@code{this}指针。
+这是在函数序言之前的参数，例如在sparc上为@samp{%o0}。
 
-Then, if @var{vcall_offset} is nonzero, an additional adjustment should be
-made after adding @code{delta}.  In particular, if @var{p} is the
-adjusted pointer, the following adjustment should be made:
+然后，如果@var{vcall_offset}非0，则在增加@var{delta}之后应该进行额外的调整。
+特别是，如果@var{p}为被调整的指针，则应该进行如下的调整：
 
 @smallexample
 p += (*((ptrdiff_t **)p))[vcall_offset/sizeof(ptrdiff_t)]
 @end smallexample
 
-After the additions, emit code to jump to @var{function}, which is a
-@code{FUNCTION_DECL}.  This is a direct pure jump, not a call, and does
-not touch the return address.  Hence returning from @var{FUNCTION} will
-return to whoever called the current @samp{thunk}.
+加法之后，输出代码跳转到@var{function}，其为@code{FUNCTION_DECL}。
+这是一个直接跳转，而不是调用，并且不触及返回地址。因此从@var{FUNCTION}中返回时，
+将返回到调用当前@samp{thunk}的地方。
 
-The effect must be as if @var{function} had been called directly with
-the adjusted first argument.  This macro is responsible for emitting all
-of the code for a thunk function; @code{TARGET_ASM_FUNCTION_PROLOGUE}
-and @code{TARGET_ASM_FUNCTION_EPILOGUE} are not invoked.
+其效果就好像是函数被直接调用，并使用调整后的第一个参数。
+该宏负责输出thunk函数的所有代码；@code{TARGET_ASM_FUNCTION_PROLOGUE}和@code{TARGET_ASM_FUNCTION_EPILOGUE}不被调用。
 
-The @var{thunk_fndecl} is redundant.  (@var{delta} and @var{function}
-have already been extracted from it.)  It might possibly be useful on
-some targets, but probably not.
+@var{thunk_fndecl}是冗余的。（@var{delta}和@var{function}已经从中被抽取出来。）
+其可能在一些target上有用，也很可能没用。
 
-If you do not define this macro, the target-independent code in the C++
-front end will generate a less efficient heavyweight thunk that calls
-@var{function} instead of jumping to it.  The generic approach does
-not support varargs.
+如果你没有定义该宏，则C++前端的target无关代码将会生成一个不太有效的重量级的
+thunk，其调用@var{function}而不是直接跳转过去。普通的方法不支持varargs。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_ASM_CAN_OUTPUT_MI_THUNK (tree @var{thunk_fndecl}, HOST_WIDE_INT @var{delta}, HOST_WIDE_INT @var{vcall_offset}, tree @var{function})
-A function that returns true if TARGET_ASM_OUTPUT_MI_THUNK would be able
-to output the assembler code for the thunk function specified by the
-arguments it is passed, and false otherwise.  In the latter case, the
-generic approach will be used by the C++ front end, with the limitations
-previously exposed.
+一个函数，返回真，如果TARGET_ASM_OUTPUT_MI_THUNK应该能够为其传递的参数所指定的
+thunk函数输出汇编代码，否则为假。在后一种情况下，C++前端将会使用普通的方式，
+并具有之前提到的限制。
 @end deftypefn
 
 @node Profiling
