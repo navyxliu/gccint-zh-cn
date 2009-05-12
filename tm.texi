@@ -12,8 +12,8 @@
 @cindex @file{tm.h} macros
 
 除了文件@file{@var{machine}.md}，
-机器描述还包括一个通常名为@file{@var{machine}.h}的C头文件和
-一个名为@file{@var{machine}.c}的C源文件。
+机器描述还包括一个通常名为@file{@var{machine}.h}的C头文件和一个名为
+@file{@var{machine}.c}的C源文件。
 头文件定义了许多用来传达不适合@file{.md}文件框架的目标机器信息的宏。
 文件@file{tm.h}应该为@file{@var{machine}.h}的一个链接。
 头文件@file{config.h}包含@file{tm.h}，
@@ -62,10 +62,10 @@
 @cindex target functions
 
 @deftypevar {struct gcc_target} targetm
-目标@file{.c}文件必须定义包含了目标机器相关的函数指针和数据的全局变量
-@code{targetm}。变量在@file{target.h}中声明；
-@file{target-def.h}定义了用来初始化变量的宏@code{TARGET_INITIALIZER}，
-和结构体元素的缺省初始化。@file{.c}文件应该覆盖这些缺省定义不合适的宏。例如：
+目标机@file{.c}文件必须定义包含了目标机器相关的函数指针和数据的全局变量
+@code{targetm}。该变量在@file{target.h}中声明；
+@file{target-def.h}定义了用来初始化该变量的宏@code{TARGET_INITIALIZER}，
+和结构体元素的缺省初始化宏。@file{.c}文件应该覆写这些缺省定义不合适的宏。例如：
 @smallexample
 #include "target.h"
 #include "target-def.h"
@@ -79,10 +79,10 @@ struct gcc_target targetm = TARGET_INITIALIZER;
 @end smallexample
 @end deftypevar
 
-其中应该在@file{.c}文件中定义的，
-使用这种方式成为@code{targetm}结构体一部分的宏，
-将在下面被记述为“目标钩子”和函数原形。
-在@file{.h}.h文件中定义的许多宏将来将会改为@code{targetm}结构体的一部分。
+其中，宏应该通过这种方式在@file{.c}文件中被定义，
+从而成为@code{targetm}结构体的一部分。
+该宏将在下面作为具有函数原型的“目标钩子”来介绍。
+在@file{.h}.h文件中定义的许多宏将来都会改为@code{targetm}结构体的一部分。
 
 @node 驱动器
 @section 控制编译驱动器，@file{gcc}
@@ -94,46 +94,46 @@ struct gcc_target targetm = TARGET_INITIALIZER;
 
 @defmac SWITCH_TAKES_ARG (@var{char})
 一个C表达式，用来确定选项@option{-@var{char}}是否接受参数。
-值应该为选项接受的参数个数，0表示为许多选项。
+值应该为那个选项接受的参数个数，对于许多选项其为0。
 
 缺省情况下，该宏被定义为@code{DEFAULT_SWITCH_TAKES_ARG}，
-可以正常处理标准的选项。除非希望增加额外的接受参数的选项，
+其可以正常处理标准的选项。除非你希望增加额外的接受参数的选项，
 否则不需要定义@code{SWITCH_TAKES_ARG}。
-任何定义都应该先调用@code{DEFAULT_SWITCH_TAKES_ARG}，然后再检查额外的选项。
+任何重定义都应该先调用@code{DEFAULT_SWITCH_TAKES_ARG}，然后再检查额外的选项。
 @end defmac
 
 @defmac WORD_SWITCH_TAKES_ARG (@var{name})
 一个C表达式，用来确定选项@option{-@var{name}}是否接受参数。
-值应该为选项接受的参数个数，0表示为许多选项。
-该宏与@code{SWITCH_TAKES_ARG}不同的是用于多字符的选项名。
+值应该为那个选项接受的参数个数，对于许多选项其为0。
+该宏不同于@code{SWITCH_TAKES_ARG}，是用于选项名为多个字符的情况。
 
 缺省情况下，该宏被定义为@code{DEFAULT_WORD_SWITCH_TAKES_ARG}，
-可以正常处理标准的选项。除非希望增加额外的接受参数的选项，
+其可以正常处理标准的选项。除非你希望增加额外的接受参数的选项，
 否则不需要定义@code{WORD_SWITCH_TAKES_ARG}。
-任何定义都应该先调用@code{DEFAULT_WORD_SWITCH_TAKES_ARG}，然后再检查额外的选项。
+任何重定义都应该先调用@code{DEFAULT_WORD_SWITCH_TAKES_ARG}，然后再检查额外的选项。
 @end defmac
 
 @defmac SWITCH_CURTAILS_COMPILATION (@var{char})
 一个C表达式，用来确定选项@option{-@var{char}}是否在生成可执行程序之前停止编译。
-值为布尔的，如果选项确实停止生成可执行程序则为非0，否则为0。
+值为布尔型，如果选项确实停止生成可执行程序则为非0，否则为0。
 
 缺省情况下，该宏被定义为@code{DEFAULT_SWITCH_CURTAILS_COMPILATION}，
-可以正常处理标准的选项。除非希望增加额外的影响可执行程序生成的选项，
+其可以正常处理标准的选项。除非你希望增加额外的影响可执行程序生成的选项，
 否则不需要定义@code{SWITCH_CURTAILS_COMPILATION}。
-任何定义都应该先调用@code{DEFAULT_SWITCH_CURTAILS_COMPILATION}，
+任何重定义都应该先调用@code{DEFAULT_SWITCH_CURTAILS_COMPILATION}，
 然后再检查额外的选项。
 @end defmac
 
 @defmac SWITCHES_NEED_SPACES
-一个字符串形式的C表达式，
-用来枚举连接器在选项和它的参数之间需要一个空格的那些选项。
+一个值为字符串的C表达式，
+用来枚举连接器在选项和其参数之间需要一个空格的那些选项。
 
 如果该宏没有被定义，则缺省值为@code{""}。
 @end defmac
 
 @defmac TARGET_OPTION_TRANSLATE_TABLE
-如果定义，则为字符串对列表，
-其中第一个为@file{gcc}驱动程序的一个可能的命令行target，
+如果定义，则为字符串对（pairs of strings）列表，
+其中第一个为@file{gcc}驱动程序的一个可能的命令行目标，
 第二个为空格分隔的（不支持tab和其它 whitespace）选项列表，用来替换第一个选项。
 定义该列表的target负责确认结果是有效的。替换选项不可以为@code{--opt}风格的，
 它们必须为@code{-opt}风格的。该宏的目的是为多版本库选择提供一种替换机制，
