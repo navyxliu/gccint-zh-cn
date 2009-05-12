@@ -133,12 +133,14 @@ struct gcc_target targetm = TARGET_INITIALIZER;
 
 @defmac TARGET_OPTION_TRANSLATE_TABLE
 如果定义，则为字符串对（pairs of strings）列表，
-其中第一个为@file{gcc}驱动程序的一个可能的命令行目标，
-第二个为空格分隔的（不支持tab和其它 whitespace）选项列表，用来替换第一个选项。
-定义该列表的target负责确认结果是有效的。替换选项不可以为@code{--opt}风格的，
-它们必须为@code{-opt}风格的。该宏的目的是为多版本库选择提供一种替换机制，
-像可以启用许多选项一个选项。例如，在一个无实际意义的定义中，
-@option{-malt-abi}, @option{-EB}和@option{-mspoo}会造成不同的多版本库被选择：
+其中第一个字符串为@file{gcc}驱动程序的一个可能的命令行目标，
+第二个字符串为空格分隔的（不支持tab和其它whitespace）选项列表，
+用来替换第一个选项。
+定义该列表的目标机要负责确保结果是有效的。替换选项不可以为@code{--opt}风格的，
+它们必须为@code{-opt}风格的。该宏的目的是为选择multilib提供一种替换机制，
+例如通过一个选项可以打开许多选项，其中一些用来选择multilib。
+例如，在下面这个无意义的定义中，
+@option{-malt-abi}, @option{-EB}和@option{-mspoo}会导致不同的multilib被选择：
 
 @smallexample
 #define TARGET_OPTION_TRANSLATE_TABLE \
@@ -149,27 +151,28 @@ struct gcc_target targetm = TARGET_INITIALIZER;
 
 @defmac DRIVER_SELF_SPECS
 驱动器本身的specs列表。其应该为一个字符串数组的适当的初始化值，
-并不使用大括号包裹。
+并且不使用大括号包裹。
 
-驱动器将这些specs应用到它自己的命令行上，位于加载缺省@file{specs}
-（不是命令行指定的）和选择多版本库目录或者运行任何子命令之间。
-将按照给定的顺序来应用它们，所以每个spec可以依赖于先前增加的选项。
+驱动器将这些specs应用到它自己的命令行上，位于加载缺省@file{specs}文件
+（而不是由命令行指定的）和选择multilib目录或者运行任何子命令之间。
+驱动器按照给定的顺序来应用它们，所以每个spec可以依赖于先前增加的选项。
 还可以使用通常的方式，用@samp{%<@var{option}}来移除选项。
 
-当一个port具有多个相互依赖的target选项时，该宏会有一些用处。
-它提供了一个标准化命令行的方法，使得其它specs的书写变得容易些。
+当一个port具有多个相互依赖的目标机选项时，该宏会有帮助。
+它提供了一种标准化命令行的方法，使得其它specs的书写变得容易些。
 
 如果不需要做任何事情的话，则不要定义该宏。
 @end defmac
 
 @defmac OPTION_DEFAULT_SPECS
-用于在驱动器中支持配置时（configure-time）缺省选项（即，@option{--with}选项）
-的specs列表。其应该为一个结构体数组的适当的初始化值，每个元素包含两个字符串，
-并不使用大括号包裹字符串对。
+一个specs列表，用于支持驱动器中的配置时（configure-time）缺省选项
+（即，@option{--with}选项）。
+其应该为一个结构体数组的适当的初始化值，每个元素包含两个字符串，
+并且不带有最外层的大括号对。
 
-字符串对的第一项为缺省名字。其必须匹配target的@file{config.gcc}中的代码。
-第二项为一个spec，当指定那个名字的时候会被应用。
-在spec中的字符串@samp{%(VALUE)}将被它的缺省值替换。
+字符串对的第一项为缺省名字。其必须匹配目标机的@file{config.gcc}中的代码。
+第二项为一个spec，当那个缺省名字被指定的时候会被应用。
+在spec中，字符串@samp{%(VALUE)}出现的所有地方都将被缺省值替换。
 
 驱动器将这些specs应用到它自己的命令行上，
 位于加载缺省@file{specs}文件和处理@code{DRIVER_SELF_SPECS}之间，
@@ -179,8 +182,8 @@ struct gcc_target targetm = TARGET_INITIALIZER;
 @end defmac
 
 @defmac CPP_SPEC
-一个C字符串常理，告诉GCC驱动程序要传给CPP的选项。
-还可以指定如何将你给GCC的选项转换成GCC传给CPP的选项。
+一个C字符串常量，告诉GCC驱动程序要传给CPP的选项。
+其还可以指定如何将你传给GCC的选项转换成GCC传给CPP的选项。
 
 如果不需要做任何事情的话，则不要定义该宏。
 @end defmac
@@ -193,14 +196,14 @@ struct gcc_target targetm = TARGET_INITIALIZER;
 @defmac CC1_SPEC
 一个C字符串常量，告诉GCC驱动程序要传给@code{cc1}, @code{cc1plus}, 
 @code{f771}和其它语言前端的选项。
-还可以指定如何将你给GCC的选项转换成GCC传给前端的选项。
+其还可以指定如何将你传给GCC的选项转换成GCC传给前端的选项。
 
 如果不需要做任何事情的话，则不要定义该宏。
 @end defmac
 
 @defmac CC1PLUS_SPEC
 一个C字符串常量，告诉GCC驱动程序要传给@code{cc1plus}的选项。
-还可以指定如何将你给GCC的选项转换成GCC传给@code{cc1plus}的选项。
+其还可以指定如何将你传给GCC的选项转换成GCC传给@code{cc1plus}的选项。
 
 如果不需要做任何事情的话，则不要定义该宏。
 注意在CC1_SPEC中定义的所有选项已经被传给@code{cc1plus}，
@@ -209,46 +212,47 @@ struct gcc_target targetm = TARGET_INITIALIZER;
 
 @defmac ASM_SPEC
 一个C字符串常量，告诉GCC驱动程序要传给汇编器的选项。
-还可以指定如何将你给GCC的选项转换成GCC传给汇编器的选项。
+其还可以指定如何将你传给GCC的选项转换成GCC传给汇编器的选项。
 参见文件@file{sun3.h}中的例子。
 
 如果不需要做任何事情的话，则不要定义该宏。
 @end defmac
 
 @defmac ASM_FINAL_SPEC
-一个C字符串常理，告诉GCC驱动程序如何在正常的汇编之后运行任何清除程序。
+一个C字符串常量，告诉GCC驱动程序如何在运行正常的汇编器之后，来运行任何清除程序。
 通常，不需要该宏。参见文件@file{mips.h}中的例子。
 
 如果不需要做任何事情的话，则不要定义该宏。
 @end defmac
 
 @defmac AS_NEEDS_DASH_FOR_PIPED_INPUT
-定义该宏，不需要任何值，如果驱动器需要给汇编器一个由单横线@option{-}组成的参数，
-来指示它从标准输入（其将为一个与编译器输出连接的管道）读取时。
-该参数在任何指定输出文件名字的@option{-o}选项后面被给出。
+如果驱动器应该传给汇编器一个由单横线@option{-}组成的参数，
+来指示它从标准输入（其将为一个与编译器输出相连接的管道）读取时，
+则定义该宏，并且不需要给出定义值。
+该参数在任何指定输出文件名的@option{-o}选项后面被给出。
 
-如果不定义该宏，则汇编器被认为在没有给任何参数时，才从标准输入读取。
-如果你的汇编器根本不能从标准输入读取，则使用@samp{%@{pipe:%e@}}子句；
+如果不定义该宏，则汇编器被认为在没有传给任何非选项参数时，才从标准输入读取。
+如果你的汇编器根本不能从标准输入读取，则使用@samp{%@{pipe:%e@}}；
 参见@file{mips.h}中的例子。
 @end defmac
 
 @defmac LINK_SPEC
 一个C字符串常量，告诉GCC驱动程序要传给连接器的选项。
-还可以指定如何将你给GCC的选项转换成GCC传给连接器的选项。
+其还可以指定如何将你传给GCC的选项转换成GCC传给连接器的选项。
 
 如果不需要做任何事情的话，则不要定义该宏。
 @end defmac
 
 @defmac LIB_SPEC
-另一个C字符串常理，与@code{LINK_SPEC}的用法很相似。
+另一个C字符串常量，与@code{LINK_SPEC}的用法很相似。
 两者的区别是@code{LIB_SPEC}用于传给连接器的命令的结尾处。
 
-如果该宏没有被定义，则提供缺省的方式从通常的地方来加载标准C库。
+如果该宏没有被定义，则提供缺省的方式，从通常的地方来加载标准C库。
 参见@file{gcc.c}。
 @end defmac
 
 @defmac LIBGCC_SPEC
-另一个C字符串常理，
+另一个C字符串常量，
 告诉GCC驱动程序如何以及什么时候将对@file{libgcc.a}的引用放到连接器的命令行中。
 该常量同时被放在@code{LIB_SPEC}的值的前面和后面。
 
@@ -260,35 +264,35 @@ struct gcc_target targetm = TARGET_INITIALIZER;
 缺省情况下，如果@code{ENABLE_SHARED_LIBGCC}被定义，
 则@code{LIBGCC_SPEC}不直接被驱动程序使用，而是根据命令行标记@option{-static}, 
 @option{-shared}, @option{-static-libgcc}和@option{-shared-libgcc}的值，
-被修改来引用@file{libgcc.a}的不同版本。在一些target上，这些修改并不合适，
+进行修改，从而引用@file{libgcc.a}的不同版本。在一些目标机上，这些修改并不合适，
 这样就可以定义@code{REAL_LIBGCC_SPEC}。
 @code{REAL_LIBGCC_SPEC}告诉驱动器如何将对@file{libgcc}的引用放到连接器命令行中，
-不过不像@code{LIBGCC_SPEC}，它的使用不会被修改。
+不过不像@code{LIBGCC_SPEC}，它不经过修改，被直接使用。
 @end defmac
 
 @defmac USE_LD_AS_NEEDED
-一个宏，用于控制对在@code{REAL_LIBGCC_SPEC}中提到的@code{LIBGCC_SPEC}的修改。
-如果非0，则会创建一个spec，当不使用任何@code{-static}, 
+一个宏，用于控制在@code{REAL_LIBGCC_SPEC}中提到的对@code{LIBGCC_SPEC}的修改。
+如果非0，则会生成一个spec，当不使用任何@code{-static}, 
 @code{-static-libgcc}或@code{-shared-libgcc}来连接的时候，
 将使用–as-needed和静态异常处理库所在位置的共享libgcc。
 @end defmac
 
 @defmac LINK_EH_SPEC
-如果定义，则该C字符串常理被增加到@code{LINK_SPEC}中。
+如果定义，则该C字符串常量被增加到@code{LINK_SPEC}中。
 当@code{USE_LD_AS_NEEDED}为0或者未定义时，
-它仍然影响对在@code{REAL_LIBGCC_SPEC}中提到的@code{LIBGCC_SPEC}的修改。
+其还影响在@code{REAL_LIBGCC_SPEC}中提到的对@code{LIBGCC_SPEC}的修改。
 @end defmac
 
 @defmac STARTFILE_SPEC
-另一个C字符串常理，与@code{LINK_SPEC}用法很相似。
+另一个C字符串常量，与@code{LINK_SPEC}的用法很相似。
 两者的不同之处是@code{STARTFILE_SPEC}用于传给连接器的命令的最开始处。
 
-如果该宏没有被定义，则会提供一个缺省方式，
-从通常的地方来加载标准C起始（startup）文件。参见@file{gcc.c}。
+如果该宏没有被定义，则会提供一种缺省方式，
+从通常的地方来加载标准C启动（startup）文件。参见@file{gcc.c}。
 @end defmac
 
 @defmac ENDFILE_SPEC
-另一个C字符串常理，与@code{LINK_SPEC}用法很相似。
+另一个C字符串常量，与@code{LINK_SPEC}的用法很相似。
 两者的不同之处是@code{ENDFILE_SPEC}用于传给连接器的命令的最末尾处。
 
 如果不需要做任何事情的话，则不要定义该宏。
@@ -302,32 +306,33 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 @end defmac
 
 @defmac SYSROOT_SUFFIX_SPEC
-定义该宏，当GCC使用一个sysroot被配置时，来为target sysroot增加一个后缀。
-这将造成GCC在sysroot+suffix下查找usr/lib等。
+定义该宏，当GCC使用sysroot被配置时，来为目标机的sysroot增加一个suffix。
+这将导致GCC在sysroot+suffix下查找usr/lib等。
 @end defmac
 
 @defmac SYSROOT_HEADERS_SUFFIX_SPEC
-定义该宏，当GCC使用一个sysroot被配置时，来为target sysroot增加一个头文件后缀。
-这将造成GCC将更新的sysroot+headers_suffix传给CPP，
-使得在sysroot+headers_suffix下查找usr/include等。
+定义该宏，当GCC使用sysroot被配置时，来为目标机的sysroot增加一个headers_suffix。
+这将导致GCC将更新的sysroot+headers_suffix传给CPP，
+使其在sysroot+headers_suffix下查找usr/include等。
 @end defmac
 
 @defmac EXTRA_SPECS
-定义该宏，来提供放在@file{specs}文件中的，
-可以被各种规范像@code{CC1_SPEC}使用的额外的规范。
+定义该宏，来提供放在@file{specs}文件中，
+可以被各种specification，像@code{CC1_SPEC}，使用的额外的specification。
 
 定义应该为一个结构体数组的初始化值，其包含一个字符串常量，
-定义了规范的名字，以及一个字符串常量，提供相应的规范。
+定义了specification的名字，以及一个字符串常量，提供相应的specification。
 
 如果不需要做任何事情的话，则不要定义该宏。
 
-当一种体系结构包含多个相关的target，所具有的各种..._SPECS彼此很相似的时候，@code{EXTRA_SPECS}会很有用，维护者可以有一个集中的地方来存放这些定义。
+当一种体系结构包含多个相关的目标机，所具有的各种@code{@dots()_SPECS}彼此很相似
+的时候，@code{EXTRA_SPECS}会很有用，维护者会希望有一个地方来集中保存这些定义。
 
-例如，PowerPC System V.4的target使用@code{EXTRA_SPECS}，
+例如，PowerPC System V.4的目标机使用@code{EXTRA_SPECS}，
 在System V调用序列被使用时，来定义@code{_CALL_SYSV}，
-当较老的基于AIX的调用序列被使用时，来定义@code{_CALL_AIX}。
+在较老的基于AIX的调用序列被使用时，来定义@code{_CALL_AIX}。
 
-@file{config/rs6000/rs6000.h}的target文件这样定义:
+@file{config/rs6000/rs6000.h}目标机文件这样定义:
 
 @smallexample
 #define EXTRA_SPECS \
@@ -336,7 +341,7 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 #define CPP_SYS_DEFAULT ""
 @end smallexample
 
-@file{config/rs6000/sysv.h}的target文件这样定义:
+@file{config/rs6000/sysv.h}目标机文件这样定义:
 @smallexample
 #undef CPP_SPEC
 #define CPP_SPEC \
@@ -349,7 +354,7 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 #define CPP_SYSV_DEFAULT "-D_CALL_SYSV"
 @end smallexample
 
-而@file{config/rs6000/eabiaix.h}的target文件将@code{CPP_SYSV_DEFAULT}定义为:
+而@file{config/rs6000/eabiaix.h}目标机文件将@code{CPP_SYSV_DEFAULT}定义为:
 
 @smallexample
 #undef CPP_SYSV_DEFAULT
@@ -359,7 +364,7 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 
 @defmac LINK_LIBGCC_SPECIAL_1
 定义该宏，如果驱动程序应该找到库@file{libgcc.a}。
-如果没有定义该宏，则驱动程序将参数@option{-lgcc}传给连接器，并告诉连接器来查找。
+如果没有定义该宏，则驱动程序将参数@option{-lgcc}传给连接器，告诉连接器来查找。
 @end defmac
 
 @defmac LINK_GCC_C_SEQUENCE_SPEC
@@ -367,7 +372,7 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 @end defmac
 
 @defmac LINK_COMMAND_SPEC
-一个C字符串常量，给出执行连接器所需的全部的命令行。当定义时，
+一个C字符串常量，给出执行连接器所需的完整的命令行。当定义时，
 每次在@file{gcc.c}中对连接器命令行的修改，你都需要更新你的port。
 因此，只有当你需要完全重定义所调用的连接器的命令行，并且没有其他方式来完成时，
 才定义该宏。可以通过@code{LINK_GCC_C_SEQUENCE_SPEC}来替代该宏。
@@ -513,7 +518,7 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 @end smallexample
 @end defmac
 
-这些是查找exec文件的前缀顺序：
+这些是尝试查找exec文件的前缀顺序：
 
 @enumerate
 @item
@@ -521,14 +526,14 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 
 @item
 环境变量@code{GCC_EXEC_PREFIX}，
-或者如果@code{GCC_EXEC_PREFIX}没有被设置并且编译器没有被安装到配置时的@var{prefix}，
+或者如果@code{GCC_EXEC_PREFIX}没有被设置并且编译器没有被安装到配置时的@var{prefix}处，
 则搜寻编译器实际被安装的位置。
 
 @item
 环境变量@code{COMPILER_PATH}指定的目录。
 
 @item
-宏@code{STANDARD_EXEC_PREFIX}，如果编译器安装在配置时的@var{prefix}。
+宏@code{STANDARD_EXEC_PREFIX}，如果编译器安装在配置时的@var{prefix}处。
 
 @item
 位置@file{/usr/libexec/gcc/}，仅当是本地编译器。
@@ -540,7 +545,7 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 宏@code{MD_EXEC_PREFIX}，如果定义，仅当是本地编译器。
 @end enumerate
 
-这些是查找起始文件的前缀顺序：
+这些是尝试查找启动文件的前缀顺序：
 
 @enumerate
 @item
@@ -550,7 +555,8 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 环境变量@code{GCC_EXEC_PREFIX}，或者基于工具链的安装位置被自动确定的值。
 
 @item
-由环境变量@code{LIBRARY_PATH}指定的目录；只用于本地编译器。
+由环境变量@code{LIBRARY_PATH}指定的目录（或者port特定的名字，只用于本地编译器，
+交叉编译器不使用）。
 
 @item
 宏@code{STANDARD_EXEC_PREFIX}，但只当工具链被安装在配置的@var{prefix}处，
@@ -564,11 +570,11 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 
 @item
 宏@code{MD_STARTFILE_PREFIX}，如果定义，
-仅当为本地编译器，或者具有target系统根目录。
+仅当为本地编译器，或者具有目标机系统根目录（system root）。
 
 @item
 宏@code{MD_STARTFILE_PREFIX_1}，如果定义，
-仅当为本地编译器，或者具有target系统根目录。
+仅当为本地编译器，或者具有目标机系统根目录。
 
 @item
 宏@code{STANDARD_STARTFILE_PREFIX}，带有任何sysroot的修改。
@@ -577,11 +583,11 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 
 @item
 宏@code{STANDARD_STARTFILE_PREFIX_1}，仅当为本地编译器，
-或者具有target系统根目录。缺省为@file{/lib/}。
+或者具有目标机系统根目录。该宏的缺省值为@file{/lib/}。
 
 @item
 宏@code{STANDARD_STARTFILE_PREFIX_2}，仅当为本地编译器，
-或者具有target系统根目录。缺省为@file{/usr/lib/}。
+或者具有目标机系统根目录。该宏的缺省值为@file{/usr/lib/}。
 @end enumerate
 
 @node 运行时目标机
