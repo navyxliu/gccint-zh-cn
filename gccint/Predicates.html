@@ -6,7 +6,7 @@
 <meta name="generator" content="makeinfo 4.11">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0.html#g_t_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0" title="机器描述">
-<link rel="prev" href="Output-Statement.html#Output-Statement" title="Output Statement">
+<link rel="prev" href="_00e8_00be_0093_00e5_0087_00ba_00e8_00af_00ad_00e5_008f_00a5.html#g_t_00e8_00be_0093_00e5_0087_00ba_00e8_00af_00ad_00e5_008f_00a5" title="输出语句">
 <link rel="next" href="Constraints.html#Constraints" title="Constraints">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
@@ -44,7 +44,7 @@
 <p>
 <a name="Predicates"></a>
 Next:&nbsp;<a rel="next" accesskey="n" href="Constraints.html#Constraints">Constraints</a>,
-Previous:&nbsp;<a rel="previous" accesskey="p" href="Output-Statement.html#Output-Statement">Output Statement</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e8_00be_0093_00e5_0087_00ba_00e8_00af_00ad_00e5_008f_00a5.html#g_t_00e8_00be_0093_00e5_0087_00ba_00e8_00af_00ad_00e5_008f_00a5">输出语句</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0.html#g_t_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0">机器描述</a>
 <hr>
 </div>
@@ -52,41 +52,47 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 <h3 class="section">16.7 Predicates</h3>
 
 <p><a name="index-predicates-3191"></a><a name="index-operand-predicates-3192"></a><a name="index-operator-predicates-3193"></a>
-断言用于判断一个 <code>match_operand</code> 或者 <code>match_operator</code> 表达式是否匹
-配，以及指令模式是否会被用于那些操作数的组合。GCC有许多机器独立的断言，并且如
-果需要的话你可以定义机器特定的断言。根据惯例，与 <code>match_operand</code> 一起使用
-的断言名字以 &lsquo;<samp><span class="samp">_operand</span></samp>&rsquo; 结束，与 <code>match_operator</code> 一起使用的断言名字
-以&lsquo;<samp><span class="samp">_operator</span></samp>&rsquo; 结束。
+predicate用于确定一个<code>match_operand</code>或者
+<code>match_operator</code>表达式是否匹配，
+以及周围的指令模式是否会被用于那些操作数的组合。
+GCC有许多机器无关的predicate，并且你可以根据需要来定义机器特定的predicate。
+按照惯例，与<code>match_operand</code>一起使用的predicate的名字以&lsquo;<samp><span class="samp">_operand</span></samp>&rsquo;结尾，
+与<code>match_operator</code>一起使用的predicate的名字以&lsquo;<samp><span class="samp">_operator</span></samp>&rsquo;结尾。
 
- <p>所有断言（从数学意义上）都是具有两个参数的布尔函数：指令模式中的RTL表达式，以
-及 <code>match_operand</code> 或 <code>match_operator</code> 指定的机器模式。在这一节里，
-第一个参数被称为 <var>op</var>，第二个被称为 <var>mode</var>。断言能够作为普通的两个参数
-的函数，由C来调用；这可以用于输出模板或者其它机器特定代码中。
+ <p>所有predicate（从数学意义上）都是具有两个参数的布尔函数：
+指令模式中在那个位置上被考虑的RTL表达式，
+以及<code>match_operand</code>或<code>match_operator</code>所指定的机器模式。
+在这一节里，第一个参数被称为<var>op</var>，第二个参数被称为<var>mode</var>。
+predicate可以作为普通的具有两个参数的函数，从C中调用；
+这在输出模板或者其它机器特定的代码中，很有用处。
 
- <p>操作数断言能够允许硬件实际上无法接受的操作数，只要约束提供重载的能力，能够修复
-它们（see <a href="Constraints.html#Constraints">Constraints</a>）。然而，只要断言指定的机器指令要求尽可能的严密，GCC
-通常便会生成较好的代码。重载不能修复必须为常量的操作数（立即数）；你必须使用只
-允许常量的断言，或者使用额外的条件来加强必要条件。
+ <p>操作数predicate可以允许硬件实际上无法接受的操作数，
+只要constraint能够为reload提供能力，来修复它们（参见<a href="Constraints.html#Constraints">Constraints</a>）。
+然而，只要predicate指定的机器指令需求尽可能的严密，
+GCC通常便会生成更好的代码。reload不能修复必须为常量的操作数（立即数）；
+你必须使用只允许常量的predicate，或者使用额外的条件来加强必要条件。
 
- <p><a name="index-predicates-and-machine-modes-3194"></a><a name="index-normal-predicates-3195"></a><a name="index-special-predicates-3196"></a>大多数断言使用统一的方式来处理它们的 <var>mode</var> 参数。如果 <var>mode</var> 为
-<code>VOIDmode</code>（未指定的），那么 <var>op</var> 能够具有任意的模式。如果 <var>mode</var>
-为其它情况，那么 <var>op</var> 必须具有相同的模式，除非 <var>op</var> 是一个
-<code>CONST_INT</code> 或者整数 <code>CONST_DOUBLE</code>。这些RTL表达式总是具有
-<code>VOIDmode</code>，所以检测它们的模式匹配是不必要的。相反的，接受
-<code>CONST_INT</code> 以及整数 <code>CONST_DOUBLE</code> 的断言，检测存储在常量中的值时，
-将会得到适合的模式。
+ <p><a name="index-predicates-and-machine-modes-3194"></a><a name="index-normal-predicates-3195"></a><a name="index-special-predicates-3196"></a>大多数predicate使用统一的方式来处理它们的<var>mode</var>参数。
+如果<var>mode</var>为<code>VOIDmode</code>（未加指明的），则<var>op</var>可以具有任意的模式。
+如果<var>mode</var>为其它情况，则<var>op</var>必须具有相同的机器模式，
+除非<var>op</var>是一个<code>CONST_INT</code>或整数<code>CONST_DOUBLE</code>。
+这些RTL表达式总是具有<code>VOIDmode</code>，所以检测它们的模式匹配反而会适得其反。
+替代的，接受<code>CONST_INT</code>和/或整数<code>CONST_DOUBLE</code>的predicate，
+可以检测存储在常量中的值是否适合所要求的机器模式。
 
- <p>这种行为的断言被称为常规断言。<samp><span class="command">genrecog</span></samp> 能够根据常规断言如何处理模式的
-知识来优化指令识别器。它还能够诊断使用常规断言所出现的一些常见错误类型。例如，
-常见的使用常规断言而没有指定模式的错误。
+ <p>具有这种行为的predicate被称为常规的。
+<samp><span class="command">genrecog</span></samp>能够根据常规predicate如何处理机器模式的知识来优化指令识别器。
+它还能够诊断使用常规predicate所出现的一些常见错误。例如，
+使用常规predicate而没有指定机器模式几乎总是错误的。
 
- <p>对 <var>mode</var> 参数进行不同方式处理的断言被称为特殊断言。通用断言
-<code>address_operand</code> 和 <code>pmode_register_operand</code> 是特殊断言。
-<samp><span class="command">genrecog</span></samp> 对使用特殊断言的不做任何优化和诊断。
+ <p>对<var>mode</var>参数进行不同方式处理的predicate被称为特殊的。
+通用predicate <code>address_operand</code>和<code>pmode_register_operand</code>
+是特殊predicate。当使用特殊predicate的时候，
+<samp><span class="command">genrecog</span></samp>不做任何的优化或诊断。
 
 <ul class="menu">
-<li><a accesskey="1" href="Machine_002dIndependent-Predicates.html#Machine_002dIndependent-Predicates">Machine-Independent Predicates</a>:  所有后端都可用的断言。
-<li><a accesskey="2" href="Defining-Predicates.html#Defining-Predicates">Defining Predicates</a>:             如何写机器特定的断言函数。
+<li><a accesskey="1" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_0097_00a0_00e5_0085_00b3_00e7_009a_0084predicate.html#g_t_00e6_009c_00ba_00e5_0099_00a8_00e6_0097_00a0_00e5_0085_00b3_00e7_009a_0084predicate">机器无关的predicate</a>:  所有后端都可用的predicate。
+<li><a accesskey="2" href="_00e5_00ae_009a_00e4_00b9_0089predicate.html#g_t_00e5_00ae_009a_00e4_00b9_0089predicate">定义predicate</a>:        如何写机器特定的predicate函数。
 </ul>
 
  </body></html>

@@ -22,11 +22,11 @@
 * RTL模板::             RTL模板定义了什么样的insn与一个模式匹配。
 * 输出模板::            输出模板说明了如何从这样一个insn来生成汇编代码。
 * 输出语句::            更一般的情况, 编写C代码来输出汇编代码。
-* 判定条件::            控制一个insn可以使用什么类型的操作数。
-* 约束条件::            对操作数的选择进行微调。
+* Predicates::          控制一个insn可以使用什么类型的操作数。
+* Constraints::         对操作数的选择进行微调。
 * 标准名字::            代码生成时使用的模式名字。
 * 指令模式顺序::        不同模式顺序所产生的作用。
-* 依赖指令模式::  拥有一个指令模式，可能还会需要另一个。
+* 依赖指令模式::        拥有一个指令模式，可能还会需要另一个。
 * 跳转指令模式::        针对跳转insn的指令模式的特殊考虑。
 * 循环指令模式::        如何为特定的循环insn定义模式。
 * Insn规范化::          指令的规范化。
@@ -60,7 +60,7 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 
 生成过程，只与insn的名字有关系，包括命名的 @code{define_insn} 或者 
 @code{define_expand}。编译器会选择恰当名字的模式，并且根据这章后面的文档来使用
-操作数，而不需要关心RTL模板或者操作数约束。注意，编译器所寻找的名字是被硬编码
+操作数，而不需要关心RTL模板或者操作数constraint。注意，编译器所寻找的名字是被硬编码
 进编译器中的——它将忽略未命名的模式和名字无法识别的模式，但是，如果你没有提供所
 需要的命名模式，它将异常中断（abort）。
 
@@ -83,7 +83,7 @@ insn列表创建一个新的insn，并且调用 @code{DONE}。对于某些命名
 @cindex instruction patterns
 
 @findex define_insn
-每个指令模式包含了一个不完全的RTL表达式，和之后要被填充的部分；操作数约束，用来
+每个指令模式包含了一个不完全的RTL表达式，和之后要被填充的部分；操作数constraint，用来
 限制如何填充那些部分；以及一个输出模式或者C代码来生成汇编输出。所有这些都由一个
  @code{define_insn} 表达式包裹起来。
 
@@ -177,7 +177,7 @@ insn列表创建一个新的insn，并且调用 @code{DONE}。对于某些命名
 
 输出控制字符串是一部分C代码，用来根据操作数的类别和CPU的特定类型选择输出模版。
 
-@samp{"rm"} 是一个操作数约束。后面将会解释它的含义。
+@samp{"rm"} 是一个操作数constraint。后面将会解释它的含义。
 
 @node RTL模板
 @section RTL模板
@@ -207,20 +207,20 @@ RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们�
 的值。
 
 @var{predicate} 为一个字符串，为一个函数的名字，其接受两个参数，一个表达式和一个
-机器模式。@pxref{判定条件}。在匹配过程中，函数将会被调用，使用假定的操作数作为
+机器模式。@pxref{Predicates}。在匹配过程中，函数将会被调用，使用假定的操作数作为
 表达式并且 @var{m} 作为机器模式参数（如果 @var{m} 没有被指定，则使用 
 @code{VOIDmode}，这通常会使得 @var{predicate} 可以接受任何机器模式）。如果其返
 回0，则该指令模式匹配失败。@var{predicate} 可以为一个空字符串；这意味着不对操作
 数作测试，这样出现在该位置的任何都是有效的。
 
 大多时候，@var{predicate} 将会拒绝 @var{m} 之外的机器模式——但并不总是这样。例
-如，断言 @code{address_operand} 使用 @var{m} 作为内存引用的机器模式。许多断言
+如，predicate @code{address_operand} 使用 @var{m} 作为内存引用的机器模式。许多predicate
 接受 @code{const_int} 节点，即使它们的机器模式为 @code{VOIDmode}。
 
 @var{constraint} 控制重载以及针对一个值选择最好的寄存器类别来使用，将在后面解释
-（@pxref{约束条件}）。如果约束为空字符串，则可以忽略掉。
+（@pxref{约束条件}）。如果constraint为空字符串，则可以忽略掉。
 
-人们经常弄不清楚约束和断言的区别。断言帮助决定一个给定的insn是否匹配指令模式。约束在该决定中不发挥作用；替代的，其控制已经匹配的insn的各种决定。
+人们经常弄不清楚constraint和predicate的区别。predicate帮助决定一个给定的insn是否匹配指令模式。constraint在该决定中不发挥作用；替代的，其控制已经匹配的insn的各种决定。
 
 @findex match_scratch
 @item (match_scratch:@var{m} @var{n} @var{constraint})
@@ -251,7 +251,7 @@ RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们�
 
 注意 @code{match_dup} 不要用来告诉编译器特定寄存器被用于两个操作数（例如：
 @code{add} 将一个寄存器加到另一个之上；第二个寄存器即为输入操作数，同样也为输
-出操作数）。可以为此使用匹配约束（@pxref{简单约束}）。@code{match_dup}
+出操作数）。可以为此使用匹配constraint（@pxref{简单constraint}）。@code{match_dup}
 是用于一个操作数在模板中的两个地方被使用的情况，例如一条指令同时计算商和余数，
 其中操作码接受两个输入操作数，但是RTL模板不得不引用它们两次；一次用于求商指令
 模式，一次用于求余数指令模式。
@@ -299,7 +299,7 @@ commutative_integer_operator (x, mode)
 用 @code{GET_CODE (operands[3])} 来查看使用了哪个可交换操作符。
 
 @code{match_operator} 的机器模式 @var{m} 的作用与 @code{match_operand} 的类似：
-其被作为第二个参数传递给断言函数，并且函数专门负责决定被匹配的表达式是否具有那
+其被作为第二个参数传递给predicate函数，并且函数专门负责决定被匹配的表达式是否具有那
 个机器模式。
 
 当构造insn时，gen-function 的参数3将会指定要构造的表达式的操作（即，表达式代
@@ -312,10 +312,10 @@ commutative_integer_operator (x, mode)
 因为寄存器分配者通常查看insn的操作数1和2，来看是否它可以做寄存器绑定
 （register tying）。
 
-无法指定在 @code{match_operator} 中的约束。对应于 @code{match_operator} 的
-insn的操作数，不具有任何约束，因为它从来不作为一个整体被重载。但是，如果它
+无法指定在 @code{match_operator} 中的constraint。对应于 @code{match_operator} 的
+insn的操作数，不具有任何constraint，因为它从来不作为一个整体被重载。但是，如果它
 的 @var{operands} 的一部分被 @code{match_operand} 指令模式匹配，那些部分可
-以具有它们自己的约束。
+以具有它们自己的constraint。
 
 @findex match_op_dup
 @item (match_op_dup:@var{m} @var{n}[@var{operands}@dots{}])
@@ -331,7 +331,7 @@ insn的操作数，不具有任何约束，因为它从来不作为一个整体�
 
 当构造insn时，操作数编号 @var{n} 将在该处被替换。当匹配一个insn时，其当insn
 的主体为一个 @code{parallel} 表达式，其具有至少跟向量 @var{subpat} 表达式同
-样多数目元素，并且函数 @var{predicate} 返回非零时才匹配。断言负责判定在
+样多数目元素，并且函数 @var{predicate} 返回非零时才匹配。predicate负责判定在
 @code{match_parallel} 中的 @code{parallel} 的元素是否有效。
 
 @code{match_parallel} 的一个典型用法是，匹配加载和存储多个表达式，其可以在
@@ -464,7 +464,7 @@ describe multiple variants of assembler language syntax.
 可能需要额外的机器指令。
 
 如果输出控制字符串起始于 @samp{@@}，则其实际为一系列模板，每一个单独一行。
-（空行，以及开头的空格和tab被忽略掉。）这些模板对应于模式的各个约束
+（空行，以及开头的空格和tab被忽略掉。）这些模板对应于模式的各个constraint
 （@pxref{多个可选项}）。例如，如果一个目标机有一个二址（two-address）
 加法指令 @samp{addr}相加到寄存器中，另外还有一个 @samp{addm} 将寄存器的值相加
 到内存中，你可能会这样写模式：
@@ -503,9 +503,9 @@ describe multiple variants of assembler language syntax.
 @code{operands}，或者是另一个声明为局部的并且自己初始化的 @code{rtx} 数组。
 
 @findex which_alternative
-当一个insn模式有多个可选择的约束时，则汇编代码经常主要是由所匹配的约束选择来决
+当一个insn模式有多个可选择的constraint时，则汇编代码经常主要是由所匹配的constraint选择来决
 定。如果是这样，C代码可以测试变量 @code{which_alternative}，其为实际满足条件的
-约束选择的序号（0为第一个，1位第二个选择，以此类推）。
+constraint选择的序号（0为第一个，1位第二个选择，以此类推）。
 
 例如，假设有两个操作码来存储0，@samp{clrreg} 用于寄存器，@samp{clrmem} 用于内存
 地址。这个模式实现了如何能够使用 @samp{which_alternative} 来选择它们：
@@ -536,284 +536,250 @@ describe multiple variants of assembler language syntax.
 @end group
 @end smallexample
 
-@node 判定条件
-@section 判定条件
+@node Predicates
+@section Predicates
 @cindex predicates
 @cindex operand predicates
 @cindex operator predicates
 
-断言用于判断一个 @code{match_operand} 或者 @code{match_operator} 表达式是否匹
-配，以及指令模式是否会被用于那些操作数的组合。GCC有许多机器独立的断言，并且如
-果需要的话你可以定义机器特定的断言。根据惯例，与 @code{match_operand} 一起使用
-的断言名字以 @samp{_operand} 结束，与 @code{match_operator} 一起使用的断言名字
-以@samp{_operator} 结束。
+predicate用于确定一个@code{match_operand}或者
+@code{match_operator}表达式是否匹配，
+以及周围的指令模式是否会被用于那些操作数的组合。
+GCC有许多机器无关的predicate，并且你可以根据需要来定义机器特定的predicate。
+按照惯例，与@code{match_operand}一起使用的predicate的名字以@samp{_operand}结尾，
+与@code{match_operator}一起使用的predicate的名字以@samp{_operator}结尾。
 
-所有断言（从数学意义上）都是具有两个参数的布尔函数：指令模式中的RTL表达式，以
-及 @code{match_operand} 或 @code{match_operator} 指定的机器模式。在这一节里，
-第一个参数被称为 @var{op}，第二个被称为 @var{mode}。断言能够作为普通的两个参数
-的函数，由C来调用；这可以用于输出模板或者其它机器特定代码中。
+所有predicate（从数学意义上）都是具有两个参数的布尔函数：
+指令模式中在那个位置上被考虑的RTL表达式，
+以及@code{match_operand}或@code{match_operator}所指定的机器模式。
+在这一节里，第一个参数被称为@var{op}，第二个参数被称为@var{mode}。
+predicate可以作为普通的具有两个参数的函数，从C中调用；
+这在输出模板或者其它机器特定的代码中，很有用处。
 
-操作数断言能够允许硬件实际上无法接受的操作数，只要约束提供重载的能力，能够修复
-它们（@pxref{约束条件}）。然而，只要断言指定的机器指令要求尽可能的严密，GCC
-通常便会生成较好的代码。重载不能修复必须为常量的操作数（立即数）；你必须使用只
-允许常量的断言，或者使用额外的条件来加强必要条件。
+操作数predicate可以允许硬件实际上无法接受的操作数，
+只要constraint能够为reload提供能力，来修复它们（参见@ref{Constraints}）。
+然而，只要predicate指定的机器指令需求尽可能的严密，
+GCC通常便会生成更好的代码。reload不能修复必须为常量的操作数（立即数）；
+你必须使用只允许常量的predicate，或者使用额外的条件来加强必要条件。
 
 @cindex predicates and machine modes
 @cindex normal predicates
 @cindex special predicates
-大多数断言使用统一的方式来处理它们的 @var{mode} 参数。如果 @var{mode} 为
-@code{VOIDmode}（未指定的），那么 @var{op} 能够具有任意的模式。如果 @var{mode} 
-为其它情况，那么 @var{op} 必须具有相同的模式，除非 @var{op} 是一个 
-@code{CONST_INT} 或者整数 @code{CONST_DOUBLE}。这些RTL表达式总是具有
-@code{VOIDmode}，所以检测它们的模式匹配是不必要的。相反的，接受
-@code{CONST_INT} 以及整数 @code{CONST_DOUBLE} 的断言，检测存储在常量中的值时，
-将会得到适合的模式。
+大多数predicate使用统一的方式来处理它们的@var{mode}参数。
+如果@var{mode}为@code{VOIDmode}（未加指明的），则@var{op}可以具有任意的模式。
+如果@var{mode}为其它情况，则@var{op}必须具有相同的机器模式，
+除非@var{op}是一个@code{CONST_INT}或整数@code{CONST_DOUBLE}。
+这些RTL表达式总是具有@code{VOIDmode}，所以检测它们的模式匹配反而会适得其反。
+替代的，接受@code{CONST_INT}和/或整数@code{CONST_DOUBLE}的predicate，
+可以检测存储在常量中的值是否适合所要求的机器模式。
 
-这种行为的断言被称为常规断言。@command{genrecog} 能够根据常规断言如何处理模式的
-知识来优化指令识别器。它还能够诊断使用常规断言所出现的一些常见错误类型。例如，
-常见的使用常规断言而没有指定模式的错误。
+具有这种行为的predicate被称为常规的。
+@command{genrecog}能够根据常规predicate如何处理机器模式的知识来优化指令识别器。
+它还能够诊断使用常规predicate所出现的一些常见错误。例如，
+使用常规predicate而没有指定机器模式几乎总是错误的。
 
-对 @var{mode} 参数进行不同方式处理的断言被称为特殊断言。通用断言 
-@code{address_operand} 和 @code{pmode_register_operand} 是特殊断言。
-@command{genrecog} 对使用特殊断言的不做任何优化和诊断。
+对@var{mode}参数进行不同方式处理的predicate被称为特殊的。
+通用predicate @code{address_operand}和@code{pmode_register_operand}
+是特殊predicate。当使用特殊predicate的时候，
+@command{genrecog}不做任何的优化或诊断。
 
 @menu
-* 机器无关的判定条件:: 所有后端都可用的断言。 
-* 定义判定条件::       如何写机器特定的断言函数。
+* 机器无关的predicate:: 所有后端都可用的predicate。 
+* 定义predicate::       如何写机器特定的predicate函数。
 @end menu
 
-@node 机器无关的判定条件
-@subsection 机器无关的判定条件
+@node 机器无关的predicate
+@subsection 机器无关的predicate
 @cindex machine-independent predicates
 @cindex generic predicates
 
-These are the generic predicates available to all back ends.  They are
-defined in @file{recog.c}.  The first category of predicates allow
-only constant, or @dfn{immediate}, operands.
+这些是通用predicate，适用于所有后端。它们定义在@file{recog.c}中。
+第一类predicate只允许常量或立即数。
 
 @defun immediate_operand
-This predicate allows any sort of constant that fits in @var{mode}.
-It is an appropriate choice for instructions that take operands that
-must be constant.
+该predicate允许适合相应@var{mode}的任何类别的常量。
+适合用于操作数必须为常量的指令。
 @end defun
 
 @defun const_int_operand
-This predicate allows any @code{CONST_INT} expression that fits in
-@var{mode}.  It is an appropriate choice for an immediate operand that
-does not allow a symbol or label.
+该predicate允许适合相应@var{mode}的任何@code{CONST_INT}表达式。
+适合用于不是符号（symbol）或标号（label）的立即数。
 @end defun
 
 @defun const_double_operand
-This predicate accepts any @code{CONST_DOUBLE} expression that has
-exactly @var{mode}.  If @var{mode} is @code{VOIDmode}, it will also
-accept @code{CONST_INT}.  It is intended for immediate floating point
-constants.
+该predicate接受任何确实为@var{mode}的@code{CONST_DOUBLE}表达式。
+如果@var{mode}为@code{VOIDmode}，则其还接受@code{CONST_INT}。
+它是用于浮点立即数的。
 @end defun
 
 @noindent
-The second category of predicates allow only some kind of machine
-register.
+第二类predicate只允许某种类别的机器寄存器。
 
 @defun register_operand
-This predicate allows any @code{REG} or @code{SUBREG} expression that
-is valid for @var{mode}.  It is often suitable for arithmetic
-instruction operands on a RISC machine.
+该predicate允许适合相应@var{mode}的任何@code{REG}或@code{SUBREG}表达式。
+通常适合于RISC机器上的算术指令操作数。
 @end defun
 
 @defun pmode_register_operand
-This is a slight variant on @code{register_operand} which works around
-a limitation in the machine-description reader.
+这与@code{register_operand}略为不同，其对机器描述的读入器有些限制。
+
+当机器描述读入器接受@samp{:P}机器模式后缀时，
 
 @smallexample
 (match_operand @var{n} "pmode_register_operand" @var{constraint})
 @end smallexample
 
 @noindent
-means exactly what
+与
 
 @smallexample
 (match_operand:P @var{n} "register_operand" @var{constraint})
 @end smallexample
 
 @noindent
-would mean, if the machine-description reader accepted @samp{:P}
-mode suffixes.  Unfortunately, it cannot, because @code{Pmode} is an
-alias for some other mode, and might vary with machine-specific
-options.  @xref{其它}.
+将具有完全相同的含义。不幸的是，这样不行，应为Pmode是其它机器模式的别名，
+并且可能随着机器特定选项的不同而改变。参见@ref{其它}。
 @end defun
 
 @defun scratch_operand
-This predicate allows hard registers and @code{SCRATCH} expressions,
-but not pseudo-registers.  It is used internally by @code{match_scratch};
-it should not be used directly.
+该predicate允许硬件寄存器和@code{SCRATCH}表达式，但不允许伪寄存器。
+其由@code{match_scratch}在内部使用；而不应该被直接使用。
 @end defun
 
 @noindent
-The third category of predicates allow only some kind of memory reference.
+第三类predicate只允许某种内存引用。
 
 @defun memory_operand
-This predicate allows any valid reference to a quantity of mode
-@var{mode} in memory, as determined by the weak form of
-@code{GO_IF_LEGITIMATE_ADDRESS} (@pxref{寻址模式}).
+该predicate允许任何对内存中机器模式@var{mode}的一定数量的有效引用，
+并通过@code{GO_IF_LEGITIMATE_ADDRESS}的弱形式来确定（参见@ref{寻址模式}）。
 @end defun
 
 @defun address_operand
-This predicate is a little unusual; it allows any operand that is a
-valid expression for the @emph{address} of a quantity of mode
-@var{mode}, again determined by the weak form of
-@code{GO_IF_LEGITIMATE_ADDRESS}.  To first order, if
-@samp{@w{(mem:@var{mode} (@var{exp}))}} is acceptable to
-@code{memory_operand}, then @var{exp} is acceptable to
-@code{address_operand}.  Note that @var{exp} does not necessarily have
-the mode @var{mode}.
+该predicate有些不常用；
+其允许任何为机器模式@var{mode}的一定数量的地址有效表达式操作数，
+同样通过@code{GO_IF_LEGITIMATE_ADDRESS}的弱形式来确定。
+首先，如果@samp{@w{(mem:@var{mode} (@var{exp}))}}被@code{memory_operand}接受，
+则@var{exp}被@code{address_operand}接受。
+注意@var{exp}不必具有机器模式@var{mode}。
 @end defun
 
 @defun indirect_operand
-This is a stricter form of @code{memory_operand} which allows only
-memory references with a @code{general_operand} as the address
-expression.  New uses of this predicate are discouraged, because
-@code{general_operand} is very permissive, so it's hard to tell what
-an @code{indirect_operand} does or does not allow.  If a target has
-different requirements for memory operands for different instructions,
-it is better to define target-specific predicates which enforce the
-hardware's requirements explicitly.
+这是一个@code{memory_operand}的更严格形式，
+其只允许将@code{general_operand}作为地址表达式的内存引用。
+不鼓励对该predicate的新的使用，因为@code{general_operand}的条件非常宽，
+所以很难说清对于@code{indirect_operand}什么是被允许的，什么是不被允许的。
+如果目标机对不同指令的内存操作数具有不同的要求，
+则最好定义目标机特定的predicate，以显式的加强硬件的要求。
 @end defun
 
 @defun push_operand
-This predicate allows a memory reference suitable for pushing a value
-onto the stack.  This will be a @code{MEM} which refers to
-@code{stack_pointer_rtx}, with a side-effect in its address expression
-(@pxref{Incdec}); which one is determined by the
-@code{STACK_PUSH_CODE} macro (@pxref{帧布局}).
+该predicate允许适合将值压入栈中的内存引用。这将为一个@code{MEM}，
+其引用@code{stack_pointer_rtx}，且在其地址表达式中具有一个副作用
+（参见@ref{Incdec}）；其由宏@code{STACK_PUSH_CODE}来确定（参见@ref{帧布局}）。
 @end defun
 
 @defun pop_operand
-This predicate allows a memory reference suitable for popping a value
-off the stack.  Again, this will be a @code{MEM} referring to
-@code{stack_pointer_rtx}, with a side-effect in its address
-expression.  However, this time @code{STACK_POP_CODE} is expected.
+该predicate允许适合将值弹出栈中的内存引用。同样，这将为一个@code{MEM} ，
+其引用@code{stack_pointer_rtx}，且在其地址表达式中具有一个副作用；
+不过，这次是@code{STACK_POP_CODE} 。
 @end defun
 
 @noindent
-The fourth category of predicates allow some combination of the above
-operands.
+第四类predicate允许上面的操作数的某种组合。
 
 @defun nonmemory_operand
-This predicate allows any immediate or register operand valid for @var{mode}.
+该predicate允许任何对于@var{mode}有效的立即数，或寄存器操作数。
 @end defun
 
 @defun nonimmediate_operand
-This predicate allows any register or memory operand valid for @var{mode}.
+该predicate允许任何对于@var{mode}有效的寄存器，或内存操作数。
 @end defun
 
 @defun general_operand
-This predicate allows any immediate, register, or memory operand
-valid for @var{mode}.
+该predicate允许任何对于@var{mode}有效的立即数，寄存器，或内存操作数。
 @end defun
 
 @noindent
-Finally, there is one generic operator predicate.
+最后，有一个通用操作符predicate。
 
 @defun comparison_operator
-This predicate matches any expression which performs an arithmetic
-comparison in @var{mode}; that is, @code{COMPARISON_P} is true for the
-expression code.
+该predicate匹配任何执行一个基于@var{mode}的算术比较表达式；
+即，@code{COMPARISON_P}对于表达式代码为真。
 @end defun
 
-@node 定义判定条件
-@subsection 定义机器特定的判定条件
+@node 定义predicate
+@subsection 定义机器特定的predicate
 @cindex defining predicates
 @findex define_predicate
 @findex define_special_predicate
 
-Many machines have requirements for their operands that cannot be
-expressed precisely using the generic predicates.  You can define
-additional predicates using @code{define_predicate} and
-@code{define_special_predicate} expressions.  These expressions have
-three operands:
-
+许多机器对操作数的要求无法使用通用的predicate来精确表达。
+你可以使用表达式@code{define_predicate}和@code{define_special_predicate}来定义 额外的predicate。这些表达式具有三个操作数： 
 @itemize @bullet
 @item
-The name of the predicate, as it will be referred to in
-@code{match_operand} or @code{match_operator} expressions.
+predicate的名字，
+其将在@code{match_operand}或@code{match_operator}表达式中被引用。
 
 @item
-An RTL expression which evaluates to true if the predicate allows the
-operand @var{op}, false if it does not.  This expression can only use
-the following RTL codes:
+一个RTL表达式，如果predicate允许@var{op}操作数，则值为真，否则为假。
+该表达式只能使用下列RTL代码： 
 
 @table @code
 @item MATCH_OPERAND
-When written inside a predicate expression, a @code{MATCH_OPERAND}
-expression evaluates to true if the predicate it names would allow
-@var{op}.  The operand number and constraint are ignored.  Due to
-limitations in @command{genrecog}, you can only refer to generic
-predicates and predicates that have already been defined.
+当用于predicate表达式中时，
+表达式@code{MATCH_OPERAND}在predicate允许@var{op}时为真。
+操作数编号和constraint被忽略。由于@command{genrecog}中的限制，
+你只能用于引用通用的predicate和已经被定义的predicate。
 
 @item MATCH_CODE
-This expression evaluates to true if @var{op} or a specified
-subexpression of @var{op} has one of a given list of RTX codes.
+该表达式为真，
+如果@var{op}或一个指定的@var{op}的子表达式具有给定RTX代码列表中的一个RTX代码。
 
-The first operand of this expression is a string constant containing a
-comma-separated list of RTX code names (in lower case).  These are the
-codes for which the @code{MATCH_CODE} will be true.
+该表达式的第一个操作数为一个字符串常量，
+包含了逗号分割的RTX代码名字（小写形式）列表。这些是@code{MATCH_CODE}为真的代码。
 
-The second operand is a string constant which indicates what
-subexpression of @var{op} to examine.  If it is absent or the empty
-string, @var{op} itself is examined.  Otherwise, the string constant
-must be a sequence of digits and/or lowercase letters.  Each character
-indicates a subexpression to extract from the current expression; for
-the first character this is @var{op}, for the second and subsequent
-characters it is the result of the previous character.  A digit
-@var{n} extracts @samp{@w{XEXP (@var{e}, @var{n})}}; a letter @var{l}
-extracts @samp{@w{XVECEXP (@var{e}, 0, @var{n})}} where @var{n} is the
-alphabetic ordinal of @var{l} (0 for `a', 1 for 'b', and so on).  The
-@code{MATCH_CODE} then examines the RTX code of the subexpression
-extracted by the complete string.  It is not possible to extract
-components of an @code{rtvec} that is not at position 0 within its RTX
-object.
+第二个操作数为一个字符串常量，其指示@var{op}的什么子表达式需要被检查。
+如果没有或者为空字符串，则检查@var{op}本身。
+否则，字符串常量必须为一个数字和/或小写字母的序列。
+每个字符指示从当前表达式中抽取的子表达式；
+第一个字符为@var{op}，第二个和后续字符，其为先前字符的结果。
+数字@var{n}用于抽取@samp{@w{XEXP (@var{e}, @var{n})}}；
+字母@var{l}抽取@samp{@w{XVECEXP (@var{e}, 0, @var{n})}}，
+其中@var{n}为@var{l}的字母顺序（0为`a'，1为'b'，等等）。
+@code{MATCH_CODE}然后检查完整字符串所抽取的子表达式的RTX代码。
 
 @item MATCH_TEST
-This expression has one operand, a string constant containing a C
-expression.  The predicate's arguments, @var{op} and @var{mode}, are
-available with those names in the C expression.  The @code{MATCH_TEST}
-evaluates to true if the C expression evaluates to a nonzero value.
-@code{MATCH_TEST} expressions must not have side effects.
+该表达式具有一个操作数，一个包含了一个C表达式的字符串常量。
+在C表达式中可以使用predicate的参数，@var{op}和@var{mode}。
+当C表达式为非0值时，@code{MATCH_TEST}为真。
+@code{MATCH_TEST}表达式必须不具有副作用。
 
 @item  AND
 @itemx IOR
 @itemx NOT
 @itemx IF_THEN_ELSE
-The basic @samp{MATCH_} expressions can be combined using these
-logical operators, which have the semantics of the C operators
-@samp{&&}, @samp{||}, @samp{!}, and @samp{@w{? :}} respectively.  As
-in Common Lisp, you may give an @code{AND} or @code{IOR} expression an
-arbitrary number of arguments; this has exactly the same effect as
-writing a chain of two-argument @code{AND} or @code{IOR} expressions.
+基本的@samp{MATCH_}表达式可以使用这些逻辑操作符组合，
+其分别具有C操作符@samp{&&}, @samp{||}, @samp{!}和@samp{@w{? :}}的语义。
+正如在Common Lisp中，可以给@code{AND}或@code{IOR}表达式任意数目的参数；
+这跟写成两个参数的@code{AND}或@code{IOR}表达式链具有相同的效果。
 @end table
 
 @item
-An optional block of C code, which should execute
-@samp{@w{return true}} if the predicate is found to match and
-@samp{@w{return false}} if it does not.  It must not have any side
-effects.  The predicate arguments, @var{op} and @var{mode}, are
-available with those names.
+一个可选的C代码块，其应该在发现predicate匹配时执行@samp{@w{return true}}，
+不匹配时执行@samp{@w{return false}}。其一定不要具有副作用。
+predicate参数，@var{op}和@var{mode}，是有效的。
 
-If a code block is present in a predicate definition, then the RTL
-expression must evaluate to true @emph{and} the code block must
-execute @samp{@w{return true}} for the predicate to allow the operand.
-The RTL expression is evaluated first; do not re-check anything in the
-code block that was checked in the RTL expression.
+如果代码块存在于predicate定义中，则对于predicate允许的操作数，
+RTL表达式必须求值为true并且代码块必须执行@samp{@w{return true}}。
+RTL表达式被首先求值，不要重复检查代码块中的在RTL表达式中曾经被检查过的任何事情。
 @end itemize
 
-The program @command{genrecog} scans @code{define_predicate} and
-@code{define_special_predicate} expressions to determine which RTX
-codes are possibly allowed.  You should always make this explicit in
-the RTL predicate expression, using @code{MATCH_OPERAND} and
-@code{MATCH_CODE}.
+程序@command{genrecog}扫描@code{define_predicate}和
+@code{define_special_predicate}表达式来决定什么RTX代码可能被允许。
+你应该使其在RTL predicate表达式中总是显式的，
+使用@code{MATCH_OPERAND}和@code{MATCH_CODE}。
 
-Here is an example of a simple predicate definition, from the IA64
-machine description:
+这里有一个简单的定义predicate的例子，来自IA64机器描述：
 
 @smallexample
 @group
@@ -825,7 +791,7 @@ machine description:
 @end smallexample
 
 @noindent
-And here is another, showing the use of the C block.
+另一个例子，展示了C块的使用。
 
 @smallexample
 @group
@@ -843,47 +809,43 @@ And here is another, showing the use of the C block.
 @end group
 @end smallexample
 
-Predicates written with @code{define_predicate} automatically include
-a test that @var{mode} is @code{VOIDmode}, or @var{op} has the same
-mode as @var{mode}, or @var{op} is a @code{CONST_INT} or
-@code{CONST_DOUBLE}.  They do @emph{not} check specifically for
-integer @code{CONST_DOUBLE}, nor do they test that the value of either
-kind of constant fits in the requested mode.  This is because
-target-specific predicates that take constants usually have to do more
-stringent value checks anyway.  If you need the exact same treatment
-of @code{CONST_INT} or @code{CONST_DOUBLE} that the generic predicates
-provide, use a @code{MATCH_OPERAND} subexpression to call
-@code{const_int_operand}, @code{const_double_operand}, or
-@code{immediate_operand}.
+使用@code{define_predicate}编写的predicate会自动包含一个测试，
+用来测试@var{mode}为@code{VOIDmode}，
+或者@var{op}具有与@var{mode}相同的机器模式，
+或者@var{op}为@code{CONST_INT}或@code{CONST_DOUBLE}。
+它们@emph{不}专门检查整数@code{CONST_DOUBLE}，
+也不测试每种常量的值是否适合所需求的机器模式。
+这是因为接受常量的目标机特定的predicate，通常必须做更严厉的值检查。
+如果你需要确切的通用predicate提供的对@code{CONST_INT}或
+@code{CONST_DOUBLE}的对待，
+则可以使用@code{MATCH_OPERAND}子表达式来调用@code{const_int_operand}, 
+@code{const_double_operand}或者@code{immediate_operand}。
 
-Predicates written with @code{define_special_predicate} do not get any
-automatic mode checks, and are treated as having special mode handling
-by @command{genrecog}.
+使用@code{define_special_predicate}编写的predicate不做任何自动的机器模式检查，
+并且@command{genrecog}将其作为具有特定的机器模式处理来对待。
 
-The program @command{genpreds} is responsible for generating code to
-test predicates.  It also writes a header file containing function
-declarations for all machine-specific predicates.  It is not necessary
-to declare these predicates in @file{@var{cpu}-protos.h}.
+程序@command{genpreds}负责生成代码来测试predicate。
+其还编写了一个包含所有机器特定predicate的函数声明的头文件。
+所以不需要在cpu-protos.h中声明这些predicate。
 @end ifset
 
 @c Most of this node appears by itself (in a different place) even
 @c when the INTERNALS flag is clear.  Passages that require the internals
 @c manual's context are conditionalized to appear only in the internals manual.
 @ifset INTERNALS
-@node 约束条件
-@section 操作数约束
+@node Constraints
+@section 操作数的constraint
 @cindex operand constraints
 @cindex constraints
 
-Each @code{match_operand} in an instruction pattern can specify
-constraints for the operands allowed.  The constraints allow you to
-fine-tune matching within the set of operands allowed by the
-predicate.
+在指令模式中的每个@code{match_operand}都可以指定操作数所允许的constraint。
+constraint允许你在由predicate所允许的操作数集里进行微调匹配。
+
 
 @end ifset
 @ifclear INTERNALS
-@node 约束条件
-@section @code{asm}操作数的约束条件
+@node Constraints
+@section @code{asm}操作数的constraint条件
 @cindex operand constraints, @code{asm}
 @cindex constraints, @code{asm}
 @cindex @code{asm} constraints
@@ -891,172 +853,135 @@ predicate.
 Here are specific details on what constraint letters you can use with
 @code{asm} operands.
 @end ifclear
-Constraints can say whether
-an operand may be in a register, and which kinds of register; whether the
-operand can be a memory reference, and which kinds of address; whether the
-operand may be an immediate constant, and which possible values it may
-have.  Constraints can also require two operands to match.
+constraint可以告诉一个操作数是否可以在寄存器中，以及哪种寄存器；
+操作数是否可以为内存引用，以及哪种寻址方式；操作数是否可以为立即数，
+以及可以具有什么值。constraint还可以要求两个操作数要匹配。
 
 @ifset INTERNALS
 @menu
-* 简单约束::       约束的基本用法
-* 多个可选项::     当insn具有两个可选的约束模式
-* 类别优先选择::   约束可以指导用哪个硬件寄存器来存放事物
-* 修饰符::         对约束效果更精确的控制
-* 禁止Insn可选项:: 使用@code{enabled}属性来禁止insn可选项
-* 机器约束::       一些特定机器现有的约束
-* 定义约束::       如何定义机器特定的约束
-* C约束接口::      如何测试C代码的约束
+* 简单的constraint::     constraint的基本用法
+* 多个可选项::           当insn具有两个可选的constraint模式
+* 类别优先选择::         constraint可以指导用哪个硬件寄存器来存放事物
+* 修饰符::               对constraint效果更精确的控制
+* 禁止Insn可选项::       使用@code{enabled}属性来禁止insn可选项
+* 机器constraint::       一些特定机器现有的constraint
+* 定义constraint::       如何定义机器特定的constraint
+* C constraint接口::     如何测试C代码的constraint
 @end menu
 @end ifset
 
 @ifclear INTERNALS
 @menu
-* 简单约束::   约束的基本用法
-* 多个可选项:: 当insn具有两个可选的约束模式
-* 修饰符::     对约束效果更精确的控制
-* 机器约束::   一些特定机器现有的约束
+* 简单的constraint::   constraint的基本用法
+* 多个可选项::         当insn具有两个可选的constraint模式
+* 修饰符::             对constraint效果更精确的控制
+* 机器constraint::     一些特定机器现有的constraint
 @end menu
 @end ifclear
 
-@node 简单约束
-@subsection 简单约束
+@node 简单的constraint
+@subsection 简单的constraint
 @cindex simple constraints
 
-The simplest kind of constraint is a string full of letters, each of
-which describes one kind of operand that is permitted.  Here are
-the letters that are allowed:
+最简单的constraint种类是一个由字母组成的字符串，
+每个字母描述一种所允许的操作数。这里是所允许的字母：
 
 @table @asis
 @item whitespace
-Whitespace characters are ignored and can be inserted at any position
-except the first.  This enables each alternative for different operands to
-be visually aligned in the machine description even if they have different
-number of constraints and modifiers.
+空格字符将被忽略，并且可以插到除了起始处的任何地方。这使得机器描述中，
+不同操作数的每个可选项可以被可视化的对齐，即使它们具有不同数目的约束和修饰符。 
 
 @cindex @samp{m} in constraint
 @cindex memory references in constraints
 @item @samp{m}
-A memory operand is allowed, with any kind of address that the machine
-supports in general.
-Note that the letter used for the general memory constraint can be
-re-defined by a back end using the @code{TARGET_MEM_CONSTRAINT} macro.
+内存操作数将被允许，包括机器支持的任何寻址方式。
 
 @cindex offsettable address
 @cindex @samp{o} in constraint
 @item @samp{o}
-A memory operand is allowed, but only if the address is
-@dfn{offsettable}.  This means that adding a small integer (actually,
-the width in bytes of the operand, as determined by its machine mode)
-may be added to the address and the result is also a valid memory
-address.
+内存操作数将被允许，但只有当地址为偏移表的时候。
+这意味着可以对地址加上一个小的整数(实际上,是为操作数的数个字节宽度,
+这由它的机器模式决定),其结果也为一个有效的内存地址。
 
 @cindex autoincrement/decrement addressing
-For example, an address which is constant is offsettable; so is an
-address that is the sum of a register and a constant (as long as a
-slightly larger constant is also within the range of address-offsets
-supported by the machine); but an autoincrement or autodecrement
-address is not offsettable.  More complicated indirect/indexed
-addresses may or may not be offsettable depending on the other
-addressing modes that the machine supports.
-
-Note that in an output operand which can be matched by another
-operand, the constraint letter @samp{o} is valid only when accompanied
-by both @samp{<} (if the target machine has predecrement addressing)
-and @samp{>} (if the target machine has preincrement addressing).
+例如，地址为常数的为一个偏移表；所以地址为一个寄存器和常数（只要常数在机器所支持
+的地址偏移范围）的和；但是递增或者递减地址不是偏移表。更加复杂的间接/索引地址可
+能是或者可能不是偏移表，这取决于机器支持的其它寻址模式。
 
 @cindex @samp{V} in constraint
 @item @samp{V}
-A memory operand that is not offsettable.  In other words, anything that
-would fit the @samp{m} constraint but not the @samp{o} constraint.
+一个不是offsettable的内存操作数。换句话说，
+任何适合@samp{m}约束但不是@samp{o}约束的。 
 
 @cindex @samp{<} in constraint
 @item @samp{<}
-A memory operand with autodecrement addressing (either predecrement or
-postdecrement) is allowed.
+允许具有自动减量寻址（先减或者后减）的内存操作数。 
 
 @cindex @samp{>} in constraint
 @item @samp{>}
-A memory operand with autoincrement addressing (either preincrement or
-postincrement) is allowed.
+允许具有自动增量寻址（先增或者后增）的内存操作数。
 
 @cindex @samp{r} in constraint
 @cindex registers in constraints
 @item @samp{r}
-A register operand is allowed provided that it is in a general
-register.
+允许为通用寄存器的寄存器操作数。 
 
 @cindex constants in constraints
 @cindex @samp{i} in constraint
 @item @samp{i}
-An immediate integer operand (one with constant value) is allowed.
-This includes symbolic constants whose values will be known only at
-assembly time or later.
+立即数（具有常数值）将被允许。这包括符号常量，
+其值将在汇编时候或者更晚的时候才被知道。 
 
 @cindex @samp{n} in constraint
 @item @samp{n}
-An immediate integer operand with a known numeric value is allowed.
-Many systems cannot support assembly-time constants for operands less
-than a word wide.  Constraints for these operands should use @samp{n}
-rather than @samp{i}.
+立即数，其具有已知的数值。
+许多系统不支持汇编时间常量作为小于一个字的宽度的操作数。
+这些操作数的约束应该为@samp{n}而不是@samp{i}。 
 
 @cindex @samp{I} in constraint
 @item @samp{I}, @samp{J}, @samp{K}, @dots{} @samp{P}
-Other letters in the range @samp{I} through @samp{P} may be defined in
-a machine-dependent fashion to permit immediate integer operands with
-explicit integer values in specified ranges.  For example, on the
-68000, @samp{I} is defined to stand for the range of values 1 to 8.
-This is the range permitted as a shift count in the shift
-instructions.
+从@samp{I}到@samp{P}的其它字母可以被定义为机器特定的，
+用来运行立即数具有显示指定范围的整数值。例如，在68000上，
+@samp{I}被定义为代表1到8的值。这是在移位指令中被允许作为移位数的范围。 
 
 @cindex @samp{E} in constraint
 @item @samp{E}
-An immediate floating operand (expression code @code{const_double}) is
-allowed, but only if the target floating point format is the same as
-that of the host machine (on which the compiler is running).
+浮点立即数（表达式代码为@code{const_double}），
+但是必须target浮点格式与host机器（编译器运行的机器）的相同才行。 
 
 @cindex @samp{F} in constraint
 @item @samp{F}
-An immediate floating operand (expression code @code{const_double} or
-@code{const_vector}) is allowed.
+浮点立即数（表达式代码为@code{const_double}或者@code{const_vector}）。 
 
 @cindex @samp{G} in constraint
 @cindex @samp{H} in constraint
 @item @samp{G}, @samp{H}
-@samp{G} and @samp{H} may be defined in a machine-dependent fashion to
-permit immediate floating operands in particular ranges of values.
+@samp{G}和@samp{H}可以被定义为机器特定的方式来允许浮点立即数具有特定范围的值。 
 
 @cindex @samp{s} in constraint
 @item @samp{s}
-An immediate integer operand whose value is not an explicit integer is
-allowed.
+整数立即数，其值不是一个显式的整数。
 
-This might appear strange; if an insn allows a constant operand with a
-value not known at compile time, it certainly must allow any known
-value.  So why use @samp{s} instead of @samp{i}?  Sometimes it allows
-better code to be generated.
+这可能有点奇怪；如果insn允许常量操作数具有在编译时不可知的值，
+它当然必须允许任何可知的值。所以为什么用@samp{s}，而不是@samp{i}能？有时候，
+它会允许生成更好的代码。
 
-For example, on the 68000 in a fullword instruction it is possible to
-use an immediate operand; but if the immediate value is between @minus{}128
-and 127, better code results from loading the value into a register and
-using the register.  This is because the load into the register can be
-done with a @samp{moveq} instruction.  We arrange for this to happen
-by defining the letter @samp{K} to mean ``any integer outside the
-range @minus{}128 to 127'', and then specifying @samp{Ks} in the operand
-constraints.
+例如，在68000上的全字指令，有可能使用一个立即数操作数；
+但是如果立即数的值是处于-128和127之间，更好的代码是将值加载到寄存器中，
+使用寄存器。这是因为加载到寄存器中可以由@samp{moveq}指令来完成。
+我们对此通过定义字母@samp{K}来表示任意范围超出-128和127的整数，
+然后在操作数约束中指定@samp{Ks}。
 
 @cindex @samp{g} in constraint
 @item @samp{g}
-Any register, memory or immediate integer operand is allowed, except for
-registers that are not general registers.
+任何寄存器，内存或整数立即数，除了不是通用寄存器的寄存器。 
 
 @cindex @samp{X} in constraint
 @item @samp{X}
 @ifset INTERNALS
-Any operand whatsoever is allowed, even if it does not satisfy
-@code{general_operand}.  This is normally used in the constraint of
-a @code{match_scratch} when certain alternatives will not actually
-require a scratch register.
+任何操作数都被允许，即使其不满足@code{general_operand}。
+这通常用于@code{match_scratch}的约束中，
+当一些的可选项实际上不需要scratch寄存器的时候。 
 @end ifset
 @ifclear INTERNALS
 Any operand whatsoever is allowed.
@@ -1065,56 +990,35 @@ Any operand whatsoever is allowed.
 @cindex @samp{0} in constraint
 @cindex digits in constraint
 @item @samp{0}, @samp{1}, @samp{2}, @dots{} @samp{9}
-An operand that matches the specified operand number is allowed.  If a
-digit is used together with letters within the same alternative, the
-digit should come last.
+匹配指定操作数编号的操作数。如果数字与字母一起使用，则数字应该放在最后。
 
-This number is allowed to be more than a single digit.  If multiple
-digits are encountered consecutively, they are interpreted as a single
-decimal integer.  There is scant chance for ambiguity, since to-date
-it has never been desirable that @samp{10} be interpreted as matching
-either operand 1 @emph{or} operand 0.  Should this be desired, one
-can use multiple alternatives instead.
+该编号允许多于单个数字。如果多个数字连续的在一起，
+则它们被解析为一个单独的十进制整数。很少会因此产生不明确，因为到目前为止，
+还没有想要将@samp{10}解析为匹配操作数1或者0的。如果有这样的需要，
+则可以使用多个可选项来替代。
 
 @cindex matching constraint
 @cindex constraint, matching
-This is called a @dfn{matching constraint} and what it really means is
-that the assembler has only a single operand that fills two roles
-@ifset INTERNALS
-considered separate in the RTL insn.  For example, an add insn has two
-input operands and one output operand in the RTL, but on most CISC
-@end ifset
-@ifclear INTERNALS
-which @code{asm} distinguishes.  For example, an add instruction uses
-two input operands and an output operand, but on most CISC
-@end ifclear
-machines an add instruction really has only two operands, one of them an
-input-output operand:
+这被称为匹配约束，其实际上是指汇编器只有一个单独的操作数，
+却在RTL insn中扮演两个角色。例如，
+add insn在RTL中具有两个输入操作数和一个输出操作数，
+但是多数CISC机器上，add指令实际上只有两个操作数，其中一个为输入输出操作数：
 
 @smallexample
 addl #35,r12
 @end smallexample
 
-Matching constraints are used in these circumstances.
-More precisely, the two operands that match must include one input-only
-operand and one output-only operand.  Moreover, the digit must be a
-smaller number than the number of the operand that uses it in the
-constraint.
-
-@ifset INTERNALS
-For operands to match in a particular case usually means that they
-are identical-looking RTL expressions.  But in a few special cases
-specific kinds of dissimilarity are allowed.  For example, @code{*x}
-as an input operand will match @code{*x++} as an output operand.
-For proper results in such cases, the output template should always
-use the output-operand's number when printing the operand.
-@end ifset
+匹配约束被用于这些情况。更确切的说，
+匹配的两个操作数必须包括一个只作输入的操作数和一个只作输出的操作数。
 
 @cindex load address instruction
 @cindex push address instruction
 @cindex address constraints
 @cindex @samp{p} in constraint
 @item @samp{p}
+允许一个为有效内存地址的操作数。这用于“加载地址”和“地址压栈”指令。
+
+约束中的`p'必须由match_operand中的作为断言的address_operand协同工作。该断言将match_operand中指定的机器模式解析为地址有效的内存引用的机器模式。
 An operand that is a valid memory address is allowed.  This is
 for ``load address'' and ``push address'' instructions.
 
@@ -1127,6 +1031,7 @@ reference for which the address would be valid.
 @cindex other register constraints
 @cindex extensible constraints
 @item @var{other-letters}
+其它字母可以采用机器相关的方式被定义，用于代表寄存器的特定类别或者其它任意的操作数类型。`d', `a' 和 `f'在68000/68020被定义用来代表数据，地址和浮点寄存器。
 Other letters can be defined in machine-dependent fashion to stand for
 particular classes of registers or other arbitrary operand types.
 @samp{d}, @samp{a} and @samp{f} are defined on the 68000/68020 to stand
@@ -1134,6 +1039,9 @@ for data, address and floating point registers.
 @end table
 
 @ifset INTERNALS
+为了具有有效的汇编代码，每个操作数必须满足它的约束。但是如果不满足的话，也不会阻止将该指令模式应用到insn上。替代的，它会指示编译器去修改代码以至于约束将被满足。通常，这是通过将一个操作数复制到寄存器中来完成的。
+
+因此，对比下面的两条指令模式：
 In order to have valid assembler code, each operand must satisfy
 its constraint.  But a failure to do so does not prevent the pattern
 from applying to an insn.  Instead, it directs the compiler to modify
@@ -1152,6 +1060,7 @@ Contrast, therefore, the two instruction patterns that follow:
 @end smallexample
 
 @noindent
+其具有两个操作数，其中一个必须出现在两个位置，
 which has two operands, one of which must appear in two places, and
 
 @smallexample
@@ -1164,6 +1073,7 @@ which has two operands, one of which must appear in two places, and
 @end smallexample
 
 @noindent
+其具有三个操作数，其中两个通过约束被要求为是相同的。如果我们考虑如下形式的一条insn 
 which has three operands, two of which are required by a constraint to be
 identical.  If we are considering an insn of the form
 
@@ -1175,6 +1085,7 @@ identical.  If we are considering an insn of the form
 @end smallexample
 
 @noindent
+第一个指令模式将根本不会被应用，因为该insn不在合适的地方包含两个相同的子表达式。指令模式会说“这看起来不像是一条加法指令；试一下其它模式”。第二个指令模式将会说，“是的，这是一条加法指令，但是有些问题”。它将指使编译器的重载过程生成额外的insn，使得约束为真。结果可能看起来像：
 the first pattern would not apply at all, because this insn does not
 contain two identical subexpressions in the right place.  The pattern would
 say, ``That does not look like an add instruction; try other patterns''.
@@ -1194,6 +1105,7 @@ results might look like this:
   @dots{})
 @end smallexample
 
+你必须确保每个操作数，在每个指令模式中，具有能够处理可能会出现的任何RTL表达式的约束。（当使用多个可选项时，每个指令模式，对于每个可能的操作数表达式组合，必须至少具有一个可选项可以处理该操作数的组合。）约束不需要允许任何可能的操作数——如果是这种情况，它们就不做约束了——但是它们必须至少指出可以加载任何可能操作数，使得适合约束的方法。
 It is up to you to make sure that each operand, in each pattern, has
 constraints that can handle any RTL expression that could be present for
 that operand.  (When multiple alternatives are in use, each pattern must,
@@ -1205,6 +1117,11 @@ reloading any possible operand so that it will fit.
 
 @itemize @bullet
 @item
+如果约束接受断言允许的任何操作数，则没有问题：重载对于该操作数将没有必要。
+
+例如，操作数对于它的约束允许除了寄存器以外的任何事物，如果它的断言不接受寄存器的话，这样是安全的。
+
+操作数对于断言只接受常量时，如果它的约束包含字母'i'，则是安全的。如果任何可能的常量都被接受，则可以使用'i'；如果断言具有更多的选择性，则约束也可以具有更多的选择性。
 If the constraint accepts whatever operands the predicate permits,
 there is no problem: reloading is never necessary for this operand.
 
@@ -1218,6 +1135,7 @@ if the predicate is more selective, then the constraints may also be
 more selective.
 
 @item
+任何操作数表达式可以通过复制到寄存器中来进行重载。所以如果一个操作数的约束允许某种寄存器，其当然是安全的。它不需要允许所有类型的寄存器；编译器知道为了使指令有效，如何将一个寄存器复制到另一个合适类别的寄存器中。 
 Any operand expression can be reloaded by copying it into a register.
 So if an operand's constraints allow some kind of register, it is
 certain to be safe.  It need not permit all classes of registers; the
@@ -1227,17 +1145,20 @@ proper class in order to make an instruction valid.
 @cindex nonoffsettable memory reference
 @cindex memory reference, nonoffsettable
 @item
+非偏移表的内存引用可以通过将地址复制到寄存器中来重载。所以如果约束使用字母'o'，则所有内存引用将被照顾到。
 A nonoffsettable memory reference can be reloaded by copying the
 address into a register.  So if the constraint uses the letter
 @samp{o}, all memory references are taken care of.
 
 @item
+常量操作数可以通过在内存中分配空间作为预先被初始化的数据来重载。然后可以使用内存引用。所以如果约束使用字母'o'或者'm'，则常量操作数不是问题。
 A constant operand can be reloaded by allocating space in memory to
 hold it as preinitialized data.  Then the memory reference can be used
 in place of the constant.  So if the constraint uses the letters
 @samp{o} or @samp{m}, constant operands are not a problem.
 
 @item
+如果约束允许的常量和伪寄存器没有被分配到硬件寄存器中，并且等价于一个常量，则寄存器将被常量替换。如果断言不允许常量并且insn出于某种原因被识别了，则编译器将会崩溃。因此断言必须总是能够识别任何被约束允许的对象。
 If the constraint permits a constant and a pseudo register used in an insn
 was not allocated to a hard register and is equivalent to a constant,
 the register will be replaced with the constant.  If the predicate does
@@ -1246,6 +1167,9 @@ compiler will crash.  Thus the predicate must always recognize any
 objects allowed by the constraint.
 @end itemize
 
+如果操作数的断言能够识别寄存器，但是约束不允许它们，则能够使编译器崩溃。当该操作数正好是寄存器时，重载过程将被打乱，因为它不知道如何将寄存器临时复制到内存中。
+
+如果断言接受一元操作符，约束将被应用到操作数上。例如，MIPS处理器在ISA3级时，支持一条指令，其将两个SImode的寄存器相加产生一个 DImode的结果，但是必须寄存器能够被正确的符号扩展。该断言对于输入操作数接受一个SImode寄存器的sign_extend。将约束写成指示寄存器的类型需要为sign_extend的操作数。
 If the operand's predicate can recognize registers, but the constraint does
 not permit them, it can make the compiler crash.  When this operand happens
 to be a register, the reload pass will be stymied, because it does not know
@@ -1262,20 +1186,19 @@ to indicate the type of register that is required for the operand of the
 @end ifset
 
 @node 多个可选项
-@subsection 多个可选的约束
+@subsection 多个可选的constraint
 @cindex multiple alternative constraints
 
-Sometimes a single instruction has multiple alternative sets of possible
-operands.  For example, on the 68000, a logical-or instruction can combine
-register or an immediate value into memory, or it can combine any kind of
-operand into a register; but it cannot combine one memory location into
-another.
+有时单个指令具有多个可选的操作数集。例如，在68000上，
+一个逻辑或指令可以将寄存器或者立即数的值组合到内存中，
+或者可以组合任何类型的操作数到寄存器中；但是不能将一个内存位置组合到另一个中。
 
-These constraints are represented as multiple alternatives.  An alternative
-can be described by a series of letters for each operand.  The overall
-constraint for an operand is made from the letters for this operand
-from the first alternative, a comma, the letters for this operand from
-the second alternative, a comma, and so on until the last alternative.
+这些约束作为多个可选项来表示。
+一个可选项可以通过针对每个操作数的一系列字母来描述。
+一个操作数的总的约束由该操作数第一个可选项的字母，逗号，
+该操作数的第二个可选项，逗号，等等直到最后一个可选项组成。
+这里有一个在68000上全字逻辑或的表示：
+
 @ifset INTERNALS
 Here is how it is done for fullword logical-or on the 68000:
 
@@ -1287,46 +1210,39 @@ Here is how it is done for fullword logical-or on the 68000:
   @dots{})
 @end smallexample
 
-The first alternative has @samp{m} (memory) for operand 0, @samp{0} for
-operand 1 (meaning it must match operand 0), and @samp{dKs} for operand
-2.  The second alternative has @samp{d} (data register) for operand 0,
-@samp{0} for operand 1, and @samp{dmKs} for operand 2.  The @samp{=} and
-@samp{%} in the constraints apply to all the alternatives; their
-meaning is explained in the next section (@pxref{Class Preferences}).
+第一个可选项具有操作数0的@samp{m} (memory)，操作数1的@samp{0}（意味着其必须匹配
+操作数0）和操作数2的@samp{dKs}。第二个可选项具有操作数0的@samp{d}
+(data register)，操作数1的@samp{0}和操作数2的@samp{dmKs}。
+约束中的@samp{=}和@samp{%}应用于所有的可选项；
+它们的含义在下一节介绍（参见@ref{类别优先选择}）。
 @end ifset
 
 @c FIXME Is this ? and ! stuff of use in asm()?  If not, hide unless INTERNAL
-If all the operands fit any one alternative, the instruction is valid.
-Otherwise, for each alternative, the compiler counts how many instructions
-must be added to copy the operands so that that alternative applies.
-The alternative requiring the least copying is chosen.  If two alternatives
-need the same amount of copying, the one that comes first is chosen.
-These choices can be altered with the @samp{?} and @samp{!} characters:
+如果所有操作数适合任意一个可选项，则指令为有效的。否则，对于每个可选项，
+编译器计算要复制操作数使得可选项可以使用所需要增加的指令个数。
+需要的复制最少的可选项将被选中。如果两个可选项需要相同数目的复制，
+则选择前面的。这些选择可以通过字符@samp{?}和@samp{!}来改变：
 
 @table @code
 @cindex @samp{?} in constraint
 @cindex question mark
 @item ?
-Disparage slightly the alternative that the @samp{?} appears in,
-as a choice when no alternative applies exactly.  The compiler regards
-this alternative as one unit more costly for each @samp{?} that appears
-in it.
+轻微降低@samp{?}出现的可选项，当没有可选项被确切应用时，才将其作为选择。
+编译器将该可选项的花销认为高出一个单元。 
 
 @cindex @samp{!} in constraint
 @cindex exclamation point
 @item !
-Disparage severely the alternative that the @samp{!} appears in.
-This alternative can still be used if it fits without reloading,
-but if reloading is needed, some other alternative will be used.
+严格降低@samp{!}出现的可选项，当该选项没有reloading的时候还可以被使用，
+但是如果需要reloading，则将使用其它可选项。 
 @end table
 
 @ifset INTERNALS
-When an insn pattern has multiple alternatives in its constraints, often
-the appearance of the assembler code is determined mostly by which
-alternative was matched.  When this is so, the C code for writing the
-assembler code can use the variable @code{which_alternative}, which is
-the ordinal number of the alternative that was actually satisfied (0 for
-the first, 1 for the second alternative, etc.).  @xref{输出语句}.
+当insn指令模式在其约束中具有多个可选项时，
+经常会出现通过哪个可选项被匹配而决定使用使用什么汇编代码的情况。这时，
+输写汇编代码的C代码可以使用变量@code{which_alternative}，
+其为实际被满足的可选项的顺序编号（0对应第一个，1对应第二个，等等）。
+参见@ref{输出语句}。
 @end ifset
 
 @ifset INTERNALS
@@ -1336,80 +1252,63 @@ the first, 1 for the second alternative, etc.).  @xref{输出语句}.
 @cindex register class preference constraints
 
 @cindex voting between constraint alternatives
-The operand constraints have another function: they enable the compiler
-to decide which kind of hardware register a pseudo register is best
-allocated to.  The compiler examines the constraints that apply to the
-insns that use the pseudo register, looking for the machine-dependent
-letters such as @samp{d} and @samp{a} that specify classes of registers.
-The pseudo register is put in whichever class gets the most ``votes''.
-The constraint letters @samp{g} and @samp{r} also vote: they vote in
-favor of a general register.  The machine description says which registers
-are considered general.
+操作数约束还具有另一个功能：它们使编译器可以决定为伪寄存器分配哪种硬件寄存器。
+编译器检查应用到使用伪寄存器的insn的约束，
+查看机器相关的指定寄存器类别的字母像@samp{d}和@samp{a}。
+伪寄存器被放在获得最多“票数”的类别中。约束字母@samp{g}和@samp{r}也要投票：
+它们在通用寄存器方面进行投票。机器描述告诉哪种寄存器被认为是通用的。
 
-Of course, on some machines all registers are equivalent, and no register
-classes are defined.  Then none of this complexity is relevant.
+当然，在一些机器上所有寄存器都是等价的，并且没有定义寄存器类别。
+那么就相应的没有这么复杂了。
 @end ifset
 
 @node 修饰符
-@subsection 约束修饰符
+@subsection constraint修饰符
 @cindex modifiers in constraints
 @cindex constraint modifier characters
 
 @c prevent bad page break with this line
-Here are constraint modifier characters.
+这里是约束修饰符。 
 
 @table @samp
 @cindex @samp{=} in constraint
 @item =
-Means that this operand is write-only for this instruction: the previous
-value is discarded and replaced by output data.
+意味着该指令的该操作数为只写的：先前的值将被丢弃并且由输出数据替换。 
 
 @cindex @samp{+} in constraint
 @item +
-Means that this operand is both read and written by the instruction.
+意味着该操作数可以由指令读和写。
 
-When the compiler fixes up the operands to satisfy the constraints,
-it needs to know which operands are inputs to the instruction and
-which are outputs from it.  @samp{=} identifies an output; @samp{+}
-identifies an operand that is both input and output; all other operands
-are assumed to be input only.
+当编译器修订操作数来满足约束时，
+它需要知道哪些操作数为指令的输入以及哪些为它的输出。@samp{=}表示一个输出；
+@samp{+}表示一个操作数同时为输入和输出；所有其它操作数将被认为只是输入。
 
-If you specify @samp{=} or @samp{+} in a constraint, you put it in the
-first character of the constraint string.
+如果你指定了@samp{=}或者@samp{+}，你要将它作为约束字符串的第一个字符。
 
 @cindex @samp{&} in constraint
 @cindex earlyclobber operand
 @item &
-Means (in a particular alternative) that this operand is an
-@dfn{earlyclobber} operand, which is modified before the instruction is
-finished using the input operands.  Therefore, this operand may not lie
-in a register that is used as an input operand or as part of any memory
-address.
+意味着（在一个特别的可选项中）该操作数为一个@dfn{earlyclobber}操作数，
+其在指令完成使用输入操作数之前就被修改了。
+因此该操作数可能不在被用作输入操作数或者用作任何内存地址的一部分的寄存器中。
 
-@samp{&} applies only to the alternative in which it is written.  In
-constraints with multiple alternatives, sometimes one alternative
-requires @samp{&} while others do not.  See, for example, the
-@samp{movdf} insn of the 68000.
+@samp{&}只应用于其所在的可选项。在具有多个可选项的约束中，
+有时一个可选项需要@samp{&}，而其它的不需要。例如，参见68000的@samp{movdf} insn。
 
-An input operand can be tied to an earlyclobber operand if its only
-use as an input occurs before the early result is written.  Adding
-alternatives of this form often allows GCC to produce better code
-when only some of the inputs can be affected by the earlyclobber.
-See, for example, the @samp{mulsi3} insn of the ARM@.
+一个输入操作数可以被限定为一个earlyclobber操作数，
+如果它唯一的作为输入的使用发生在早期结果被写出之前。
+增加这种形式的可选项经常可以允许GCC来产生更好的代码，
+当只有一些输出可以被earlyclobber影响时。例如，参见ARM的@samp{mulsi3} insn。
 
-@samp{&} does not obviate the need to write @samp{=}.
+@samp{&}不排除对@samp{=}的需要。
 
 @cindex @samp{%} in constraint
 @item %
-Declares the instruction to be commutative for this operand and the
-following operand.  This means that the compiler may interchange the
-two operands if that is the cheapest way to make all operands fit the
-constraints.
+声明指令对于该操作数和随后的操作数是可交换的。这意味着编译器可以交换两操作数，
+如果有更廉价的方式来使得所有操作数都适合约束。
 @ifset INTERNALS
-This is often used in patterns for addition instructions
-that really have only two operands: the result must go in one of the
-arguments.  Here for example, is how the 68000 halfword-add
-instruction is defined:
+这经常被用于实际上只有两个操作数的加法指令中：结果必须放在一个参数中。
+这里有个例子，是68000半字加指令如何被定义的： 
 
 @smallexample
 (define_insn "addhi3"
@@ -1419,35 +1318,28 @@ instruction is defined:
   @dots{})
 @end smallexample
 @end ifset
-GCC can only handle one commutative pair in an asm; if you use more,
-the compiler may fail.  Note that you need not use the modifier if
-the two alternatives are strictly identical; this would only waste
-time in the reload pass.  The modifier is not operational after
-register allocation, so the result of @code{define_peephole2}
-and @code{define_split}s performed after reload cannot rely on
-@samp{%} to make the intended insn match.
+GCC只能处理在asm中的一个可交换对；如果你有更多的，编译器将会失败。
+注意如果两个可选项严格相同，则不需要使用该修饰符；这只会在重载过程浪费时间。
+该修饰符在寄存器分配之后，是不可操作的，
+所以在重载之后执行的@code{define_peephole2}和@code{define_split}的结果不能依赖
+@samp{%}来进行insn匹配。
 
 @cindex @samp{#} in constraint
 @item #
-Says that all following characters, up to the next comma, are to be
-ignored as a constraint.  They are significant only for choosing
-register preferences.
+表示所有后续的字符，直到下一个逗号，作为约束都被忽略掉。
+它们只对选择寄存器优先时有意义。 
 
 @cindex @samp{*} in constraint
 @item *
-Says that the following character should be ignored when choosing
-register preferences.  @samp{*} has no effect on the meaning of the
-constraint as a constraint, and no effect on reloading.
+表示后续字符在选择寄存器优先时应该被忽略掉。@samp{*}对于重载没有影响。
 
 @ifset INTERNALS
-Here is an example: the 68000 has an instruction to sign-extend a
-halfword in a data register, and can also sign-extend a value by
-copying it into an address register.  While either kind of register is
-acceptable, the constraints on an address-register destination are
-less strict, so it is best if register allocation makes an address
-register its goal.  Therefore, @samp{*} is used so that the @samp{d}
-constraint letter (for data register) is ignored when computing
-register preferences.
+这里有一个例子：68000有一条指令，用于在数据寄存器中符号扩展一个半字，
+并且还可以通过将其复制到一个地址寄存器中来符号扩展一个值。
+当每种寄存器都可以被接受时，对于地址寄存器的约束相对不是很严格，
+所以最好是寄存器分配将地址寄存器作为其目标。
+因此，@samp{*}被使用，以至于@samp{d}约束字母（数据寄存器）被忽略，
+当计算寄存器优先时。
 
 @smallexample
 (define_insn "extendhisi2"
@@ -1459,29 +1351,23 @@ register preferences.
 @end ifset
 @end table
 
-@node 机器约束
-@subsection 机器特定的约束
+@node 机器constraint
+@subsection 机器特定的constraint
 @cindex machine specific constraints
 @cindex constraints, machine specific
 
-Whenever possible, you should use the general-purpose constraint letters
-in @code{asm} arguments, since they will convey meaning more readily to
-people reading your code.  Failing that, use the constraint letters
-that usually have very similar meanings across architectures.  The most
-commonly used constraints are @samp{m} and @samp{r} (for memory and
-general-purpose registers respectively; @pxref{简单约束}), and
-@samp{I}, usually the letter indicating the most common
-immediate-constant format.
+只要可能，就应该在@code{asm}参数中使用通用目的的约束字母，
+因为它们可以向阅读你的代码的人们传达更加可读的意思。如果无法做到，
+则使用在不同体系结构中通常具有非常相似的意思的约束字母。
+最通用的约束为@samp{m}和@samp{r}（分别用于内存和通用寄存器；
+参见@pxref{简单constraint}“），
+以及@samp{I}，通常用于指示最常见的立即数常量格式。
 
-Each architecture defines additional constraints.  These constraints
-are used by the compiler itself for instruction generation, as well as
-for @code{asm} statements; therefore, some of the constraints are not
-particularly useful for @code{asm}.  Here is a summary of some of the
-machine-dependent constraints available on some particular machines;
-it includes both constraints that are useful for @code{asm} and
-constraints that aren't.  The compiler source file mentioned in the
-table heading for each architecture is the definitive reference for
-the meanings of that architecture's constraints.
+每个体系结构定义了额外的约束。这些约束被编译器本身使用，用于指令生成，
+同时也用于@code{asm}语句；因此，一些约束对于@code{asm}并不是很有用处。
+这里有一个总结，关于在一些特定机器上使用的机器相关的约束；
+包括对@code{asm}有用处的和没有用处的。
+在表中提到的针对每个体系结构的编译器原文件，是该体系结构的约束的定义参考。
 
 @table @emph
 @item ARM family---@file{config/arm/arm.h}
@@ -3065,136 +2951,104 @@ with the @code{enabled} attribute defined like this:
 @end ifset
 
 @ifset INTERNALS
-@node 定义约束
-@subsection 定义机器特定的约束
+@node 定义constraint
+@subsection 定义机器特定的constraint
 @cindex defining constraints
 @cindex constraints, defining
 
-Machine-specific constraints fall into two categories: register and
-non-register constraints.  Within the latter category, constraints
-which allow subsets of all possible memory or address operands should
-be specially marked, to give @code{reload} more information.
+机器特定的约束分为两类：寄存器约束和非寄存器约束。在后者中，
+如果约束允许所有可能的内存或地址操作数，则应该被专门标记出来，
+以便给@code{reload}更多信息。
 
-Machine-specific constraints can be given names of arbitrary length,
-but they must be entirely composed of letters, digits, underscores
-(@samp{_}), and angle brackets (@samp{< >}).  Like C identifiers, they
-must begin with a letter or underscore. 
+机器特定的约束可以给定任意长度的名字，但是它们全部由字母，数字，
+下划线（@samp{_}）和三角括号（@samp{< >}）组成。跟C标识符类似，
+它们必须起始于字母或者下划线。
 
-In order to avoid ambiguity in operand constraint strings, no
-constraint can have a name that begins with any other constraint's
-name.  For example, if @code{x} is defined as a constraint name,
-@code{xy} may not be, and vice versa.  As a consequence of this rule,
-no constraint may begin with one of the generic constraint letters:
-@samp{E F V X g i m n o p r s}.
+为了避免操作数约束字符串的混淆，约束的名字不能起始于任何其它约束的名字。
+例如，如果@code{x}被定义为一个约束名，则不可以定义@code{xy}，反之依然。
+按照这个规则，所有约束都不能起始于通用约束字母：@samp{E F V X g i m n o p r s}。
 
-Register constraints correspond directly to register classes.
-@xref{寄存器类别}.  There is thus not much flexibility in their
-definitions.
+寄存器约束直接对应于寄存器类别。参见@ref{寄存器类别}。
+因此它们的定义没有太多的灵活性。
 
 @deffn {MD Expression} define_register_constraint name regclass docstring
-All three arguments are string constants.
-@var{name} is the name of the constraint, as it will appear in
-@code{match_operand} expressions.  If @var{name} is a multi-letter
-constraint its length shall be the same for all constraints starting
-with the same letter.  @var{regclass} can be either the
-name of the corresponding register class (@pxref{寄存器类别}),
-or a C expression which evaluates to the appropriate register class.
-If it is an expression, it must have no side effects, and it cannot
-look at the operand.  The usual use of expressions is to map some
-register constraints to @code{NO_REGS} when the register class
-is not available on a given subarchitecture.
+这三个参数都是字符串常量。@var{name}为约束的名字，
+将在@code{match_operand}表达式中出现。如果@var{name}为多个字母的约束，
+则它的长度应该与所有起始与同一字母的约束相同。
+@var{regclass}可以为相应的寄存器类别的名字（参见@ref{寄存器类别}），
+或者一个C表达式，其值为合适的寄存器类别。如果为表达式，其必须不具有副作用，
+并且不能查看操作数。通常使用表达式是为了当寄存器类别对于给定的子体系结构无效时，
+将一些寄存器约束映射为@code{NO_REGS}。
 
-@var{docstring} is a sentence documenting the meaning of the
-constraint.  Docstrings are explained further below.
+@var{docstring}为一条语句，介绍了约束的含义。这将在下面做进一步的解释。
 @end deffn
 
-Non-register constraints are more like predicates: the constraint
-definition gives a Boolean expression which indicates whether the
-constraint matches.
+非寄存器的约束更加像断言：约束定义给出一个布尔表达式，其指示是否约束匹配。
 
 @deffn {MD Expression} define_constraint name docstring exp
-The @var{name} and @var{docstring} arguments are the same as for
-@code{define_register_constraint}, but note that the docstring comes
-immediately after the name for these expressions.  @var{exp} is an RTL
-expression, obeying the same rules as the RTL expressions in predicate
-definitions.  @xref{定义判定条件}, for details.  If it
-evaluates true, the constraint matches; if it evaluates false, it
-doesn't. Constraint expressions should indicate which RTL codes they
-might match, just like predicate expressions.
+@var{name}和@var{docstring}参数与@code{define_register_constraint}的相同，
+但是注意docstring直接跟随name之后。@var{exp}为一个RTL表达式，
+遵循在断言定义中相同的规则。详情参见@ref{定义predicate}。如果求得为真，
+则约束匹配；如果求得为假，则不匹配。约束表达式应该指示出它们可能匹配的RTL，
+就像断言表达式一样。
 
-@code{match_test} C expressions have access to the
-following variables:
+C表达式@code{match_test}，可以访问下列变量：
 
 @table @var
 @item op
-The RTL object defining the operand.
+定义操作数的RTL对象。 
 @item mode
-The machine mode of @var{op}.
+@var{op}的机器模式。
 @item ival
-@samp{INTVAL (@var{op})}, if @var{op} is a @code{const_int}.
+@samp{INTVAL (@var{op})}, 如果@var{op}为@code{const_int}。
 @item hval
-@samp{CONST_DOUBLE_HIGH (@var{op})}, if @var{op} is an integer
-@code{const_double}.
+@samp{CONST_DOUBLE_HIGH (@var{op})}, 如果@var{op}为整数@code{const_double}。
 @item lval
-@samp{CONST_DOUBLE_LOW (@var{op})}, if @var{op} is an integer
-@code{const_double}.
+@samp{CONST_DOUBLE_LOW (@var{op})}, 如果@var{op}为整数@code{const_double}。 
 @item rval
-@samp{CONST_DOUBLE_REAL_VALUE (@var{op})}, if @var{op} is a floating-point
-@code{const_double}.
+@samp{CONST_DOUBLE_REAL_VALUE (@var{op})}, 
+如果@var{op}为浮点@code{const_double}。 
 @end table
 
-The @var{*val} variables should only be used once another piece of the
-expression has verified that @var{op} is the appropriate kind of RTL
-object.
+变量@var{*val}应该只在表达式的其它部分已经验证了@var{op}为合适类型的RTL对象时，
+才被使用。
 @end deffn
 
-Most non-register constraints should be defined with
-@code{define_constraint}.  The remaining two definition expressions
-are only appropriate for constraints that should be handled specially
-by @code{reload} if they fail to match.
+大多数非寄存器约束应该使用@code{define_constraint}来定义。
+其余的两个定义表达式只适合当约束匹配失败时，应该由@code{reload}单独处理的约束。
 
 @deffn {MD Expression} define_memory_constraint name docstring exp
-Use this expression for constraints that match a subset of all memory
-operands: that is, @code{reload} can make them match by converting the
-operand to the form @samp{@w{(mem (reg @var{X}))}}, where @var{X} is a
-base register (from the register class specified by
-@code{BASE_REG_CLASS}, @pxref{寄存器类别}).
+使用该表达式来定义匹配所有内存操作数的子集的约束：也就是，
+@code{reload}能够通过将操作数转换为@samp{@w{(mem (reg @var{X}))}}的形式使得它们
+匹配。其中@var{X}为基址寄存器（通过@code{BASE_REG_CLASS}指定的寄存器类别，
+参见@ref{寄存器类别}）。
 
-For example, on the S/390, some instructions do not accept arbitrary
-memory references, but only those that do not make use of an index
-register.  The constraint letter @samp{Q} is defined to represent a
-memory address of this type.  If @samp{Q} is defined with
-@code{define_memory_constraint}, a @samp{Q} constraint can handle any
-memory operand, because @code{reload} knows it can simply copy the
-memory address into a base register if required.  This is analogous to
-the way a @samp{o} constraint can handle any memory operand.
+例如，在S/390上，一些指令不接受任意的内存引用，只接受那些不使用索引寄存器的。
+约束字母@samp{Q}被定义用来表示这个类型的内存地址。
+如果@samp{Q}使用@code{define_memory_constraint}定义，
+则@samp{Q}约束可以处理任意内存操作数，因为@code{reload}知道在需要的时候，
+它可以简单的将内存地址复制到基址寄存器中。
+这与@samp{o}约束可以处理任意内存操作数的方式类似。
 
-The syntax and semantics are otherwise identical to
-@code{define_constraint}.
+语法和语义在其它方面都与@code{define_constraint}相同。
 @end deffn
 
 @deffn {MD Expression} define_address_constraint name docstring exp
-Use this expression for constraints that match a subset of all address
-operands: that is, @code{reload} can make the constraint match by
-converting the operand to the form @samp{@w{(reg @var{X})}}, again
-with @var{X} a base register.
+使用该表达式来定义匹配所有地址操作数的子集的约束：也就是，
+@code{reload}能够通过将操作数转换为@samp{@w{(reg @var{X})}}的形式使得它们匹配。
+同样@var{X}为基址寄存器。
 
-Constraints defined with @code{define_address_constraint} can only be
-used with the @code{address_operand} predicate, or machine-specific
-predicates that work the same way.  They are treated analogously to
-the generic @samp{p} constraint.
+使用@code{define_address_constraint}定义的约束只能用于@code{address_operand}断言
+，或者机器特定的同样方式的断言。它们与通用的@samp{p}约束类似。
 
-The syntax and semantics are otherwise identical to
-@code{define_constraint}.
+语法和语义在其它方面都与@code{define_constraint}相同。
 @end deffn
 
-For historical reasons, names beginning with the letters @samp{G H}
-are reserved for constraints that match only @code{const_double}s, and
-names beginning with the letters @samp{I J K L M N O P} are reserved
-for constraints that match only @code{const_int}s.  This may change in
-the future.  For the time being, constraints with these names must be
-written in a stylized form, so that @code{genpreds} can tell you did
-it correctly:
+由于历史的原因，
+起始于字母@samp{G H}的名字被保留为只匹配@code{const_double}的约束，
+起始与字母@samp{I J K L M N O P}被保留为只匹配@code{const_int}的约束。
+这在将来可能会改变。暂时的，这些名字的约束必须使用固定形式来书写，
+以便@code{genpreds}能够辨别出你在做正确的事情：
 
 @smallexample
 @group
@@ -3206,45 +3060,35 @@ it correctly:
 @end smallexample
 @c the semicolons line up in the formatted manual
 
-It is fine to use names beginning with other letters for constraints
-that match @code{const_double}s or @code{const_int}s.
+可以使用起始于其它字母的名字来定义匹配@code{const_double}或@code{const_int}的约束。
 
-Each docstring in a constraint definition should be one or more complete
-sentences, marked up in Texinfo format.  @emph{They are currently unused.}
-In the future they will be copied into the GCC manual, in @ref{机器约束}, replacing the hand-maintained tables currently found in
-that section.  Also, in the future the compiler may use this to give
-more helpful diagnostics when poor choice of @code{asm} constraints
-causes a reload failure.
+在约束定义中的每个docstring应该是一条或多条完整的语句，使用Texinfo格式来标记。
+它们目前没有被使用。在将来，它们将被复制到 GCC手册中，在机器约束这一章节，
+用来替换手工维护的表格。而且，将来编译器可以使用其来给出更多有帮助的诊断信息，
+当过少的@code{asm}约束选择造成重载失败时。
 
-If you put the pseudo-Texinfo directive @samp{@@internal} at the
-beginning of a docstring, then (in the future) it will appear only in
-the internals manual's version of the machine-specific constraint tables.
-Use this for constraints that should not appear in @code{asm} statements.
+如果你在docstring的起始出放入伪Texinfo指令@samp{@@internal}，
+则（在将来）其将只出现在internals手册版本的机器特定约束表中。
+这可以用于不应该出现在@code{asm}语句中的约束。
 
-@node C约束接口
-@subsection 从C中测试约束
+@node Cconstraint接口
+@subsection 从C中测试constraint
 @cindex testing constraints
 @cindex constraints, testing
 
-It is occasionally useful to test a constraint from C code rather than
-implicitly via the constraint string in a @code{match_operand}.  The
-generated file @file{tm_p.h} declares a few interfaces for working
-with machine-specific constraints.  None of these interfaces work with
-the generic constraints described in @ref{简单约束}.  This
-may change in the future.
+有时从C代码中测试约束要比隐式的通过@code{match_operand}中的约束字符串有用处。
+生成文件@file{tm_p.h}声明了一些接口，用于机器特定的约束。
+这些接口都没有用于在@ref{简单constraint}中描述的通用约束。
+这在将来可能会有所改变。
 
-@strong{Warning:} @file{tm_p.h} may declare other functions that
-operate on constraints, besides the ones documented here.  Do not use
-those functions from machine-dependent code.  They exist to implement
-the old constraint interface that machine-independent components of
-the compiler still expect.  They will change or disappear in the
-future.
+警告：@file{tm_p.h}可能声明了其它操作约束的函数，除了在这里列的以外。
+不要在机器独立的代码中使用那些函数。它们只是为了实现旧的约束接口。
+它们在将来将会有变动或者消失。
 
-Some valid constraint names are not valid C identifiers, so there is a
-mangling scheme for referring to them from C@.  Constraint names that
-do not contain angle brackets or underscores are left unchanged.
-Underscores are doubled, each @samp{<} is replaced with @samp{_l}, and
-each @samp{>} with @samp{_g}.  Here are some examples:
+一些有效的约束名字不是有效的C标志符，
+所以这里有一个mangling框架用于从C中引用它们。
+不包含三角括号或者下划线的约束名保持不变。下划线改写成两次，
+每个@samp{<}被@samp{_l}替换，每个@samp{>}被@samp{_g}替换。这里有些例子：
 
 @c the @c's prevent double blank lines in the printed manual.
 @example
@@ -3259,48 +3103,38 @@ each @samp{>} with @samp{_g}.  Here are some examples:
 @end multitable
 @end example
 
-Throughout this section, the variable @var{c} is either a constraint
-in the abstract sense, or a constant from @code{enum constraint_num};
-the variable @var{m} is a mangled constraint name (usually as part of
-a larger identifier).
+在该章节中，变量@var{c}或者为一个抽象的约束，
+或者为来自@code{enum constraint_num}的常量；
+变量@var{m}为一个mangled约束名字（通常作为一个大标志符的一部分）。
 
 @deftp Enum constraint_num
-For each machine-specific constraint, there is a corresponding
-enumeration constant: @samp{CONSTRAINT_} plus the mangled name of the
-constraint.  Functions that take an @code{enum constraint_num} as an
-argument expect one of these constants.
+对于每个机器特定的约束，有一个对应的枚举常量：
+@samp{CONSTRAINT_}加上约束的mangled名字。
+函数接受一个@code{enum constraint_num}作为参数。
 
-Machine-independent constraints do not have associated constants.
-This may change in the future.
+机器独立的约束不具有相关的常量。这在将来可能会有改变。
 @end deftp
 
 @deftypefun {inline bool} satisfies_constraint_@var{m} (rtx @var{exp})
-For each machine-specific, non-register constraint @var{m}, there is
-one of these functions; it returns @code{true} if @var{exp} satisfies the
-constraint.  These functions are only visible if @file{rtl.h} was included
-before @file{tm_p.h}.
+对于每个机器特定的，非寄存器约束@var{m}，有一个这样函数；其返回@code{true}，
+如果@var{exp}满足约束。
+这些函数只有当@file{rtl.h}被包含在@file{tm_p.h}之前时才可见。
 @end deftypefun
 
 @deftypefun bool constraint_satisfied_p (rtx @var{exp}, enum constraint_num @var{c})
-Like the @code{satisfies_constraint_@var{m}} functions, but the
-constraint to test is given as an argument, @var{c}.  If @var{c}
-specifies a register constraint, this function will always return
-@code{false}.
+类似@code{satisfies_constraint_@var{m}}函数，只是被测试的约束作为参数给出，
+@var{c}。如果@var{c}指定一个寄存器约束，该函数将总是返回@code{false}。
 @end deftypefun
 
 @deftypefun {enum reg_class} regclass_for_constraint (enum constraint_num @var{c})
-Returns the register class associated with @var{c}.  If @var{c} is not
-a register constraint, or those registers are not available for the
-currently selected subtarget, returns @code{NO_REGS}.
+返回与@var{c}关联的寄存器类别。如果@var{c}不是寄存器约束，
+或者那些寄存器对于当前选择的子target无效，则返回@code{NO_REGS}。
 @end deftypefun
 
-Here is an example use of @code{satisfies_constraint_@var{m}}.  In
-peephole optimizations (@pxref{窥孔定义}), operand
-constraint strings are ignored, so if there are relevant constraints,
-they must be tested in the C condition.  In the example, the
-optimization is applied if operand 2 does @emph{not} satisfy the
-@samp{K} constraint.  (This is a simplified version of a peephole
-definition from the i386 machine description.)
+这里有一个使用@code{satisfies_constraint_@var{m}}的例子。
+在窥孔优化（参见@ref{窥孔定义}）中，操作数约束字符串将被忽略，
+所以如果有相应的约束，它们必须在C条件中被测试。在例子中，优化将被采用，
+如果操作数2不满足@samp{K}约束。（这是从 i386机器描述中的窥孔定义简化的版本。）
 
 @smallexample
 (define_peephole2
@@ -5178,7 +5012,7 @@ If this pattern is not defined, a call to the library function
 像这样扩展常数的指令很少被生成，因为它们会被优化掉，
 不过在不优化的编译中确实偶尔会出现。
 
-如果在指令模式中约束允许为一个常量，reload过程可以用约束允许的常量来替换寄存器。
+如果在指令模式中constraint允许为一个常量，reload过程可以用constraint允许的常量来替换寄存器。
 类似的对于内存引用。由于存在这种替换，
 所以不要为递增和递减指令提供单独的指令模式。
 替换的，它们应该由同一个指令模式生成。
@@ -5314,7 +5148,7 @@ GCC具有三个特定的命名指令模式，来支持低开销循环。
 @end smallexample
 
 注意，由于该insn为jump insn并且具有一个输出，所以其必须处理自己的重载，
-因此要使用`m' 约束。还要注意，由于该insn是在指令组合过程中，
+因此要使用`m' constraint。还要注意，由于该insn是在指令组合过程中，
 通过将两个连序insn组合成一个隐式并行的insn而生成的，所以迭代计数器需要。
 注意下面类似的指令模式将不会被编译器匹配。
 
@@ -5364,30 +5198,24 @@ GCC具有三个特定的命名指令模式，来支持低开销循环。
 @cindex canonicalization of instructions
 @cindex insn canonicalization
 
-There are often cases where multiple RTL expressions could represent an
-operation performed by a single machine instruction.  This situation is
-most commonly encountered with logical, branch, and multiply-accumulate
-instructions.  In such cases, the compiler attempts to convert these
-multiple RTL expressions into a single canonical form to reduce the
-number of insn patterns required.
+经常会有多个RTL表达式可以表示由单个机器指令所执行的运算。该情况对于逻辑，
+分支和乘累加指令最常见。对于这样的情况，
+编译器尝试将这些多个RTL表达式转换为一个规范的形式，
+以减少对insn指令模式的需求数。
 
-In addition to algebraic simplifications, following canonicalizations
-are performed:
+除了进行代数简化以外，还执行了下面的规范化：
 
 @itemize @bullet
 @item
-For commutative and comparison operators, a constant is always made the
-second operand.  If a machine only supports a constant as the second
-operand, only patterns that match a constant in the second operand need
-be supplied.
+对于可交换指令和比较指令，总是将常量作为第二个操作数。
+如果机器只支持常量作为第二个操作数，
+则只需要提供匹配将常量作为第二个操作数的指令模式。
 
 @item
-For associative operators, a sequence of operators will always chain
-to the left; for instance, only the left operand of an integer @code{plus}
-can itself be a @code{plus}.  @code{and}, @code{ior}, @code{xor},
-@code{plus}, @code{mult}, @code{smin}, @code{smax}, @code{umin}, and
-@code{umax} are associative when applied to integers, and sometimes to
-floating-point.
+对于结合性操作符，操作符序列总是向左方向链接；例如，一个整数@code{plus}，
+只有它的左操作数本身可以为一个@code{plus}。当应用到整数时，
+@code{and}, @code{ior}, @code{xor}, @code{plus}, @code{mult}, @code{smin}, 
+@code{smax}, @code{umin}和@code{umax}为可结合的，对于浮点，这些有时为可结合的。
 
 @item
 @cindex @code{neg}, canonicalization of
@@ -5395,56 +5223,47 @@ floating-point.
 @cindex @code{mult}, canonicalization of
 @cindex @code{plus}, canonicalization of
 @cindex @code{minus}, canonicalization of
-For these operators, if only one operand is a @code{neg}, @code{not},
-@code{mult}, @code{plus}, or @code{minus} expression, it will be the
-first operand.
+对于这些操作符，如果只有一个为@code{neg}, @code{not},@code{mult}, @code{plus} 或
+@code{minus}表达式的操作数，则其将为第一个操作数。
 
 @item
-In combinations of @code{neg}, @code{mult}, @code{plus}, and
-@code{minus}, the @code{neg} operations (if any) will be moved inside
-the operations as far as possible.  For instance,
-@code{(neg (mult A B))} is canonicalized as @code{(mult (neg A) B)}, but
-@code{(plus (mult (neg A) B) C)} is canonicalized as
-@code{(minus A (mult B C))}.
+对于@code{neg}, @code{mult}, @code{plus}和@code{minus}的组合中，
+@code{neg}操作（如果存在）将被尽可能的移到内部。
+例如@code{(neg (mult A B))}将被规范为@code{(mult (neg A) B)}，
+但是@code{(plus (mult (neg A) B) C)}将被规范为@code{(minus A (mult B C))}。 
 
 @cindex @code{compare}, canonicalization of
 @item
-For the @code{compare} operator, a constant is always the second operand
-on machines where @code{cc0} is used (@pxref{Jump Patterns}).  On other
-machines, there are rare cases where the compiler might want to construct
-a @code{compare} with a constant as the first operand.  However, these
-cases are not common enough for it to be worthwhile to provide a pattern
-matching a constant as the first operand unless the machine actually has
-such an instruction.
+对于@code{compare}运算符，在使用@code{cc0}（参见@ref{跳转指令模式}）的机器上，
+常量总是为第二个操作数。 在其它机器上，极少的情况下，
+编译器可能想使用常量作为第一个操作数来构建@code{compare}。但是，
+这些情况并不常见，所以不值得来提供匹配常量作为第一个操作数的指令模式，
+除非机器确实具有这样的指令。
 
-An operand of @code{neg}, @code{not}, @code{mult}, @code{plus}, or
-@code{minus} is made the first operand under the same conditions as
-above.
+在与上面条件相同的情况下，@code{neg}, @code{not}, @code{mult}, @code{plus} 或
+@code{minus}的操作数被作为第一个操作数。
 
 @item
-@code{(ltu (plus @var{a} @var{b}) @var{b})} is converted to
-@code{(ltu (plus @var{a} @var{b}) @var{a})}. Likewise with @code{geu} instead
-of @code{ltu}.
+@code{(ltu (plus @var{a} @var{b}) @var{b})}被转换为
+@code{(ltu (plus @var{a} @var{b}) @var{a})}。
+同样，使用@code{geu}来替换@code{ltu}。
 
 @item
-@code{(minus @var{x} (const_int @var{n}))} is converted to
-@code{(plus @var{x} (const_int @var{-n}))}.
+@code{(minus @var{x} (const_int @var{n}))}被转换为
+@code{(plus @var{x} (const_int @var{-n}))}。
 
 @item
-Within address computations (i.e., inside @code{mem}), a left shift is
-converted into the appropriate multiplication by a power of two.
+在地址计算中（即，在@code{mem}中），左移操作被转换为与合适的2的幂相乘。 
 
 @cindex @code{ior}, canonicalization of
 @cindex @code{and}, canonicalization of
 @cindex De Morgan's law
 @item
-De Morgan's Law is used to move bitwise negation inside a bitwise
-logical-and or logical-or operation.  If this results in only one
-operand being a @code{not} expression, it will be the first one.
+De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中，将位置反。
+如果该结果为@code{not}表达式的唯一的操作数，则其为第一个。
 
-A machine that has an instruction that performs a bitwise logical-and of one
-operand with the bitwise negation of the other should specify the pattern
-for that instruction as
+具有执行按位‘逻辑与’，且其中一个操作数为一个按位求反的机器，
+应该为该指令指定如下的指令模式
 
 @smallexample
 (define_insn ""
@@ -5456,7 +5275,7 @@ for that instruction as
 @end smallexample
 
 @noindent
-Similarly, a pattern for a ``NAND'' instruction should be written
+类似的，“NAND”指令的指令模式应给被写为
 
 @smallexample
 (define_insn ""
@@ -5467,39 +5286,33 @@ Similarly, a pattern for a ``NAND'' instruction should be written
   "@dots{}")
 @end smallexample
 
-In both cases, it is not necessary to include patterns for the many
-logically equivalent RTL expressions.
+对于这两种情况，都没必要包含许多逻辑上相同的RTL表达式。
 
 @cindex @code{xor}, canonicalization of
 @item
-The only possible RTL expressions involving both bitwise exclusive-or
-and bitwise negation are @code{(xor:@var{m} @var{x} @var{y})}
-and @code{(not:@var{m} (xor:@var{m} @var{x} @var{y}))}.
+涉及按位‘异或’和求反的唯一可能的RTL表达式为@code{(xor:@var{m} @var{x} @var{y})}
+和@code{(not:@var{m} (xor:@var{m} @var{x} @var{y}))}。
 
 @item
-The sum of three items, one of which is a constant, will only appear in
-the form
+对于三项的和，其中一个为常量的，将使用如下形式
 
 @smallexample
 (plus:@var{m} (plus:@var{m} @var{x} @var{y}) @var{constant})
 @end smallexample
 
 @item
-On machines that do not use @code{cc0},
-@code{(compare @var{x} (const_int 0))} will be converted to
-@var{x}.
+在不使用@code{cc0}的机器上，
+@code{(compare @var{x} (const_int 0))}将被转换为@var{x}。 
 
 @cindex @code{zero_extract}, canonicalization of
 @cindex @code{sign_extract}, canonicalization of
 @item
-Equality comparisons of a group of bits (usually a single bit) with zero
-will be written using @code{zero_extract} rather than the equivalent
-@code{and} or @code{sign_extract} operations.
+位组（通常是单个位）和0的相等比较，将使用@code{zero_extract}，
+而不是等价的@code{and}或者@code{sign_extract}运算。
 
 @end itemize
 
-Further canonicalization rules are defined in the function
-@code{commutative_operand_precedence} in @file{gcc/rtlanal.c}.
+更多的规范化规则都定义在@file{gcc/rtlanal.c}里的函数@code{commutative_operand_precedence}中。
 
 @end ifset
 @ifset INTERNALS
@@ -5509,110 +5322,82 @@ Further canonicalization rules are defined in the function
 @cindex code generation RTL sequences
 @cindex defining RTL sequences for code generation
 
-On some target machines, some standard pattern names for RTL generation
-cannot be handled with single insn, but a sequence of RTL insns can
-represent them.  For these target machines, you can write a
-@code{define_expand} to specify how to generate the sequence of RTL@.
+在一些目标机上，一些用于RTL生成的标准指令模式名无法通过单个insn来处理，
+但是可以用一个RTL insn序列来表示它们。对于这些目标机，
+你可以写一个@code{define_expand}来指定如何生成RTL序列。
 
 @findex define_expand
-A @code{define_expand} is an RTL expression that looks almost like a
-@code{define_insn}; but, unlike the latter, a @code{define_expand} is used
-only for RTL generation and it can produce more than one RTL insn.
+@code{define_expand}为一个RTL表达式，看起来非常像@code{define_insn}；
+但是不同之处为，@code{define_expand}只用于RTL生成，并且可以产生多个RTL insn。
 
-A @code{define_expand} RTX has four operands:
+@code{define_expand} RTX具有4个操作数:
 
 @itemize @bullet
 @item
-The name.  Each @code{define_expand} must have a name, since the only
-use for it is to refer to it by name.
+名字。每个@code{define_expand}必须具有一个名字，
+因为必须通过对名字的引用才能使用它。
 
 @item
-The RTL template.  This is a vector of RTL expressions representing
-a sequence of separate instructions.  Unlike @code{define_insn}, there
-is no implicit surrounding @code{PARALLEL}.
+RTL模板。这是一个RTL表达式向量，表示一个指令序列。
 
 @item
-The condition, a string containing a C expression.  This expression is
-used to express how the availability of this pattern depends on
-subclasses of target machine, selected by command-line options when GCC
-is run.  This is just like the condition of a @code{define_insn} that
-has a standard name.  Therefore, the condition (if present) may not
-depend on the data in the insn being matched, but only the
-target-machine-type flags.  The compiler needs to test these conditions
-during initialization in order to learn exactly which named instructions
-are available in a particular run.
+条件，一个字符串包含了一个C表达式。
+该表达式用于表示该指令模式对于GCC运行时命令行选项所选择的什么样的target机器
+子类别有效。这跟具有标准名字的@code{define_insn}的条件类似。因此，
+条件（如果存在）可以不依赖于所匹配的insn的数据，而只是依赖于target机器类型标号。
+编译器需要在初始化时测试这些条件，以便确切的知道在一次特定的运行时，
+哪些命名指令有效。
 
 @item
-The preparation statements, a string containing zero or more C
-statements which are to be executed before RTL code is generated from
-the RTL template.
-
-Usually these statements prepare temporary registers for use as
-internal operands in the RTL template, but they can also generate RTL
-insns directly by calling routines such as @code{emit_insn}, etc.
-Any such insns precede the ones that come from the RTL template.
+准备语句，一个字符串，包含了0个或多个C语句，其将在RTL模板生成RTL代码前被执行。
 @end itemize
 
-Every RTL insn emitted by a @code{define_expand} must match some
-@code{define_insn} in the machine description.  Otherwise, the compiler
-will crash when trying to generate code for the insn or trying to optimize
-it.
+每个由@code{define_expand}生成的RTL insn必须匹配机器描述中的某个
+@code{define_insn}。否则，编译器在尝试为insn生成代码或者试图对其进行优化的时候，
+将会崩溃。
 
-The RTL template, in addition to controlling generation of RTL insns,
-also describes the operands that need to be specified when this pattern
-is used.  In particular, it gives a predicate for each operand.
+RTL模板，除了控制RTL insn的生成，还描述了当使用该指令模式时，
+所需要指定的操作数。特别是，它为每个操作数给出了断言。
 
-A true operand, which needs to be specified in order to generate RTL from
-the pattern, should be described with a @code{match_operand} in its first
-occurrence in the RTL template.  This enters information on the operand's
-predicate into the tables that record such things.  GCC uses the
-information to preload the operand into a register if that is required for
-valid RTL code.  If the operand is referred to more than once, subsequent
-references should use @code{match_dup}.
+需要被指定的由指令模式生成RTL的，真正的操作数，
+在RTL模板中它第一次出现的位置使用@code{match_operand}来描述。
+这将把对于操作数的断言信息放入记录该事情的表中。
+如果操作数被引用多次，则后续的引用应该使用@code{match_dup}。
 
-The RTL template may also refer to internal ``operands'' which are
-temporary registers or labels used only within the sequence made by the
-@code{define_expand}.  Internal operands are substituted into the RTL
-template with @code{match_dup}, never with @code{match_operand}.  The
-values of the internal operands are not passed in as arguments by the
-compiler when it requests use of this pattern.  Instead, they are computed
-within the pattern, in the preparation statements.  These statements
-compute the values and store them into the appropriate elements of
-@code{operands} so that @code{match_dup} can find them.
+RTL模板还可以引用内部操作数，
+其为只在由@code{define_expand}生成的序列中使用的临时寄存器或者标号。
+内部操作数使用@code{match_dup}来替换到RTL模板中，而不是@code{match_operand}。
+内部操作数的值在编译器需要使用该指令模式时，不作为参数传入。替代的，
+它们在指令模式中计算，在准备语句中。
+这些语句计算值并将它们存入到合适的@code{operands}元素中，
+以便@code{match_dup}可以找到它们。
 
-There are two special macros defined for use in the preparation statements:
-@code{DONE} and @code{FAIL}.  Use them with a following semicolon,
-as a statement.
+有两个特定的宏，用于准备语句中：@code{DONE}和@code{FAIL}。
+在其后面跟随一个分号，以作为一条语句来使用。
 
 @table @code
 
 @findex DONE
 @item DONE
-Use the @code{DONE} macro to end RTL generation for the pattern.  The
-only RTL insns resulting from the pattern on this occasion will be
-those already emitted by explicit calls to @code{emit_insn} within the
-preparation statements; the RTL template will not be generated.
+使用@code{DONE}宏来结束该指令模式的RTL生成。这种情况下，
+由该指令模式生成的唯一的RTL insn将为在准备语句中显示调用@code{emit_insn}生成
+的insn；RTL模板将不被生成。 
 
 @findex FAIL
 @item FAIL
-Make the pattern fail on this occasion.  When a pattern fails, it means
-that the pattern was not truly available.  The calling routines in the
-compiler will try other strategies for code generation using other patterns.
 
-Failure is currently supported only for binary (addition, multiplication,
-shifting, etc.) and bit-field (@code{extv}, @code{extzv}, and @code{insv})
-operations.
+使指令模式对于这种情况失败。当指令模式失败时，这意味着指令模式实际上无效。编译器中的调用程序将会尝试其它策略，使用其它指令模式来进行代码生成。
+
+目前，FAIL操作只支持二元（加法，乘法，移位等）和
+位域（@code{extv}, @code{extzv}和@code{insv}）操作。 
 @end table
 
-If the preparation falls through (invokes neither @code{DONE} nor
-@code{FAIL}), then the @code{define_expand} acts like a
-@code{define_insn} in that the RTL template is used to generate the
-insn.
+如果准备语句即没有调用@code{DONE}，也没有调用@code{FAIL}，
+则@code{define_expand}的行为便跟@code{define_insn}一样，即RTL模板用于生成insn
 
-The RTL template is not used for matching, only for generating the
-initial insn list.  If the preparation statement always invokes
-@code{DONE} or @code{FAIL}, the RTL template may be reduced to a simple
-list of operands, such as this example:
+RTL模板不用于匹配，只是用于生成最初的insn列表。
+如果准备语句总是调用@code{DONE}或者@code{FAIL}，
+则RTL模板可以简化为一个简单的操作数列表，例如：
 
 @smallexample
 @group
@@ -5631,7 +5416,7 @@ list of operands, such as this example:
 @end group
 @end smallexample
 
-Here is an example, the definition of left-shift for the SPUR chip:
+这里有一个例子，是为SPUR芯片定义的左移位：
 
 @smallexample
 @group
@@ -5658,16 +5443,13 @@ Here is an example, the definition of left-shift for the SPUR chip:
 @end smallexample
 
 @noindent
-This example uses @code{define_expand} so that it can generate an RTL insn
-for shifting when the shift-count is in the supported range of 0 to 3 but
-fail in other cases where machine insns aren't available.  When it fails,
-the compiler tries another strategy using different patterns (such as, a
-library call).
+这个例子使用了@code{define_expand}，使得当移位数在支持的0到3的范围内时，
+便会生成移位RTL insn，而对于其它情况，则会失败。当其失败时，
+编译器便会使用不同的指令模式（比如一个库调用）来尝试其它策略。
 
-If the compiler were able to handle nontrivial condition-strings in
-patterns with names, then it would be possible to use a
-@code{define_insn} in that case.  Here is another case (zero-extension
-on the 68000) which makes more use of the power of @code{define_expand}:
+如果编译器能够处理具有名字的指令模式中的非平凡的条件字符串，
+则对于这样情况也可以使用@code{define_insn}。这里有另一种情况（68000上的0扩展），
+其使用了@code{define_expand}的更强大的功能：
 
 @smallexample
 (define_expand "zero_extendhisi2"
@@ -5684,20 +5466,18 @@ on the 68000) which makes more use of the power of @code{define_expand}:
 
 @noindent
 @findex make_safe_from
-Here two RTL insns are generated, one to clear the entire output operand
-and the other to copy the input operand into its low half.  This sequence
-is incorrect if the input operand refers to [the old value of] the output
-operand, so the preparation statement makes sure this isn't so.  The
-function @code{make_safe_from} copies the @code{operands[1]} into a
-temporary register if it refers to @code{operands[0]}.  It does this
-by emitting another RTL insn.
+这里将会生成两个RTL insn，一个用于清除整个输出操作数，
+另一个用于将输入操作数复制到其低半部份。
+该指令序列在输入操作数指向输出操作数（的旧值）时，是不正确的。
+所以，准备语句用来确保不是这样。当其指向@code{operands[0]}时，
+函数@code{make_safe_from}用来将@code{operands[1]}复制到临时寄存器中。
+其通过生成另一个RTL insn来完成这件事。
 
-Finally, a third example shows the use of an internal operand.
-Zero-extension on the SPUR chip is done by @code{and}-ing the result
-against a halfword mask.  But this mask cannot be represented by a
-@code{const_int} because the constant value is too large to be legitimate
-on this machine.  So it must be copied into a register with
-@code{force_reg} and then the register used in the @code{and}.
+最后，第三个例子显示了内部操作数的使用。
+在SPUR芯片上的0扩展是通过将结果与上半字mask来完成的。
+但是该mask不能通过一个@code{const_int}来表示，因为常量值太大，
+无法在该机器上被合法化。所以其必须使用@code{force_reg}复制到寄存器中，
+然后在@code{and}中使用该寄存器。
 
 @smallexample
 (define_expand "zero_extendhisi2"
@@ -5711,14 +5491,12 @@ on this machine.  So it must be copied into a register with
      = force_reg (SImode, GEN_INT (65535)); ")
 @end smallexample
 
-@emph{Note:} If the @code{define_expand} is used to serve a
-standard binary or unary arithmetic operation or a bit-field operation,
-then the last insn it generates must not be a @code{code_label},
-@code{barrier} or @code{note}.  It must be an @code{insn},
-@code{jump_insn} or @code{call_insn}.  If you don't need a real insn
-at the end, emit an insn to copy the result of the operation into
-itself.  Such an insn will generate no code, but it can avoid problems
-in the compiler.
+注意：如果@code{define_expand}被用于一个标准的二元或者一元算数运算，
+或者一个位域运算，则其生成的最后的insn一定不能为一个@code{code_label},
+@code{barrier}或@code{note}。其必须为一个@code{insn},
+@code{jump_insn}或@code{call_insn}。如果你在结尾处不需要实际的insn，
+则可以生成一条将操作数的结果复制到其本身的insn。这样的insn将不会生成代码，
+但可以避免编译器中的问题。
 
 @end ifset
 @ifset INTERNALS
@@ -5728,35 +5506,27 @@ in the compiler.
 @cindex instruction splitting
 @cindex splitting instructions
 
-There are two cases where you should specify how to split a pattern
-into multiple insns.  On machines that have instructions requiring
-delay slots (@pxref{Delay Slots}) or that have instructions whose
-output is not available for multiple cycles (@pxref{Processor pipeline
-description}), the compiler phases that optimize these cases need to
-be able to move insns into one-instruction delay slots.  However, some
-insns may generate more than one machine instruction.  These insns
-cannot be placed into a delay slot.
+有两种情况，你应该指定如何将一个指令模式拆分为多个insn。在一些机器上，
+指令需要延迟槽（参见@ref{延迟槽}）或者指令的输出对于多周期
+（参见@ref{处理器流水线描述}）不可用，
+则优化这些情况的编译器过程需要能够将insn移入延迟槽中。但是，
+一些insn可能会生成不止一条机器指令。这些insn则不能被放入延迟槽。
 
-Often you can rewrite the single insn as a list of individual insns,
-each corresponding to one machine instruction.  The disadvantage of
-doing so is that it will cause the compilation to be slower and require
-more space.  If the resulting insns are too complex, it may also
-suppress some optimizations.  The compiler splits the insn if there is a
-reason to believe that it might improve instruction or delay slot
-scheduling.
+通常你可以重写单个insn为单独的insn列表，每个对应于一条机器指令。
+这样做的缺点是它将造成编译变慢并且需要更多的空间。如果结果insn太复杂，
+则还会抑制一些优化。当编译器有理由相信可以改进指令或者延迟槽调度的时候，
+则会拆分insn。
 
-The insn combiner phase also splits putative insns.  If three insns are
-merged into one insn with a complex expression that cannot be matched by
-some @code{define_insn} pattern, the combiner phase attempts to split
-the complex pattern into two insns that are recognized.  Usually it can
-break the complex pattern into two patterns by splitting out some
-subexpression.  However, in some other cases, such as performing an
-addition of a large constant in two insns on a RISC machine, the way to
-split the addition into two insns is machine-dependent.
+insn组合器阶段还拆分putative insns。
+如果三个insn被合并到一个使用复杂表达式的insn，
+其不能被某个@code{define_insn}模式匹配，
+则组合器阶段尝试将复杂指令模式拆分为两个被识别的insn。通常，
+它能够将复杂指令模式通过拆分某个子表达式来断开。但是，有些情况下，
+像在一个RISC机器上执行一个大常量的加法，则拆分加法为两个insn的方式是机器相关的。
 
 @findex define_split
-The @code{define_split} definition tells the compiler how to split a
-complex insn into several simpler insns.  It looks like this:
+@code{define_split}定义告诉了编译器如何将一个复杂的insn拆分为多个简单的insn。
+它的形式为：
 
 @smallexample
 (define_split
@@ -5768,34 +5538,25 @@ complex insn into several simpler insns.  It looks like this:
   "@var{preparation-statements}")
 @end smallexample
 
-@var{insn-pattern} is a pattern that needs to be split and
-@var{condition} is the final condition to be tested, as in a
-@code{define_insn}.  When an insn matching @var{insn-pattern} and
-satisfying @var{condition} is found, it is replaced in the insn list
-with the insns given by @var{new-insn-pattern-1},
-@var{new-insn-pattern-2}, etc.
+@var{insn-pattern}为需要被拆分的指令模式，@var{condition}为要被测试的最终条件，
+跟@code{define_insn}中的一样。当一个insn匹配@var{insn-pattern}，
+并且满足条件@var{condition}，则它由insn列表@var{new-insn-pattern-1},
+@var{new-insn-pattern-2}等来替换。
 
-The @var{preparation-statements} are similar to those statements that
-are specified for @code{define_expand} (@pxref{Expander Definitions})
-and are executed before the new RTL is generated to prepare for the
-generated code or emit some insns whose pattern is not fixed.  Unlike
-those in @code{define_expand}, however, these statements must not
-generate any new pseudo-registers.  Once reload has completed, they also
-must not allocate any space in the stack frame.
+@var{preparation-statements}与那些为@code{define_expand}（参见@ref{扩展定义}）
+指定的语句类似，并且在生成新RTL之前被执行。
+与@code{define_expand}中的不同之处为，这些语句不能生成任何新的伪寄存器。
+一旦完成重载，它们则不能在栈帧中分配任何空间。
 
-Patterns are matched against @var{insn-pattern} in two different
-circumstances.  If an insn needs to be split for delay slot scheduling
-or insn scheduling, the insn is already known to be valid, which means
-that it must have been matched by some @code{define_insn} and, if
-@code{reload_completed} is nonzero, is known to satisfy the constraints
-of that @code{define_insn}.  In that case, the new insn patterns must
-also be insns that are matched by some @code{define_insn} and, if
-@code{reload_completed} is nonzero, must also satisfy the constraints
-of those definitions.
+指令模式根据两种不同的环境来匹配@var{insn-pattern}。
+如果需要为延迟槽调度或者insn调度来拆分insn，则insn已经是有效的，
+这意味着它已经被一些@code{define_insn}匹配过，
+并且如果@code{reload_completed}为非0，则已经满足那个@code{define_insn}的约束。
+在那种情况下，新的insn模式必须也是匹配某个@code{define_insn}的insn，
+并且如果@code{reload_completed}为非0，则也必须满足那些定义的约束。
 
-As an example of this usage of @code{define_split}, consider the following
-example from @file{a29k.md}, which splits a @code{sign_extend} from
-@code{HImode} to @code{SImode} into a pair of shift insns:
+对于这种@code{define_split}用法的例子，考虑下面来自@file{a29k.md}的例子，
+其将从@code{HImode}到@code{SImode}的@code{sign_extend}拆分为一对shift insn：
 
 @smallexample
 (define_split
@@ -5812,19 +5573,14 @@ example from @file{a29k.md}, which splits a @code{sign_extend} from
 @{ operands[1] = gen_lowpart (SImode, operands[1]); @}")
 @end smallexample
 
-When the combiner phase tries to split an insn pattern, it is always the
-case that the pattern is @emph{not} matched by any @code{define_insn}.
-The combiner pass first tries to split a single @code{set} expression
-and then the same @code{set} expression inside a @code{parallel}, but
-followed by a @code{clobber} of a pseudo-reg to use as a scratch
-register.  In these cases, the combiner expects exactly two new insn
-patterns to be generated.  It will verify that these patterns match some
-@code{define_insn} definitions, so you need not do this test in the
-@code{define_split} (of course, there is no point in writing a
-@code{define_split} that will never produce insns that match).
-
-Here is an example of this use of @code{define_split}, taken from
-@file{rs6000.md}:
+当组合器阶段尝试拆分一个insn模式时，则情况总是为，
+指令模式没有被任何@code{define_insn}匹配。
+组合器过程首先尝试将单个@code{set}表达式拆分，
+然后是在@code{parallel}中的相同的@code{set}表达式，
+不过跟随一个伪寄存器的@code{clobber}，以作为scratch寄存器来使用。
+这这些情况下，组合器期望能够生成两个新的insn。
+它将验证这些指令模式匹配某个@code{define_insn}定义，
+所以你不需要在@code{define_split}中做这些测试（当然，there is no point in writing a @code{define_split} that will never produce insns that match).
 
 @smallexample
 (define_split
@@ -5847,13 +5603,11 @@ Here is an example of this use of @code{define_split}, taken from
 @}")
 @end smallexample
 
-Here the predicate @code{non_add_cint_operand} matches any
-@code{const_int} that is @emph{not} a valid operand of a single add
-insn.  The add with the smaller displacement is written so that it
-can be substituted into the address of a subsequent operation.
+这里断言@code{non_add_cint_operand}匹配任何不是单个add insn的有效操作数的
+@code{const_int}。
 
-An example that uses a scratch register, from the same file, generates
-an equality comparison of a register and a large constant:
+使用scratch寄存器的例子，来自同一个文件，
+用来生成等价的寄存器和大常量的比较运算：
 
 @smallexample
 (define_split
@@ -5881,32 +5635,24 @@ an equality comparison of a register and a large constant:
 @}")
 @end smallexample
 
-To avoid confusion, don't write a single @code{define_split} that
-accepts some insns that match some @code{define_insn} as well as some
-insns that don't.  Instead, write two separate @code{define_split}
-definitions, one for the insns that are valid and one for the insns that
-are not valid.
+为了避免混淆，不要写这样的@code{define_split}，
+其接受匹配某个@code{define_insn}的一些insn，同时也接受不匹配的insn。替代的，
+可以写两个分别的@code{define_split}定义，一个针对有效的insn，
+一个针对无效的insn。
 
-The splitter is allowed to split jump instructions into sequence of
-jumps or create new jumps in while splitting non-jump instructions.  As
-the central flowgraph and branch prediction information needs to be updated,
-several restriction apply.
+允许将跳转指令拆分为一个跳转序列或者在拆分非跳转指令时创建新的跳转。
+由于控制流图和分支预测信息需要更新，所以会有一些限制。
 
-Splitting of jump instruction into sequence that over by another jump
-instruction is always valid, as compiler expect identical behavior of new
-jump.  When new sequence contains multiple jump instructions or new labels,
-more assistance is needed.  Splitter is required to create only unconditional
-jumps, or simple conditional jump instructions.  Additionally it must attach a
-@code{REG_BR_PROB} note to each conditional jump.  A global variable
-@code{split_branch_probability} holds the probability of the original branch in case
-it was an simple conditional jump, @minus{}1 otherwise.  To simplify
-recomputing of edge frequencies, the new sequence is required to have only
-forward jumps to the newly created labels.
+将跳转指令拆分为由另一个跳转指令覆盖的指令序列，总是有效的，
+因为编译器期望新的跳转具有相同的行为。当新的序列包含多个跳转指令或新的标号时，
+则需要更多的辅助。只允许创建无条件跳转，或者简单的条件跳转指令。另外，
+其必须为每个条件跳转附加一个@code{REG_BR_PROB}注解。
+全局变量@code{split_branch_probability}保存了原始分支的可能性。
+为了简化边频率的重新计算，新的序列要求只具有向前跳转。
 
 @findex define_insn_and_split
-For the common case where the pattern of a define_split exactly matches the
-pattern of a define_insn, use @code{define_insn_and_split}.  It looks like
-this:
+对于通常的情况，define_split的模式完全匹配define_insn的模式，
+则可以使用@code{define_insn_and_split}。其形式为：
 
 @smallexample
 (define_insn_and_split
@@ -5922,14 +5668,14 @@ this:
 
 @end smallexample
 
-@var{insn-pattern}, @var{condition}, @var{output-template}, and
-@var{insn-attributes} are used as in @code{define_insn}.  The
-@var{new-insn-pattern} vector and the @var{preparation-statements} are used as
-in a @code{define_split}.  The @var{split-condition} is also used as in
-@code{define_split}, with the additional behavior that if the condition starts
-with @samp{&&}, the condition used for the split will be the constructed as a
-logical ``and'' of the split condition with the insn condition.  For example,
-from i386.md:
+@var{insn-pattern}, @var{condition}, @var{output-template}和
+@var{insn-attributes}跟在@code{define_insn}中的用法一样. 
+@var{new-insn-pattern}向量和@var{preparation-statements}跟在
+@code{define_split}中的用法一样。
+@var{split-condition}也跟在@code{define_split}中的用法一样, 
+不同之处是如果condition开始于@samp{&&}, 
+则用于拆分的条件将被构造为split condition和insn condition的逻辑“and”运算。
+例如，在i386.md中:
 
 @smallexample
 (define_insn_and_split "zero_extendhisi2_and"
@@ -5947,13 +5693,9 @@ from i386.md:
 
 @end smallexample
 
-In this case, the actual split condition will be
-@samp{TARGET_ZERO_EXTEND_WITH_AND && !optimize_size && reload_completed}.
+在这种情况下，实际的split condition将为@samp{TARGET_ZERO_EXTEND_WITH_AND && !optimize_size && reload_completed}。
 
-The @code{define_insn_and_split} construction provides exactly the same
-functionality as two separate @code{define_insn} and @code{define_split}
-patterns.  It exists for compactness, and as a maintenance tool to prevent
-having to ensure the two patterns' templates match.
+@code{define_insn_and_split}结构提供了与两个单独的@code{define_insn}和@code{define_split}指令模式相同的功能. 其形式紧凑。
 
 @end ifset
 @ifset INTERNALS
@@ -5962,11 +5704,11 @@ having to ensure the two patterns' templates match.
 @cindex insn includes
 
 @findex include
-The @code{include} pattern tells the compiler tools where to
-look for patterns that are in files other than in the file
-@file{.md}.  This is used only at build time and there is no preprocessing allowed.
+模板@code{include}告诉编译器工具，
+从哪里寻找在其它文件中而不是文件@file{.md}中的模板。
+这只在构建时候使用，并且不允许进行预处理操作。
 
-It looks like:
+其形如：
 
 @smallexample
 
@@ -5974,7 +5716,7 @@ It looks like:
   @var{pathname})
 @end smallexample
 
-For example:
+例如：
 
 @smallexample
 
@@ -5982,15 +5724,13 @@ For example:
 
 @end smallexample
 
-Where @var{pathname} is a string that specifies the location of the file,
-specifies the include file to be in @file{gcc/config/target/filestuff}.  The
-directory @file{gcc/config/target} is regarded as the default directory.
+其中@var{pathname}为一个指定文件位置的字符串，
+指定了包含文件为@file{gcc/config/target/filestuff}。
+目录@file{gcc/config/target}被当作缺省目录。
 
+机器描述可以被分割成容易管理的小章节并放在子目录下。
 
-Machine descriptions may be split up into smaller more manageable subsections
-and placed into subdirectories.
-
-By specifying:
+通过指定：
 
 @smallexample
 
@@ -5998,23 +5738,24 @@ By specifying:
 
 @end smallexample
 
-the include file is specified to be in @file{gcc/config/@var{target}/BOGUS/filestuff}.
+包含文件被指定为@file{gcc/config/@var{target}/BOGUS/filestuff}。
 
-Specifying an absolute path for the include file such as;
+为包含文件指定一个绝对路径，像：
+
 @smallexample
 
 (include "/u2/BOGUS/filestuff")
 
 @end smallexample
-is permitted but is not encouraged.
+
+是被允许的，但不鼓励这么做。
 
 @subsection 用于目录搜索的RTL生成工具选项
 @cindex directory options .md
 @cindex options, directory search
 @cindex search options
 
-The @option{-I@var{dir}} option specifies directories to search for machine descriptions.
-For example:
+选项@option{-I@var{dir}}指定了搜索机器描述的目录。例如：
 
 @smallexample
 
@@ -6022,14 +5763,11 @@ genrecog -I/p1/abc/proc1 -I/p2/abcd/pro2 target.md
 
 @end smallexample
 
-
-Add the directory @var{dir} to the head of the list of directories to be
-searched for header files.  This can be used to override a system machine definition
-file, substituting your own version, since these directories are
-searched before the default machine description file directories.  If you use more than
-one @option{-I} option, the directories are scanned in left-to-right
-order; the standard default directory come after.
-
+目录@var{dir}将被增加到搜索头文件的目录列表的头部。
+这可以用来覆盖系统的机器定义文件，而替换为你自己的版本，
+因为这些目录将在缺省机器描述文件目录之前被搜索。
+如果你使用了多个@option{-I}选项，则目录按照从左到右的顺序被扫描；
+之后为标准的缺省目录。
 
 @end ifset
 @ifset INTERNALS
@@ -6099,12 +5837,12 @@ order; the standard default directory come after.
 你可以通过一个insn中的@code{match_operand}和另一个insn中的@code{match_dup}，
 来在两个insn中检查相同的操作数。
 
-用于@code{match_operand}指令模式的操作数约束对窥孔的适用性没有任何直接的影响，
-不过它们将会在后面被验证，所以要确信当窥孔匹配时，你的约束要足够通用。
-如果窥孔匹配，但约束却不满足，则编译器将崩溃。
+用于@code{match_operand}指令模式的操作数constraint对窥孔的适用性没有任何直接的影响，
+不过它们将会在后面被验证，所以要确信当窥孔匹配时，你的constraint要足够通用。
+如果窥孔匹配，但constraint却不满足，则编译器将崩溃。
 
-将窥孔中的所有操作数的约束省略掉是安全的；
-或者你可以编写约束作为之前测试过的标准的二次检查。
+将窥孔中的所有操作数的constraint省略掉是安全的；
+或者你可以编写constraint作为之前测试过的标准的二次检查。
 
 一旦insn序列匹配指令模式，则@code{condition}将被检查。
 这是一个C表达式，用于对是否执行优化来做最后的决定
@@ -6624,66 +6362,49 @@ produce more efficient code for non-numeric attributes.
 @cindex tagging insns
 @cindex assigning attribute values to insns
 
-The value assigned to an attribute of an insn is primarily determined by
-which pattern is matched by that insn (or which @code{define_peephole}
-generated it).  Every @code{define_insn} and @code{define_peephole} can
-have an optional last argument to specify the values of attributes for
-matching insns.  The value of any attribute not specified in a particular
-insn is set to the default value for that attribute, as specified in its
-@code{define_attr}.  Extensive use of default values for attributes
-permits the specification of the values for only one or two attributes
-in the definition of most insn patterns, as seen in the example in the
-next section.
+给insn的属性赋予的值，主要由该insn所匹配的模式决定
+（或者什么@code{define_peephole}生成的它）。
+每个@code{define_insn}和@code{define_peephole}可以具有可选的最后的参数，
+用来指定匹配insn的属性值。在特定insn中没有指定的任何属性的值，
+将被设为在@code{define_attr}中指定的缺省值。
 
-The optional last argument of @code{define_insn} and
-@code{define_peephole} is a vector of expressions, each of which defines
-the value for a single attribute.  The most general way of assigning an
-attribute's value is to use a @code{set} expression whose first operand is an
-@code{attr} expression giving the name of the attribute being set.  The
-second operand of the @code{set} is an attribute expression
-(@pxref{Expressions}) giving the value of the attribute.
+可选的@code{define_insn}和@code{define_peephole}最后的参数，为一个表达式向量，
+每个元素定义了单个属性的值。赋属性值的最通用方式是使用@code{set}表达式，
+其第一个操作数为一个@code{attr}表达式，给出了要设置的属性名。
+第二个操作数为一个属性表达式（参见@ref{表达式}），给出了属性值。
 
-When the attribute value depends on the @samp{alternative} attribute
-(i.e., which is the applicable alternative in the constraint of the
-insn), the @code{set_attr_alternative} expression can be used.  It
-allows the specification of a vector of attribute expressions, one for
-each alternative.
+当属性值依赖于可选（@samp{alternative}）属性，
+则可以使用@code{set_attr_alternative}表达式。其允许指定属性表达式向量，
+每个元素对应一个可选属性。
 
 @findex set_attr
-When the generality of arbitrary attribute expressions is not required,
-the simpler @code{set_attr} expression can be used, which allows
-specifying a string giving either a single attribute value or a list
-of attribute values, one for each alternative.
+当不需要一般性的任意属性表达式，则可以使用简单的@code{set_attr}表达式，
+其允许指定一个字符串，给出单个属性值或者属性值列表，
+其中每个元素对应于一个可选属性。
 
-The form of each of the above specifications is shown below.  In each case,
-@var{name} is a string specifying the attribute to be set.
+以上的属性指定形式将在下面展示出。在每种情况中，@var{name}为一个字符串，
+指定了要被设置的属性。
 
 @table @code
 @item (set_attr @var{name} @var{value-string})
-@var{value-string} is either a string giving the desired attribute value,
-or a string containing a comma-separated list giving the values for
-succeeding alternatives.  The number of elements must match the number
-of alternatives in the constraint of the insn pattern.
+@var{value-string}或者为一个字符串，给出了期望的属性值，
+或者为一个包含了逗号分隔的列表的字符串，给出了后续可选项的值。
+元素的个数必须匹配在insn指令模式的约束中的可选项的个数。
 
-Note that it may be useful to specify @samp{*} for some alternative, in
-which case the attribute will assume its default value for insns matching
-that alternative.
+注意可以为一些可选项指定@samp{*}，这样属性将被假设它的缺省值匹配那个可选项。 
 
 @findex set_attr_alternative
 @item (set_attr_alternative @var{name} [@var{value1} @var{value2} @dots{}])
-Depending on the alternative of the insn, the value will be one of the
-specified values.  This is a shorthand for using a @code{cond} with
-tests on the @samp{alternative} attribute.
+取决于insn的可选项，值将为被指定值的其中之一。
+这是对@samp{alternative}属性使用@code{cond}的简化形式。
 
 @findex attr
 @item (set (attr @var{name}) @var{value})
-The first operand of this @code{set} must be the special RTL expression
-@code{attr}, whose sole operand is a string giving the name of the
-attribute being set.  @var{value} is the value of the attribute.
+第一个操作数必须为特定RTL表达式@code{attr}，其唯一的操作数是一个字符串，
+给出了被设置的属性名。@var{value}为属性值。
 @end table
 
-The following shows three different ways of representing the same
-attribute value specification:
+下面展示了三种表示相同的属性指定的不同的方式：
 
 @smallexample
 (set_attr "type" "load,store,arith")
@@ -6700,29 +6421,24 @@ attribute value specification:
 
 @need 1000
 @findex define_asm_attributes
-The @code{define_asm_attributes} expression provides a mechanism to
-specify the attributes assigned to insns produced from an @code{asm}
-statement.  It has the form:
+表达式@code{define_asm_attributes}提供了一种机制，
+用来指定赋予insn的属性是由@code{asm}语句产生的。其形式为：
 
 @smallexample
 (define_asm_attributes [@var{attr-sets}])
 @end smallexample
 
 @noindent
-where @var{attr-sets} is specified the same as for both the
-@code{define_insn} and the @code{define_peephole} expressions.
+其中@var{attr-sets}为与@code{define_insn}和@code{define_peephole}中的相同。
 
-These values will typically be the ``worst case'' attribute values.  For
-example, they might indicate that the condition code will be clobbered.
+这些值通常为“最坏情况”属性值。例如，它们可能指示条件码将被破坏（clobbered）。
 
-A specification for a @code{length} attribute is handled specially.  The
-way to compute the length of an @code{asm} insn is to multiply the
-length specified in the expression @code{define_asm_attributes} by the
-number of machine instructions specified in the @code{asm} statement,
-determined by counting the number of semicolons and newlines in the
-string.  Therefore, the value of the @code{length} attribute specified
-in a @code{define_asm_attributes} should be the maximum possible length
-of a single machine instruction.
+为@code{length}属性赋值，将被特殊处理。
+计算@code{asm} insn长度的方式是将表达式@code{define_asm_attributes}中指定的长度
+乘以在@code{asm}语句中指定的机器指令个数。
+指令个数通过计算字符串中分号和换行符的个数来决定。因此，
+在@code{define_asm_attributes}中指定的@code{length}属性值应该为单个机器指令的
+最大可能长度。
 
 @end ifset
 @ifset INTERNALS
@@ -6731,25 +6447,18 @@ of a single machine instruction.
 @cindex attribute specifications example
 @cindex attribute specifications
 
-The judicious use of defaulting is important in the efficient use of
-insn attributes.  Typically, insns are divided into @dfn{types} and an
-attribute, customarily called @code{type}, is used to represent this
-value.  This attribute is normally used only to define the default value
-for other attributes.  An example will clarify this usage.
+要想有效的使用insn属性，巧妙的使用缺省值是很重要的。通常，insn被分为不同类别，
+并使用称作@code{type}的属性来表示该值。该属性通常只用于定义其它属性的缺省值。
+可以举一个例子来阐明它的用法。
 
-Assume we have a RISC machine with a condition code and in which only
-full-word operations are performed in registers.  Let us assume that we
-can divide all insns into loads, stores, (integer) arithmetic
-operations, floating point operations, and branches.
+假设我们有一个RISC机器，其具有一个条件码并且在寄存器中只进行全字操作。
+让我们假设可以将所有的insn分为加载，存储，（整数）算术运算，浮点运算和分支。
 
-Here we will concern ourselves with determining the effect of an insn on
-the condition code and will limit ourselves to the following possible
-effects:  The condition code can be set unpredictably (clobbered), not
-be changed, be set to agree with the results of the operation, or only
-changed if the item previously set into the condition code has been
-modified.
+在这里我们将关注条件码对于insn的影响，并局限在下列可能的影响：
+条件码可以被不可预期的设置（clobbered），没有改变，被设为符合运算结果的值，
+或者只在先前被设置的条件码已经被修改。
 
-Here is part of a sample @file{md} file for such a machine:
+下面是该机器的一个样本@file{md}文件：
 
 @smallexample
 (define_attr "type" "load,store,arith,fp,branch" (const_string "arith"))
@@ -6776,10 +6485,8 @@ Here is part of a sample @file{md} file for such a machine:
   [(set_attr "type" "arith,load,store")])
 @end smallexample
 
-Note that we assume in the above example that arithmetic operations
-performed on quantities smaller than a machine word clobber the condition
-code since they will set the condition code to a value corresponding to the
-full-word result.
+注意我们假设在上面的例子中，比机器字小的算术运算将会clobber条件码，
+因为它们将会根据全字的结果来设置条件码。
 
 @end ifset
 @ifset INTERNALS
@@ -6788,69 +6495,55 @@ full-word result.
 @cindex insn lengths, computing
 @cindex computing the length of an insn
 
-For many machines, multiple types of branch instructions are provided, each
-for different length branch displacements.  In most cases, the assembler
-will choose the correct instruction to use.  However, when the assembler
-cannot do so, GCC can when a special attribute, the @code{length}
-attribute, is defined.  This attribute must be defined to have numeric
-values by specifying a null string in its @code{define_attr}.
+许多机器提供了多种类型的分支指令，针对于不同长度的分支位移。多数情况下，
+汇编器会选择使用正确的指令。但是，当汇编器无法做到的时候，如果一个特殊的属性，
+@code{length}属性，被定义，则可以由GCC来完成。
+该属性必须通过在它的@code{define_attr}中指定一个空字符串，
+从而被定义成具有数字值。
 
-In the case of the @code{length} attribute, two additional forms of
-arithmetic terms are allowed in test expressions:
+对于@code{length}属性，在test表达式中允许两个额外形式的算术术语：
 
 @table @code
 @cindex @code{match_dup} and attributes
 @item (match_dup @var{n})
-This refers to the address of operand @var{n} of the current insn, which
-must be a @code{label_ref}.
+这是指当前insn的操作数@var{n}的地址，其必须为一个@code{label_ref}。 
 
 @cindex @code{pc} and attributes
 @item (pc)
-This refers to the address of the @emph{current} insn.  It might have
-been more consistent with other usage to make this the address of the
-@emph{next} insn but this would be confusing because the length of the
-current insn is to be computed.
+这是指当前insn的地址。或许可以将其设为下一个insn的地址，
+从而跟其它地方的用法一致，但是这样容易引起混淆，因为还要计算当前insn的长度。 
 @end table
 
 @cindex @code{addr_vec}, length of
 @cindex @code{addr_diff_vec}, length of
-For normal insns, the length will be determined by value of the
-@code{length} attribute.  In the case of @code{addr_vec} and
-@code{addr_diff_vec} insn patterns, the length is computed as
-the number of vectors multiplied by the size of each vector.
+对于通常的insn，长度将由@code{length}属性的值来确定。
+对于@code{addr_vec}和@code{addr_diff_vec}的insn模式，
+长度通过向量数乘于每个向量的大小来计算获得。
 
-Lengths are measured in addressable storage units (bytes).
+长度按照可寻址的存储单元（字节）来度量。
 
-The following macros can be used to refine the length computation:
+下列宏可以用于改进长度计算：
 
 @table @code
 @findex ADJUST_INSN_LENGTH
 @item ADJUST_INSN_LENGTH (@var{insn}, @var{length})
-If defined, modifies the length assigned to instruction @var{insn} as a
-function of the context in which it is used.  @var{length} is an lvalue
-that contains the initially computed length of the insn and should be
-updated with the correct length of the insn.
+如果定义，则在上下文中作为函数来使用，用于修改赋予指令@var{insn}的长度。
+@var{length}为一个lvalue（左值）包含了最初计算的insn长度并将使用insn的正确长度来更新。
 
-This macro will normally not be required.  A case in which it is
-required is the ROMP@.  On this machine, the size of an @code{addr_vec}
-insn must be increased by two to compensate for the fact that alignment
-may be required.
+该宏通常并不需要。一种使用它的情况为ROMP。在这个机器上，
+一个@code{addr_vec} insn的大小必须被加2用于补偿可能需要的指令对齐。
 @end table
 
 @findex get_attr_length
-The routine that returns @code{get_attr_length} (the value of the
-@code{length} attribute) can be used by the output routine to
-determine the form of the branch instruction to be written, as the
-example below illustrates.
+返回@code{get_attr_length}（@code{length}属性的值）的程序，
+可以被输出程序用来确定将要写入的分支指令的形式，正如下面的例子。
 
-As an example of the specification of variable-length branches, consider
-the IBM 360.  If we adopt the convention that a register will be set to
-the starting address of a function, we can jump to labels within 4k of
-the start using a four-byte instruction.  Otherwise, we need a six-byte
-sequence to load the address from memory and then branch to it.
+作为一个指定可变长度分支的例子，可以考虑一下IBM360。
+如果我们采用寄存器将被设为函数起始地址这样的约定，
+我们则可以使用一个4字节的指令来跳转到4K范围的标号。
+否则，我们需要一个6字节的序列来从内存加载地址并然后分支到那里。
 
-On such a machine, a pattern for a branch instruction might be specified
-as follows:
+对于这样的机器，可以按照如下的方式来指定一个分支指令模式：
 
 @smallexample
 (define_insn "jump"
@@ -6901,28 +6594,22 @@ as follows:
 @subsection 延迟槽调度
 @cindex delay slots, defining
 
-The insn attribute mechanism can be used to specify the requirements for
-delay slots, if any, on a target machine.  An instruction is said to
-require a @dfn{delay slot} if some instructions that are physically
-after the instruction are executed as if they were located before it.
-Classic examples are branch and call instructions, which often execute
-the following instruction before the branch or call is performed.
+如果在一个目标机上存在延迟槽的话，insn属性机制可以用于指定对延迟槽的需求。
+一条指令被称为需要延迟槽，
+如果在物理上位于该指令之后的一些指令将被按照它们仿佛是位于之前的情况被执行。
+典型的例子是分支和调用指令，其通常在执行分支或调用之前先执行后面的指令。
 
-On some machines, conditional branch instructions can optionally
-@dfn{annul} instructions in the delay slot.  This means that the
-instruction will not be executed for certain branch outcomes.  Both
-instructions that annul if the branch is true and instructions that
-annul if the branch is false are supported.
+在一些机器上，条件分支指令可以选择性的废除（@dfn{annul}）延迟槽中的指令。
+这意味着该指令对于特定的分支结果将不被执行。
+对于分支为真时废除指令和分支为假时废除指令，这两种方式都被支持。
 
-Delay slot scheduling differs from instruction scheduling in that
-determining whether an instruction needs a delay slot is dependent only
-on the type of instruction being generated, not on data flow between the
-instructions.  See the next section for a discussion of data-dependent
-instruction scheduling.
+延迟槽调度与指令调度的不同之处在于，
+判定一条指令是否需要延迟槽只依赖于正被生成的指令的类型，而不是指令间的数据流。
+关于数据相关的指令调度的讨论，参见下一个章节。
 
 @findex define_delay
-The requirement of an insn needing one or more delay slots is indicated
-via the @code{define_delay} expression.  It has the following form:
+一个insn对一个或多个延迟槽的需求是通过@code{define_delay}表达式来表示的。
+其具有下列形式：
 
 @smallexample
 (define_delay @var{test}
@@ -6931,34 +6618,27 @@ via the @code{define_delay} expression.  It has the following form:
                @dots{}])
 @end smallexample
 
-@var{test} is an attribute test that indicates whether this
-@code{define_delay} applies to a particular insn.  If so, the number of
-required delay slots is determined by the length of the vector specified
-as the second argument.  An insn placed in delay slot @var{n} must
-satisfy attribute test @var{delay-n}.  @var{annul-true-n} is an
-attribute test that specifies which insns may be annulled if the branch
-is true.  Similarly, @var{annul-false-n} specifies which insns in the
-delay slot may be annulled if the branch is false.  If annulling is not
-supported for that delay slot, @code{(nil)} should be coded.
+@var{test}是一个属性测试，用来表示该@code{define_delay}是否应用到特定的insn。
+如果是，则所需延迟槽的数目通过作为第二个参数的向量的长度来确定。
+放在延迟槽@var{n}中的insn必须满足属性测试@var{delay-n}。
+@var{annul-true-n}是一个属性测试，用来指定当分支为真时哪些insn可以被废除。
+如果该延迟槽不支持废除，则应该使用@code{(nil)}。
 
-For example, in the common case where branch and call insns require
-a single delay slot, which may contain any insn other than a branch or
-call, the following would be placed in the @file{md} file:
+例如，通常情况下分支和调用insns都需要一个单个的延迟槽，
+其可以包含任何不是分支或调用的其它insn，则下面的可以放入@file{md}文件中：
 
 @smallexample
 (define_delay (eq_attr "type" "branch,call")
               [(eq_attr "type" "!branch,call") (nil) (nil)])
 @end smallexample
 
-Multiple @code{define_delay} expressions may be specified.  In this
-case, each such expression specifies different delay slot requirements
-and there must be no insn for which tests in two @code{define_delay}
-expressions are both true.
+可以指定多个@code{define_delay}表达式。在这种情况下，
+每个这样的表达式都指定了不同的延迟槽需求，
+并且在两个@code{define_delay}表达式中的test必须不能都为真。
 
-For example, if we have a machine that requires one delay slot for branches
-but two for calls,  no delay slot can contain a branch or call insn,
-and any valid insn in the delay slot for the branch can be annulled if the
-branch is true, we might represent this as follows:
+例如，如果我们有一个机器，其对分支需要一个延迟槽，但对调用需要两个，
+延迟槽不能包含分支或调用insn，并且当分支为真时，
+任何在分支延迟槽中的有效insn可以被废除，则我们可以使用下列方式来表示：
 
 @smallexample
 (define_delay (eq_attr "type" "branch")
@@ -6990,21 +6670,22 @@ branch is true, we might represent this as follows:
 @cindex RISC
 @cindex VLIW
 
-为了获得更好的性能，大多数现代处理器（超流水线的，超标量@acronym{RISC}，
+为了获得更好的性能，大多数现代处理器（超流水线，超标量@acronym{RISC}，
 以及@acronym{VLIW}处理器）都具有许多功能单元（@dfn{functional units}），
-可以在其上同时执行多条指令。一条指令当它的问题条件（issue conditions）
-被满足时才开始执行。如果不满足，则指令会被延迟直到它的条件被满足。
+可以在其上同时执行多条指令。一条指令当它的发射条件（issue conditions）
+被满足时才开始执行。如果不满足，则指令会被阻塞（stalled），直到它的条件被满足。
 这样的互锁（流水线）延迟(@dfn{interlock (pipeline) delay})
-造成了获取后继指令的中断（或者需要nop指令，例如一些MIPS处理器）。
+导致对后续指令读取的中断（或者需要nop指令，例如一些MIPS处理器）。
 
-现代处理器中有两种主要的互锁延迟。第一个为数据相关延迟用来判定指令延迟时间
+现代处理器中有两种主要的互锁延迟。第一种为数据依赖延迟，用来确定指令延迟时间
 （@dfn{instruction latency time}）。直到所有源数据都被先前指令求得，
 该指令才会开始执行（有更加复杂的情况是，
-当指令开始执行时数据还不可用但是将会在指令开始执行后的给定时间准备好）。
-考虑数据相关延迟是简单的。两个指令间的数据相关（）延迟被给定为一个常量。
+当指令开始执行时数据还不可用，但是将会在指令开始执行后的给定时间准备好）。
+考虑数据依赖延迟是简单的。
+两个指令间的数据依赖（真依赖，输出依赖，反依赖）延迟被给定为一个常量。
 大多数情况下该方法都适合。第二种互锁延迟为保留延迟（reservation delay）。
 保留延迟意味着要执行的两条指令将会需要共享的处理器资源，即总线，内部寄存器，
-以及/或者函数单元，而这些将被保留一段时间。考虑这种延迟是复杂的，
+以及/或者功能单元，而这些将被保留一段时间。考虑这种延迟是复杂的，
 特别是对于现代@acronym{RISC}处理器。
 
 探索更多的处理器并行的任务是由指令调度器来解决的。为了能够更好的解决该问题，
@@ -7022,7 +6703,7 @@ GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟�
 所以这确实会在算法性能上造成一点消减。}。
 
 @cindex automaton based pipeline description
-该章节的剩余部分描述了构造一个基于自动机的处理器流水线描述的指令。
+该章节的剩余部分描述了构造一个基于自动机的处理器流水线描述的命令（directive）。
 这些结构在机器描述文件中的顺序并不重要。
 
 @findex define_automaton
@@ -7057,8 +6738,8 @@ GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟�
 如果有一个定义的自动机，则你应该给出@dfn{automaton-name}。
 
 为功能单元赋予自动机，受到insn保留中对功能单元使用的限制。
-最重要的约束为：如果一个功能单元保留。
-其余的约束将在后续的结构描述中提到。
+最重要的constraint为：如果一个功能单元保留。
+其余的constraint将在后续的结构描述中提到。
 
 @findex define_query_cpu_unit
 @cindex querying function unit reservations
@@ -7093,7 +6774,7 @@ GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟�
 在基于自动机的流水线描述中，给定的延迟时间只用于真依赖。
 反依赖的代价总为0，并且输出依赖的代价是生产者insn和消费者insn的延迟时间之差
 （如果差为负数，则代价被认为为0）。
-你可以通过使用target钩子@code{TARGET_SCHED_ADJUST_COST} （参见 @ref{调度}），
+你可以通过使用目标机钩子@code{TARGET_SCHED_ADJUST_COST}（参见@ref{调度}），
 来改变任何描述的缺省代价。
 
 @var{insn-name}为一个字符串，给出了insn的内部名字。
@@ -7138,68 +6819,57 @@ GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟�
 @samp{,}用于描述在保留中，下一周期的开始。
 
 @item
-@samp{|}用于描述在保留中，第一个正规表达式@strong{或上}第二个正规表达式，
-@strong{或}等等。 
+@samp{|}用于描述在保留中，第一个正规表达式@strong{or}第二个正规表达式，
+@strong{or}等等。 
 
 @item
-@samp{+}用于描述在保留中，第一个正规表达式@strong{与上}第二个正规表达式，与上等等。
-is used for describing a reservation described by the first
-regular expression @strong{and} a reservation described by the
-second regular expression @strong{and} etc.
+@samp{+}用于描述在保留中，第一个正规表达式@strong{and}第二个正规表达式，
+@strong{and}等等。
 
 @item
-@samp{*} is used for convenience and simply means a sequence in which
-the regular expression are repeated @var{number} times with cycle
-advancing (see @samp{,}).
+@samp{*}用于方便记述，其简单的表示一个正规表达式序列，
+表达式随着周期前移被重复@var{number}次（参见@samp{,}）。
 
 @item
-@samp{cpu_function_unit_name} denotes reservation of the named
-functional unit.
+@samp{cpu_function_unit_name}表示对命名功能单元的保留。
 
 @item
-@samp{reservation_name} --- see description of construction
-@samp{define_reservation}.
+@samp{reservation_name} --- 参见对结构@samp{define_reservation}的描述。
 
 @item
-@samp{nothing} denotes no unit reservations.
+@samp{nothing}表示没有功能单元被保留。
 @end itemize
 
 @findex define_reservation
-Sometimes unit reservations for different insns contain common parts.
-In such case, you can simplify the pipeline description by describing
-the common part by the following construction
+有时，对于不同insn，具有共同部分的单元保留。
+这样情况，你可以通过使用下面的结构来描述共同部分，以简化流水线描述。
 
 @smallexample
 (define_reservation @var{reservation-name} @var{regexp})
 @end smallexample
 
-@var{reservation-name} is a string giving name of @var{regexp}.
-Functional unit names and reservation names are in the same name
-space.  So the reservation names should be different from the
-functional unit names and can not be the reserved name @samp{nothing}.
+@var{reservation-name}为一个字符串，给出了@var{regexp}的名字。
+功能单元名和保留名属于同一命名空间。所以，保留名应该与功能单元名不同，
+并且不能为预留名@samp{nothing}。
 
 @findex define_bypass
 @cindex instruction latency time
 @cindex data bypass
-The following construction is used to describe exceptions in the
-latency time for given instruction pair.  This is so called bypasses.
+下面的结构被用于描述对于给定的指令对，在延迟时间上的例外。也称之为bypass。
 
 @smallexample
 (define_bypass @var{number} @var{out_insn_names} @var{in_insn_names}
                [@var{guard}])
 @end smallexample
 
-@var{number} defines when the result generated by the instructions
-given in string @var{out_insn_names} will be ready for the
-instructions given in string @var{in_insn_names}.  The instructions in
-the string are separated by commas.
+@var{number}定义了给定字符串@var{out_insn_names}的指令所产生的结果，
+什么时候可以由给定字符串@var{in_insn_names}的指令使用。
+字符串中的指令由逗号分隔。
 
-@var{guard} is an optional string giving the name of a C function which
-defines an additional guard for the bypass.  The function will get the
-two insns as parameters.  If the function returns zero the bypass will
-be ignored for this case.  The additional guard is necessary to
-recognize complicated bypasses, e.g.@: when the consumer is only an address
-of insn @samp{store} (not a stored value).
+@var{guard}为一个可选的字符串，给出了C函数名，其定义了bypass的额外的保护条件。
+该函数将两个insn作为参数。如果函数返回0，则对于该情况bypass将被忽略。
+额外的guard在识别复杂的bypass时，很有必要。
+例如当消费者只是一个insn @samp{store}的地址（而不是被存储的值）。
 
 @findex exclusion_set
 @findex presence_set
@@ -7208,10 +6878,9 @@ of insn @samp{store} (not a stored value).
 @findex final_absence_set
 @cindex VLIW
 @cindex RISC
-The following five constructions are usually used to describe
-@acronym{VLIW} processors, or more precisely, to describe a placement
-of small instructions into @acronym{VLIW} instruction slots.  They
-can be used for @acronym{RISC} processors, too.
+下面五个结构通常用于描述@acronym{VLIW}处理器，或者更精确的说，
+来描述放入@acronym{VLIW}指令槽中的小指令的位置。
+它们也可以用于@acronym{RISC}处理器。
 
 @smallexample
 (exclusion_set @var{unit-names} @var{unit-names})
@@ -7221,168 +6890,133 @@ can be used for @acronym{RISC} processors, too.
 (final_absence_set @var{unit-names} @var{patterns})
 @end smallexample
 
-@var{unit-names} is a string giving names of functional units
-separated by commas.
+@var{unit-names}为一个字符串，给出了由逗号分隔的功能单元的名字。
 
-@var{patterns} is a string giving patterns of functional units
-separated by comma.  Currently pattern is one unit or units
-separated by white-spaces.
+@var{patterns}为一个字符串，给出了由逗号分隔的功能单元的模式。
+目前的模式，为一个单元或者由空格分隔的单元。
 
-The first construction (@samp{exclusion_set}) means that each
-functional unit in the first string can not be reserved simultaneously
-with a unit whose name is in the second string and vice versa.  For
-example, the construction is useful for describing processors
-(e.g.@: some SPARC processors) with a fully pipelined floating point
-functional unit which can execute simultaneously only single floating
-point insns or only double floating point insns.
+第一个结构(@samp{exclusion_set}) 意味着第一个字符串中的每个功能单元不能与
+第二个字符串中的功能单元同时被保留，反之亦然。例如，结构可以用于描述处理器
+（例如，一些SPARC处理器）具有全流水浮点功能单元，
+其只可以同时执行单浮点insn或者双浮点insn。
 
-The second construction (@samp{presence_set}) means that each
-functional unit in the first string can not be reserved unless at
-least one of pattern of units whose names are in the second string is
-reserved.  This is an asymmetric relation.  For example, it is useful
-for description that @acronym{VLIW} @samp{slot1} is reserved after
-@samp{slot0} reservation.  We could describe it by the following
-construction
+第二个结构(@samp{presence_set}) 意味着第一个字符串中的每个功能单元不能被保留，
+除非至少一种模式的功能单元其名字在第二个字符串中且被保留。这是一个不对称关系。
+例如，可以用于描述@acronym{VLIW} @samp{slot1}在@samp{slot0}保留之后被保留。
+我们可以使用下列结构来描述
 
 @smallexample
 (presence_set "slot1" "slot0")
 @end smallexample
 
-Or @samp{slot1} is reserved only after @samp{slot0} and unit @samp{b0}
-reservation.  In this case we could write
+或者@samp{slot1}只在@samp{slot0}和功能单元@samp{b0}保留之后被保留。
+这种情况下，我们可以写成
 
 @smallexample
 (presence_set "slot1" "slot0 b0")
 @end smallexample
 
-The third construction (@samp{final_presence_set}) is analogous to
-@samp{presence_set}.  The difference between them is when checking is
-done.  When an instruction is issued in given automaton state
-reflecting all current and planned unit reservations, the automaton
-state is changed.  The first state is a source state, the second one
-is a result state.  Checking for @samp{presence_set} is done on the
-source state reservation, checking for @samp{final_presence_set} is
-done on the result reservation.  This construction is useful to
-describe a reservation which is actually two subsequent reservations.
-For example, if we use
+第三个结构(@samp{final_presence_set}) 类似于@samp{presence_set}。
+区别在于什么时候进行检查。当指令在给定自动机状态被发射时，
+其将影响所有当前和计划中的单元保留，并且自动机状态被改变。
+第一个状态为源状态，第二个为结果状态。
+对于@samp{presence_set}的检查是在源状态保留时进行的，
+对于@samp{final_presence_set}的检查是在结果状态下进行的。
+该结构可以用于描述实际上是两个连续的保留的保留。例如，如果我们使用
 
 @smallexample
 (presence_set "slot1" "slot0")
 @end smallexample
 
-the following insn will be never issued (because @samp{slot1} requires
-@samp{slot0} which is absent in the source state).
+下列insn将永远不会被发射（因为@samp{slot1}需要@samp{slot0}，
+而@samp{slot0}在源状态是空缺的）
 
 @smallexample
 (define_reservation "insn_and_nop" "slot0 + slot1")
 @end smallexample
 
-but it can be issued if we use analogous @samp{final_presence_set}.
+但是如果我们使用类似的@samp{final_presence_set}其就可以被发射。
 
-The forth construction (@samp{absence_set}) means that each functional
-unit in the first string can be reserved only if each pattern of units
-whose names are in the second string is not reserved.  This is an
-asymmetric relation (actually @samp{exclusion_set} is analogous to
-this one but it is symmetric).  For example it might be useful in a 
-@acronym{VLIW} description to say that @samp{slot0} cannot be reserved
-after either @samp{slot1} or @samp{slot2} have been reserved.  This
-can be described as:
+第四个结构 (@samp{absence_set}) 意味着在第一个字符串中的每个功能单元，
+只有在每个名字在第二个字符串中的功能单元没有被保留时才能被保留。
+这是一个不对称关系（实际上@samp{exclusion_set}与其类似，但它是对成的）。
+例如，可以用于@acronym{VLIW}描述，来表示@samp{slot0}不能在@samp{slot1}或
+@samp{slot2}保留后被保留。这可以描述为
 
 @smallexample
 (absence_set "slot0" "slot1, slot2")
 @end smallexample
 
-Or @samp{slot2} can not be reserved if @samp{slot0} and unit @samp{b0}
-are reserved or @samp{slot1} and unit @samp{b1} are reserved.  In
-this case we could write
+或者@samp{slot2}不能被保留，如果@samp{slot0}和单元@samp{b0}被保留，
+或者@samp{slot1}和单元@samp{b1}被保留. 这种情况下，我们可以写成
 
 @smallexample
 (absence_set "slot2" "slot0 b0, slot1 b1")
 @end smallexample
 
-All functional units mentioned in a set should belong to the same
-automaton.
+所有在集合（set）中提到的功能单元应属于相同的自动机。
 
-The last construction (@samp{final_absence_set}) is analogous to
-@samp{absence_set} but checking is done on the result (state)
-reservation.  See comments for @samp{final_presence_set}.
+最后一个结构(@samp{final_absence_set})类似于@samp{absence_set}，
+但是检查是在结果（状态）保留时进行。参见@samp{final_presence_set}的注解。
 
 @findex automata_option
 @cindex deterministic finite state automaton
 @cindex nondeterministic finite state automaton
 @cindex finite state automaton minimization
-You can control the generator of the pipeline hazard recognizer with
-the following construction.
+你可以使用下面的结构来控制流水线冒险识别器的生成。
 
 @smallexample
 (automata_option @var{options})
 @end smallexample
 
-@var{options} is a string giving options which affect the generated
-code.  Currently there are the following options:
+@var{options}为一个字符串，给出了影响生成代码的选项。目前有下列选项：
 
 @itemize @bullet
 @item
-@dfn{no-minimization} makes no minimization of the automaton.  This is
-only worth to do when we are debugging the description and need to
-look more accurately at reservations of states.
+@dfn{no-minimization}不对自动机进行最小化处理。
+这只在我们进行调试描述信息并且需要更加精确的查看保留状态时，才值得做。
 
 @item
-@dfn{time} means printing time statistics about the generation of
-automata.
+@dfn{time}意味着打印生成自动机的时间统计。
 
 @item
-@dfn{stats} means printing statistics about the generated automata
-such as the number of DFA states, NDFA states and arcs.
+@dfn{stats}意味着打印生成自动机的DFA状态，NDFA状态和arcs这样的数目统
 
 @item
-@dfn{v} means a generation of the file describing the result automata.
-The file has suffix @samp{.dfa} and can be used for the description
-verification and debugging.
+@dfn{v}意味着生成一个描述生成自动机的文件。文件具有后缀@samp{.dfa}，
+并且可以用于验证和调试描述。
 
 @item
-@dfn{w} means a generation of warning instead of error for
-non-critical errors.
+@dfn{w}意味着对于非关键的错误使用警告来替代。
 
 @item
-@dfn{ndfa} makes nondeterministic finite state automata.  This affects
-the treatment of operator @samp{|} in the regular expressions.  The
-usual treatment of the operator is to try the first alternative and,
-if the reservation is not possible, the second alternative.  The
-nondeterministic treatment means trying all alternatives, some of them
-may be rejected by reservations in the subsequent insns.
+@dfn{ndfa}生成非确定有限状态机。这将影响对正规表达式中操作符@samp{|}的对待。
+通常对该操作符的处理是先尝试第一个，然后再第二个。
+非确定状态机意味着尝试所有的选择，其中一些可以被后续的insn放弃。
 
 @item
-@dfn{progress} means output of a progress bar showing how many states
-were generated so far for automaton being processed.  This is useful
-during debugging a @acronym{DFA} description.  If you see too many
-generated states, you could interrupt the generator of the pipeline
-hazard recognizer and try to figure out a reason for generation of the
-huge automaton.
+@dfn{progress}意味着输出一个进度条，来显示被处理的自动机目前生成了多少状态。
+这在调试@acronym{DFA}描述时很有用。如果你看到太多的状态被生成，
+你可以中断流水线冒险识别器的生成并尝试去弄清楚为什么会生成如此大的自动机。
 @end itemize
 
-As an example, consider a superscalar @acronym{RISC} machine which can
-issue three insns (two integer insns and one floating point insn) on
-the cycle but can finish only two insns.  To describe this, we define
-the following functional units.
+作为一个例子，考虑一个超标量@acronym{RISC}机器，
+其可以在一个周期发射三条insn（两条整数insn和一条浮点insn），
+但是只能完成两条insn。为了描述，我们定义下列功能单元。
 
 @smallexample
 (define_cpu_unit "i0_pipeline, i1_pipeline, f_pipeline")
 (define_cpu_unit "port0, port1")
 @end smallexample
 
-All simple integer insns can be executed in any integer pipeline and
-their result is ready in two cycles.  The simple integer insns are
-issued into the first pipeline unless it is reserved, otherwise they
-are issued into the second pipeline.  Integer division and
-multiplication insns can be executed only in the second integer
-pipeline and their results are ready correspondingly in 8 and 4
-cycles.  The integer division is not pipelined, i.e.@: the subsequent
-integer division insn can not be issued until the current division
-insn finished.  Floating point insns are fully pipelined and their
-results are ready in 3 cycles.  Where the result of a floating point
-insn is used by an integer insn, an additional delay of one cycle is
-incurred.  To describe all of this we could specify
+所有简单的整数insn可以在任何整数流水线中被执行，并且结果可以在两个周期获得。
+简单的整数insn将被发射到第一个流水线中，除非它被保留，
+否则它们将被发射到第二个流水线中。整数除和乘insn只能在第二个整数流水线中被执行，
+并且它们的结果相应的在8和4个周期获得。
+整数除为非流水线，即后续的整数除insn在当前的除法insn完成前不能被发射。
+浮点insn为全流水的并且它们的结果在3个周期获得。
+当浮点insn的结果被整数insn使用使，将会产生一个额外的周期延迟。
+要描述所有这些，我们可以指定
 
 @smallexample
 (define_cpu_unit "div")
@@ -7402,14 +7036,13 @@ incurred.  To describe all of this we could specify
 (define_bypass 4 "float" "simple,mult,div")
 @end smallexample
 
-To simplify the description we could describe the following reservation
+为了简化描述，我们可以描述下列保留
 
 @smallexample
 (define_reservation "finish" "port0|port1")
 @end smallexample
 
-and use it in all @code{define_insn_reservation} as in the following
-construction
+并在所有@code{define_insn_reservation}中使用，比如下面的结构
 
 @smallexample
 (define_insn_reservation "simple" 2 (eq_attr "type" "int")
@@ -7424,7 +7057,7 @@ construction
 @cindex conditional execution
 @cindex predication
 
-许多体系结构都提供了某种形式的条件执行，或者断言。其特点是能够使得
+许多体系结构都提供了某种形式的条件执行，或者predicate。其特点是能够使得
 指令集中的大多数指令变为无效。当指令集很大并且不完全对称时，在
 @file{.md} 文件中直接描述这些形式将会变得非常冗长。一种可替代的方式
 为 @code{define_cond_exec} 模板。
@@ -7447,9 +7080,9 @@ construction
 @findex current_insn_predicate
 @var{output-template} 为一个类似于 @code{define_insn} 输出模板
 （@pxref{Output Template}）的字符串，除了不应用 @samp{*} 和 @samp{@@}
-的特殊情况。这只在针对断言的汇编文本为一个主insn的简单前缀时有用。为了
+的特殊情况。这只在针对predicate的汇编文本为一个主insn的简单前缀时有用。为了
 处理通用的情况，有一个全局变量 @code{current_insn_predicate}，在当前
-insn被断言时其将包含整个断言，否则将为 @code{NULL}。
+insn被predicate时其将包含整个predicate，否则将为 @code{NULL}。
 
 当使用 @code{define_cond_exec} 时，将会创建一个对 @code{predicable} 指
 令属性的隐式引用。@pxref{Insn Attributes}。该属性并须为布尔的（即在它的
@@ -7458,7 +7091,7 @@ insn被断言时其将包含整个断言，否则将为 @code{NULL}。
 赖于可选项或其它。
 
 对于每个 @code{predicable} 属性为真的 @code{define_insn}，一个新的匹配
-一个指令断言版本的 @code{define_insn} 指令模式将被生成。例如，
+一个指令predicate版本的 @code{define_insn} 指令模式将被生成。例如，
 
 @smallexample
 (define_insn "addsi"
