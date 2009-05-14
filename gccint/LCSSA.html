@@ -52,41 +52,31 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_00be_00aa_00e7_008e_00af_00e5_008
 <h3 class="section">14.4 循环封闭的SSA形式</h3>
 
 <p><a name="index-LCSSA-3076"></a><a name="index-Loop_002dclosed-SSA-form-3077"></a>
-Throughout the loop optimizations on tree level, one extra condition is
-enforced on the SSA form:  No SSA name is used outside of the loop in
-that it is defined.  The SSA form satisfying this condition is called
-&ldquo;loop-closed SSA form&rdquo; &ndash; LCSSA.  To enforce LCSSA, PHI nodes must be
-created at the exits of the loops for the SSA names that are used
-outside of them.  Only the real operands (not virtual SSA names) are
-held in LCSSA, in order to save memory.
+在整个树级的循环优化过程中，SSA形式需要有一个额外的加强条件：
+没有SSA名字在它所定义的循环之外被使用。
+满足这样条件的SSA形式称作“循环封闭的SSA形式”-LCSSA。
+为了形成LCSSA，对于在循环外使用SSA名字的，必须在循环的出口创建PHI节点。
+为了节省内存，在LCSSA中只支持实际的操作数（不包括虚拟SSA名）。
 
- <p>There are various benefits of LCSSA:
+ <p>LCSSA有许多好处：
 
      <ul>
-<li>Many optimizations (value range analysis, final value
-replacement) are interested in the values that are defined in the loop
-and used outside of it, i.e., exactly those for that we create new PHI
-nodes. 
-<li>In induction variable analysis, it is not necessary to specify the
-loop in that the analysis should be performed &ndash; the scalar evolution
-analysis always returns the results with respect to the loop in that the
-SSA name is defined. 
-<li>It makes updating of SSA form during loop transformations simpler. 
-Without LCSSA, operations like loop unrolling may force creation of PHI
-nodes arbitrarily far from the loop, while in LCSSA, the SSA form can be
-updated locally.  However, since we only keep real operands in LCSSA, we
-cannot use this advantage (we could have local updating of real
-operands, but it is not much more efficient than to use generic SSA form
-updating for it as well; the amount of changes to SSA is the same). 
+<li>许多优化（值范围分析，最终值替换）都对在循环中定义的而在循环外使用的值感兴趣，
+即，对那些我们创建的新PHI节点。
+<li>在归约变量分析中，
+没有必要指定将要执行分析的循环——标量演化分析总是返回SSA名字被定义的循环。
+<li>它使得循环转换中更新SSA形式变得更简单。没有LCSSA的话，
+像循环展开这样的操作可能会强迫创建距离循环任意远的PHI节点，然而使用LCSSA的话，
+SSA形式能够被局部更新。不过，由于我们只是在LCSSA中保持真实的操作书，
+所以我们不能使用这个好处（我们本来能够局部更新真实操作数，
+但是这样并不比使用通用SSA形式更新更有效；对SSA的改动是相同的）。
 </ul>
 
- <p>However, it also means LCSSA must be updated.  This is usually
-straightforward, unless you create a new value in loop and use it
-outside, or unless you manipulate loop exit edges (functions are
-provided to make these manipulations simple). 
-<code>rewrite_into_loop_closed_ssa</code> is used to rewrite SSA form to
-LCSSA, and <code>verify_loop_closed_ssa</code> to check that the invariant of
-LCSSA is preserved.
+ <p>不管怎样，这还意味着LCSSA必须被更新。这通常是很直白的，
+除非你在循环中创建了一个新值，并在外面使用，
+或者除非你操作了循环出口边（有函数被提供使得这些操作变得简单）。
+<code>rewrite_into_loop_closed_ssa</code>用来将SSA形式重写为 LCSSA，
+<code>verify_loop_closed_ssa</code>用来检查LCSSA所保持的不变性。
 
  </body></html>
 

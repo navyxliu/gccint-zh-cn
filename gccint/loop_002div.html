@@ -53,45 +53,36 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_00be_00aa_00e7_008e_00af_00e5_008
 <h3 class="section">14.6 RTL上的IV分析</h3>
 
 <p><a name="index-IV-analysis-on-RTL-3080"></a>
-The induction variable on RTL is simple and only allows analysis of
-affine induction variables, and only in one loop at once.  The interface
-is declared in <samp><span class="file">cfgloop.h</span></samp>.  Before analyzing induction variables
-in a loop L, <code>iv_analysis_loop_init</code> function must be called on L. 
-After the analysis (possibly calling <code>iv_analysis_loop_init</code> for
-several loops) is finished, <code>iv_analysis_done</code> should be called. 
-The following functions can be used to access the results of the
-analysis:
+RTL之上的归约变量很简单，并且只允许一次在一个循环中，仿射归约变量的分析。
+接口在<samp><span class="file">cfgloop.h</span></samp>中声明。在循环L中分析归约变量之前，
+必须在L上调用<code>iv_analysis_loop_init</code>函数。
+分析完成之后（可能会为多个循环调用<code>iv_analysis_loop_init</code>），
+应该调用<code>iv_analysis_done</code>。下面的函数能够被用来访问分析结果：
 
      <ul>
-<li><code>iv_analyze</code>: Analyzes a single register used in the given
-insn.  If no use of the register in this insn is found, the following
-insns are scanned, so that this function can be called on the insn
-returned by get_condition. 
-<li><code>iv_analyze_result</code>: Analyzes result of the assignment in the
-given insn. 
-<li><code>iv_analyze_expr</code>: Analyzes a more complicated expression. 
-All its operands are analyzed by <code>iv_analyze</code>, and hence they must
-be used in the specified insn or one of the following insns. 
+<li><code>iv_analyze</code>:
+分析在给定insn中的单个寄存器。如果在该insn中没有使用寄存器，则扫描下一个insn，
+因此该函数能够在通过get_condition返回的insn上被调用。
+<li><code>iv_analyze_result</code>:
+分析给定insn的赋值结果。
+<li><code>iv_analyze_expr</code>:
+分析一个更加复杂的表达式。其所有操作数都通过<code>iv_analyze</code>来分析，
+因此它们必须用在特定insn中，或者后面insn的其中之一。
 </ul>
 
- <p>The description of the induction variable is provided in <code>struct
-rtx_iv</code>.  In order to handle subregs, the representation is a bit
-complicated; if the value of the <code>extend</code> field is not
-<code>UNKNOWN</code>, the value of the induction variable in the i-th
-iteration is
+ <p>归约变量的描述在<code>struct rtx_iv</code>中。为了处理子寄存器，该表示有些复杂；
+如果<code>extend</code>域的值不是<code>UNKNOWN</code>，则归约变量在第i次迭代时的值为
 
 <pre class="smallexample">     delta + mult * extend_{extend_mode} (subreg_{mode} (base + i * step)),
 </pre>
- <p>with the following exception:  if <code>first_special</code> is true, then the
-value in the first iteration (when <code>i</code> is zero) is <code>delta +
-mult * base</code>.  However, if <code>extend</code> is equal to <code>UNKNOWN</code>,
-then <code>first_special</code> must be false, <code>delta</code> 0, <code>mult</code> 1
-and the value in the i-th iteration is
+ <p>不过下面的情况例外：如果<code>first_special</code>为真，
+则在首次迭代时（当<code>i</code>为0时），值为<code>delta + mult * base</code>。
+然而，如果<code>extend</code>等于<code>UNKNOWN</code>，则<code>first_special</code>必须为假，
+<code>delta</code>为0，<code>mult</code>为1，并且在第i次迭代时的值为
 
 <pre class="smallexample">     subreg_{mode} (base + i * step)
 </pre>
- <p>The function <code>get_iv_value</code> can be used to perform these
-calculations.
+ <p>函数<code>get_iv_value</code>可以用来执行这些计算。
 
  </body></html>
 
