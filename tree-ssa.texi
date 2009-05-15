@@ -40,40 +40,27 @@ GIMPLE和RTL用于优化程序。GIMPLE用于目标和语言无关的优化（�
 @cindex real operands
 @findex update_stmt
 
-Almost every GIMPLE statement will contain a reference to a variable
-or memory location.  Since statements come in different shapes and
-sizes, their operands are going to be located at various spots inside
-the statement's tree.  To facilitate access to the statement's
-operands, they are organized into lists associated inside each
-statement's annotation.  Each element in an operand list is a pointer
-to a @code{VAR_DECL}, @code{PARM_DECL} or @code{SSA_NAME} tree node.
-This provides a very convenient way of examining and replacing
-operands.
+几乎每条GIMPLE语句都会包含对变量或者内存地址的引用。由于语句的形状和大小不同，
+它们的操作数也将会位于语句树中的不同点。为了便于访问语句的操作数，
+它们被组织到与语句的注解（annotation）相关联的一个列表中。
+操作数列表中的每个元素都是一个指向@code{VAR_DECL}, @code{PARM_DECL}
+或@code{SSA_NAME}树结点的指针。这就为检查和替换操作数提供了一种非常方便的方法。
 
-Data flow analysis and optimization is done on all tree nodes
-representing variables.  Any node for which @code{SSA_VAR_P} returns
-nonzero is considered when scanning statement operands.  However, not
-all @code{SSA_VAR_P} variables are processed in the same way.  For the
-purposes of optimization, we need to distinguish between references to
-local scalar variables and references to globals, statics, structures,
-arrays, aliased variables, etc.  The reason is simple, the compiler
-can gather complete data flow information for a local scalar.  On the
-other hand, a global variable may be modified by a function call, it
-may not be possible to keep track of all the elements of an array or
-the fields of a structure, etc.
+数据流分析和优化是在所有表示变量的树结点上完成的。扫描语句操作数时，
+将会考虑任何@code{SSA_VAR_P}返回非零的节点。但是，
+并不是所有的@code{SSA_VAR_P}变量都使用同一种方式来处理。出于优化的目的，
+我们需要区分对局部标量的引用和对全局，静态，结构体，数组，别名变量的引用，等等。
+原因很简单，一方面是因为编译器能够为局部标量搜集完整的数据流信息；而另一方面，
+是因为全局变量可能会被函数调用所修改，
+并且也可能无法追踪数组或结构体的所有元素或域的信息，等等。
 
-The operand scanner gathers two kinds of operands: @dfn{real} and
-@dfn{virtual}.  An operand for which @code{is_gimple_reg} returns true
-is considered real, otherwise it is a virtual operand.  We also
-distinguish between uses and definitions.  An operand is used if its
-value is loaded by the statement (e.g., the operand at the RHS of an
-assignment).  If the statement assigns a new value to the operand, the
-operand is considered a definition (e.g., the operand at the LHS of
-an assignment).
+操作数扫描器搜集两类操作数：实的（@dfn{real}）和虚的（@dfn{virtual}）。
+@code{is_gimple_reg}返回真的操作数被认为是实操作数，否则为一个虚操作数。
+我们还区分了它们的使用和定义。如果操作数的值被语句加载（例如，在赋值的右边），
+则为使用。如果语句给操作数赋于了一个新的值（例如，在赋值的左边），则为定义。
 
-Virtual and real operands also have very different data flow
-properties.  Real operands are unambiguous references to the
-full object that they represent.  For instance, given
+虚操作数和实操作数还具有不同的数据流属性。
+实操作数是对它们表示的完整对象的明确引用。例如，给定
 
 @smallexample
 @{
@@ -82,23 +69,19 @@ full object that they represent.  For instance, given
 @}
 @end smallexample
 
-Since @code{a} and @code{b} are non-aliased locals, the statement
-@code{a = b} will have one real definition and one real use because
-variable @code{b} is completely modified with the contents of
-variable @code{a}.  Real definition are also known as @dfn{killing
-definitions}.  Similarly, the use of @code{a} reads all its bits.
+由于@code{a}和@code{b}为非别名的局部变量，
+语句@code{a = b}将具有一个实定义和一个实使用，
+因为变量@code{a}完全被变量@code{b}的内容修改了。
+实定义还被称作为@dfn{killing definition}（杀死定义）。
+类似的，对@code{b}的使用是读取了它的所有位。
 
-In contrast, virtual operands are used with variables that can have
-a partial or ambiguous reference.  This includes structures, arrays,
-globals, and aliased variables.  In these cases, we have two types of
-definitions.  For globals, structures, and arrays, we can determine from
-a statement whether a variable of these types has a killing definition.
-If the variable does, then the statement is marked as having a
-@dfn{must definition} of that variable.  However, if a statement is only
-defining a part of the variable (i.e.@: a field in a structure), or if we
-know that a statement might define the variable but we cannot say for sure,
-then we mark that statement as having a @dfn{may definition}.  For
-instance, given
+与此相反，虚操作数用于部分或者不明确的引用。这包括结构体，数组，全局和别名变量。
+这些情况下，我们具有两种类型的定义。对于全局变量，结构体和数组，
+我们能够从语句中确定这些类型的变量是否具有一个killing definition。如果变量具有，
+则语句被标记为具有那个变量的必然定义（@dfn{must definition}）。但是，
+如果语句只是定义了变量的一部分（即，结构体中的一个域），
+或者如果我们知道语句可能会定义变量，但是不确定，
+则我们将那条语句标记为具有一个可能定义（@dfn{may definition}）。例如，给定
 
 @smallexample
 @{
@@ -113,14 +96,12 @@ instance, given
 @}
 @end smallexample
 
-The assignment @code{*p = 5} may be a definition of @code{a} or
-@code{b}.  If we cannot determine statically where @code{p} is
-pointing to at the time of the store operation, we create virtual
-definitions to mark that statement as a potential definition site for
-@code{a} and @code{b}.  Memory loads are similarly marked with virtual
-use operands.  Virtual operands are shown in tree dumps right before
-the statement that contains them.  To request a tree dump with virtual
-operands, use the @option{-vops} option to @option{-fdump-tree}:
+赋值@code{*p = 5}可能为@code{a}或者@code{b}的定义。
+如果我们不能静态地确定在存储操作的时候@code{p}的指向，
+我们便创建一个虚定义来标记那条语句为一个@code{a}和@code{b}的潜在的定义。
+内存加载也类似的使用虚操作数进行标记。
+虚操作数在树转储（dump）中显示在包含它们的语句前面。
+要获得带有虚操作数的树转储，使用@option{-fdump-tree}的@option{-vops}选项：
 
 @smallexample
 @{
@@ -140,39 +121,34 @@ operands, use the @option{-vops} option to @option{-fdump-tree}:
 @}
 @end smallexample
 
-Notice that @code{VDEF} operands have two copies of the referenced
-variable.  This indicates that this is not a killing definition of
-that variable.  In this case we refer to it as a @dfn{may definition}
-or @dfn{aliased store}.  The presence of the second copy of the
-variable in the @code{VDEF} operand will become important when the
-function is converted into SSA form.  This will be used to link all
-the non-killing definitions to prevent optimizations from making
-incorrect assumptions about them.
+注意@code{VDEF}操作数具有被引用变量的两个副本。
+这表明不是一个那个变量的killing definition。在这种情况下，
+我们称它为一个可能定义（@dfn{may definition}）或者
+别名存储（@dfn{aliased store}）。
+当函数被转换为SSA形式的时候，@code{VDEF}操作数的第二个变量副本将会变得很重要。
+其将用于链接所有的non-killing definition，用来防止优化对它们做错误的假设。
 
-Operands are updated as soon as the statement is finished via a call
-to @code{update_stmt}.  If statement elements are changed via
-@code{SET_USE} or @code{SET_DEF}, then no further action is required
-(i.e., those macros take care of updating the statement).  If changes
-are made by manipulating the statement's tree directly, then a call
-must be made to @code{update_stmt} when complete.  Calling one of the
-@code{bsi_insert} routines or @code{bsi_replace} performs an implicit
-call to @code{update_stmt}.
+当语句完成时，便会立刻通过调用@code{update_stmt}来更新操作数。
+如果语句元素通过@code{SET_USE}或@code{SET_DEF}被改变，
+则不需要进一步的动作（即，那些宏会处理好语句更新）。
+如果改变是通过直接操作语句的树，则必须在完成时调用@code{update_stmt}。
+调用@code{bsi_insert}程序中的任何一个，或者@code{bsi_replace}，
+都会隐式的调用@code{update_stmt}。
 
 @subsection 操作数迭代器和访问例程
 @cindex Operand Iterators 
 @cindex Operand Access Routines
 
-Operands are collected by @file{tree-ssa-operands.c}.  They are stored
-inside each statement's annotation and can be accessed through either the
-operand iterators or an access routine.
+与操作数相关的代码都在@file{tree-ssa-operands.c}中。
+操作数被存储在每条语句的注解中并且可以通过操作数迭代器或者访问程序来访问。
 
-The following access routines are available for examining operands:
+下列访问程序可以用来检查操作数：
 
 @enumerate
-@item @code{SINGLE_SSA_@{USE,DEF,TREE@}_OPERAND}: These accessors will return 
-NULL unless there is exactly one operand matching the specified flags.  If 
-there is exactly one operand, the operand is returned as either a @code{tree}, 
-@code{def_operand_p}, or @code{use_operand_p}.
+@item @code{SINGLE_SSA_@{USE,DEF,TREE@}_OPERAND}: 
+这些访问程序将会返回NULL，除非确实有一个操作数匹配指定的标记。
+如果确实存在一个操作数，则操作数被作为@code{tree},@code{def_operand_p}或者
+@code{use_operand_p}返回。 
 
 @smallexample
 tree t = SINGLE_SSA_TREE_OPERAND (stmt, flags);
@@ -180,27 +156,25 @@ use_operand_p u = SINGLE_SSA_USE_OPERAND (stmt, SSA_ALL_VIRTUAL_USES);
 def_operand_p d = SINGLE_SSA_DEF_OPERAND (stmt, SSA_OP_ALL_DEFS);
 @end smallexample
 
-@item @code{ZERO_SSA_OPERANDS}: This macro returns true if there are no 
-operands matching the specified flags.
+@item @code{ZERO_SSA_OPERANDS}: 该宏返回真，如果没有操作数匹配指定的标记。 
 
 @smallexample
 if (ZERO_SSA_OPERANDS (stmt, SSA_OP_ALL_VIRTUALS))
   return;
 @end smallexample
 
-@item @code{NUM_SSA_OPERANDS}: This macro Returns the number of operands 
-matching 'flags'.  This actually executes a loop to perform the count, so 
-only use this if it is really needed.
+@item @code{NUM_SSA_OPERANDS}: 
+该宏返回匹配'flags'的操作数数目。其实际上是执行了一个循环来进行统计，
+所以最好只有在真正需要的时候才使用它。 
 
 @smallexample
 int count = NUM_SSA_OPERANDS (stmt, flags)
 @end smallexample
 @end enumerate
 
-
-If you wish to iterate over some or all operands, use the
-@code{FOR_EACH_SSA_@{USE,DEF,TREE@}_OPERAND} iterator.  For example, to print
-all the operands for a statement:
+如果你想迭代一些或者所有操作数，
+使用@code{FOR_EACH_SSA_@{USE,DEF,TREE@}_OPERAND}迭代器。
+例如，要打印语句的所有操作数：
 
 @smallexample
 void
@@ -214,12 +188,10 @@ print_ops (tree stmt)
 @}
 @end smallexample
 
-
-How to choose the appropriate iterator:
+如何选择合适的迭代器：
 
 @enumerate
-@item Determine whether you are need to see the operand pointers, or just the
-trees, and choose the appropriate macro:
+@item 确定你是否需要看到操作数指针，或者只是树，并选择合适的宏
 
 @smallexample
 Need            Macro:
@@ -229,13 +201,12 @@ def_operand_p   FOR_EACH_SSA_DEF_OPERAND
 tree            FOR_EACH_SSA_TREE_OPERAND
 @end smallexample
 
-@item You need to declare a variable of the type you are interested
-in, and an ssa_op_iter structure which serves as the loop controlling
-variable.
+@item 
+你需要声明一个你感兴趣的类型的变量，和一个用作循环控制变量的ssa_op_iter结构体
 
-@item Determine which operands you wish to use, and specify the flags of
-those you are interested in.  They are documented in
-@file{tree-ssa-operands.h}:
+@item 
+确定你想使用哪些操作数，并指定你所感兴趣的那些操作书的标记。
+它们在@file{tree-ssa-operands.h}中有所记载：
 
 @smallexample
 #define SSA_OP_USE              0x01    /* @r{Real USE operands.}  */
@@ -253,8 +224,8 @@ those you are interested in.  They are documented in
 @end smallexample
 @end enumerate
 
-So if you want to look at the use pointers for all the @code{USE} and
-@code{VUSE} operands, you would do something like:
+所以，如果你想查看所有@code{USE}和@code{VUSE}操作数的use指针，
+则可以使用类似下面的方法：
 
 @smallexample
   use_operand_p use_p;
@@ -266,10 +237,9 @@ So if you want to look at the use pointers for all the @code{USE} and
     @}
 @end smallexample
 
-The @code{TREE} macro is basically the same as the @code{USE} and
-@code{DEF} macros, only with the use or def dereferenced via
-@code{USE_FROM_PTR (use_p)} and @code{DEF_FROM_PTR (def_p)}.  Since we
-aren't using operand pointers, use and defs flags can be mixed.
+宏@code{TREE}基本上与宏@code{USE}和@code{DEF}相同，
+除了通过@code{USE_FROM_PTR (use_p)}和@code{DEF_FROM_PTR (def_p)}进行的
+use或def dereference。因为我们不会使用操作数指针，所以可以混合use和def标记。
 
 @smallexample
   tree var;
@@ -281,13 +251,11 @@ aren't using operand pointers, use and defs flags can be mixed.
     @}
 @end smallexample
 
-@code{VDEF}s are broken into two flags, one for the
-@code{DEF} portion (@code{SSA_OP_VDEF}) and one for the USE portion
-(@code{SSA_OP_VMAYUSE}).  If all you want to look at are the
-@code{VDEF}s together, there is a fourth iterator macro for this,
-which returns both a def_operand_p and a use_operand_p for each
-@code{VDEF} in the statement.  Note that you don't need any flags for
-this one.
+@code{VDEF}被分解为两个标记，一个是@code{DEF}部分（@code{SSA_OP_VDEF}），
+一个是USE部分（@code{SSA_OP_VMAYUSE}）。
+如果你只是想要查看合在一起的@code{VDEF}，则可以使用第四个迭代器，
+其返回语句中每个@code{VDEF}的 def_operand_p和use_operand_p。
+注意该宏不需要任何标记。
 
 @smallexample
   use_operand_p use_p;
@@ -300,15 +268,12 @@ this one.
     @}
 @end smallexample
 
-There are many examples in the code as well, as well as the
-documentation in @file{tree-ssa-operands.h}.
+代码中也有很多例子，同时在@file{tree-ssa-operands.h}中也有记载。
 
-There are also a couple of variants on the stmt iterators regarding PHI
-nodes.
+还有一些stmt迭代器是用于关注PHI节点的。
 
-@code{FOR_EACH_PHI_ARG} Works exactly like 
-@code{FOR_EACH_SSA_USE_OPERAND}, except it works over @code{PHI} arguments 
-instead of statement operands.
+@code{FOR_EACH_PHI_ARG}跟@code{FOR_EACH_SSA_USE_OPERAND}非常类似，
+只不过它是工作于@code{PHI}参数，而不是语句操作数。
 
 @smallexample
 /* Look at every virtual PHI use.  */
@@ -326,11 +291,11 @@ FOR_EACH_PHI_ARG (use_p, phi_stmt, iter, SSA_OP_ALL_USES)
   my_code;
 @end smallexample
 
-@code{FOR_EACH_PHI_OR_STMT_@{USE,DEF@}} works exactly like 
-@code{FOR_EACH_SSA_@{USE,DEF@}_OPERAND}, except it will function on
-either a statement or a @code{PHI} node.  These should be used when it is
-appropriate but they are not quite as efficient as the individual 
-@code{FOR_EACH_PHI} and @code{FOR_EACH_SSA} routines.
+@code{FOR_EACH_PHI_OR_STMT_@{USE,DEF@}}与
+@code{FOR_EACH_SSA_@{USE,DEF@}_OPERAND}非常类似，
+只不过它是作用于语句或者@code{PHI}节点。
+这些应该在使用单独的@code{FOR_EACH_PHI}和
+@code{FOR_EACH_SSA}程序效率低的时候再使用。
 
 @smallexample
 FOR_EACH_PHI_OR_STMT_USE (use_operand_p, stmt, iter, flags)
@@ -347,10 +312,10 @@ FOR_EACH_PHI_OR_STMT_DEF (def_operand_p, phi, iter, flags)
 @subsection 立即使用
 @cindex Immediate Uses
 
-Immediate use information is now always available.  Using the immediate use 
-iterators, you may examine every use of any @code{SSA_NAME}. For instance,
-to change each use of @code{ssa_var} to @code{ssa_var2} and call fold_stmt on
-each stmt after that is done:
+现在immediate use（这个短语咋翻译？）信息总是可以被获得。
+使用immediate use迭代器，你可以检查任意@code{SSA_NAME}的每个使用。
+例如，要将@code{ssa_var}的每个使用改为@code{ssa_var2}的，
+并且之后在每个stmt上调用fold_stmt：
 
 @smallexample
   use_operand_p imm_use_p;
@@ -366,21 +331,17 @@ each stmt after that is done:
     @}
 @end smallexample
 
-There are 2 iterators which can be used. @code{FOR_EACH_IMM_USE_FAST} is
-used when the immediate uses are not changed, i.e., you are looking at the
-uses, but not setting them.  
+这里有两个可以使用的迭代器。
+@code{FOR_EACH_IMM_USE_FAST}用于当immediate use没有被改变的情况下，即，
+只是进行查看use，但不设置它们。
 
-If they do get changed, then care must be taken that things are not changed 
-under the iterators, so use the @code{FOR_EACH_IMM_USE_STMT} and 
-@code{FOR_EACH_IMM_USE_ON_STMT} iterators.  They attempt to preserve the 
-sanity of the use list by moving all the uses for a statement into 
-a controlled position, and then iterating over those uses.  Then the 
-optimization can manipulate the stmt when all the uses have been
-processed.  This is a little slower than the FAST version since it adds a 
-placeholder element and must sort through the list a bit for each statement.  
-This placeholder element must be also be removed if the loop is 
-terminated early.  The macro @code{BREAK_FROM_IMM_USE_SAFE} is provided 
-to do this :
+如果确实要做改变，则必须要考虑到迭代器下没有被改变的事物，这时，
+可以使用@code{FOR_EACH_IMM_USE_STMT}和@code{FOR_EACH_IMM_USE_ON_STMT}迭代器。
+它们试图通过将语句的所有使用移动到一个被控制的位置并对它们进行迭代的方式，
+来保存使用列表的健全。然后优化就能够在所有的使用被处理完后来操作stmt。
+这比FAST版本的有点慢，因为它增加了一个占位元素并且必须对每条语句的列表进行排序。
+如果循环被提前终止，则该占位元素还必须被移除。
+宏@code{BREAK_FROM_IMM_USE_SAFE}用于做这个：
 
 @smallexample
   FOR_EACH_IMM_USE_STMT (stmt, iterator, ssa_var)
@@ -394,45 +355,41 @@ to do this :
     @}
 @end smallexample
 
-There are checks in @code{verify_ssa} which verify that the immediate use list
-is up to date, as well as checking that an optimization didn't break from the 
-loop without using this macro.  It is safe to simply 'break'; from a 
-@code{FOR_EACH_IMM_USE_FAST} traverse.
+在@code{verify_ssa}中有一些检测用来验证immediate use列表是最新的，
+同时还检测一个优化是否没有使用该宏而中断循环。
+在@code{FOR_EACH_IMM_USE_FAST}遍历中，直接使用'break'语句是安全的。
 
-Some useful functions and macros:
+一些有用的函数和宏：
 @enumerate
-@item  @code{has_zero_uses (ssa_var)} : Returns true if there are no uses of
-@code{ssa_var}.
-@item   @code{has_single_use (ssa_var)} : Returns true if there is only a 
-single use of @code{ssa_var}.
+@item  @code{has_zero_uses (ssa_var)} : 如果没有@code{ssa_var}的使用，则返回真。
+@item   @code{has_single_use (ssa_var)} : 
+如果只有@code{ssa_var}的单个使用，则返回真。
 @item   @code{single_imm_use (ssa_var, use_operand_p *ptr, tree *stmt)} :
-Returns true if there is only a single use of @code{ssa_var}, and also returns
-the use pointer and statement it occurs in, in the second and third parameters.
-@item   @code{num_imm_uses (ssa_var)} : Returns the number of immediate uses of
-@code{ssa_var}. It is better not to use this if possible since it simply
-utilizes a loop to count the uses.
-@item  @code{PHI_ARG_INDEX_FROM_USE (use_p)} : Given a use within a @code{PHI}
-node, return the index number for the use.  An assert is triggered if the use
-isn't located in a @code{PHI} node.
-@item  @code{USE_STMT (use_p)} : Return the statement a use occurs in.
+如果只有@code{ssa_var}的单个使用，则返回真，
+并且还在第二和第三个参数中返回使用指针和所在的语句。
+@item   @code{num_imm_uses (ssa_var)} : 
+返回@code{ssa_var}的immediate use的数目。最好不要使用该宏，
+因为它只是简单的使用循环来统计use。
+@item  @code{PHI_ARG_INDEX_FROM_USE (use_p)} : 
+给定一个在@code{PHI}节点中的use，返回use的索引数。
+如果use不位于@code{PHI}节点中，则会触发一个断言。
+@item  @code{USE_STMT (use_p)} : 返回use所在的语句。
 @end enumerate
 
-Note that uses are not put into an immediate use list until their statement is
-actually inserted into the instruction stream via a @code{bsi_*} routine.  
+注意在语句通过@code{bsi_*}程序被实际插入指令流中之前，
+use是不被放入immediate use列表中的。
 
-It is also still possible to utilize lazy updating of statements, but this 
-should be used only when absolutely required.  Both alias analysis and the 
-dominator optimizations currently do this.  
+还可以使用懒散的语句更新方式，不过这应该在确实需要的时候才使用。
+别名分析和dominator优化目前都采用了这种方式。
 
-When lazy updating is being used, the immediate use information is out of date 
-and cannot be used reliably.  Lazy updating is achieved by simply marking
-statements modified via calls to @code{mark_stmt_modified} instead of 
-@code{update_stmt}.  When lazy updating is no longer required, all the 
-modified statements must have @code{update_stmt} called in order to bring them 
-up to date.  This must be done before the optimization is finished, or 
-@code{verify_ssa} will trigger an abort.
+当使用懒散更新（lazy updating）时，immediate use信息是过时的，不能被信赖。
+懒散更新简单的调用@code{mark_stmt_modified}来标记语句被修改了，
+而不使用@code{update_stmt}。当不再需要进行懒散更新时，
+所有修改的语句都必须调用@code{update_stmt}来保持更新。
+这必须在优化完成之前进行，否则@code{verify_ssa}将触发abort 异常中断。
 
-This is done with a simple loop over the instruction stream:
+这是通过对指令流进行简单的循环来实现的：
+
 @smallexample
   block_stmt_iterator bsi;
   basic_block bb;
@@ -448,39 +405,28 @@ This is done with a simple loop over the instruction stream:
 @cindex SSA
 @cindex static single assignment
 
-Most of the tree optimizers rely on the data flow information provided
-by the Static Single Assignment (SSA) form.  We implement the SSA form
-as described in @cite{R. Cytron, J. Ferrante, B. Rosen, M. Wegman, and
+大多数树优化器都依赖于静态单赋值（SSA）形式所提供的数据流信息。
+我们是按照@cite{R. Cytron, J. Ferrante, B. Rosen, M. Wegman, and
 K. Zadeck.  Efficiently Computing Static Single Assignment Form and the
 Control Dependence Graph.  ACM Transactions on Programming Languages
-and Systems, 13(4):451-490, October 1991}.
+and Systems, 13(4):451-490, October 1991}中的描述来实现SSA形式的。
 
-The SSA form is based on the premise that program variables are
-assigned in exactly one location in the program.  Multiple assignments
-to the same variable create new versions of that variable.  Naturally,
-actual programs are seldom in SSA form initially because variables
-tend to be assigned multiple times.  The compiler modifies the program
-representation so that every time a variable is assigned in the code,
-a new version of the variable is created.  Different versions of the
-same variable are distinguished by subscripting the variable name with
-its version number.  Variables used in the right-hand side of
-expressions are renamed so that their version number matches that of
-the most recent assignment.
+SSA形式基于的前提是程序变量只在程序中的一个位置被赋值。
+对同一变量的多次赋值将创建那个变量的新的版本。
+实际的程序最初自然很少是SSA形式的，因为变量一般会被赋值多次。
+编译器修改程序表示，使得代码中每次变量被赋值的时候，便会创建一个新版本的变量。
+不同版本的同一变量通过变量名字的版本号作为下标来区分开。
+在表达式右端使用的变量被重命名，使得它们的版本号匹配最近的赋值。
 
-We represent variable versions using @code{SSA_NAME} nodes.  The
-renaming process in @file{tree-ssa.c} wraps every real and
-virtual operand with an @code{SSA_NAME} node which contains
-the version number and the statement that created the
-@code{SSA_NAME}.  Only definitions and virtual definitions may
-create new @code{SSA_NAME} nodes.
+我们使用@code{SSA_NAME}节点来表示变量版本。
+@file{tree-ssa.c}中的重命名程序将每个实操作数和虚操作数，
+用包含了版本号和创建@code{SSA_NAME}的语句的@code{SSA_NAME}节点包裹起来。
+只有定义和虚定义可能会创建新的@code{SSA_NAME}节点。
 
 @cindex PHI nodes
-Sometimes, flow of control makes it impossible to determine the
-most recent version of a variable.  In these cases, the compiler
-inserts an artificial definition for that variable called
-@dfn{PHI function} or @dfn{PHI node}.  This new definition merges
-all the incoming versions of the variable to create a new name
-for it.  For instance,
+有时，控制流使得无法确定变量的最近版本是多少。这种情况下，
+编译器插入一个那个变量的人造定义，称作@dfn{PHI function}或者@dfn{PHI node}。
+这个新的定义将变量的所有可能引入的版本合并一起，以创建一个新的名字。例如，
 
 @smallexample
 if (@dots{})
@@ -494,60 +440,49 @@ else
 return a_4;
 @end smallexample
 
-Since it is not possible to determine which of the three branches
-will be taken at runtime, we don't know which of @code{a_1},
-@code{a_2} or @code{a_3} to use at the return statement.  So, the
-SSA renamer creates a new version @code{a_4} which is assigned
-the result of ``merging'' @code{a_1}, @code{a_2} and @code{a_3}.
-Hence, PHI nodes mean ``one of these operands.  I don't know
-which''.
+由于不可能确定在运行时，将运行三个分支中的哪一个，
+所以我们不知道在return语句中要使用@code{a_1},@code{a_2}或@code{a_3}中的哪一个。
+因此，SSA重命名将会创建一个新的版本a_4，其被赋值为“合并”a_1, a_2和a_3的结果。
+因此，PHI节点意味着“这些操作数中的一个，我不知道是哪一个”。
 
-The following macros can be used to examine PHI nodes
+下面的宏可以用来检查PHI节点。
 
 @defmac PHI_RESULT (@var{phi})
-Returns the @code{SSA_NAME} created by PHI node @var{phi} (i.e.,
-@var{phi}'s LHS)@.
+返回由PHI节点@var{phi}(即, @var{phi}'s LHS)创建的@code{SSA_NAME}。
 @end defmac
 
 @defmac PHI_NUM_ARGS (@var{phi})
-Returns the number of arguments in @var{phi}.  This number is exactly
-the number of incoming edges to the basic block holding @var{phi}@.
+返回@var{phi}中的参数个数。这个数目就是持有@var{phi}的基本块所引入的边的数目。
 @end defmac
 
 @defmac PHI_ARG_ELT (@var{phi}, @var{i})
-Returns a tuple representing the @var{i}th argument of @var{phi}@.
-Each element of this tuple contains an @code{SSA_NAME} @var{var} and
-the incoming edge through which @var{var} flows.
+返回@var{phi}的第@var{i}个参数的tuple表示。
+tuple中的每个元素包含了一个@code{SSA_NAME} @var{var}和@var{var}借以流向的引入边。
 @end defmac
 
 @defmac PHI_ARG_EDGE (@var{phi}, @var{i})
-Returns the incoming edge for the @var{i}th argument of @var{phi}.
+返回@var{phi}的第@var{i}个参数对应的引入边。
 @end defmac
 
 @defmac PHI_ARG_DEF (@var{phi}, @var{i})
-Returns the @code{SSA_NAME} for the @var{i}th argument of @var{phi}.
+返回@var{phi}的第@var{i}个参数的@code{SSA_NAME}。
 @end defmac
 
 
 @subsection 保持SSA形式
 @findex update_ssa
 @cindex preserving SSA form
-Some optimization passes make changes to the function that
-invalidate the SSA property.  This can happen when a pass has
-added new symbols or changed the program so that variables that
-were previously aliased aren't anymore.  Whenever something like this
-happens, the affected symbols must be renamed into SSA form again.  
-Transformations that emit new code or replicate existing statements
-will also need to update the SSA form@.
+一些优化过程会改变函数并使得不再具有SSA特性。
+这可能会发生在当一个过程增加了新的符号或者改变了程序使得变量不再被别名的时候。
+不管什么时候发生类似的情况，受到影响的符号必须被再次重命名为SSA形式。
+产生新代码或者替代存在的语句的转换也需要更新SSA形式。
 
-Since GCC implements two different SSA forms for register and virtual
-variables, keeping the SSA form up to date depends on whether you are
-updating register or virtual names.  In both cases, the general idea
-behind incremental SSA updates is similar: when new SSA names are
-created, they typically are meant to replace other existing names in
-the program@.
+由于GCC为寄存器和虚变量实现了两种不同的SSA形式，
+所有保持SSA形式的更新取决于你是否正在更新寄存器或者虚名字。
+这两种情况对于不断的SSA更新的背后思想是类似的：当新的SSA名字被创建时，
+它们通常意味着要替换程序中的其它存在的名字。
 
-For instance, given the following code:
+例如，给定下列代码：
 
 @smallexample
      1  L0:
@@ -563,8 +498,7 @@ For instance, given the following code:
      11 endif
 @end smallexample
 
-Suppose that we insert new names @code{x_10} and @code{x_11} (lines
-@code{4} and @code{8})@.
+假设我们插入了新的名字@code{x_10}和@code{x_11}（第@code{4}行和第@code{8}行）。
 
 @smallexample
      1  L0:
@@ -582,85 +516,63 @@ Suppose that we insert new names @code{x_10} and @code{x_11} (lines
      13 endif
 @end smallexample
 
-We want to replace all the uses of @code{x_1} with the new definitions
-of @code{x_10} and @code{x_11}.  Note that the only uses that should
-be replaced are those at lines @code{5}, @code{9} and @code{11}.
-Also, the use of @code{x_7} at line @code{9} should @emph{not} be
-replaced (this is why we cannot just mark symbol @code{x} for
-renaming)@.
+我们想使用@code{x_10}和@code{x_11}的新的定义来替换@code{x_1}的所有使用。
+注意将要被替换的使用只在行@code{5}, @code{9}和@code{11}中。而且，
+第@code{9}行@code{x_7}的使用不应被替换
+（这就是为什么我们不能仅仅标记符号@code{x}为重命名）。
 
-Additionally, we may need to insert a PHI node at line @code{11}
-because that is a merge point for @code{x_10} and @code{x_11}.  So the
-use of @code{x_1} at line @code{11} will be replaced with the new PHI
-node.  The insertion of PHI nodes is optional.  They are not strictly
-necessary to preserve the SSA form, and depending on what the caller
-inserted, they may not even be useful for the optimizers@.
+另外，我们可能需要在第@code{11}行插入一个PHI节点，
+因为有一个@code{x_10}和@code{x_11}的合并点。
+所以@code{x_1}在第@code{11}行的使用将用新的PHI节点来替换。
+PHI节点的插入是可选的。它们并不完全必要用于保持SSA形式，
+并且取决于调用者的插入内容，它们可能对优化器没有用处。
 
-Updating the SSA form is a two step process.  First, the pass has to
-identify which names need to be updated and/or which symbols need to
-be renamed into SSA form for the first time.  When new names are
-introduced to replace existing names in the program, the mapping
-between the old and the new names are registered by calling
-@code{register_new_name_mapping} (note that if your pass creates new
-code by duplicating basic blocks, the call to @code{tree_duplicate_bb}
-will set up the necessary mappings automatically).  On the other hand,
-if your pass exposes a new symbol that should be put in SSA form for
-the first time, the new symbol should be registered with
-@code{mark_sym_for_renaming}.
+更新SSA形式分为两步。首先，过程必须分别出哪些名字需要被更新，
+以及哪些符号需要被重命名为SSA形式。当新的名字被引入以替换程序中现存的名字时，
+新旧名字之间的映射通过调用@code{register_new_name_mapping}来注册
+（注意如果你的过程通过复制基本块创建了新的代码，
+对@code{tree_duplicate_bb}的调用将会自动建立所需的映射）。另一方面，
+如果你的过程使得一个新的符号需要为SSA形式，
+则新符号需要使用@code{mark_sym_for_renaming}来注册。
 
-After the replacement mappings have been registered and new symbols
-marked for renaming, a call to @code{update_ssa} makes the registered
-changes.  This can be done with an explicit call or by creating
-@code{TODO} flags in the @code{tree_opt_pass} structure for your pass.
-There are several @code{TODO} flags that control the behavior of
-@code{update_ssa}:
+在替换映射被注册完，并且新符号被标记了要重命名后，
+将会调用@code{update_ssa}来按照注册的进行改变。
+这可以通过显示的调用或者为你的过程在@code{tree_opt_pass}结构体中创建
+@code{TODO}标记来完成。
+这里有几个@code{TODO}标记用于控制@code{update_ssa}的行为：
 
 @itemize @bullet
-@item @code{TODO_update_ssa}.  Update the SSA form inserting PHI nodes
-for newly exposed symbols and virtual names marked for updating.
-When updating real names, only insert PHI nodes for a real name
-@code{O_j} in blocks reached by all the new and old definitions for
-@code{O_j}.  If the iterated dominance frontier for @code{O_j}
-is not pruned, we may end up inserting PHI nodes in blocks that
-have one or more edges with no incoming definition for
-@code{O_j}.  This would lead to uninitialized warnings for
-@code{O_j}'s symbol@.
+@item @code{TODO_update_ssa}.  
+采用为新出现的符号插入PHI节点，以及虚名字进行标记的方式更新SSA形式。
+当更新实名字时，只为@code{O_j}的所有新旧定义所到达的块中的实名字@code{O_j}
+插入PHI节点。如果@code{O_j}的迭代的dominance边界没有被截枝，
+我们可以在块中危机具有一个或多个没有即来定义的@code{O_j}结束插入PHI节点。
+这将导致对@code{O_j}符号的未初始化警告。
 
-@item @code{TODO_update_ssa_no_phi}.  Update the SSA form without
-inserting any new PHI nodes at all.  This is used by passes that
-have either inserted all the PHI nodes themselves or passes that
-need only to patch use-def and def-def chains for virtuals
-(e.g., DCE)@.
+@item @code{TODO_update_ssa_no_phi}. 
+不使用插入任何新PHI节点的方式来更新SSA形式。这被用于要自己插入所有PHI节点的
+过程或者只需要更新use-def和def-def链的虚名字的过程（例如，DCE）。
 
+@item @code{TODO_update_ssa_full_phi}.  
+在任何需要的地方都插入PHI节点。不进行IDF的截枝。
+这被过程用于需要@code{O_j}的PHI节点的情况
+（例如，@code{pass_linear_transform}）。
 
-@item @code{TODO_update_ssa_full_phi}.  Insert PHI nodes everywhere
-they are needed.  No pruning of the IDF is done.  This is used
-by passes that need the PHI nodes for @code{O_j} even if it
-means that some arguments will come from the default definition
-of @code{O_j}'s symbol (e.g., @code{pass_linear_transform})@.
+警告: 如果你需要使用这个标记，则有可能你的过程是在做一些错误的事情。
+为一个旧名字插入PHI节点可能会导致沉默的codegen错误或者虚假的未初始化警告。
 
-WARNING: If you need to use this flag, chances are that your
-pass may be doing something wrong.  Inserting PHI nodes for an
-old name where not all edges carry a new replacement may lead to
-silent codegen errors or spurious uninitialized warnings@.
-
-@item @code{TODO_update_ssa_only_virtuals}.  Passes that update the
-SSA form on their own may want to delegate the updating of
-virtual names to the generic updater.  Since FUD chains are
-easier to maintain, this simplifies the work they need to do.
-NOTE: If this flag is used, any OLD->NEW mappings for real names
-are explicitly destroyed and only the symbols marked for
-renaming are processed@.
+@item @code{TODO_update_ssa_only_virtuals}.  
+自己更新SSA的过程可能想要使用虚名字更新来代表通用的更新。因为FUD链易于维护，
+所有这简化了他们所需的工作。注意：如果使用了该标记，
+则任何实名字OLD->NEW的映射将被显式的破坏，只有标记为重命名的符合被处理。
 @end itemize
 
 @subsection 保持虚SSA形式
 @cindex preserving virtual SSA form
 
-The virtual SSA form is harder to preserve than the non-virtual SSA form
-mainly because the set of virtual operands for a statement may change at
-what some would consider unexpected times.  In general, statement
-modifications should be bracketed between calls to
-@code{push_stmt_changes} and @code{pop_stmt_changes}.  For example,
+虚SSA形式比非虚SSA形式要难以保持，主要是因为语句的虚操作数集可能会意外的改变。
+通常，语句修改应该被对@code{push_stmt_changes}和@code{pop_stmt_changes}的调用
+所包裹。例如，
 
 @smallexample
     munge_stmt (tree stmt)
@@ -671,97 +583,81 @@ modifications should be bracketed between calls to
     @}
 @end smallexample
 
-The call to @code{push_stmt_changes} saves the current state of the
-statement operands and the call to @code{pop_stmt_changes} compares
-the saved state with the current one and does the appropriate symbol
-marking for the SSA renamer.
+对@code{push_stmt_changes}的调用保存了语句操作数的当前状态，
+对@code{pop_stmt_changes}的调用比较保存的状态和现在的，
+并对适当的符号标记为SSA重命名。
 
-It is possible to modify several statements at a time, provided that
-@code{push_stmt_changes} and @code{pop_stmt_changes} are called in
-LIFO order, as when processing a stack of statements.
+当处理一个语句栈时，通过使用LIFO顺序来调用@code{push_stmt_changes}和
+@code{pop_stmt_changes}，可以一次修改多条语句。
 
-Additionally, if the pass discovers that it did not need to make
-changes to the statement after calling @code{push_stmt_changes}, it
-can simply discard the topmost change buffer by calling
-@code{discard_stmt_changes}.  This will avoid the expensive operand
-re-scan operation and the buffer comparison that determines if symbols
-need to be marked for renaming.
+另外，如果过程在调用@code{push_stmt_changes}后发现它不需要改变语句，
+它可以通过调用@code{discard_stmt_changes}来简单的丢弃最顶层的缓存。
+这将避免用来确定是否符合需要被标记为重命名所需的昂贵的操作数重扫描操作和缓存比较。
 
 @subsection 检验@code{SSA_NAME}节点
 @cindex examining SSA_NAMEs
 
-The following macros can be used to examine @code{SSA_NAME} nodes
+下面的宏可以用来检查@code{SSA_NAME}节点
 
 @defmac SSA_NAME_DEF_STMT (@var{var})
-Returns the statement @var{s} that creates the @code{SSA_NAME}
-@var{var}.  If @var{s} is an empty statement (i.e., @code{IS_EMPTY_STMT
-(@var{s})} returns @code{true}), it means that the first reference to
-this variable is a USE or a VUSE@.
+返回创建@code{SSA_NAME} @var{var}的语句@var{s}。
+如过@var{s}是空语句（即，@code{IS_EMPTY_STMT (@var{s})}返回@code{true}），
+则意味着对该变量的第一个引用是一个USE或者VUSE。
 @end defmac
 
 @defmac SSA_NAME_VERSION (@var{var})
-Returns the version number of the @code{SSA_NAME} object @var{var}.
+返回@code{SSA_NAME}对象@var{var}的版本号。
 @end defmac
-
 
 @subsection 遍历use-def链
 
 @deftypefn {Tree SSA function} void walk_use_def_chains (@var{var}, @var{fn}, @var{data})
 
-Walks use-def chains starting at the @code{SSA_NAME} node @var{var}.
-Calls function @var{fn} at each reaching definition found.  Function
-@var{FN} takes three arguments: @var{var}, its defining statement
-(@var{def_stmt}) and a generic pointer to whatever state information
-that @var{fn} may want to maintain (@var{data}).  Function @var{fn} is
-able to stop the walk by returning @code{true}, otherwise in order to
-continue the walk, @var{fn} should return @code{false}.
+对use-def链的遍历起始于@code{SSA_NAME}节点@var{var}。
+对每一个发现的可达定义调用函数@var{fn}。函数@var{fn}接受三个参数：@var{var}，
+它的定义语句（@var{def_stmt}）和一个通用指针指向@var{fn}可能想要维护的任何状态
+信息（数据）。函数@var{fn}可以通过返回@code{true}来停止遍历，否则要继续遍历，
+@var{fn}应该返回@code{false}。
 
-Note, that if @var{def_stmt} is a @code{PHI} node, the semantics are
-slightly different.  For each argument @var{arg} of the PHI node, this
-function will:
+注意，如果@var{def_stmt}是一个@code{PHI}节点，则语法有点不同。
+对PHI节点的每个参数@var{arg}，该函数将：
 
 @enumerate
-@item Walk the use-def chains for @var{arg}.
-@item Call @code{FN (@var{arg}, @var{phi}, @var{data})}.
+@item 为@var{arg}遍历use-def链
+@item 调用@code{FN (@var{arg}, @var{phi}, @var{data})}.
 @end enumerate
 
-Note how the first argument to @var{fn} is no longer the original
-variable @var{var}, but the PHI argument currently being examined.
-If @var{fn} wants to get at @var{var}, it should call
-@code{PHI_RESULT} (@var{phi}).
+注意不管@var{fn}的第一个是否还是最初的变量@var{var}，目前都会检测PHI的参数。
+如果@var{fn}想获得@var{var}，则应该调用@code{PHI_RESULT} (@var{phi})。
 @end deftypefn
 
 @subsection 遍历支配树
 
 @deftypefn {Tree SSA function} void walk_dominator_tree (@var{walk_data}, @var{bb})
 
-This function walks the dominator tree for the current CFG calling a
-set of callback functions defined in @var{struct dom_walk_data} in
-@file{domwalk.h}.  The call back functions you need to define give you
-hooks to execute custom code at various points during traversal:
+该函数遍历当前CFG的支配树，
+并调用在@file{domwalk.h}中@var{struct dom_walk_data}里定义的一系列回调函数。
+你所需要定义的回调函数可以用于在遍历过程中的不同点执行自定义的代码：
 
 @enumerate
-@item Once to initialize any local data needed while processing
-@var{bb} and its children.  This local data is pushed into an
-internal stack which is automatically pushed and popped as the
-walker traverses the dominator tree.
+@item 
+当处理@var{bb}和它的孩子（children）时，在初始化所需要的任何局部数据的时候。
+该局部数据被压入一个内部的栈中，该栈在遍历支配树时会被自动的压入和弹出。
 
-@item Once before traversing all the statements in the @var{bb}.
+@item 在遍历@var{bb}中的所有语句之前。
 
-@item Once for every statement inside @var{bb}.
+@item 对于@var{bb}中的每条语句。
 
-@item Once after traversing all the statements and before recursing
-into @var{bb}'s dominator children.
+@item 当遍历过所有语句之后，并在递归到@var{bb}的支配孩子之前。
 
-@item It then recurses into all the dominator children of @var{bb}.
+@item 然后递归到@var{bb}的所有支配孩子。
 
-@item After recursing into all the dominator children of @var{bb} it
-can, optionally, traverse every statement in @var{bb} again
-(i.e., repeating steps 2 and 3).
+@item 
+在递归到@var{bb}的所有支配孩子之后，可选的，
+重新遍历@var{bb}中的每条语句（即，重复步骤2和3）。
 
-@item Once after walking the statements in @var{bb} and @var{bb}'s
-dominator children.  At this stage, the block local data stack
-is popped.
+@item 
+当遍历完@var{bb}和@var{bb}的支配孩子中的所有语句之后。这时，块局部数据栈被弹出。
 @end enumerate
 @end deftypefn
 
@@ -771,17 +667,15 @@ is popped.
 @cindex flow-sensitive alias analysis
 @cindex flow-insensitive alias analysis
 
-Alias analysis proceeds in 4 main phases:
+别名分析经历4个主要阶段：
 
 @enumerate
-@item   Structural alias analysis.
+@item   结构体的别名分析。 
 
-This phase walks the types for structure variables, and determines which
-of the fields can overlap using offset and size of each field.  For each
-field, a ``subvariable'' called a ``Structure field tag'' (SFT)@ is
-created, which represents that field as a separate variable.  All
-accesses that could possibly overlap with a given field will have
-virtual operands for the SFT of that field.
+该过程遍历结构体类型的变量，并确定哪些域可以使用域的偏移量和大小来重叠。
+对于每个域，一个称作“结构体域标签”（SFT）的“子变量”被创建，
+其使用独立的变量来表示那个域。对于给定域，
+所有可能会重叠的访问将具有那个域的SFT的虚操作数。
 
 @smallexample
 struct foo
@@ -808,69 +702,55 @@ int bar (void)
 @}
 @end smallexample
 
-If you copy the symbol tag for a variable for some reason, you probably
-also want to copy the subvariables for that variable.
+如果你出于某种原因为一个变量复制符合标签，则有可能还要复制它的子变量。
 
-@item Points-to and escape analysis.
+@item Points-to和escape分析
 
-This phase walks the use-def chains in the SSA web looking for
-three things:
+该过程遍历SSA web中的use-def链，查看三件事情：
 
 @itemize @bullet
-@item Assignments of the form @code{P_i = &VAR}
-@item Assignments of the form P_i = malloc()
-@item Pointers and ADDR_EXPR that escape the current function.
+@item @code{P_i = &VAR}形式的赋值
+@item @code{P_i = malloc()}形式的赋值
+@item 逃逸当前函数的指针和ADDR_EXPR
 @end itemize
 
-The concept of `escaping' is the same one used in the Java world.
-When a pointer or an ADDR_EXPR escapes, it means that it has been
-exposed outside of the current function.  So, assignment to
-global variables, function arguments and returning a pointer are
-all escape sites.
+逃逸的概念跟Java世界中使用的相同。当一个指针或者一个ADDR_EXPR逃逸，
+指的是它已经被暴露在当前函数之外。所以，全局变量的赋值，函数参数，
+以及返回指针都是逃逸的地点。
 
-This is where we are currently limited.  Since not everything is
-renamed into SSA, we lose track of escape properties when a
-pointer is stashed inside a field in a structure, for instance.
-In those cases, we are assuming that the pointer does escape.
+这是我们目前所限制的。因为并不是所有都被重命名到SSA，例如，
+当指针被隐藏在一个结构体的域中的时候，我们就丢失了逃逸属性。
+在那些情况下，我们假设指针是逃逸的。
 
-We use escape analysis to determine whether a variable is
-call-clobbered.  Simply put, if an ADDR_EXPR escapes, then the
-variable is call-clobbered.  If a pointer P_i escapes, then all
-the variables pointed-to by P_i (and its memory tag) also escape.
+我们使用逃逸分析来确定是否变量为call-clobbered。简单的说，
+如果一个ADDR_EXPR逃逸，则变量是call-clobbered。如果一个指针P_i逃逸，
+则所有P_i指向的变量（以及它的内存标签）也逃逸。
 
-@item Compute flow-sensitive aliases
+@item 计算流敏感别名
 
-We have two classes of memory tags.  Memory tags associated with
-the pointed-to data type of the pointers in the program.  These
-tags are called ``symbol memory tag'' (SMT)@.  The other class are
-those associated with SSA_NAMEs, called ``name memory tag'' (NMT)@.
-The basic idea is that when adding operands for an INDIRECT_REF
-*P_i, we will first check whether P_i has a name tag, if it does
-we use it, because that will have more precise aliasing
-information.  Otherwise, we use the standard symbol tag.
+我们有两类内存标签。内存标签与程序中的指针所指向的数据类型相关。
+这些标签称为“符号内存标签”（SMT）。另一类是那些与SSA_NAME相关的，
+称作“名字内存标签”（NMT）。基本的想法是，当为一个INDIRECT_REF *P_i增加操作数时，
+我们将先检查P_i是否具有名字标签，如果有的话我们就使用，
+因为那将具有更加精确的别名信息。否则，我们使用标准的符号标签。
 
-In this phase, we go through all the pointers we found in
-points-to analysis and create alias sets for the name memory tags
-associated with each pointer P_i.  If P_i escapes, we mark
-call-clobbered the variables it points to and its tag.
+在这一阶段，我们遍历在points-to分析中发现的所有指针，
+并为与每个指针P_i关联的名字内存标签创建别名集。如果P_i逃逸，
+我们标记它指向的变量和它的标签为call-clobbered。
 
+@item 计算流不敏感别名
 
-@item Compute flow-insensitive aliases
+该过程将比较每个符号内存标签的别名集与程序中发现的每个可寻址的变量。
+给定一个符号内存标签SMT和一个可寻址变量V。
+如果SMT的别名集和V冲突（通过may_alias_p来计算获得），
+则V被标记为一个别名标签并被增加到SMT的别名集中。
 
-This pass will compare the alias set of every symbol memory tag and
-every addressable variable found in the program.  Given a symbol
-memory tag SMT and an addressable variable V@.  If the alias sets
-of SMT and V conflict (as computed by may_alias_p), then V is
-marked as an alias tag and added to the alias set of SMT@.
-
-Every language that wishes to perform language-specific alias analysis
-should define a function that computes, given a @code{tree}
-node, an alias set for the node.  Nodes in different alias sets are not
-allowed to alias.  For an example, see the C front-end function
-@code{c_get_alias_set}.
+每个希望执行语言相关的别名分析的语言应该定义一个函数，给定一个@code{tree}结点，
+能够计算结点的别名集。在不同别名集中的节点不允许进行别名。例如，
+参见C语言前端函数@code{c_get_alias_set}。
 @end enumerate
 
-For instance, consider the following function:
+例如，考虑下面的函数：
 
 @smallexample
 foo (int i)
@@ -889,11 +769,9 @@ foo (int i)
 @}
 @end smallexample
 
-After aliasing analysis has finished, the symbol memory tag for
-pointer @code{p} will have two aliases, namely variables @code{a} and
-@code{b}.
-Every time pointer @code{p} is dereferenced, we want to mark the
-operation as a potential reference to @code{a} and @code{b}.
+在别名分析完成之后，指针@code{p}的符号内存标签将具有两个别名，
+变量@code{a}和@code{b}。当每次指针@code{p}被dereference时，
+我们想要标记操作为一个对@code{a}和@code{b}的潜在的引用。
 
 @smallexample
 foo (int i)
@@ -920,35 +798,28 @@ foo (int i)
 @}
 @end smallexample
 
-In certain cases, the list of may aliases for a pointer may grow
-too large.  This may cause an explosion in the number of virtual
-operands inserted in the code.  Resulting in increased memory
-consumption and compilation time.
+在一些情况下，一个指针的可能别名列表可能会变得很大。
+这会造成代码中插入的虚操作数的数目的膨胀，使得内存消耗和编译时间增大。
 
-When the number of virtual operands needed to represent aliased
-loads and stores grows too large (configurable with @option{--param
-max-aliased-vops}), alias sets are grouped to avoid severe
-compile-time slow downs and memory consumption.  The alias
-grouping heuristic proceeds as follows:
+当表示别名加载和存储所需要的虚操作数数目增长的太大的时候
+（可以使用@option{--param max-aliased-vops}来配置），
+别名集被分组以避免严重的编译时间下降和内存消耗。别名分组的heuristic如下：
 
 @enumerate
-@item Sort the list of pointers in decreasing number of contributed
-virtual operands.
+@item 
+将指针列表按照分配的虚操作数数目进行递减排序。
 
-@item Take the first pointer from the list and reverse the role
-of the memory tag and its aliases.  Usually, whenever an
-aliased variable Vi is found to alias with a memory tag
-T, we add Vi to the may-aliases set for T@.  Meaning that
-after alias analysis, we will have:
+@item 
+从列表中取出第一个指针并反转内存标签和别名的脚色。通常，
+不管什么时候被别名的变量Vi被发现与内存标签T别名，
+我们都将Vi增加到T的可能别名集中。这意味着，别名分析之后，我们将得到：
 
 @smallexample
 may-aliases(T) = @{ V1, V2, V3, @dots{}, Vn @}
 @end smallexample
 
-This means that every statement that references T, will get
-@code{n} virtual operands for each of the Vi tags.  But, when
-alias grouping is enabled, we make T an alias tag and add it
-to the alias set of all the Vi variables:
+这意味着每条引用T的语句，将得到Vi标签的@code{n}个虚拟操作数。但是，
+当启用了别名分组时，我们将T标记为别名标签并将其增加到所有Vi变量的别名集中：
 
 @smallexample
 may-aliases(V1) = @{ T @}
@@ -957,25 +828,22 @@ may-aliases(V2) = @{ T @}
 may-aliases(Vn) = @{ T @}
 @end smallexample
 
-This has two effects: (a) statements referencing T will only get
-a single virtual operand, and, (b) all the variables Vi will now
-appear to alias each other.  So, we lose alias precision to
-improve compile time.  But, in theory, a program with such a high
-level of aliasing should not be very optimizable in the first
-place.
+这有两个效果：(a)引用T的语句将只得到一个单独的虚拟操作数，
+(b)所有变量Vi现在将显示为相互别名。所以，
+我们为了提高编译时间而失去了别名精确性。但是，理论上，
+像这样使用高层次的别名的程序，应该不是把优化放在第一位。
 
-@item Since variables may be in the alias set of more than one
-memory tag, the grouping done in step (2) needs to be extended
-to all the memory tags that have a non-empty intersection with
-the may-aliases set of tag T@.  For instance, if we originally
-had these may-aliases sets:
+@item 
+由于变量可以在多个内存标签的别名集中，所以在步骤(2)中所作的分组工作需要被扩展
+为针对所有与标签T的可能别名集具有非空交集的内存标签。例如，
+如果我们最初具有这些可能别名集： 
 
 @smallexample
 may-aliases(T) = @{ V1, V2, V3 @}
 may-aliases(R) = @{ V2, V4 @}
 @end smallexample
 
-In step (2) we would have reverted the aliases for T as:
+在步骤(2)中，我们将会反转T的别名为： 
 
 @smallexample
 may-aliases(V1) = @{ T @}
@@ -983,10 +851,9 @@ may-aliases(V2) = @{ T @}
 may-aliases(V3) = @{ T @}
 @end smallexample
 
-But note that now V2 is no longer aliased with R@.  We could
-add R to may-aliases(V2), but we are in the process of
-grouping aliases to reduce virtual operands so what we do is
-add V4 to the grouping to obtain:
+但是注意现在V2不再与R别名了。我们本应该将R增加到may-aliases(V2)中，
+但是我们是在处理别名分组以减少虚拟操作数，所以我们所要做的是将V4增加到分组中，
+以获得：
 
 @smallexample
 may-aliases(V1) = @{ T @}
@@ -995,6 +862,7 @@ may-aliases(V3) = @{ T @}
 may-aliases(V4) = @{ T @}
 @end smallexample
 
-@item If the total number of virtual operands due to aliasing is
-still above the threshold set by max-alias-vops, go back to (2).
+@item 
+如果由于别名产生的虚拟操作数总数依然超出max-alias-vops设置的门槛，
+则回到步骤(2)。
 @end enumerate
