@@ -850,6 +850,9 @@ the test
 @end itemize
 
 @item @{ dg-skip-if @var{comment} @{ @var{selector} @} @{ @var{include-opts} @} @{ @var{exclude-opts} @} @}
+如果测试系统被包含在选择器中，并且在include-opts中的每个选项都在用于编译测试的选项集中，并且在exclude-opts中的每个选项都不在用于编译测试的选项集中，则跳过该测试。
+
+空的include-opts列表使用`"*"'，空的exclude-opts列表使用`""'。
 Skip the test if the test system is included in @var{selector} and if
 each of the options in @var{include-opts} is in the set of options with
 which the test would be compiled and if none of the options in
@@ -860,6 +863,7 @@ Use @samp{"*"} for an empty @var{include-opts} list and @samp{""} for
 an empty @var{exclude-opts} list.
 
 @item  @{ dg-xfail-if @var{comment} @{ @var{selector} @} @{ @var{include-opts} @} @{ @var{exclude-opts} @} @}
+如果符合条件（与dg-skip-if相同），则期望测试失败。 
 Expect the test to fail if the conditions (which are the same as for
 @code{dg-skip-if}) are met.  This does not affect the execute step.
 
@@ -1060,95 +1064,75 @@ GCC在@file{gcc/testsuite}目录下包含下列C语言测试包：
 
 @table @file
 @item gcc.dg
-This contains tests of particular features of the C compiler, using the
-more modern @samp{dg} harness.  Correctness tests for various compiler
-features should go here if possible.
+其包含了C编译器特定特征的测试，使用了较为现代的@samp{dg} harness。
+如果可能的话，对各种编译器特征的正确性的测试应该放在这里。
 
-Magic comments determine whether the file
-is preprocessed, compiled, linked or run.  In these tests, error and warning
-message texts are compared against expected texts or regular expressions
-given in comments.  These tests are run with the options @samp{-ansi -pedantic}
-unless other options are given in the test.  Except as noted below they
-are not run with multiple optimization options.
+魔术注释（Magic comments）决定了文件是否被预处理，编译，连接或运行。
+在这些测试中，错误和警告消息文本用来跟在注释中给出的预期文本或正规表达式作比较。
+这些测试使用选项@samp{-ansi -pedantic}来运行，除非给出了其它选项。
+除了下面标注的以外，它们使用多个优化选项来运行。
 @item gcc.dg/compat
-This subdirectory contains tests for binary compatibility using
-@file{compat.exp}, which in turn uses the language-independent support
-(参见 @ref{compat测试, , Support for testing binary compatibility}).
+该子目录包含了使用@file{compat.exp}的二进制兼容性测试，
+并且是使用语言无关的支持（参见@ref{compat测试,,对测试二进制兼容性的支持}）。 
 @item gcc.dg/cpp
-This subdirectory contains tests of the preprocessor.
+该子目录包含了预处理器的测试。 
 @item gcc.dg/debug
-This subdirectory contains tests for debug formats.  Tests in this
-subdirectory are run for each debug format that the compiler supports.
+该子目录包含了调试格式的测试。该子目录下的测试用于编译器支持的每个调试格式。 
 @item gcc.dg/format
-This subdirectory contains tests of the @option{-Wformat} format
-checking.  Tests in this directory are run with and without
-@option{-DWIDE}.
+该子目录包含了@option{-Wformat}格式检测的测试。
+该目录下的测试分别使用和不使用@option{-DWIDE}来运行。 
 @item gcc.dg/noncompile
-This subdirectory contains tests of code that should not compile and
-does not need any special compilation options.  They are run with
-multiple optimization options, since sometimes invalid code crashes
-the compiler with optimization.
+该子目录包含了不被编译并且不需要任何特定编译选项的测试。
+它们使用多个优化选项来运行，因为有时编译器的优化会使得代码崩溃。 
 @item gcc.dg/special
-FIXME: describe this.
-
+FIXME: 对其进行描述。 
 @item gcc.c-torture
-This contains particular code fragments which have historically broken easily.
-These tests are run with multiple optimization options, so tests for features
-which only break at some optimization levels belong here.  This also contains
-tests to check that certain optimizations occur.  It might be worthwhile to
-separate the correctness tests cleanly from the code quality tests, but
-it hasn't been done yet.
-
+这包含了历史上很容易出问题的特定代码片断。这些测试使用多个优化选项来运行，
+所以测试只在某些优化级别出问题的特征也属于这里。
+这还包含了检测特定优化发生的测试。
+或许值得去将正确性测试从代码质量测试中完全分开出来，但目前还没有做。 
 @item gcc.c-torture/compat
-FIXME: describe this.
+FIXME: 对其进行描述。
 
-This directory should probably not be used for new tests.
+该目录应该不会被用于新的测试。
 @item gcc.c-torture/compile
-This testsuite contains test cases that should compile, but do not
-need to link or run.  These test cases are compiled with several
-different combinations of optimization options.  All warnings are
-disabled for these test cases, so this directory is not suitable if
-you wish to test for the presence or absence of compiler warnings.
-While special options can be set, and tests disabled on specific
-platforms, by the use of @file{.x} files, mostly these test cases
-should not contain platform dependencies.  FIXME: discuss how defines
-such as @code{NO_LABEL_VALUES} and @code{STACK_SIZE} are used.
+该测试包包含了应该编译，但不需要连接和运行的测试用例。
+这些测试用例使用多个不同优化选项组合来编译。所有的警告都被禁止，
+所以如果你想测试编译器警告是否存在，则这个目录不适合。虽然可以设置特定的选项，
+并且测试不是用于特定的平台，但大多数这些测试用例不应该包含平台依赖。
+FIXME：论述如何使用像@code{NO_LABEL_VALUES}和@code{STACK_SIZE}这样的定义。
 @item gcc.c-torture/execute
-This testsuite contains test cases that should compile, link and run;
-otherwise the same comments as for @file{gcc.c-torture/compile} apply.
+该测试包包含了应该被编译，连接和运行的测试用例；
+否则跟@file{gcc.c-torture/compile}相同的注释将会使用。 
 @item gcc.c-torture/execute/ieee
-This contains tests which are specific to IEEE floating point.
+这包含了IEEE浮点特定的测试。 
 @item gcc.c-torture/unsorted
-FIXME: describe this.
+FIXME: 对其进行描述。
 
-This directory should probably not be used for new tests.
+该目录应该不会被用于新的测试。
 @item gcc.c-torture/misc-tests
-This directory contains C tests that require special handling.  Some
-of these tests have individual expect files, and others share
-special-purpose expect files:
+该目录包含了需要特殊处理的C测试。其中的一些测试具有单独的expect文件，
+另一些则共享特殊用途的expect文件：
 
 @table @file
 @item @code{bprob*.c}
-Test @option{-fbranch-probabilities} using @file{bprob.exp}, which
-in turn uses the generic, language-independent framework
-(参见 @ref{profopt测试, , Support for testing profile-directed
-optimizations}).
+使用@file{bprob.exp}来测试@option{-fbranch-probabilities}，并且是使用通用的，
+语言无关的框架（参见@ref{profopt测试,,对测试profile指导的优化的支持}）。 
 
 @item @code{dg-*.c}
-Test the testsuite itself using @file{dg-test.exp}.
+使用@file{dg-test.exp}来测试测试包本身。 
 
 @item @code{gcov*.c}
-Test @command{gcov} output using @file{gcov.exp}, which in turn uses the
-language-independent support (参见 @ref{gcov测试, , Support for testing gcov}).
+使用@file{gcov.exp}来测试@command{gcov}输出，
+并且是使用语言无关的支持（参见@ref{gcov测试,,对测试gcov的支持}）。
 
 @item @code{i386-pf-*.c}
-Test i386-specific support for data prefetch using @file{i386-prefetch.exp}.
+使用@file{i386-prefetch.exp}来测试i386特定的对数据预提取的支持。 
+@end table
 @end table
 
-@end table
-
-FIXME: merge in @file{testsuite/README.gcc} and discuss the format of
-test cases and magic comments more.
+FIXME: 合并到@file{testsuite/readme.gcc}中，
+并进一步论述测试用例的格式和魔术注释。
 
 @node libgcj测试
 @subsection Java库测试包
@@ -1172,11 +1156,10 @@ Mauve测试包还覆盖了libgcj的核心包的回归测试。Mauve项目为Java
 @node gcov测试
 @subsection 对@command{gcov}测试的支持
 
-Language-independent support for testing @command{gcov}, and for checking
-that branch profiling produces expected values, is provided by the
-expect file @file{gcov.exp}.  @command{gcov} tests also rely on procedures
-in @file{gcc.dg.exp} to compile and run the test program.  A typical
-@command{gcov} test contains the following DejaGnu commands within comments:
+expect文件@file{gcov.exp}，
+提供了对测试@command{gcov}和检查分支profile是否产生预期值的语言无关的支持。
+@command{gcov}测试还依赖于@file{gcc.dg.exp}的程序，来编译和运行测试程序。
+一个典型的@command{gcov}测试包含下列在注释中的DejaGnu命令：
 
 @smallexample
 @{ dg-options "-fprofile-arcs -ftest-coverage" @}
@@ -1184,33 +1167,27 @@ in @file{gcc.dg.exp} to compile and run the test program.  A typical
 @{ dg-final @{ run-gcov sourcefile @} @}
 @end smallexample
 
-Checks of @command{gcov} output can include line counts, branch percentages,
-and call return percentages.  All of these checks are requested via
-commands that appear in comments in the test's source file.
-Commands to check line counts are processed by default.
-Commands to check branch percentages and call return percentages are
-processed if the @command{run-gcov} command has arguments @code{branches}
-or @code{calls}, respectively.  For example, the following specifies
-checking both, as well as passing @option{-b} to @command{gcov}:
+对@command{gcov}输出的检测可以包括行数，分支百分比和调用返回百分比。
+所有这些检测都由在测试源文件中注释里出现的命令来请求。
+缺省情况下处理检测行数的命令。检测分支百分比和调用返回百分比的命令，
+当@command{run-gcov}命令具有相应的参数@code{branches}或@code{calls}时，
+才会被处理。例如，下面指定了两者都检测，
+同时还传给@command{gcov}一个@option{-b}：
 
 @smallexample
 @{ dg-final @{ run-gcov branches calls @{ -b sourcefile @} @} @}
 @end smallexample
 
-A line count command appears within a comment on the source line
-that is expected to get the specified count and has the form
-@code{count(@var{cnt})}.  A test should only check line counts for
-lines that will get the same count for any architecture.
+行数命令出现在注释中，其源行期望能获得指定的数，
+并具有形式@code{count(@var{cnt})}。
+测试应该只检测对于任意体系结构都会得到同一数值的行数。
 
-Commands to check branch percentages (@code{branch}) and call
-return percentages (@code{returns}) are very similar to each other.
-A beginning command appears on or before the first of a range of
-lines that will report the percentage, and the ending command
-follows that range of lines.  The beginning command can include a
-list of percentages, all of which are expected to be found within
-the range.  A range is terminated by the next command of the same
-kind.  A command @code{branch(end)} or @code{returns(end)} marks
-the end of a range without starting a new one.  For example:
+检测分支百分比（@code{branch}）和调用返回百分比（@code{returns}）的命令彼此很
+相似。起始命令出现在将报告百分比的一个行范围的第一行或者之前，
+结束命令跟在行范围之后。起始命令可以包括一个百分比列表，其为在范围内期望获得的。
+范围由同种类型的下一个命令来终止。
+命令@code{branch(end)}或@code{returns(end)}标记了范围的结束，
+而不起是一个新的。例如：
 
 @smallexample
 if (i > 10 && j > i && j < 20)  /* @r{branch(27 50 75)} */
@@ -1218,131 +1195,102 @@ if (i > 10 && j > i && j < 20)  /* @r{branch(27 50 75)} */
   foo (i, j);
 @end smallexample
 
-For a call return percentage, the value specified is the
-percentage of calls reported to return.  For a branch percentage,
-the value is either the expected percentage or 100 minus that
-value, since the direction of a branch can differ depending on the
-target or the optimization level.
+对于调用返回百分比，指定的值为调用报告返回的百分比。对于分支百分比，
+值或者为期望的百分比，或者为100减去那个值，
+因为分支的方向可以根据目标机或优化级别而不同。
 
-Not all branches and calls need to be checked.  A test should not
-check for branches that might be optimized away or replaced with
-predicated instructions.  Don't check for calls inserted by the
-compiler or ones that might be inlined or optimized away.
+并不是所有的分支和调用都需要被检测。
+测试不应检测可能被优化掉的或者被断言指令替代的分支。
+不要检测编译器插入的调用或者可能被inline或优化掉的。
 
-A single test can check for combinations of line counts, branch
-percentages, and call return percentages.  The command to check a
-line count must appear on the line that will report that count, but
-commands to check branch percentages and call return percentages can
-bracket the lines that report them.
+单个测试可以检测行数，分支百分比和调用返回百分比的组合。
+检测行数的命令必须出现在将会报告行数的行中，
+但是检测分支百分比和调用返回百分比的命令，可以将报告的行括起来。
 
 @node profopt测试
 @subsection 对profile-directed优化测试的支持
 
-The file @file{profopt.exp} provides language-independent support for
-checking correct execution of a test built with profile-directed
-optimization.  This testing requires that a test program be built and
-executed twice.  The first time it is compiled to generate profile
-data, and the second time it is compiled to use the data that was
-generated during the first execution.  The second execution is to
-verify that the test produces the expected results.
+文件@file{profopt.exp}提供了对检测，
+使用profile指导的优化来构建的测试是否正确执行的支持。
+该测试需要测试程序被构建和执行两次。第一次用来编译生成profile数据，
+第二次用来使用第一次执行生成的数据来编译。
+第二次执行用来验证测试产生了预期的结果。
 
-To check that the optimization actually generated better code, a
-test can be built and run a third time with normal optimizations to
-verify that the performance is better with the profile-directed
-optimizations.  @file{profopt.exp} has the beginnings of this kind
-of support.
+要检查优化确实生成了更好的代码，测试可以被构建并运行第三次，
+使用标准的来验证性能是否比profile指导的优化更好。
+@file{profopt.exp}提供了这种最初的支持。
 
-@file{profopt.exp} provides generic support for profile-directed
-optimizations.  Each set of tests that uses it provides information
-about a specific optimization:
+@file{profopt.exp}为profile指导的优化提供了通用的支持。
+每套测试都使用了其提供的关于特定优化的信息：
 
 @table @code
 @item tool
-tool being tested, e.g., @command{gcc}
+被测试的工具，如gcc。 
 
 @item profile_option
-options used to generate profile data
+用于生成profile数据的选项。 
 
 @item feedback_option
-options used to optimize using that profile data
+使用profile数据进行优化的选项。 
 
 @item prof_ext
-suffix of profile data files
+profile数据文件的后缀。 
 
 @item PROFOPT_OPTIONS
-list of options with which to run each test, similar to the lists for
-torture tests
+运行每个测试所使用的选项列表，类似于torture测试的列表。 
 @end table
 
 @node compat测试
 @subsection 对二进制兼容性测试的支持
 
-The file @file{compat.exp} provides language-independent support for
-binary compatibility testing.  It supports testing interoperability of
-two compilers that follow the same ABI, or of multiple sets of
-compiler options that should not affect binary compatibility.  It is
-intended to be used for testsuites that complement ABI testsuites.
+文件@file{compat.exp}提供了对二进制兼容性测试的语言无关的支持。
+它支持测试遵循相同ABI的两个编译器，或者编译器选项的多个集合，
+在一起工作时不影响二进制兼容性。它是打算用来补充ABI测试包的。
 
-A test supported by this framework has three parts, each in a
-separate source file: a main program and two pieces that interact
-with each other to split up the functionality being tested.
+该框架支持的测试具有三部分，分别在不同的源文件中：主程序，
+和两个相互作用来拆分要测试的功能的部分。
 
 @table @file
 @item @var{testname}_main.@var{suffix}
-Contains the main program, which calls a function in file
-@file{@var{testname}_x.@var{suffix}}.
+包含了主程序，其调用了文件@file{@var{testname}_x.@var{suffix}}中的函数。 
 
 @item @var{testname}_x.@var{suffix}
-Contains at least one call to a function in
-@file{@var{testname}_y.@var{suffix}}.
+包含了至少一个对@file{@var{testname}_y.@var{suffix}}中的函数的调用。 
 
 @item @var{testname}_y.@var{suffix}
-Shares data with, or gets arguments from,
-@file{@var{testname}_x.@var{suffix}}.
+与@file{@var{testname}_x.@var{suffix}}共享数据，或者从中获得参数。
 @end table
 
-Within each test, the main program and one functional piece are
-compiled by the GCC under test.  The other piece can be compiled by
-an alternate compiler.  If no alternate compiler is specified,
-then all three source files are all compiled by the GCC under test.
-You can specify pairs of sets of compiler options.  The first element
-of such a pair specifies options used with the GCC under test, and the
-second element of the pair specifies options used with the alternate
-compiler.  Each test is compiled with each pair of options.
+每个测试中，主程序和一个功能部分由测试GCC编译。
+另一部分可以由一个候选编译器来编译。如果没有指定候选编译器，
+则所有的这三个源文件都由测试 GCC编译。你可以指定一个编译器选项对。
+每一对中第一个元素指定了测试GCC使用的选项，第二个元素用于候选编译器。
+每个测试都是用这些选项来编译。
 
-@file{compat.exp} defines default pairs of compiler options.
-These can be overridden by defining the environment variable
-@env{COMPAT_OPTIONS} as:
+@file{compat.exp}定义了缺省的一对编译器选项。
+这些可以通过定义环境变量@env{COMPAT_OPTIONS}来取代，如：
 
 @smallexample
 COMPAT_OPTIONS="[list [list @{@var{tst1}@} @{@var{alt1}@}]
   @dots{}[list @{@var{tstn}@} @{@var{altn}@}]]"
 @end smallexample
 
-where @var{tsti} and @var{alti} are lists of options, with @var{tsti}
-used by the compiler under test and @var{alti} used by the alternate
-compiler.  For example, with
-@code{[list [list @{-g -O0@} @{-O3@}] [list @{-fpic@} @{-fPIC -O2@}]]},
-the test is first built with @option{-g -O0} by the compiler under
-test and with @option{-O3} by the alternate compiler.  The test is
-built a second time using @option{-fpic} by the compiler under test
-and @option{-fPIC -O2} by the alternate compiler.
+其中@var{tsti}和@var{alti}是选项列表，要测试的编译器使用@var{tsti}，
+候选的编译器使用@var{alti}。例如，
+对于@code{[list [list @{-g -O0@} @{-O3@}] [list @{-fpic@} @{-fPIC -O2@}]]}，
+测试会首先被要测试的编译器使用@option{-g -O0}来编译，
+并且被候选编译器使用@option{-O3}来编译。测试在第二次的时候，
+测试编译器会使用@option{-fpic}，候选编译器会使用@option{-fPIC -O2}。
 
-An alternate compiler is specified by defining an environment
-variable to be the full pathname of an installed compiler; for C
-define @env{ALT_CC_UNDER_TEST}, and for C++ define
-@env{ALT_CXX_UNDER_TEST}.  These will be written to the
-@file{site.exp} file used by DejaGnu.  The default is to build each
-test with the compiler under test using the first of each pair of
-compiler options from @env{COMPAT_OPTIONS}.  When
-@env{ALT_CC_UNDER_TEST} or
-@env{ALT_CXX_UNDER_TEST} is @code{same}, each test is built using
-the compiler under test but with combinations of the options from
-@env{COMPAT_OPTIONS}.
+候选编译器通过将环境变量定义为安装的编译的全路径名来指定；对于C，
+定义@env{ALT_CC_UNDER_TEST}，对于C++，定义@env{ALT_CXX_UNDER_TEST}。
+这些将被写入DejaGnu使用的@file{site.exp}文件中。缺省情况，是由要测试的编译器，
+使用@env{COMPAT_OPTIONS}中每个编译选项对的第一个，来构建每个测试。
+当@env{ALT_CC_UNDER_TEST}或@env{ALT_CXX_UNDER_TEST}为@code{same}时，
+每个测试将使用测试编译来构建，但是使用@env{COMPAT_OPTIONS}中的选项组合。
 
-To run only the C++ compatibility suite using the compiler under test
-and another version of GCC using specific compiler options, do the
-following from @file{@var{objdir}/gcc}:
+若要对要测试的编译器和另一版本的使用指定编译选项的GCC，
+只运行C++兼容性测试包，则在@file{@var{objdir}/gcc}下执行下列命令：
 
 @smallexample
 rm site.exp
@@ -1353,32 +1301,25 @@ make -k \
   RUNTESTFLAGS="compat.exp"
 @end smallexample
 
-A test that fails when the source files are compiled with different
-compilers, but passes when the files are compiled with the same
-compiler, demonstrates incompatibility of the generated code or
-runtime support.  A test that fails for the alternate compiler but
-passes for the compiler under test probably tests for a bug that was
-fixed in the compiler under test but is present in the alternate
-compiler.
+如果一个测试当源文件由不同编译器编译的时候执行失败，
+而当文件由同一编译器编译的时候执行成功，则表明生成代码或运行时支持不兼容。
+如果一个测试对于候选编译器执行失败，但对于测试编译器却执行成功，
+则可能是因为一个bug在测试编译器中已经被修改好，但还存在于候选编译器中。
 
-The binary compatibility tests support a small number of test framework
-commands that appear within comments in a test file.
+二进制兼容性测试支持少数在测试文件的注释中出现的测试框架命令。
 
 @table @code
 @item dg-require-*
-These commands can be used in @file{@var{testname}_main.@var{suffix}}
-to skip the test if specific support is not available on the target.
+这些命令可以用于@file{@var{testname}_main.@var{suffix}}中，
+使得当目标机上没有特定支持的时候跳过测试。 
 
 @item dg-options
-The specified options are used for compiling this particular source
-file, appended to the options from @env{COMPAT_OPTIONS}.  When this
-command appears in @file{@var{testname}_main.@var{suffix}} the options
-are also used to link the test program.
+指定选项用于编译该特定的源文件，将选项添加到@env{COMPAT_OPTIONS}中。
+当该命令出现在@file{@var{testname}_main.@var{suffix}}中时，
+选项还用于链接测试程序的时候。 
 
 @item dg-xfail-if
-This command can be used in a secondary source file to specify that
-compilation is expected to fail for particular options on particular
-targets.
+该命令可以用在第二个源文件中，来指定在特定目标机上对于特定选项，编译将会失败。 
 @end table
 
 @node Torture测试
