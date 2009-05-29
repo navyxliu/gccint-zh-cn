@@ -830,203 +830,168 @@ FIXME: 讨论一下非C的测试包。
 @end table
 
 @item @{ dg-timeout @var{n} [@{target @var{selector} @}] @}
-Set the time limit for the compilation and for the execution of the test
-to the specified number of seconds.
+将编译和执行测试程序的时间限制，设置为指定的秒数。
 
 @item @{ dg-timeout-factor @var{x} [@{ target @var{selector} @}] @}
-Multiply the normal time limit for compilation and execution of the test
-by the specified floating-point factor.  The normal timeout limit, in
-seconds, is found by searching the following in order:
+将测试程序的编译和执行的通常时间限制，乘以指定的浮点因子。
+通常的时间限制，以妙为单位，按照下列顺序来查找：
 
 @itemize @bullet
-@item the value defined by an earlier @code{dg-timeout} directive in
-the test
+@item 由之前在测试程序中@code{dg-timeout}指令定义
 
-@item variable @var{tool_timeout} defined by the set of tests
+@item 由测试程序集定义的变量@var{tool_timeout}
 
-@item @var{gcc},@var{timeout} set in the target board
+@item 在目标板子上（target board）设置的@var{gcc},@var{timeout} 
 
 @item 300
 @end itemize
 
 @item @{ dg-skip-if @var{comment} @{ @var{selector} @} @{ @var{include-opts} @} @{ @var{exclude-opts} @} @}
-如果测试系统被包含在选择器中，并且在include-opts中的每个选项都在用于编译测试的选项集中，并且在exclude-opts中的每个选项都不在用于编译测试的选项集中，则跳过该测试。
+如果测试系统被包含在@var{selector}中，
+并且在@var{include-opts}中的每个选项都在用于编译测试的选项集中，
+并且在@var{exclude-opts}中的每个选项都不在用于编译测试的选项集中，则跳过该测试。
 
-空的include-opts列表使用`"*"'，空的exclude-opts列表使用`""'。
-Skip the test if the test system is included in @var{selector} and if
-each of the options in @var{include-opts} is in the set of options with
-which the test would be compiled and if none of the options in
-@var{exclude-opts} is in the set of options with which the test would be
-compiled.
-
-Use @samp{"*"} for an empty @var{include-opts} list and @samp{""} for
-an empty @var{exclude-opts} list.
+空的@var{include-opts}列表使用@samp{"*"}，
+空的@var{exclude-opts}列表使用@samp{""}。
 
 @item  @{ dg-xfail-if @var{comment} @{ @var{selector} @} @{ @var{include-opts} @} @{ @var{exclude-opts} @} @}
-如果符合条件（与dg-skip-if相同），则期望测试失败。 
-Expect the test to fail if the conditions (which are the same as for
-@code{dg-skip-if}) are met.  This does not affect the execute step.
+如果符合条件（与@code{dg-skip-if}相同），则期望测试失败。 
 
 @item  @{ dg-xfail-run-if @var{comment} @{ @var{selector} @} @{ @var{include-opts} @} @{ @var{exclude-opts} @} @}
 Expect the execute step of a test to fail if the conditions (which are
 the same as for @code{dg-skip-if}) and @code{dg-xfail-if}) are met.
 
 @item @{ dg-require-@var{support} args @}
-Skip the test if the target does not provide the required support;
-see @file{gcc-dg.exp} in the GCC testsuite for the actual directives.
-These directives must appear after any @code{dg-do} directive in the test
-and before any @code{dg-additional-sources} directive.
-They require at least one argument, which can be an empty string if the
-specific procedure does not examine the argument.
+如果目标没有提供需要的支持，则跳过测试；
+实际的指令参见GCC测试包中的@file{gcc-dg.exp}。
+这些指令必须出现在任何@code{dg-do}指令之后，
+并且是任何@code{dg-additional-sources}指令之前。
+它们至少需要一个参数，如果特定的程序不检查参数，则其可以为空字符串。
 
 @item @{ dg-require-effective-target @var{keyword} @}
-Skip the test if the test target, including current multilib flags,
-is not covered by the effective-target keyword.
-This directive must appear after any @code{dg-do} directive in the test
-and before any @code{dg-additional-sources} directive.
+如果测试目标，包括目前的multilib标记，没有相应的有效目标关键字，则跳过测试。
+该指令必须出现在任何@code{dg-do}指令之后，
+并且是任何@code{dg-additional-sources} directive指令之前。 
 
 @item  @{ dg-shouldfail @var{comment} @{ @var{selector} @} @{ @var{include-opts} @} @{ @var{exclude-opts} @} @}
-Expect the test executable to return a nonzero exit status if the
-conditions (which are the same as for @code{dg-skip-if}) are met.
+如果条件满足（与@code{dg-skip-if}相同），
+则期望测试可执行程序返回非零的退出状态。 
 
 @item @{ dg-error @var{regexp} [@var{comment} [@{ target/xfail @var{selector} @} [@var{line}] @}]] @}
-This DejaGnu directive appears on a source line that is expected to get
-an error message, or else specifies the source line associated with the
-message.  If there is no message for that line or if the text of that
-message is not matched by @var{regexp} then the check fails and
-@var{comment} is included in the @code{FAIL} message.  The check does
-not look for the string @samp{"error"} unless it is part of @var{regexp}.
+该DejaGnu指令出现在期望能获得一个错误消息的源行中，或者指定源行与消息相关联。
+如果那个line没有产生消息，或者如果消息文本不匹配@var{regexp}，
+则检测失败并且@var{comment}被包括在@code{FAIL}消息中。
+检测并不查看字符串@samp{"error"}，除非它是@var{regexp}的一部分。
 
 @item @{ dg-warning @var{regexp} [@var{comment} [@{ target/xfail @var{selector} @} [@var{line}] @}]] @}
-This DejaGnu directive appears on a source line that is expected to get
-a warning message, or else specifies the source line associated with the
-message.  If there is no message for that line or if the text of that
-message is not matched by @var{regexp} then the check fails and
-@var{comment} is included in the @code{FAIL} message.  The check does
-not look for the string @samp{"warning"} unless it is part of @var{regexp}.
+该DejaGnu指令出现在期望能获得一个警告消息的源行中，或者指定源行与消息相关联。
+如果那个line没有产生消息，或者如果消息文本不匹配@var{regexp}，
+则检测失败并且@var{comment}被包括在@code{FAIL}消息中。
+检测并不查看字符串@samp{"warning"}，除非它是@var{regexp}的一部分。
 
 @item @{ dg-message @var{regexp} [@var{comment} [@{ target/xfail @var{selector} @} [@var{line}] @}]] @}
-The line is expected to get a message other than an error or warning.
-If there is no message for that line or if the text of that message is
-not matched by @var{regexp} then the check fails and @var{comment} is
-included in the @code{FAIL} message.
+line被期望能获得一个错误或者警告消息。如果如果那个行没有产生消息，
+或者如果消息文本不匹配@var{regexp}，
+则检测失败并且@var{comment}被包括在@code{FAIL}消息中。 
 
 @item @{ dg-bogus @var{regexp} [@var{comment} [@{ target/xfail @var{selector} @} [@var{line}] @}]] @}
-This DejaGnu directive appears on a source line that should not get a
-message matching @var{regexp}, or else specifies the source line
-associated with the bogus message.  It is usually used with @samp{xfail}
-to indicate that the message is a known problem for a particular set of
-targets.
+该DejaGnu指令出现在一个不应该获得匹配@var{regexp}的消息的源行，
+或者指定源行与一个虚假消息相关联。其通常和@samp{xfail}一起使用，
+来指示消息为一个特定目标集的已知问题。 
 
 @item @{ dg-excess-errors @var{comment} [@{ target/xfail @var{selector} @}] @}
-This DejaGnu directive indicates that the test is expected to fail due
-to compiler messages that are not handled by @samp{dg-error},
-@samp{dg-warning} or @samp{dg-bogus}.  For this directive @samp{xfail}
-has the same effect as @samp{target}.
+该DejaGnu指令指示该测试由于编译器消息没有被@samp{dg-error}, 
+@samp{dg-warning}或@samp{dg-bogus}处理，从而期望失败。
+对于这个指令，@samp{xfail}与@samp{target}具有相同效果。 
 
 @item @{ dg-output @var{regexp} [@{ target/xfail @var{selector} @}] @}
-This DejaGnu directive compares @var{regexp} to the combined output
-that the test executable writes to @file{stdout} and @file{stderr}.
+该DejaGnu指令将@var{regexp}与测试执行程序写入@file{stdout}和@file{stderr}的组合输出作比较。 
 
 @item @{ dg-prune-output @var{regexp} @}
-Prune messages matching @var{regexp} from test output.
+删除测试输出中匹配@var{regexp}的消息。 
 
 @item @{ dg-additional-files "@var{filelist}" @}
-Specify additional files, other than source files, that must be copied
-to the system where the compiler runs.
+指定必须复制到编译器运行的系统上的额外文件，不是源文件。 
 
 @item @{ dg-additional-sources "@var{filelist}" @}
-Specify additional source files to appear in the compile line
-following the main test file.
+指定在编译命令行中出现在主测试文件之后的额外的源文件。 
 
 @item @{ dg-final @{ @var{local-directive} @} @}
-This DejaGnu directive is placed within a comment anywhere in the
-source file and is processed after the test has been compiled and run.
-Multiple @samp{dg-final} commands are processed in the order in which
-they appear in the source file.
+该DejaGnu指令被放在源文件中任何地方的注释中，并且在测试编译和运行后被处理。
+多个@samp{dg-final}命令将按照它们在源文件中出现的顺序来处理。
 
-The GCC testsuite defines the following directives to be used within
-@code{dg-final}.
+GCC测试包定义了下列指令用于@code{dg-final}中。
 
 @table @code
 @item cleanup-coverage-files
-Removes coverage data files generated for this test.
+移除该测试生成的覆盖数据文件。 
 
 @item cleanup-repo-files
-Removes files generated for this test for @option{-frepo}.
+移除该测试使用@option{-frepo}生成的文件。 
 
 @item cleanup-rtl-dump @var{suffix}
-Removes RTL dump files generated for this test.
+移除该测试生成的匹配suffix的RTL转储文件。 
 
 @item cleanup-tree-dump @var{suffix}
-Removes tree dump files matching @var{suffix} which were generated for
-this test.
+移除该测试生成的匹配@var{suffix}的树转储文件。 
 
 @item cleanup-saved-temps
-Removes files for the current test which were kept for @option{--save-temps}.
+移除该测试使用@option{--save-temps}生成的文件。 
 
 @item scan-file @var{filename} @var{regexp} [@{ target/xfail @var{selector} @}]
-Passes if @var{regexp} matches text in @var{filename}.
+如果@var{regexp}匹配@var{filename}文本，则测试通过。 
 
 @item scan-file-not @var{filename} @var{regexp} [@{ target/xfail @var{selector} @}]
-Passes if @var{regexp} does not match text in @var{filename}.
+如果@var{regexp}不匹配@var{filename}文本，则测试通过。 
 
 @item scan-hidden @var{symbol} [@{ target/xfail @var{selector} @}]
-Passes if @var{symbol} is defined as a hidden symbol in the test's
-assembly output.
+如果@var{symbol}在测试的汇编输出中被定义为隐含符号，则测试通过。 
 
 @item scan-not-hidden @var{symbol} [@{ target/xfail @var{selector} @}]
-Passes if @var{symbol} is not defined as a hidden symbol in the test's
-assembly output.
+如果@var{symbol}在测试的汇编输出中没有被定义为隐含符号，则测试通过。 
 
 @item scan-assembler-times @var{regex} @var{num} [@{ target/xfail @var{selector} @}]
-Passes if @var{regex} is matched exactly @var{num} times in the test's
-assembler output.
+如果@var{regex}匹配在测试的汇编输出中的确切@var{num}次数，则测试通过。 
 
 @item scan-assembler @var{regex} [@{ target/xfail @var{selector} @}]
-Passes if @var{regex} matches text in the test's assembler output.
+如果@var{regex}匹配测试的汇编输出的文本，则测试通过。 
 
 @item scan-assembler-not @var{regex} [@{ target/xfail @var{selector} @}]
-Passes if @var{regex} does not match text in the test's assembler output.
+如果@var{regex}不匹配测试的汇编输出的文本，则测试通过。 
 
 @item scan-assembler-dem @var{regex} [@{ target/xfail @var{selector} @}]
-Passes if @var{regex} matches text in the test's demangled assembler output.
+如果@var{regex}匹配测试的汇编输出的demangled文本，则测试通过。 
 
 @item scan-assembler-dem-not @var{regex} [@{ target/xfail @var{selector} @}]
-Passes if @var{regex} does not match text in the test's demangled assembler
-output.
+如果@var{regex}不匹配测试的汇编输出的demangled文本，则测试通过。 
 
 @item scan-tree-dump-times @var{regex} @var{num} @var{suffix} [@{ target/xfail @var{selector} @}]
-Passes if @var{regex} is found exactly @var{num} times in the dump file
-with suffix @var{suffix}.
+如果@var{regex}在具有@var{suffix}后缀的转储文件中出现确切的@var{num}次数，
+则测试通过。 
 
 @item scan-tree-dump @var{regex} @var{suffix} [@{ target/xfail @var{selector} @}]
-Passes if @var{regex} matches text in the dump file with suffix @var{suffix}.
+如果@var{regex}匹配具有@var{suffix}后缀的转储文件的文本，则测试通过。 
 
 @item scan-tree-dump-not @var{regex} @var{suffix} [@{ target/xfail @var{selector} @}]
-Passes if @var{regex} does not match text in the dump file with suffix
-@var{suffix}.
+如果@var{regex}不匹配具有@var{suffix}后缀的转储文件的文本，则测试通过。 
 
 @item scan-tree-dump-dem @var{regex} @var{suffix} [@{ target/xfail @var{selector} @}]
-Passes if @var{regex} matches demangled text in the dump file with
-suffix @var{suffix}.
+如果@var{regex}匹配具有@var{suffix}后缀的转储文件的demangled文本，则测试通过。 
 
 @item scan-tree-dump-dem-not @var{regex} @var{suffix} [@{ target/xfail @var{selector} @}]
-Passes if @var{regex} does not match demangled text in the dump file with
-suffix @var{suffix}.
+如果@var{regex}不匹配具有@var{suffix}后缀的转储文件的demangled文本，则测试通过。
 
 @item output-exists [@{ target/xfail @var{selector} @}]
-Passes if compiler output file exists.
+如果编译器输出文件存在，则测试通过。 
 
 @item output-exists-not [@{ target/xfail @var{selector} @}]
-Passes if compiler output file does not exist.
+如果编译器输出文件不存在，则测试通过。 
 
 @item run-gcov @var{sourcefile}
-Check line counts in @command{gcov} tests.
+在@command{gcov}测试中检查行数。 
 
 @item run-gcov [branches] [calls] @{ @var{opts} @var{sourcefile} @}
-Check branch and/or call counts, in addition to line counts, in
-@command{gcov} tests.
+在@command{gcov}测试中除了行数外，还检查分支和/或调用数。
 @end table
 @end table
 
