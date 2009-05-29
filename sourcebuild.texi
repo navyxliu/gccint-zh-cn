@@ -1325,44 +1325,40 @@ make -k \
 @node Torture测试
 @subsection 对使用多个选项进行torture测试的支持
 
-Throughout the compiler testsuite there are several directories whose
-tests are run multiple times, each with a different set of options.
-These are known as torture tests.
-@file{gcc/testsuite/lib/torture-options.exp} defines procedures to
-set up these lists:
+在整个编译器测试包中，有几个目录，它们的测试程序被运行多次，
+每次使用不同的选项集合。这些被称为torture测试。
+@file{gcc/testsuite/lib/torture-options.exp}定义了建立这些列表的程序：
 
 @table @code
 @item torture-init
-Initialize use of torture lists.
+初始化对torture列表的使用。
 @item set-torture-options
-Set lists of torture options to use for tests with and without loops.
-Optionally combine a set of torture options with a set of other
-options, as is done with Objective-C runtime options.
+设置用于测试程序的torture选项列表。
+可选的，可以将torture选项集合与其它选项集合组合一起，
+正如Objective-C运行时选项所用的方式。
 @item torture-finish
-Finalize use of torture lists.
+结束对torture列表的使用。
 @end table
 
-The @file{.exp} file for a set of tests that use torture options must
-include calls to these three procedures if:
+使用torture选项的用于测试集的文件@file{.exp}，必须包含对这三个程序的调用，如果：
 
 @itemize @bullet
-@item It calls @code{gcc-dg-runtest} and overrides @var{DG_TORTURE_OPTIONS}.
+@item 其调用了@code{gcc-dg-runtest}并且覆写了@var{DG_TORTURE_OPTIONS}
 
-@item It calls @var{$@{tool@}}@code{-torture} or
-@var{$@{tool@}}@code{-torture-execute}, where @var{tool} is @code{c},
-@code{fortran}, or @code{objc}.
+@item 其调用了@var{$@{tool@}}@code{-torture} 或者
+@var{$@{tool@}}@code{-torture-execute}，其中@var{tool}为@code{c},
+@code{fortran}, 或者@code{objc}.
 
-@item It calls @code{dg-pch}.
+@item 其调用了@code{dg-pch}.
 @end itemize
 
-It is not necessary for a @file{.exp} file that calls @code{gcc-dg-runtest}
-to call the torture procedures if the tests should use the list in
-@var{DG_TORTURE_OPTIONS} defined in @file{gcc-dg.exp}.
+如果测试程序将使用在@file{gcc-dg.exp}中定义的@var{DG_TORTURE_OPTIONS}中的列表，
+则文件@file{.exp}不必通过调用@code{gcc-dg-runtest}来调用torture程序。
 
-Most uses of torture options can override the default lists by defining
-@var{TORTURE_OPTIONS} or add to the default list by defining
-@var{ADDITIONAL_TORTURE_OPTIONS}.  Define these in a @file{.dejagnurc}
-file or add them to the @file{site.exp} file; for example
+大多数对torture选项的使用，
+可以通过定义@var{TORTURE_OPTIONS}或者通过定义@var{ADDITIONAL_TORTURE_OPTIONS}
+增加到缺省列表中，来覆写缺省列表。在文件@file{.dejagnurc}中定义这些，
+或者将它们增加到文件@file{site.exp}中；例如
 
 @smallexample
 set ADDITIONAL_TORTURE_OPTIONS  [list \
