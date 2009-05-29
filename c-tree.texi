@@ -1803,93 +1803,77 @@ return;
 @tindex VEC_INTERLEAVE_HIGH_EXPR
 @tindex VEC_INTERLEAVE_LOW_EXPR
 
-The internal representation for expressions is for the most part quite
-straightforward.  However, there are a few facts that one must bear in
-mind.  In particular, the expression ``tree'' is actually a directed
-acyclic graph.  (For example there may be many references to the integer
-constant zero throughout the source program; many of these will be
-represented by the same expression node.)  You should not rely on
-certain kinds of node being shared, nor should you rely on certain kinds of
-nodes being unshared.
+表达式的内部表示大多都相当简单。但是，也有一些事实必须牢记。
+尤其是，表达式“tree”实际是一个有向无环图。（例如，
+整个源程序中可能会有许多对常整数0的引用；这些将会由同一个表达式节点来表示。）
+不要依赖于某种节点是共享的，也不要依赖于某种节点没有被共享。
 
-The following macros can be used with all expression nodes:
+下列宏可以用于所有表达式节点：
 
 @ftable @code
 @item TREE_TYPE
-Returns the type of the expression.  This value may not be precisely the
-same type that would be given the expression in the original program.
+返回表达式的类型。该值可能不是与原始程序中给出的表达式相同精度的类型。 
 @end ftable
 
-In what follows, some nodes that one might expect to always have type
-@code{bool} are documented to have either integral or boolean type.  At
-some point in the future, the C front end may also make use of this same
-intermediate representation, and at this point these nodes will
-certainly have integral type.  The previous sentence is not meant to
-imply that the C++ front end does not or will not give these nodes
-integral type.
+在下文中，有些节点可能总是期望具有@code{bool}类型，
+但是被记载为具有整形或bool型。将来的某个时刻，
+C前端可能也会使用该相同的中间表示，那时，这些节点当然会具有整数类型。
+当然，这并不意味着暗示C++前端中这些节点不具有，或者不会具有整数类型。
 
-Below, we list the various kinds of expression nodes.  Except where
-noted otherwise, the operands to an expression are accessed using the
-@code{TREE_OPERAND} macro.  For example, to access the first operand to
-a binary plus expression @code{expr}, use:
+下面，我们列出了各种表达式节点。除了特别注明的以外，
+表达式的操作数都通过@code{TREE_OPERAND}宏来访问。
+例如，要访问二元加法表达式@code{expr}的第一个操作数，使用：
 
 @smallexample
 TREE_OPERAND (expr, 0)
 @end smallexample
 @noindent
-As this example indicates, the operands are zero-indexed.
 
-All the expressions starting with @code{OMP_} represent directives and
-clauses used by the OpenMP API @w{@uref{http://www.openmp.org/}}.
+正如这个例子所示，操作数是从0开始索引的。
 
-The table below begins with constants, moves on to unary expressions,
-then proceeds to binary expressions, and concludes with various other
-kinds of expressions:
+所有起始于@code{OMP_}的表达式，
+表示使用的是OpenMp API @w{@uref{http://www.openmp.org/}}的directives和clauses。
+
+下面的列表格首先介绍了常数，接着是一元表达式，然后是二元表达式，
+以及各种其它类型的表达式：
 
 @table @code
 @item INTEGER_CST
-These nodes represent integer constants.  Note that the type of these
-constants is obtained with @code{TREE_TYPE}; they are not always of type
-@code{int}.  In particular, @code{char} constants are represented with
-@code{INTEGER_CST} nodes.  The value of the integer constant @code{e} is
-given by
+这些节点表示整数常量。注意这些常量的类型通过@code{TREE_TYPE}来获得；
+并不总是@code{int}型的。特别是，
+@code{char}型常量使用@code{INTEGER_CST}节点表示。
+整数常量@code{e}的值通过下面的方式给出
 @smallexample
 ((TREE_INT_CST_HIGH (e) << HOST_BITS_PER_WIDE_INT)
 + TREE_INST_CST_LOW (e))
 @end smallexample
 @noindent
-HOST_BITS_PER_WIDE_INT is at least thirty-two on all platforms.  Both
-@code{TREE_INT_CST_HIGH} and @code{TREE_INT_CST_LOW} return a
-@code{HOST_WIDE_INT}.  The value of an @code{INTEGER_CST} is interpreted
-as a signed or unsigned quantity depending on the type of the constant.
-In general, the expression given above will overflow, so it should not
-be used to calculate the value of the constant.
+HOST_BITS_PER_WIDE_INT在所有的平台上最少为32。
+@code{TREE_INT_CST_HIGH}和@code{TREE_INT_CST_LOW}都返回一个
+@code{HOST_WIDE_INT}。
+一个@code{INTEGER_CST}的值根据常量的类型而被解析为有符号或无符号的数。
+一般来说，上面给出的表达式将会溢出，因此不要用来计算常量的值。
 
-The variable @code{integer_zero_node} is an integer constant with value
-zero.  Similarly, @code{integer_one_node} is an integer constant with
-value one.  The @code{size_zero_node} and @code{size_one_node} variables
-are analogous, but have type @code{size_t} rather than @code{int}.
+变量@code{integer_zero_node}是一个值为0的整数常量。类似的，
+@code{integer_one_node}是值为1的整数常量。
+变量@code{size_zero_node}和@code{size_one_node}比较类似，
+只是具有@code{size_t}类型，而不是@code{int}。
 
-The function @code{tree_int_cst_lt} is a predicate which holds if its
-first argument is less than its second.  Both constants are assumed to
-have the same signedness (i.e., either both should be signed or both
-should be unsigned.)  The full width of the constant is used when doing
-the comparison; the usual rules about promotions and conversions are
-ignored.  Similarly, @code{tree_int_cst_equal} holds if the two
-constants are equal.  The @code{tree_int_cst_sgn} function returns the
-sign of a constant.  The value is @code{1}, @code{0}, or @code{-1}
-according on whether the constant is greater than, equal to, or less
-than zero.  Again, the signedness of the constant's type is taken into
-account; an unsigned constant is never less than zero, no matter what
-its bit-pattern.
+函数@code{tree_int_cst_lt}是一个断言，当第一个参数小于第二个时有效。
+两个常量被假设为具有相同的符号性（即，要么都是有符号的，要么都是无符号的。）
+在作比较时，使用常量的全部宽度；并忽略掉通常的类型提升和转换规则。
+类似的，@code{tree_int_cst_equal}在两个常熟相等时有效。
+函数@code{tree_int_cst_sgn}返回常数的符号。根据常数是大于，等于，或小于0，
+而返回值@code{1}, @code{0}或@code{-1}。此外，会顾及到常数类型的符号性；
+无符号常数是永远小于0的，不论它的位模式如何。
 
 @item REAL_CST
 
-FIXME: Talk about how to obtain representations of this constant, do
-comparisons, and so forth.
+FIXME: 讨论如何获得该常量的表示，如何进行比较等等。 
 
 @item FIXED_CST
 
+这些节点表示定点常数。这些常量的类型通过TREE_TYPE获得。TREE_FIXED_CST_PTR指向struct fixed_value；TREE_FIXED_CST返回结构体本身。Struct fixed_value包含了具有2个HOST_BITS_PER_WIDE_INT大小的数据，以及与定点机器模式关联的模式。
 These nodes represent fixed-point constants.  The type of these constants
 is obtained with @code{TREE_TYPE}.  @code{TREE_FIXED_CST_PTR} points to
 to struct fixed_value;  @code{TREE_FIXED_CST} returns the structure itself.
@@ -1898,18 +1882,25 @@ HOST_BITS_PER_WIDE_INT and @code{mode} as the associated fixed-point
 machine mode for @code{data}.
 
 @item COMPLEX_CST
+这些节点用于表示复数常量，是一个__complex__，其组成部分为常数节点。TREE_REALPART和TREE_IMAGPART返回相应的实部和虚部。 
 These nodes are used to represent complex number constants, that is a
 @code{__complex__} whose parts are constant nodes.  The
 @code{TREE_REALPART} and @code{TREE_IMAGPART} return the real and the
 imaginary parts respectively.
 
 @item VECTOR_CST
+这些节点用于表示向量常数，其组成部分为常量节点。每个单独的常量节点或者是一个常整数节点，或者是一个双精度的常数节点。第一个操作数为常数节点的TREE_LIST，并可以通过TREE_VECTOR_CST_ELTS来访问。 
 These nodes are used to represent vector constants, whose parts are
 constant nodes.  Each individual constant node is either an integer or a
 double constant node.  The first operand is a @code{TREE_LIST} of the
 constant nodes and is accessed through @code{TREE_VECTOR_CST_ELTS}.
 
 @item STRING_CST
+这些节点表示字符串常量。TREE_STRING_LENGTH返回int型的字符串长度。TREE_STRING_POINTER是一个char*型，包含了字符串本身。字符串可以不是NUL结尾的，并且可以包含嵌入的NUL字符。因此，TREE_STRING_LENGTH包括了结尾的NUL，如果存在的话。
+
+对于宽字符串常量，TREE_STRING_LENGTH为字符串的字节数，并且TREE_STRING_POINTER指向在目标系统上表示的，字符串的字节数组（即，符合目标大小端的整数系列）。宽字符串和非宽字符串常量，只区别于STRING_CST的TREE_TYPE。
+
+FIXME: 当目标系统的字节与主机系统的字节宽度不同时，字符串的格式没有被很好的定义。
 These nodes represent string-constants.  The @code{TREE_STRING_LENGTH}
 returns the length of the string, as an @code{int}.  The
 @code{TREE_STRING_POINTER} is a @code{char*} containing the string
@@ -1929,6 +1920,7 @@ FIXME: The formats of string constants are not well-defined when the
 target system bytes are not the same width as host system bytes.
 
 @item PTRMEM_CST
+这些节点用来表示指向成员的指针（pointer-to-member）常量。PTRMEM_CST_CLASS是类的类型（或者为 RECORD_TYPE，或者为UNION_TYPE），PTRMEM_CST_MEMBER是指向的对象的声明。注意 PTRMEM_CST_MEMBER的DECL_CONTEXT一般有别于PTRMEM_CST_CLASS的。例如，给定： 
 These nodes are used to represent pointer-to-member constants.  The
 @code{PTRMEM_CST_CLASS} is the class type (either a @code{RECORD_TYPE}
 or @code{UNION_TYPE} within which the pointer points), and the
@@ -1942,16 +1934,21 @@ struct D : public B @{@};
 int D::*dp = &D::i;
 @end smallexample
 @noindent
+虽然PTRMEM_CST_MEMBER的DECL_CONTEXT是B，但是由于B::i是B的成员，而不是D的，所以&D::i的PTRMEM_CST_CLASS为D。
 The @code{PTRMEM_CST_CLASS} for @code{&D::i} is @code{D}, even though
 the @code{DECL_CONTEXT} for the @code{PTRMEM_CST_MEMBER} is @code{B},
 since @code{B::i} is a member of @code{B}, not @code{D}.
 
 @item VAR_DECL
 
+这些节点表示变量，包括静态数据成员。更多信息，参见“声明”。 
 These nodes represent variables, including static data members.  For
 more information, @pxref{Declarations}.
 
 @item NEGATE_EXPR
+这些节点表示对单个操作数，整数和浮点类型的，进行一元取负运算。取负的类型可以通过查看表达式的类型来决定。
+
+该操作在有符号算术溢出时的行为，由flag_wrapv和flag_trapv变量控制。
 These nodes represent unary negation of the single operand, for both
 integer and floating-point types.  The type of negation can be
 determined by looking at the type of the expression.
@@ -1960,6 +1957,9 @@ The behavior of this operation on signed arithmetic overflow is
 controlled by the @code{flag_wrapv} and @code{flag_trapv} variables.
 
 @item ABS_EXPR
+这些节点表示单个操作数，整数和浮点类型的，的绝对值。这通常用于实现整数类型的内建abs，labs和llabs，以及浮点类型的fabs，fabsf和fabsl。abs操作的类型可以通过查看表达式的类型来决定。
+
+该节点不用于复数类型。要表示复数的模或者复数abs，使用内建的BUILT_IN_CABS, BUILT_IN_CABSF or BUILT_IN_CABSL，这些被用于实现C99的内建函数cabs, cabsf和cabsl。
 These nodes represent the absolute value of the single operand, for
 both integer and floating-point types.  This is typically used to
 implement the @code{abs}, @code{labs} and @code{llabs} builtins for
@@ -1974,10 +1974,12 @@ to implement the C99 @code{cabs}, @code{cabsf} and @code{cabsl}
 built-in functions.
 
 @item BIT_NOT_EXPR
+这些节点表示按位求补运算，并总是具有整数型。唯一的操作数是要被求补的值。
 These nodes represent bitwise complement, and will always have integral
 type.  The only operand is the value to be complemented.
 
 @item TRUTH_NOT_EXPR
+这些节点表示逻辑非，并总是具有整数（或布尔）类型。操作数是要求非的值。操作数的，以及结果的类型总是BOOLEAN_TYPE或INTEGER_TYPE。 
 These nodes represent logical negation, and will always have integral
 (or boolean) type.  The operand is the value being negated.  The type
 of the operand and that of the result are always of @code{BOOLEAN_TYPE}
@@ -1987,6 +1989,7 @@ or @code{INTEGER_TYPE}.
 @itemx PREINCREMENT_EXPR
 @itemx POSTDECREMENT_EXPR
 @itemx POSTINCREMENT_EXPR
+这些节点表示递增和递减表达式。单操作数的值将被计算，并且操作数递增或递减。在PREDECREMENT_EXPR和 PREINCREMENT_EXPR的情况下，表达式的值是递增或递减之后的结果；在POSTDECREMENT_EXPR和 POSTINCREMENT_EXPR的情况下，表达式的值是递增或递减发生前的值。操作数的值，跟结果的一样，将会是整数，布尔，或浮点的。
 These nodes represent increment and decrement expressions.  The value of
 the single operand is computed, and the operand incremented or
 decremented.  In the case of @code{PREDECREMENT_EXPR} and
@@ -1997,6 +2000,11 @@ before the increment or decrement occurs.  The type of the operand, like
 that of the result, will be either integral, boolean, or floating-point.
 
 @item ADDR_EXPR
+这些节点用于表示对象的地址。（这些表达式将总是具有指针或引用类型。）操作数或者为表达式，或者可以是一个声明。
+
+作为扩展，GCC运行用户使用标号的地址。这种情况下，ADDR_EXPR的操作数将为LABEL_DECL。这样的表达式的类型是void*。
+
+如果求址的对象不是左值，则创建一个临时的，并使用临时对象的地址。
 These nodes are used to represent the address of an object.  (These
 expressions will always have pointer or reference type.)  The operand may
 be another expression, or it may be a declaration.
@@ -2009,17 +2017,22 @@ If the object addressed is not an lvalue, a temporary is created, and
 the address of the temporary is used.
 
 @item INDIRECT_REF
+这些节点用来表示由指针指向的对象。操作数是被dereferenced的指针；其总是具有指针或引用类型。 
 These nodes are used to represent the object pointed to by a pointer.
 The operand is the pointer being dereferenced; it will always have
 pointer or reference type.
 
 @item FIX_TRUNC_EXPR
+这些节点表示浮点值到整数的转换。单操作数将具有一个浮点类型，完整的表达式将具有整数（或布尔）类型。操作数向0方向舍入。
 These nodes represent conversion of a floating-point value to an
 integer.  The single operand will have a floating-point type, while
 the complete expression will have an integral (or boolean) type.  The
 operand is rounded towards zero.
 
 @item FLOAT_EXPR
+这些节点表示整数（或布尔）值向浮点值的转换。单操作数将具有整数类型，而完整的表达式将具有浮点类型。
+
+FIXME: 操作数是如何被舍入的？这是不是取决于-mieee？
 These nodes represent conversion of an integral (or boolean) value to a
 floating-point value.  The single operand will have integral type, while
 the complete expression will have a floating-point type.
@@ -2028,23 +2041,28 @@ FIXME: How is the operand supposed to be rounded?  Is this dependent on
 @option{-mieee}?
 
 @item COMPLEX_EXPR
+这些节点用于表示通过两个相同类型（整数或实数）的表达式构造的复数。第一个操作数是实部，第二个操作数是虚部。 
 These nodes are used to represent complex numbers constructed from two
 expressions of the same (integer or real) type.  The first operand is the
 real part and the second operand is the imaginary part.
 
 @item CONJ_EXPR
+这些节点表示它们的操作数的共轭（conjugate）。 
 These nodes represent the conjugate of their operand.
 
 @item REALPART_EXPR
 @itemx IMAGPART_EXPR
+这些节点表示复数的相应实数和虚数部分。 
 These nodes represent respectively the real and the imaginary parts
 of complex numbers (their sole argument).
 
 @item NON_LVALUE_EXPR
+这些节点指示它们有且仅有的一个操作数不是左值的。后端可以将其作为单操作数来对待。 
 These nodes indicate that their one and only operand is not an lvalue.
 A back end can treat these identically to the single operand.
 
 @item NOP_EXPR
+这些节点用于表示不需要任何代码生成的转换。例如，由char*到int*不需要任何代码生成；这样的转换被表示为一个NOP_EXPR。单操作数为要转换的表达式。从指针到引用的转换也被表示为NOP_EXPR。 
 These nodes are used to represent conversions that do not require any
 code-generation.  For example, conversion of a @code{char*} to an
 @code{int*} does not require any code be generated; such a conversion is
@@ -2053,6 +2071,7 @@ to be converted.  The conversion from a pointer to a reference is also
 represented with a @code{NOP_EXPR}.
 
 @item CONVERT_EXPR
+这些节点类似于NOP_EXPR，不过用于可能会有代码生成的情况。例如，如果int*被转换为int，则可能会在一些平台上需要生成代码。这些节点从来不被用于C++特定的转换，例如在一个继承体系中不同的类的指针间的转换。这种情况下的任何调整，总是需要被显式的指出。类似的，用户定义的转换也不使用 CONVERT_EXPR表示；相反的，而是显式的调用函数。
 These nodes are similar to @code{NOP_EXPR}s, but are used in those
 situations where code may need to be generated.  For example, if an
 @code{int*} is converted to an @code{int} code may need to be generated
@@ -2071,6 +2090,7 @@ integer, from a floating-point value to a fixed-point value, or from
 a fixed-point value to a floating-point value.
 
 @item THROW_EXPR
+这些节点表示throw表达式。单操作为一个表达式，其代码将被执行用于抛出异常。但是，在表达式中有一个隐式的动作没有表示出来；即调用 __throw。这个函数没有参数。如果使用了setjmp/longjmp异常，则相应的调用函数__sjthrow。通常GCC后端使用函数 emit_throw来生成该代码；你可以检查该函数看看都需要做什么。
 These nodes represent @code{throw} expressions.  The single operand is
 an expression for the code that should be executed to throw the
 exception.  However, there is one implicit action not represented in
@@ -2082,6 +2102,7 @@ examine this function to see what needs to be done.
 
 @item LSHIFT_EXPR
 @itemx RSHIFT_EXPR
+这些节点分别表示左移和右移。第一个操作数为要移动的值；其将总是为整数类型。第二个操作数为表示移动位数的表达式。右移将作为算术移动，即，当表达式具有无符号类型则高位填充0，当表达式具有有符号类型则高位填充符号位。注意如果第二个操作数大于或等于第一个操作数的类型大小，则结果无定义。
 These nodes represent left and right shifts, respectively.  The first
 operand is the value to shift; it will always be of integral type.  The
 second operand is an expression for the number of bits by which to
@@ -2095,12 +2116,14 @@ than or equal to the first operand's type size.
 @item BIT_IOR_EXPR
 @itemx BIT_XOR_EXPR
 @itemx BIT_AND_EXPR
+这些节点分别表示位运算符“或”，“异或”，和“与”。所有操作数将总是为整数类型。 
 These nodes represent bitwise inclusive or, bitwise exclusive or, and
 bitwise and, respectively.  Both operands will always have integral
 type.
 
 @item TRUTH_ANDIF_EXPR
 @itemx TRUTH_ORIF_EXPR
+这些节点分别表示逻辑“与”和“或”。这些操作符不是严格的；即第二个操作数只在通过求值第一个操作数无法确定表达式的值的时候，才被计算求值。操作数和结果的类型总是为BOOLEAN_TYPE或INTEGER_TYPE。 
 These nodes represent logical ``and'' and logical ``or'', respectively.
 These operators are not strict; i.e., the second operand is evaluated
 only if the value of the expression is not determined by evaluation of
@@ -2110,6 +2133,7 @@ always of @code{BOOLEAN_TYPE} or @code{INTEGER_TYPE}.
 @item TRUTH_AND_EXPR
 @itemx TRUTH_OR_EXPR
 @itemx TRUTH_XOR_EXPR
+这些节点表示逻辑与，或和异或。它们为严格的方式；所有参数都总是被计算求值。这在C或C++中没有对应的运算符，但是前端如果可以断定严格的方式没关系，则有时将会生成这些表达式。操作数和结果的类型总是为BOOLEAN_TYPE或INTEGER_TYPE。 
 These nodes represent logical and, logical or, and logical exclusive or.
 They are strict; both arguments are always evaluated.  There are no
 corresponding operators in C or C++, but the front end will sometimes
@@ -2118,6 +2142,7 @@ not matter.  The type of the operands and that of the result are
 always of @code{BOOLEAN_TYPE} or @code{INTEGER_TYPE}.
 
 @itemx POINTER_PLUS_EXPR
+该节点表示指针算术运算。第一个操作数总是为一个指针/引用类型。第二个操作数总是为一个与sizetype兼容的无符号整数类型。这是唯一的可以操作指针类型的二元算术运算。 
 This node represents pointer arithmetic.  The first operand is always
 a pointer/reference type.  The second operand is always an unsigned
 integer type compatible with sizetype.  This is the only binary
@@ -2126,6 +2151,9 @@ arithmetic operand that can operate on pointer types.
 @itemx PLUS_EXPR
 @itemx MINUS_EXPR
 @itemx MULT_EXPR
+这些节点表示不同的二元算术运算。分别为加法，减法和乘法。它们的操作数可以为整数或者浮点类型，但不会为一个是浮点类型的，而另一个是整数类型。
+
+这些运算在有符号算术溢出时的行为，由变量flag_wrapv和flag_trapv来控制。
 These nodes represent various binary arithmetic operations.
 Respectively, these operations are addition, subtraction (of the second
 operand from the first) and multiplication.  Their operands may have
@@ -2136,12 +2164,16 @@ The behavior of these operations on signed arithmetic overflow is
 controlled by the @code{flag_wrapv} and @code{flag_trapv} variables.
 
 @item RDIV_EXPR
+该节点表示一个浮点除法运算。 
 This node represents a floating point division operation.
 
 @item TRUNC_DIV_EXPR
 @itemx FLOOR_DIV_EXPR
 @itemx CEIL_DIV_EXPR
 @itemx ROUND_DIV_EXPR
+这些节点表示返回整数结果的整数除法运算。TRUNC_DIV_EXPR向0方向舍入，FLOOR_DIV_EXPR向负无穷大舍入，CEIL_DIV_EXPR向正无穷大舍入，ROUND_DIV_EXPR向最近的整数舍入。C和C++中的整数除法为截断方式，即 TRUNC_DIV_EXPR。
+
+这些运算在有符号算术溢出时的行为，由变量flag_wrapv和flag_trapv来控制。
 These nodes represent integer division operations that return an integer
 result.  @code{TRUNC_DIV_EXPR} rounds towards zero, @code{FLOOR_DIV_EXPR}
 rounds towards negative infinity, @code{CEIL_DIV_EXPR} rounds towards
@@ -2156,6 +2188,7 @@ dividing the minimum signed integer by minus one, is controlled by the
 @itemx FLOOR_MOD_EXPR
 @itemx CEIL_MOD_EXPR
 @itemx ROUND_MOD_EXPR
+
 These nodes represent the integer remainder or modulus operation.
 The integer modulus of two operands @code{a} and @code{b} is
 defined as @code{a - (a/b)*b} where the division calculated using
@@ -2417,328 +2450,237 @@ represented.  Unrepresented fields will be set to zero.
 @item COMPOUND_LITERAL_EXPR
 @findex COMPOUND_LITERAL_EXPR_DECL_STMT
 @findex COMPOUND_LITERAL_EXPR_DECL
-These nodes represent ISO C99 compound literals.  The
-@code{COMPOUND_LITERAL_EXPR_DECL_STMT} is a @code{DECL_STMT}
-containing an anonymous @code{VAR_DECL} for
-the unnamed object represented by the compound literal; the
-@code{DECL_INITIAL} of that @code{VAR_DECL} is a @code{CONSTRUCTOR}
-representing the brace-enclosed list of initializers in the compound
-literal.  That anonymous @code{VAR_DECL} can also be accessed directly
-by the @code{COMPOUND_LITERAL_EXPR_DECL} macro.
+这些节点表示复合文字。
+@code{COMPOUND_LITERAL_EXPR_DECL_STMT}为一个@code{DECL_STMT}，
+包含了一个由复合文字表示的未命名对象的匿名@code{VAR_DECL}；
+@code{VAR_DECL}的@code{DECL_INITIAL}是一个@code{CONSTRUCTOR}用来表示在
+复合文字中大括号包围的初始值列表。
+匿名的@code{VAR_DECL}还可以通过@code{COMPOUND_LITERAL_EXPR_DECL}宏直接访问。 
 
 @item SAVE_EXPR
-
-A @code{SAVE_EXPR} represents an expression (possibly involving
-side-effects) that is used more than once.  The side-effects should
-occur only the first time the expression is evaluated.  Subsequent uses
-should just reuse the computed value.  The first operand to the
-@code{SAVE_EXPR} is the expression to evaluate.  The side-effects should
-be executed where the @code{SAVE_EXPR} is first encountered in a
-depth-first preorder traversal of the expression tree.
+@code{SAVE_EXPR}表示一个被多次使用的表达式（可能会有副作用）。
+副作用应该只在表达式第一次被求值时发生。后续的使用应该只是重用计算所得的值。
+@code{SAVE_EXPR}的第一个操作数是要求值的表达式。
+副作用应该在深度优先前续遍历表达式树，第一次遇到@code{SAVE_EXPR}时被执行。 
 
 @item TARGET_EXPR
-A @code{TARGET_EXPR} represents a temporary object.  The first operand
-is a @code{VAR_DECL} for the temporary variable.  The second operand is
-the initializer for the temporary.  The initializer is evaluated and,
-if non-void, copied (bitwise) into the temporary.  If the initializer
-is void, that means that it will perform the initialization itself.
+@code{TARGET_EXPR}表示一个临时对象。第一个操作数是临时变量@code{VAR_DECL}。
+第二个操作数是临时变量的初始值。初始值将被求值，并且如果不是void型的，
+则（按位）复制到临时变量中。如果初始值是void的，意味着将会自己执行初始化。 
 
-Often, a @code{TARGET_EXPR} occurs on the right-hand side of an
-assignment, or as the second operand to a comma-expression which is
-itself the right-hand side of an assignment, etc.  In this case, we say
-that the @code{TARGET_EXPR} is ``normal''; otherwise, we say it is
-``orphaned''.  For a normal @code{TARGET_EXPR} the temporary variable
-should be treated as an alias for the left-hand side of the assignment,
-rather than as a new temporary variable.
+很多时候，@code{TARGET_EXPR}会出现在赋值的右边，
+或者作为逗号表达式的第二个操作数。 这种情况下，
+我们说@code{TARGET_EXPR}是“normal”的；否则，我们说它是“orphaned”。
+对于一个正常的@code{TARGET_EXPR}，临时变量应被视为赋值的左端的一个别名，
+而不是一个新的临时变量。
 
-The third operand to the @code{TARGET_EXPR}, if present, is a
-cleanup-expression (i.e., destructor call) for the temporary.  If this
-expression is orphaned, then this expression must be executed when the
-statement containing this expression is complete.  These cleanups must
-always be executed in the order opposite to that in which they were
-encountered.  Note that if a temporary is created on one branch of a
-conditional operator (i.e., in the second or third operand to a
-@code{COND_EXPR}), the cleanup must be run only if that branch is
-actually executed.
+@code{TARGET_EXPR}的第三个操作数，如果存在的话，
+是临时变量的清理表达式（即析构调用）。如果该表达式是孤儿的，
+则该表达式必须当包含它的语句是完整的时候被执行。
+这些清理必须总是按照相反的顺序执行。
+注意如果临时变量是在条件操作符的分支上创建的（即，
+@code{COND_EXPR}的第二个或第三个操作数），
+则清理必须只有在该分支实际被执行时才运行。
 
-See @code{STMT_IS_FULL_EXPR_P} for more information about running these
-cleanups.
+关于运行这些清理的更多信息，参见@code{STMT_IS_FULL_EXPR_P}。
 
 @item AGGR_INIT_EXPR
-An @code{AGGR_INIT_EXPR} represents the initialization as the return
-value of a function call, or as the result of a constructor.  An
-@code{AGGR_INIT_EXPR} will only appear as a full-expression, or as the
-second operand of a @code{TARGET_EXPR}.  @code{AGGR_INIT_EXPR}s have
-a representation similar to that of @code{CALL_EXPR}s.  You can use
-the @code{AGGR_INIT_EXPR_FN} and @code{AGGR_INIT_EXPR_ARG} macros to access
-the function to call and the arguments to pass.
+@code{AGGR_INIT_EXPR}表示作为函数调用的返回值或者作为构造函数的结果的初始化。
+@code{AGGR_INIT_EXPR}只作为充分表达式出现，
+或作为@code{TARGET_EXPR}的第二个操作数。
+@code{AGGR_INIT_EXPR}具有跟@code{CALL_EXPR}类似的表示。
+可以使用@code{AGGR_INIT_EXPR_FN}和@code{AGGR_INIT_EXPR_ARG}宏来访问调用的函数，
+以及传递的参数。
 
-If @code{AGGR_INIT_VIA_CTOR_P} holds of the @code{AGGR_INIT_EXPR}, then
-the initialization is via a constructor call.  The address of the
-@code{AGGR_INIT_EXPR_SLOT} operand, which is always a @code{VAR_DECL},
-is taken, and this value replaces the first argument in the argument
-list.
+如果@code{AGGR_INIT_VIA_CTOR_P}持有@code{AGGR_INIT_EXPR}，
+则初始化是通过一个构造函数进行的。@code{AGGR_INIT_EXPR_SLOT}操作数的地址，
+其总是一个@code{VAR_DECL}，将被接受，并且该值替代参数列表中的第一个参数。
 
-In either case, the expression is void.
+在这两种情况下，表达式都是void的。
 
 @item VA_ARG_EXPR
-This node is used to implement support for the C/C++ variable argument-list
-mechanism.  It represents expressions like @code{va_arg (ap, type)}.
-Its @code{TREE_TYPE} yields the tree representation for @code{type} and
-its sole argument yields the representation for @code{ap}.
+该节点用来实现对C/C++可变参数列表机制的支持。
+它表示了像@code{va_arg (ap, type)}这样的表达式。
+它的@code{TREE_TYPE}用来产生@code{type}的树表示，
+唯一的参数用来产生对@code{ap}的表示。 
 
 @item CHANGE_DYNAMIC_TYPE_EXPR
-Indicates the special aliasing required by C++ placement new.  It has
-two operands: a type and a location.  It means that the dynamic type
-of the location is changing to be the specified type.  The alias
-analysis code takes this into account when doing type based alias
-analysis.
+指出了C++ placement new的特定别名需求。有两个操作数：类型和位置。
+它表示该位置的动态类型被转换为指定的类型。
+别名分析代码在做基于类型的别名分析时，需要考虑到这一点。 
 
 @item OMP_PARALLEL
 
-Represents @code{#pragma omp parallel [clause1 @dots{} clauseN]}. It
-has four operands:
+表示@code{#pragma omp parallel [clause1 @dots{} clauseN]}。具有四个操作数：
 
-Operand @code{OMP_PARALLEL_BODY} is valid while in GENERIC and
-High GIMPLE forms.  It contains the body of code to be executed
-by all the threads.  During GIMPLE lowering, this operand becomes
-@code{NULL} and the body is emitted linearly after
-@code{OMP_PARALLEL}.
+操作数@code{OMP_PARALLEL_BODY}在GENERIC和High GIMPLE形式中是有效的。
+它包含了被所有线程执行的代码体。在GIMPLE下降过程中，
+这个操作数变为@code{NULL}并且代码体被线性的输出在@code{OMP_PARALLEL}之后。
 
-Operand @code{OMP_PARALLEL_CLAUSES} is the list of clauses
-associated with the directive.
+操作数@code{OMP_PARALLEL_CLAUSES}为与指令相关的子句列表。
 
-Operand @code{OMP_PARALLEL_FN} is created by
-@code{pass_lower_omp}, it contains the @code{FUNCTION_DECL}
-for the function that will contain the body of the parallel
-region.
+操作数@code{OMP_PARALLEL_FN}由@code{pass_lower_omp}创建，
+它包含了将要包含并行区域体的函数@code{FUNCTION_DECL}。
 
-Operand @code{OMP_PARALLEL_DATA_ARG} is also created by
-@code{pass_lower_omp}. If there are shared variables to be
-communicated to the children threads, this operand will contain
-the @code{VAR_DECL} that contains all the shared values and
-variables.
+操作数@code{OMP_PARALLEL_DATA_ARG}也由@code{pass_lower_omp}创建。
+如果有共享变量用于子线程间通讯，则该操作数将包含@code{VAR_DECL}，
+其包含了所有共享的值和变量。
 
 @item OMP_FOR
 
-Represents @code{#pragma omp for [clause1 @dots{} clauseN]}.  It
-has 5 operands:
+表示#pragma omp for [clause1 ... clauseN]. 其具有5个操作数：
 
-Operand @code{OMP_FOR_BODY} contains the loop body.
+操作数OMP_FOR_BODY包含了循环体。
 
-Operand @code{OMP_FOR_CLAUSES} is the list of clauses
-associated with the directive.
+操作数OMP_FOR_CLAUSES为与指令相关的子句列表。
 
-Operand @code{OMP_FOR_INIT} is the loop initialization code of
-the form @code{VAR = N1}.
+操作数OMP_FOR_INIT为VAR = N1形式的循环初始化代码。
 
-Operand @code{OMP_FOR_COND} is the loop conditional expression
-of the form @code{VAR @{<,>,<=,>=@} N2}.
+操作数OMP_FOR_COND为VAR {<,>,<=,>=} N2形式的循环条件表达式。
 
-Operand @code{OMP_FOR_INCR} is the loop index increment of the
-form @code{VAR @{+=,-=@} INCR}.
+操作数OMP_FOR_INCR为VAR {+=,-=} INCR形式的循环索引增量。
 
-Operand @code{OMP_FOR_PRE_BODY} contains side-effect code from
-operands @code{OMP_FOR_INIT}, @code{OMP_FOR_COND} and
-@code{OMP_FOR_INC}.  These side-effects are part of the
-@code{OMP_FOR} block but must be evaluated before the start of
-loop body.
+操作数OMP_FOR_PRE_BODY包含了来自操作数OMP_FOR_INIT, OMP_FOR_COND和OMP_FOR_INC的副作用代码。这些副作用为OMP_FOR块的一部分，但是必须在开始循环体之前被计算求值。
 
-The loop index variable @code{VAR} must be a signed integer variable,
-which is implicitly private to each thread.  Bounds
-@code{N1} and @code{N2} and the increment expression
-@code{INCR} are required to be loop invariant integer
-expressions that are evaluated without any synchronization. The
-evaluation order, frequency of evaluation and side-effects are
-unspecified by the standard.
+循环索引变量VAR必须为单个整数变量，其隐式的归每个线程私有。边界N1和N2，以及增量表达式INCR需要为循环不变量整数表达式，其不需要同步就可以被计算求值。按照标准，计算求值的顺序，频率和副作用都没有被指定。
 
 @item OMP_SECTIONS
 
-Represents @code{#pragma omp sections [clause1 @dots{} clauseN]}.
+表示@code{#pragma omp sections [clause1 @dots{} clauseN]}。
 
-Operand @code{OMP_SECTIONS_BODY} contains the sections body,
-which in turn contains a set of @code{OMP_SECTION} nodes for
-each of the concurrent sections delimited by @code{#pragma omp
-section}.
+操作数@code{OMP_SECTIONS_BODY}包含了section主体，
+其依次包含了一个@code{OMP_SECTION}节点集合，
+每个并发的section通过@code{#pragma omp section}来划分。
 
-Operand @code{OMP_SECTIONS_CLAUSES} is the list of clauses
-associated with the directive.
+操作数@code{OMP_SECTIONS_CLAUSES}为与指令相关的子句列表。
 
 @item OMP_SECTION
 
-Section delimiter for @code{OMP_SECTIONS}.
+@code{OMP_SECTIONS}的Section定界符。 
 
 @item OMP_SINGLE
 
-Represents @code{#pragma omp single}.
+表示@code{#pragma omp single}
 
-Operand @code{OMP_SINGLE_BODY} contains the body of code to be
-executed by a single thread.
+操作数@code{OMP_SINGLE_BODY}包含了被单个线程执行的代码体。
 
-Operand @code{OMP_SINGLE_CLAUSES} is the list of clauses
-associated with the directive.
+操作数@code{OMP_SINGLE_CLAUSES}为与指令相关的子句列表。
 
 @item OMP_MASTER
 
-Represents @code{#pragma omp master}.
+表示@code{#pragma omp master}。
 
-Operand @code{OMP_MASTER_BODY} contains the body of code to be
-executed by the master thread.
+操作数@code{OMP_MASTER_BODY}包含了被主控线程执行的代码体。
 
 @item OMP_ORDERED
 
-Represents @code{#pragma omp ordered}.
+表示@code{#pragma omp ordered}。
 
-Operand @code{OMP_ORDERED_BODY} contains the body of code to be
-executed in the sequential order dictated by the loop index
-variable.
+操作数@code{OMP_ORDERED_BODY}包含了按照由循环索引变量所指示的顺序序列来执行的代码体。
 
 @item OMP_CRITICAL
 
-Represents @code{#pragma omp critical [name]}.
+表示@code{#pragma omp critical [name]}。
 
-Operand @code{OMP_CRITICAL_BODY} is the critical section.
+操作数@code{OMP_CRITICAL_BODY}为临界section。
 
-Operand @code{OMP_CRITICAL_NAME} is an optional identifier to
-label the critical section.
+操作数@code{OMP_CRITICAL_NAME}为可选的用来标记临界section的标识符。
 
 @item OMP_RETURN
 
-This does not represent any OpenMP directive, it is an artificial
-marker to indicate the end of the body of an OpenMP@. It is used
-by the flow graph (@code{tree-cfg.c}) and OpenMP region
-building code (@code{omp-low.c}).
+这个并不表示任何OpenMP指令，它为一个人为标记用来指示OpenMP主体的结束。
+其被用于流图（@code{tree-cfg.c}）和OpenMP区域构建代码（@code{omp-low.c}）。
 
 @item OMP_CONTINUE
 
-Similarly, this instruction does not represent an OpenMP
-directive, it is used by @code{OMP_FOR} and
-@code{OMP_SECTIONS} to mark the place where the code needs to
-loop to the next iteration (in the case of @code{OMP_FOR}) or
-the next section (in the case of @code{OMP_SECTIONS}).
-
-In some cases, @code{OMP_CONTINUE} is placed right before
-@code{OMP_RETURN}.  But if there are cleanups that need to
-occur right after the looping body, it will be emitted between
-@code{OMP_CONTINUE} and @code{OMP_RETURN}.
+类似的，该指令不表示OpenMP指令，它被@code{OMP_FOR}和@code{OMP_SECTIONS}用于
+标记代码需要循环到下一个迭代（例如@code{OMP_FOR}）或者下一个section
+（例如@code{OMP_SECTIONS}）的地方。有一些情况，
+@code{OMP_CONTINUE}被放在紧挨着@code{OMP_RETURN}之前。
+但是，如果在循环体之后需要出现cleanups，
+则它将被生成在@code{OMP_CONTINUE}和@code{OMP_RETURN}之间。 
 
 @item OMP_ATOMIC
 
-Represents @code{#pragma omp atomic}.
+表示@code{#pragma omp atomic}。
 
-Operand 0 is the address at which the atomic operation is to be
-performed.
+操作数0是要被执行的原子操作的地址。
 
-Operand 1 is the expression to evaluate.  The gimplifier tries
-three alternative code generation strategies.  Whenever possible,
-an atomic update built-in is used.  If that fails, a
-compare-and-swap loop is attempted.  If that also fails, a
-regular critical section around the expression is used.
+操作数1是要计算求值的表达式。gimplifier会尝试三种可供选择的代码生成策略。
+只要可能，则会使用内建的原子更新。如果失败，
+则会尝试进行比较-交换（compare-and-swap）循环。如果还是失败，
+则会使用表达式附近的一个常规临界section。
 
 @item OMP_CLAUSE
 
-Represents clauses associated with one of the @code{OMP_} directives.
-Clauses are represented by separate sub-codes defined in
-@file{tree.h}.  Clauses codes can be one of:
-@code{OMP_CLAUSE_PRIVATE}, @code{OMP_CLAUSE_SHARED},
-@code{OMP_CLAUSE_FIRSTPRIVATE},
-@code{OMP_CLAUSE_LASTPRIVATE}, @code{OMP_CLAUSE_COPYIN},
-@code{OMP_CLAUSE_COPYPRIVATE}, @code{OMP_CLAUSE_IF},
-@code{OMP_CLAUSE_NUM_THREADS}, @code{OMP_CLAUSE_SCHEDULE},
-@code{OMP_CLAUSE_NOWAIT}, @code{OMP_CLAUSE_ORDERED},
-@code{OMP_CLAUSE_DEFAULT}, and @code{OMP_CLAUSE_REDUCTION}.  Each code
-represents the corresponding OpenMP clause.
+表示与@code{OMP_}指令相关的子句。子句使用@file{tree.h}中定义的子代码单独表示。
+子句代码可以为：OMP_CLAUSE_PRIVATE, OMP_CLAUSE_SHARED, OMP_CLAUSE_FIRSTPRIVATE, OMP_CLAUSE_LASTPRIVATE, OMP_CLAUSE_COPYIN, OMP_CLAUSE_COPYPRIVATE, OMP_CLAUSE_IF, OMP_CLAUSE_NUM_THREADS, OMP_CLAUSE_SCHEDULE, OMP_CLAUSE_NOWAIT, OMP_CLAUSE_ORDERED, OMP_CLAUSE_DEFAULT, 和OMP_CLAUSE_REDUCTION。每个代码表示了相应的OpenMP子句。
 
-Clauses associated with the same directive are chained together
-via @code{OMP_CLAUSE_CHAIN}. Those clauses that accept a list
-of variables are restricted to exactly one, accessed with
-@code{OMP_CLAUSE_VAR}.  Therefore, multiple variables under the
-same clause @code{C} need to be represented as multiple @code{C} clauses
-chained together.  This facilitates adding new clauses during
-compilation.
+与同一指令相关的子句通过@code{OMP_CLAUSE_CHAIN}链接在一起。
+那些接受一个变量列表的子句被限制为只有一个，使用@code{OMP_CLAUSE_VAR}来访问。
+因此，同一子句@code{C}下的多个变量需要被多个链接在一起的@code{C}子句表示。
+这样可以有助于在编译过程中增加新的子句。
 
 @item VEC_LSHIFT_EXPR
 @item VEC_RSHIFT_EXPR
-These nodes represent whole vector left and right shifts, respectively.  
-The first operand is the vector to shift; it will always be of vector type.  
-The second operand is an expression for the number of bits by which to
-shift.  Note that the result is undefined if the second operand is larger
-than or equal to the first operand's type size.
+这些节点相应的表示整个向量的左移和右移。第一个操作数为要移动的向量；
+其将总是为向量类型。第二个操作数是一个表达式，表示要移动的位数。
+注意如果第二个操作数大于或等于第一个操作数的类型大小，则结果未定义。
 
 @item VEC_WIDEN_MULT_HI_EXPR
 @item VEC_WIDEN_MULT_LO_EXPR
-These nodes represent widening vector multiplication of the high and low
-parts of the two input vectors, respectively.  Their operands are vectors 
-that contain the same number of elements (@code{N}) of the same integral type.  
-The result is a vector that contains half as many elements, of an integral type 
-whose size is twice as wide.  In the case of @code{VEC_WIDEN_MULT_HI_EXPR} the
-high @code{N/2} elements of the two vector are multiplied to produce the
-vector of @code{N/2} products. In the case of @code{VEC_WIDEN_MULT_LO_EXPR} the
-low @code{N/2} elements of the two vector are multiplied to produce the
-vector of @code{N/2} products.
+这些节点分别表示两个输入向量的高部和低部的加宽向量乘法。
+它们的操作数为包含同一整数类型的同一数目（@code{N}）元素的向量。
+结果为一个包含整数类型的元素大小为两倍宽数目为一半的向量。
+对于@code{VEC_WIDEN_MULT_HI_EXPR}，
+两个向量的高@code{N/2}个元素相乘得到@code{N/2}个积的向量。
+对于@code{VEC_WIDEN_MULT_LO_EXPR}，
+两个向量的低@code{N/2}个元素相乘得到@code{N/2}个积的向量。 
 
 @item VEC_UNPACK_HI_EXPR
 @item VEC_UNPACK_LO_EXPR
-These nodes represent unpacking of the high and low parts of the input vector,
-respectively.  The single operand is a vector that contains @code{N} elements 
-of the same integral or floating point type.  The result is a vector
-that contains half as many elements, of an integral or floating point type
-whose size is twice as wide.  In the case of @code{VEC_UNPACK_HI_EXPR} the
-high @code{N/2} elements of the vector are extracted and widened (promoted).
-In the case of @code{VEC_UNPACK_LO_EXPR} the low @code{N/2} elements of the
-vector are extracted and widened (promoted).
+这些节点分别表示拆分输入向量的高部和低部。
+单操作数为一个包含同一整数或浮点类型的@code{N}个元素的向量。
+结果为包含整数或者浮点类型的元素大小为两倍宽数目为一半的向量。
+对于@code{VEC_UNPACK_HI_EXPR}，向量的高@code{N/2}个元素被提取并扩展（提升）。
+对于@code{VEC_UNPACK_LO_EXPR}，向量的低@code{N/2}个元素被提取并扩展（提升）。 
 
 @item VEC_UNPACK_FLOAT_HI_EXPR
 @item VEC_UNPACK_FLOAT_LO_EXPR
-These nodes represent unpacking of the high and low parts of the input vector,
-where the values are converted from fixed point to floating point.  The
-single operand is a vector that contains @code{N} elements of the same
-integral type.  The result is a vector that contains half as many elements
-of a floating point type whose size is twice as wide.  In the case of
-@code{VEC_UNPACK_HI_EXPR} the high @code{N/2} elements of the vector are
-extracted, converted and widened.  In the case of @code{VEC_UNPACK_LO_EXPR}
-the low @code{N/2} elements of the vector are extracted, converted and widened.
+这些节点分别表示拆分输入向量的高部和低部，并将值由定点转换为浮点。
+单操作数为包含同一整数类型的@code{N}个元素的向量。
+结果为包含浮点类型的元素大小为两倍宽数目为一半的向量。
+对于@code{VEC_UNPACK_HI_EXPR}，向量的高@code{N/2}个元素被提取，转换并扩展。
+对于@code{VEC_UNPACK_LO_EXPR}，向量的低@code{N/2}个元素被提取，转换并扩展。 
 
 @item VEC_PACK_TRUNC_EXPR
-This node represents packing of truncated elements of the two input vectors
-into the output vector.  Input operands are vectors that contain the same
-number of elements of the same integral or floating point type.  The result
-is a vector that contains twice as many elements of an integral or floating
-point type whose size is half as wide. The elements of the two vectors are
-demoted and merged (concatenated) to form the output vector.
+该节点表示将两个输入向量的截断元素打包成输出向量。
+输入操作数是包含同一整数或者浮点类型的相同数目元素的向量。
+结果为包含整数或者浮点类型的元素大小为一半数目为两倍的向量。
+两个向量的元素合并成输出向量。 
 
 @item VEC_PACK_SAT_EXPR
-This node represents packing of elements of the two input vectors into the
-output vector using saturation.  Input operands are vectors that contain
-the same number of elements of the same integral type.  The result is a
-vector that contains twice as many elements of an integral type whose size
-is half as wide.  The elements of the two vectors are demoted and merged
-(concatenated) to form the output vector.
+该节点表示使用饱和方式（saturation）将两个输入向量的元素打包成输出向量。
+输入操作数是包含了同一整数类型的相同数目元素的向量。
+结果为一个包含整数类型的元素大小为一半数目为两倍的向量。
+两个向量的元素合并成输出向量。 
 
 @item VEC_PACK_FIX_TRUNC_EXPR
-This node represents packing of elements of the two input vectors into the
-output vector, where the values are converted from floating point
-to fixed point.  Input operands are vectors that contain the same number
-of elements of a floating point type.  The result is a vector that contains
-twice as many elements of an integral type whose size is half as wide.  The
-elements of the two vectors are merged (concatenated) to form the output
-vector.
+该节点表示将将两个输入向量的元素打包成输出向量，并将值由浮点转换为定点。
+输入操作数是包含浮点类型的相同数目元素的向量。
+结果为包含整数类型元素大小一半数目为两倍的向量。两个向量的元素合并成输出向量。 
 
 @item VEC_EXTRACT_EVEN_EXPR
 @item VEC_EXTRACT_ODD_EXPR
-These nodes represent extracting of the even/odd elements of the two input 
-vectors, respectively. Their operands and result are vectors that contain the 
-same number of elements of the same type.
+这些节点分别表示提取两个输入向量的偶数/奇数个元素。
+它们的操作数和结果为包含同一类型的相同数目元素的向量。 
 
 @item VEC_INTERLEAVE_HIGH_EXPR
 @item VEC_INTERLEAVE_LOW_EXPR
-These nodes represent merging and interleaving of the high/low elements of the
-two input vectors, respectively. The operands and the result are vectors that 
-contain the same number of elements (@code{N}) of the same type.
-In the case of @code{VEC_INTERLEAVE_HIGH_EXPR}, the high @code{N/2} elements of 
-the first input vector are interleaved with the high @code{N/2} elements of the
-second input vector. In the case of @code{VEC_INTERLEAVE_LOW_EXPR}, the low
-@code{N/2} elements of the first input vector are interleaved with the low 
-@code{N/2} elements of the second input vector.
-
+这些节点分别表示交错合并两个输入向量的高/低元素。
+操作数和结果为包含同一类型的相同数目（@code{N}）元素的向量。
+对于@code{VEC_INTERLEAVE_HIGH_EXPR}，
+第一个输入向量的高@code{N/2}个元素被第二个输入向量的高@code{N/2}个元素替换。
+对于@code{VEC_INTERLEAVE_LOW_EXPR}，
+第一个输入向量的低@code{N/2}个元素被第二个输入向量的低@code{N/2}个元素替换。 
 @end table
