@@ -1880,61 +1880,32 @@ FIXME: 讨论如何获得该常量的表示，如何进行比较等等。
 
 
 @item VECTOR_CST
-这些节点用于表示向量常数，其组成部分为常量节点。每个单独的常量节点或者是一个常整数节点，或者是一个双精度的常数节点。第一个操作数为常数节点的TREE_LIST，并可以通过TREE_VECTOR_CST_ELTS来访问。 
-These nodes are used to represent vector constants, whose parts are
-constant nodes.  Each individual constant node is either an integer or a
-double constant node.  The first operand is a @code{TREE_LIST} of the
-constant nodes and is accessed through @code{TREE_VECTOR_CST_ELTS}.
+这些节点用于表示向量常数，其组成部分为常量节点。每个单独的常量节点或者是一个常整数节点，或者是一个双精度的常数节点。第一个操作数为常数节点的@code{TREE_LIST}，并可以通过@code{TREE_VECTOR_CST_ELTS}来访问。 
+
 
 @item STRING_CST
-这些节点表示字符串常量。TREE_STRING_LENGTH返回int型的字符串长度。TREE_STRING_POINTER是一个char*型，包含了字符串本身。字符串可以不是NUL结尾的，并且可以包含嵌入的NUL字符。因此，TREE_STRING_LENGTH包括了结尾的NUL，如果存在的话。
+这些节点表示字符串常量。@code{TREE_STRING_LENGTH}返回@code{int}型的字符串长度。@code{TREE_STRING_POINTER}是一个@code{char*}型，包含了字符串本身。字符串可以不是@code{NUL}结尾的，并且可以包含嵌入的@code{NUL}字符。因此，如果字符串的结尾存在@code{NUL}，则@code{TREE_STRING_LENGTH}也包括了结尾的NUL。
 
-对于宽字符串常量，TREE_STRING_LENGTH为字符串的字节数，并且TREE_STRING_POINTER指向在目标系统上表示的，字符串的字节数组（即，符合目标大小端的整数系列）。宽字符串和非宽字符串常量，只区别于STRING_CST的TREE_TYPE。
+对于宽字符串常量，@code{TREE_STRING_LENGTH}为字符串的字节数，并且@code{TREE_STRING_POINTER}指向在目标系统上表示的，字符串的字节数组（即，符合目标大小端的整数系列）。宽字符串和非宽字符串常量，只区别于@code{STRING_CST}的@code{TREE_TYPE}。
 
 FIXME: 当目标系统的字节与主机系统的字节宽度不同时，字符串的格式没有被很好的定义。
-These nodes represent string-constants.  The @code{TREE_STRING_LENGTH}
-returns the length of the string, as an @code{int}.  The
-@code{TREE_STRING_POINTER} is a @code{char*} containing the string
-itself.  The string may not be @code{NUL}-terminated, and it may contain
-embedded @code{NUL} characters.  Therefore, the
-@code{TREE_STRING_LENGTH} includes the trailing @code{NUL} if it is
-present.
 
-For wide string constants, the @code{TREE_STRING_LENGTH} is the number
-of bytes in the string, and the @code{TREE_STRING_POINTER}
-points to an array of the bytes of the string, as represented on the
-target system (that is, as integers in the target endianness).  Wide and
-non-wide string constants are distinguished only by the @code{TREE_TYPE}
-of the @code{STRING_CST}.
-
-FIXME: The formats of string constants are not well-defined when the
-target system bytes are not the same width as host system bytes.
 
 @item PTRMEM_CST
-这些节点用来表示指向成员的指针（pointer-to-member）常量。PTRMEM_CST_CLASS是类的类型（或者为 RECORD_TYPE，或者为UNION_TYPE），PTRMEM_CST_MEMBER是指向的对象的声明。注意 PTRMEM_CST_MEMBER的DECL_CONTEXT一般有别于PTRMEM_CST_CLASS的。例如，给定： 
-These nodes are used to represent pointer-to-member constants.  The
-@code{PTRMEM_CST_CLASS} is the class type (either a @code{RECORD_TYPE}
-or @code{UNION_TYPE} within which the pointer points), and the
-@code{PTRMEM_CST_MEMBER} is the declaration for the pointed to object.
-Note that the @code{DECL_CONTEXT} for the @code{PTRMEM_CST_MEMBER} is in
-general different from the @code{PTRMEM_CST_CLASS}.  For example,
-given:
+这些节点用来表示指向成员的指针（pointer-to-member）常量。@code{PTRMEM_CST_CLASS}是类的类型（或者为@code{RECORD_TYPE}，或者为@code{UNION_TYPE}），@code{PTRMEM_CST_MEMBER}是指向的对象的声明。注意@code{PTRMEM_CST_MEMBER}的@code{DECL_CONTEXT}一般有别于@code{PTRMEM_CST_CLASS}的。例如，给定： 
 @smallexample
 struct B @{ int i; @};
 struct D : public B @{@};
 int D::*dp = &D::i;
 @end smallexample
 @noindent
-虽然PTRMEM_CST_MEMBER的DECL_CONTEXT是B，但是由于B::i是B的成员，而不是D的，所以&D::i的PTRMEM_CST_CLASS为D。
-The @code{PTRMEM_CST_CLASS} for @code{&D::i} is @code{D}, even though
-the @code{DECL_CONTEXT} for the @code{PTRMEM_CST_MEMBER} is @code{B},
-since @code{B::i} is a member of @code{B}, not @code{D}.
+虽然@code{PTRMEM_CST_MEMBER}的@code{DECL_CONTEXT}是@code{B}，但是由于@code{B::i}是@code{B}的成员，而不是@code{D}的，所以@code{&D::i}的@code{PTRMEM_CST_CLASS}为@code{D}。
+
 
 @item VAR_DECL
 
-这些节点表示变量，包括静态数据成员。更多信息，参见“声明”。 
-These nodes represent variables, including static data members.  For
-more information, @pxref{Declarations}.
+这些节点表示变量，包括静态数据成员。更多信息，参见@pxref{Declarations}。 
+
 
 @item NEGATE_EXPR
 这些节点表示对单个操作数，整数和浮点类型的，进行一元取负运算。取负的类型可以通过查看表达式的类型来决定。
@@ -2180,36 +2151,18 @@ dividing the minimum signed integer by minus one, is controlled by the
 @itemx CEIL_MOD_EXPR
 @itemx ROUND_MOD_EXPR
 
-These nodes represent the integer remainder or modulus operation.
-The integer modulus of two operands @code{a} and @code{b} is
-defined as @code{a - (a/b)*b} where the division calculated using
-the corresponding division operator.  Hence for @code{TRUNC_MOD_EXPR}
-this definition assumes division using truncation towards zero, i.e.@:
-@code{TRUNC_DIV_EXPR}.  Integer remainder in C and C++ uses truncating
-division, i.e.@: @code{TRUNC_MOD_EXPR}.
+这些节点表示整数类型的求余或求模运算。两个操作数@code{a}和@code{b}的整型的模被定义为@code{a - (a/b)*b}，其中使用相应的除法操作符进行除法运算。因此，对于@code{TRUNC_MOD_EXPR}的定义，是假设使用了向零方向舍去的除法，即@code{TRUNC_DIV_EXPR}。C和C++中的整型求余，使用了舍去除法，即@code{TRUNC_MOD_EXPR}。
+
 
 @item EXACT_DIV_EXPR
-The @code{EXACT_DIV_EXPR} code is used to represent integer divisions where
-the numerator is known to be an exact multiple of the denominator.  This
-allows the backend to choose between the faster of @code{TRUNC_DIV_EXPR},
-@code{CEIL_DIV_EXPR} and @code{FLOOR_DIV_EXPR} for the current target.
+@code{EXACT_DIV_EXPR}用来表示整数除法，即分子已知为分母的确切的倍数。这使得后端可以从@code{TRUNC_DIV_EXPR},
+@code{CEIL_DIV_EXPR}和@code{FLOOR_DIV_EXPR}中，为当前的目标机选择更快的运算。
 
 @item ARRAY_REF
-These nodes represent array accesses.  The first operand is the array;
-the second is the index.  To calculate the address of the memory
-accessed, you must scale the index by the size of the type of the array
-elements.  The type of these expressions must be the type of a component of
-the array.  The third and fourth operands are used after gimplification
-to represent the lower bound and component size but should not be used
-directly; call @code{array_ref_low_bound} and @code{array_ref_element_size}
-instead.
+这些节点表示对数组的访问。第一个操作数为数组；第二个为索引。要计算被访问内存的地址，你必须要根据比例，用数组元素的类型大小来乘以索引。这些表达式的类型必须为数组元素的类型。第三和第四个操作数在gimplification之后使用，来表示下界和元素大小；但是不要直接使用它们，相应的，调用@code{array_ref_low_bound}和@code{array_ref_element_size}。
 
 @item ARRAY_RANGE_REF
-These nodes represent access to a range (or ``slice'') of an array.  The
-operands are the same as that for @code{ARRAY_REF} and have the same
-meanings.  The type of these expressions must be an array whose component
-type is the same as that of the first operand.  The range of that array
-type determines the amount of data these expressions access.
+这些节点表示对数组的一个范围（或者说切片）的访问。操作数与@code{ARRAY_REF}相同，并具有相同的含义。这些表达式的类型必须是一个数组，其元素的类型与第一个操作数的类型相同。数组类型的范围决定了这些表达式访问的数据数目。
 
 @item TARGET_MEM_REF
 These nodes represent memory accesses whose address directly map to
