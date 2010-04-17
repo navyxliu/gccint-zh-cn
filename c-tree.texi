@@ -2204,55 +2204,24 @@ dividing the minimum signed integer by minus one, is controlled by the
 这些节点就像@code{MODIFY_EXPR}一样，只不过用于一个变量被初始化的时候，而不是后续的赋值。这意味着，我们可以假设初始化的目标，没有在右手边被用于计算它自己的值；任何在右手边的计算中，对左手边的引用，其行为将是未定义。
 
 @item COMPONENT_REF
-These nodes represent non-static data member accesses.  The first
-operand is the object (rather than a pointer to it); the second operand
-is the @code{FIELD_DECL} for the data member.  The third operand represents
-the byte offset of the field, but should not be used directly; call
-@code{component_ref_field_offset} instead.
+这些节点表示对non-static数据成员的访问。第一个操作数为对象（而不是指向它的指针）；第二个操作数为数据成员的@code{FIELD_DECL}。第三个操作数表示域的字节偏移量，但不要直接使用；相应的，调用@code{component_ref_field_offset}。
 
 @item COMPOUND_EXPR
-These nodes represent comma-expressions.  The first operand is an
-expression whose value is computed and thrown away prior to the
-evaluation of the second operand.  The value of the entire expression is
-the value of the second operand.
+这些节点表示逗号表达式。第一个操作数为表达式，其值被计算，并在求出第二个操作数的值之前丢掉。整个表达式的值为第二个操作数的值。
 
 @item COND_EXPR
-These nodes represent @code{?:} expressions.  The first operand
-is of boolean or integral type.  If it evaluates to a nonzero value,
-the second operand should be evaluated, and returned as the value of the
-expression.  Otherwise, the third operand is evaluated, and returned as
-the value of the expression.
+这些节点表示@code{?:}表达式。第一个操作数是布尔或者整数类型。如果其求解为非零值，则第二个操作数将被求值，并返回表达式的值。否则，第三个操作数将被求值，并将表达式的值返回。
 
-The second operand must have the same type as the entire expression,
-unless it unconditionally throws an exception or calls a noreturn
-function, in which case it should have void type.  The same constraints
-apply to the third operand.  This allows array bounds checks to be
-represented conveniently as @code{(i >= 0 && i < 10) ? i : abort()}.
+第二个操作数必须与整个表达式具有相同的类型，除非它是要无条件的抛出一个异常或者调用一个不返回的函数，这种情况下，其将是void类型。第三个操作数也具有同样的约束。这使得数组的边界检查可以被方便的表示为@code{(i >= 0 && i < 10) ? i : abort()}。
 
-As a GNU extension, the C language front-ends allow the second
-operand of the @code{?:} operator may be omitted in the source.
-For example, @code{x ? : 3} is equivalent to @code{x ? x : 3},
-assuming that @code{x} is an expression without side-effects.
-In the tree representation, however, the second operand is always
-present, possibly protected by @code{SAVE_EXPR} if the first
-argument does cause side-effects.
+作为GNU扩展，C语言前端允许@code{?:}运算符的第二个操作数可以在源程序中省略掉。例如，@code{x ? : 3}等价于@code{x ? x : 3}，假设@code{x}是一个没有副作用的表达式。但是，在tree的表示中，第二个操作数总是存在的，并且，如果第一个参数确实产生副作用的话，则其可能通过@code{SAVE_EXPR}来保护。
 
 @item CALL_EXPR
-These nodes are used to represent calls to functions, including
-non-static member functions.  @code{CALL_EXPR}s are implemented as
-expression nodes with a variable number of operands.  Rather than using
-@code{TREE_OPERAND} to extract them, it is preferable to use the
-specialized accessor macros and functions that operate specifically on
-@code{CALL_EXPR} nodes.
+这些节点用来表示对函数的调用，包括non-static成员函数。@code{CALL_EXPR}被实现为一个具有可变数目操作数的表达式节点。不要用@code{TREE_OPERAND}来获取这些操作数，最好是用针对@code{CALL_EXPR}节点的特定的访问宏和函数。
 
-@code{CALL_EXPR_FN} returns a pointer to the
-function to call; it is always an expression whose type is a
-@code{POINTER_TYPE}.
+@code{CALL_EXPR_FN}返回一个调用函数的指针；其总是一个类型为@code{POINTER_TYPE}的表达式。
 
-The number of arguments to the call is returned by @code{call_expr_nargs},
-while the arguments themselves can be accessed with the @code{CALL_EXPR_ARG} 
-macro.  The arguments are zero-indexed and numbered left-to-right.  
-You can iterate over the arguments using @code{FOR_EACH_CALL_EXPR_ARG}, as in:
+调用函数的参数数目由@code{call_expr_nargs}来返回，而参数本身可以使用@code{CALL_EXPR_ARG}宏来访问。参数从零开始，从左向右进行索引。你可以使用@code{FOR_EACH_CALL_EXPR_ARG}来迭代参数，例如：
 
 @smallexample
 tree call, arg;
@@ -2262,87 +2231,50 @@ FOR_EACH_CALL_EXPR_ARG (arg, iter, call)
   @dots{};
 @end smallexample
 
-For non-static
-member functions, there will be an operand corresponding to the
-@code{this} pointer.  There will always be expressions corresponding to
-all of the arguments, even if the function is declared with default
-arguments and some arguments are not explicitly provided at the call
-sites.
+对于non-static成员函数，将会有一个对应于@code{this}指针的操作数。所有的参数都会有相应的表达式，即使函数使用缺省的参数声明，并且在调用的地方，一些参数没有被显式的提供。
 
-@code{CALL_EXPR}s also have a @code{CALL_EXPR_STATIC_CHAIN} operand that
-is used to implement nested functions.  This operand is otherwise null.
+@code{CALL_EXPR}还有一个@code{CALL_EXPR_STATIC_CHAIN}操作数，用于实现嵌套函数。如果没有嵌套函数，则为null。
 
 @item STMT_EXPR
-These nodes are used to represent GCC's statement-expression extension.
-The statement-expression extension allows code like this:
+这些节点用于表示GCC的语句表达式扩展。语句表达式扩展，允许代码像这样：
+
 @smallexample
 int f() @{ return (@{ int j; j = 3; j + 7; @}); @}
 @end smallexample
-In other words, an sequence of statements may occur where a single
-expression would normally appear.  The @code{STMT_EXPR} node represents
-such an expression.  The @code{STMT_EXPR_STMT} gives the statement
-contained in the expression.  The value of the expression is the value
-of the last sub-statement in the body.  More precisely, the value is the
-value computed by the last statement nested inside @code{BIND_EXPR},
-@code{TRY_FINALLY_EXPR}, or @code{TRY_CATCH_EXPR}.  For example, in:
+
+还句话说，一个语句序列可以出现在通常单个表达式出现的地方。@code{STMT_EXPR}节点表示这样的表达式。The @code{STMT_EXPR_STMT}给出了表达式中包含的语句。表达式的值为最后一条语句的值。更确切的说，为嵌套在@code{BIND_EXPR},
+@code{TRY_FINALLY_EXPR}, 或@code{TRY_CATCH_EXPR}中的最后一条语句所计算出来的值。例如，
+
 @smallexample
 (@{ 3; @})
 @end smallexample
-the value is @code{3} while in:
+
+值为@code{3}，而:
+
 @smallexample
 (@{ if (x) @{ 3; @} @})
 @end smallexample
-there is no value.  If the @code{STMT_EXPR} does not yield a value,
-it's type will be @code{void}.
+
+没有值。如果@code{STMT_EXPR}没有产生一个值，则类型为@code{void}。
 
 @item BIND_EXPR
-These nodes represent local blocks.  The first operand is a list of
-variables, connected via their @code{TREE_CHAIN} field.  These will
-never require cleanups.  The scope of these variables is just the body
-of the @code{BIND_EXPR}.  The body of the @code{BIND_EXPR} is the
-second operand.
+这些节点表示局部块。第一个操作数为变量的列表，通过它们的@code{TREE_CHAIN}域链接。这些将从不会要求被清除。这些变量的作用域就是@code{BIND_EXPR}的主体。@code{BIND_EXPR}的主体为第二个操作数。
 
 @item LOOP_EXPR
-These nodes represent ``infinite'' loops.  The @code{LOOP_EXPR_BODY}
-represents the body of the loop.  It should be executed forever, unless
-an @code{EXIT_EXPR} is encountered.
+这些节点表示“无限”循环。@code{LOOP_EXPR_BODY}表示循环体。其将被永远执行，除非遇到@code{EXIT_EXPR}。
 
 @item EXIT_EXPR
-These nodes represent conditional exits from the nearest enclosing
-@code{LOOP_EXPR}.  The single operand is the condition; if it is
-nonzero, then the loop should be exited.  An @code{EXIT_EXPR} will only
-appear within a @code{LOOP_EXPR}.
+这些节点表示从最近包含的@code{LOOP_EXPR}中条件退出。单个操作数为条件；如果非零，则循环将被退出。@code{EXIT_EXPR}将只是出现在@code{LOOP_EXPR}中。
 
 @item CLEANUP_POINT_EXPR
-These nodes represent full-expressions.  The single operand is an
-expression to evaluate.  Any destructor calls engendered by the creation
-of temporaries during the evaluation of that expression should be
-performed immediately after the expression is evaluated.
+这些节点表示full-expression。单个操作数为被求值的表达式。任何在表达式求值中通过创建临时对象所引起的析构调用，都应该在表达式求值之后立刻执行。
 
 @item CONSTRUCTOR
-These nodes represent the brace-enclosed initializers for a structure or
-array.  The first operand is reserved for use by the back end.  The
-second operand is a @code{TREE_LIST}.  If the @code{TREE_TYPE} of the
-@code{CONSTRUCTOR} is a @code{RECORD_TYPE} or @code{UNION_TYPE}, then
-the @code{TREE_PURPOSE} of each node in the @code{TREE_LIST} will be a
-@code{FIELD_DECL} and the @code{TREE_VALUE} of each node will be the
-expression used to initialize that field.
+这些节点表示大括号括起的，对结构体或者数组的初始化。第一个操作数被保留，用于后端。第二个操作数为@code{TREE_LIST}。如果@code{CONSTRUCTOR}的@code{TREE_TYPE}为一个@code{RECORD_TYPE}或者@code{UNION_TYPE}，则@code{TREE_LIST}中每个节点的@code{TREE_PURPOSE}将为一个@code{FIELD_DECL}，并且每个节点的@code{TREE_VALUE}将为初始化该域的表达式。
 
-If the @code{TREE_TYPE} of the @code{CONSTRUCTOR} is an
-@code{ARRAY_TYPE}, then the @code{TREE_PURPOSE} of each element in the
-@code{TREE_LIST} will be an @code{INTEGER_CST} or a @code{RANGE_EXPR} of
-two @code{INTEGER_CST}s.  A single @code{INTEGER_CST} indicates which
-element of the array (indexed from zero) is being assigned to.  A
-@code{RANGE_EXPR} indicates an inclusive range of elements to
-initialize.  In both cases the @code{TREE_VALUE} is the corresponding
-initializer.  It is re-evaluated for each element of a
-@code{RANGE_EXPR}.  If the @code{TREE_PURPOSE} is @code{NULL_TREE}, then
-the initializer is for the next available array element.
+如果@code{CONSTRUCTOR}的@code{TREE_TYPE}为一个@code{ARRAY_TYPE}，则@code{TREE_LIST}中每个节点的@code{TREE_PURPOSE}将为一个@code{INTEGER_CST}，或者两个@code{INTEGER_CST}的@code{RANGE_EXPR}。单个@code{INTEGER_CST}指出了数组（从0开始索引）的哪个元素将被赋值。@code{RANGE_EXPR}指出了包含端点元素的一个范围将被初始化。这两种情况下，@code{TREE_VALUE}都对应初始化者。其值将对于@code{RANGE_EXPR}的每个元素都重新计算一次。如果@code{TREE_PURPOSE}是@code{NULL_TREE}，则初始化是针对下一个可用的数组元素。
 
-In the front end, you should not depend on the fields appearing in any
-particular order.  However, in the middle end, fields must appear in
-declaration order.  You should not assume that all fields will be
-represented.  Unrepresented fields will be set to zero.
+在前端，你不要认为域是按照特定的顺序出现。但是，在中端，域必须按照声明的顺序出现。你不应该假设所有的域都被表示了。没有表示的域将被设置为0。
 
 @item COMPOUND_LITERAL_EXPR
 @findex COMPOUND_LITERAL_EXPR_DECL_STMT
