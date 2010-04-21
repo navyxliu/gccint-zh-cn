@@ -1913,232 +1913,103 @@ int D::*dp = &D::i;
 该操作在有符号算术溢出时的行为，由@code{flag_wrapv}和@code{flag_trapv}变量来控制。
 
 @item ABS_EXPR
-这些节点表示单个操作数，整数和浮点类型的，的绝对值。这通常用于实现整数类型的内建abs，labs和llabs，以及浮点类型的fabs，fabsf和fabsl。abs操作的类型可以通过查看表达式的类型来决定。
+这些节点表示单个操作数，整数和浮点类型的，的绝对值。这通常用于实现整数类型的内建@code{abs}，@code{labs}和@code{llabs}，以及浮点类型的@code{fabs}，@code{fabsf}和@code{fabsl}。abs操作的类型可以通过查看表达式的类型来决定。
 
-该节点不用于复数类型。要表示复数的模或者复数abs，使用内建的BUILT_IN_CABS, BUILT_IN_CABSF or BUILT_IN_CABSL，这些被用于实现C99的内建函数cabs, cabsf和cabsl。
-These nodes represent the absolute value of the single operand, for
-both integer and floating-point types.  This is typically used to
-implement the @code{abs}, @code{labs} and @code{llabs} builtins for
-integer types, and the @code{fabs}, @code{fabsf} and @code{fabsl}
-builtins for floating point types.  The type of abs operation can
-be determined by looking at the type of the expression.
-
-This node is not used for complex types.  To represent the modulus
-or complex abs of a complex value, use the @code{BUILT_IN_CABS},
-@code{BUILT_IN_CABSF} or @code{BUILT_IN_CABSL} builtins, as used
-to implement the C99 @code{cabs}, @code{cabsf} and @code{cabsl}
-built-in functions.
+该节点不用于复数类型。要表示复数的模或者复数abs，使用内建的@code{BUILT_IN_CABS}, @code{BUILT_IN_CABSF}或@code{BUILT_IN_CABSL}，这些被用于实现C99的内建函数@code{cabs}, @code{cabsf}和@code{cabsl}。
 
 @item BIT_NOT_EXPR
 这些节点表示按位求补运算，并总是具有整数型。唯一的操作数是要被求补的值。
-These nodes represent bitwise complement, and will always have integral
-type.  The only operand is the value to be complemented.
 
 @item TRUTH_NOT_EXPR
-这些节点表示逻辑非，并总是具有整数（或布尔）类型。操作数是要求非的值。操作数的，以及结果的类型总是BOOLEAN_TYPE或INTEGER_TYPE。 
-These nodes represent logical negation, and will always have integral
-(or boolean) type.  The operand is the value being negated.  The type
-of the operand and that of the result are always of @code{BOOLEAN_TYPE}
-or @code{INTEGER_TYPE}.
+这些节点表示逻辑非，并总是具有整数（或布尔）类型。操作数是要求非的值。操作数的，以及结果的类型总是@code{BOOLEAN_TYPE}或@code{INTEGER_TYPE}。 
 
 @item PREDECREMENT_EXPR
 @itemx PREINCREMENT_EXPR
 @itemx POSTDECREMENT_EXPR
 @itemx POSTINCREMENT_EXPR
-这些节点表示递增和递减表达式。单操作数的值将被计算，并且操作数递增或递减。在PREDECREMENT_EXPR和 PREINCREMENT_EXPR的情况下，表达式的值是递增或递减之后的结果；在POSTDECREMENT_EXPR和 POSTINCREMENT_EXPR的情况下，表达式的值是递增或递减发生前的值。操作数的值，跟结果的一样，将会是整数，布尔，或浮点的。
-These nodes represent increment and decrement expressions.  The value of
-the single operand is computed, and the operand incremented or
-decremented.  In the case of @code{PREDECREMENT_EXPR} and
-@code{PREINCREMENT_EXPR}, the value of the expression is the value
-resulting after the increment or decrement; in the case of
-@code{POSTDECREMENT_EXPR} and @code{POSTINCREMENT_EXPR} is the value
-before the increment or decrement occurs.  The type of the operand, like
-that of the result, will be either integral, boolean, or floating-point.
+这些节点表示递增和递减表达式。单操作数的值将被计算，并且操作数递增或递减。在@code{PREDECREMENT_EXPR}和@code{PREINCREMENT_EXPR}的情况下，表达式的值是递增或递减之后的结果；在@code{POSTDECREMENT_EXPR}和@code{POSTINCREMENT_EXPR}的情况下，表达式的值是递增或递减发生前的值。操作数的值，跟结果的一样，将会是整数，布尔，或浮点的。
 
 @item ADDR_EXPR
 这些节点用于表示对象的地址。（这些表达式将总是具有指针或引用类型。）操作数或者为表达式，或者可以是一个声明。
 
-作为扩展，GCC运行用户使用标号的地址。这种情况下，ADDR_EXPR的操作数将为LABEL_DECL。这样的表达式的类型是void*。
+作为扩展，GCC运行用户使用标号的地址。这种情况下，@code{ADDR_EXPR}的操作数将为@code{LABEL_DECL}。这样的表达式的类型是@code{void*}。
 
 如果求址的对象不是左值，则创建一个临时的，并使用临时对象的地址。
-These nodes are used to represent the address of an object.  (These
-expressions will always have pointer or reference type.)  The operand may
-be another expression, or it may be a declaration.
-
-As an extension, GCC allows users to take the address of a label.  In
-this case, the operand of the @code{ADDR_EXPR} will be a
-@code{LABEL_DECL}.  The type of such an expression is @code{void*}.
-
-If the object addressed is not an lvalue, a temporary is created, and
-the address of the temporary is used.
 
 @item INDIRECT_REF
 这些节点用来表示由指针指向的对象。操作数是被dereferenced的指针；其总是具有指针或引用类型。 
-These nodes are used to represent the object pointed to by a pointer.
-The operand is the pointer being dereferenced; it will always have
-pointer or reference type.
 
 @item FIX_TRUNC_EXPR
 这些节点表示浮点值到整数的转换。单操作数将具有一个浮点类型，完整的表达式将具有整数（或布尔）类型。操作数向0方向舍入。
-These nodes represent conversion of a floating-point value to an
-integer.  The single operand will have a floating-point type, while
-the complete expression will have an integral (or boolean) type.  The
-operand is rounded towards zero.
 
 @item FLOAT_EXPR
 这些节点表示整数（或布尔）值向浮点值的转换。单操作数将具有整数类型，而完整的表达式将具有浮点类型。
 
-FIXME: 操作数是如何被舍入的？这是不是取决于-mieee？
-These nodes represent conversion of an integral (or boolean) value to a
-floating-point value.  The single operand will have integral type, while
-the complete expression will have a floating-point type.
-
-FIXME: How is the operand supposed to be rounded?  Is this dependent on
-@option{-mieee}?
+FIXME: 操作数是如何被舍入的？这是不是取决于@option{-mieee}？
 
 @item COMPLEX_EXPR
 这些节点用于表示通过两个相同类型（整数或实数）的表达式构造的复数。第一个操作数是实部，第二个操作数是虚部。 
-These nodes are used to represent complex numbers constructed from two
-expressions of the same (integer or real) type.  The first operand is the
-real part and the second operand is the imaginary part.
 
 @item CONJ_EXPR
 这些节点表示它们的操作数的共轭（conjugate）。 
-These nodes represent the conjugate of their operand.
 
 @item REALPART_EXPR
 @itemx IMAGPART_EXPR
 这些节点表示复数的相应实数和虚数部分。 
-These nodes represent respectively the real and the imaginary parts
-of complex numbers (their sole argument).
 
 @item NON_LVALUE_EXPR
 这些节点指示它们有且仅有的一个操作数不是左值的。后端可以将其作为单操作数来对待。 
-These nodes indicate that their one and only operand is not an lvalue.
-A back end can treat these identically to the single operand.
 
 @item NOP_EXPR
-这些节点用于表示不需要任何代码生成的转换。例如，由char*到int*不需要任何代码生成；这样的转换被表示为一个NOP_EXPR。单操作数为要转换的表达式。从指针到引用的转换也被表示为NOP_EXPR。 
-These nodes are used to represent conversions that do not require any
-code-generation.  For example, conversion of a @code{char*} to an
-@code{int*} does not require any code be generated; such a conversion is
-represented by a @code{NOP_EXPR}.  The single operand is the expression
-to be converted.  The conversion from a pointer to a reference is also
-represented with a @code{NOP_EXPR}.
+这些节点用于表示不需要任何代码生成的转换。例如，由@code{char*}到@code{int*}不需要任何代码生成；这样的转换被表示为一个@code{NOP_EXPR}。单操作数为要转换的表达式。从指针到引用的转换也被表示为@code{NOP_EXPR}。 
 
 @item CONVERT_EXPR
-这些节点类似于NOP_EXPR，不过用于可能会有代码生成的情况。例如，如果int*被转换为int，则可能会在一些平台上需要生成代码。这些节点从来不被用于C++特定的转换，例如在一个继承体系中不同的类的指针间的转换。这种情况下的任何调整，总是需要被显式的指出。类似的，用户定义的转换也不使用 CONVERT_EXPR表示；相反的，而是显式的调用函数。
-These nodes are similar to @code{NOP_EXPR}s, but are used in those
-situations where code may need to be generated.  For example, if an
-@code{int*} is converted to an @code{int} code may need to be generated
-on some platforms.  These nodes are never used for C++-specific
-conversions, like conversions between pointers to different classes in
-an inheritance hierarchy.  Any adjustments that need to be made in such
-cases are always indicated explicitly.  Similarly, a user-defined
-conversion is never represented by a @code{CONVERT_EXPR}; instead, the
-function calls are made explicit.
+这些节点类似于@code{NOP_EXPR}，不过用于可能会有代码生成的情况。例如，如果@code{int*}被转换为@code{int}，则可能会在一些平台上需要生成代码。这些节点从来不被用于C++特定的转换，例如在一个继承体系中不同的类的指针间的转换。这种情况下的任何调整，总是需要被显式的指出。类似的，用户定义的转换也不使用@code{CONVERT_EXPR}表示；相反的，而是显式的调用函数。
 
 @item FIXED_CONVERT_EXPR
-These nodes are used to represent conversions that involve fixed-point
-values.  For example, from a fixed-point value to another fixed-point value,
-from an integer to a fixed-point value, from a fixed-point value to an
-integer, from a floating-point value to a fixed-point value, or from
-a fixed-point value to a floating-point value.
+这些节点用于表示涉及定点值的转换。例如，从一个定点值到另一个定点值，从一个整数到一个定点值，从一个定点值到一个整数，从一个浮点值到一个定点值，或者从一个定点值到一个浮点值。
 
 @item THROW_EXPR
-这些节点表示throw表达式。单操作为一个表达式，其代码将被执行用于抛出异常。但是，在表达式中有一个隐式的动作没有表示出来；即调用 __throw。这个函数没有参数。如果使用了setjmp/longjmp异常，则相应的调用函数__sjthrow。通常GCC后端使用函数 emit_throw来生成该代码；你可以检查该函数看看都需要做什么。
-These nodes represent @code{throw} expressions.  The single operand is
-an expression for the code that should be executed to throw the
-exception.  However, there is one implicit action not represented in
-that expression; namely the call to @code{__throw}.  This function takes
-no arguments.  If @code{setjmp}/@code{longjmp} exceptions are used, the
-function @code{__sjthrow} is called instead.  The normal GCC back end
-uses the function @code{emit_throw} to generate this code; you can
-examine this function to see what needs to be done.
+这些节点表示@code{throw}表达式。单操作为一个表达式，其代码将被执行用于抛出异常。但是，在表达式中有一个隐式的动作没有表示出来；即调用 @code{__throw}。这个函数没有参数。如果使用了@code{setjmp}/@code{longjmp}异常，则相应的调用函数@code{__sjthrow}。通常GCC后端使用函数 @code{emit_throw}来生成该代码；你可以检查该函数看看都需要做什么。
 
 @item LSHIFT_EXPR
 @itemx RSHIFT_EXPR
 这些节点分别表示左移和右移。第一个操作数为要移动的值；其将总是为整数类型。第二个操作数为表示移动位数的表达式。右移将作为算术移动，即，当表达式具有无符号类型则高位填充0，当表达式具有有符号类型则高位填充符号位。注意如果第二个操作数大于或等于第一个操作数的类型大小，则结果无定义。
-These nodes represent left and right shifts, respectively.  The first
-operand is the value to shift; it will always be of integral type.  The
-second operand is an expression for the number of bits by which to
-shift.  Right shift should be treated as arithmetic, i.e., the
-high-order bits should be zero-filled when the expression has unsigned
-type and filled with the sign bit when the expression has signed type.
-Note that the result is undefined if the second operand is larger
-than or equal to the first operand's type size.
-
 
 @item BIT_IOR_EXPR
 @itemx BIT_XOR_EXPR
 @itemx BIT_AND_EXPR
 这些节点分别表示位运算符“或”，“异或”，和“与”。所有操作数将总是为整数类型。 
-These nodes represent bitwise inclusive or, bitwise exclusive or, and
-bitwise and, respectively.  Both operands will always have integral
-type.
 
 @item TRUTH_ANDIF_EXPR
 @itemx TRUTH_ORIF_EXPR
-这些节点分别表示逻辑“与”和“或”。这些操作符不是严格的；即第二个操作数只在通过求值第一个操作数无法确定表达式的值的时候，才被计算求值。操作数和结果的类型总是为BOOLEAN_TYPE或INTEGER_TYPE。 
-These nodes represent logical ``and'' and logical ``or'', respectively.
-These operators are not strict; i.e., the second operand is evaluated
-only if the value of the expression is not determined by evaluation of
-the first operand.  The type of the operands and that of the result are
-always of @code{BOOLEAN_TYPE} or @code{INTEGER_TYPE}.
+这些节点分别表示逻辑“与”和“或”。这些操作符不是严格的；即第二个操作数只在通过求值第一个操作数无法确定表达式的值的时候，才被计算求值。操作数和结果的类型总是为@code{BOOLEAN_TYPE}或@code{INTEGER_TYPE}。 
 
 @item TRUTH_AND_EXPR
 @itemx TRUTH_OR_EXPR
 @itemx TRUTH_XOR_EXPR
-这些节点表示逻辑与，或和异或。它们为严格的方式；所有参数都总是被计算求值。这在C或C++中没有对应的运算符，但是前端如果可以断定严格的方式没关系，则有时将会生成这些表达式。操作数和结果的类型总是为BOOLEAN_TYPE或INTEGER_TYPE。 
-These nodes represent logical and, logical or, and logical exclusive or.
-They are strict; both arguments are always evaluated.  There are no
-corresponding operators in C or C++, but the front end will sometimes
-generate these expressions anyhow, if it can tell that strictness does
-not matter.  The type of the operands and that of the result are
-always of @code{BOOLEAN_TYPE} or @code{INTEGER_TYPE}.
+这些节点表示逻辑与，或和异或。它们为严格的方式；所有参数都总是被计算求值。这在C或C++中没有对应的运算符，但是前端如果可以断定严格的方式没关系，则有时将会生成这些表达式。操作数和结果的类型总是为@code{BOOLEAN_TYPE}或@code{INTEGER_TYPE}。 
 
 @itemx POINTER_PLUS_EXPR
 该节点表示指针算术运算。第一个操作数总是为一个指针/引用类型。第二个操作数总是为一个与sizetype兼容的无符号整数类型。这是唯一的可以操作指针类型的二元算术运算。 
-This node represents pointer arithmetic.  The first operand is always
-a pointer/reference type.  The second operand is always an unsigned
-integer type compatible with sizetype.  This is the only binary
-arithmetic operand that can operate on pointer types.
 
 @itemx PLUS_EXPR
 @itemx MINUS_EXPR
 @itemx MULT_EXPR
 这些节点表示不同的二元算术运算。分别为加法，减法和乘法。它们的操作数可以为整数或者浮点类型，但不会为一个是浮点类型的，而另一个是整数类型。
 
-这些运算在有符号算术溢出时的行为，由变量flag_wrapv和flag_trapv来控制。
-These nodes represent various binary arithmetic operations.
-Respectively, these operations are addition, subtraction (of the second
-operand from the first) and multiplication.  Their operands may have
-either integral or floating type, but there will never be case in which
-one operand is of floating type and the other is of integral type.
-
-The behavior of these operations on signed arithmetic overflow is
-controlled by the @code{flag_wrapv} and @code{flag_trapv} variables.
+这些运算在有符号算术溢出时的行为，由变量@code{flag_wrapv}和@code{flag_trapv}来控制。
 
 @item RDIV_EXPR
 该节点表示一个浮点除法运算。 
-This node represents a floating point division operation.
 
 @item TRUNC_DIV_EXPR
 @itemx FLOOR_DIV_EXPR
 @itemx CEIL_DIV_EXPR
 @itemx ROUND_DIV_EXPR
-这些节点表示返回整数结果的整数除法运算。TRUNC_DIV_EXPR向0方向舍入，FLOOR_DIV_EXPR向负无穷大舍入，CEIL_DIV_EXPR向正无穷大舍入，ROUND_DIV_EXPR向最近的整数舍入。C和C++中的整数除法为截断方式，即 TRUNC_DIV_EXPR。
+这些节点表示返回整数结果的整数除法运算。@code{TRUNC_DIV_EXPR}向0方向舍入，@code{FLOOR_DIV_EXPR}向负无穷大舍入，@code{CEIL_DIV_EXPR}向正无穷大舍入，@code{ROUND_DIV_EXPR}向最近的整数舍入。C和C++中的整数除法为截断方式，即@code{TRUNC_DIV_EXPR}。
 
-这些运算在有符号算术溢出时的行为，由变量flag_wrapv和flag_trapv来控制。
-These nodes represent integer division operations that return an integer
-result.  @code{TRUNC_DIV_EXPR} rounds towards zero, @code{FLOOR_DIV_EXPR}
-rounds towards negative infinity, @code{CEIL_DIV_EXPR} rounds towards
-positive infinity and @code{ROUND_DIV_EXPR} rounds to the closest integer.
-Integer division in C and C++ is truncating, i.e.@: @code{TRUNC_DIV_EXPR}.
-
-The behavior of these operations on signed arithmetic overflow, when
-dividing the minimum signed integer by minus one, is controlled by the
-@code{flag_wrapv} and @code{flag_trapv} variables.
+这些运算在有符号算术溢出时的行为，由变量@code{flag_wrapv}和@code{flag_trapv}来控制。
 
 @item TRUNC_MOD_EXPR
 @itemx FLOOR_MOD_EXPR
