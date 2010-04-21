@@ -1217,21 +1217,9 @@ class C @{ friend void f() @{@} @};
 @code{DECL_NAME}的值未定义。关于可以用来区分这些情况的宏，参见下面。 
 
 @item DECL_ASSEMBLER_NAME
-This macro returns the mangled name of the function, also an
-@code{IDENTIFIER_NODE}.  This name does not contain leading underscores
-on systems that prefix all identifiers with underscores.  The mangled
-name is computed in the same way on all platforms; if special processing
-is required to deal with the object file format used on a particular
-platform, it is the responsibility of the back end to perform those
-modifications.  (Of course, the back end should not modify
-@code{DECL_ASSEMBLER_NAME} itself.)
+该宏返回函数的mangled名字，也是一个@code{IDENTIFIER_NODE}。该名字没有包含前导的下划线。mangled名字在所有平台上按照相同的方式来计算；如果在特定的平台上，需要对目标文件格式进行特殊的处理，则后端需要负责执行那些修改。（当然，后端不应该修改@code{DECL_ASSEMBLER_NAME}）
 
-Using @code{DECL_ASSEMBLER_NAME} will cause additional memory to be
-allocated (for the mangled name of the entity) so it should be used
-only when emitting assembly code.  It should not be used within the
-optimizers to determine whether or not two declarations are the same,
-even though some of the existing optimizers do use it in that way.
-These uses will be removed over time.
+使用@code{DECL_ASSEMBLER_NAME}将使得额外的内存被分配（用于实体的mangled名字），所以其应该只当生成汇编代码时被使用。其不应该在优化器中被使用，用于确定两个声明是否相同，即使一些现有的优化器确实采用了这种方式。这些使用将随着时间被移除。
 
 @item DECL_EXTERNAL
 该断言判断函数是否未定义。 
@@ -1306,19 +1294,11 @@ FIXME: 该宏还没有实现。
 该断言用来判断函数是否为一个文件作用域的结束化函数。 
 
 @item DECL_THUNK_P
-This predicate holds if the function is a thunk.
+该断言用来判断函数是否为一个thunk。
 
-These functions represent stub code that adjusts the @code{this} pointer
-and then jumps to another function.  When the jumped-to function
-returns, control is transferred directly to the caller, without
-returning to the thunk.  The first parameter to the thunk is always the
-@code{this} pointer; the thunk should add @code{THUNK_DELTA} to this
-value.  (The @code{THUNK_DELTA} is an @code{int}, not an
-@code{INTEGER_CST}.)
+这些函数表示stub代码，用来调整@code{this}指针，然后跳转到另一个函数中。当从被跳转的函数中返回时，控制被直接传给调用者，不需要返回到thunk中。thunk的第一个参数总是为@code{this}指针；thunk应该将该值加上@code{THUNK_DELTA}。（@code{THUNK_DELTA}是一个@code{int}，而不是@code{INTEGER_CST}。）
 
-Then, if @code{THUNK_VCALL_OFFSET} (an @code{INTEGER_CST}) is nonzero
-the adjusted @code{this} pointer must be adjusted again.  The complete
-calculation is given by the following pseudo-code:
+然后，如果@code{THUNK_VCALL_OFFSET}（一个@code{INTEGER_CST}）是非零的，则被调整的@code{this}必须再次被调整。下面的伪代码给出了完整的计算：
 
 @smallexample
 this += THUNK_DELTA
@@ -1326,22 +1306,13 @@ if (THUNK_VCALL_OFFSET)
   this += (*((ptrdiff_t **) this))[THUNK_VCALL_OFFSET]
 @end smallexample
 
-Finally, the thunk should jump to the location given
-by @code{DECL_INITIAL}; this will always be an expression for the
-address of a function.
+最终，thunk应该跳转到由@code{DECL_INITIAL}给出的位置；这将总是一个函数地址的表达式。
 
 @item DECL_NON_THUNK_FUNCTION_P
 该断言用来判断函数@emph{不是}一个thunk函数。 
 
 @item GLOBAL_INIT_PRIORITY
-如果DECL_GLOBAL_CTOR_P或者DECL_GLOBAL_DTOR_P有效，则该宏给出了函数的初始优先级。连接器将设法安排 DECL_GLOBAL_CTOR_P所保存的所有的函数在递增的顺序下运行，在main被调用之前。当程序退出时，DECL_GLOBAL_DTOR_P所保存的所有函数按照相反的顺序执行。
-
-If either @code{DECL_GLOBAL_CTOR_P} or @code{DECL_GLOBAL_DTOR_P} holds,
-then this gives the initialization priority for the function.  The
-linker will arrange that all functions for which
-@code{DECL_GLOBAL_CTOR_P} holds are run in increasing order of priority
-before @code{main} is called.  When the program exits, all functions for
-which @code{DECL_GLOBAL_DTOR_P} holds are run in the reverse order.
+如果@code{DECL_GLOBAL_CTOR_P}或者@code{DECL_GLOBAL_DTOR_P}有效，则该宏给出了函数的初始优先级。连接器将设法安排@code{DECL_GLOBAL_CTOR_P}所保存的所有的函数在递增的顺序下运行，在@code{main}被调用之前。当程序退出时，@code{DECL_GLOBAL_DTOR_P}所保存的所有函数按照相反的顺序执行。
 
 @item DECL_ARTIFICIAL
 该宏保存了函数是否由编译器隐式的生成，而不是被显式的生成。
@@ -1359,10 +1330,7 @@ which @code{DECL_GLOBAL_DTOR_P} holds are run in the reverse order.
 该宏返回函数的@code{FUNCTION_TYPE}或@code{METHOD_TYPE}。
 
 @item TYPE_RAISES_EXCEPTIONS
-该宏返回（成员）函数可以引起的异常列表。返回的列表，如果不是NULL，则为TREE_VALUE代表一个类型的节点组成。 
-This macro returns the list of exceptions that a (member-)function can
-raise.  The returned list, if non @code{NULL}, is comprised of nodes
-whose @code{TREE_VALUE} represents a type.
+该宏返回（成员）函数可以引起的异常列表。返回的列表，如果不是@code{NULL}，则为@code{TREE_VALUE}代表一个类型的节点组成。 
 
 @item TYPE_NOTHROW_P
 该断言用来判断是否是使用`@code{()}'形式来指定异常的参数。 
@@ -1371,16 +1339,11 @@ whose @code{TREE_VALUE} represents a type.
 该断言用来判断函数是否为一个重载的@code{operator delete[]}。
 
 @item DECL_FUNCTION_SPECIFIC_TARGET
-This macro returns a tree node that holds the target options that are
-to be used to compile this particular function or @code{NULL_TREE} if
-the function is to be compiled with the target options specified on
-the command line.
+该宏返回一个tree节点，存放了用于编译该特定函数的目标机选项，或者为@code{NULL_TREE}，如果是使用命令行中指定的目标机选项来编译该函数。
 
 @item DECL_FUNCTION_SPECIFIC_OPTIMIZATION
-This macro returns a tree node that holds the optimization options
-that are to be used to compile this particular function or
-@code{NULL_TREE} if the function is to be compiled with the
-optimization options specified on the command line.
+该宏返回一个tree节点，存放了用于编译该特定函数的优化选项，或者为@code{NULL_TREE}，如果是使用命令行中指定的优化选项来编译该函数。
+
 @end ftable
 
 @c ---------------------------------------------------------------------
