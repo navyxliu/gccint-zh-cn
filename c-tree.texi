@@ -863,65 +863,23 @@ typedef struct S S;
 
 如果该变量被初始化（并需要一个构造者），则@code{DECL_INITIAL}将为初始化者的表达式。初始化者将被求值，并按位复制到变量中。如果@code{DECL_INITIAL}为@code{error_mark_node}，则表明存在一个初始化者，只不过它由之后代码中的显式的语句给出；这将不需要进行按位复制。
 
-GCC提供了一个扩展，允许自动变量或者全局变量，被放到特定的寄存器中。该扩展
-
-
-
-
-
-GCC provides an extension that allows either automatic variables, or
-global variables, to be placed in particular registers.  This extension
-is being used for a particular @code{VAR_DECL} if @code{DECL_REGISTER}
-holds for the @code{VAR_DECL}, and if @code{DECL_ASSEMBLER_NAME} is not
-equal to @code{DECL_NAME}.  In that case, @code{DECL_ASSEMBLER_NAME} is
-the name of the register into which the variable will be placed.
+GCC提供了一个扩展，允许自动变量或者全局变量，被放到特定的寄存器中。如果@code{DECL_REGISTER}存放了@code{VAR_DECL}，并且@code{DECL_ASSEMBLER_NAME}不等于@code{DECL_NAME}，则@code{VAR_DECL}是使用了该扩展。这种情况下，@code{DECL_ASSEMBLER_NAME}为存放变量的寄存器的名字。
 
 @item PARM_DECL
-Used to represent a parameter to a function.  Treat these nodes
-similarly to @code{VAR_DECL} nodes.  These nodes only appear in the
-@code{DECL_ARGUMENTS} for a @code{FUNCTION_DECL}.
+用于表示一个函数的参数。这些节点可以作为@code{VAR_DECL}节点来看待。这些节点只出现在@code{FUNCTION_DECL}的@code{DECL_ARGUMENTS}中。
 
-The @code{DECL_ARG_TYPE} for a @code{PARM_DECL} is the type that will
-actually be used when a value is passed to this function.  It may be a
-wider type than the @code{TREE_TYPE} of the parameter; for example, the
-ordinary type might be @code{short} while the @code{DECL_ARG_TYPE} is
-@code{int}.
+@code{PARM_DECL}的@code{DECL_ARG_TYPE}为，当值传给函数时实际使用的类型。其可以为一个比参数的@code{TREE_TYPE}更宽的类型；例如，原始类型可能为@code{short}，而@code{DECL_ARG_TYPE}为@code{int}。
 
 @item FIELD_DECL
-These nodes represent non-static data members.  The @code{DECL_SIZE} and
-@code{DECL_ALIGN} behave as for @code{VAR_DECL} nodes.  
-The position of the field within the parent record is specified by a 
-combination of three attributes.  @code{DECL_FIELD_OFFSET} is the position,
-counting in bytes, of the @code{DECL_OFFSET_ALIGN}-bit sized word containing
-the bit of the field closest to the beginning of the structure.  
-@code{DECL_FIELD_BIT_OFFSET} is the bit offset of the first bit of the field
-within this word; this may be nonzero even for fields that are not bit-fields,
-since @code{DECL_OFFSET_ALIGN} may be greater than the natural alignment
-of the field's type.
-
-If @code{DECL_C_BIT_FIELD} holds, this field is a bit-field.  In a bit-field,
-@code{DECL_BIT_FIELD_TYPE} also contains the type that was originally
-specified for it, while DECL_TYPE may be a modified type with lesser precision,
-according to the size of the bit field.
+这些节点表示非静态数据成员。@code{DECL_SIZE}和@code{DECL_ALIGN}的行为，跟@code{VAR_DECL}节点的一样。在父记录（parent record）中的域的位置，由三个属性组合指定。@code{DECL_FIELD_OFFSET}为按字节计数的位置，
 
 @item NAMESPACE_DECL
 @xref{Namespaces}.
 
 @item TEMPLATE_DECL
+这些节点用于表示类，函数和变量（静态数据成员）模板。@code{DECL_TEMPLATE_SPECIALIZATIONS}为一个@code{TREE_LIST}。列表中每个节点的@code{TREE_VALUE}为一个@code{TEMPLATE_DECL}或者@code{FUNCTION_DECL}，表示该模板的特列（包括实例）。后端可以安全的忽略@code{TEMPLATE_DECL}，但是应该检查特例列表中的@code{FUNCTION_DECL}，就像是普通的@code{FUNCTION_DECL}节点一样。
 
-These nodes are used to represent class, function, and variable (static
-data member) templates.  The @code{DECL_TEMPLATE_SPECIALIZATIONS} are a
-@code{TREE_LIST}.  The @code{TREE_VALUE} of each node in the list is a
-@code{TEMPLATE_DECL}s or @code{FUNCTION_DECL}s representing
-specializations (including instantiations) of this template.  Back ends
-can safely ignore @code{TEMPLATE_DECL}s, but should examine
-@code{FUNCTION_DECL} nodes on the specializations list just as they
-would ordinary @code{FUNCTION_DECL} nodes.
-
-For a class template, the @code{DECL_TEMPLATE_INSTANTIATIONS} list
-contains the instantiations.  The @code{TREE_VALUE} of each node is an
-instantiation of the class.  The @code{DECL_TEMPLATE_SPECIALIZATIONS}
-contains partial specializations of the class.
+对于类模板，@code{DECL_TEMPLATE_INSTANTIATIONS}列表包含了实例。每个节点的@code{TREE_VALUE}为类的一个实例。@code{DECL_TEMPLATE_SPECIALIZATIONS}包含了类的部分特例。
 
 @item USING_DECL
 后端可以安全的忽略掉这些节点。
