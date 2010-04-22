@@ -859,27 +859,15 @@ typedef struct S S;
 这些节点表示@code{typedef}声明。@code{TREE_TYPE}为被声明的类型，其名字由@code{DECL_NAME}给出。有些情况下，没有相关联的名字。
 
 @item VAR_DECL
-这些节点表示
+这些节点表示具有命名空间或者块作用域的变量，以及静态数据成员。@code{DECL_SIZE}和@code{DECL_ALIGN}，类似于@code{TYPE_SIZE}和@code{TYPE_ALIGN}。对于声明，你应该总是使用@code{DECL_SIZE}和@code{DECL_ALIGN}，而不是由@code{TREE_TYPE}给定的@code{TYPE_SIZE}和@code{TYPE_ALIGN}，因为，可能会对变量应用了特定的属性，使其具有特定的大小和对齐方式。你可以使用断言@code{DECL_THIS_STATIC}或@code{DECL_THIS_EXTERN}来测试是否使用了存储类别说明符@code{static}或@code{extern}来声明一个变量。
+
+如果该变量被初始化（并需要一个构造者），则@code{DECL_INITIAL}将为初始化者的表达式。初始化者将被求值，并按位复制到变量中。如果@code{DECL_INITIAL}为@code{error_mark_node}，则表明存在一个初始化者，只不过它由之后代码中的显式的语句给出；这将不需要进行按位复制。
+
+GCC提供了一个扩展，允许自动变量或者全局变量，被放到特定的寄存器中。该扩展
 
 
 
-These nodes represent variables with namespace or block scope, as well
-as static data members.  The @code{DECL_SIZE} and @code{DECL_ALIGN} are
-analogous to @code{TYPE_SIZE} and @code{TYPE_ALIGN}.  For a declaration,
-you should always use the @code{DECL_SIZE} and @code{DECL_ALIGN} rather
-than the @code{TYPE_SIZE} and @code{TYPE_ALIGN} given by the
-@code{TREE_TYPE}, since special attributes may have been applied to the
-variable to give it a particular size and alignment.  You may use the
-predicates @code{DECL_THIS_STATIC} or @code{DECL_THIS_EXTERN} to test
-whether the storage class specifiers @code{static} or @code{extern} were
-used to declare a variable.
 
-If this variable is initialized (but does not require a constructor),
-the @code{DECL_INITIAL} will be an expression for the initializer.  The
-initializer should be evaluated, and a bitwise copy into the variable
-performed.  If the @code{DECL_INITIAL} is the @code{error_mark_node},
-there is an initializer, but it is given by an explicit statement later
-in the code; no bitwise copy is required.
 
 GCC provides an extension that allows either automatic variables, or
 global variables, to be placed in particular registers.  This extension
