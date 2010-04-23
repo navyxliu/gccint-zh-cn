@@ -396,13 +396,10 @@ structural comparisons; the compiler will then print any warnings if
 the canonical types miscompare.
 
 @item TYPE_STRUCTURAL_EQUALITY_P
-This predicate holds when the node requires structural equality
-checks, e.g., when @code{TYPE_CANONICAL} is @code{NULL_TREE}.
+当节点需要进行结构相等检查的时候，该断言成立，例如，当@code{TYPE_CANONICAL}为@code{NULL_TREE}时。
 
 @item SET_TYPE_STRUCTURAL_EQUALITY
-This macro states that the type node it is given requires structural
-equality checks, e.g., it sets @code{TYPE_CANONICAL} to
-@code{NULL_TREE}.
+该宏规定给定的类型节点需要进行结构相等检查，例如，其将@code{TYPE_CANONICAL}设为@code{NULL_TREE}
 
 @item same_type_p
 This predicate takes two types as input, and holds if they are the same
@@ -415,86 +412,41 @@ should never use @code{==} (pointer equality) to compare types; always
 use @code{same_type_p} instead.
 @end ftable
 
-Detailed below are the various kinds of types, and the macros that can
-be used to access them.  Although other kinds of types are used
-elsewhere in G++, the types described here are the only ones that you
-will encounter while examining the intermediate representation.
+下面详细介绍了各种类型，以及可以用来访问它们的宏。虽然有其它类型是在G++中用到，这里描述的类型将只是当你检查中间表示时会遇到的。
 
 @table @code
 @item VOID_TYPE
 用于表示@code{void}类型。 
 
 @item INTEGER_TYPE
-Used to represent the various integral types, including @code{char},
-@code{short}, @code{int}, @code{long}, and @code{long long}.  This code
-is not used for enumeration types, nor for the @code{bool} type.
-The @code{TYPE_PRECISION} is the number of bits used in
-the representation, represented as an @code{unsigned int}.  (Note that
-in the general case this is not the same value as @code{TYPE_SIZE};
-suppose that there were a 24-bit integer type, but that alignment
-requirements for the ABI required 32-bit alignment.  Then,
-@code{TYPE_SIZE} would be an @code{INTEGER_CST} for 32, while
-@code{TYPE_PRECISION} would be 24.)  The integer type is unsigned if
-@code{TYPE_UNSIGNED} holds; otherwise, it is signed.
+用来表示跟中整数类型，包括@code{char}，@code{short}，@code{int}，@code{long}和@code{long long}。该代码不用于枚举类型和@code{bool}类型。@code{TYPE_PRECISION}为用于表示该类型的位数，是一个@code{unsigned int}。（注意，通常情况它的值与@code{TYPE_SIZE}不相同；假设有一个24位的整数类型，但是ABI要求32位的对齐方式。则，@code{TYPE_SIZE}将为一个@code{INTEGER_CST}，32，而@code{TYPE_PRECISION}为24。）如果@code{TYPE_UNSIGNED}成立，则整数类型为无符号的；否则为有符号的。
 
-The @code{TYPE_MIN_VALUE} is an @code{INTEGER_CST} for the smallest
-integer that may be represented by this type.  Similarly, the
-@code{TYPE_MAX_VALUE} is an @code{INTEGER_CST} for the largest integer
-that may be represented by this type.
+@code{TYPE_MIN_VALUE}为一个@code{INTEGER_CST}，是该类型可以表示的最小整数。类似的，@code{TYPE_MAX_VALUE}为一个@code{INTEGER_CST}，是该类型可以表示的最大整数。
 
 @item REAL_TYPE
-Used to represent the @code{float}, @code{double}, and @code{long
-double} types.  The number of bits in the floating-point representation
-is given by @code{TYPE_PRECISION}, as in the @code{INTEGER_TYPE} case.
+用来表示类型@code{float}，@code{double}和@code{long double}。跟@code{INTEGER_TYPE}的情况类型，用于浮点表示的位数由@code{TYPE_PRECISION}给出。
 
 @item FIXED_POINT_TYPE
-Used to represent the @code{short _Fract}, @code{_Fract}, @code{long
-_Fract}, @code{long long _Fract}, @code{short _Accum}, @code{_Accum},
-@code{long _Accum}, and @code{long long _Accum} types.  The number of bits
-in the fixed-point representation is given by @code{TYPE_PRECISION},
-as in the @code{INTEGER_TYPE} case.  There may be padding bits, fractional
-bits and integral bits.  The number of fractional bits is given by
-@code{TYPE_FBIT}, and the number of integral bits is given by @code{TYPE_IBIT}.
-The fixed-point type is unsigned if @code{TYPE_UNSIGNED} holds; otherwise,
-it is signed.
-The fixed-point type is saturating if @code{TYPE_SATURATING} holds; otherwise,
-it is not saturating.
+用来表示类型@code{short _Fract}, @code{_Fract}, @code{long _Fract}, @code{long long _Fract}, @code{short _Accum}, @code{_Accum}, @code{long _Accum}, 和 @code{long long _Accum}。跟@code{INTEGER_TYPE}的情况类型，用于定点表示的位数由@code{TYPE_PRECISION}给出。可能会有填充位，小数位和整数位。小数的位数由@code{TYPE_FBIT}给出，整数的位数由@code{TYPE_IBIT}给出。如果@code{TYPE_UNSIGNED}成立，则定点类型为无符号的；否则为有符号的。
+
+如果@code{TYPE_SATURATING}成立，则定点类型为饱和的；否则不是饱和的。。
 
 @item COMPLEX_TYPE
-Used to represent GCC built-in @code{__complex__} data types.  The
-@code{TREE_TYPE} is the type of the real and imaginary parts.
+用来表示GCC内建的@code{__complex__}数据类型。@code{TREE_TYPE}为实部和虚部的类型。
 
 @item ENUMERAL_TYPE
-Used to represent an enumeration type.  The @code{TYPE_PRECISION} gives
-(as an @code{int}), the number of bits used to represent the type.  If
-there are no negative enumeration constants, @code{TYPE_UNSIGNED} will
-hold.  The minimum and maximum enumeration constants may be obtained
-with @code{TYPE_MIN_VALUE} and @code{TYPE_MAX_VALUE}, respectively; each
-of these macros returns an @code{INTEGER_CST}.
+用于表示枚举类型。@code{TYPE_PRECISION}给出了用于表示该类型的位数（为一个@code{int}）。如果没有负数的枚举常量，则@code{TYPE_UNSIGNED}成立。最小和最大的枚举常量，可以分别使用@code{TYPE_MIN_VALUE}和@code{TYPE_MAX_VALUE}获得；每个宏都返回一个@code{INTEGER_CST}。
 
-The actual enumeration constants themselves may be obtained by looking
-at the @code{TYPE_VALUES}.  This macro will return a @code{TREE_LIST},
-containing the constants.  The @code{TREE_PURPOSE} of each node will be
-an @code{IDENTIFIER_NODE} giving the name of the constant; the
-@code{TREE_VALUE} will be an @code{INTEGER_CST} giving the value
-assigned to that constant.  These constants will appear in the order in
-which they were declared.  The @code{TREE_TYPE} of each of these
-constants will be the type of enumeration type itself.
+实际的枚举常量可以通过查看@code{TYPE_VALUES}来获得。该宏将返回一个@code{TREE_LIST}，包含了常量；@code{TREE_VALUE}将为一个@code{INTEGER_CST}，给出了赋予那个常量的值。这些常量将按照它们被声明的顺序出现。每个常量的@code{TREE_TYPE}，将为枚举类型本身的类型。
 
 @item BOOLEAN_TYPE
 用来表示@code{bool}类型。
 
 @item POINTER_TYPE
-Used to represent pointer types, and pointer to data member types.  The
-@code{TREE_TYPE} gives the type to which this type points.  If the type
-is a pointer to data member type, then @code{TYPE_PTRMEM_P} will hold.
-For a pointer to data member type of the form @samp{T X::*},
-@code{TYPE_PTRMEM_CLASS_TYPE} will be the type @code{X}, while
-@code{TYPE_PTRMEM_POINTED_TO_TYPE} will be the type @code{T}.
+用来表示指针类型，以及指向数据成员的指针类型。@code{TREE_TYPE}给出了所指向的类型。如果类型为一个指向数据成员的指针，则@code{TYPE_PTRMEM_P}成立。对于一个指向@samp{T X::*}形式的数据成员类型的指针，@code{TYPE_PTRMEM_CLASS_TYPE}将为类型@code{X}，而@code{TYPE_PTRMEM_POINTED_TO_TYPE}为类型@code{T}。
 
 @item REFERENCE_TYPE
-Used to represent reference types.  The @code{TREE_TYPE} gives the type
-to which this type refers.
+用来表示引用类型。@code{TREE_TYPE}给出了所引用的类型。
 
 @item FUNCTION_TYPE
 Used to represent the type of non-member functions and of static member
@@ -513,7 +465,7 @@ is an unprototyped function taking a variable number of arguments; the
 @code{TYPE_ARG_TYPES} of such a function will be @code{NULL}.
 
 @item METHOD_TYPE
-Used to represent the type of a non-static member function.  Like a
+用来表示非静态成员函数的类型。Used to represent the type of a non-static member function.  Like a
 @code{FUNCTION_TYPE}, the return type is given by the @code{TREE_TYPE}.
 The type of @code{*this}, i.e., the class of which functions of this
 type are a member, is given by the @code{TYPE_METHOD_BASETYPE}.  The
@@ -521,44 +473,16 @@ type are a member, is given by the @code{TYPE_METHOD_BASETYPE}.  The
 @code{FUNCTION_TYPE}, and includes the @code{this} argument.
 
 @item ARRAY_TYPE
-Used to represent array types.  The @code{TREE_TYPE} gives the type of
-the elements in the array.  If the array-bound is present in the type,
-the @code{TYPE_DOMAIN} is an @code{INTEGER_TYPE} whose
-@code{TYPE_MIN_VALUE} and @code{TYPE_MAX_VALUE} will be the lower and
-upper bounds of the array, respectively.  The @code{TYPE_MIN_VALUE} will
-always be an @code{INTEGER_CST} for zero, while the
-@code{TYPE_MAX_VALUE} will be one less than the number of elements in
-the array, i.e., the highest value which may be used to index an element
-in the array.
+用于表示数组类型，@code{TREE_TYPE}给出了数组元素的类型。如果数组边界在类型中存在，则@code{TYPE_DOMAIN}为一个@code{INTEGER_TYPE}，它的@code{TYPE_MIN_VALUE}和@code{TYPE_MAX_VALUE}将分别为数组的下界和上界。@code{TYPE_MIN_VALUE}将总是为@code{INTEGER_CST}，0，而@code{TYPE_MAX_VALUE}将为数组元素数目减1，即可以用来索引数组元素的最大值。
 
 @item RECORD_TYPE
-Used to represent @code{struct} and @code{class} types, as well as
-pointers to member functions and similar constructs in other languages.
-@code{TYPE_FIELDS} contains the items contained in this type, each of
-which can be a @code{FIELD_DECL}, @code{VAR_DECL}, @code{CONST_DECL}, or
-@code{TYPE_DECL}.  You may not make any assumptions about the ordering
-of the fields in the type or whether one or more of them overlap.  If
-@code{TYPE_PTRMEMFUNC_P} holds, then this type is a pointer-to-member
-type.  In that case, the @code{TYPE_PTRMEMFUNC_FN_TYPE} is a
-@code{POINTER_TYPE} pointing to a @code{METHOD_TYPE}.  The
-@code{METHOD_TYPE} is the type of a function pointed to by the
-pointer-to-member function.  If @code{TYPE_PTRMEMFUNC_P} does not hold,
-this type is a class type.  For more information, see @pxref{Classes}.
+用来表示@code{struct}和@code{class}类型，以及指向成员函数和其它语言中类似结构的指针。@code{TYPE_FIELDS}包含了该类型中包含的项，其可以为@code{FIELD_DECL}, @code{VAR_DECL}, @code{CONST_DECL}或@code{TYPE_DECL}。你不能假设类型中的域之间的顺序，以及它们是否有重叠。如果@code{TYPE_PTRMEMFUNC_P}成立，则该类型为一个指向成员（pointer-to-member）的类型。这种情况下，@code{TYPE_PTRMEMFUNC_FN_TYPE}为一个@code{POINTER_TYPE}，指向一个@code{METHOD_TYPE}。@code{METHOD_TYPE}为由pointer-to-member函数指向的函数的类型。如果@code{TYPE_PTRMEMFUNC_P}不成立，则该类型为一个class类型。更多信息，参见@pxref{Classes}。
 
 @item UNION_TYPE
-Used to represent @code{union} types.  Similar to @code{RECORD_TYPE}
-except that all @code{FIELD_DECL} nodes in @code{TYPE_FIELD} start at
-bit position zero.
+用来表示@code{union}类型。类似于@code{RECORD_TYPE}，只不过在@code{TYPE_FIELD}中的所有@code{FIELD_DECL}起始于0位。
 
 @item QUAL_UNION_TYPE
-Used to represent part of a variant record in Ada.  Similar to
-@code{UNION_TYPE} except that each @code{FIELD_DECL} has a
-@code{DECL_QUALIFIER} field, which contains a boolean expression that
-indicates whether the field is present in the object.  The type will only
-have one field, so each field's @code{DECL_QUALIFIER} is only evaluated
-if none of the expressions in the previous fields in @code{TYPE_FIELDS}
-are nonzero.  Normally these expressions will reference a field in the
-outer object using a @code{PLACEHOLDER_EXPR}.
+用来表示Ada中的可变记录（variant record）的一部分。类似于@code{UNION_TYPE}，只不过每个@code{FIELD_DECL}具有一个@code{DECL_QUALIFIER}域，其包含了一个布尔表达式，用来指示该域是否在对象中存在。该类型将只有一个域，所以只有当@code{TYPE_FIELDS}中，先前的域中的表达式都不为零时，每个域的@code{DECL_QUALIFIER}才被求值。通常，这些表达式将使用@code{PLACEHOLDER_EXPR}引用外部对象的一个域。
 
 @item UNKNOWN_TYPE
 该节点用来表示一个类型，其信息不足以进行合理的处理。
@@ -567,14 +491,7 @@ outer object using a @code{PLACEHOLDER_EXPR}.
 该节点用于表示一个pointer-to-data成员。对于一个数据成员@code{X::m}，则@code{TYPE_OFFSET_BASETYPE}为@code{X}，@code{TREE_TYPE}为 @code{m}类型.
 
 @item TYPENAME_TYPE
-Used to represent a construct of the form @code{typename T::A}.  The
-@code{TYPE_CONTEXT} is @code{T}; the @code{TYPE_NAME} is an
-@code{IDENTIFIER_NODE} for @code{A}.  If the type is specified via a
-template-id, then @code{TYPENAME_TYPE_FULLNAME} yields a
-@code{TEMPLATE_ID_EXPR}.  The @code{TREE_TYPE} is non-@code{NULL} if the
-node is implicitly generated in support for the implicit typename
-extension; in which case the @code{TREE_TYPE} is a type node for the
-base-class.
+用于表示@code{typename T::A}。@code{TYPE_CONTEXT}为@code{T}；@code{TYPE_NAME}为@code{A}的@code{IDENTIFIER_NODE}。如果类型通过模板id指定，则@code{TYPENAME_TYPE_FULLNAME}产生一个@code{TEMPLATE_ID_EXPR}。如果节点是被隐式的生成，用来支持隐式类型名扩展，则@code{TREE_TYPE}不为@code{NULL}；这种情况下，@code{TREE_TYPE}为基类的类型节点。
 
 @item TYPEOF_TYPE
 用于表示@code{__typeof__}扩展。@code{TYPE_FIELDS}为被表示的类型的表达式。 
@@ -957,15 +874,11 @@ GCC提供了一个扩展，允许自动变量或者全局变量，被放到特�
 
 @table @asis
 
-@item Add a new tree code for the @code{DECL} node
-For language specific @code{DECL} nodes, there is a @file{.def} file
-in each frontend directory where the tree code should be added.
-For @code{DECL} nodes that are part of the middle-end, the code should
-be added to @file{tree.def}.
+@item 为@code{DECL}节点增加一个新的树代码
+对于语言特定的@code{DECL}节点，在每个前端目录下有一个@file{.def}文件，用来添加树代码。对于属于中端一部分的@code{DECL}节点，代码应该添加到@file{tree.def}中。
 
-@item Create a new structure type for the @code{DECL} node
-These structures should inherit from one of the existing structures in
-the language hierarchy by using that structure as the first member.
+@item 为@code{DECL}节点创建一个新的结构体类型
+这些结构体应该继承于现有的层次结构体，方法是使用该结构体作为第一个成员。
 
 @smallexample
 struct tree_foo_decl
@@ -974,53 +887,28 @@ struct tree_foo_decl
 @}
 @end smallexample
 
-Would create a structure name @code{tree_foo_decl} that inherits from
-@code{struct tree_decl_with_vis}.
+将会创建一个名为@code{tree_foo_decl}的结构体，继承于@code{struct tree_decl_with_vis}。
 
-For language specific @code{DECL} nodes, this new structure type
-should go in the appropriate @file{.h} file.
-For @code{DECL} nodes that are part of the middle-end, the structure
-type should go in @file{tree.h}.
+对于语言特定的@code{DECL}节点，这个新的结构体类型应该放在合适的@file{.h}文件中。对于属于中端一部分的@code{DECL}节点，结构体类型应该在@file{tree.h}中。
 
-@item Add a member to the tree structure enumerator for the node
-For garbage collection and dynamic checking purposes, each @code{DECL}
-node structure type is required to have a unique enumerator value
-specified with it.
-For language specific @code{DECL} nodes, this new enumerator value
-should go in the appropriate @file{.def} file.
-For @code{DECL} nodes that are part of the middle-end, the enumerator
-values are specified in @file{treestruct.def}.
+@item 向树结构枚举中增加一个节点成员
+出于垃圾搜集和动态检查的目的，每个@code{DECL}节点结构体类型需要具有一个唯一的枚举值用来指定它。对于语言特定的@code{DECL}节点，该新的枚举值应该在合适的.def文中。对于属于中端的@code{DECL}节点，枚举值在@file{treestruct.def}中指定。
 
-@item Update @code{union tree_node}
-In order to make your new structure type usable, it must be added to
-@code{union tree_node}.
-For language specific @code{DECL} nodes, a new entry should be added
-to the appropriate @file{.h} file of the form
+@item 更新@code{union tree_node}
+为了使得新的结构体类型可用，其必须被添加到@code{union tree_node}中。对于语言特定的@code{DECL}节点，一个新的项应该被添加到合适的@file{.h}文件中，形式如下 
+
 @smallexample
   struct tree_foo_decl GTY ((tag ("TS_VAR_DECL"))) foo_decl;
 @end smallexample
+
+对于属于中端的@code{DECL}节点，额外的成员直接放在@file{tree.h}里的@code{union tree_node}中。
 For @code{DECL} nodes that are part of the middle-end, the additional
-member goes directly into @code{union tree_node} in @file{tree.h}.
 
-@item Update dynamic checking info
-In order to be able to check whether accessing a named portion of
-@code{union tree_node} is legal, and whether a certain @code{DECL} node
-contains one of the enumerated @code{DECL} node structures in the
-hierarchy, a simple lookup table is used.
-This lookup table needs to be kept up to date with the tree structure
-hierarchy, or else checking and containment macros will fail
-inappropriately.
+@item 更新动态检查信息
+为了能够检查访问@code{union tree_node}的一个命名部分是否合法，以及特定的@code{DECL}节点是否包含了枚举的@code{DECL}节点结构体，我们使用了一个简单的查找表。该查找表需要随着树结构层次一起更新，否则用于检查和包含的宏将会失败。
 
-For language specific @code{DECL} nodes, their is an @code{init_ts}
-function in an appropriate @file{.c} file, which initializes the lookup
-table.
-Code setting up the table for new @code{DECL} nodes should be added
-there.
-For each @code{DECL} tree code and enumerator value representing a
-member of the inheritance  hierarchy, the table should contain 1 if
-that tree code inherits (directly or indirectly) from that member.
-Thus, a @code{FOO_DECL} node derived from @code{struct decl_with_rtl},
-and enumerator value @code{TS_FOO_DECL}, would be set up as follows
+对于语言特定的@code{DECL}节点，它们是在合适的@file{.c}文件中的@code{init_ts}函数，用于初始化查找表。为新的@code{DECL}节点建立表格的代码应该添加到这里。对于每个表示继承层次的成员的@code{DECL}树代码和枚举值，如果树代码（直接或间接）继承于那个成员，则表应该包含1。因此，一个源于@code{struct decl_with_rtl}的，枚举值为@code{TS_FOO_DECL}的@code{FOO_DECL}节点，会使用下列方式来建立。
+
 @smallexample
 tree_contains_struct[FOO_DECL][TS_FOO_DECL] = 1;
 tree_contains_struct[FOO_DECL][TS_DECL_WRTL] = 1;
@@ -1028,21 +916,18 @@ tree_contains_struct[FOO_DECL][TS_DECL_COMMON] = 1;
 tree_contains_struct[FOO_DECL][TS_DECL_MINIMAL] = 1;
 @end smallexample
 
-For @code{DECL} nodes that are part of the middle-end, the setup code
-goes into @file{tree.c}.
+对于属于中端的@code{DECL}节点，建表代码在@file{tree.c}中。
 
-@item Add macros to access any new fields and flags
+@item 增加访问任何新的域和标识的宏 
 
-Each added field or flag should have a macro that is used to access
-it, that performs appropriate checking to ensure only the right type of
-@code{DECL} nodes access the field.
+每个增加的域或标识，都应有一个宏用来访问它，并且执行适当的检查以保证访问的是正确类型的@code{DECL}。
 
-These macros generally take the following form
+这些宏通常采用下面的形式
+
 @smallexample
 #define FOO_DECL_FIELDNAME(NODE) FOO_DECL_CHECK(NODE)->foo_decl.fieldname
 @end smallexample
-However, if the structure is simply a base class for further
-structures, something like the following should be used
+但是，如果结构体只是更多结构体的一个基类，有时会使用下面的形式
 @smallexample
 #define BASE_STRUCT_CHECK(T) CONTAINS_STRUCT_CHECK(T, TS_BASE_STRUCT)
 #define BASE_STRUCT_FIELDNAME(NODE) \
