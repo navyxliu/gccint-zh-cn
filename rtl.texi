@@ -2062,13 +2062,9 @@ declarations, and not in the insn chain.
 @cindex math, in RTL
 @cindex RTL expressions for arithmetic
 
-Unless otherwise specified, all the operands of arithmetic expressions
-must be valid for mode @var{m}.  An operand is valid for mode @var{m}
-if it has mode @var{m}, or if it is a @code{const_int} or
-@code{const_double} and @var{m} is a mode of class @code{MODE_INT}.
+除非其它规定，所有算术表达式的操作数必须对模式@var{m}有效。一个操作数对模式@var{m}有效，是指当它具有模式@var{m}，或者如果它是一个@code{const_int}或者@code{const_double}，并且@var{m}是一个@code{MODE_INT}类的模式。
 
-For commutative binary operations, constants should be placed in the
-second operand.
+对于可交换的二进制操作，常量应该放到第二个操作数的位置。
 
 @table @code
 @findex plus
@@ -2521,82 +2517,52 @@ for insn attributes.  @xref{Insn Attributes}.
 @section 位域
 @cindex bit-fields
 
-Special expression codes exist to represent bit-field instructions.
+有专门的表达式代码来表示位域指令。
 
 @table @code
 @findex sign_extract
 @cindex @code{BITS_BIG_ENDIAN}, effect on @code{sign_extract}
 @item (sign_extract:@var{m} @var{loc} @var{size} @var{pos})
-This represents a reference to a sign-extended bit-field contained or
-starting in @var{loc} (a memory or register reference).  The bit-field
-is @var{size} bits wide and starts at bit @var{pos}.  The compilation
-option @code{BITS_BIG_ENDIAN} says which end of the memory unit
-@var{pos} counts from.
+这表示了对在@var{loc}处包含的或者起始的符号扩展位域的引用（内存或者寄存器引用）。位域为@var{size}个位数宽并且在位@var{pos}处起始。编译选项@code{BITS_BIG_ENDIAN}指明了@var{pos}从内存单元的那个端开始。 
 
-If @var{loc} is in memory, its mode must be a single-byte integer mode.
-If @var{loc} is in a register, the mode to use is specified by the
-operand of the @code{insv} or @code{extv} pattern
-(@pxref{Standard Names}) and is usually a full-word integer mode,
-which is the default if none is specified.
+如果@var{loc}在内存中，则它的机器模式必须为一个单个字节的整数机器模式。如果@var{loc}在寄存器中，则使用的机器模式是通过@code{insv}或者@code{extv}指令模式的操作数来指定的（@pxref{Standard Names}）并且通常为一个全字的整数机器模式，这当没有任何指定的时候为缺省的。
 
-The mode of @var{pos} is machine-specific and is also specified
-in the @code{insv} or @code{extv} pattern.
+@var{pos}的机器模式为机器特定的并且总是在@code{insv}或者@code{extv}指令模式中被指定。
 
-The mode @var{m} is the same as the mode that would be used for
-@var{loc} if it were a register.
+机器模式@var{m}与@var{loc}所使用的相同，如果它是在寄存器中。
 
-A @code{sign_extract} can not appear as an lvalue, or part thereof,
-in RTL.
+在RTL中，@code{sign_extract}不可以作为左值或者是其中的一部分出现。
 
 @findex zero_extract
 @item (zero_extract:@var{m} @var{loc} @var{size} @var{pos})
-Like @code{sign_extract} but refers to an unsigned or zero-extended
-bit-field.  The same sequence of bits are extracted, but they
-are filled to an entire word with zeros instead of by sign-extension.
+类似@code{sign_extract}，但是指向一个无符号或者0扩展的位域。相同的位序列被抽取，但是它们被填充到一个整字中，并使用0扩展而不是符号扩展。 
 
-Unlike @code{sign_extract}, this type of expressions can be lvalues
-in RTL; they may appear on the left side of an assignment, indicating
-insertion of a value into the specified bit-field.
+不像@code{sign_extract}，该表达式的类型可以在RTL中为左值；它们可以出现在一个赋值的左边，来表明在一个指定的位域插入一个值。
+
 @end table
 
 @node 向量运算
 @section 向量运算
 @cindex vector operations
 
-All normal RTL expressions can be used with vector modes; they are
-interpreted as operating on each part of the vector independently.
-Additionally, there are a few new expressions to describe specific vector
-operations.
+所有普通的RTL表达式都能够作为向量模式使用；它们被解析为对向量的每个部分进行独立的运算。另外，有一些新的表达式来描述特定的向量运算。
 
 @table @code
 @findex vec_merge
 @item (vec_merge:@var{m} @var{vec1} @var{vec2} @var{items})
-This describes a merge operation between two vectors.  The result is a vector
-of mode @var{m}; its elements are selected from either @var{vec1} or
-@var{vec2}.  Which elements are selected is described by @var{items}, which
-is a bit mask represented by a @code{const_int}; a zero bit indicates the
-corresponding element in the result vector is taken from @var{vec2} while
-a set bit indicates it is taken from @var{vec1}.
+这描述了两个向量间的合并操作。结果为机器模式为@var{m}的向量；它的元素来自@var{vec1}或者@var{vec2}。那些元素被选择是通过@var{items}来描述，其为一个由@code{const_int}表示的位掩码；0位指示相应的元素在结果向量中是来自@var{vec2}，而1指示其来自@var{vec1}。 
 
 @findex vec_select
 @item (vec_select:@var{m} @var{vec1} @var{selection})
-This describes an operation that selects parts of a vector.  @var{vec1} is
-the source vector, @var{selection} is a @code{parallel} that contains a
-@code{const_int} for each of the subparts of the result vector, giving the
-number of the source subpart that should be stored into it.
+这描述了选择一个向量的一部分的操作。@var{vec1}为源向量，@var{selection}为一个@code{parallel}其包含了一个@code{const_int}，来描述结果向量的子部分，给出了源向量的子部分应该被存放进去。 
 
 @findex vec_concat
 @item (vec_concat:@var{m} @var{vec1} @var{vec2})
-Describes a vector concat operation.  The result is a concatenation of the
-vectors @var{vec1} and @var{vec2}; its length is the sum of the lengths of
-the two inputs.
+描述了一个向量连接操作。结果为向量@var{vec1}和@var{vec2}的连接；其长度为两个输出向量的长度之和。
 
 @findex vec_duplicate
 @item (vec_duplicate:@var{m} @var{vec})
-This operation converts a small vector into a larger one by duplicating the
-input values.  The output vector mode must have the same submodes as the
-input vector mode, and the number of output parts must be an integer multiple
-of the number of input parts.
+该操作将一个小向量转换为一个大一点的，通过复制输入值。输出向量的机器模式必须和输入向量的相同，并且输出部分的编号必须为输入部分的编号的整数倍。
 
 @end table
 
