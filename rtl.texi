@@ -366,17 +366,18 @@ and is less than @code{XVECLEN (@var{exp}, @var{idx})}.
 在本节中所定义的所有宏定义都被扩展成左值，
 因而也可用于对操作数、长度和向量元素赋值。
 
-@node 特殊访问方式
-@section 特殊访问方式
+@node 访问特殊操作数
+@section 访问特殊操作数
 @cindex access to special operands
 
-Some RTL nodes have special annotations associated with them.
+一些RTL节点具有与它们相关联的特殊的注解。
 
 @table @code
 @item MEM
 @table @code
 @findex MEM_ALIAS_SET
 @item MEM_ALIAS_SET (@var{x})
+
 If 0, @var{x} is not in any alias set, and may alias anything.  Otherwise,
 @var{x} can only alias @code{MEM}s in a conflicting alias set.  This value
 is set in a language-dependent manner in the front-end, and should not be
@@ -2604,100 +2605,62 @@ of the number of input parts.
 @cindex conversions
 @cindex machine mode conversions
 
-All conversions between machine modes must be represented by
-explicit conversion operations.  For example, an expression
-which is the sum of a byte and a full word cannot be written as
-@code{(plus:SI (reg:QI 34) (reg:SI 80))} because the @code{plus}
-operation requires two operands of the same machine mode.
-Therefore, the byte-sized operand is enclosed in a conversion
-operation, as in
+所有机器模式之间的转换都必须使用显示的转换符来表示。例如，一个表示字节和全字之和的表达式就不能写成@code{(plus:SI (reg:QI 34) (reg:SI 80))}，因为@code{plus}操作符需要两个具有相同机器模式的操作符。因此，字节长度的操作数被封装在一个转换操作中，如
 
 @smallexample
 (plus:SI (sign_extend:SI (reg:QI 34)) (reg:SI 80))
 @end smallexample
 
-The conversion operation is not a mere placeholder, because there
-may be more than one way of converting from a given starting mode
-to the desired final mode.  The conversion operation code says how
-to do it.
+转换符并不仅仅是一个形式上的占位符，因为可能会有多种方式将给出的最初模式转换为期望的最终模式。转换符指出了如何进行这种操作。
 
-For all conversion operations, @var{x} must not be @code{VOIDmode}
-because the mode in which to do the conversion would not be known.
-The conversion must either be done at compile-time or @var{x}
-must be placed into a register.
+对于所有的转换操作，@var{x}不能为@code{VOIDmode}，因为这样就无法知道如何进行转换操作。转换必须在编译时进行或者@var{x}必须被放入寄存器中。
 
 @table @code
 @findex sign_extend
 @item (sign_extend:@var{m} @var{x})
-Represents the result of sign-extending the value @var{x}
-to machine mode @var{m}.  @var{m} must be a fixed-point mode
-and @var{x} a fixed-point value of a mode narrower than @var{m}.
+表示将@var{x}的值符号扩展为机器模式@var{m}后的结果。@var{m}必须是一个定点模式，并且@var{x}是一个比@var{m}模式窄的定点值。
 
 @findex zero_extend
 @item (zero_extend:@var{m} @var{x})
-Represents the result of zero-extending the value @var{x}
-to machine mode @var{m}.  @var{m} must be a fixed-point mode
-and @var{x} a fixed-point value of a mode narrower than @var{m}.
+表示将@var{x}的值零扩展为机器模式@var{m}后的结果。@var{m}必须是一个定点模式，并且@var{x}是一个比@var{m}模式窄的定点值。
 
 @findex float_extend
 @item (float_extend:@var{m} @var{x})
-Represents the result of extending the value @var{x}
-to machine mode @var{m}.  @var{m} must be a floating point mode
-and @var{x} a floating point value of a mode narrower than @var{m}.
+表示将@var{x}的值扩展为机器模式@var{m}后的结果。@var{m}必须是一个浮点模式，并且@var{x}是一个比@var{m}模式窄的浮点值。
 
 @findex truncate
 @item (truncate:@var{m} @var{x})
-Represents the result of truncating the value @var{x}
-to machine mode @var{m}.  @var{m} must be a fixed-point mode
-and @var{x} a fixed-point value of a mode wider than @var{m}.
+表示将@var{x}的值截短为机器模式@var{m}后的结果。@var{m}必须是一个定点模式，并且@var{x}是一个比@var{m}模式宽的定点值。
 
 @findex ss_truncate
 @item (ss_truncate:@var{m} @var{x})
-Represents the result of truncating the value @var{x}
-to machine mode @var{m}, using signed saturation in the case of
-overflow.  Both @var{m} and the mode of @var{x} must be fixed-point
-modes.
+表示将@var{x}的值截短为机器模式@var{m}后的结果，并且在溢出时作为有符号数处理。@var{m}和@var{x}的模式都必须是定点模式。
 
 @findex us_truncate
 @item (us_truncate:@var{m} @var{x})
-Represents the result of truncating the value @var{x}
-to machine mode @var{m}, using unsigned saturation in the case of
-overflow.  Both @var{m} and the mode of @var{x} must be fixed-point
-modes.
+表示将@var{x}的值截短为机器模式@var{m}后的结果，并且在溢出时作为无符号数处理。@var{m}和@var{x}的模式都必须是定点模式。
 
 @findex float_truncate
 @item (float_truncate:@var{m} @var{x})
-Represents the result of truncating the value @var{x}
-to machine mode @var{m}.  @var{m} must be a floating point mode
-and @var{x} a floating point value of a mode wider than @var{m}.
+表示将@var{x}的值截短为机器模式@var{m}后的结果。@var{m}必须是一个浮定点模式，并且@var{x}是一个比@var{m}模式宽的浮点值。
 
 @findex float
 @item (float:@var{m} @var{x})
-Represents the result of converting fixed point value @var{x},
-regarded as signed, to floating point mode @var{m}.
+表示将定点值@var{x}转换为有符号的浮点模式@var{m}后的结果。
 
 @findex unsigned_float
 @item (unsigned_float:@var{m} @var{x})
-Represents the result of converting fixed point value @var{x},
-regarded as unsigned, to floating point mode @var{m}.
+表示将定点值@var{x}转换为无符号的浮点模式@var{m}后的结果。
 
 @findex fix
 @item (fix:@var{m} @var{x})
-When @var{m} is a floating-point mode, represents the result of
-converting floating point value @var{x} (valid for mode @var{m}) to an
-integer, still represented in floating point mode @var{m}, by rounding
-towards zero.
+当@var{m}是一个浮点模式时，表示将浮点值@var{x}（对模式@var{m}有效）转换为整形，仍然使用浮点模式@var{m}表示，只不过是向零方向进行舍入。
 
-When @var{m} is a fixed-point mode, represents the result of
-converting floating point value @var{x} to mode @var{m}, regarded as
-signed.  How rounding is done is not specified, so this operation may
-be used validly in compiling C code only for integer-valued operands.
+当@var{m}是一个定点模式时，表示将浮点值@var{x}转换为有符号的模式@var{m}的结果。具体如何舍入没有做出规定。所以，这个操作可能只是被用在编译C代码时的整数值的操作数。
 
 @findex unsigned_fix
 @item (unsigned_fix:@var{m} @var{x})
-Represents the result of converting floating point value @var{x} to
-fixed point mode @var{m}, regarded as unsigned.  How rounding is done
-is not specified.
+表示将浮点值@var{x}转换为无符号的定点模式@var{m}。具体如何舍入没有做出规定。
 
 @findex fract_convert
 @item (fract_convert:@var{m} @var{x})
@@ -2737,98 +2700,48 @@ maximum or the minimum.
 @cindex RTL declarations
 @cindex declarations, RTL
 
-Declaration expression codes do not represent arithmetic operations
-but rather state assertions about their operands.
+声明表达式代码并不表示算术运算，而是关于它们的操作数状态的断言。
 
 @table @code
 @findex strict_low_part
 @cindex @code{subreg}, in @code{strict_low_part}
 @item (strict_low_part (subreg:@var{m} (reg:@var{n} @var{r}) 0))
-This expression code is used in only one context: as the destination operand of a
-@code{set} expression.  In addition, the operand of this expression
-must be a non-paradoxical @code{subreg} expression.
+这个表达式代码只用在一种上下文中：作为@code{set}表达式的目标操作数。另外，这个表达式的操作数必须是一个non-paradoxical @code{subreg}表达式 
 
-The presence of @code{strict_low_part} says that the part of the
-register which is meaningful in mode @var{n}, but is not part of
-mode @var{m}, is not to be altered.  Normally, an assignment to such
-a subreg is allowed to have undefined effects on the rest of the
-register when @var{m} is less than a word.
+这里@code{strict_low_part}指出寄存器中对于模式@var{n}有意义，但对于模式@var{m}却无意义的那一部分，是不能被修改的。通常，对于这样的subreg进行赋值，当@var{m}小于一个字时，是允许对寄存器的其它部分有未定义的影响。
+
 @end table
 
 @node 副作用
 @section 副作用表达式
 @cindex RTL side effect expressions
 
-The expression codes described so far represent values, not actions.
-But machine instructions never produce values; they are meaningful
-only for their side effects on the state of the machine.  Special
-expression codes are used to represent side effects.
+目前为止，所描述的表达式代码都是用来表示一个值，而不是操作。但是机器指令是不会产生值的，而只是通过副作用来改变机器状态。特定的表达式代码被用来表示副作用。
 
-The body of an instruction is always one of these side effect codes;
-the codes described above, which represent values, appear only as
-the operands of these.
+一条指令的主体，总是这些副作用代码之一；上面描述的表示值的代码，只是作为操作数出现在其中。
 
 @table @code
 @findex set
 @item (set @var{lval} @var{x})
-Represents the action of storing the value of @var{x} into the place
-represented by @var{lval}.  @var{lval} must be an expression
-representing a place that can be stored in: @code{reg} (or @code{subreg},
-@code{strict_low_part} or @code{zero_extract}), @code{mem}, @code{pc},
-@code{parallel}, or @code{cc0}.
+表示将@var{x}的值存放到由@var{lval}表示的地方。@var{lval}必须是表示可以用来存放的地方的表达式：@code{reg}（或者@code{subreg}，@code{strict_low_part}或者@code{zero_extract}），@code{mem}，@code{pc}，@code{parallel}或者@code{cc0}。
 
-If @var{lval} is a @code{reg}, @code{subreg} or @code{mem}, it has a
-machine mode; then @var{x} must be valid for that mode.
+如果@var{lval}是一个@code{reg}，@code{subreg}或者@code{mem}，其具有一个机器模式；则@var{x}必须对这种模式有效。 
 
-If @var{lval} is a @code{reg} whose machine mode is less than the full
-width of the register, then it means that the part of the register
-specified by the machine mode is given the specified value and the
-rest of the register receives an undefined value.  Likewise, if
-@var{lval} is a @code{subreg} whose machine mode is narrower than
-the mode of the register, the rest of the register can be changed in
-an undefined way.
+如果@var{lval}是一个@code{subreg}的@code{strict_low_part}，则由@code{subreg}的机器模式所指定的寄存器的那部分被赋予值@var{x}，而寄存器的其它部分不变。 
 
-If @var{lval} is a @code{strict_low_part} of a subreg, then the part
-of the register specified by the machine mode of the @code{subreg} is
-given the value @var{x} and the rest of the register is not changed.
+如果@var{lval}是一个@code{zero_extract}，则由@code{zero_extract}指定的相关位域（内存或者寄存器相关的），被赋予值@var{x}，而其它位域不变。注意@code{sign_extract}不能出现在@var{lval}中。 
 
-If @var{lval} is a @code{zero_extract}, then the referenced part of
-the bit-field (a memory or register reference) specified by the
-@code{zero_extract} is given the value @var{x} and the rest of the
-bit-field is not changed.  Note that @code{sign_extract} can not
-appear in @var{lval}.
+如果@var{lval}是@code{(cc0)}，其没有机器模式，并且@var{x}可以为一个@code{compare}表达式或者任意模式的值。后者情况表示是一个“test”指令。表达式@code{(set (cc0) (reg:@var{m} @var{n}))} 等价于 @code{(set (cc0) (compare (reg:@var{m} @var{n})。在编译过程中可以使用前一个表达式来节省空间。 
 
-If @var{lval} is @code{(cc0)}, it has no machine mode, and @var{x} may
-be either a @code{compare} expression or a value that may have any mode.
-The latter case represents a ``test'' instruction.  The expression
-@code{(set (cc0) (reg:@var{m} @var{n}))} is equivalent to
-@code{(set (cc0) (compare (reg:@var{m} @var{n}) (const_int 0)))}.
-Use the former expression to save space during the compilation.
-
-If @var{lval} is a @code{parallel}, it is used to represent the case of
-a function returning a structure in multiple registers.  Each element
-of the @code{parallel} is an @code{expr_list} whose first operand is a
-@code{reg} and whose second operand is a @code{const_int} representing the
-offset (in bytes) into the structure at which the data in that register
-corresponds.  The first element may be null to indicate that the structure
-is also passed partly in memory.
+如果@var{lval}是一个@code{parallel}，其用来表示一个函数通过多个寄存器来返回一个结构体的情况。@code{parallel}中的每一个元素是一个@code{expr_list}，其第一个操作数是一个@code{reg}，并且第二个操作数是一个@code{const_int}，表示相应寄存器的数据在结构体中的偏移量（以字节为单位）。第一个元素也可能为null，用来指示结构体也有一部分是在内存中传递的。 
 
 @cindex jump instructions and @code{set}
 @cindex @code{if_then_else} usage
-If @var{lval} is @code{(pc)}, we have a jump instruction, and the
-possibilities for @var{x} are very limited.  It may be a
-@code{label_ref} expression (unconditional jump).  It may be an
-@code{if_then_else} (conditional jump), in which case either the
-second or the third operand must be @code{(pc)} (for the case which
-does not jump) and the other of the two must be a @code{label_ref}
-(for the case which does jump).  @var{x} may also be a @code{mem} or
-@code{(plus:SI (pc) @var{y})}, where @var{y} may be a @code{reg} or a
-@code{mem}; these unusual patterns are used to represent jumps through
-branch tables.
+如果@var{lval}是@code{(pc)}，则为一个跳转指令，并且@var{x}只有几种可能。其可能为一个@code{label_ref}表达式（无条件跳转）。可能为一个@code{if_then_else}（条件跳转），这种情况下，第二个或者第三个操作数必须是@code{(pc)}（用于不进行跳转的情况），并且另外两个必须是一个@code{label_ref}（用于进行跳转的情况）。@var{x}也可以是一个@code{mem}或者@code{(plus:SI (pc) @var{y}, 其中y可以为一个@code{reg}或者@code{mem}；这些独特的模式用来表示通过分支表来进行跳转。 
 
-If @var{lval} is neither @code{(cc0)} nor @code{(pc)}, the mode of
-@var{lval} must not be @code{VOIDmode} and the mode of @var{x} must be
-valid for the mode of @var{lval}.
+如果@var{lval}即不是@code{(cc0)}也不是@code{(pc)},则@var{lval}的模式一定不是@code{VOIDmode}，并且@var{x}的模式必须对于@var{lval}的模式有效。 
+
+lval通常通过SET_DEST宏来访问，x通常使用SET_SRC宏。
 
 @findex SET_DEST
 @findex SET_SRC
@@ -3212,18 +3125,14 @@ in the machine description.
 @cindex assembler instructions in RTL
 
 @cindex @code{asm_operands}, usage
-The RTX code @code{asm_operands} represents a value produced by a
-user-specified assembler instruction.  It is used to represent
-an @code{asm} statement with arguments.  An @code{asm} statement with
-a single output operand, like this:
+RTX代码@code{asm_operands}表示由用户特定的汇编指令所产生的值。其用来表示带有参数的@code{asm}语句。一个具有单个输出操作数的@code{asm}语句，如下：
 
 @smallexample
 asm ("foo %1,%2,%0" : "=a" (outputvar) : "g" (x + y), "di" (*z));
 @end smallexample
 
 @noindent
-is represented using a single @code{asm_operands} RTX which represents
-the value that is stored in @code{outputvar}:
+其通过一个单个的@code{asm_operands} RTX来表示，其表示了存储在@code{outputvar}中的值：
 
 @smallexample
 (set @var{rtx-for-outputvar}
@@ -3234,19 +3143,9 @@ the value that is stored in @code{outputvar}:
 @end smallexample
 
 @noindent
-Here the operands of the @code{asm_operands} RTX are the assembler
-template string, the output-operand's constraint, the index-number of the
-output operand among the output operands specified, a vector of input
-operand RTX's, and a vector of input-operand modes and constraints.  The
-mode @var{m1} is the mode of the sum @code{x+y}; @var{m2} is that of
-@code{*z}.
-
-When an @code{asm} statement has multiple output values, its insn has
-several such @code{set} RTX's inside of a @code{parallel}.  Each @code{set}
-contains a @code{asm_operands}; all of these share the same assembler
-template and vectors, but each contains the constraint for the respective
-output operand.  They are also distinguished by the output-operand index
-number, which is 0, 1, @dots{} for successive output operands.
+这里，@code{asm_operands} RTX的操作数为汇编模板字符串，输出操作数的约束，在指定的输出操作数中的索引编号，一个输入操作数RTX向量，以及一个输出操作数机器模式和约束的向量。机器模式@var{m1}为@code{x+y}的和的机器模式；@var{m2}为@code{*z}的机器模式。
+        
+当@code{asm}语句具有多个输出值时，它的insn具有多个这样的@code{set} RTX，并位于一个@code{parallel}中。每个@code{set}包括了一个@code{asm_operands}；所有这些共享相同的汇编模板和向量，但是每个包含了相应的输出操作数的约束。它们也是通过输出操作数索引编号来区分的，即0，1@dots{}连续的输出操作数。
 
 @node Insns
 @section Insns
@@ -3844,32 +3743,22 @@ ordinary way as an expression.
 @cindex RTL function-call insns
 @cindex function-call insns
 
-Insns that call subroutines have the RTL expression code @code{call_insn}.
-These insns must satisfy special rules, and their bodies must use a special
-RTL expression code, @code{call}.
+调用子程序的Insn具有RTL表达式代码@code{call_insn}。这些insn必须满足特别的规则，并且它们的主体必须使用特定的RTL表达式代码@code{call}。
 
 @cindex @code{call} usage
-A @code{call} expression has two operands, as follows:
+@code{call}表达式有两个操作数，如下：
 
 @smallexample
 (call (mem:@var{fm} @var{addr}) @var{nbytes})
 @end smallexample
 
 @noindent
-Here @var{nbytes} is an operand that represents the number of bytes of
-argument data being passed to the subroutine, @var{fm} is a machine mode
-(which must equal as the definition of the @code{FUNCTION_MODE} macro in
-the machine description) and @var{addr} represents the address of the
-subroutine.
+这里@var{nbytes}操作数表示传递给子程序的参数的字节数，@var{fm}是一个机器模式（其必须与在机器描述中定义的@code{FUNCTION_MODE}相等），@var{addr}表示子程序的地址。
 
-For a subroutine that returns no value, the @code{call} expression as
-shown above is the entire body of the insn, except that the insn might
-also contain @code{use} or @code{clobber} expressions.
+对于子程序没有返回值的，上面所示的@code{call}表达式是insn的整个主体，除了insn可能还会包含@code{use}或@code{clobber}表达式。
 
 @cindex @code{BLKmode}, and function return values
-For a subroutine that returns a value whose mode is not @code{BLKmode},
-the value is returned in a hard register.  If this register's number is
-@var{r}, then the body of the call insn looks like this:
+对于子程序返回不是@code{BLKmode}模式的值的，值通过硬件寄存器返回。如果该寄存器号为@var{r}，则call insn的主体看起来是这样的：
 
 @smallexample
 (set (reg:@var{m} @var{r})
@@ -3877,92 +3766,59 @@ the value is returned in a hard register.  If this register's number is
 @end smallexample
 
 @noindent
-This RTL expression makes it clear (to the optimizer passes) that the
-appropriate register receives a useful value in this insn.
+该RTL表达式很清楚的说明了（对于优化阶段），在该insn中有一个适当的寄存器用来接受一个有用的值。
 
-When a subroutine returns a @code{BLKmode} value, it is handled by
-passing to the subroutine the address of a place to store the value.
-So the call insn itself does not ``return'' any value, and it has the
-same RTL form as a call that returns nothing.
+当子程序返回@code{BLKmode}值时，将会通过传递给子程序用来存储返回值的地址来处理。因次，call insn本身不返回任何值，具有和没有返回值一样的RTL。
 
-On some machines, the call instruction itself clobbers some register,
-for example to contain the return address.  @code{call_insn} insns
-on these machines should have a body which is a @code{parallel}
-that contains both the @code{call} expression and @code{clobber}
-expressions that indicate which registers are destroyed.  Similarly,
-if the call instruction requires some register other than the stack
-pointer that is not explicitly mentioned in its RTL, a @code{use}
-subexpression should mention that register.
+在一些机器上，调用指令本身会破坏一些寄存器，例如包含了返回地址。这些机器上的@code{call_insn}应该有一个@code{parallel}主体，包含了@code{call}表达式和@code{clobber}表达式，用来指示哪些寄存器会被破坏。类似的，如果调用指令需要栈指针之外的一些寄存器，并且没有在其RTL中显示提到的，则应该用@code{use}子表达式来指出。
 
-Functions that are called are assumed to modify all registers listed in
-the configuration macro @code{CALL_USED_REGISTERS} (@pxref{Register
-Basics}) and, with the exception of @code{const} functions and library
-calls, to modify all of memory.
+被调用的函数被假设为会修改列在配置宏@code{CALL_USED_REGISTERS}（@pxref{Register Basics}）中的所有寄存器，并且除了const函数和库函数调用外，被假设为会修改所有的内存。
 
-Insns containing just @code{use} expressions directly precede the
-@code{call_insn} insn to indicate which registers contain inputs to the
-function.  Similarly, if registers other than those in
-@code{CALL_USED_REGISTERS} are clobbered by the called function, insns
-containing a single @code{clobber} follow immediately after the call to
-indicate which registers.
+直接在@code{call_insn}之前的只是包含了@code{use}表达式的insn，用来指示哪些寄存器用来存放函数的输入。类似的，如果不在@code{CALL_USED_REGISTERS}中那些寄存器会被所调用的函数破坏，紧跟在call之后的包含了单独的@code{clobber}的insn，用来指出这些寄存器。
 
 @node 共享
 @section 结构共享假设
 @cindex sharing of RTL components
 @cindex RTL structure sharing assumptions
 
-The compiler assumes that certain kinds of RTL expressions are unique;
-there do not exist two distinct objects representing the same value.
-In other cases, it makes an opposite assumption: that no RTL expression
-object of a certain kind appears in more than one place in the
-containing structure.
+编译器假设某些类型的RTL表达式是唯一的；不会存在两个不同的对象表示相同的值。对于其它情况，有相反的假设：在被包含的结构体中，不会在多个地方出现某一类型的RTL表达式对象。
 
-These assumptions refer to a single function; except for the RTL
-objects that describe global variables and external functions,
-and a few standard objects such as small integer constants,
-no RTL objects are common to two functions.
+这些假设针对于一个单独的函数；除了描述全局变量和外部函数的RTL对象，一些标准对象，例如小整形常数以外，没有其它RTL对象可以在两个函数中共用。
 
 @itemize @bullet
 @cindex @code{reg}, RTL sharing
 @item
-Each pseudo-register has only a single @code{reg} object to represent it,
-and therefore only a single machine mode.
+每一个伪寄存器只有一个单独的@code{reg}对象来表示，因此也只有一种机器模式。
 
 @cindex symbolic label
 @cindex @code{symbol_ref}, RTL sharing
 @item
-For any symbolic label, there is only one @code{symbol_ref} object
-referring to it.
+对于任何标号，只有一个@code{symbol_ref}对象关联。
 
 @cindex @code{const_int}, RTL sharing
 @item
-All @code{const_int} expressions with equal values are shared.
+所有具有相同值的@code{const_int}表达式被共享。
 
 @cindex @code{pc}, RTL sharing
 @item
-There is only one @code{pc} expression.
+T只有一个@code{pc}表达式。
 
 @cindex @code{cc0}, RTL sharing
 @item
-There is only one @code{cc0} expression.
+只有一个@code{cc0}表达式。
 
 @cindex @code{const_double}, RTL sharing
 @item
-There is only one @code{const_double} expression with value 0 for
-each floating point mode.  Likewise for values 1 and 2.
+对于每一种浮点模式，只有一个@code{const_double}表达式其值为0。同样对于值1，2。
 
 @cindex @code{const_vector}, RTL sharing
 @item
-There is only one @code{const_vector} expression with value 0 for
-each vector mode, be it an integer or a double constant vector.
+对于每一种向量模式，只有一个@code{const_vector}表达式其值为0。其为整数或者双精度常量向量。
 
 @cindex @code{label_ref}, RTL sharing
 @cindex @code{scratch}, RTL sharing
 @item
-No @code{label_ref} or @code{scratch} appears in more than one place in
-the RTL structure; in other words, it is safe to do a tree-walk of all
-the insns in the function and assume that each time a @code{label_ref}
-or @code{scratch} is seen it is distinct from all others that are seen.
+在RTL结构体中不会在多个地方出现@code{label_ref}或@code{scratch}；换句话说，对函数中所有insn进行树遍历时，可以认为每次遇到的@code{label_ref}或者@code{scratch}都与在其它地方遇到的不同。
 
 @cindex @code{mem}, RTL sharing
 @item
@@ -3973,34 +3829,19 @@ variables are occasionally made.
 
 @cindex @code{asm_operands}, RTL sharing
 @item
-When a single @code{asm} statement has multiple output operands, a
-distinct @code{asm_operands} expression is made for each output operand.
-However, these all share the vector which contains the sequence of input
-operands.  This sharing is used later on to test whether two
-@code{asm_operands} expressions come from the same statement, so all
-optimizations must carefully preserve the sharing if they copy the
-vector at all.
+当一个单独的@code{asm}语句具有多个输出操作数时，会为每一个输出数创建一个不同的@code{asm_operands}表达式。然后，这些表达式都共享包含着输入操作数序列的向量。这是为了之后用于测试两个@code{asm_operands}表达式是否来自同一语句，所以，所有的优化当进行复制整个向量时，必须仔细保持共享。
 
 @item
-No RTL object appears in more than one place in the RTL structure
-except as described above.  Many passes of the compiler rely on this
-by assuming that they can modify RTL objects in place without unwanted
-side-effects on other insns.
+除了上面描述的以外，在RTL结构体中没有其它RTL对象会出现多次。编译器的许多遍扫描，都是依赖于这样的假设，即它们能在一个地方修改RTL对象，并且不会对其它insn产生不需要的副作用。
 
 @findex unshare_all_rtl
 @item
-During initial RTL generation, shared structure is freely introduced.
-After all the RTL for a function has been generated, all shared
-structure is copied by @code{unshare_all_rtl} in @file{emit-rtl.c},
-after which the above rules are guaranteed to be followed.
+在最初的RTL生成过程中，可以随意使用共享结构。当一个函数的所有RTL都被生成之后，所有的共享结构体都被@file{emit-rtl.c}中的@code{unshare_all_rtl}进行复制，之后，将保证上面的规则会被遵循。
 
 @findex copy_rtx_if_shared
 @item
-During the combiner pass, shared structure within an insn can exist
-temporarily.  However, the shared structure is copied before the
-combiner is finished with the insn.  This is done by calling
-@code{copy_rtx_if_shared}, which is a subroutine of
-@code{unshare_all_rtl}.
+在合并阶段，共享结构体可以在insn中临时存在。但是，在insn的合并完成之前，共享结构会被复制，通过调用@code{unshare_all_rtl}的子程序@code{copy_rtx_if_shared}。
+
 @end itemize
 
 @node 读取RTL
