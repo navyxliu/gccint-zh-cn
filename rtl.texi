@@ -10,14 +10,9 @@
 @cindex representation of RTL
 @cindex Register Transfer Language (RTL)
 
-编译器的大部分工作都是基于一种中间表示，
-叫做寄存器传送语言（register transfer language）。
-在该语言中，描述了将要输出的指令，
-并且差不多是按照字母顺序一个一个的来描述指令的行为。
+编译器的大部分工作都是基于一种中间表示，叫做寄存器传送语言（register transfer language）。在该语言中，描述了将要输出的指令，并且差不多是按照字母顺序一个一个的来描述指令的行为。
 
-RTL的灵感来自Lisp列表。它同时具有一个内部形式，由指向结构体的结构体组成，
-以及一个文本形式，用在机器描述和打印的调试输出中。文本形式使用嵌套的括号，
-来表示内部形式中的指针。
+RTL的灵感来自Lisp列表。它同时具有一个内部形式，由指向结构体的结构体组成，以及一个文本形式，用在机器描述和打印的调试输出中。文本形式使用嵌套的括号，来表示内部形式中的指针。
 
 @menu
 * RTL对象::       表达式、向量、字符串、整数 
@@ -52,21 +47,11 @@ RTL的灵感来自Lisp列表。它同时具有一个内部形式，由指向结�
 @cindex RTL vectors
 @cindex RTL expression
 @cindex RTX (See RTL)
-RTL使用五种对象：表达式、整数、宽整数、字符串和向量。
-其中，最重要的是表达式。
-RTL 表达式（简称RTX）是一个C结构体，通常用指针来引用它。
-这种引用它的指针的类型定义名为@code{rtx}。
+RTL使用五种对象：表达式、整数、宽整数、字符串和向量。其中，最重要的是表达式。RTL 表达式（简称RTX）是一个C结构体，通常用指针来引用它。这种引用它的指针的类型定义名为@code{rtx}。
 
-整数就是C中的@code{int}，书写形式使用十进制表示。
-宽整数是@code{HOST_WIDE_INT}类型的一个整数对象，
-其书写形式也用十进制表示。
+整数就是C中的@code{int}，书写形式使用十进制表示。宽整数是@code{HOST_WIDE_INT}类型的一个整数对象，其书写形式也用十进制表示。
 
-字符串为一串字符，在存储器中以C的@code{char *}形式表示且按C语法规定书写。
-然而，RTL中的字符串决不会为空值。若机器描述中有一空字符串，
-它在存储器中则表示成一个空指针而不是通常意义上的指向空字符的指针。
-在某些上下文中，允许用这种空指针表示空字符串。在RTL代码中，
-字符串经常出现在@code{symbol_ref}表达式中，
-但也出现在某些机器描述的RTL表达式中。
+字符串为一串字符，在存储器中以C的@code{char *}形式表示且按C语法规定书写。然而，RTL中的字符串决不会为空值。若机器描述中有一空字符串，它在存储器中则表示成一个空指针而不是通常意义上的指向空字符的指针。在某些上下文中，允许用这种空指针表示空字符串。在RTL代码中，字符串经常出现在@code{symbol_ref}表达式中，但也出现在某些机器描述的RTL表达式中。
 
 对于字符串，还有一种特殊的语法，用于在机器描述中嵌入C代码。只要字符串可以出现的地方，都可以书写一个C风格的大括号代码块。整个大括号代码块，包括最外面的一对括号，被作为字符串常量看待。括号里面的双引号字符不是特殊字符。因此，如果你在C代码中书写字符串常量，则不需要使用反斜杠来转义每个引号字符。
 
@@ -76,35 +61,17 @@ RTL 表达式（简称RTX）是一个C结构体，通常用指针来引用它。
 @cindex codes, RTL expression
 @findex GET_CODE
 @findex PUT_CODE
-Expressions are classified by @dfn{expression codes} (also called RTX
-codes).  The expression code is a name defined in @file{rtl.def}, which is
-also (in uppercase) a C enumeration constant.  The possible expression
-codes and their meanings are machine-independent.  The code of an RTX can
-be extracted with the macro @code{GET_CODE (@var{x})} and altered with
-@code{PUT_CODE (@var{x}, @var{newcode})}.
+表达式根据@dfn{expression codes}来划分类别（也称作RTX代码）。表达式代码为在@file{rtl.def}中定义的一个名字，其也是一个（大写的）C枚举常量。合理的表达式代码以及它们的含义，是机器无关的。RTX的代码可以使用宏@code{GET_CODE (@var{x})}来抽取，以及使用@code{PUT_CODE (@var{x}, @var{newcode})}来修改。
 
-The expression code determines how many operands the expression contains,
-and what kinds of objects they are.  In RTL, unlike Lisp, you cannot tell
-by looking at an operand what kind of object it is.  Instead, you must know
-from its context---from the expression code of the containing expression.
-For example, in an expression of code @code{subreg}, the first operand is
-to be regarded as an expression and the second operand as an integer.  In
-an expression of code @code{plus}, there are two operands, both of which
-are to be regarded as expressions.  In a @code{symbol_ref} expression,
-there is one operand, which is to be regarded as a string.
+表达式代码决定了表达式包含了多少个操作数，以及它们都是什么对象。在RTL中，不像Lisp，你不能通过查看一个操作数来得知它是什么对象。替代的，你必须通过它的上下文来知道——通过所包含的表达式的表达式代码。例如，在一个表达式代码为@code{subreg}的表达式中，第一个操作数被作为一个表达式，第二个操作数为一个整数。在代码为@code{plus}的表达式中，有两个操作数，都作为表达式。在@code{symbol_ref}表达式中，有一个操作数，作为一个字符串。
 
-Expressions are written as parentheses containing the name of the
-expression type, its flags and machine mode if any, and then the operands
-of the expression (separated by spaces).
+表达式被书写为，一对括号，包含了表达式类型的名字，它的标记和机器模式（如果存在的话），然后是表达式的操作数（通过空格分隔）。
 
-Expression code names in the @samp{md} file are written in lowercase,
-but when they appear in C code they are written in uppercase.  In this
-manual, they are shown as follows: @code{const_int}.
+表达式代码名，在@samp{md}文件中按小写形式书写，但在C代码中出现时按大写形式书写。在这个手册里，它们按照如下形式表示：@code{const_int}。
 
 @cindex (nil)
 @cindex nil
-In a few contexts a null pointer is valid where an expression is normally
-wanted.  The written form of this is @code{(nil)}.
+在一些上下文中，表达式通常会需要一个空指针。这种书写形式为@code{(nil)}。
 
 @node RTL类别
 @section RTL类别和格式
