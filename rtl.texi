@@ -936,98 +936,74 @@ In an RTL dump, this flag is represented as @samp{/v}.
 @cindex machine modes
 
 @findex enum machine_mode
-A machine mode describes a size of data object and the representation used
-for it.  In the C code, machine modes are represented by an enumeration
-type, @code{enum machine_mode}, defined in @file{machmode.def}.  Each RTL
-expression has room for a machine mode and so do certain kinds of tree
-expressions (declarations and types, to be precise).
+机器模式描述数据对象的大小及其表示。在C 代码中，机器模式表示成枚举类型@code{enum machine_mode}。此类型定义在@file{machmode.def}中。每个RTL表达式都有机器模式域。一些树结构如变量定义、类型等也有机器模式域。
 
-In debugging dumps and machine descriptions, the machine mode of an RTL
-expression is written after the expression code with a colon to separate
-them.  The letters @samp{mode} which appear at the end of each machine mode
-name are omitted.  For example, @code{(reg:SI 38)} is a @code{reg}
-expression with machine mode @code{SImode}.  If the mode is
-@code{VOIDmode}, it is not written at all.
+在调试信息及机器描述中，RTL表达式的机器模式紧跟在RTL 代码之后，其间用冒号隔开。每一种机器模式名未尾的字母省缺为@samp{mode}。例如：@code{(reg:SI 38)}是一个@code{reg}表达式，其机器模式为@code{SImode}。如果方式为@code{VOIDmode}，表达式中完全不出现此模式。
 
-Here is a table of machine modes.  The term ``byte'' below refers to an
-object of @code{BITS_PER_UNIT} bits (@pxref{Storage Layout}).
+以下是一个机器模式表，这里的“字节”是指具有@code{BITS_PER_UNIT}个存储位的对象
+（@pxref{Storage Layout}）。
 
 @table @code
 @findex BImode
 @item BImode
-``Bit'' mode represents a single bit, for predicate registers.
+“Bit”模式，表示一位，用于断言寄存器。
 
 @findex QImode
 @item QImode
-``Quarter-Integer'' mode represents a single byte treated as an integer.
+“Quarter-Integer”模式，表示一个一字节的整数。
 
 @findex HImode
 @item HImode
-``Half-Integer'' mode represents a two-byte integer.
+“Half-Integer”模式，表示一个两字节的整数。
 
 @findex PSImode
 @item PSImode
-``Partial Single Integer'' mode represents an integer which occupies
-four bytes but which doesn't really use all four.  On some machines,
-this is the right mode to use for pointers.
+“Partial Single Integer”模式，表示一个占有四个字节但并不真正使用全部四个字节的整数。
 
 @findex SImode
 @item SImode
-``Single Integer'' mode represents a four-byte integer.
+“Single Integer”模式，表示一个四字节的整数。
 
 @findex PDImode
 @item PDImode
-``Partial Double Integer'' mode represents an integer which occupies
-eight bytes but which doesn't really use all eight.  On some machines,
-this is the right mode to use for certain pointers.
+“Partial Double Integer”模式，表示一个占有八个字节但并不真正使用全部八个字节的整数。
 
 @findex DImode
 @item DImode
-``Double Integer'' mode represents an eight-byte integer.
+“Double Integer”模式，表示一个8 字节的整数。
 
 @findex TImode
 @item TImode
-``Tetra Integer'' (?) mode represents a sixteen-byte integer.
+“Tetra Integer”模式，表示一个16 字节的整数。
 
 @findex OImode
 @item OImode
-``Octa Integer'' (?) mode represents a thirty-two-byte integer.
+“Octa Integer” 模式，表示一个32 字节的整数。
 
 @findex QFmode
 @item QFmode
-``Quarter-Floating'' mode represents a quarter-precision (single byte)
-floating point number.
+“Quarter-Floating” 模式，表示一个四分之一精度（单字节）浮点数。
 
 @findex HFmode
 @item HFmode
-``Half-Floating'' mode represents a half-precision (two byte) floating
-point number.
+“Half-Floating” 模式，表示一个二分之一精度（双字节）浮点数。
 
 @findex TQFmode
 @item TQFmode
-``Three-Quarter-Floating'' (?) mode represents a three-quarter-precision
-(three byte) floating point number.
+“Three-Quarter-Floating” 模式，表示一个四分之三精度（单字节）浮点数。
 
 @findex SFmode
 @item SFmode
-``Single Floating'' mode represents a four byte floating point number.
-In the common case, of a processor with IEEE arithmetic and 8-bit bytes,
-this is a single-precision IEEE floating point number; it can also be
-used for double-precision (on processors with 16-bit bytes) and
-single-precision VAX and IBM types.
+“Single Floating”模式，表示一个单精度（4 个字节）浮点数。
 
 @findex DFmode
 @item DFmode
-``Double Floating'' mode represents an eight byte floating point number.
-In the common case, of a processor with IEEE arithmetic and 8-bit bytes,
-this is a double-precision IEEE floating point number.
+“Double Floating”模式，表示一个双精度（8 字节）浮点数。
+
 
 @findex XFmode
 @item XFmode
-``Extended Floating'' mode represents an IEEE extended floating point
-number.  This mode only has 80 meaningful bits (ten bytes).  Some
-processors require such numbers to be padded to twelve bytes, others
-to sixteen; this mode is used for either.
+“Extended Floating”模式，表示一个三精度（12 字节）浮点数。本方式用来表示 IEEE 扩展浮点类型。
 
 @findex SDmode
 @item SDmode
@@ -1047,9 +1023,7 @@ floating point number all 128 of whose bits are meaningful.
 
 @findex TFmode
 @item TFmode
-``Tetra Floating'' mode represents a sixteen byte floating point number
-all 128 of whose bits are meaningful.  One common use is the
-IEEE quad-precision format.
+“Tetra Floating”模式，表示一个四精度（16 字节）浮点数。
 
 @findex QQmode
 @item QQmode
@@ -1143,26 +1117,16 @@ accumulator.  The default format is ``64.64''.
 
 @findex CCmode
 @item CCmode
-``Condition Code'' mode represents the value of a condition code, which
-is a machine-specific set of bits used to represent the result of a
-comparison operation.  Other machine-specific modes may also be used for
-the condition code.  These modes are not used on machines that use
-@code{cc0} (see @pxref{Condition Code}).
+“condition code”模式，表示条件代码的值。其中条件代码是一组与机器相关的位集合，用来表示比较的结果。在使用了 cc0 的机器上，不用CCmode。
 
 @findex BLKmode
 @item BLKmode
-``Block'' mode represents values that are aggregates to which none of
-the other modes apply.  In RTL, only memory references can have this mode,
-and only if they appear in string-move or vector instructions.  On machines
-which have no such instructions, @code{BLKmode} will not appear in RTL@.
+“Block”模式，表示其它模式都不适用的聚合值。在 RTL 中，只有内存引用才能有此方式，并且仅当出现在字符串移动指令或向量指令中时，才能有此方式。若机器没有上述指令，则@code{BLKmode}将不出现在 RTL中。
 
 @findex VOIDmode
 @item VOIDmode
-Void mode means the absence of a mode or an unspecified mode.
-For example, RTL expressions of code @code{const_int} have mode
-@code{VOIDmode} because they can be taken to have whatever mode the context
-requires.  In debugging dumps of RTL, @code{VOIDmode} is expressed by
-the absence of any mode.
+意味着模式不出现或一个不确定的模式。例 如：@code{const_int}表达式的模式就是@code{VOIDmode}， 因为此类表达式可认为具有其上下文所要求的任何模式。在RTL的调试输出中，@code{VOIDmode}表示成没有任何模式出现。
+
 
 @findex QCmode
 @findex HCmode
@@ -1171,10 +1135,7 @@ the absence of any mode.
 @findex XCmode
 @findex TCmode
 @item QCmode, HCmode, SCmode, DCmode, XCmode, TCmode
-These modes stand for a complex number represented as a pair of floating
-point values.  The floating point values are in @code{QFmode},
-@code{HFmode}, @code{SFmode}, @code{DFmode}, @code{XFmode}, and
-@code{TFmode}, respectively.
+这些方式模式由一对浮点数组成的复数。其中， 浮点数分别具有@code{QFmode}、@code{HFmode}, @code{SFmode}, @code{DFmode}, @code{XFmode}和@code{TFmode}。
 
 @findex CQImode
 @findex CHImode
@@ -1183,10 +1144,8 @@ point values.  The floating point values are in @code{QFmode},
 @findex CTImode
 @findex COImode
 @item CQImode, CHImode, CSImode, CDImode, CTImode, COImode
-These modes stand for a complex number represented as a pair of integer
-values.  The integer values are in @code{QImode}, @code{HImode},
-@code{SImode}, @code{DImode}, @code{TImode}, and @code{OImode},
-respectively.
+这些模式代表由一对整数组成的复数。整数值分别具有方式@code{QImode}, @code{HImode},@code{SImode}, @code{DImode}, @code{TImode}和@code{OImode}。
+
 @end table
 
 The machine description defines @code{Pmode} as a C macro which expands
@@ -1281,54 +1240,52 @@ classes.  Currently @code{VOIDmode} and @code{BLKmode} are in
 @code{MODE_RANDOM}.
 @end table
 
-Here are some C macros that relate to machine modes:
+这些是与机器模式相关的C宏：
 
 @table @code
 @findex GET_MODE
 @item GET_MODE (@var{x})
-Returns the machine mode of the RTX @var{x}.
+返回RTX @var{x}的机器模式。
 
 @findex PUT_MODE
 @item PUT_MODE (@var{x}, @var{newmode})
-Alters the machine mode of the RTX @var{x} to be @var{newmode}.
+将RTX @var{x}的机器模式修改为@var{newmode}。
 
 @findex NUM_MACHINE_MODES
 @item NUM_MACHINE_MODES
-Stands for the number of machine modes available on the target
-machine.  This is one greater than the largest numeric value of any
-machine mode.
+表示目标机器上可用的机器模式的个数。比最大的机器模式数值大1。
 
 @findex GET_MODE_NAME
 @item GET_MODE_NAME (@var{m})
-Returns the name of mode @var{m} as a string.
+返回机器模式@var{m}的字符串名字。
 
 @findex GET_MODE_CLASS
 @item GET_MODE_CLASS (@var{m})
-Returns the mode class of mode @var{m}.
+返回机器模式@var{m}的类别。
 
 @findex GET_MODE_WIDER_MODE
 @item GET_MODE_WIDER_MODE (@var{m})
-Returns the next wider natural mode.  For example, the expression
-@code{GET_MODE_WIDER_MODE (QImode)} returns @code{HImode}.
+返回下一个宽的自然的机器模式。例如，表达式@code{GET_MODE_WIDER_MODE (QImode)}返回@code{HImode}。
 
 @findex GET_MODE_SIZE
 @item GET_MODE_SIZE (@var{m})
-Returns the size in bytes of a datum of mode @var{m}.
+返回机器模式@var{m}的字节数。
 
 @findex GET_MODE_BITSIZE
 @item GET_MODE_BITSIZE (@var{m})
-Returns the size in bits of a datum of mode @var{m}.
+返回机器模式@var{m}位数。
 
 @findex GET_MODE_IBIT
 @item GET_MODE_IBIT (@var{m})
-Returns the number of integral bits of a datum of fixed-point mode @var{m}.
+返回定点机器模式@var{m}的整数位数。
 
 @findex GET_MODE_FBIT
 @item GET_MODE_FBIT (@var{m})
-Returns the number of fractional bits of a datum of fixed-point mode @var{m}.
+返回定点机器模式@var{m}的小数位数。
 
 @findex GET_MODE_MASK
 @item GET_MODE_MASK (@var{m})
+返回一个位掩码，
 Returns a bitmask containing 1 for all bits in a word that fit within
 mode @var{m}.  This macro can only be used for modes whose bitsize is
 less than or equal to @code{HOST_BITS_PER_INT}.
