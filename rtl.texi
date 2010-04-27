@@ -581,216 +581,150 @@ RTL表达式包含几个标记（位域），用于特定类型的表达式。�
 @cindex @code{unchanging}, in @code{subreg}
 @cindex @code{volatil}, in @code{subreg}
 @item SUBREG_PROMOTED_UNSIGNED_P (@var{x})
-Returns a value greater then zero for a @code{subreg} that has
-@code{SUBREG_PROMOTED_VAR_P} nonzero if the object being referenced is kept
-zero-extended, zero if it is kept sign-extended, and less then zero if it is
-extended some other way via the @code{ptr_extend} instruction.
-Stored in the @code{unchanging}
-field and @code{volatil} field, printed as @samp{/u} and @samp{/v}.
-This macro may only be used to get the value it may not be used to change
-the value.  Use @code{SUBREG_PROMOTED_UNSIGNED_SET} to change the value.
+如果@code{subreg}对于@code{SUBREG_PROMOTED_VAR_P}为非零，并且被引用的对象为零扩展，则返回一个大于零的值；如果保持为符号扩展，则为零；如果是通过@code{ptr_extend}指令，进行某种其它方式的扩展，则小于零。存储在@code{unchanging}域和@code{volatil}域中，打印输出为@samp{/u}和@samp{/v}。该宏只用于获得值，不能用于修改值。使用@code{SUBREG_PROMOTED_UNSIGNED_SET}来修改值。
 
 @findex SUBREG_PROMOTED_UNSIGNED_SET
 @cindex @code{subreg} and @samp{/u}
 @cindex @code{unchanging}, in @code{subreg}
 @cindex @code{volatil}, in @code{subreg}
 @item SUBREG_PROMOTED_UNSIGNED_SET (@var{x})
-Set the @code{unchanging} and @code{volatil} fields in a @code{subreg}
-to reflect zero, sign, or other extension.  If @code{volatil} is
-zero, then @code{unchanging} as nonzero means zero extension and as
-zero means sign extension.  If @code{volatil} is nonzero then some
-other type of extension was done via the @code{ptr_extend} instruction.
+设置@code{subreg}中的@code{unchanging}和@code{volatil}域，来反映零扩展，符号扩展，或其它扩展。如果@code{volatil}为零，然后如果@code{unchanging}为非零，则意味着零扩展，如果为零，则意味着符号扩展。如果@code{volatil}为非零，则通过@code{ptr_extend}指令使用了其它某种扩展。
 
 @findex SUBREG_PROMOTED_VAR_P
 @cindex @code{subreg} and @samp{/s}
 @cindex @code{in_struct}, in @code{subreg}
 @item SUBREG_PROMOTED_VAR_P (@var{x})
-Nonzero in a @code{subreg} if it was made when accessing an object that
-was promoted to a wider mode in accord with the @code{PROMOTED_MODE} machine
-description macro (@pxref{Storage Layout}).  In this case, the mode of
-the @code{subreg} is the declared mode of the object and the mode of
-@code{SUBREG_REG} is the mode of the register that holds the object.
-Promoted variables are always either sign- or zero-extended to the wider
-mode on every assignment.  Stored in the @code{in_struct} field and
-printed as @samp{/s}.
+位于@code{subreg}中，如果当访问一个被提升为符合机器描述宏@code{PROMOTED_MODE}的(@pxref{Storage Layout})，宽机器模式的对象时，则非零。这种情况下，@code{subreg}的机器模式为对象被声明的机器模式，@code{SUBREG_REG}的机器模式为存放该对象的寄存器的机器模式。被提升的变量，在每个赋值中，总是被符号扩展或者零扩展成宽机器模式。存储在@code{in_struct}域中，打印输出为@samp{/s}。
 
 @findex SYMBOL_REF_USED
 @cindex @code{used}, in @code{symbol_ref}
 @item SYMBOL_REF_USED (@var{x})
-In a @code{symbol_ref}, indicates that @var{x} has been used.  This is
-normally only used to ensure that @var{x} is only declared external
-once.  Stored in the @code{used} field.
+位于@code{symbol_ref}中，表明@var{x}已经被使用。这通常只用于确保@var{x}只在外部被声明一次。存储在@code{used}中。
 
 @findex SYMBOL_REF_WEAK
 @cindex @code{symbol_ref} and @samp{/i}
 @cindex @code{return_val}, in @code{symbol_ref}
 @item SYMBOL_REF_WEAK (@var{x})
-In a @code{symbol_ref}, indicates that @var{x} has been declared weak.
-Stored in the @code{return_val} field and printed as @samp{/i}.
+位于@code{symbol_ref}中，表明@var{x}已经被声明为weak。存储在@code{return_val}域中，打印输出为@samp{/i}。
 
 @findex SYMBOL_REF_FLAG
 @cindex @code{symbol_ref} and @samp{/v}
 @cindex @code{volatil}, in @code{symbol_ref}
 @item SYMBOL_REF_FLAG (@var{x})
-In a @code{symbol_ref}, this is used as a flag for machine-specific purposes.
-Stored in the @code{volatil} field and printed as @samp{/v}.
+位于@code{symbol_ref}中，用于机器特定目的的标记。存储在@code{volatil}域中，打印输出为@samp{/v}。
 
-Most uses of @code{SYMBOL_REF_FLAG} are historic and may be subsumed
-by @code{SYMBOL_REF_FLAGS}.  Certainly use of @code{SYMBOL_REF_FLAGS}
-is mandatory if the target requires more than one bit of storage.
+大多对@code{SYMBOL_REF_FLAG}的使用，是历史性的，并且可以通过@code{SYMBOL_REF_FLAGS}来归类。当然，如果目标机器需要多于一个位的存储时，对@code{SYMBOL_REF_FLAGS}的使用是强制的。
+
 @end table
 
-These are the fields to which the above macros refer:
+这些是上面的宏所引用的域：
 
 @table @code
 @findex call
 @cindex @samp{/c} in RTL dump
 @item call
-In a @code{mem}, 1 means that the memory reference will not trap.
+在@code{mem}中，1表示该内存引用不会有陷阱。
 
-In a @code{call}, 1 means that this pure or const call may possibly
-infinite loop.
+在@code{call}中，1表示该pure或者const调用，可能为无限循环。
 
-In an RTL dump, this flag is represented as @samp{/c}.
+在RTL转储中，该标记被表示为@samp{/c}。
 
 @findex frame_related
 @cindex @samp{/f} in RTL dump
 @item frame_related
-In an @code{insn} or @code{set} expression, 1 means that it is part of
-a function prologue and sets the stack pointer, sets the frame pointer,
-saves a register, or sets up a temporary register to use in place of the
-frame pointer.
+在@code{insn}或者@code{set}表达式中，1表示其为函数序言的一部分，设置栈寄存器，设置帧寄存器，保存寄存器，或者设置一个用于帧寄存器的临时寄存器。
 
-In @code{reg} expressions, 1 means that the register holds a pointer.
+在@code{reg}表达式中，1表示该寄存器存放一个指针。
 
-In @code{mem} expressions, 1 means that the memory reference holds a pointer.
+在@code{mem}表达式中，1表示该内存引用存放一个指针。
 
-In @code{symbol_ref} expressions, 1 means that the reference addresses
-this function's string constant pool.
+在@code{symbol_ref}表达式中，1表示该引用是对函数的字符串常量池的寻址。
 
-In an RTL dump, this flag is represented as @samp{/f}.
+在RTL转储中，该标记被表示为@samp{/f}。
 
 @findex in_struct
 @cindex @samp{/s} in RTL dump
 @item in_struct
-In @code{mem} expressions, it is 1 if the memory datum referred to is
-all or part of a structure or array; 0 if it is (or might be) a scalar
-variable.  A reference through a C pointer has 0 because the pointer
-might point to a scalar variable.  This information allows the compiler
-to determine something about possible cases of aliasing.
+在@code{mem}表达式中，如果所引用的内存数据为整个结构体或者数组，或者一部分，其为1；如果为（或者可能为）一个标量变量。则为0。通过C指针的引用，为0，因为指针可以指向一个标量变量。该信息允许编译器来确定别名的可能情况。
 
-In @code{reg} expressions, it is 1 if the register has its entire life
-contained within the test expression of some loop.
+在@code{reg}表达式中，如果寄存器整个生命期都包含在某个循环的测试表达式中，则为1。
 
-In @code{subreg} expressions, 1 means that the @code{subreg} is accessing
-an object that has had its mode promoted from a wider mode.
+在@code{subreg}表达式中，1表示@code{subreg}在访问一个从更宽的机器模式进行提升的对象。
 
-In @code{label_ref} expressions, 1 means that the referenced label is
-outside the innermost loop containing the insn in which the @code{label_ref}
-was found.
+在@code{label_ref}表达式中，1表示被引用的标号位于包含发现@code{label_ref}的insn的最内层循环的外面。
 
-In @code{code_label} expressions, it is 1 if the label may never be deleted.
-This is used for labels which are the target of non-local gotos.  Such a
-label that would have been deleted is replaced with a @code{note} of type
-@code{NOTE_INSN_DELETED_LABEL}.
+在@code{code_label}表达式中，如果标号不能被删除，则为1。这用于其为非局部goto的目标的标号。对于已经被删除的这样的标号，使用类型为@code{NOTE_INSN_DELETED_LABEL}的@code{note}来替换。
 
-In an @code{insn} during dead-code elimination, 1 means that the insn is
-dead code.
+在@code{insn}中，在死代码消除阶段，1表示该insn为死代码。
 
-In an @code{insn} or @code{jump_insn} during reorg for an insn in the
-delay slot of a branch,
-1 means that this insn is from the target of the branch.
+在@code{insn}或者@code{jump_insn}中，在针对分支延迟槽中insn的reorg阶段，1表示该insn来自分支跳转的目标。
 
-In an @code{insn} during instruction scheduling, 1 means that this insn
-must be scheduled as part of a group together with the previous insn.
+在@code{insn}中，在指令调度阶段，1表示该insn必须与之前的insn一起进行调度。
 
-In an RTL dump, this flag is represented as @samp{/s}.
+在RTL转储中，该标记被表示为@samp{/s}。
 
 @findex return_val
 @cindex @samp{/i} in RTL dump
 @item return_val
-In @code{reg} expressions, 1 means the register contains
-the value to be returned by the current function.  On
-machines that pass parameters in registers, the same register number
-may be used for parameters as well, but this flag is not set on such
-uses.
+在@code{reg}表达式中，1表示寄存器包含了当且函数的返回值。对于在寄存器中传递参数的机器上，同一个寄存器编号也可以被用作参数，但是这种情况下，该标记不被设置。
 
-In @code{mem} expressions, 1 means the memory reference is to a scalar
-known not to be a member of a structure, union, or array.
+在@code{mem}中，1表示内存引用为一个已知不为结构体，联合体，数组的成员的标量。
 
-In @code{symbol_ref} expressions, 1 means the referenced symbol is weak.
+在@code{symbol_ref}表达式中，1表示被引用的符号为weak。
 
-In @code{call} expressions, 1 means the call is pure.
+在@code{call}表达式中，1表示调用是pure。
 
-In an RTL dump, this flag is represented as @samp{/i}.
+在RTL转储中，该标记被表示为@samp{/i}。
 
 @findex jump
 @cindex @samp{/j} in RTL dump
 @item jump
-In a @code{mem} expression, 1 means we should keep the alias set for this
-mem unchanged when we access a component.
+在@code{mem}表达式中，1表示当访问一个部件时，应该保持该mem的别名集不变。
 
-In a @code{set}, 1 means it is for a return.
+在@code{set}中，1表示其为一个return。
 
-In a @code{call_insn}, 1 means it is a sibling call.
+在@code{call_insn}中，1表示其为一个sibling call。
 
-In an RTL dump, this flag is represented as @samp{/j}.
+在RTL转储中，该标记被表示为@samp{/j}。
 
 @findex unchanging
 @cindex @samp{/u} in RTL dump
 @item unchanging
-In @code{reg} and @code{mem} expressions, 1 means
-that the value of the expression never changes.
+在@code{reg}和@code{mem}表达式中，1表示表达式的值不会改变。
 
-In @code{subreg} expressions, it is 1 if the @code{subreg} references an
-unsigned object whose mode has been promoted to a wider mode.
+在@code{subreg}表达式中，如果@code{subreg}引用了机器模式已经被提升为一个宽模式的无符号对象，则为1。 references an
 
-In an @code{insn} or @code{jump_insn} in the delay slot of a branch
-instruction, 1 means an annulling branch should be used.
+在分支指令延迟槽中的@code{insn}或@code{jump_insn}中，1表示将使用一个被取消的分支。
 
-In a @code{symbol_ref} expression, 1 means that this symbol addresses
-something in the per-function constant pool.
+在@code{symbol_ref}表达式中，1表示该符号对函数的常量池进行寻址。
 
-In a @code{call_insn} 1 means that this instruction is a call to a const
-function.
+在@code{call_insn}中，1表示该指令为对const函数的调用。
 
-In an RTL dump, this flag is represented as @samp{/u}.
+在RTL转储中，该标记被表示为@samp{/u}。
 
 @findex used
 @item used
-This flag is used directly (without an access macro) at the end of RTL
-generation for a function, to count the number of times an expression
-appears in insns.  Expressions that appear more than once are copied,
-according to the rules for shared structure (@pxref{Sharing}).
+该标记在函数的RTL生成阶段的结尾被直接使用（不通过访问宏），来计数表达式在insns中出现的次数。出现次数大于一的表达式，根据共享结构的规则（@pxref{Sharing}），被复制。
 
-For a @code{reg}, it is used directly (without an access macro) by the
-leaf register renumbering code to ensure that each register is only
-renumbered once.
+对于@code{reg}，其被叶子寄存器重编号代码直接使用（不通过访问宏），来确保每个寄存器只被重编号一次。
 
-In a @code{symbol_ref}, it indicates that an external declaration for
-the symbol has already been written.
+在@code{symbol_ref}中，其表示该符号的外部声明已经被书写了。
 
 @findex volatil
 @cindex @samp{/v} in RTL dump
 @item volatil
 @cindex volatile memory references
-In a @code{mem}, @code{asm_operands}, or @code{asm_input}
-expression, it is 1 if the memory
-reference is volatile.  Volatile memory references may not be deleted,
-reordered or combined.
+在@code{mem}, @code{asm_operands}或者@code{asm_input}表达式中，如果内存引用是volatile的，则为1。volatile的内存引用不可以被删除，重排或者合并。
 
-In a @code{symbol_ref} expression, it is used for machine-specific
-purposes.
+在@code{symbol_ref}表达式中，其用于机器特定的目的。
 
-In a @code{reg} expression, it is 1 if the value is a user-level variable.
-0 indicates an internal compiler temporary.
+在@code{reg}表达式中，如果值为用户级的变量，则为1。0表示为内部的编译器临时对象。
 
-In an @code{insn}, 1 means the insn has been deleted.
+在@code{insn}中，1表示该insn已经被删除。
 
-In @code{label_ref} and @code{reg_label} expressions, 1 means a reference
-to a non-local label.
+在@code{label_ref}和@code{reg_label}表达式中，1表示对非局部标号的引用。
 
-In an RTL dump, this flag is represented as @samp{/v}.
+在RTL转储中，该标记被表示为@samp{/v}。
 @end table
 
 @node 机器模式
