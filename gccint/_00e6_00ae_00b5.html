@@ -1,0 +1,342 @@
+<html lang="zh">
+<head>
+<title>段 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f.html#g_t_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f" title="目标宏">
+<link rel="prev" href="_00e8_00b0_0083_00e5_00ba_00a6.html#g_t_00e8_00b0_0083_00e5_00ba_00a6" title="调度">
+<link rel="next" href="PIC.html#PIC" title="PIC">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e6%ae%b5"></a>
+<a name="g_t_00e6_00ae_00b5"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="PIC.html#PIC">PIC</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e8_00b0_0083_00e5_00ba_00a6.html#g_t_00e8_00b0_0083_00e5_00ba_00a6">调度</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f.html#g_t_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f">目标宏</a>
+<hr>
+</div>
+
+<h3 class="section">17.19 将输出划分到section中（Texts, Data, <small class="dots">...</small>）</h3>
+
+<!-- the above section title is WAY too long.  maybe cut the part between -->
+<!-- the (...)?  -mew 10feb93 -->
+<p>目标文件被划分到包含不同类型数据的section中。大多数情况下，
+有三个section：<dfn>text section</dfn>，存放指令和只读数据；<dfn>data section</dfn>，
+存放初始化的可写数据；<dfn>bss section</dfn>，存放未初始化的数据。
+一些系统还具有其它类型的section。
+
+ <p><samp><span class="file">varasm.c</span></samp>提供了一些已知的section，例如<code>text_section</code>,
+<code>data_section</code>和<code>bss_section</code>。
+通常控制一个<var>foo</var><code>_section</code>变量的方式是定义一个相关联的
+宏<var>FOO</var><code>_SECTION_ASM_OP</code>，正如下面将要描述的。
+宏只在<samp><span class="file">varasm.c</span></samp>初始化时被读一次，
+所以它们的值必须为运行时常量。不过它们可以依赖于命令行标记。
+
+ <p>注意：一些运行时文件，例如<samp><span class="file">crtstuff.c</span></samp>，
+也使用<var>FOO</var><code>_SECTION_ASM_OP</code>宏，并且将它们作为字符串文字。
+
+ <p>一些汇编器要求每次选择section时，都要写入一个不同的字符串。
+如果你的汇编器属于这类，
+你应该定义<code>TARGET_ASM_INIT_SECTIONS</code>钩子并使用
+<code>get_unnamed_section</code>来建立section。
+
+ <p>你必须总是创建一个<code>text_section</code>，
+或者通过定义<code>TEXT_SECTION_ASM_OP</code>，
+或者通过在<code>TARGET_ASM_INIT_SECTIONS</code>中初始化<code>text_section</code>。
+同样对于<code>data_section</code>和<code>DATA_SECTION_ASM_OP</code>。
+如果你没有创建一个独立的<code>readonly_data_section</code>，
+则缺省使用<code>text_section</code>。
+
+ <p>所有其他<samp><span class="file">varasm.c</span></samp> section都是可选的，如果target不提供则为null。
+
+<div class="defun">
+&mdash; Macro: <b>TEXT_SECTION_ASM_OP</b><var><a name="index-TEXT_005fSECTION_005fASM_005fOP-4286"></a></var><br>
+<blockquote><p>一个C表达式，值为一个字符串，包括空格，
+其包含了在指令和只读数据之前的汇编操作。通常为<code>"\t.text"</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>HOT_TEXT_SECTION_NAME</b><var><a name="index-HOT_005fTEXT_005fSECTION_005fNAME-4287"></a></var><br>
+<blockquote><p>如果定义，则为一个C字符串常量，为包含最频繁被执行的程序的函数的section名字。
+如果没有定义，GCC将会提供一个缺省定义，如果target支持命名section。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>UNLIKELY_EXECUTED_TEXT_SECTION_NAME</b><var><a name="index-UNLIKELY_005fEXECUTED_005fTEXT_005fSECTION_005fNAME-4288"></a></var><br>
+<blockquote><p>如果定义，则为一个C字符串常量，为包含程序中不太可能被执行的函数的section名字。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DATA_SECTION_ASM_OP</b><var><a name="index-DATA_005fSECTION_005fASM_005fOP-4289"></a></var><br>
+<blockquote><p>一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为可写的初始化数据的汇编操作。通常为<code>"\t.data"</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SDATA_SECTION_ASM_OP</b><var><a name="index-SDATA_005fSECTION_005fASM_005fOP-4290"></a></var><br>
+<blockquote><p>如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为初始化的，可写的小数据的汇编操作。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>READONLY_DATA_SECTION_ASM_OP</b><var><a name="index-READONLY_005fDATA_005fSECTION_005fASM_005fOP-4291"></a></var><br>
+<blockquote><p>一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为只读的初始化数据的汇编操作。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>BSS_SECTION_ASM_OP</b><var><a name="index-BSS_005fSECTION_005fASM_005fOP-4292"></a></var><br>
+<blockquote><p>如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为未初始化的，global数据的汇编操作。如果没有定义，
+并且<code>ASM_OUTPUT_BSS</code>和<code>ASM_OUTPUT_ALIGNED_BSS</code>也都没有定义，
+则为初始化的global数据将被输出在data section，如果使用了<samp><span class="option">-fno-common</span></samp>，
+否则将使用<code>ASM_OUTPUT_COMMON</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SBSS_SECTION_ASM_OP</b><var><a name="index-SBSS_005fSECTION_005fASM_005fOP-4293"></a></var><br>
+<blockquote><p>如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为未初始化的，可写的小数据的汇编操作。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INIT_SECTION_ASM_OP</b><var><a name="index-INIT_005fSECTION_005fASM_005fOP-4294"></a></var><br>
+<blockquote><p>如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为初始化代码的汇编操作。如果没有定义，
+GCC将假设这样的section不存在。该section没有相应的<code>init_section</code>变量；
+其完全在运行时代码中使用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FINI_SECTION_ASM_OP</b><var><a name="index-FINI_005fSECTION_005fASM_005fOP-4295"></a></var><br>
+<blockquote><p>如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为结束代码的汇编操作。如果没有定义，
+GCC将假设这样的section不存在。该section没有相应的<code>fini_section</code>变量；
+其完全在运行时代码中使用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INIT_ARRAY_SECTION_ASM_OP</b><var><a name="index-INIT_005fARRAY_005fSECTION_005fASM_005fOP-4296"></a></var><br>
+<blockquote><p>如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为<code>.init_array</code>（或相当的） section的一部分的
+汇编操作。如果没有定义，GCC将假设这样的section不存在。
+不要同时定义该宏和<code>INIT_SECTION_ASM_OP</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FINI_ARRAY_SECTION_ASM_OP</b><var><a name="index-FINI_005fARRAY_005fSECTION_005fASM_005fOP-4297"></a></var><br>
+<blockquote><p>如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为<code>.fini_array</code>（或相当的） section的一部分的
+汇编操作。如果没有定义，GCC将假设这样的section不存在。
+不要同时定义该宏和<code>FINI_SECTION_ASM_OP</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CRT_CALL_STATIC_FUNCTION</b> (<var>section_op, function</var>)<var><a name="index-CRT_005fCALL_005fSTATIC_005fFUNCTION-4298"></a></var><br>
+<blockquote><p>如果定义，为一个ASM语句，其通过<var>section_op</var>来切换到不同的section，
+调用<var>function</var>，然后切换回到text section。这在<samp><span class="file">crtstuff.c</span></samp>中使用，
+如果<code>INIT_SECTION_ASM_OP</code>或<code>FINI_SECTION_ASM_OP</code>从init和
+fini section中调用初始化和结束函数。缺省下，该宏使用简单的函数调用。
+一些port需要手工的代码来避免在函数前奏中对寄存器初始化的依赖，
+或者确保常量池在text section中不要结束的太远。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_LIBGCC_SDATA_SECTION</b><var><a name="index-TARGET_005fLIBGCC_005fSDATA_005fSECTION-4299"></a></var><br>
+<blockquote><p>如果定义，则为一个字符串，
+其命名了在crtstuff和libgcc中定义的小变量应该存放的section。
+这在target具有选项来优化访问小数据的时候很有用。例如，
+对于具有<code>.sdata</code> section（像MIPS）的target，
+你可以使用<code>-G 0</code>来编译crtstuff，使得其不需要小数据的支持，
+但是使用该宏将小数据放到<code>.sdata</code>中，
+这样你的应用程序不管是否使用小数据，都可以访问到这些变量。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FORCE_CODE_SECTION_ALIGN</b><var><a name="index-FORCE_005fCODE_005fSECTION_005fALIGN-4300"></a></var><br>
+<blockquote><p>如果定义，则为一个ASM语句，其将code section对齐到某个任意的边界。
+这用于使得所有<code>.init</code>和<code>.fini</code> section的fragment都具有同样的对齐，
+这样就可以阻止连接器增加任何padding。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>JUMP_TABLES_IN_TEXT_SECTION</b><var><a name="index-JUMP_005fTABLES_005fIN_005fTEXT_005fSECTION-4301"></a></var><br>
+<blockquote><p>定义该宏为一个表达式，具有非零值，如果跳转表（对于<code>tablejump</code> insn）
+应该被输出到text secton中，以及汇编指令。否则，使用只读data section。
+
+      <p>如果没有独立的只读data section，则该宏不相关。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_INIT_SECTIONS</b> (<var>void</var>)<var><a name="index-TARGET_005fASM_005fINIT_005fSECTIONS-4302"></a></var><br>
+<blockquote><p>定义该钩子，如果你需要在建立<samp><span class="file">varasm.c</span></samp> section时做一些特殊的处理，
+或者你的target具有一些特殊的section需要创建。
+
+      <p>GCC在处理完命令行之后，在写任何汇编代码之前，
+并在调用任何下面描述的返回section的钩子之前调用该钩子。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: TARGET_ASM_RELOC_RW_MASK <b>(</b><var>void</var>)<var><a name="index-g_t_0028-4303"></a></var><br>
+<blockquote><p>返回一个掩码，用来描述当选择section时，应该如何对待重定位。
+如果全局重定位应该放在读写section中，则应该设置位1；
+如果局部重定位应该被放在读写section中，则应该设置位0。
+
+      <p>该函数的缺省版本返回3，当<samp><span class="option">-fpic</span></samp>有效时，否则返回0。
+当target不支持（某种）在只读section中，甚至在可执行程序中的动态重定位时，
+通常会重定义该钩子。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: section * <b>TARGET_ASM_SELECT_SECTION</b> (<var>tree exp, int reloc, unsigned HOST_WIDE_INT align</var>)<var><a name="index-TARGET_005fASM_005fSELECT_005fSECTION-4304"></a></var><br>
+<blockquote><p>返回<var>exp</var>应该被放入的section。
+你可以假设<var>exp</var>为<code>VAR_DECL</code>节点或者一个常量。
+<var>reloc</var>指示<var>exp</var>的初始化值是否需要连接时重定位。
+当变量只包含局部重定位时位0被设置，对于全局重定位位1被设置。
+<var>align</var>为常量对齐位数。
+
+      <p>该函数的缺省版本只关心将只读变量放到<code>readonly_data_section</code>中。
+
+      <p>参见<var>USE_SELECT_SECTION_FOR_FUNCTIONS</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>USE_SELECT_SECTION_FOR_FUNCTIONS</b><var><a name="index-USE_005fSELECT_005fSECTION_005fFOR_005fFUNCTIONS-4305"></a></var><br>
+<blockquote><p>如果你希望对于<code>FUNCTION_DECL</code>，
+将会调用TARGET_ASM_SELECT_SECTION，则定义该宏。同样对于变量和常量。
+
+      <p>对于<code>FUNCTION_DECL</code>，<var>reloc</var>将为0，如果函数被确定有可能被调用，
+非零如果其不能被调用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_UNIQUE_SECTION</b> (<var>tree decl, int reloc</var>)<var><a name="index-TARGET_005fASM_005fUNIQUE_005fSECTION-4306"></a></var><br>
+<blockquote><p>构建一个唯一的section名，使用<code>STRING_CST</code>节点表示，
+并赋值为&lsquo;<samp><span class="samp">DECL_SECTION_NAME (</span><var>decl</var><span class="samp">)</span></samp>&rsquo;。
+跟<code>TARGET_ASM_SELECT_SECTION</code>一样，
+<var>reloc</var>指示<var>exp</var>的初始化值是否需要连接时重定位。
+
+      <p>该函数的缺省版本向ELF section名中追加一个符号名。例如，
+函数<code>foo</code>将被放在<code>.text.foo</code>中。
+这对于实际的target目标格式通常是可以的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: section * <b>TARGET_ASM_FUNCTION_RODATA_SECTION</b> (<var>tree decl</var>)<var><a name="index-TARGET_005fASM_005fFUNCTION_005fRODATA_005fSECTION-4307"></a></var><br>
+<blockquote><p>返回与&lsquo;<samp><span class="samp">DECL_SECTION_NAME (</span><var>decl</var><span class="samp">)</span></samp>&rsquo;关联的只读data section。
+该函数的缺省版本选择<code>.gnu.linkonce.r.name</code>，
+如果函数的section为<code>.gnu.linkonce.t.name</code>，
+<code>.rodata.name</code>如果函数在<code>.text.name</code>中，
+否则为通常的只读data section。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: section * <b>TARGET_ASM_SELECT_RTX_SECTION</b> (<var>enum machine_mode mode, rtx x, unsigned HOST_WIDE_INT align</var>)<var><a name="index-TARGET_005fASM_005fSELECT_005fRTX_005fSECTION-4308"></a></var><br>
+<blockquote><p>返回具有机器模式mode的常量x应该放入的section。
+你可以假设<var>x</var>为RTL形式的某种常量。参数<var>mode</var>除了<code>const_int</code>之外，
+是冗余的。<var>align</var>为常量对齐位数。
+
+      <p>该函数的缺省版本考虑将符号常量<code>flag_pic</code>模式的，放在<code>data_section</code>中，
+其它放在<code>readonly_data_section</code>中。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_MANGLE_DECL_ASSEMBLER_NAME</b> (<var>tree decl, tree id</var>)<var><a name="index-TARGET_005fMANGLE_005fDECL_005fASSEMBLER_005fNAME-4309"></a></var><br>
+<blockquote><p>定义该钩子，如果你需要处理由target无关的代码生成的汇编名。
+提供给该钩子的<var>id</var>将为被计算的名字（例如C中的<code>DECL_NAME</code>宏，
+或者C++中的mangled name）。该钩子的返回值为一个<code>IDENTIFIER_NODE</code>。
+该钩子的缺省实现只是返回提供的<var>id</var>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ENCODE_SECTION_INFO</b> (<var>tree decl, rtx rtl, int new_decl_p</var>)<var><a name="index-TARGET_005fENCODE_005fSECTION_005fINFO-4310"></a></var><br>
+<blockquote><p>定义该钩子，如果对符号或者常量的引用必须根据符号所命名的变量或者函数来不同处理
+（例如其在哪个section中）。
+
+      <p>钩子在为<var>decl</var>创建<var>rtl</var>之后立即被执行，
+<var>decl</var>可能为一个变量或者函数声明，或者常量池的入口。<em>不要</em>在该钩子中
+使用<code>DECL_RTL (</code><var>decl</var><code>)</code>；那个域可能还没有被初始化。
+
+      <p>对于常量，可以假设rtl为一个<code>mem</code>，其地址为一个 <code>symbol_ref</code>。
+大多数decl将具有这种形式，但不被保证。全局寄存器变量，例如，
+它们的rtl将具有一个<code>reg</code>。（对于这样不寻常的rtl通常是将其放在一边）。
+
+      <p>参数<var>new_decl_p</var>将为真，
+如果这是第一次对于该decl调用<code>TARGET_ENCODE_SECTION_INFO</code>。
+对于后续的调用其将为假，这放生在复制的声明中。对于复制声明，是否需要做什么，
+取决于钩子是否检查<code>DECL_ATTRIBUTES</code>。当钩子对于常量被调用，
+则<var>new_decl_p</var>总为真。
+
+      <p><a name="index-g_t_0040code_007bSYMBOL_005fREF_005fFLAG_007d_002c-in-_0040code_007bTARGET_005fENCODE_005fSECTION_005fINFO_007d-4311"></a>该钩子通常做的事情是记录<code>symbol_ref</code>中的标记，
+使用<code>SYMBOL_REF_FLAG</code>或<code>SYMBOL_REF_FLAGS</code>。
+
+      <p>该钩子的缺省定义，<samp><span class="file">varasm.c</span></samp>中的<code>default_encode_section_info</code>，
+设置了<code>SYMBOL_REF_FLAGS</code>中通常有用的位。
+在覆盖它之前检查缺省代码是否做了你所需要的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: const <b>char</b><var> *TARGET_STRIP_NAME_ENCODING </var>(<var>const char *name</var>)<var><a name="index-char-4312"></a></var><br>
+<blockquote><p>解析<var>name</var>并返回真实的名字部分，
+没有<code>TARGET_ENCODE_SECTION_INFO</code>可能加进去的字符。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_IN_SMALL_DATA_P</b> (<var>tree exp</var>)<var><a name="index-TARGET_005fIN_005fSMALL_005fDATA_005fP-4313"></a></var><br>
+<blockquote><p>返回真，如果<var>exp</var>应该被放到“小数据”section中。该钩子的缺省版本总是返回假。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Variable: Target Hook <b>bool</b><var> TARGET_HAVE_SRODATA_SECTION<a name="index-bool-4314"></a></var><br>
+<blockquote><p>如果target将只读“小数据”放到单独的section中，则包含值为真。缺省值为假。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_BINDS_LOCAL_P</b> (<var>tree exp</var>)<var><a name="index-TARGET_005fBINDS_005fLOCAL_005fP-4315"></a></var><br>
+<blockquote><p>返回真，如果<var>exp</var>命名了一个对象，其名字解析规则必须
+
+      <p>该钩子的缺省版本实现了ELF的名字解析规则，
+其具有一个比目前支持的其它目标文件格式较松散的全局名字绑定模型。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Variable: Target Hook <b>bool</b><var> TARGET_HAVE_TLS<a name="index-bool-4316"></a></var><br>
+<blockquote><p>如果target支持thread-local storage，则包含值为真。缺省值为假。
+</p></blockquote></div>
+
+ </body></html>
+

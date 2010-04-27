@@ -1,0 +1,102 @@
+<html lang="zh">
+<head>
+<title>DBX钩子 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e8_00b0_0083_00e8_00af_0095_00e4_00bf_00a1_00e6_0081_00af.html#g_t_00e8_00b0_0083_00e8_00af_0095_00e4_00bf_00a1_00e6_0081_00af" title="调试信息">
+<link rel="prev" href="DBX_00e9_0080_0089_00e9_00a1_00b9.html#DBX_00e9_0080_0089_00e9_00a1_00b9" title="DBX选项">
+<link rel="next" href="_00e6_0096_0087_00e4_00bb_00b6_00e5_0090_008d_00e5_0092_008cDBX.html#g_t_00e6_0096_0087_00e4_00bb_00b6_00e5_0090_008d_00e5_0092_008cDBX" title="文件名和DBX">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="DBX%e9%92%a9%e5%ad%90"></a>
+<a name="DBX_00e9_0092_00a9_00e5_00ad_0090"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e6_0096_0087_00e4_00bb_00b6_00e5_0090_008d_00e5_0092_008cDBX.html#g_t_00e6_0096_0087_00e4_00bb_00b6_00e5_0090_008d_00e5_0092_008cDBX">文件名和DBX</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="DBX_00e9_0080_0089_00e9_00a1_00b9.html#DBX_00e9_0080_0089_00e9_00a1_00b9">DBX选项</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e8_00b0_0083_00e8_00af_0095_00e4_00bf_00a1_00e6_0081_00af.html#g_t_00e8_00b0_0083_00e8_00af_0095_00e4_00bf_00a1_00e6_0081_00af">调试信息</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.22.3 针对DBX格式的钩子</h4>
+
+<!-- prevent bad page break with this line -->
+<p>这些是针对DBX格式的钩子。
+
+<div class="defun">
+&mdash; Macro: <b>DBX_OUTPUT_LBRAC</b> (<var>stream, name</var>)<var><a name="index-DBX_005fOUTPUT_005fLBRAC-4523"></a></var><br>
+<blockquote><p>定义该宏，
+以告知如何将变量名的作用域级别的起始调试信息输出到<var>stream</var>中。
+参数<var>name</var>为一个汇编符号的名字（使用<code>assemble_name</code>），
+其值为作用域起始的地址。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_OUTPUT_RBRAC</b> (<var>stream, name</var>)<var><a name="index-DBX_005fOUTPUT_005fRBRAC-4524"></a></var><br>
+<blockquote><p>类似<code>DBX_OUTPUT_LBRAC</code>，不过是作用域级别的结尾。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_OUTPUT_NFUN</b> (<var>stream, lscope_label, decl</var>)<var><a name="index-DBX_005fOUTPUT_005fNFUN-4525"></a></var><br>
+<blockquote><p>定义该宏，
+如果target机器要求对函数<var>decl</var>输出一个<code>N_FUN</code>条目进行特殊处理。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_OUTPUT_SOURCE_LINE</b> (<var>stream, line, counter</var>)<var><a name="index-DBX_005fOUTPUT_005fSOURCE_005fLINE-4526"></a></var><br>
+<blockquote><p>一条C语句，将DBX调试信息在当前源文件行号<var>line</var>的代码前，
+输出到stdio流<var>stream</var>中。<var>counter</var>为宏被调用的次数，
+包括当前调用；其用于在汇编输出中生成为一个标号。
+
+      <p>如果缺省输出是正确的，
+或者其能够通过定义<code>DBX_LINES_FUNCTION_RELATIVE</code>而变的正确，
+则不要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>NO_DBX_FUNCTION_END</b><var><a name="index-NO_005fDBX_005fFUNCTION_005fEND-4527"></a></var><br>
+<blockquote><p>一些stab封装格式（特别是ECOFF），
+不能处理<code>.stabs "",N_FUN,,0,0,Lscope-function-1</code> gdb dbx扩展结构。
+在那些机器上，定义该宏来关掉这个特点，并且不影响其它gdb扩展。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>NO_DBX_BNSYM_ENSYM</b><var><a name="index-NO_005fDBX_005fBNSYM_005fENSYM-4528"></a></var><br>
+<blockquote><p>一些汇编器不能处理<code>.stabd BNSYM/ENSYM,0,0</code> gdb dbx扩展结构。
+在那些机器上，定义该宏来关掉这个特点，并且不影响其它gdb扩展。
+</p></blockquote></div>
+
+ </body></html>
+

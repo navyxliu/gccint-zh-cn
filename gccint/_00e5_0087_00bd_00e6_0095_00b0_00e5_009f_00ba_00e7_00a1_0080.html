@@ -1,0 +1,161 @@
+<html lang="zh">
+<head>
+<title>函数基础 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e5_0087_00bd_00e6_0095_00b0.html#g_t_00e5_0087_00bd_00e6_0095_00b0" title="函数">
+<link rel="next" href="_00e5_0087_00bd_00e6_0095_00b0_00e4_00bd_0093.html#g_t_00e5_0087_00bd_00e6_0095_00b0_00e4_00bd_0093" title="函数体">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%87%bd%e6%95%b0%e5%9f%ba%e7%a1%80"></a>
+<a name="g_t_00e5_0087_00bd_00e6_0095_00b0_00e5_009f_00ba_00e7_00a1_0080"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e5_0087_00bd_00e6_0095_00b0_00e4_00bd_0093.html#g_t_00e5_0087_00bd_00e6_0095_00b0_00e4_00bd_0093">函数体</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_0087_00bd_00e6_0095_00b0.html#g_t_00e5_0087_00bd_00e6_0095_00b0">函数</a>
+<hr>
+</div>
+
+<h4 class="subsection">9.6.1 函数基础</h4>
+
+<p><a name="index-constructor-1839"></a><a name="index-destructor-1840"></a><a name="index-copy-constructor-1841"></a><a name="index-assignment-operator-1842"></a><a name="index-linkage-1843"></a><a name="index-DECL_005fNAME-1844"></a><a name="index-DECL_005fASSEMBLER_005fNAME-1845"></a><a name="index-TREE_005fPUBLIC-1846"></a><a name="index-DECL_005fLINKONCE_005fP-1847"></a><a name="index-DECL_005fFUNCTION_005fMEMBER_005fP-1848"></a><a name="index-DECL_005fCONSTRUCTOR_005fP-1849"></a><a name="index-DECL_005fDESTRUCTOR_005fP-1850"></a><a name="index-DECL_005fOVERLOADED_005fOPERATOR_005fP-1851"></a><a name="index-DECL_005fCONV_005fFN_005fP-1852"></a><a name="index-DECL_005fARTIFICIAL-1853"></a><a name="index-DECL_005fGLOBAL_005fCTOR_005fP-1854"></a><a name="index-DECL_005fGLOBAL_005fDTOR_005fP-1855"></a><a name="index-GLOBAL_005fINIT_005fPRIORITY-1856"></a><a name="index-DECL_005fFUNCTION_005fSPECIFIC_005fTARGET-1857"></a><a name="index-DECL_005fFUNCTION_005fSPECIFIC_005fOPTIMIZATION-1858"></a>
+下列宏和函数能够用于<code>FUNCTION_DECL</code>:
+     <dl>
+<dt><code>DECL_MAIN_P</code><a name="index-DECL_005fMAIN_005fP-1859"></a><dd>该断言判断一个函数是否为程序的入口点<code>::code</code>。
+
+     <br><dt><code>DECL_NAME</code><a name="index-DECL_005fNAME-1860"></a><dd>该宏返回函数未限定的名字，为一个<code>IDENTIFIER_NODE</code>。
+对于一个函数模版的实例，<code>DECL_NAME</code>为模版的未限定名字，
+而不是类似<code>f&lt;int&gt;</code>的东西。当用在编译器隐式生成的构造函数，
+析构函数，重载操作符，或者类型转换符，或者任何函数时，
+<code>DECL_NAME</code>的值未定义。关于可以用来区分这些情况的宏，参见下面。
+
+     <br><dt><code>DECL_ASSEMBLER_NAME</code><a name="index-DECL_005fASSEMBLER_005fNAME-1861"></a><dd>该宏返回函数的mangled名字，也是一个<code>IDENTIFIER_NODE</code>。该名字没有包含前导的下划线。mangled名字在所有平台上按照相同的方式来计算；如果在特定的平台上，需要对目标文件格式进行特殊的处理，则后端需要负责执行那些修改。（当然，后端不应该修改<code>DECL_ASSEMBLER_NAME</code>）
+
+     <p>使用<code>DECL_ASSEMBLER_NAME</code>将使得额外的内存被分配（用于实体的mangled名字），所以其应该只当生成汇编代码时被使用。其不应该在优化器中被使用，用于确定两个声明是否相同，即使一些现有的优化器确实采用了这种方式。这些使用将随着时间被移除。
+
+     <br><dt><code>DECL_EXTERNAL</code><a name="index-DECL_005fEXTERNAL-1862"></a><dd>该断言判断函数是否未定义。
+
+     <br><dt><code>TREE_PUBLIC</code><a name="index-TREE_005fPUBLIC-1863"></a><dd>该断言判断函数是否具有外部连接。
+
+     <br><dt><code>DECL_LOCAL_FUNCTION_P</code><a name="index-DECL_005fLOCAL_005fFUNCTION_005fP-1864"></a><dd>该断言判断函数是否声明在块作用域中，即使具有全局作用域。
+
+     <br><dt><code>DECL_ANTICIPATED</code><a name="index-DECL_005fANTICIPATED-1865"></a><dd>该断言判断函数是否为built-in函数，并且函数原形没有显示声明。
+
+     <br><dt><code>DECL_EXTERN_C_FUNCTION_P</code><a name="index-DECL_005fEXTERN_005fC_005fFUNCTION_005fP-1866"></a><dd>该断言判断函数是否声明为`<code>extern "C"</code>'函数。
+
+     <br><dt><code>DECL_LINKONCE_P</code><a name="index-DECL_005fLINKONCE_005fP-1867"></a><dd>该宏用来判断该函数是否会在不同的转换单元产生多个副本。
+合并不同副本是连接器的责任。
+模版实例是使用<code>DECL_LINKONCE_P</code>最常见的例子。
+G++会在需要它们的所有转换单元里实例化模版，
+然后依赖连接器去移除重复的实例。
+
+     <p>FIXME: 该宏还没有实现。
+
+     <br><dt><code>DECL_FUNCTION_MEMBER_P</code><a name="index-DECL_005fFUNCTION_005fMEMBER_005fP-1868"></a><dd>该宏用来判断函数是否为一个类的成员，而不是命名空间的成员。
+
+     <br><dt><code>DECL_STATIC_FUNCTION_P</code><a name="index-DECL_005fSTATIC_005fFUNCTION_005fP-1869"></a><dd>该断言用来判断函数是否为一个静态成员函数。
+
+     <br><dt><code>DECL_NONSTATIC_MEMBER_FUNCTION_P</code><a name="index-DECL_005fNONSTATIC_005fMEMBER_005fFUNCTION_005fP-1870"></a><dd>该宏用来判断是否为一个非静态成员函数。
+
+     <br><dt><code>DECL_CONST_MEMFUNC_P</code><a name="index-DECL_005fCONST_005fMEMFUNC_005fP-1871"></a><dd>该断言用来判断是否为<code>const</code>成员函数。
+
+     <br><dt><code>DECL_VOLATILE_MEMFUNC_P</code><a name="index-DECL_005fVOLATILE_005fMEMFUNC_005fP-1872"></a><dd>该断言用来判断是否为<code>volatile</code>成员函数。
+
+     <br><dt><code>DECL_CONSTRUCTOR_P</code><a name="index-DECL_005fCONSTRUCTOR_005fP-1873"></a><dd>该宏用来判断函数是否为一个构造函数。
+
+     <br><dt><code>DECL_NONCONVERTING_P</code><a name="index-DECL_005fNONCONVERTING_005fP-1874"></a><dd>该断言用来判断构造函数是否为一个非转换构造函数。
+
+     <br><dt><code>DECL_COMPLETE_CONSTRUCTOR_P</code><a name="index-DECL_005fCOMPLETE_005fCONSTRUCTOR_005fP-1875"></a><dd>该断言用来判断函数是否为完全类型的对象的构造函数。
+
+     <br><dt><code>DECL_BASE_CONSTRUCTOR_P</code><a name="index-DECL_005fBASE_005fCONSTRUCTOR_005fP-1876"></a><dd>该断言用来判断函数是否为一个基类的子对象的构造函数。
+
+     <br><dt><code>DECL_COPY_CONSTRUCTOR_P</code><a name="index-DECL_005fCOPY_005fCONSTRUCTOR_005fP-1877"></a><dd>该断言用来判断函数是否为一个复制构造函数。
+
+     <br><dt><code>DECL_DESTRUCTOR_P</code><a name="index-DECL_005fDESTRUCTOR_005fP-1878"></a><dd>该宏用来判断函数是否为一个析构函数。
+
+     <br><dt><code>DECL_COMPLETE_DESTRUCTOR_P</code><a name="index-DECL_005fCOMPLETE_005fDESTRUCTOR_005fP-1879"></a><dd>该断言用来判断函数是否为一个完全类型的对象的析构函数。
+
+     <br><dt><code>DECL_OVERLOADED_OPERATOR_P</code><a name="index-DECL_005fOVERLOADED_005fOPERATOR_005fP-1880"></a><dd>该宏用来判断函数是否为一个重载操作符。
+
+     <br><dt><code>DECL_CONV_FN_P</code><a name="index-DECL_005fCONV_005fFN_005fP-1881"></a><dd>该宏用来判断函数是否为一个类型转换操作符。
+
+     <br><dt><code>DECL_GLOBAL_CTOR_P</code><a name="index-DECL_005fGLOBAL_005fCTOR_005fP-1882"></a><dd>该断言用来判断函数是否为一个文件作用域的初始化函数。
+
+     <br><dt><code>DECL_GLOBAL_DTOR_P</code><a name="index-DECL_005fGLOBAL_005fDTOR_005fP-1883"></a><dd>该断言用来判断函数是否为一个文件作用域的结束化函数。
+
+     <br><dt><code>DECL_THUNK_P</code><a name="index-DECL_005fTHUNK_005fP-1884"></a><dd>该断言用来判断函数是否为一个thunk。
+
+     <p>这些函数表示stub代码，用来调整<code>this</code>指针，然后跳转到另一个函数中。当从被跳转的函数中返回时，控制被直接传给调用者，不需要返回到thunk中。thunk的第一个参数总是为<code>this</code>指针；thunk应该将该值加上<code>THUNK_DELTA</code>。（<code>THUNK_DELTA</code>是一个<code>int</code>，而不是<code>INTEGER_CST</code>。）
+
+     <p>然后，如果<code>THUNK_VCALL_OFFSET</code>（一个<code>INTEGER_CST</code>）是非零的，则被调整的<code>this</code>必须再次被调整。下面的伪代码给出了完整的计算：
+
+     <pre class="smallexample">          this += THUNK_DELTA
+          if (THUNK_VCALL_OFFSET)
+            this += (*((ptrdiff_t **) this))[THUNK_VCALL_OFFSET]
+</pre>
+     <p>最终，thunk应该跳转到由<code>DECL_INITIAL</code>给出的位置；这将总是一个函数地址的表达式。
+
+     <br><dt><code>DECL_NON_THUNK_FUNCTION_P</code><a name="index-DECL_005fNON_005fTHUNK_005fFUNCTION_005fP-1885"></a><dd>该断言用来判断函数<em>不是</em>一个thunk函数。
+
+     <br><dt><code>GLOBAL_INIT_PRIORITY</code><a name="index-GLOBAL_005fINIT_005fPRIORITY-1886"></a><dd>如果<code>DECL_GLOBAL_CTOR_P</code>或者<code>DECL_GLOBAL_DTOR_P</code>有效，则该宏给出了函数的初始优先级。连接器将设法安排<code>DECL_GLOBAL_CTOR_P</code>所保存的所有的函数在递增的顺序下运行，在<code>main</code>被调用之前。当程序退出时，<code>DECL_GLOBAL_DTOR_P</code>所保存的所有函数按照相反的顺序执行。
+
+     <br><dt><code>DECL_ARTIFICIAL</code><a name="index-DECL_005fARTIFICIAL-1887"></a><dd>该宏保存了函数是否由编译器隐式的生成，而不是被显式的生成。
+除了隐式的生成的类成员函数以外，该宏还保存了创建的特定函数，
+用来实现静态初始化和析构，来计算运行时信息等等。
+
+     <br><dt><code>DECL_ARGUMENTS</code><a name="index-DECL_005fARGUMENTS-1888"></a><dd>该宏返回函数第一个参数的<code>PARM_DECL</code>。
+后续的<code>PARM_DECL</code>节点可以通过<code>TREE_CHAIN</code>来获得。
+
+     <br><dt><code>DECL_RESULT</code><a name="index-DECL_005fRESULT-1889"></a><dd>该函数返回函数的<code>RESULT_DECL</code>。
+
+     <br><dt><code>TREE_TYPE</code><a name="index-TREE_005fTYPE-1890"></a><dd>该宏返回函数的<code>FUNCTION_TYPE</code>或<code>METHOD_TYPE</code>。
+
+     <br><dt><code>TYPE_RAISES_EXCEPTIONS</code><a name="index-TYPE_005fRAISES_005fEXCEPTIONS-1891"></a><dd>该宏返回（成员）函数可以引起的异常列表。返回的列表，如果不是<code>NULL</code>，则为<code>TREE_VALUE</code>代表一个类型的节点组成。
+
+     <br><dt><code>TYPE_NOTHROW_P</code><a name="index-TYPE_005fNOTHROW_005fP-1892"></a><dd>该断言用来判断是否是使用`<code>()</code>'形式来指定异常的参数。
+
+     <br><dt><code>DECL_ARRAY_DELETE_OPERATOR_P</code><a name="index-DECL_005fARRAY_005fDELETE_005fOPERATOR_005fP-1893"></a><dd>该断言用来判断函数是否为一个重载的<code>operator delete[]</code>。
+
+     <br><dt><code>DECL_FUNCTION_SPECIFIC_TARGET</code><a name="index-DECL_005fFUNCTION_005fSPECIFIC_005fTARGET-1894"></a><dd>该宏返回一个tree节点，存放了用于编译该特定函数的目标机选项，或者为<code>NULL_TREE</code>，如果是使用命令行中指定的目标机选项来编译该函数。
+
+     <br><dt><code>DECL_FUNCTION_SPECIFIC_OPTIMIZATION</code><a name="index-DECL_005fFUNCTION_005fSPECIFIC_005fOPTIMIZATION-1895"></a><dd>该宏返回一个tree节点，存放了用于编译该特定函数的优化选项，或者为<code>NULL_TREE</code>，如果是使用命令行中指定的优化选项来编译该函数。
+
+ </dl>
+
+<!--  -->
+<!-- Function Bodies -->
+<!--  -->
+ </body></html>
+

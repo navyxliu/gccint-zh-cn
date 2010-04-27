@@ -1,0 +1,92 @@
+<html lang="zh">
+<head>
+<title>迭代次数 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e5_00be_00aa_00e7_008e_00af_00e5_0088_0086_00e6_009e_0090_00e5_0092_008c_00e8_00a1_00a8_00e7_00a4_00ba.html#g_t_00e5_00be_00aa_00e7_008e_00af_00e5_0088_0086_00e6_009e_0090_00e5_0092_008c_00e8_00a1_00a8_00e7_00a4_00ba" title="循环分析和表示">
+<link rel="prev" href="loop_002div.html#loop_002div" title="loop-iv">
+<link rel="next" href="_00e4_00be_009d_00e8_00b5_0096_00e5_0088_0086_00e6_009e_0090.html#g_t_00e4_00be_009d_00e8_00b5_0096_00e5_0088_0086_00e6_009e_0090" title="依赖分析">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e8%bf%ad%e4%bb%a3%e6%ac%a1%e6%95%b0"></a>
+<a name="g_t_00e8_00bf_00ad_00e4_00bb_00a3_00e6_00ac_00a1_00e6_0095_00b0"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e4_00be_009d_00e8_00b5_0096_00e5_0088_0086_00e6_009e_0090.html#g_t_00e4_00be_009d_00e8_00b5_0096_00e5_0088_0086_00e6_009e_0090">依赖分析</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="loop_002div.html#loop_002div">loop-iv</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_00be_00aa_00e7_008e_00af_00e5_0088_0086_00e6_009e_0090_00e5_0092_008c_00e8_00a1_00a8_00e7_00a4_00ba.html#g_t_00e5_00be_00aa_00e7_008e_00af_00e5_0088_0086_00e6_009e_0090_00e5_0092_008c_00e8_00a1_00a8_00e7_00a4_00ba">循环分析和表示</a>
+<hr>
+</div>
+
+<h3 class="section">14.7 迭代次数分析</h3>
+
+<p><a name="index-Number-of-iterations-analysis-3081"></a>
+在GIMPLE和RTL之上，都有函数可以用来判定循环的迭代次数，并且具有相似的接口。
+在GCC中，循环的迭代次数被定义为循环latch的执行次数。许多情况下，
+是不可能无条件的判定出迭代次数——判定的迭代次数只有在满足一些假设时才正确。
+分析尝试使用包含在程序中的信息来检验这些条件；如果失败了，
+则条件和结果一起被返回。下面的信息和条件由分析提供：
+
+     <ul>
+<li><code>assumptions</code>:
+如果条件为假，则其余的信息无效。
+<li>RTL上的<code>noloop_assumptions</code>, GIMPLE上的<code>may_be_zero</code>:
+如果该条件为真，则循环在第一次迭代中便退出。
+<li><code>infinite</code>:
+If this condition is true, the loop is infinite. 
+This condition is only available on RTL.  On GIMPLE, conditions for
+finiteness of the loop are included in <code>assumptions</code>. 
+<li>RTL上的<code>niter_expr</code> , GIMPLE上的<code>niter</code>:
+该表达式给出迭代次数。迭代次数被定义为循环latch的执行次数。
+</ul>
+
+ <p>在GIMPLE和RTL之上，都需要初始化归约变量分析框架（GIMPLE上为SCEV，
+RTL上为loop-iv）。在GIMPLE上，结果存储在<code>struct tree_niter_desc</code>中。
+可以通过<code>number_of_iterations_exit</code>函数来判定循环在通过给定出口退出之前的
+迭代次数。在RTL上，结果返回在<code>struct niter_desc</code>结构体中，
+相应的函数名为<code>check_simple_exit</code>。还有一些函数遍历循环的所有出口，
+并尝试找到容易判定迭代次数的一个——它们是GIMPLE上的<code>find_loop_niter</code>和
+RTL上的<code>find_simple_exit</code>。最后，还有一些函数提供相同的信息，
+只不过还额外的对其进行缓存，
+使得反复调用迭代次数的代价不会很高——它们是GIMPLE上的
+<code>number_of_latch_executions</code>和RTL上的<code>get_simple_loop_desc</code>。
+
+ <p>注意这些函数中的一些可能与其它的在行为上有些不同——有些只返回迭代次数的表达式。
+函数<code>number_of_latch_executions</code>只工作于单个出口的循环。
+函数<code>number_of_cond_exit_executions</code>能被用来判定一个单出口循环在退出条件下
+的执行次数。（即，<code>number_of_latch_executions</code>加1）。
+
+ </body></html>
+

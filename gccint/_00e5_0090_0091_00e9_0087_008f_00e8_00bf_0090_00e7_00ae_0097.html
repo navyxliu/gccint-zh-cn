@@ -1,0 +1,71 @@
+<html lang="zh">
+<head>
+<title>向量运算 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="RTL.html#RTL" title="RTL">
+<link rel="prev" href="_00e4_00bd_008d_00e5_009f_009f_00e8_00bf_0090_00e7_00ae_0097.html#g_t_00e4_00bd_008d_00e5_009f_009f_00e8_00bf_0090_00e7_00ae_0097" title="位域运算">
+<link rel="next" href="_00e8_00bd_00ac_00e6_008d_00a2_00e8_00bf_0090_00e7_00ae_0097.html#g_t_00e8_00bd_00ac_00e6_008d_00a2_00e8_00bf_0090_00e7_00ae_0097" title="转换运算">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%90%91%e9%87%8f%e8%bf%90%e7%ae%97"></a>
+<a name="g_t_00e5_0090_0091_00e9_0087_008f_00e8_00bf_0090_00e7_00ae_0097"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e8_00bd_00ac_00e6_008d_00a2_00e8_00bf_0090_00e7_00ae_0097.html#g_t_00e8_00bd_00ac_00e6_008d_00a2_00e8_00bf_0090_00e7_00ae_0097">转换运算</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e4_00bd_008d_00e5_009f_009f_00e8_00bf_0090_00e7_00ae_0097.html#g_t_00e4_00bd_008d_00e5_009f_009f_00e8_00bf_0090_00e7_00ae_0097">位域运算</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="RTL.html#RTL">RTL</a>
+<hr>
+</div>
+
+<h3 class="section">10.12 向量运算</h3>
+
+<p><a name="index-vector-operations-2525"></a>
+所有普通的RTL表达式都能够作为向量模式使用；它们被解析为对向量的每个部分进行独立的运算。另外，有一些新的表达式来描述特定的向量运算。
+
+     
+<a name="index-vec_005fmerge-2526"></a>
+<dl><dt><code>(vec_merge:</code><var>m</var> <var>vec1</var> <var>vec2</var> <var>items</var><code>)</code><dd>这描述了两个向量间的合并操作。结果为机器模式为<var>m</var>的向量；它的元素来自<var>vec1</var>或者<var>vec2</var>。那些元素被选择是通过<var>items</var>来描述，其为一个由<code>const_int</code>表示的位掩码；0位指示相应的元素在结果向量中是来自<var>vec2</var>，而1指示其来自<var>vec1</var>。
+
+     <p><a name="index-vec_005fselect-2527"></a><br><dt><code>(vec_select:</code><var>m</var> <var>vec1</var> <var>selection</var><code>)</code><dd>这描述了选择一个向量的一部分的操作。<var>vec1</var>为源向量，<var>selection</var>为一个<code>parallel</code>其包含了一个<code>const_int</code>，来描述结果向量的子部分，给出了源向量的子部分应该被存放进去。
+
+     <p><a name="index-vec_005fconcat-2528"></a><br><dt><code>(vec_concat:</code><var>m</var> <var>vec1</var> <var>vec2</var><code>)</code><dd>描述了一个向量连接操作。结果为向量<var>vec1</var>和<var>vec2</var>的连接；其长度为两个输出向量的长度之和。
+
+     <p><a name="index-vec_005fduplicate-2529"></a><br><dt><code>(vec_duplicate:</code><var>m</var> <var>vec</var><code>)</code><dd>该操作将一个小向量转换为一个大一点的，通过复制输入值。输出向量的机器模式必须和输入向量的相同，并且输出部分的编号必须为输入部分的编号的整数倍。
+
+ </dl>
+
+ </body></html>
+

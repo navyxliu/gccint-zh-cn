@@ -1,0 +1,123 @@
+<html lang="zh">
+<head>
+<title>类 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e4_00bd_009c_00e7_0094_00a8_00e5_009f_009f.html#g_t_00e4_00bd_009c_00e7_0094_00a8_00e5_009f_009f" title="作用域">
+<link rel="prev" href="_00e5_0091_00bd_00e5_0090_008d_00e7_00a9_00ba_00e9_0097_00b4.html#g_t_00e5_0091_00bd_00e5_0090_008d_00e7_00a9_00ba_00e9_0097_00b4" title="命名空间">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e7%b1%bb"></a>
+<a name="g_t_00e7_00b1_00bb"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e5_0091_00bd_00e5_0090_008d_00e7_00a9_00ba_00e9_0097_00b4.html#g_t_00e5_0091_00bd_00e5_0090_008d_00e7_00a9_00ba_00e9_0097_00b4">命名空间</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e4_00bd_009c_00e7_0094_00a8_00e5_009f_009f.html#g_t_00e4_00bd_009c_00e7_0094_00a8_00e5_009f_009f">作用域</a>
+<hr>
+</div>
+
+<h4 class="subsection">9.4.2 类</h4>
+
+<p><a name="index-class-1787"></a><a name="index-RECORD_005fTYPE-1788"></a><a name="index-UNION_005fTYPE-1789"></a><a name="index-CLASSTYPE_005fDECLARED_005fCLASS-1790"></a><a name="index-TYPE_005fBINFO-1791"></a><a name="index-BINFO_005fTYPE-1792"></a><a name="index-TYPE_005fFIELDS-1793"></a><a name="index-TYPE_005fVFIELD-1794"></a><a name="index-TYPE_005fMETHODS-1795"></a>
+类的类型被表示为<code>RECORD_TYPE</code>或者<code>UNION_TYPE</code>。
+使用<code>union</code>标签声明的类由<code>UNION_TYPE</code>来表示，
+而使用<code>struct</code>或者<code>class</code>标签声明的类由<code>RECORD_TYPE</code>来表示。
+可以使用<code>CLASSTYPE_DECLARED_CLASS</code>宏来判定一个特定类型是
+<code>class</code>的还是<code>struct</code>的。
+该宏只在类使用<code>class</code>标签声明时才为真。
+
+ <p>几乎所有非函数的成员都在<code>TYPE_FIELDS</code>列表中。
+给出一个成员，可以通过<code>TREE_CHAIN</code>来找到下一个。
+不要依赖于在该链表中出现的域的顺序。链表中的所有节点将为&lsquo;<samp><span class="samp">DECL</span></samp>&rsquo;节点。
+<code>FIELD_DECL</code>用于表示非静态数据成员，<code>VAR_DECL</code>用于表示静态数据成员，
+而<code>TYPE_DECL</code>用于表示类型。注意如果在类中声明了枚举类型，
+则用于枚举常量的<code>CONST_DECL</code>将会出现在该链表中。
+（当然，枚举类型的<code>TYPE_DECL</code>也会出现。）链表中没有基类的实体。
+特别是，对于一个对象的基类部分“base-class portion”，没有<code>FIELD_DECL</code>。
+
+ <p><code>TYPE_VFIELD</code>是编译器生成的域用于指向虚函数表。
+它有可能会出现在<code>TYPE_FIELDS</code>链表中。
+然而，后端应该处理<code>TYPE_VFIELD</code>，
+就像<code>TYPE_FIELDS</code>链表中所有其它实体一样。
+
+ <p>函数成员在<code>TYPE_METHODS</code>链表中。
+同样，后续成员可以通过<code>TREE_CHAIN</code>域来找到。
+如果函数是重载的，每个重载函数都会出现；
+<code>OVERLOAD</code>节点不会出现在<code>TYPE_METHODS</code>链表上。
+隐式声明的函数（包括缺省构造函数，复制构造函数，赋值操作和析构函数）
+也会出现在该链表中。
+
+ <p>每个类都具有一个相关的<dfn>binfo</dfn>，其能够通过<code>TYPE_BINFO</code>获得。
+Binfos用于表示基类。由<code>TYPE_BINFO</code>给出的binfo是退化情况，
+让每个类被考虑为它自己的基类。
+
+ <p>对基类型的访问可以通过<code>BINFO_BASE_ACCESS</code>。
+这将产生<code>access_public_node</code>, <code>access_private_node</code>或
+<code>access_protected_node</code>。
+如果基类总是public的，<code>BINFO_BASE_ACCESSES</code>可以为<code>NULL</code>。
+
+ <p><code>BINFO_VIRTUAL_P</code>用于指定binfo是否为虚继承。
+其它标识，<code>BINFO_MARKED_P</code>和
+<code>BINFO_FLAG_1</code>到<code>BINFO_FLAG_6</code>可以用于语言特定用途。
+
+ <p>下列宏可以用在表示class类型的树节点上。
+
+     <dl>
+<dt><code>LOCAL_CLASS_P</code><a name="index-LOCAL_005fCLASS_005fP-1796"></a><dd>该断言当是局部类时有效，即在函数体内声明的类。
+
+     <br><dt><code>TYPE_POLYMORPHIC_P</code><a name="index-TYPE_005fPOLYMORPHIC_005fP-1797"></a><dd>该断言当类至少具有一个虚函数（声明的或者继承的）时有效。
+
+     <br><dt><code>TYPE_HAS_DEFAULT_CONSTRUCTOR</code><a name="index-TYPE_005fHAS_005fDEFAULT_005fCONSTRUCTOR-1798"></a><dd>该断言当参数表示具有缺省构造函数的class类型时有效。
+
+     <br><dt><code>CLASSTYPE_HAS_MUTABLE</code><a name="index-CLASSTYPE_005fHAS_005fMUTABLE-1799"></a><dt><code>TYPE_HAS_MUTABLE_P</code><a name="index-TYPE_005fHAS_005fMUTABLE_005fP-1800"></a><dd>这些断言表示了一个class-type具有mutable数据成员。
+
+     <br><dt><code>CLASSTYPE_NON_POD_P</code><a name="index-CLASSTYPE_005fNON_005fPOD_005fP-1801"></a><dd>该断言表示了不是POD的class-types。
+
+     <br><dt><code>TYPE_HAS_NEW_OPERATOR</code><a name="index-TYPE_005fHAS_005fNEW_005fOPERATOR-1802"></a><dd>该断言表示一个class-type定义了<code>operator new</code>。
+
+     <br><dt><code>TYPE_HAS_ARRAY_NEW_OPERATOR</code><a name="index-TYPE_005fHAS_005fARRAY_005fNEW_005fOPERATOR-1803"></a><dd>该断言表示一个class-type定义了<code>operator new[]</code>。
+
+     <br><dt><code>TYPE_OVERLOADS_CALL_EXPR</code><a name="index-TYPE_005fOVERLOADS_005fCALL_005fEXPR-1804"></a><dd>该断言表示class-type重载了函数调用<code>operator()</code>。
+
+     <br><dt><code>TYPE_OVERLOADS_ARRAY_REF</code><a name="index-TYPE_005fOVERLOADS_005fARRAY_005fREF-1805"></a><dd>该断言表示class-type重载了<code>operator[]</code>。
+
+     <br><dt><code>TYPE_OVERLOADS_ARROW</code><a name="index-TYPE_005fOVERLOADS_005fARROW-1806"></a><dd>该断言表示class-type重载了<code>operator-&gt;</code>。
+</dl>
+
+<!--  -->
+<!-- Declarations -->
+<!--  -->
+ </body></html>
+

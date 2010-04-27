@@ -1,0 +1,240 @@
+<html lang="zh">
+<head>
+<title>函数体 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e5_0087_00bd_00e6_0095_00b0.html#g_t_00e5_0087_00bd_00e6_0095_00b0" title="函数">
+<link rel="prev" href="_00e5_0087_00bd_00e6_0095_00b0_00e5_009f_00ba_00e7_00a1_0080.html#g_t_00e5_0087_00bd_00e6_0095_00b0_00e5_009f_00ba_00e7_00a1_0080" title="函数基础">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%87%bd%e6%95%b0%e4%bd%93"></a>
+<a name="g_t_00e5_0087_00bd_00e6_0095_00b0_00e4_00bd_0093"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e5_0087_00bd_00e6_0095_00b0_00e5_009f_00ba_00e7_00a1_0080.html#g_t_00e5_0087_00bd_00e6_0095_00b0_00e5_009f_00ba_00e7_00a1_0080">函数基础</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_0087_00bd_00e6_0095_00b0.html#g_t_00e5_0087_00bd_00e6_0095_00b0">函数</a>
+<hr>
+</div>
+
+<h4 class="subsection">9.6.2 函数体</h4>
+
+<p><a name="index-function-body-1896"></a><a name="index-statements-1897"></a><a name="index-BREAK_005fSTMT-1898"></a><a name="index-CLEANUP_005fSTMT-1899"></a><a name="index-CLEANUP_005fDECL-1900"></a><a name="index-CLEANUP_005fEXPR-1901"></a><a name="index-CONTINUE_005fSTMT-1902"></a><a name="index-DECL_005fSTMT-1903"></a><a name="index-DECL_005fSTMT_005fDECL-1904"></a><a name="index-DO_005fSTMT-1905"></a><a name="index-DO_005fBODY-1906"></a><a name="index-DO_005fCOND-1907"></a><a name="index-EMPTY_005fCLASS_005fEXPR-1908"></a><a name="index-EXPR_005fSTMT-1909"></a><a name="index-EXPR_005fSTMT_005fEXPR-1910"></a><a name="index-FOR_005fSTMT-1911"></a><a name="index-FOR_005fINIT_005fSTMT-1912"></a><a name="index-FOR_005fCOND-1913"></a><a name="index-FOR_005fEXPR-1914"></a><a name="index-FOR_005fBODY-1915"></a><a name="index-HANDLER-1916"></a><a name="index-IF_005fSTMT-1917"></a><a name="index-IF_005fCOND-1918"></a><a name="index-THEN_005fCLAUSE-1919"></a><a name="index-ELSE_005fCLAUSE-1920"></a><a name="index-RETURN_005fSTMT-1921"></a><a name="index-RETURN_005fEXPR-1922"></a><a name="index-SUBOBJECT-1923"></a><a name="index-SUBOBJECT_005fCLEANUP-1924"></a><a name="index-SWITCH_005fSTMT-1925"></a><a name="index-SWITCH_005fCOND-1926"></a><a name="index-SWITCH_005fBODY-1927"></a><a name="index-TRY_005fBLOCK-1928"></a><a name="index-TRY_005fSTMTS-1929"></a><a name="index-TRY_005fHANDLERS-1930"></a><a name="index-HANDLER_005fPARMS-1931"></a><a name="index-HANDLER_005fBODY-1932"></a><a name="index-USING_005fSTMT-1933"></a><a name="index-WHILE_005fSTMT-1934"></a><a name="index-WHILE_005fBODY-1935"></a><a name="index-WHILE_005fCOND-1936"></a>
+在当前转换单元中定义的函数将会有一个非<code>NULL</code>的<code>DECL_INITIAL</code>。
+但是，后端不应该使用<code>DECL_INITIAL</code>给出的该特定值。
+
+ <p>宏<code>DECL_SAVED_TREE</code>将会给出完整的函数体。
+
+<h5 class="subsubsection">9.6.2.1 语句</h5>
+
+<p>C和C++前端，使用了对应于所有源级的语句构造的树节点。
+这些都列举在这里，并附上能够用来获得它们的信息的各种宏的列表。
+有一些宏能用于所有的语句：
+
+     <dl>
+<dt><code>STMT_IS_FULL_EXPR_P</code><a name="index-STMT_005fIS_005fFULL_005fEXPR_005fP-1937"></a><dd>在C++里，语句通常构成“充分表达式（full expressions）”；
+在语句中创建的临时事物会在声明完成时被销毁。
+然而，G++有时通过语句来表示表达式；
+这些语句将不会设置<code>STMT_IS_FULL_EXPR_P</code>。
+在这样的语句中创建的临时事物将会在最内层设置了
+<code>STMT_IS_FULL_EXPR_P</code>的语句退出时被销毁。
+</dl>
+
+ <p>这里有一个各种语句节点的列表，以及访问它们的宏。
+该文档描述了在非模板函数（包括模板函数的实例）中这些节点的用法。
+在模板函数里，使用相同的节点，但是有时方法略有不同。
+
+ <p>许多语句具有子语句。例如，一个<code>while</code>循环将会有一个循环体，
+其本身也是一个语句。如果子语句是<code>NULL_TREE</code>，
+则被认为相当于一个<code>;</code>组成的语句，即一个表达式语句，其中表达式为空。
+一个子语句实际上可以为一个语句列表，通过它们的<code>TREE_CHAIN</code>连接一起。
+所以，你应该总是通过循环所有的子语句来处理语句树，像这样：
+
+<pre class="smallexample">     void process_stmt (stmt)
+          tree stmt;
+     {
+       while (stmt)
+         {
+           switch (TREE_CODE (stmt))
+             {
+             case IF_STMT:
+               process_stmt (THEN_CLAUSE (stmt));
+               /* <span class="roman">More processing here.</span>  */
+               break;
+     
+             ...
+             }
+     
+           stmt = TREE_CHAIN (stmt);
+         }
+     }
+</pre>
+ <p>换句话说，虽然C++中<code>if</code>语句的<code>then</code>子句可以只是一个语句，
+但中间表示有时会使用多个语句连接在一起。
+
+     <dl>
+<dt><code>ASM_EXPR</code><dd>用来表示一条内联的汇编语句。一条内联汇编语句形如：
+     <pre class="smallexample">          asm ("mov x, y");
+</pre>
+     <p><code>ASM_STRING</code>宏将会为<code>"mov x, y"</code>返回一个<code>STRING_CST</code>节点。
+如果原始的语句使用了扩展汇编语法，则<code>ASM_OUTPUTS</code>,
+<code>ASM_INPUTS</code>和<code>ASM_CLOBBERS</code>为用<code>STRING_CST</code>表示的语句的输出，
+输入和clobber。扩展汇编语法形如：
+
+     <pre class="smallexample">          asm ("fsinx %1,%0" : "=f" (result) : "f" (angle));
+</pre>
+     <p>第一个字符串是<code>ASM_STRING</code>，包含指令模板。
+接下来的两个字符串分别是输出和输入。该语句没有clobbers。
+这个例子表明，普通的汇编语句只是扩展汇编语句的一个特例；
+它们没有限定符，输出，输入或者clobbers。
+所有的字符串都为<code>NUL</code>结尾，并且不包含嵌入的<code>NUL</code>字符。
+
+     <p>如果汇编语句被声明为<code>volatile</code>，或者语句不是扩展汇编语句，
+因此是一个隐式的<code>volatile</code>，
+则断言<code>ASM_VOLATILE_P</code>将会保存<code>ASM_EXPR</code>。
+
+     <br><dt><code>BREAK_STMT</code><dd>用来表示一条<code>break</code>语句。没有额外的域。
+
+     <br><dt><code>CASE_LABEL_EXPR</code><dd>用来表示一个<code>case</code>标号，<code>case</code>标号的范围或者一个<code>default</code>标号。
+如果<code>CASE_LOW</code>是<code>NULL_TREE</code>，则为一个<code>default</code>标号。
+否则，如果<code>CASE_HIGH</code>是<code>NULL_TREE</code>，则为一个普通的<code>case</code>标号。
+这种情况下，<code>CASE_LOW</code>是一个表达式，给出了标号的值。
+<code>CASE_LOW</code>和<code>CASE_HIGH</code>都是<code>INTEGER_CST</code>节点。
+这些值跟在<code>switch</code>语句中的条件表达式具有相同的类型。
+
+     <p>否则，如果同时定义了<code>CASE_LOW</code>和<code>CASE_HIGH</code>，则语句为一个<code>case</code>标号的范围。这样的语句源于允许用户使用如下形式的扩展：
+
+     <pre class="smallexample">          case 2 ... 5:
+</pre>
+     <p>第一个值为<code>CASE_LOW</code>，第二个为<code>CASE_HIGH</code>。
+
+     <br><dt><code>CLEANUP_STMT</code><dd>用来表示在封闭作用域的出口上执行的动作。
+通常，这些动作是为局部对象调用析构函数，但是后端不能依靠这个事实。
+如果这些节点确实是表示了这样的析构函数，
+<code>CLEANUP_DECL</code>将为销毁的<code>VAR_DECL</code>。
+否则<code>CLEANUP_DECL</code>为<code>NULL_TREE</code>。
+无论哪种情况，<code>CLEANUP_EXPR</code>都是要被执行的表达式。
+清除工作在作用域的出口被执行，
+并且按照所遇到的<code>CLEANUP_STMT</code>的相反顺序进行。
+
+     <br><dt><code>CONTINUE_STMT</code><dd>用来表示一条<code>continue</code>语句。没有额外的域。
+
+     <br><dt><code>CTOR_STMT</code><dd>用于标记构建函数体的起始（<code>CTOR_BEGIN_P</code>）或结尾（<code>CTOR_END_P</code>）。关于如何使用这些节点的更多信息，参见<code>SUBOBJECT</code>。
+
+     <br><dt><code>DECL_STMT</code><dd>用来表示一个局部声明。宏<code>DECL_STMT_DECL</code>可以用来获得整个声明。
+该声明可以为一个<code>LABEL_DECL</code>，表示声明了一个局部标号。
+（作为扩展，GCC允许声明具有作用域的标号。）
+在C中，该声明可以为一个<code>FUNCTION_DECL</code>，表示使用GCC嵌套函数扩展。
+更多信息，参见 <a href="_00e5_0087_00bd_00e6_0095_00b0.html#g_t_00e5_0087_00bd_00e6_0095_00b0">函数</a>。
+
+     <br><dt><code>DO_STMT</code><dd>用来表示<code>do</code>循环。循环体由<code>DO_BODY</code>给出，
+终止条件由<code>DO_COND</code>给出。<code>do</code>语句的条件总是一个表达式。
+
+     <br><dt><code>EMPTY_CLASS_EXPR</code><dd>用来表示类的临时对象。（所有这样的对象都是可互换的。）
+<code>TREE_TYPE</code>表示对象的类型。
+
+     <br><dt><code>EXPR_STMT</code><dd>用来表示表达式语句。使用<code>EXPR_STMT_EXPR</code>来获得表达式。
+
+     <br><dt><code>FOR_STMT</code><dd>用来表示一条<code>for</code>语句。<code>FOR_INIT_STMT</code>是循环的初始语句。
+<code>FOR_COND</code>是终止条件。
+<code>FOR_INIT_STMT</code>是在每次循环迭代<code>FOR_COND</code>之前执行的表达式，
+该表达式常常是增加计数器。循环体由<code>FOR_BODY</code>给出。
+注意<code>FOR_INIT_STMT</code>和<code>FOR_BODY</code>返回语句，
+而<code>FOR_COND</code>和<code>FOR_EXPR</code>返回表达式。
+
+     <br><dt><code>GOTO_EXPR</code><dd>用来表示一条<code>goto</code>语句。
+<code>GOTO_DESTINATION</code>通常为一个<code>LABEL_DECL</code>。
+然而，如果使用了扩展的“computed goto”，将为一个随机表达式用来指示目的地。
+该表达式总是具有一个指针类型。
+
+     <br><dt><code>HANDLER</code><dd>用来表示C++ <code>catch</code>块。<code>HANDLER_TYPE</code>是由该处理者捕捉的异常类型。
+如果该处理者是针对所有类型的，则等于（指针等于）<code>NULL</code>。
+<code>HANDLER_PARMS</code>是<code>catch</code>参数，是一个<code>DECL_STMT</code>。
+<code>HANDLER_BODY</code>是块本身的代码。
+
+     <br><dt><code>IF_STMT</code><dd>用来表示一条<code>if</code>语句。<code>IF_COND</code>是表达式。
+如果条件是一个<code>TREE_LIST</code>，
+则<code>TREE_PURPOSE</code>是一条语句（通常为 <code>DECL_STMT</code>）。
+每次评估条件的时候，都要执行该语句。
+然后，<code>TREE_VALUE</code>应该作为条件表达式本身来使用。
+该表示用来处理C++代码，如：
+
+     <pre class="smallexample">          if (int i = 7) ...
+</pre>
+     <p>其中，在条件中声明了一个（或多个）新的局部变量。
+
+     <br><dt><code>LABEL_EXPR</code><dd>用来表示一个标号。
+可以通过<code>LABEL_EXPR_LABEL</code>宏获得该语句声明的<code>LABEL_DECL</code>。
+可以通过<code>LABEL_DECL</code>的<code>DECL_NAME</code>获得给出的标号名字。
+
+     <br><dt><code>RETURN_STMT</code><dd>用来表示一条<code>return</code>语句。<code>RETURN_EXPR</code>是返回的表达式，
+其将会返回<code>NULL_TREE</code>，如果语句只是
+     <pre class="smallexample">          return;
+</pre>
+     <br><dt><code>SUBOBJECT</code><dd>在构造函数中，这些节点用来标记在某一点子对象被完全构造。如果，这一点之后，在遇到设置了<code>CTOR_END_P</code>的<code>CTOR_STMT</code>之前，有异常抛出，则必须执行<code>SUBOBJECT_CLEANUP</code>。清除工作必须按照它们出现的顺序反向执行。
+
+     <br><dt><code>SWITCH_STMT</code><dd>用来表示一个<code>switch</code>语句。
+<code>SWITCH_STMT_COND</code>是发生<code>switch</code>的表达式。
+更多关于条件表示的信息，参见<code>IF_STMT</code>文档。
+<code>SWITCH_STMT_BODY</code>是<code>switch</code>语句主体。
+<code>SWITCH_STMT_TYPE</code>是源代码中给出的<code>switch</code>表达式的，
+在任何编译器转换之前的原始类型。
+
+     <br><dt><code>TRY_BLOCK</code><dd>用来表示一个<code>try</code>块。<code>try</code>块的主体由<code>TRY_STMTS</code>给出。
+每个<code>catch</code>块都是一个<code>HANDLER</code>节点。
+第一个<code>handler</code>由 <code>TRY_HANDLERS</code>给出。
+后续的<code>handlers</code>可以通过<code>TREE_CHAIN</code>获得。
+<code>handler</code>的主体由<code>HANDLER_BODY</code>给出。
+
+     <p>如果<code>CLEANUP_P</code>持有<code>TRY_BLOCK</code>，
+则<code>TRY_HANDLERS</code>将不是一个<code>HANDLER</code>节点。
+相反的，其将会是一个表达式，并且如果在<code>try</code>块中抛出异常时则被执行。
+其必须在执行完那些代码之后再重新抛出异常。
+并且，如果当表达式正在执行的时候，如果有异常抛出，则必须终止。
+
+     <br><dt><code>USING_STMT</code><dd>用来表示<code>using</code>指示符。命名空间为一个NAMESPACE_DECL，
+由<code>USING_STMT_NAMESPACE</code>给出。该节点在模板函数内部需要，
+用来在实例化时实现<code>using</code>指示符。
+
+     <br><dt><code>WHILE_STMT</code><dd>用来表示一个<code>while</code>循环。<code>WHILE_COND</code>是循环的终止条件。
+关于用来表示条件的更多信息，参见<code>IF_STMT</code>的文档。
+
+     <p><code>WHILE_BODY</code>是循环体。
+</dl>
+
+<!--  -->
+<!-- Attributes -->
+<!--  -->
+ </body></html>
+

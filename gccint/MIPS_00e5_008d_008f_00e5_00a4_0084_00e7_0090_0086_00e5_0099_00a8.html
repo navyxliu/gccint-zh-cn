@@ -1,0 +1,86 @@
+<html lang="zh">
+<head>
+<title>MIPS协处理器 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f.html#g_t_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f" title="目标宏">
+<link rel="prev" href="_00e6_00a8_00a1_00e6_008b_009fTLS.html#g_t_00e6_00a8_00a1_00e6_008b_009fTLS" title="模拟TLS">
+<link rel="next" href="PCH-Target.html#PCH-Target" title="PCH Target">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="MIPS%e5%8d%8f%e5%a4%84%e7%90%86%e5%99%a8"></a>
+<a name="MIPS_00e5_008d_008f_00e5_00a4_0084_00e7_0090_0086_00e5_0099_00a8"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="PCH-Target.html#PCH-Target">PCH Target</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e6_00a8_00a1_00e6_008b_009fTLS.html#g_t_00e6_00a8_00a1_00e6_008b_009fTLS">模拟TLS</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f.html#g_t_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f">目标宏</a>
+<hr>
+</div>
+
+<h3 class="section">17.27 定义MIPS target的协处理器的规范</h3>
+
+<p><a name="index-MIPS-coprocessor_002ddefinition-macros-4606"></a>
+MIPS规范允许MIPS的实现最多具有4个协处理器，其中每个最多具有32个私有寄存器。
+GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以及内存间的传值。例如：
+
+<pre class="smallexample">       register unsigned int cp0count asm ("c0r1");
+       unsigned int d;
+     
+       d = cp0count + 3;
+</pre>
+ <p>(“c0r1”是协处理器0的寄存器1的缺省名；可以按照下面的描述来增加可选名字，
+或者可以通过<code>SUBTARGET_CONDITIONAL_REGISTER_USAGE</code>来覆写全部的缺省名字。)
+
+ <p>协处理器寄存器被假设为epilogue-used；对它们的赋值将被保存，
+即使在函数中的后面不会再使用该寄存器。
+
+ <p>另一个需要注意的是：根据MIPS spec，协处理器1（如果存在）为FPU。
+标准mips浮点支持的对COP1寄存器的访问，不包含在这个机制中。
+
+ <p>下面描述的一个宏，用于定义MIPS协处理器接口，
+可能在子目标（subtarget）中需要被覆写。
+
+<div class="defun">
+&mdash; Macro: <b>ALL_COP_ADDITIONAL_REGISTER_NAMES</b><var><a name="index-ALL_005fCOP_005fADDITIONAL_005fREGISTER_005fNAMES-4607"></a></var><br>
+<blockquote><p>一个逗号分隔的列表（起始于逗号），是用于描述可选的协处理器寄存器的名字对。
+每项的格式应该为
+     <pre class="smallexample">          { <var>alternatename</var>, <var>register_number</var>}
+</pre>
+      <p>缺省情况: 空
+</p></blockquote></div>
+
+ </body></html>
+

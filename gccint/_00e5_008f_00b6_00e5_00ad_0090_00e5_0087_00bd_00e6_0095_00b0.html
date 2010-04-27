@@ -1,0 +1,104 @@
+<html lang="zh">
+<head>
+<title>叶子函数 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8" title="寄存器">
+<link rel="prev" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e4_00b8_00ad_00e7_009a_0084_00e5_0080_00bc.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e4_00b8_00ad_00e7_009a_0084_00e5_0080_00bc" title="寄存器中的值">
+<link rel="next" href="_00e6_00a0_0088_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8.html#g_t_00e6_00a0_0088_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8" title="栈寄存器">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%8f%b6%e5%ad%90%e5%87%bd%e6%95%b0"></a>
+<a name="g_t_00e5_008f_00b6_00e5_00ad_0090_00e5_0087_00bd_00e6_0095_00b0"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e6_00a0_0088_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8.html#g_t_00e6_00a0_0088_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8">栈寄存器</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e4_00b8_00ad_00e7_009a_0084_00e5_0080_00bc.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e4_00b8_00ad_00e7_009a_0084_00e5_0080_00bc">寄存器中的值</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8">寄存器</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.7.4 处理叶子函数</h4>
+
+<p><a name="index-leaf-functions-3898"></a><a name="index-functions_002c-leaf-3899"></a>在一些机器上，一个叶子函数（即，不做任何调用的函数）可以运行的更加有效，
+如果其使用它自己的寄存器窗口。通常这意味着，
+需要通过调用者传递参数的寄存器来接收它的参数，而不是它们通常到达的寄存器。
+
+ <p>对叶子函数的特殊处理通常只在其它条件满足时才被执行；例如，
+通常它们可能只用于它自己的变量和临时对象的那些寄存器。
+我们使用词语“叶子函数”来指一个适合这样的处理的函数，
+所以没有函数调用的函数并不一定是“叶子函数”。
+
+ <p>GCC在它知道函数是否适合作为叶子函数来对待之前分配寄存器编号。
+所以它需要重编号寄存器，以便输出一个叶子函数。下面的宏用来完成此事。
+
+<div class="defun">
+&mdash; Macro: <b>LEAF_REGISTERS</b><var><a name="index-LEAF_005fREGISTERS-3900"></a></var><br>
+<blockquote><p>一个char向量的名字，按照硬件寄存器编号进行索引，
+对于允许作为叶子函数处理的候选的寄存器，其值为1。
+
+      <p>如果叶子函数处理涉及到重编号寄存器，
+则这里标记的寄存器应该是重编号之前的——那些GCC普通分配的。
+重编号后，在汇编代码中实际被使用的寄存器，不要在该向量中被标记为1。
+
+      <p>定义该宏，只当target机器提供了优化叶子函数处理的方法。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LEAF_REG_REMAP</b> (<var>regno</var>)<var><a name="index-LEAF_005fREG_005fREMAP-3901"></a></var><br>
+<blockquote><p>一个C表达式，当函数作为叶子函数来处理时，
+其值为应该对<var>regno</var>进行重编号的寄存器编号。
+
+      <p>如果<var>regno</var>为一个在重编号前不应该出现在叶子函数中的寄存器编号，
+则表达式应该求值为-1，这将造成编译器中断退出。
+
+      <p>定义该宏，只当target机器提供了优化叶子函数处理的方法，
+并且寄存器需要被重编号。
+</p></blockquote></div>
+
+ <p><a name="index-current_005ffunction_005fis_005fleaf-3902"></a><a name="index-current_005ffunction_005fuses_005fonly_005fleaf_005fregs-3903"></a><code>TARGET_ASM_FUNCTION_PROLOGUE</code>和<code>TARGET_ASM_FUNCTION_EPILOGUE</code>
+通常需要单独处理叶子函数。
+它们可以测试C变量<code>current_function_is_leaf</code>，其对于叶子函数非0。
+<code>current_function_is_leaf</code>在局部寄存器分配之前被设置，
+并且可以用于剩余的编译器过程。
+它们还可以测试C变量<code>current_function_uses_only_leaf_regs</code>，
+其对于只用叶子寄存器的叶子函数为非0。
+<code>current_function_uses_only_leaf_regs</code>在所有修改指令的过程被运行完
+之后可用，并且只有当<code>LEAF_REGISTERS</code>被定义时才有用。
+
+<!-- changed this to fix overfull.  ALSO:  why the "it" at the beginning -->
+<!-- of the next paragraph?!  -mew 2feb93 -->
+ </body></html>
+

@@ -1,0 +1,96 @@
+<html lang="zh">
+<head>
+<title>循环操作 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e5_00be_00aa_00e7_008e_00af_00e5_0088_0086_00e6_009e_0090_00e5_0092_008c_00e8_00a1_00a8_00e7_00a4_00ba.html#g_t_00e5_00be_00aa_00e7_008e_00af_00e5_0088_0086_00e6_009e_0090_00e5_0092_008c_00e8_00a1_00a8_00e7_00a4_00ba" title="循环分析和表示">
+<link rel="prev" href="_00e5_00be_00aa_00e7_008e_00af_00e6_009f_00a5_00e8_00af_00a2.html#g_t_00e5_00be_00aa_00e7_008e_00af_00e6_009f_00a5_00e8_00af_00a2" title="循环查询">
+<link rel="next" href="LCSSA.html#LCSSA" title="LCSSA">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%be%aa%e7%8e%af%e6%93%8d%e4%bd%9c"></a>
+<a name="g_t_00e5_00be_00aa_00e7_008e_00af_00e6_0093_008d_00e4_00bd_009c"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="LCSSA.html#LCSSA">LCSSA</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e5_00be_00aa_00e7_008e_00af_00e6_009f_00a5_00e8_00af_00a2.html#g_t_00e5_00be_00aa_00e7_008e_00af_00e6_009f_00a5_00e8_00af_00a2">循环查询</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_00be_00aa_00e7_008e_00af_00e5_0088_0086_00e6_009e_0090_00e5_0092_008c_00e8_00a1_00a8_00e7_00a4_00ba.html#g_t_00e5_00be_00aa_00e7_008e_00af_00e5_0088_0086_00e6_009e_0090_00e5_0092_008c_00e8_00a1_00a8_00e7_00a4_00ba">循环分析和表示</a>
+<hr>
+</div>
+
+<h3 class="section">14.3 循环操作</h3>
+
+<p><a name="index-Loop-manipulation-3075"></a>
+可以使用下列函数来操作循环树：
+
+     <ul>
+<li><code>flow_loop_tree_node_add</code>: 向树中增加一个节点。
+<li><code>flow_loop_tree_node_remove</code>: 从树中移除一个节点。
+<li><code>add_bb_to_loop</code>: 向循环增加一个基本块。
+<li><code>remove_bb_from_loops</code>: 从循环中移除一个基本块。
+</ul>
+
+ <p>大多数低级别的CFG函数会自动更新循环。下列函数用来处理一些比较复杂的CFG操作情况：
+
+     <ul>
+<li><code>remove_path</code>: 移除一个边，以及它支配的所有块。
+<li><code>split_loop_exit_edge</code>:
+拆分循环的出口边，以确保PHI节点参数保留在循环中（确保使用了循环封闭SSA形式）。
+只用于GIMPLE。
+</ul>
+
+ <p>最后，有一些高层的循环转换被实现。虽然其中一些能够工作于非最内层循环，
+但是大多数并没有对这种情况进行过测试，目前，它们只对最内层循环可靠：
+
+     <ul>
+<li><code>create_iv</code>:
+创建一个新的归约变量。只工作在GIMPLE上。
+<code>standard_iv_increment_position</code>能够被用来为iv增量找到合适的位置。
+<li><code>duplicate_loop_to_header_edge</code>,
+<code>tree_duplicate_loop_to_header_edge</code>:
+这些函数（在RTL和GIMPLE之上）在进入循环头的边上对循环体复制规定的次数，
+从而执行了循环展开或loop peeling。对于复制的循环，
+<code>can_duplicate_loop_p</code>（GIMPLE之上为<code>can_unroll_loop_p</code>）必须为真。
+<li><code>loop_version</code>, <code>tree_ssa_loop_version</code>:
+这些函数创建一个循环的复本，以及在它们之前的一个分支跳转，
+从而可以根据规定的条件来选择它们。这对需要在运行时检验一些假设的优化很有帮助
+（循环的一个复本通常不做变换，而另一个通过某种方式进行转换）。
+<li><code>tree_unroll_loop</code>:
+展开循环，包括剥离额外的迭代，从而使得迭代次数可以由展开因子划分，
+更新出口条件，以及移除不会经过的出口。只在GIMPLE上工作。
+</ul>
+
+ </body></html>
+

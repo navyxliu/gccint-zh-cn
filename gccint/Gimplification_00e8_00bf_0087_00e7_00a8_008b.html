@@ -1,0 +1,84 @@
+<html lang="zh">
+<head>
+<title>Gimplification过程 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Passes.html#Passes" title="Passes">
+<link rel="prev" href="_00e8_00af_00ad_00e6_00b3_0095_00e5_0088_0086_00e6_009e_0090_00e8_00bf_0087_00e7_00a8_008b.html#g_t_00e8_00af_00ad_00e6_00b3_0095_00e5_0088_0086_00e6_009e_0090_00e8_00bf_0087_00e7_00a8_008b" title="语法分析过程">
+<link rel="next" href="_00e8_00bf_0087_00e7_00a8_008b_00e7_00ae_00a1_00e7_0090_0086_00e5_0099_00a8.html#g_t_00e8_00bf_0087_00e7_00a8_008b_00e7_00ae_00a1_00e7_0090_0086_00e5_0099_00a8" title="过程管理器">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Gimplification%e8%bf%87%e7%a8%8b"></a>
+<a name="Gimplification_00e8_00bf_0087_00e7_00a8_008b"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e8_00bf_0087_00e7_00a8_008b_00e7_00ae_00a1_00e7_0090_0086_00e5_0099_00a8.html#g_t_00e8_00bf_0087_00e7_00a8_008b_00e7_00ae_00a1_00e7_0090_0086_00e5_0099_00a8">过程管理器</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e8_00af_00ad_00e6_00b3_0095_00e5_0088_0086_00e6_009e_0090_00e8_00bf_0087_00e7_00a8_008b.html#g_t_00e8_00af_00ad_00e6_00b3_0095_00e5_0088_0086_00e6_009e_0090_00e8_00bf_0087_00e7_00a8_008b">语法分析过程</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Passes.html#Passes">Passes</a>
+<hr>
+</div>
+
+<h3 class="section">8.2 Gimplification过程</h3>
+
+<p><a name="index-gimplification-1678"></a><a name="index-GIMPLE-1679"></a><dfn>Gimplification</dfn>是一个离奇的术语，
+用来表示将函数的中间表示转换为GIMPLE语言的过程。
+The term stuck，所以像“gimplification”, “gimplify”,
+“gimplifier” 等类似的单词会分布在这部分代码中。
+
+ <p><a name="index-GENERIC-1680"></a>当然，尽管前端可以选择直接生成GIMPLE，但如果这样，
+则处理起来可能会有些复杂，除非前端使用的中间语言非常简单。
+通常生成GENERIC树以及其扩展会相对容易些，
+并且让语言独立的gimplifier来多大部分的工作。
+
+ <p><a name="index-gimplify_005ffunction_005ftree-1681"></a><a name="index-gimplify_005fexpr-1682"></a><a name="index-lang_005fhooks_002egimplify_005fexpr-1683"></a>这个过程的主入口点是<code>gimplify_function_tree</code>，
+位于<samp><span class="file">gimplify.c</span></samp>中。我们从这里处理整个函数，
+依次的对每条语句进行gimplify。
+这个过程的主要工作是<code>gimplify_expr</code>。
+几乎每个处理都需要经过这里一次，
+并且我们是从这里来调用<code>lang_hooks.gimplify_expr</code>回调的。
+
+ <p>回调函数应该考虑检查表达式，
+并且当表达式不是一个需要注意的语言特定的结构，
+则返回<code>GS_UNHANDLES</code>。
+否则，应该通过某种方式修改表达式使得可以产生合法的GIMPLE。
+如果回调函数确定已经完全转换，并且表达式是合法的GIMPLE，
+则应该返回<code>GS_ALL_DONE</code>。
+否则，应该返回<code>GS_OK</code>，这将会使得表达式会被再次处理。
+如果回调函数在转换过程中遇到一个错误
+（因为前端依赖于gimplification处理来完成语义检测），
+则应该返回<code>GS_ERROR</code>。
+
+ </body></html>
+

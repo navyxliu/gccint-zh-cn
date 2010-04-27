@@ -1,0 +1,84 @@
+<html lang="zh">
+<head>
+<title>定义机器模式迭代器 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_00a8_00a1_00e5_00bc_008f_00e8_00bf_00ad_00e4_00bb_00a3_00e5_0099_00a8.html#g_t_00e6_009c_00ba_00e5_0099_00a8_00e6_00a8_00a1_00e5_00bc_008f_00e8_00bf_00ad_00e4_00bb_00a3_00e5_0099_00a8" title="机器模式迭代器">
+<link rel="next" href="_00e6_009b_00bf_00e6_008d_00a2.html#g_t_00e6_009b_00bf_00e6_008d_00a2" title="替换">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%ae%9a%e4%b9%89%e6%9c%ba%e5%99%a8%e6%a8%a1%e5%bc%8f%e8%bf%ad%e4%bb%a3%e5%99%a8"></a>
+<a name="g_t_00e5_00ae_009a_00e4_00b9_0089_00e6_009c_00ba_00e5_0099_00a8_00e6_00a8_00a1_00e5_00bc_008f_00e8_00bf_00ad_00e4_00bb_00a3_00e5_0099_00a8"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e6_009b_00bf_00e6_008d_00a2.html#g_t_00e6_009b_00bf_00e6_008d_00a2">替换</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_00a8_00a1_00e5_00bc_008f_00e8_00bf_00ad_00e4_00bb_00a3_00e5_0099_00a8.html#g_t_00e6_009c_00ba_00e5_0099_00a8_00e6_00a8_00a1_00e5_00bc_008f_00e8_00bf_00ad_00e4_00bb_00a3_00e5_0099_00a8">机器模式迭代器</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">16.22.1.1 定义机器模式迭代器</h5>
+
+<p><a name="index-define_005fmode_005fiterator-3673"></a>
+定义一个机器模式迭代器的语法为：
+
+<pre class="smallexample">     (define_mode_iterator <var>name</var> [(<var>mode1</var> "<var>cond1</var>") ... (<var>moden</var> "<var>condn</var>")])
+</pre>
+ <p>这将允许后续的 <samp><span class="file">.md</span></samp> 文件结构可以使用机器模式suffix
+<code>:</code><var>name</var>。每个这样的结构将被扩展 <var>n</var> 次，一次使用
+<code>:</code><var>mode1</var> 来替换，一次使用 <code>:</code><var>mode2</var> 来替换，等等。
+在扩展 <var>modei</var> 时，每个C条件 <var>condi</var> 还要为真。
+
+ <p>例如：
+
+<pre class="smallexample">     (define_mode_iterator P [(SI "Pmode == SImode") (DI "Pmode == DImode")])
+</pre>
+ <p>定义了一个新的机器模式后缀 <code>:P</code>。每个使用 <code>:P</code> 的结构将被扩展
+两次，一次由 <code>:SI</code> 来替换 <code>:P</code>，一次由 <code>:DI</code> 来替换
+<code>:P</code>。其中 <code>:SI</code> 版本的只有当 <code>Pmode == SImode</code> 时才被应
+用，<code>:DI</code> 版本的只有当 <code>Pmode == DImode</code> 时才被应用。
+
+ <p>就像其它 <samp><span class="file">.md</span></samp> 条件，一个空字符串被当作“总为真”。<code>(</code><var>mode</var><code> "")</code>
+也可以被缩写为 <var>mode</var>。例如：
+
+<pre class="smallexample">     (define_mode_iterator GPR [SI (DI "TARGET_64BIT")])
+</pre>
+ <p>意味着 <code>:DI</code> 扩展只有为 <code>TARGET_64BIT</code> 时被应用，但 <code>:SI</code>
+扩展却没有这样的限制。
+
+ <p>迭代器按照它们定义的顺序被应用。这在当两个迭代器用于一个结构中需要替换时
+会变的很重要。see <a href="Substitutions.html#Substitutions">Substitutions</a>。
+
+ </body></html>
+

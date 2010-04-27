@@ -1,0 +1,107 @@
+<html lang="zh">
+<head>
+<title>添加新的DECL节点类型 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e5_0086_0085_00e9_0083_00a8_00e7_00bb_0093_00e6_009e_0084.html#g_t_00e5_0086_0085_00e9_0083_00a8_00e7_00bb_0093_00e6_009e_0084" title="内部结构">
+<link rel="prev" href="_00e7_009b_00ae_00e5_0089_008d_00e7_009a_0084_00e7_00bb_0093_00e6_009e_0084_00e5_00b1_0082_00e6_00ac_00a1.html#g_t_00e7_009b_00ae_00e5_0089_008d_00e7_009a_0084_00e7_00bb_0093_00e6_009e_0084_00e5_00b1_0082_00e6_00ac_00a1" title="目前的结构层次">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e6%b7%bb%e5%8a%a0%e6%96%b0%e7%9a%84DECL%e8%8a%82%e7%82%b9%e7%b1%bb%e5%9e%8b"></a>
+<a name="g_t_00e6_00b7_00bb_00e5_008a_00a0_00e6_0096_00b0_00e7_009a_0084DECL_00e8_008a_0082_00e7_0082_00b9_00e7_00b1_00bb_00e5_009e_008b"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e7_009b_00ae_00e5_0089_008d_00e7_009a_0084_00e7_00bb_0093_00e6_009e_0084_00e5_00b1_0082_00e6_00ac_00a1.html#g_t_00e7_009b_00ae_00e5_0089_008d_00e7_009a_0084_00e7_00bb_0093_00e6_009e_0084_00e5_00b1_0082_00e6_00ac_00a1">目前的结构层次</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_0086_0085_00e9_0083_00a8_00e7_00bb_0093_00e6_009e_0084.html#g_t_00e5_0086_0085_00e9_0083_00a8_00e7_00bb_0093_00e6_009e_0084">内部结构</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">9.5.2.2 添加新的DECL节点类型</h5>
+
+<p>增加一个新的<code>DECL</code>树包含下列步骤
+
+     <dl>
+<dt>为<code>DECL</code>节点增加一个新的树代码<dd>对于语言特定的<code>DECL</code>节点，在每个前端目录下有一个<samp><span class="file">.def</span></samp>文件，用来添加树代码。对于属于中端一部分的<code>DECL</code>节点，代码应该添加到<samp><span class="file">tree.def</span></samp>中。
+
+     <br><dt>为<code>DECL</code>节点创建一个新的结构体类型<dd>这些结构体应该继承于现有的层次结构体，方法是使用该结构体作为第一个成员。
+
+     <pre class="smallexample">          struct tree_foo_decl
+          {
+             struct tree_decl_with_vis common;
+          }
+</pre>
+     <p>将会创建一个名为<code>tree_foo_decl</code>的结构体，继承于<code>struct tree_decl_with_vis</code>。
+
+     <p>对于语言特定的<code>DECL</code>节点，这个新的结构体类型应该放在合适的<samp><span class="file">.h</span></samp>文件中。对于属于中端一部分的<code>DECL</code>节点，结构体类型应该在<samp><span class="file">tree.h</span></samp>中。
+
+     <br><dt>向树结构枚举中增加一个节点成员<dd>出于垃圾搜集和动态检查的目的，每个<code>DECL</code>节点结构体类型需要具有一个唯一的枚举值用来指定它。对于语言特定的<code>DECL</code>节点，该新的枚举值应该在合适的.def文中。对于属于中端的<code>DECL</code>节点，枚举值在<samp><span class="file">treestruct.def</span></samp>中指定。
+
+     <br><dt>更新<code>union tree_node</code><dd>为了使得新的结构体类型可用，其必须被添加到<code>union tree_node</code>中。对于语言特定的<code>DECL</code>节点，一个新的项应该被添加到合适的<samp><span class="file">.h</span></samp>文件中，形式如下
+
+     <pre class="smallexample">            struct tree_foo_decl GTY ((tag ("TS_VAR_DECL"))) foo_decl;
+</pre>
+     <p>对于属于中端的<code>DECL</code>节点，额外的成员直接放在<samp><span class="file">tree.h</span></samp>里的<code>union tree_node</code>中。
+For <code>DECL</code> nodes that are part of the middle-end, the additional
+
+     <br><dt>更新动态检查信息<dd>为了能够检查访问<code>union tree_node</code>的一个命名部分是否合法，以及特定的<code>DECL</code>节点是否包含了枚举的<code>DECL</code>节点结构体，我们使用了一个简单的查找表。该查找表需要随着树结构层次一起更新，否则用于检查和包含的宏将会失败。
+
+     <p>对于语言特定的<code>DECL</code>节点，它们是在合适的<samp><span class="file">.c</span></samp>文件中的<code>init_ts</code>函数，用于初始化查找表。为新的<code>DECL</code>节点建立表格的代码应该添加到这里。对于每个表示继承层次的成员的<code>DECL</code>树代码和枚举值，如果树代码（直接或间接）继承于那个成员，则表应该包含1。因此，一个源于<code>struct decl_with_rtl</code>的，枚举值为<code>TS_FOO_DECL</code>的<code>FOO_DECL</code>节点，会使用下列方式来建立。
+
+     <pre class="smallexample">          tree_contains_struct[FOO_DECL][TS_FOO_DECL] = 1;
+          tree_contains_struct[FOO_DECL][TS_DECL_WRTL] = 1;
+          tree_contains_struct[FOO_DECL][TS_DECL_COMMON] = 1;
+          tree_contains_struct[FOO_DECL][TS_DECL_MINIMAL] = 1;
+</pre>
+     <p>对于属于中端的<code>DECL</code>节点，建表代码在<samp><span class="file">tree.c</span></samp>中。
+
+     <br><dt>增加访问任何新的域和标识的宏<dd>
+每个增加的域或标识，都应有一个宏用来访问它，并且执行适当的检查以保证访问的是正确类型的<code>DECL</code>。
+
+     <p>这些宏通常采用下面的形式
+
+     <pre class="smallexample">          #define FOO_DECL_FIELDNAME(NODE) FOO_DECL_CHECK(NODE)-&gt;foo_decl.fieldname
+</pre>
+     <p>但是，如果结构体只是更多结构体的一个基类，有时会使用下面的形式
+     <pre class="smallexample">          #define BASE_STRUCT_CHECK(T) CONTAINS_STRUCT_CHECK(T, TS_BASE_STRUCT)
+          #define BASE_STRUCT_FIELDNAME(NODE) \
+             (BASE_STRUCT_CHECK(NODE)-&gt;base_struct.fieldname
+</pre>
+     </dl>
+
+<!--  -->
+<!-- Functions -->
+<!--  -->
+ </body></html>
+

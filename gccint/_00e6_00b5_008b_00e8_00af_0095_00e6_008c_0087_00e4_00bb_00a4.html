@@ -1,0 +1,245 @@
+<html lang="zh">
+<head>
+<title>测试指令 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e6_00b5_008b_00e8_00af_0095_00e5_008c_0085.html#g_t_00e6_00b5_008b_00e8_00af_0095_00e5_008c_0085" title="测试包">
+<link rel="prev" href="_00e6_00b5_008b_00e8_00af_0095_00e7_0094_00a8_00e8_00af_00ad.html#g_t_00e6_00b5_008b_00e8_00af_0095_00e7_0094_00a8_00e8_00af_00ad" title="测试用语">
+<link rel="next" href="Ada_00e6_00b5_008b_00e8_00af_0095.html#Ada_00e6_00b5_008b_00e8_00af_0095" title="Ada测试">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e6%b5%8b%e8%af%95%e6%8c%87%e4%bb%a4"></a>
+<a name="g_t_00e6_00b5_008b_00e8_00af_0095_00e6_008c_0087_00e4_00bb_00a4"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Ada_00e6_00b5_008b_00e8_00af_0095.html#Ada_00e6_00b5_008b_00e8_00af_0095">Ada测试</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e6_00b5_008b_00e8_00af_0095_00e7_0094_00a8_00e8_00af_00ad.html#g_t_00e6_00b5_008b_00e8_00af_0095_00e7_0094_00a8_00e8_00af_00ad">测试用语</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_00b5_008b_00e8_00af_0095_00e5_008c_0085.html#g_t_00e6_00b5_008b_00e8_00af_0095_00e5_008c_0085">测试包</a>
+<hr>
+</div>
+
+<h4 class="subsection">6.4.2 DejaGnu测试中使用的指令</h4>
+
+<p>测试指令出现在测试源文件的注释中，并且起始于<code>dg-</code>。
+其中一些是在DejaGnu中定义的，其它的是局限于GCC测试包自己的。
+
+ <p>测试中测试指令出现的顺序很重要：
+局限于GCC的指令有时会覆盖DejaGnu的指令使用的信息，
+并且其对GCC指令一无所知，所以DejaGnu指令必须在GCC指令之前。
+
+ <p>个别测试指令包含了选择器，
+其通常由关键字<code>target</code>或<code>xfail</code>打头。
+一个选择器为：一个或多个目标三元组，可能包含通配符；
+单个的有效目标关键字；或者一个逻辑表达式。
+取决于上下文，选择器指定了是否测试被跳过并报告为不支持，
+或者预期为失败。使用&lsquo;<samp><span class="samp">*-*-*</span></samp>&rsquo;来匹配任何目标。
+有效目标关键字在GCC测试包的<samp><span class="file">target-supports.exp</span></samp>中定义。
+
+ <p>选择器表达式出现在大括号中，
+并且使用单个的逻辑操作符：&lsquo;<samp><span class="samp">!</span></samp>&rsquo;,&lsquo;<samp><span class="samp">&amp;&amp;</span></samp>&rsquo;, 或&lsquo;<samp><span class="samp">||</span></samp>&rsquo;。
+操作数为另一个选择器表达式，一个有效目标关键字，
+单个的目标三元组，或者一个双引号或大括号包裹的目标三元组列表。
+例如：
+
+<pre class="smallexample">     { target { ! "hppa*-*-* ia64*-*-*" } }
+     { target { powerpc*-*-* &amp;&amp; lp64 } }
+     { xfail { lp64 || vect_no_align } }
+</pre>
+     <dl>
+<dt><code>{ dg-do </code><var>do-what-keyword</var><code> [{ target/xfail </code><var>selector</var><code> }] }</code><dd><var>do-what-keyword</var>指定了测试如何被编译，以及是否被执行。其为：
+
+          <dl>
+<dt><code>preprocess</code><dd>使用<samp><span class="option">-E</span></samp>编译，从而只运行预处理器。
+<br><dt><code>compile</code><dd>使用<samp><span class="option">-S</span></samp>编译，从而生成汇编代码文件。
+<br><dt><code>assemble</code><dd>使用<samp><span class="option">-c</span></samp>编译，从而生成可重定位的目标文件。
+<br><dt><code>link</code><dd>编译，汇编，并连接，从而生成一个可执行文件。
+<br><dt><code>run</code><dd>生成并运行一个可执行文件，并期望其返回的退出代码为0。
+</dl>
+
+     <p>缺省情况为<code>compile</code>。
+可以通过在那些测试的<code>.exp</code>文件中重定义
+<code>dg-do-what-default</code>来覆盖这个值。
+
+     <p>如果指令包含了可选的&lsquo;<samp><span class="samp">{ target </span><var>selector</var><span class="samp"> } </span></samp>&rsquo;，
+则除非目标系统被包含在目标三元组列表中，或者匹配有效目标关键字，
+否则测试将被跳过。
+
+     <p>如果运行了&lsquo;<samp><span class="samp">do-what-keyword</span></samp>&rsquo;并且指令包含了可选的
+&lsquo;<samp><span class="samp">{ xfail </span><var>selector</var><span class="samp"> }</span></samp>&rsquo;并且选择器匹配，则测试期望为失败。
+对于&lsquo;<samp><span class="samp">do-what-keyword</span></samp>&rsquo;的其它值，<code>xfail</code>子句会被忽略；
+那些测试可以使用指令<code>dg-xfail-if</code>。
+
+     <br><dt><code>{ dg-options </code><var>options</var><code> [{ target </code><var>selector</var><code> }] }</code><dd>该DejaGnu指令提供了一个编译器选项列表，
+用来在目标系统匹配<var>selector</var>的时候被使用，
+以替换这个测试集的缺省选项。
+
+     <br><dt><code>{ dg-add-options </code><var>feature</var><code> ... }</code><dd>增加任何访问特定特征所需要的编译器选项。
+该指令对使用缺省方式启用特征或者根本不提供特征的目标不做任何事情。
+其必须在所有<code>dg-options</code>指令之后。
+
+     <p>支持的<var>feature</var>为：
+          <dl>
+<dt><code>c99_runtime</code><dd>目标的C99运行时（包括头文件和库）。
+
+          <br><dt><code>mips16_attribute</code><dd><code>mips16</code>函数属性。只有MIPS目标支持该特征，并且是在特定的模式下。
+</dl>
+
+     <br><dt><code>{ dg-timeout </code><var>n</var><code> [{target </code><var>selector</var><code> }] }</code><dd>将编译和执行测试程序的时间限制，设置为指定的秒数。
+
+     <br><dt><code>{ dg-timeout-factor </code><var>x</var><code> [{ target </code><var>selector</var><code> }] }</code><dd>将测试程序的编译和执行的通常时间限制，乘以指定的浮点因子。
+通常的时间限制，以妙为单位，按照下列顺序来查找：
+
+          <ul>
+<li>由之前在测试程序中<code>dg-timeout</code>指令定义
+
+          <li>由测试程序集定义的变量<var>tool_timeout</var>
+
+          <li>在目标板子上（target board）设置的<var>gcc</var>,<var>timeout</var>
+
+          <li>300
+</ul>
+
+     <br><dt><code>{ dg-skip-if </code><var>comment</var><code> { </code><var>selector</var><code> } { </code><var>include-opts</var><code> } { </code><var>exclude-opts</var><code> } }</code><dd>如果测试系统被包含在<var>selector</var>中，
+并且在<var>include-opts</var>中的每个选项都在用于编译测试的选项集中，
+并且在<var>exclude-opts</var>中的每个选项都不在用于编译测试的选项集中，则跳过该测试。
+
+     <p>空的<var>include-opts</var>列表使用&lsquo;<samp><span class="samp">"*"</span></samp>&rsquo;，
+空的<var>exclude-opts</var>列表使用&lsquo;<samp><span class="samp">""</span></samp>&rsquo;。
+
+     <br><dt><code>{ dg-xfail-if </code><var>comment</var><code> { </code><var>selector</var><code> } { </code><var>include-opts</var><code> } { </code><var>exclude-opts</var><code> } }</code><dd>如果符合条件（与<code>dg-skip-if</code>相同），则期望测试失败。
+
+     <br><dt><code>{ dg-xfail-run-if </code><var>comment</var><code> { </code><var>selector</var><code> } { </code><var>include-opts</var><code> } { </code><var>exclude-opts</var><code> } }</code><dd>Expect the execute step of a test to fail if the conditions (which are
+the same as for <code>dg-skip-if</code>) and <code>dg-xfail-if</code>) are met.
+
+     <br><dt><code>{ dg-require-</code><var>support</var><code> args }</code><dd>如果目标没有提供需要的支持，则跳过测试；
+实际的指令参见GCC测试包中的<samp><span class="file">gcc-dg.exp</span></samp>。
+这些指令必须出现在任何<code>dg-do</code>指令之后，
+并且是任何<code>dg-additional-sources</code>指令之前。
+它们至少需要一个参数，如果特定的程序不检查参数，则其可以为空字符串。
+
+     <br><dt><code>{ dg-require-effective-target </code><var>keyword</var><code> }</code><dd>如果测试目标，包括目前的multilib标记，没有相应的有效目标关键字，则跳过测试。
+该指令必须出现在任何<code>dg-do</code>指令之后，
+并且是任何<code>dg-additional-sources</code> directive指令之前。
+
+     <br><dt><code>{ dg-shouldfail </code><var>comment</var><code> { </code><var>selector</var><code> } { </code><var>include-opts</var><code> } { </code><var>exclude-opts</var><code> } }</code><dd>如果条件满足（与<code>dg-skip-if</code>相同），
+则期望测试可执行程序返回非零的退出状态。
+
+     <br><dt><code>{ dg-error </code><var>regexp</var><code> [</code><var>comment</var><code> [{ target/xfail </code><var>selector</var><code> } [</code><var>line</var><code>] }]] }</code><dd>该DejaGnu指令出现在期望能获得一个错误消息的源行中，或者指定源行与消息相关联。
+如果那个line没有产生消息，或者如果消息文本不匹配<var>regexp</var>，
+则检测失败并且<var>comment</var>被包括在<code>FAIL</code>消息中。
+检测并不查看字符串&lsquo;<samp><span class="samp">"error"</span></samp>&rsquo;，除非它是<var>regexp</var>的一部分。
+
+     <br><dt><code>{ dg-warning </code><var>regexp</var><code> [</code><var>comment</var><code> [{ target/xfail </code><var>selector</var><code> } [</code><var>line</var><code>] }]] }</code><dd>该DejaGnu指令出现在期望能获得一个警告消息的源行中，或者指定源行与消息相关联。
+如果那个line没有产生消息，或者如果消息文本不匹配<var>regexp</var>，
+则检测失败并且<var>comment</var>被包括在<code>FAIL</code>消息中。
+检测并不查看字符串&lsquo;<samp><span class="samp">"warning"</span></samp>&rsquo;，除非它是<var>regexp</var>的一部分。
+
+     <br><dt><code>{ dg-message </code><var>regexp</var><code> [</code><var>comment</var><code> [{ target/xfail </code><var>selector</var><code> } [</code><var>line</var><code>] }]] }</code><dd>line被期望能获得一个错误或者警告消息。如果如果那个行没有产生消息，
+或者如果消息文本不匹配<var>regexp</var>，
+则检测失败并且<var>comment</var>被包括在<code>FAIL</code>消息中。
+
+     <br><dt><code>{ dg-bogus </code><var>regexp</var><code> [</code><var>comment</var><code> [{ target/xfail </code><var>selector</var><code> } [</code><var>line</var><code>] }]] }</code><dd>该DejaGnu指令出现在一个不应该获得匹配<var>regexp</var>的消息的源行，
+或者指定源行与一个虚假消息相关联。其通常和&lsquo;<samp><span class="samp">xfail</span></samp>&rsquo;一起使用，
+来指示消息为一个特定目标集的已知问题。
+
+     <br><dt><code>{ dg-excess-errors </code><var>comment</var><code> [{ target/xfail </code><var>selector</var><code> }] }</code><dd>该DejaGnu指令指示该测试由于编译器消息没有被&lsquo;<samp><span class="samp">dg-error</span></samp>&rsquo;,
+&lsquo;<samp><span class="samp">dg-warning</span></samp>&rsquo;或&lsquo;<samp><span class="samp">dg-bogus</span></samp>&rsquo;处理，从而期望失败。
+对于这个指令，&lsquo;<samp><span class="samp">xfail</span></samp>&rsquo;与&lsquo;<samp><span class="samp">target</span></samp>&rsquo;具有相同效果。
+
+     <br><dt><code>{ dg-output </code><var>regexp</var><code> [{ target/xfail </code><var>selector</var><code> }] }</code><dd>该DejaGnu指令将<var>regexp</var>与测试执行程序写入<samp><span class="file">stdout</span></samp>和<samp><span class="file">stderr</span></samp>的组合输出作比较。
+
+     <br><dt><code>{ dg-prune-output </code><var>regexp</var><code> }</code><dd>删除测试输出中匹配<var>regexp</var>的消息。
+
+     <br><dt><code>{ dg-additional-files "</code><var>filelist</var><code>" }</code><dd>指定必须复制到编译器运行的系统上的额外文件，不是源文件。
+
+     <br><dt><code>{ dg-additional-sources "</code><var>filelist</var><code>" }</code><dd>指定在编译命令行中出现在主测试文件之后的额外的源文件。
+
+     <br><dt><code>{ dg-final { </code><var>local-directive</var><code> } }</code><dd>该DejaGnu指令被放在源文件中任何地方的注释中，并且在测试编译和运行后被处理。
+多个&lsquo;<samp><span class="samp">dg-final</span></samp>&rsquo;命令将按照它们在源文件中出现的顺序来处理。
+
+     <p>GCC测试包定义了下列指令用于<code>dg-final</code>中。
+
+          <dl>
+<dt><code>cleanup-coverage-files</code><dd>移除该测试生成的覆盖数据文件。
+
+          <br><dt><code>cleanup-repo-files</code><dd>移除该测试使用<samp><span class="option">-frepo</span></samp>生成的文件。
+
+          <br><dt><code>cleanup-rtl-dump </code><var>suffix</var><dd>移除该测试生成的匹配suffix的RTL转储文件。
+
+          <br><dt><code>cleanup-tree-dump </code><var>suffix</var><dd>移除该测试生成的匹配<var>suffix</var>的树转储文件。
+
+          <br><dt><code>cleanup-saved-temps</code><dd>移除该测试使用<samp><span class="option">--save-temps</span></samp>生成的文件。
+
+          <br><dt><code>scan-file </code><var>filename</var> <var>regexp</var><code> [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果<var>regexp</var>匹配<var>filename</var>文本，则测试通过。
+
+          <br><dt><code>scan-file-not </code><var>filename</var> <var>regexp</var><code> [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果<var>regexp</var>不匹配<var>filename</var>文本，则测试通过。
+
+          <br><dt><code>scan-hidden </code><var>symbol</var><code> [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果<var>symbol</var>在测试的汇编输出中被定义为隐含符号，则测试通过。
+
+          <br><dt><code>scan-not-hidden </code><var>symbol</var><code> [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果<var>symbol</var>在测试的汇编输出中没有被定义为隐含符号，则测试通过。
+
+          <br><dt><code>scan-assembler-times </code><var>regex</var> <var>num</var><code> [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果<var>regex</var>匹配在测试的汇编输出中的确切<var>num</var>次数，则测试通过。
+
+          <br><dt><code>scan-assembler </code><var>regex</var><code> [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果<var>regex</var>匹配测试的汇编输出的文本，则测试通过。
+
+          <br><dt><code>scan-assembler-not </code><var>regex</var><code> [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果<var>regex</var>不匹配测试的汇编输出的文本，则测试通过。
+
+          <br><dt><code>scan-assembler-dem </code><var>regex</var><code> [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果<var>regex</var>匹配测试的汇编输出的demangled文本，则测试通过。
+
+          <br><dt><code>scan-assembler-dem-not </code><var>regex</var><code> [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果<var>regex</var>不匹配测试的汇编输出的demangled文本，则测试通过。
+
+          <br><dt><code>scan-tree-dump-times </code><var>regex</var> <var>num</var> <var>suffix</var><code> [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果<var>regex</var>在具有<var>suffix</var>后缀的转储文件中出现确切的<var>num</var>次数，
+则测试通过。
+
+          <br><dt><code>scan-tree-dump </code><var>regex</var> <var>suffix</var><code> [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果<var>regex</var>匹配具有<var>suffix</var>后缀的转储文件的文本，则测试通过。
+
+          <br><dt><code>scan-tree-dump-not </code><var>regex</var> <var>suffix</var><code> [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果<var>regex</var>不匹配具有<var>suffix</var>后缀的转储文件的文本，则测试通过。
+
+          <br><dt><code>scan-tree-dump-dem </code><var>regex</var> <var>suffix</var><code> [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果<var>regex</var>匹配具有<var>suffix</var>后缀的转储文件的demangled文本，则测试通过。
+
+          <br><dt><code>scan-tree-dump-dem-not </code><var>regex</var> <var>suffix</var><code> [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果<var>regex</var>不匹配具有<var>suffix</var>后缀的转储文件的demangled文本，则测试通过。
+
+          <br><dt><code>output-exists [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果编译器输出文件存在，则测试通过。
+
+          <br><dt><code>output-exists-not [{ target/xfail </code><var>selector</var><code> }]</code><dd>如果编译器输出文件不存在，则测试通过。
+
+          <br><dt><code>run-gcov </code><var>sourcefile</var><dd>在<samp><span class="command">gcov</span></samp>测试中检查行数。
+
+          <br><dt><code>run-gcov [branches] [calls] { </code><var>opts</var> <var>sourcefile</var><code> }</code><dd>在<samp><span class="command">gcov</span></samp>测试中除了行数外，还检查分支和/或调用数。
+</dl>
+     </dl>
+
+ </body></html>
+

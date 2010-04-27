@@ -1,0 +1,141 @@
+<html lang="zh">
+<head>
+<title>Insn规范化 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0.html#g_t_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0" title="机器描述">
+<link rel="prev" href="_00e5_00be_00aa_00e7_008e_00af_00e6_008c_0087_00e4_00bb_00a4_00e6_00a8_00a1_00e5_00bc_008f.html#g_t_00e5_00be_00aa_00e7_008e_00af_00e6_008c_0087_00e4_00bb_00a4_00e6_00a8_00a1_00e5_00bc_008f" title="循环指令模式">
+<link rel="next" href="_00e6_0089_00a9_00e5_00b1_0095_00e5_00ae_009a_00e4_00b9_0089.html#g_t_00e6_0089_00a9_00e5_00b1_0095_00e5_00ae_009a_00e4_00b9_0089" title="扩展定义">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Insn%e8%a7%84%e8%8c%83%e5%8c%96"></a>
+<a name="Insn_00e8_00a7_0084_00e8_008c_0083_00e5_008c_0096"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e6_0089_00a9_00e5_00b1_0095_00e5_00ae_009a_00e4_00b9_0089.html#g_t_00e6_0089_00a9_00e5_00b1_0095_00e5_00ae_009a_00e4_00b9_0089">扩展定义</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e5_00be_00aa_00e7_008e_00af_00e6_008c_0087_00e4_00bb_00a4_00e6_00a8_00a1_00e5_00bc_008f.html#g_t_00e5_00be_00aa_00e7_008e_00af_00e6_008c_0087_00e4_00bb_00a4_00e6_00a8_00a1_00e5_00bc_008f">循环指令模式</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0.html#g_t_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0">机器描述</a>
+<hr>
+</div>
+
+<h3 class="section">16.14 指令规范化</h3>
+
+<p><a name="index-canonicalization-of-instructions-3529"></a><a name="index-insn-canonicalization-3530"></a>
+经常会有多个RTL表达式可以表示由单个机器指令所执行的运算。该情况对于逻辑，
+分支和乘累加指令最常见。对于这样的情况，
+编译器尝试将这些多个RTL表达式转换为一个规范的形式，
+以减少对insn指令模式的需求数。
+
+ <p>除了进行代数简化以外，还执行了下面的规范化：
+
+     <ul>
+<li>对于可交换指令和比较指令，总是将常量作为第二个操作数。
+如果机器只支持常量作为第二个操作数，
+则只需要提供匹配将常量作为第二个操作数的指令模式。
+
+     <li>对于结合性操作符，操作符序列总是向左方向链接；例如，一个整数<code>plus</code>，
+只有它的左操作数本身可以为一个<code>plus</code>。当应用到整数时，
+<code>and</code>, <code>ior</code>, <code>xor</code>, <code>plus</code>, <code>mult</code>, <code>smin</code>,
+<code>smax</code>, <code>umin</code>和<code>umax</code>为可结合的，对于浮点，这些有时为可结合的。
+
+     <li><a name="index-g_t_0040code_007bneg_007d_002c-canonicalization-of-3531"></a><a name="index-g_t_0040code_007bnot_007d_002c-canonicalization-of-3532"></a><a name="index-g_t_0040code_007bmult_007d_002c-canonicalization-of-3533"></a><a name="index-g_t_0040code_007bplus_007d_002c-canonicalization-of-3534"></a><a name="index-g_t_0040code_007bminus_007d_002c-canonicalization-of-3535"></a>对于这些操作符，如果只有一个为<code>neg</code>, <code>not</code>,<code>mult</code>, <code>plus</code> 或
+<code>minus</code>表达式的操作数，则其将为第一个操作数。
+
+     <li>对于<code>neg</code>, <code>mult</code>, <code>plus</code>和<code>minus</code>的组合中，
+<code>neg</code>操作（如果存在）将被尽可能的移到内部。
+例如<code>(neg (mult A B))</code>将被规范为<code>(mult (neg A) B)</code>，
+但是<code>(plus (mult (neg A) B) C)</code>将被规范为<code>(minus A (mult B C))</code>。
+
+     <p><a name="index-g_t_0040code_007bcompare_007d_002c-canonicalization-of-3536"></a><li>对于<code>compare</code>运算符，在使用<code>cc0</code>（参见<a href="_00e8_00b7_00b3_00e8_00bd_00ac_00e6_008c_0087_00e4_00bb_00a4_00e6_00a8_00a1_00e5_00bc_008f.html#g_t_00e8_00b7_00b3_00e8_00bd_00ac_00e6_008c_0087_00e4_00bb_00a4_00e6_00a8_00a1_00e5_00bc_008f">跳转指令模式</a>）的机器上，
+常量总是为第二个操作数。 在其它机器上，极少的情况下，
+编译器可能想使用常量作为第一个操作数来构建<code>compare</code>。但是，
+这些情况并不常见，所以不值得来提供匹配常量作为第一个操作数的指令模式，
+除非机器确实具有这样的指令。
+
+     <p>在与上面条件相同的情况下，<code>neg</code>, <code>not</code>, <code>mult</code>, <code>plus</code> 或
+<code>minus</code>的操作数被作为第一个操作数。
+
+     <li><code>(ltu (plus </code><var>a</var> <var>b</var><code>) </code><var>b</var><code>)</code>被转换为
+<code>(ltu (plus </code><var>a</var> <var>b</var><code>) </code><var>a</var><code>)</code>。
+同样，使用<code>geu</code>来替换<code>ltu</code>。
+
+     <li><code>(minus </code><var>x</var><code> (const_int </code><var>n</var><code>))</code>被转换为
+<code>(plus </code><var>x</var><code> (const_int </code><var>-n</var><code>))</code>。
+
+     <li>在地址计算中（即，在<code>mem</code>中），左移操作被转换为与合适的2的幂相乘。
+
+     <p><a name="index-g_t_0040code_007bior_007d_002c-canonicalization-of-3537"></a><a name="index-g_t_0040code_007band_007d_002c-canonicalization-of-3538"></a><a name="index-De-Morgan_0027s-law-3539"></a><li>De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中，将位置反。
+如果该结果为<code>not</code>表达式的唯一的操作数，则其为第一个。
+
+     <p>具有执行按位‘逻辑与’，且其中一个操作数为一个按位求反的机器，
+应该为该指令指定如下的指令模式
+
+     <pre class="smallexample">          (define_insn ""
+            [(set (match_operand:<var>m</var> 0 ...)
+                  (and:<var>m</var> (not:<var>m</var> (match_operand:<var>m</var> 1 ...))
+                               (match_operand:<var>m</var> 2 ...)))]
+            "..."
+            "...")
+</pre>
+     <p class="noindent">类似的，“NAND”指令的指令模式应给被写为
+
+     <pre class="smallexample">          (define_insn ""
+            [(set (match_operand:<var>m</var> 0 ...)
+                  (ior:<var>m</var> (not:<var>m</var> (match_operand:<var>m</var> 1 ...))
+                               (not:<var>m</var> (match_operand:<var>m</var> 2 ...))))]
+            "..."
+            "...")
+</pre>
+     <p>对于这两种情况，都没必要包含许多逻辑上相同的RTL表达式。
+
+     <p><a name="index-g_t_0040code_007bxor_007d_002c-canonicalization-of-3540"></a><li>涉及按位‘异或’和求反的唯一可能的RTL表达式为<code>(xor:</code><var>m</var> <var>x</var> <var>y</var><code>)</code>
+和<code>(not:</code><var>m</var><code> (xor:</code><var>m</var> <var>x</var> <var>y</var><code>))</code>。
+
+     <li>对于三项的和，其中一个为常量的，将使用如下形式
+
+     <pre class="smallexample">          (plus:<var>m</var> (plus:<var>m</var> <var>x</var> <var>y</var>) <var>constant</var>)
+</pre>
+     <li>在不使用<code>cc0</code>的机器上，
+<code>(compare </code><var>x</var><code> (const_int 0))</code>将被转换为<var>x</var>。
+
+     <p><a name="index-g_t_0040code_007bzero_005fextract_007d_002c-canonicalization-of-3541"></a><a name="index-g_t_0040code_007bsign_005fextract_007d_002c-canonicalization-of-3542"></a><li>位组（通常是单个位）和0的相等比较，将使用<code>zero_extract</code>，
+而不是等价的<code>and</code>或者<code>sign_extract</code>运算。
+
+ </ul>
+
+ <p>更多的规范化规则都定义在<samp><span class="file">gcc/rtlanal.c</span></samp>里的函数<code>commutative_operand_precedence</code>中。
+
+ </body></html>
+

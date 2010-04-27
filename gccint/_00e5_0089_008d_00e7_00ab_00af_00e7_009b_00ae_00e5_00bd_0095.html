@@ -1,0 +1,114 @@
+<html lang="zh">
+<head>
+<title>前端目录 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e5_0089_008d_00e7_00ab_00af.html#g_t_00e5_0089_008d_00e7_00ab_00af" title="前端">
+<link rel="next" href="_00e5_0089_008d_00e7_00ab_00af_00e9_0085_008d_00e7_00bd_00ae.html#g_t_00e5_0089_008d_00e7_00ab_00af_00e9_0085_008d_00e7_00bd_00ae" title="前端配置">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%89%8d%e7%ab%af%e7%9b%ae%e5%bd%95"></a>
+<a name="g_t_00e5_0089_008d_00e7_00ab_00af_00e7_009b_00ae_00e5_00bd_0095"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e5_0089_008d_00e7_00ab_00af_00e9_0085_008d_00e7_00bd_00ae.html#g_t_00e5_0089_008d_00e7_00ab_00af_00e9_0085_008d_00e7_00bd_00ae">前端配置</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_0089_008d_00e7_00ab_00af.html#g_t_00e5_0089_008d_00e7_00ab_00af">前端</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">6.3.8.1 前端<samp><var>language</var></samp>目录</h5>
+
+<p>前端<samp><var>language</var></samp>目录包含了该前端的源文件（不过对于运行时库除外，
+它们应该放到<samp><span class="file">gcc</span></samp>目录外面），包括文档或者随着前端一起构建的辅助程序。
+有些文件是专用的，并且编译器的其它部分会依赖它们的名字：
+
+     <dl>
+<dt><samp><span class="file">config-lang.in</span></samp><dd>所有的language子目录都需要这个文件。
+详情参见<a href="_00e5_0089_008d_00e7_00ab_00af_00e9_0085_008d_00e7_00bd_00ae.html#g_t_00e5_0089_008d_00e7_00ab_00af_00e9_0085_008d_00e7_00bd_00ae">前端<samp><span class="file">config-lang.in</span></samp>文件</a>。
+<br><dt><samp><span class="file">Make-lang.in</span></samp><dd>所有的language子目录都需要这个文件。
+它包含了目标<var>lang</var><code>.</code><var>hook</var>
+（<var>lang</var>是在<samp><span class="file">config-lang.in</span></samp>中对<code>language</code>的设置），
+即下面的<var>hook</var>的值，
+以及构建这些目标的其它Makefile规则(如果需要的话，
+可以使用在<samp><span class="file">config-lang.in</span></samp>中通过<code>outputs</code>指定的其它Makefile，
+但是不赞成这种方式)。
+它还向变量<code>lang_checks</code>增加了任何可以使用<samp><span class="file">gcc/Makefile.in</span></samp>中的
+标准规则的测试包目标。
+
+          <dl>
+<dt><code>all.cross</code><dt><code>start.encap</code><dt><code>rest.encap</code><dd>FIXME: 确切的描述这些目标。
+<br><dt><code>tags</code><dd>在源树的语言子目录中构建一个<samp><span class="command">etags</span></samp> <samp><span class="file">TAGS</span></samp>文件。
+<br><dt><code>info</code><dd>在构建目录下构建前端的info文档。
+这个目标只被&lsquo;<samp><span class="samp">make bootstrap</span></samp>&rsquo;在有合适版本的<samp><span class="command">makeinfo</span></samp>时调用，
+所以不需要进行检查，并且如果错误发生时，应该失败。
+<br><dt><code>dvi</code><dd>在构建目录下构建前端的DVI文档。这应该使用<code>$(TEXI2DVI)</code>，
+以及合适的指向要包含文件目录的<samp><span class="option">-I</span></samp>参数，来完成。
+<br><dt><code>pdf</code><dd>在构建目录下构建前端的PDF文档。这应该使用<code>$(TEXI2PDF)</code>，
+以及合适的指向要包含文件目录的<samp><span class="option">-I</span></samp>参数，来完成。
+<br><dt><code>html</code><dd>在构建目录下构建前端的HTML文档。
+<br><dt><code>man</code><dd>在构建目录下从Texinfo手册中构建前端的man页（参见<a href="_00e7_0094_009f_00e6_0088_0090Man_00e9_00a1_00b5.html#g_t_00e7_0094_009f_00e6_0088_0090Man_00e9_00a1_00b5">生成Man页</a>）。
+该目标只在所需的工具可用时才被调用，当应该忽视错误从而不会在错误发生时停止构建；
+man页是可选的，并且所涉及到的工具可能被安装in a broken way。
+<br><dt><code>install-common</code><dd>安装前端的所有部分，
+除了在<samp><span class="file">config-lang.in</span></samp>中列出的<code>compilers</code>可执行程序以外。
+<br><dt><code>install-info</code><dd>安装前端的info文档，如果源目录中存在的话。
+该目标应该与要安装的info文件有依赖关系。
+<br><dt><code>install-man</code><dd>安装前端的man页。该目标应该能够忽略错误。
+<br><dt><code>srcextra</code><dd>将它的依赖复制到源目录中。通常用于生成的文件，像Bison输出文件，其不存在于CVS中，
+但应该放到任何的发行tar包中。
+该目标将在自举过程中当&lsquo;<samp><span class="samp">--enable-generated-files-in-srcdir</span></samp>&rsquo;被指定为一个
+<samp><span class="file">configure</span></samp>选项时被执行。
+<br><dt><code>srcinfo</code><dt><code>srcman</code><dd>将它的依赖复制到源目录中。
+该目标将在自举过程中当&lsquo;<samp><span class="samp">--enable-generated-files-in-srcdir</span></samp>&rsquo;被指定为一个
+<samp><span class="file">configure</span></samp>选项时被执行。
+<br><dt><code>uninstall</code><dd>卸载通过安装编译器所安装的文件。目前还不支持，所以不要做任何事情。
+<br><dt><code>mostlyclean</code><dt><code>clean</code><dt><code>distclean</code><dt><code>maintainer-clean</code><dd>标准GNU&lsquo;<samp><span class="samp">*clean</span></samp>&rsquo;目标的语言部分。关于标准目标的详情，
+参见<a href="../standards/Standard-Targets.html#Standard-Targets">Standard Targets for Users</a>。
+对于GCC，<code>maintainer-clean</code>应该删除所有在源目录下生成的没有放入CVS的文件，
+但不要删除任何放入CVS的文件。
+</dl>
+
+     <p><samp><span class="file">Make-lang.in</span></samp> must also define a variable <var>lang</var><code>_OBJS</code>
+to a list of host object files that are used by that language.
+
+     <br><dt><samp><span class="file">lang.opt</span></samp><dd>该文件注册了前端所接受的命令行中的选项开关集，以及它们的<samp><span class="option">--help</span></samp>文本。
+参见<a href="_00e9_0080_0089_00e9_00a1_00b9.html#g_t_00e9_0080_0089_00e9_00a1_00b9">选项</a>。
+<br><dt><samp><span class="file">lang-specs.h</span></samp><dd>该文件提供了在<samp><span class="file">gcc.c</span></samp>中的<code>default_compilers</code>的入口，
+用于覆盖当该语言的编译器没有安装时报错的缺省行为。
+<br><dt><samp><var>language</var><span class="file">-tree.def</span></samp><dd>该文件，不需要存在，定义了任何语言特定的树代码。
+</dl>
+
+ </body></html>
+

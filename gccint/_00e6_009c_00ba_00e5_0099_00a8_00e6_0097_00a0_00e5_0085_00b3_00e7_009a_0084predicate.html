@@ -1,0 +1,174 @@
+<html lang="zh">
+<head>
+<title>机器无关的predicate - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Predicates.html#Predicates" title="Predicates">
+<link rel="next" href="_00e5_00ae_009a_00e4_00b9_0089predicate.html#g_t_00e5_00ae_009a_00e4_00b9_0089predicate" title="定义predicate">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e6%9c%ba%e5%99%a8%e6%97%a0%e5%85%b3%e7%9a%84predicate"></a>
+<a name="g_t_00e6_009c_00ba_00e5_0099_00a8_00e6_0097_00a0_00e5_0085_00b3_00e7_009a_0084predicate"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e5_00ae_009a_00e4_00b9_0089predicate.html#g_t_00e5_00ae_009a_00e4_00b9_0089predicate">定义predicate</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Predicates.html#Predicates">Predicates</a>
+<hr>
+</div>
+
+<h4 class="subsection">16.7.1 机器无关的predicate</h4>
+
+<p><a name="index-machine_002dindependent-predicates-3197"></a><a name="index-generic-predicates-3198"></a>
+这些是通用predicate，适用于所有后端。它们定义在<samp><span class="file">recog.c</span></samp>中。
+第一类predicate只允许常量或立即数。
+
+<div class="defun">
+&mdash; Function: <b>immediate_operand</b><var><a name="index-immediate_005foperand-3199"></a></var><br>
+<blockquote><p>该predicate允许适合相应<var>mode</var>的任何类别的常量。
+适合用于操作数必须为常量的指令。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>const_int_operand</b><var><a name="index-const_005fint_005foperand-3200"></a></var><br>
+<blockquote><p>该predicate允许适合相应<var>mode</var>的任何<code>CONST_INT</code>表达式。
+适合用于不是符号（symbol）或标号（label）的立即数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>const_double_operand</b><var><a name="index-const_005fdouble_005foperand-3201"></a></var><br>
+<blockquote><p>该predicate接受任何确实为<var>mode</var>的<code>CONST_DOUBLE</code>表达式。
+如果<var>mode</var>为<code>VOIDmode</code>，则其还接受<code>CONST_INT</code>。
+它是用于浮点立即数的。
+</p></blockquote></div>
+
+<p class="noindent">第二类predicate只允许某种类别的机器寄存器。
+
+<div class="defun">
+&mdash; Function: <b>register_operand</b><var><a name="index-register_005foperand-3202"></a></var><br>
+<blockquote><p>该predicate允许适合相应<var>mode</var>的任何<code>REG</code>或<code>SUBREG</code>表达式。
+通常适合于RISC机器上的算术指令操作数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>pmode_register_operand</b><var><a name="index-pmode_005fregister_005foperand-3203"></a></var><br>
+<blockquote><p>这与<code>register_operand</code>略为不同，其对机器描述的读入器有些限制。
+
+      <p>当机器描述读入器接受&lsquo;<samp><span class="samp">:P</span></samp>&rsquo;机器模式后缀时，
+
+     <pre class="smallexample">          (match_operand <var>n</var> "pmode_register_operand" <var>constraint</var>)
+</pre>
+      <p class="noindent">与
+
+     <pre class="smallexample">          (match_operand:P <var>n</var> "register_operand" <var>constraint</var>)
+</pre>
+      <p class="noindent">将具有完全相同的含义。不幸的是，这样不行，应为Pmode是其它机器模式的别名，
+并且可能随着机器特定选项的不同而改变。参见<a href="_00e5_0085_00b6_00e5_00ae_0083.html#g_t_00e5_0085_00b6_00e5_00ae_0083">其它</a>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>scratch_operand</b><var><a name="index-scratch_005foperand-3204"></a></var><br>
+<blockquote><p>该predicate允许硬件寄存器和<code>SCRATCH</code>表达式，但不允许伪寄存器。
+其由<code>match_scratch</code>在内部使用；而不应该被直接使用。
+</p></blockquote></div>
+
+<p class="noindent">第三类predicate只允许某种内存引用。
+
+<div class="defun">
+&mdash; Function: <b>memory_operand</b><var><a name="index-memory_005foperand-3205"></a></var><br>
+<blockquote><p>该predicate允许任何对内存中机器模式<var>mode</var>的一定数量的有效引用，
+并通过<code>GO_IF_LEGITIMATE_ADDRESS</code>的弱形式来确定（参见<a href="_00e5_00af_00bb_00e5_009d_0080_00e6_00a8_00a1_00e5_00bc_008f.html#g_t_00e5_00af_00bb_00e5_009d_0080_00e6_00a8_00a1_00e5_00bc_008f">寻址模式</a>）。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>address_operand</b><var><a name="index-address_005foperand-3206"></a></var><br>
+<blockquote><p>该predicate有些不常用；
+其允许任何为机器模式<var>mode</var>的一定数量的地址有效表达式操作数，
+同样通过<code>GO_IF_LEGITIMATE_ADDRESS</code>的弱形式来确定。
+首先，如果&lsquo;<samp><span class="samp">(mem:</span><var>mode</var><span class="samp">&nbsp;(</span><var>exp</var><span class="samp">))<!-- /@w --></span></samp>&rsquo;被<code>memory_operand</code>接受，
+则<var>exp</var>被<code>address_operand</code>接受。
+注意<var>exp</var>不必具有机器模式<var>mode</var>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>indirect_operand</b><var><a name="index-indirect_005foperand-3207"></a></var><br>
+<blockquote><p>这是一个<code>memory_operand</code>的更严格形式，
+其只允许将<code>general_operand</code>作为地址表达式的内存引用。
+不鼓励对该predicate的新的使用，因为<code>general_operand</code>的条件非常宽，
+所以很难说清对于<code>indirect_operand</code>什么是被允许的，什么是不被允许的。
+如果目标机对不同指令的内存操作数具有不同的要求，
+则最好定义目标机特定的predicate，以显式的加强硬件的要求。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>push_operand</b><var><a name="index-push_005foperand-3208"></a></var><br>
+<blockquote><p>该predicate允许适合将值压入栈中的内存引用。这将为一个<code>MEM</code>，
+其引用<code>stack_pointer_rtx</code>，且在其地址表达式中具有一个副作用
+（参见<a href="Incdec.html#Incdec">Incdec</a>）；其由宏<code>STACK_PUSH_CODE</code>来确定（参见<a href="_00e5_00b8_00a7_00e5_00b8_0083_00e5_00b1_0080.html#g_t_00e5_00b8_00a7_00e5_00b8_0083_00e5_00b1_0080">帧布局</a>）。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>pop_operand</b><var><a name="index-pop_005foperand-3209"></a></var><br>
+<blockquote><p>该predicate允许适合将值弹出栈中的内存引用。同样，这将为一个<code>MEM</code> ，
+其引用<code>stack_pointer_rtx</code>，且在其地址表达式中具有一个副作用；
+不过，这次是<code>STACK_POP_CODE</code> 。
+</p></blockquote></div>
+
+<p class="noindent">第四类predicate允许上面的操作数的某种组合。
+
+<div class="defun">
+&mdash; Function: <b>nonmemory_operand</b><var><a name="index-nonmemory_005foperand-3210"></a></var><br>
+<blockquote><p>该predicate允许任何对于<var>mode</var>有效的立即数，或寄存器操作数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>nonimmediate_operand</b><var><a name="index-nonimmediate_005foperand-3211"></a></var><br>
+<blockquote><p>该predicate允许任何对于<var>mode</var>有效的寄存器，或内存操作数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: <b>general_operand</b><var><a name="index-general_005foperand-3212"></a></var><br>
+<blockquote><p>该predicate允许任何对于<var>mode</var>有效的立即数，寄存器，或内存操作数。
+</p></blockquote></div>
+
+<p class="noindent">最后，有一个通用操作符predicate。
+
+<div class="defun">
+&mdash; Function: <b>comparison_operator</b><var><a name="index-comparison_005foperator-3213"></a></var><br>
+<blockquote><p>该predicate匹配任何执行一个基于<var>mode</var>的算术比较表达式；
+即，<code>COMPARISON_P</code>对于表达式代码为真。
+</p></blockquote></div>
+
+ </body></html>
+

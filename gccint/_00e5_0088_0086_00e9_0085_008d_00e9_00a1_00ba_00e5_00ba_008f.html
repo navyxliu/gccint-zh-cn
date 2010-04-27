@@ -1,0 +1,100 @@
+<html lang="zh">
+<head>
+<title>分配顺序 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8" title="寄存器">
+<link rel="prev" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e5_009f_00ba_00e7_00a1_0080.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e5_009f_00ba_00e7_00a1_0080" title="寄存器基础">
+<link rel="next" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e4_00b8_00ad_00e7_009a_0084_00e5_0080_00bc.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e4_00b8_00ad_00e7_009a_0084_00e5_0080_00bc" title="寄存器中的值">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%88%86%e9%85%8d%e9%a1%ba%e5%ba%8f"></a>
+<a name="g_t_00e5_0088_0086_00e9_0085_008d_00e9_00a1_00ba_00e5_00ba_008f"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e4_00b8_00ad_00e7_009a_0084_00e5_0080_00bc.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e4_00b8_00ad_00e7_009a_0084_00e5_0080_00bc">寄存器中的值</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e5_009f_00ba_00e7_00a1_0080.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e5_009f_00ba_00e7_00a1_0080">寄存器基础</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8">寄存器</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.7.2 寄存器的分配顺序</h4>
+
+<p><a name="index-order-of-register-allocation-3883"></a><a name="index-register-allocation-order-3884"></a>
+<!-- prevent bad page break with this line -->
+寄存器按照顺序进行分配。
+
+<div class="defun">
+&mdash; Macro: <b>REG_ALLOC_ORDER</b><var><a name="index-REG_005fALLOC_005fORDER-3885"></a></var><br>
+<blockquote><p>如果定义，则为一个整数向量的初始化值，包含了硬件寄存器号，
+GCC将按该照顺序来使用它们（前面的优先）。
+
+      <p>如果没有定义该宏，则寄存器按照低编号优先的方式使用。
+
+      <p>该宏的一个用处是在一些机器上，
+高编号的寄存器必须总是被保存并且save-multiple-registers指令
+只支持连续序列的寄存器。在这些机器上，
+可以定义<code>REG_ALLOC_ORDER</code>来初始化列表，
+使得高编号寄存器优先分配。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ORDER_REGS_FOR_LOCAL_ALLOC</b><var><a name="index-ORDER_005fREGS_005fFOR_005fLOCAL_005fALLOC-3886"></a></var><br>
+<blockquote><p>一条C语句（无分号），
+用来选择按照什么顺序来为局部于一个基本块的伪寄存器分配硬件寄存器。
+
+      <p>将想要的寄存器顺序存储在数组<code>reg_alloc_order</code>中。
+元素0为先分配的寄存器；元素1为下一个；等等。
+
+      <p>在执行宏之前，宏的内容体不应该对<code>reg_alloc_order</code>的内容作任何假设。
+
+      <p>在大多数机器上，不需要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>IRA_HARD_REGNO_ADD_COST_MULTIPLIER</b> (<var>regno</var>)<var><a name="index-IRA_005fHARD_005fREGNO_005fADD_005fCOST_005fMULTIPLIER-3887"></a></var><br>
+<blockquote><p>In some case register allocation order is not enough for the
+Integrated Register Allocator (<acronym>IRA</acronym>) to generate a good code. 
+If this macro is defined, it should return a floating point value
+based on <var>regno</var>.  The cost of using <var>regno</var> for a pseudo will
+be increased by approximately the pseudo's usage frequency times the
+value returned by this macro.  Not defining this macro is equivalent
+to having it always return <code>0.0</code>.
+
+      <p>在大多数机器上，不需要定义该宏。
+</p></blockquote></div>
+
+ </body></html>
+

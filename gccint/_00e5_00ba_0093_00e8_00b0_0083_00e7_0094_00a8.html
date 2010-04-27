@@ -1,0 +1,166 @@
+<html lang="zh">
+<head>
+<title>库调用 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f.html#g_t_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f" title="目标宏">
+<link rel="prev" href="Trampolines.html#Trampolines" title="Trampolines">
+<link rel="next" href="_00e5_00af_00bb_00e5_009d_0080_00e6_00a8_00a1_00e5_00bc_008f.html#g_t_00e5_00af_00bb_00e5_009d_0080_00e6_00a8_00a1_00e5_00bc_008f" title="寻址模式">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%ba%93%e8%b0%83%e7%94%a8"></a>
+<a name="g_t_00e5_00ba_0093_00e8_00b0_0083_00e7_0094_00a8"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e5_00af_00bb_00e5_009d_0080_00e6_00a8_00a1_00e5_00bc_008f.html#g_t_00e5_00af_00bb_00e5_009d_0080_00e6_00a8_00a1_00e5_00bc_008f">寻址模式</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Trampolines.html#Trampolines">Trampolines</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f.html#g_t_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f">目标宏</a>
+<hr>
+</div>
+
+<h3 class="section">17.13 库例程的隐式调用</h3>
+
+<p><a name="index-library-subroutine-names-4145"></a><a name="index-g_t_0040file_007blibgcc_002ea_007d-4146"></a>
+<!-- prevent bad page break with this line -->
+这是库函数的隐式调用的说明。
+
+<div class="defun">
+&mdash; Macro: <b>DECLARE_LIBRARY_RENAMES</b><var><a name="index-DECLARE_005fLIBRARY_005fRENAMES-4147"></a></var><br>
+<blockquote><p>该宏，如果被定义，应该扩展为一块C代码，当编译libgcc.a的函数时被扩展。
+其可以被用于提供GCC内部库函数的替代名字，如果有编译应该提供的ABI名字。
+</p></blockquote></div>
+
+ <p><a name="index-init_005fone_005flibfunc-4148"></a><a name="index-set_005foptab_005flibfunc-4149"></a>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_INIT_LIBFUNCS</b> (<var>void</var>)<var><a name="index-TARGET_005fINIT_005fLIBFUNCS-4150"></a></var><br>
+<blockquote><p>该钩子应该声明额外的库函数或者重命名存在的，
+使用<samp><span class="file">optabs.c</span></samp>中定义的函数<code>set_optab_libfunc</code>和
+<code>init_one_libfunc</code>。
+<code>init_optabs</code>调用该宏，在初始化所有正常的库函数之后。
+
+      <p>缺省为不作任何事情。大多数port不需要定义该钩子。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FLOAT_LIB_COMPARE_RETURNS_BOOL</b> (<var>mode, comparison</var>)<var><a name="index-FLOAT_005fLIB_005fCOMPARE_005fRETURNS_005fBOOL-4151"></a></var><br>
+<blockquote><p>该宏应该返回<code>true</code>，如果实现在模式<var>mode</var>下的浮点比较操作符
+<var>comparison</var>的库函数应该返回一个布尔值，
+如果应该返回一个三态值则返回<var>false</var>。
+
+      <p>GCC本身的浮点库从比较运算符中返回三态值，所以缺省总是返回假。
+大多数port不需要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_LIB_INT_CMP_BIASED</b><var><a name="index-TARGET_005fLIB_005fINT_005fCMP_005fBIASED-4152"></a></var><br>
+<blockquote><p>该宏应该求解为<code>true</code>，如果整型比较函数（像<code>__cmpdi2</code>）
+应该返回0来指示第一个操作数比第二个小，1来指示相等，
+2来指示第一个操作数大于第二个。如果该宏求解为<code>false</code>，
+则比较函数返回-1，0和1，来替代0，1和2。如果target使用<samp><span class="file">libgcc.a</span></samp>中的函数，
+则不需要定义该宏。
+</p></blockquote></div>
+
+ <p><a name="index-US-Software-GOFAST_002c-floating-point-emulation-library-4153"></a><a name="index-floating-point-emulation-library_002c-US-Software-GOFAST-4154"></a><a name="index-GOFAST_002c-floating-point-emulation-library-4155"></a><a name="index-gofast_005fmaybe_005finit_005flibfuncs-4156"></a>
+
+<div class="defun">
+&mdash; Macro: <b>US_SOFTWARE_GOFAST</b><var><a name="index-US_005fSOFTWARE_005fGOFAST-4157"></a></var><br>
+<blockquote><p>定义该宏，如果你的系统C库使用US Software GOFAST库来提供浮点模拟。
+
+      <p>除了定义该宏以外，你的体系结构必须将<code>TARGET_INIT_LIBFUNCS</code>设为
+<code>gofast_maybe_init_libfuncs</code>，或者从那个钩子版本中调用该函数。
+其在<samp><span class="file">config/gofast.h</span></samp>中定义，
+且必须被你的体系结构的<samp><var>cpu</var><span class="file">.c</span></samp>文件包含进来。
+例如参见<samp><span class="file">sparc/sparc.c</span></samp>。
+
+      <p>如果该宏被定义，
+则<code>TARGET_FLOAT_LIB_COMPARE_RETURNS_BOOL</code> target钩子必须返回假，
+对于<code>SFmode</code>和<code>DFmode</code>比较。
+</p></blockquote></div>
+
+ <p><a name="index-g_t_0040code_007bEDOM_007d_002c-implicit-usage-4158"></a><a name="index-matherr-4159"></a>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_EDOM</b><var><a name="index-TARGET_005fEDOM-4160"></a></var><br>
+<blockquote><p>target机器上的<code>EDOM</code>的值，作为一个C整型常量表达式。如果没有定义该宏，
+则GCC不尝试将<code>EDOM</code>的值直接存放到<code>errno</code>中。
+查看<samp><span class="file">/usr/include/errno.h</span></samp>来查找你的系统上的<code>EDOM</code>的值。
+
+      <p>如果没有定义<code>TARGET_EDOM</code>则被编译的代码通过调用库函数并使其报告错误，
+来报告domain错误。如果对于这样的错误，你系统上的数学函数使用<code>matherr</code>，
+则应该不定义<code>TARGET_EDOM</code>，以便<code>matherr</code>被正常使用。
+</p></blockquote></div>
+
+ <p><a name="index-g_t_0040code_007berrno_007d_002c-implicit-usage-4161"></a>
+
+<div class="defun">
+&mdash; Macro: <b>GEN_ERRNO_RTX</b><var><a name="index-GEN_005fERRNO_005fRTX-4162"></a></var><br>
+<blockquote><p>定义该宏为C表达式来创建一个rtl表达式，来引用全局“变量”<code>errno</code>。
+（在一些系统上，<code>errno</code>可能实际不是一个变量。）如果没有定义该宏，
+则会使用一个合理的缺省。
+</p></blockquote></div>
+
+ <p><a name="index-C99-math-functions_002c-implicit-usage-4163"></a>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_C99_FUNCTIONS</b><var><a name="index-TARGET_005fC99_005fFUNCTIONS-4164"></a></var><br>
+<blockquote><p>当该宏非0时，GCC将隐式的优化<code>sin</code>调用为<code>sinf</code>，
+类似的还有C99标准中定义的其它函数。缺省为非0，这对于大多现代系统是合适的，
+然而有一些系统缺少对这些函数的运行时支持，所以它们需要该宏被重定义为0。
+</p></blockquote></div>
+
+ <p><a name="index-sincos-math-function_002c-implicit-usage-4165"></a>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_HAS_SINCOS</b><var><a name="index-TARGET_005fHAS_005fSINCOS-4166"></a></var><br>
+<blockquote><p>当该宏非0时，
+GCC将隐式的优化<code>sin</code>和<code>cos</code>调用为使用相同参数的<code>sincos</code>调用。
+缺省为0。target必须提供下列函数：
+     <pre class="smallexample">          void sincos(double x, double *sin, double *cos);
+          void sincosf(float x, float *sin, float *cos);
+          void sincosl(long double x, long double *sin, long double *cos);
+</pre>
+      </blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>NEXT_OBJC_RUNTIME</b><var><a name="index-NEXT_005fOBJC_005fRUNTIME-4167"></a></var><br>
+<blockquote><p>定义该宏来使用NeXT系统约定为Objective-C消息发送生成代码。
+该调用约定包括将对象，选择者和方法一起传递给方法查询库函数。
+
+      <p>缺省调用约定只将对象和选择者传递给查询函数，其返回一个指向方法的指针。
+</p></blockquote></div>
+
+ </body></html>
+

@@ -1,0 +1,195 @@
+<html lang="zh">
+<head>
+<title>边 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e6_008e_00a7_00e5_0088_00b6_00e6_00b5_0081.html#g_t_00e6_008e_00a7_00e5_0088_00b6_00e6_00b5_0081" title="控制流">
+<link rel="prev" href="_00e5_009f_00ba_00e6_009c_00ac_00e5_009d_0097.html#g_t_00e5_009f_00ba_00e6_009c_00ac_00e5_009d_0097" title="基本块">
+<link rel="next" href="Profile_00e4_00bf_00a1_00e6_0081_00af.html#Profile_00e4_00bf_00a1_00e6_0081_00af" title="Profile信息">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e8%be%b9"></a>
+<a name="g_t_00e8_00be_00b9"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Profile_00e4_00bf_00a1_00e6_0081_00af.html#Profile_00e4_00bf_00a1_00e6_0081_00af">Profile信息</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e5_009f_00ba_00e6_009c_00ac_00e5_009d_0097.html#g_t_00e5_009f_00ba_00e6_009c_00ac_00e5_009d_0097">基本块</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_008e_00a7_00e5_0088_00b6_00e6_00b5_0081.html#g_t_00e6_008e_00a7_00e5_0088_00b6_00e6_00b5_0081">控制流</a>
+<hr>
+</div>
+
+<h3 class="section">15.2 边</h3>
+
+<p><a name="index-edge-in-the-flow-graph-3096"></a><a name="index-edge-3097"></a>边表示从某个基本块A的结束到另一个基本块B的开头的可能的控制流转换。
+我们称A是B的前驱，B是A的后继。在GCC中，边由<code>edge</code>数据类型表示。
+每个<code>edge</code>作为两个基本块之间的链接：
+一个<code>edge</code>的<code>src</code>成员指向前驱<code>dest</code>基本块。
+数据类型<code>basic_block</code>的成员<code>preds</code>和<code>succs</code>，
+指向块的前驱和后继们的边的type-safe向量。
+
+ <p><a name="index-edge-iterators-3098"></a>当在一个边向量中访问边时，应该使用边迭代器。
+边迭代器由<code>edge_iterator</code>数据结构和一些可以使用的操作方法构成：
+
+     <dl>
+<dt><code>ei_start</code><a name="index-ei_005fstart-3099"></a><dd>该函数初始化一个指向边向量中第一个边的<code>edge_iterator</code>。
+
+     <br><dt><code>ei_last</code><a name="index-ei_005flast-3100"></a><dd>该函数初始化一个指向边向量中最后一个边的<code>edge_iterator</code>。
+
+     <br><dt><code>ei_end_p</code><a name="index-ei_005fend_005fp-3101"></a><dd>如果<code>edge_iterator</code>表示边向量中的最后一个边，则该断言为<code>true</code>。
+
+     <br><dt><code>ei_one_before_end_p</code><a name="index-ei_005fone_005fbefore_005fend_005fp-3102"></a><dd>如果<code>edge_iterator</code>表示边向量中的倒数第二个边，则该断言为<code>true</code>。
+
+     <br><dt><code>ei_next</code><a name="index-ei_005fnext-3103"></a><dd>该函数接受一个指向<code>edge_iterator</code>的指针，并使其指向序列中的下一个边。
+
+     <br><dt><code>ei_prev</code><a name="index-ei_005fprev-3104"></a><dd>该函数接受一个指向<code>edge_iterator</code>的指针，并使其指向序列中的上一个边。
+
+     <br><dt><code>ei_edge</code><a name="index-ei_005fedge-3105"></a><dd>该函数返回由<code>edge_iterator</code>当前指向的<code>edge</code>。
+
+     <br><dt><code>ei_safe_safe</code><a name="index-ei_005fsafe_005fsafe-3106"></a><dd>该函数返回由<code>edge_iterator</code>当前指向的<code>edge</code>，
+但是如果迭代器指向序列的结尾时，则返回<code>NULL</code>。
+该函数是为现有的代码提供的，即代码假设用<code>NULL</code>边来表示序列的结尾。
+</dl>
+
+ <p>宏<code>FOR_EACH_EDGE</code>可以方便的用来访问前驱边或后继边序列。
+当在遍历中会移除元素时，不要使用该宏，否则会错过这些元素。
+这里有一个如何使用该宏的例子：
+
+<pre class="smallexample">     edge e;
+     edge_iterator ei;
+     
+     FOR_EACH_EDGE (e, ei, bb-&gt;succs)
+       {
+          if (e-&gt;flags &amp; EDGE_FALLTHRU)
+            break;
+       }
+</pre>
+ <p><a name="index-fall_002dthru-3107"></a>有许多原因会导致控制流从一个块传递到另一个。
+一种可能是某条指令，例如<code>CODE_LABEL</code>，在一个线形的指令流中，
+总是起始一个新基本块。在这种情况下，
+一个<dfn>fall-thru</dfn>边将基本块与随后的第一个比本块相连。
+但是有许多其它原因会导致边被创建。
+<code>edge</code>的数据类型的<code>flags</code>域用于存储我们处理的边的类型信息。
+每个边都具有下列类型之一：
+
+     <dl>
+<dt><em>jump</em><dd>与跳转指令相关的边没有被设置类型标识。这些边用于无条件或有条件跳转，
+以及RTL中还有表跳转。它们是最容易操作的，因为当流图不为SSA形式的时候，
+可以自由重定向。
+
+     <br><dt><em>fall-thru</em><dd><a name="index-EDGE_005fFALLTHRU_002c-force_005fnonfallthru-3108"></a>Fall-thru边存在于当基本块不需要分支而是继续执行随后的块的时候。
+这些边的标志设为<code>EDGE_FALLTHRU</code>。不像其它类型的边，
+这些边必须直接进入基本块的指令流中。
+函数<code>force_nonfallthru</code>可以用于在需要重定向时插入一个无条件跳转。
+注意这可能需要创建一个新基本块。
+
+     <br><dt><em>exception handling</em><dd><a name="index-exception-handling-3109"></a><a name="index-EDGE_005fABNORMAL_002c-EDGE_005fEH-3110"></a>异常处理边表示可能的控制转移，从一个陷门指令到一个异常处理器。
+关于“trapping”定义不尽相同。在C++中，只有函数调用能够抛出异常，
+但是对于Java，像除0或者段错误都被定义为异常，
+并且因此每条指令都可能抛出这种需要处理的异常。
+异常边设置了<code>EDGE_ABNORMAL</code>和<code>EDGE_EH</code>标识。
+
+     <p><a name="index-purge_005fdead_005fedges-3111"></a>当更新指令流时，能够容易的将可能trapping的指令转换成non-traaping，
+通过简单的将异常边移除。相反的转换比较困难，但是是不会发生的。
+可以通过调用<code>purge_dead_edges</code>来消除边。
+
+     <p><a name="index-REG_005fEH_005fREGION_002c-EDGE_005fABNORMAL_005fCALL-3112"></a>在RTL表示中，异常边的目的地由附加在insn上的注解<code>REG_EH_REGION</code>来指定。
+在trapping调用的情况下，还设置了<code>EDGE_ABNORMAL_CALL</code>标识。
+在<code>tree</code>表示中，该额外的标识没有被设置。
+
+     <p><a name="index-may_005ftrap_005fp_002c-tree_005fcould_005ftrap_005fp-3113"></a>在RTL表示中，断言<code>may_trap_p</code>可以用来检测指令是否还可能trap。
+对于tree表示，可以用<code>tree_could_trap_p</code>，
+不过该断言只检测可能的内存trap，像在废除一个无效的指针地址。
+
+     <br><dt><em>sibling calls</em><dd><a name="index-sibling-call-3114"></a><a name="index-EDGE_005fABNORMAL_002c-EDGE_005fSIBCALL-3115"></a>兄弟调用或者尾调用以非标准的方式终止函数，
+并且因此必须存在一个引向出口的边。
+<code>EDGE_SIBCALL</code>和<code>EDGE_ABNORMAL</code>在这种情况下被设置。
+这些边只存在于RTL表示中。
+
+     <br><dt><em>computed jumps</em><dd><a name="index-computed-jump-3116"></a><a name="index-EDGE_005fABNORMAL-3117"></a>计算跳转包含了引向函数中代码引用的所有标号的边。
+所有这些边都设置了<code>EDGE_ABNORMAL</code>标识。
+用来表示计算跳转的边通常会造成编译时间性能问题，
+因为函数有许多标号组成，许多计算跳转可能具有密集的流图，
+所以这些边需要特别仔细的处理。在编译过程的早期阶段，
+GCC尝试避免这样的密集流图，通过因子化计算跳转。
+例如，给定下列跳转，
+
+     <pre class="smallexample">            goto *x;
+            [ ... ]
+          
+            goto *x;
+            [ ... ]
+          
+            goto *x;
+            [ ... ]
+</pre>
+     <p class="noindent">将计算跳转提取公因子，会产生具有比较简单流图的代码序列：
+
+     <pre class="smallexample">            goto y;
+            [ ... ]
+          
+            goto y;
+            [ ... ]
+          
+            goto y;
+            [ ... ]
+          
+          y:
+            goto *x;
+</pre>
+     <p>但是，这种转换的典型问题是产生的结果代码具有运行时代价：
+一个额外的跳转。因此计算跳转在编译器之后的过程里被un-factored。
+当你工作于这些过程上时，需要注意。曾有许多已存的例子，
+即对未公因子化的计算跳转编译时造成的头痛之事。
+
+     <br><dt><em>nonlocal goto handlers</em><dd><a name="index-nonlocal-goto-handler-3118"></a><a name="index-EDGE_005fABNORMAL_002c-EDGE_005fABNORMAL_005fCALL-3119"></a>GCC允许嵌套函数使用<code>goto</code>到一个通过参数传给被调用者的标号的方式来返回到调用者那里。
+传给嵌套函数的标号包含了特定的代码用来在函数调用之后进行清理工作。
+这段代码被称为“nonlocal goto receivers”。
+如果一个函数包含这样的非局部goto接受者，一个从调用到标号的边被创建，
+并设置了<code>EDGE_ABNORMAL</code>和<code>EDGE_ABNORMAL_CALL</code>标识。
+
+     <br><dt><em>function entry points</em><dd><a name="index-function-entry-point_002c-alternate-function-entry-point-3120"></a><a name="index-LABEL_005fALTERNATE_005fNAME-3121"></a>根据定义，函数执行起始于基本块0，
+所以总有一个边从<code>ENTRY_BLOCK_PTR</code>到基本块0。
+目前，对备用入口点没有<code>tree</code>表示。在RTL里，
+备用入口点通过定义了<code>LABEL_ALTERNATE_NAME</code>的<code>CODE_LABEL</code>指定。
+这能够被后端用于为通过不同上下文调用函数而生成备用prologues。
+将来，Fortran90定义的多入口函数的完全支持需要被实现。
+
+     <br><dt><em>function exits</em><dd>在pre-reload表示中，函数终止于insn链中的最后一条指令，
+并且没有显示的返回指令。这对应于由fall-thru引向出口块。
+reload之后，最佳的RTL epilogues被用于显示的（有条件的）返回指令中。
+</dl>
+
+ </body></html>
+

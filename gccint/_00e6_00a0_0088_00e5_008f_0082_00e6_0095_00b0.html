@@ -1,0 +1,182 @@
+<html lang="zh">
+<head>
+<title>栈参数 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e6_00a0_0088_00e5_0092_008c_00e8_00b0_0083_00e7_0094_00a8.html#g_t_00e6_00a0_0088_00e5_0092_008c_00e8_00b0_0083_00e7_0094_00a8" title="栈和调用">
+<link rel="prev" href="_00e6_00b6_0088_00e9_0099_00a4.html#g_t_00e6_00b6_0088_00e9_0099_00a4" title="消除">
+<link rel="next" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e5_008f_0082_00e6_0095_00b0.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e5_008f_0082_00e6_0095_00b0" title="寄存器参数">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e6%a0%88%e5%8f%82%e6%95%b0"></a>
+<a name="g_t_00e6_00a0_0088_00e5_008f_0082_00e6_0095_00b0"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e5_008f_0082_00e6_0095_00b0.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e5_008f_0082_00e6_0095_00b0">寄存器参数</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e6_00b6_0088_00e9_0099_00a4.html#g_t_00e6_00b6_0088_00e9_0099_00a4">消除</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_00a0_0088_00e5_0092_008c_00e8_00b0_0083_00e7_0094_00a8.html#g_t_00e6_00a0_0088_00e5_0092_008c_00e8_00b0_0083_00e7_0094_00a8">栈和调用</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.10.6 在栈上传递函数参数</h4>
+
+<p><a name="index-arguments-on-stack-4025"></a><a name="index-stack-arguments-4026"></a>
+该节的宏控制如何在栈上传递参数。关于控制在寄存器中传递特定参数的其它宏，
+参见后续的章节。
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_PROMOTE_PROTOTYPES</b> (<var>tree fntype</var>)<var><a name="index-TARGET_005fPROMOTE_005fPROTOTYPES-4027"></a></var><br>
+<blockquote><p>该target钩子返回<code>true</code>，如果在函数原型中声明的一个参数，
+为整型的并且比<code>int</code>小，应该作为<code>int</code>来传递。
+除了能够避免一些不匹配的错误以外，其还能在特定机器上生成更好的代码。
+缺省为不提升原型。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>PUSH_ARGS</b><var><a name="index-PUSH_005fARGS-4028"></a></var><br>
+<blockquote><p>一个C表达式。如果非0，则将使用push insn来传递输出参数。
+如果target机器不具有push指令，则设置其为0。这将指示GCC使用替代的策略：
+分配整个参数块然后将参数存进去。当<code>PUSH_ARGS</code>为非0时，
+<code>PUSH_ROUNDING</code>也必须被定义。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>PUSH_ARGS_REVERSED</b><var><a name="index-PUSH_005fARGS_005fREVERSED-4029"></a></var><br>
+<blockquote><p>一个C表达式。如果非0，则函数参数将按照从最后一个到第一个的顺序来求值，
+而不是从第一个到最后一个。如果该宏没被定义，其缺省为<code>PUSH_ARGS</code>，
+在栈和args按照相反的顺序进行增长的target上，否则为0。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>PUSH_ROUNDING</b> (<var>npushed</var>)<var><a name="index-PUSH_005fROUNDING-4030"></a></var><br>
+<blockquote><p>一个C表达式，其为当一个指令试图压入<var>npushed</var>个字节时，实际压入栈中的字节数。
+
+      <p>在一些机器上，定义
+
+     <pre class="smallexample">          #define PUSH_ROUNDING(BYTES) (BYTES)
+</pre>
+      <p class="noindent">便可以满足。但是在其它机器上，指令压入一个字节时，
+而为了保持对齐实际压入了两个字节。则定义应该为
+
+     <pre class="smallexample">          #define PUSH_ROUNDING(BYTES) (((BYTES) + 1) &amp; ~1)
+</pre>
+      </blockquote></div>
+
+ <p><a name="index-current_005ffunction_005foutgoing_005fargs_005fsize-4031"></a>
+
+<div class="defun">
+&mdash; Macro: <b>ACCUMULATE_OUTGOING_ARGS</b><var><a name="index-ACCUMULATE_005fOUTGOING_005fARGS-4032"></a></var><br>
+<blockquote><p>一个C表达式。如果非0，则为输出参数中将被计算并放进变量
+<code>current_function_outgoing_args_size</code>所需要的空间最大数目。
+对于每个调用，将不会有空间被压入栈中；替代的，函数序言应该增加栈帧的大小。
+
+      <p>同时设置<code>PUSH_ARGS</code>和<code>ACCUMULATE_OUTGOING_ARGS</code>是不合适的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>REG_PARM_STACK_SPACE</b> (<var>fndecl</var>)<var><a name="index-REG_005fPARM_005fSTACK_005fSPACE-4033"></a></var><br>
+<blockquote><p>定义该宏，如果函数应该假设参数的栈空间已经被分配，
+即使它们的值是在寄存器中被传递的。
+
+      <p>该宏的值是一个<var>fndecl</var>表示的函数在寄存器中传递的参数的保留空间的大小，
+字节为单位，其可以为0如果GCC在调用一个库函数。
+
+      <p>该空间可以被调用者分配，或者为机器相关的栈帧的一部分：
+这由<code>OUTGOING_REG_PARM_STACK_SPACE</code>决定。
+</p></blockquote></div>
+ <!-- above is overfull.  not sure what to do.  -mew 5feb93  did -->
+<!-- something, not sure if it looks good.  -mew 10feb93 -->
+
+<div class="defun">
+&mdash; Macro: <b>OUTGOING_REG_PARM_STACK_SPACE</b> (<var>fntype</var>)<var><a name="index-OUTGOING_005fREG_005fPARM_005fSTACK_005fSPACE-4034"></a></var><br>
+<blockquote><p>定义该宏为一个非0值，如果分配在寄存器中传递的参数的保留空间，是由调用者负责。
+
+      <p>如果<code>ACCUMULATE_OUTGOING_ARGS</code>被定义，
+则该宏控制这些参数的空间是否算在<code>current_function_outgoing_args_size</code>中。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>STACK_PARMS_IN_REG_PARM_AREA</b><var><a name="index-STACK_005fPARMS_005fIN_005fREG_005fPARM_005fAREA-4035"></a></var><br>
+<blockquote><p>定义该宏，如果<code>REG_PARM_STACK_SPACE</code>被定义，
+但是栈参数不跳过其所指定的区域。
+
+      <p>通常，当一个参数没有在寄存器中传递时，
+其被放在<code>REG_PARM_STACK_SPACE</code>区域之外的栈上。
+定义该宏来抑制这种行为并使得在栈上传递的参数按照它的自然位置。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>RETURN_POPS_ARGS</b> (<var>fundecl, funtype, stack-size</var>)<var><a name="index-RETURN_005fPOPS_005fARGS-4036"></a></var><br>
+<blockquote><p>一个C表达式，指示函数在返回时所弹出的它自己的参数的字节个数，
+或者为0如果函数不弹出参数并且调用者必须在函数返回后弹出它们。
+
+      <p><var>fundecl</var>为一个C变量，其值为一个树节点，描述了被讨论的函数。
+通常其为一个<code>FUNCTION_DECL</code>类型的节点，描述了函数的声明。
+你可以从中获得函数的<code>DECL_ATTRIBUTES</code>。
+
+      <p><var>funtype</var>为一个C变量，其值为一个树节点，描述了被讨论的函数。
+通常其为一个<code>FUNCTION_TYPE</code>类型的节点，描述了函数的数据类型。
+从中可以获得函数值和参数的数据类型（如果知道的话）。
+
+      <p>当正在被考虑的函数是一个库函数调用时，
+<var>fundecl</var>将包含一个库函数的标志符节点。这样，如果你需要区别不同的库函数，
+则可以通过它们的名字进行。注意该上下文中的“库函数”是指用于执行算术的库函数，
+其名字在编译器中是已知的并且在被编译的C代码中没有被提到。
+
+      <p><var>stack-size</var>为在栈上传递的参数的字节数。如果是传递的字节数是可变的，
+则为0，并且参数弹出将总是为被调用函数的责任。
+
+      <p>在VAX上，所有的函数总是弹出它们的参数，所以该宏的定义为<var>stack-size</var>。
+在68000上，使用标准的调用约定，没有函数弹出它们的参数，
+所以对于这种情况该宏的值总是0。但是也可以使用可选的调用约定，
+这种情况下函数接受固定数目参数的将弹出它们，
+其它的函数（例如<code>printf</code>）则不弹出（由调用者来弹出所有参数）。
+当使用这种约定时，<var>funtype</var>被检查用来确定一个函数是否接受了固定数目的参数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CALL_POPS_ARGS</b> (<var>cum</var>)<var><a name="index-CALL_005fPOPS_005fARGS-4037"></a></var><br>
+<blockquote><p>一个C表达式，指示一个调用序列从栈中弹出的字节数目。
+其被加到<code>RETURN_POPS_ARGS</code>的值中，当编译一个函数调用时。
+
+      <p><var>cum</var>为一个变量，为被调用函数的所有参数的累积。
+
+      <p>在特定的体系结构上，例如SH5，一个调用蹦床被用于弹出栈上特定的寄存器，
+根据被传递给函数的参数。因为这是调用方的属性，而不是被调用函数的，
+所以<code>RETURN_POPS_ARGS</code>不太适合。
+</p></blockquote></div>
+
+ </body></html>
+

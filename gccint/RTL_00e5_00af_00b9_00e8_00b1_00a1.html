@@ -1,0 +1,75 @@
+<html lang="zh">
+<head>
+<title>RTL对象 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="RTL.html#RTL" title="RTL">
+<link rel="next" href="RTL_00e7_00b1_00bb_00e5_0088_00ab.html#RTL_00e7_00b1_00bb_00e5_0088_00ab" title="RTL类别">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="RTL%e5%af%b9%e8%b1%a1"></a>
+<a name="RTL_00e5_00af_00b9_00e8_00b1_00a1"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="RTL_00e7_00b1_00bb_00e5_0088_00ab.html#RTL_00e7_00b1_00bb_00e5_0088_00ab">RTL类别</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="RTL.html#RTL">RTL</a>
+<hr>
+</div>
+
+<h3 class="section">10.1 RTL对象类型</h3>
+
+<p><a name="index-RTL-object-types-2073"></a>
+<a name="index-RTL-integers-2074"></a><a name="index-RTL-strings-2075"></a><a name="index-RTL-vectors-2076"></a><a name="index-RTL-expression-2077"></a><a name="index-RTX-_0028See-RTL_0029-2078"></a>RTL使用五种对象：表达式、整数、宽整数、字符串和向量。其中，最重要的是表达式。RTL 表达式（简称RTX）是一个C结构体，通常用指针来引用它。这种引用它的指针的类型定义名为<code>rtx</code>。
+
+ <p>整数就是C中的<code>int</code>，书写形式使用十进制表示。宽整数是<code>HOST_WIDE_INT</code>类型的一个整数对象，其书写形式也用十进制表示。
+
+ <p>字符串为一串字符，在存储器中以C的<code>char *</code>形式表示且按C语法规定书写。然而，RTL中的字符串决不会为空值。若机器描述中有一空字符串，它在存储器中则表示成一个空指针而不是通常意义上的指向空字符的指针。在某些上下文中，允许用这种空指针表示空字符串。在RTL代码中，字符串经常出现在<code>symbol_ref</code>表达式中，但也出现在某些机器描述的RTL表达式中。
+
+ <p>对于字符串，还有一种特殊的语法，用于在机器描述中嵌入C代码。只要字符串可以出现的地方，都可以书写一个C风格的大括号代码块。整个大括号代码块，包括最外面的一对括号，被作为字符串常量看待。括号里面的双引号字符不是特殊字符。因此，如果你在C代码中书写字符串常量，则不需要使用反斜杠来转义每个引号字符。
+
+ <p>向量包含任意数目的指向表达式的指针。向量中元素的个数，在向量中显式的存在。向量的书写形式为，方括号（&lsquo;<samp><span class="samp">[...]</span></samp>&rsquo;），里面是元素，并使用空格分隔。长度为0的向量不会被创建；而是使用空指针来替代。
+
+ <p><a name="index-expression-codes-2079"></a><a name="index-codes_002c-RTL-expression-2080"></a><a name="index-GET_005fCODE-2081"></a><a name="index-PUT_005fCODE-2082"></a>表达式根据<dfn>expression codes</dfn>来划分类别（也称作RTX代码）。表达式代码为在<samp><span class="file">rtl.def</span></samp>中定义的一个名字，其也是一个（大写的）C枚举常量。合理的表达式代码以及它们的含义，是机器无关的。RTX的代码可以使用宏<code>GET_CODE (</code><var>x</var><code>)</code>来抽取，以及使用<code>PUT_CODE (</code><var>x</var><code>, </code><var>newcode</var><code>)</code>来修改。
+
+ <p>表达式代码决定了表达式包含了多少个操作数，以及它们都是什么对象。在RTL中，不像Lisp，你不能通过查看一个操作数来得知它是什么对象。替代的，你必须通过它的上下文来知道——通过所包含的表达式的表达式代码。例如，在一个表达式代码为<code>subreg</code>的表达式中，第一个操作数被作为一个表达式，第二个操作数为一个整数。在代码为<code>plus</code>的表达式中，有两个操作数，都作为表达式。在<code>symbol_ref</code>表达式中，有一个操作数，作为一个字符串。
+
+ <p>表达式被书写为，一对括号，包含了表达式类型的名字，它的标记和机器模式（如果存在的话），然后是表达式的操作数（通过空格分隔）。
+
+ <p>表达式代码名，在&lsquo;<samp><span class="samp">md</span></samp>&rsquo;文件中按小写形式书写，但在C代码中出现时按大写形式书写。在这个手册里，它们按照如下形式表示：<code>const_int</code>。
+
+ <p><a name="index-g_t_0028nil_0029-2083"></a><a name="index-nil-2084"></a>在一些上下文中，表达式通常会需要一个空指针。这种书写形式为<code>(nil)</code>。
+
+ </body></html>
+

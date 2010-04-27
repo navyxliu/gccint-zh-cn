@@ -1,0 +1,100 @@
+<html lang="zh">
+<head>
+<title>每个函数的数据 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f.html#g_t_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f" title="目标宏">
+<link rel="prev" href="_00e8_00bf_0090_00e8_00a1_008c_00e6_0097_00b6_00e7_009b_00ae_00e6_00a0_0087_00e6_009c_00ba.html#g_t_00e8_00bf_0090_00e8_00a1_008c_00e6_0097_00b6_00e7_009b_00ae_00e6_00a0_0087_00e6_009c_00ba" title="运行时目标机">
+<link rel="next" href="_00e5_00ad_0098_00e5_0082_00a8_00e5_00b8_0083_00e5_00b1_0080.html#g_t_00e5_00ad_0098_00e5_0082_00a8_00e5_00b8_0083_00e5_00b1_0080" title="存储布局">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e6%af%8f%e4%b8%aa%e5%87%bd%e6%95%b0%e7%9a%84%e6%95%b0%e6%8d%ae"></a>
+<a name="g_t_00e6_00af_008f_00e4_00b8_00aa_00e5_0087_00bd_00e6_0095_00b0_00e7_009a_0084_00e6_0095_00b0_00e6_008d_00ae"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e5_00ad_0098_00e5_0082_00a8_00e5_00b8_0083_00e5_00b1_0080.html#g_t_00e5_00ad_0098_00e5_0082_00a8_00e5_00b8_0083_00e5_00b1_0080">存储布局</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e8_00bf_0090_00e8_00a1_008c_00e6_0097_00b6_00e7_009b_00ae_00e6_00a0_0087_00e6_009c_00ba.html#g_t_00e8_00bf_0090_00e8_00a1_008c_00e6_0097_00b6_00e7_009b_00ae_00e6_00a0_0087_00e6_009c_00ba">运行时目标机</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f.html#g_t_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f">目标宏</a>
+<hr>
+</div>
+
+<h3 class="section">17.4 为基于每个函数的信息定义数据结构</h3>
+
+<p><a name="index-per_002dfunction-data-3750"></a><a name="index-data-structures-3751"></a>
+如果target需要存储基于每个函数的信息，则GCC为此提供了一个宏和一些变量。
+注意，只是使用静态变量来保存信息是一个糟糕的想法，因为GCC支持嵌套函数，
+所以可能会在编码一个函数的中途遇到另一个。
+
+ <p>GCC定义了称为<code>struct function</code>的数据结构体，
+包含了特定于单个函数的所有数据。该结构体包含一个称为<code>machine</code>的域，
+其类型为<code>struct machine_function *</code>，
+可以被target用于指向它们自己的特定数据。
+
+ <p>如果一个target需要基于每个函数的特定数据，
+则应该定义类型<code>struct machine_function</code>，
+以及宏<code>INIT_EXPANDERS</code>。
+该宏将被用于初始化函数指针<code>init_machine_status</code>。
+该指针将在下面说明。
+
+ <p>一个典型的基于每个函数的target特定数据，
+是用于创建一个RTX来存放含有函数返回地址的寄存器。
+该RTX随后可以被用于实现<code>__builtin_return_address</code>函数。
+
+ <p>注意，早期的GCC实现使用了单个数据区域来存放所有的基于每个函数的信息。
+因此当开始处理嵌套函数时，旧式的基于每个函数的数据不得不被压入栈中，
+并且当处理完成，还要出栈。
+GCC曾经提供名为<code>save_machine_status</code>和<code>restore_machine_status</code>
+函数指针来处理target特定信息的保存和恢复。
+由于单数据区域的方法不再被使用了，这些指针也不再被支持。
+
+<div class="defun">
+&mdash; Macro: <b>INIT_EXPANDERS</b><var><a name="index-INIT_005fEXPANDERS-3752"></a></var><br>
+<blockquote><p>被调用的宏，用来初始化任何target特定信息。
+该宏在任何RTL生成开始之前，基于每个函数被调用一次。
+该宏的目的是允许函数指针<code>init_machine_status</code>的初始化。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Variable: void (*)(struct function *) <b>init_machine_status</b><var><a name="index-init_005fmachine_005fstatus-3753"></a></var><br>
+<blockquote><p>如果该函数指针非空，则会在函数编译开始之前，基于每个函数被调用一次，
+用于允许target来执行对<code>struct function</code>结构体的任何target特定初始化。
+它将被用于初始化那个结构体的<code>machine</code>域。
+
+      <p>结构体<code>struct machine_function</code>将期望被GC来释放。通常，
+它们所引用的任何内存都必须使用<code>ggc_alloc</code>来分配，包括结构体本身。
+</p></blockquote></div>
+
+ </body></html>
+

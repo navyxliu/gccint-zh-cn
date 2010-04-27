@@ -1,0 +1,73 @@
+<html lang="zh">
+<head>
+<title>Insn属性 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0.html#g_t_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0" title="机器描述">
+<link rel="prev" href="_00e7_00aa_00a5_00e5_00ad_0094_00e5_00ae_009a_00e4_00b9_0089.html#g_t_00e7_00aa_00a5_00e5_00ad_0094_00e5_00ae_009a_00e4_00b9_0089" title="窥孔定义">
+<link rel="next" href="_00e6_009d_00a1_00e4_00bb_00b6_00e6_0089_00a7_00e8_00a1_008c.html#g_t_00e6_009d_00a1_00e4_00bb_00b6_00e6_0089_00a7_00e8_00a1_008c" title="条件执行">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Insn%e5%b1%9e%e6%80%a7"></a>
+<a name="Insn_00e5_00b1_009e_00e6_0080_00a7"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e6_009d_00a1_00e4_00bb_00b6_00e6_0089_00a7_00e8_00a1_008c.html#g_t_00e6_009d_00a1_00e4_00bb_00b6_00e6_0089_00a7_00e8_00a1_008c">条件执行</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e7_00aa_00a5_00e5_00ad_0094_00e5_00ae_009a_00e4_00b9_0089.html#g_t_00e7_00aa_00a5_00e5_00ad_0094_00e5_00ae_009a_00e4_00b9_0089">窥孔定义</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0.html#g_t_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0">机器描述</a>
+<hr>
+</div>
+
+<h3 class="section">16.19 指令属性</h3>
+
+<p><a name="index-insn-attributes-3568"></a><a name="index-instruction-attributes-3569"></a>
+除了描述target机器所支持的指令以外，<samp><span class="file">md</span></samp> 文件还定义了一组
+<dfn>attributes</dfn> 以及每个属性的取值集合。每条生成的insn都为每个属性赋予一
+个值。一种可能的属性是insn对于机器的条件代码所产生的影响。该属性然后可以
+被 <code>NOTICE_UPDATE_CC</code> 使用，来跟踪条件代码。
+
+<ul class="menu">
+<li><a accesskey="1" href="_00e5_00ae_009a_00e4_00b9_0089_00e5_00b1_009e_00e6_0080_00a7.html#g_t_00e5_00ae_009a_00e4_00b9_0089_00e5_00b1_009e_00e6_0080_00a7">定义属性</a>:          指定属性以及它们的值。
+<li><a accesskey="2" href="_00e8_00a1_00a8_00e8_00be_00be_00e5_00bc_008f.html#g_t_00e8_00a1_00a8_00e8_00be_00be_00e5_00bc_008f">表达式</a>:            属性值的有效表达式。
+<li><a accesskey="3" href="_00e7_00bb_0099Insns_00e6_0089_0093_00e6_00a0_0087_00e7_00ad_00be.html#g_t_00e7_00bb_0099Insns_00e6_0089_0093_00e6_00a0_0087_00e7_00ad_00be">给Insns打标签</a>:     为insns赋予属性值。
+<li><a accesskey="4" href="_00e5_00b1_009e_00e6_0080_00a7_00e7_009a_0084_00e4_00be_008b_00e5_00ad_0090.html#g_t_00e5_00b1_009e_00e6_0080_00a7_00e7_009a_0084_00e4_00be_008b_00e5_00ad_0090">属性的例子</a>:        一个设置属性的例子。
+<li><a accesskey="5" href="Insn_00e9_0095_00bf_00e5_00ba_00a6.html#Insn_00e9_0095_00bf_00e5_00ba_00a6">Insn长度</a>:          计算insns的长度。
+<li><a accesskey="6" href="_00e5_00b8_00b8_00e9_0087_008f_00e5_00b1_009e_00e6_0080_00a7.html#g_t_00e5_00b8_00b8_00e9_0087_008f_00e5_00b1_009e_00e6_0080_00a7">常量属性</a>:          定义值为常量的属性。
+<li><a accesskey="7" href="_00e5_00bb_00b6_00e8_00bf_009f_00e6_00a7_00bd.html#g_t_00e5_00bb_00b6_00e8_00bf_009f_00e6_00a7_00bd">延迟槽</a>:            定义机器所需要的延迟槽。
+<li><a accesskey="8" href="_00e5_00a4_0084_00e7_0090_0086_00e5_0099_00a8_00e6_00b5_0081_00e6_00b0_00b4_00e7_00ba_00bf_00e6_008f_008f_00e8_00bf_00b0.html#g_t_00e5_00a4_0084_00e7_0090_0086_00e5_0099_00a8_00e6_00b5_0081_00e6_00b0_00b4_00e7_00ba_00bf_00e6_008f_008f_00e8_00bf_00b0">处理器流水线描述</a>:  为insn调度指定信息。
+</ul>
+
+ </body></html>
+

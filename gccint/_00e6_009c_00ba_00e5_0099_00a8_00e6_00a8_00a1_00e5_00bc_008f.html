@@ -1,0 +1,287 @@
+<html lang="zh">
+<head>
+<title>机器模式 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="RTL.html#RTL" title="RTL">
+<link rel="prev" href="_00e6_00a0_0087_00e8_00ae_00b0.html#g_t_00e6_00a0_0087_00e8_00ae_00b0" title="标记">
+<link rel="next" href="_00e5_00b8_00b8_00e6_0095_00b0.html#g_t_00e5_00b8_00b8_00e6_0095_00b0" title="常数">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e6%9c%ba%e5%99%a8%e6%a8%a1%e5%bc%8f"></a>
+<a name="g_t_00e6_009c_00ba_00e5_0099_00a8_00e6_00a8_00a1_00e5_00bc_008f"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e5_00b8_00b8_00e6_0095_00b0.html#g_t_00e5_00b8_00b8_00e6_0095_00b0">常数</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e6_00a0_0087_00e8_00ae_00b0.html#g_t_00e6_00a0_0087_00e8_00ae_00b0">标记</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="RTL.html#RTL">RTL</a>
+<hr>
+</div>
+
+<h3 class="section">10.6 机器模式</h3>
+
+<p><a name="index-machine-modes-2262"></a>
+<a name="index-enum-machine_005fmode-2263"></a>机器模式描述数据对象的大小及其表示。在C 代码中，机器模式表示成枚举类型<code>enum machine_mode</code>。此类型定义在<samp><span class="file">machmode.def</span></samp>中。每个RTL表达式都有机器模式域。一些树结构如变量定义、类型等也有机器模式域。
+
+ <p>在调试信息及机器描述中，RTL表达式的机器模式紧跟在RTL 代码之后，其间用冒号隔开。每一种机器模式名未尾的字母省缺为&lsquo;<samp><span class="samp">mode</span></samp>&rsquo;。例如：<code>(reg:SI 38)</code>是一个<code>reg</code>表达式，其机器模式为<code>SImode</code>。如果方式为<code>VOIDmode</code>，表达式中完全不出现此模式。
+
+ <p>以下是一个机器模式表，这里的“字节”是指具有<code>BITS_PER_UNIT</code>个存储位的对象
+（see <a href="Storage-Layout.html#Storage-Layout">Storage Layout</a>）。
+
+     
+<a name="index-BImode-2264"></a>
+<dl><dt><code>BImode</code><dd>“Bit”模式，表示一位，用于断言寄存器。
+
+     <p><a name="index-QImode-2265"></a><br><dt><code>QImode</code><dd>“Quarter-Integer”模式，表示一个一字节的整数。
+
+     <p><a name="index-HImode-2266"></a><br><dt><code>HImode</code><dd>“Half-Integer”模式，表示一个两字节的整数。
+
+     <p><a name="index-PSImode-2267"></a><br><dt><code>PSImode</code><dd>“Partial Single Integer”模式，表示一个占有四个字节但并不真正使用全部四个字节的整数。
+
+     <p><a name="index-SImode-2268"></a><br><dt><code>SImode</code><dd>“Single Integer”模式，表示一个四字节的整数。
+
+     <p><a name="index-PDImode-2269"></a><br><dt><code>PDImode</code><dd>“Partial Double Integer”模式，表示一个占有八个字节但并不真正使用全部八个字节的整数。
+
+     <p><a name="index-DImode-2270"></a><br><dt><code>DImode</code><dd>“Double Integer”模式，表示一个8 字节的整数。
+
+     <p><a name="index-TImode-2271"></a><br><dt><code>TImode</code><dd>“Tetra Integer”模式，表示一个16 字节的整数。
+
+     <p><a name="index-OImode-2272"></a><br><dt><code>OImode</code><dd>“Octa Integer” 模式，表示一个32 字节的整数。
+
+     <p><a name="index-QFmode-2273"></a><br><dt><code>QFmode</code><dd>“Quarter-Floating” 模式，表示一个四分之一精度（单字节）浮点数。
+
+     <p><a name="index-HFmode-2274"></a><br><dt><code>HFmode</code><dd>“Half-Floating” 模式，表示一个二分之一精度（双字节）浮点数。
+
+     <p><a name="index-TQFmode-2275"></a><br><dt><code>TQFmode</code><dd>“Three-Quarter-Floating” 模式，表示一个四分之三精度（单字节）浮点数。
+
+     <p><a name="index-SFmode-2276"></a><br><dt><code>SFmode</code><dd>“Single Floating”模式，表示一个单精度（4 个字节）浮点数。
+
+     <p><a name="index-DFmode-2277"></a><br><dt><code>DFmode</code><dd>“Double Floating”模式，表示一个双精度（8 字节）浮点数。
+
+     <p><a name="index-XFmode-2278"></a><br><dt><code>XFmode</code><dd>“Extended Floating”模式，表示一个三精度（12 字节）浮点数。本方式用来表示 IEEE 扩展浮点类型。
+
+     <p><a name="index-SDmode-2279"></a><br><dt><code>SDmode</code><dd>&ldquo;Single Decimal Floating&rdquo; mode represents a four byte decimal
+floating point number (as distinct from conventional binary floating
+point).
+
+     <p><a name="index-DDmode-2280"></a><br><dt><code>DDmode</code><dd>&ldquo;Double Decimal Floating&rdquo; mode represents an eight byte decimal
+floating point number.
+
+     <p><a name="index-TDmode-2281"></a><br><dt><code>TDmode</code><dd>&ldquo;Tetra Decimal Floating&rdquo; mode represents a sixteen byte decimal
+floating point number all 128 of whose bits are meaningful.
+
+     <p><a name="index-TFmode-2282"></a><br><dt><code>TFmode</code><dd>“Tetra Floating”模式，表示一个四精度（16 字节）浮点数。
+
+     <p><a name="index-QQmode-2283"></a><br><dt><code>QQmode</code><dd>&ldquo;Quarter-Fractional&rdquo; mode represents a single byte treated as a signed
+fractional number.  The default format is &ldquo;s.7&rdquo;.
+
+     <p><a name="index-HQmode-2284"></a><br><dt><code>HQmode</code><dd>&ldquo;Half-Fractional&rdquo; mode represents a two-byte signed fractional number. 
+The default format is &ldquo;s.15&rdquo;.
+
+     <p><a name="index-SQmode-2285"></a><br><dt><code>SQmode</code><dd>&ldquo;Single Fractional&rdquo; mode represents a four-byte signed fractional number. 
+The default format is &ldquo;s.31&rdquo;.
+
+     <p><a name="index-DQmode-2286"></a><br><dt><code>DQmode</code><dd>&ldquo;Double Fractional&rdquo; mode represents an eight-byte signed fractional number. 
+The default format is &ldquo;s.63&rdquo;.
+
+     <p><a name="index-TQmode-2287"></a><br><dt><code>TQmode</code><dd>&ldquo;Tetra Fractional&rdquo; mode represents a sixteen-byte signed fractional number. 
+The default format is &ldquo;s.127&rdquo;.
+
+     <p><a name="index-UQQmode-2288"></a><br><dt><code>UQQmode</code><dd>&ldquo;Unsigned Quarter-Fractional&rdquo; mode represents a single byte treated as an
+unsigned fractional number.  The default format is &ldquo;.8&rdquo;.
+
+     <p><a name="index-UHQmode-2289"></a><br><dt><code>UHQmode</code><dd>&ldquo;Unsigned Half-Fractional&rdquo; mode represents a two-byte unsigned fractional
+number.  The default format is &ldquo;.16&rdquo;.
+
+     <p><a name="index-USQmode-2290"></a><br><dt><code>USQmode</code><dd>&ldquo;Unsigned Single Fractional&rdquo; mode represents a four-byte unsigned fractional
+number.  The default format is &ldquo;.32&rdquo;.
+
+     <p><a name="index-UDQmode-2291"></a><br><dt><code>UDQmode</code><dd>&ldquo;Unsigned Double Fractional&rdquo; mode represents an eight-byte unsigned
+fractional number.  The default format is &ldquo;.64&rdquo;.
+
+     <p><a name="index-UTQmode-2292"></a><br><dt><code>UTQmode</code><dd>&ldquo;Unsigned Tetra Fractional&rdquo; mode represents a sixteen-byte unsigned
+fractional number.  The default format is &ldquo;.128&rdquo;.
+
+     <p><a name="index-HAmode-2293"></a><br><dt><code>HAmode</code><dd>&ldquo;Half-Accumulator&rdquo; mode represents a two-byte signed accumulator. 
+The default format is &ldquo;s8.7&rdquo;.
+
+     <p><a name="index-SAmode-2294"></a><br><dt><code>SAmode</code><dd>&ldquo;Single Accumulator&rdquo; mode represents a four-byte signed accumulator. 
+The default format is &ldquo;s16.15&rdquo;.
+
+     <p><a name="index-DAmode-2295"></a><br><dt><code>DAmode</code><dd>&ldquo;Double Accumulator&rdquo; mode represents an eight-byte signed accumulator. 
+The default format is &ldquo;s32.31&rdquo;.
+
+     <p><a name="index-TAmode-2296"></a><br><dt><code>TAmode</code><dd>&ldquo;Tetra Accumulator&rdquo; mode represents a sixteen-byte signed accumulator. 
+The default format is &ldquo;s64.63&rdquo;.
+
+     <p><a name="index-UHAmode-2297"></a><br><dt><code>UHAmode</code><dd>&ldquo;Unsigned Half-Accumulator&rdquo; mode represents a two-byte unsigned accumulator. 
+The default format is &ldquo;8.8&rdquo;.
+
+     <p><a name="index-USAmode-2298"></a><br><dt><code>USAmode</code><dd>&ldquo;Unsigned Single Accumulator&rdquo; mode represents a four-byte unsigned
+accumulator.  The default format is &ldquo;16.16&rdquo;.
+
+     <p><a name="index-UDAmode-2299"></a><br><dt><code>UDAmode</code><dd>&ldquo;Unsigned Double Accumulator&rdquo; mode represents an eight-byte unsigned
+accumulator.  The default format is &ldquo;32.32&rdquo;.
+
+     <p><a name="index-UTAmode-2300"></a><br><dt><code>UTAmode</code><dd>&ldquo;Unsigned Tetra Accumulator&rdquo; mode represents a sixteen-byte unsigned
+accumulator.  The default format is &ldquo;64.64&rdquo;.
+
+     <p><a name="index-CCmode-2301"></a><br><dt><code>CCmode</code><dd>“condition code”模式，表示条件代码的值。其中条件代码是一组与机器相关的位集合，用来表示比较的结果。在使用了 cc0 的机器上，不用CCmode。
+
+     <p><a name="index-BLKmode-2302"></a><br><dt><code>BLKmode</code><dd>“Block”模式，表示其它模式都不适用的聚合值。在 RTL 中，只有内存引用才能有此方式，并且仅当出现在字符串移动指令或向量指令中时，才能有此方式。若机器没有上述指令，则<code>BLKmode</code>将不出现在 RTL中。
+
+     <p><a name="index-VOIDmode-2303"></a><br><dt><code>VOIDmode</code><dd>意味着模式不出现或一个不确定的模式。例 如：<code>const_int</code>表达式的模式就是<code>VOIDmode</code>， 因为此类表达式可认为具有其上下文所要求的任何模式。在RTL的调试输出中，<code>VOIDmode</code>表示成没有任何模式出现。
+
+     <p><a name="index-QCmode-2304"></a><a name="index-HCmode-2305"></a><a name="index-SCmode-2306"></a><a name="index-DCmode-2307"></a><a name="index-XCmode-2308"></a><a name="index-TCmode-2309"></a><br><dt><code>QCmode, HCmode, SCmode, DCmode, XCmode, TCmode</code><dd>这些方式模式由一对浮点数组成的复数。其中， 浮点数分别具有<code>QFmode</code>、<code>HFmode</code>, <code>SFmode</code>, <code>DFmode</code>, <code>XFmode</code>和<code>TFmode</code>。
+
+     <p><a name="index-CQImode-2310"></a><a name="index-CHImode-2311"></a><a name="index-CSImode-2312"></a><a name="index-CDImode-2313"></a><a name="index-CTImode-2314"></a><a name="index-COImode-2315"></a><br><dt><code>CQImode, CHImode, CSImode, CDImode, CTImode, COImode</code><dd>这些模式代表由一对整数组成的复数。整数值分别具有方式<code>QImode</code>, <code>HImode</code>,<code>SImode</code>, <code>DImode</code>, <code>TImode</code>和<code>OImode</code>。
+
+ </dl>
+
+ <p>The machine description defines <code>Pmode</code> as a C macro which expands
+into the machine mode used for addresses.  Normally this is the mode
+whose size is <code>BITS_PER_WORD</code>, <code>SImode</code> on 32-bit machines.
+
+ <p>The only modes which a machine description <i>must</i> support are
+<code>QImode</code>, and the modes corresponding to <code>BITS_PER_WORD</code>,
+<code>FLOAT_TYPE_SIZE</code> and <code>DOUBLE_TYPE_SIZE</code>. 
+The compiler will attempt to use <code>DImode</code> for 8-byte structures and
+unions, but this can be prevented by overriding the definition of
+<code>MAX_FIXED_MODE_SIZE</code>.  Alternatively, you can have the compiler
+use <code>TImode</code> for 16-byte structures and unions.  Likewise, you can
+arrange for the C type <code>short int</code> to avoid using <code>HImode</code>.
+
+ <p><a name="index-mode-classes-2316"></a>Very few explicit references to machine modes remain in the compiler and
+these few references will soon be removed.  Instead, the machine modes
+are divided into mode classes.  These are represented by the enumeration
+type <code>enum mode_class</code> defined in <samp><span class="file">machmode.h</span></samp>.  The possible
+mode classes are:
+
+     
+<a name="index-MODE_005fINT-2317"></a>
+<dl><dt><code>MODE_INT</code><dd>Integer modes.  By default these are <code>BImode</code>, <code>QImode</code>,
+<code>HImode</code>, <code>SImode</code>, <code>DImode</code>, <code>TImode</code>, and
+<code>OImode</code>.
+
+     <p><a name="index-MODE_005fPARTIAL_005fINT-2318"></a><br><dt><code>MODE_PARTIAL_INT</code><dd>The &ldquo;partial integer&rdquo; modes, <code>PQImode</code>, <code>PHImode</code>,
+<code>PSImode</code> and <code>PDImode</code>.
+
+     <p><a name="index-MODE_005fFLOAT-2319"></a><br><dt><code>MODE_FLOAT</code><dd>Floating point modes.  By default these are <code>QFmode</code>,
+<code>HFmode</code>, <code>TQFmode</code>, <code>SFmode</code>, <code>DFmode</code>,
+<code>XFmode</code> and <code>TFmode</code>.
+
+     <p><a name="index-MODE_005fDECIMAL_005fFLOAT-2320"></a><br><dt><code>MODE_DECIMAL_FLOAT</code><dd>Decimal floating point modes.  By default these are <code>SDmode</code>,
+<code>DDmode</code> and <code>TDmode</code>.
+
+     <p><a name="index-MODE_005fFRACT-2321"></a><br><dt><code>MODE_FRACT</code><dd>Signed fractional modes.  By default these are <code>QQmode</code>, <code>HQmode</code>,
+<code>SQmode</code>, <code>DQmode</code> and <code>TQmode</code>.
+
+     <p><a name="index-MODE_005fUFRACT-2322"></a><br><dt><code>MODE_UFRACT</code><dd>Unsigned fractional modes.  By default these are <code>UQQmode</code>, <code>UHQmode</code>,
+<code>USQmode</code>, <code>UDQmode</code> and <code>UTQmode</code>.
+
+     <p><a name="index-MODE_005fACCUM-2323"></a><br><dt><code>MODE_ACCUM</code><dd>Signed accumulator modes.  By default these are <code>HAmode</code>,
+<code>SAmode</code>, <code>DAmode</code> and <code>TAmode</code>.
+
+     <p><a name="index-MODE_005fUACCUM-2324"></a><br><dt><code>MODE_UACCUM</code><dd>Unsigned accumulator modes.  By default these are <code>UHAmode</code>,
+<code>USAmode</code>, <code>UDAmode</code> and <code>UTAmode</code>.
+
+     <p><a name="index-MODE_005fCOMPLEX_005fINT-2325"></a><br><dt><code>MODE_COMPLEX_INT</code><dd>Complex integer modes.  (These are not currently implemented).
+
+     <p><a name="index-MODE_005fCOMPLEX_005fFLOAT-2326"></a><br><dt><code>MODE_COMPLEX_FLOAT</code><dd>Complex floating point modes.  By default these are <code>QCmode</code>,
+<code>HCmode</code>, <code>SCmode</code>, <code>DCmode</code>, <code>XCmode</code>, and
+<code>TCmode</code>.
+
+     <p><a name="index-MODE_005fFUNCTION-2327"></a><br><dt><code>MODE_FUNCTION</code><dd>Algol or Pascal function variables including a static chain. 
+(These are not currently implemented).
+
+     <p><a name="index-MODE_005fCC-2328"></a><br><dt><code>MODE_CC</code><dd>Modes representing condition code values.  These are <code>CCmode</code> plus
+any <code>CC_MODE</code> modes listed in the <samp><var>machine</var><span class="file">-modes.def</span></samp>. 
+See <a href="Jump-Patterns.html#Jump-Patterns">Jump Patterns</a>,
+also see <a href="Condition-Code.html#Condition-Code">Condition Code</a>.
+
+     <p><a name="index-MODE_005fRANDOM-2329"></a><br><dt><code>MODE_RANDOM</code><dd>This is a catchall mode class for modes which don't fit into the above
+classes.  Currently <code>VOIDmode</code> and <code>BLKmode</code> are in
+<code>MODE_RANDOM</code>. 
+</dl>
+
+ <p>这些是与机器模式相关的C宏：
+
+     
+<a name="index-GET_005fMODE-2330"></a>
+<dl><dt><code>GET_MODE (</code><var>x</var><code>)</code><dd>返回RTX <var>x</var>的机器模式。
+
+     <p><a name="index-PUT_005fMODE-2331"></a><br><dt><code>PUT_MODE (</code><var>x</var><code>, </code><var>newmode</var><code>)</code><dd>将RTX <var>x</var>的机器模式修改为<var>newmode</var>。
+
+     <p><a name="index-NUM_005fMACHINE_005fMODES-2332"></a><br><dt><code>NUM_MACHINE_MODES</code><dd>表示目标机器上可用的机器模式的个数。比最大的机器模式数值大1。
+
+     <p><a name="index-GET_005fMODE_005fNAME-2333"></a><br><dt><code>GET_MODE_NAME (</code><var>m</var><code>)</code><dd>返回机器模式<var>m</var>的字符串名字。
+
+     <p><a name="index-GET_005fMODE_005fCLASS-2334"></a><br><dt><code>GET_MODE_CLASS (</code><var>m</var><code>)</code><dd>返回机器模式<var>m</var>的类别。
+
+     <p><a name="index-GET_005fMODE_005fWIDER_005fMODE-2335"></a><br><dt><code>GET_MODE_WIDER_MODE (</code><var>m</var><code>)</code><dd>返回下一个宽的自然的机器模式。例如，表达式<code>GET_MODE_WIDER_MODE (QImode)</code>返回<code>HImode</code>。
+
+     <p><a name="index-GET_005fMODE_005fSIZE-2336"></a><br><dt><code>GET_MODE_SIZE (</code><var>m</var><code>)</code><dd>返回机器模式<var>m</var>的字节数。
+
+     <p><a name="index-GET_005fMODE_005fBITSIZE-2337"></a><br><dt><code>GET_MODE_BITSIZE (</code><var>m</var><code>)</code><dd>返回机器模式<var>m</var>位数。
+
+     <p><a name="index-GET_005fMODE_005fIBIT-2338"></a><br><dt><code>GET_MODE_IBIT (</code><var>m</var><code>)</code><dd>返回定点机器模式<var>m</var>的整数位数。
+
+     <p><a name="index-GET_005fMODE_005fFBIT-2339"></a><br><dt><code>GET_MODE_FBIT (</code><var>m</var><code>)</code><dd>返回定点机器模式<var>m</var>的小数位数。
+
+     <p><a name="index-GET_005fMODE_005fMASK-2340"></a><br><dt><code>GET_MODE_MASK (</code><var>m</var><code>)</code><dd>返回一个位掩码，
+Returns a bitmask containing 1 for all bits in a word that fit within
+mode <var>m</var>.  This macro can only be used for modes whose bitsize is
+less than or equal to <code>HOST_BITS_PER_INT</code>.
+
+     <p><a name="index-GET_005fMODE_005fALIGNMENT-2341"></a><br><dt><code>GET_MODE_ALIGNMENT (</code><var>m</var><code>)</code><dd>Return the required alignment, in bits, for an object of mode <var>m</var>.
+
+     <p><a name="index-GET_005fMODE_005fUNIT_005fSIZE-2342"></a><br><dt><code>GET_MODE_UNIT_SIZE (</code><var>m</var><code>)</code><dd>Returns the size in bytes of the subunits of a datum of mode <var>m</var>. 
+This is the same as <code>GET_MODE_SIZE</code> except in the case of complex
+modes.  For them, the unit size is the size of the real or imaginary
+part.
+
+     <p><a name="index-GET_005fMODE_005fNUNITS-2343"></a><br><dt><code>GET_MODE_NUNITS (</code><var>m</var><code>)</code><dd>Returns the number of units contained in a mode, i.e.,
+<code>GET_MODE_SIZE</code> divided by <code>GET_MODE_UNIT_SIZE</code>.
+
+     <p><a name="index-GET_005fCLASS_005fNARROWEST_005fMODE-2344"></a><br><dt><code>GET_CLASS_NARROWEST_MODE (</code><var>c</var><code>)</code><dd>Returns the narrowest mode in mode class <var>c</var>. 
+</dl>
+
+ <p><a name="index-byte_005fmode-2345"></a><a name="index-word_005fmode-2346"></a>The global variables <code>byte_mode</code> and <code>word_mode</code> contain modes
+whose classes are <code>MODE_INT</code> and whose bitsizes are either
+<code>BITS_PER_UNIT</code> or <code>BITS_PER_WORD</code>, respectively.  On 32-bit
+machines, these are <code>QImode</code> and <code>SImode</code>, respectively.
+
+ </body></html>
+

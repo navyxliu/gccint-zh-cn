@@ -1,0 +1,123 @@
+<html lang="zh">
+<head>
+<title>访问特殊操作数 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e8%ae%bf%e9%97%ae%e7%89%b9%e6%ae%8a%e6%93%8d%e4%bd%9c%e6%95%b0"></a>
+<a name="g_t_00e8_00ae_00bf_00e9_0097_00ae_00e7_0089_00b9_00e6_00ae_008a_00e6_0093_008d_00e4_00bd_009c_00e6_0095_00b0"></a>
+<p>
+
+<hr>
+</div>
+
+<h3 class="section">10.4 访问特殊操作数</h3>
+
+<p><a name="index-access-to-special-operands-2103"></a>
+一些RTL节点具有与它们相关联的特殊的注解。
+
+     <dl>
+<dt><code>MEM</code><dd>
+          
+<a name="index-MEM_005fALIAS_005fSET-2104"></a>
+<dl><dt><code>MEM_ALIAS_SET (</code><var>x</var><code>)</code><dd>如果为0，则<var>x</var>不在任何别名集中，并可能为任何对象的别名。否则，<var>x</var>只能为在冲突别名集中的<code>MEM</code>的别名。该值在前端使用语言相关的方式来设置，并且不能在后端修改。在一些前端中，这些可以通过某种方式对应到类型，或者其它语言级的实体，但是不要求非要这样，所以在后端不要做这样的假设。这些集合编号使用<code>alias_sets_conflict_p</code>来测试。
+
+          <p><a name="index-MEM_005fEXPR-2105"></a><br><dt><code>MEM_EXPR (</code><var>x</var><code>)</code><dd>如果该寄存器被已知为存放了一些用户级的声明的值，则为那个tree节点。其也可以为<code>COMPONENT_REF</code>，这种情况下，其为某个域的引用，并且<code>TREE_OPERAND (</code><var>x</var><code>, 0)</code>包含了声明，或者另一个<code>COMPONENT_REF</code>，或者如果没有编译时对象相关引用，则为空。
+
+          <p><a name="index-MEM_005fOFFSET-2106"></a><br><dt><code>MEM_OFFSET (</code><var>x</var><code>)</code><dd>从<code>MEM_EXPR</code>起始的偏移量，为一个<code>CONST_INT</code> rtx。
+
+          <p><a name="index-MEM_005fSIZE-2107"></a><br><dt><code>MEM_SIZE (</code><var>x</var><code>)</code><dd>以字节为单位的内存引用长度，为一个<code>CONST_INT</code> rtx。这主要与<code>BLKmode</code>引用相关，否则机器模式已经隐含了长度。
+
+          <p><a name="index-MEM_005fALIGN-2108"></a><br><dt><code>MEM_ALIGN (</code><var>x</var><code>)</code><dd>内存引用的已知的对齐方式，以位为单位。
+</dl>
+
+     <br><dt><code>REG</code><dd>
+          
+<a name="index-ORIGINAL_005fREGNO-2109"></a>
+<dl><dt><code>ORIGINAL_REGNO (</code><var>x</var><code>)</code><dd>该域存放了寄存器原先具有的编号；对于伪寄存器放入到一个硬寄存器中，其将存放旧的伪寄存器编号。
+
+          <p><a name="index-REG_005fEXPR-2110"></a><br><dt><code>REG_EXPR (</code><var>x</var><code>)</code><dd>如果该寄存器被已知存放了某个用户级的声明的值，则其为那个tree节点。
+
+          <p><a name="index-REG_005fOFFSET-2111"></a><br><dt><code>REG_OFFSET (</code><var>x</var><code>)</code><dd>如果该寄存器被已知存放了某个用户级的声明的值，则其为相对那个逻辑存储的便宜量。
+
+     </dl>
+
+     <br><dt><code>SYMBOL_REF</code><dd>
+          
+<a name="index-SYMBOL_005fREF_005fDECL-2112"></a>
+<dl><dt><code>SYMBOL_REF_DECL (</code><var>x</var><code>)</code><dd>如果是针对<code>VAR_DECL</code>或<code>FUNCTION_DECL</code>创建的<code>symbol_ref</code> <var>x</var>，则那个tree被记录在这里。如果该值为空，则<var>x</var>由后端代码生成例程创建，并不与前端的符号表实体相关联。
+
+          <p><code>SYMBOL_REF_DECL</code>也可以指向<code>'c'</code>类别的tree，即某种常量。这种情况下，<code>symbol_ref</code>为每个文件的常量池中的实体；同样，不与前端的符号表实体相关联。
+
+          <p><a name="index-SYMBOL_005fREF_005fCONSTANT-2113"></a><br><dt><code>SYMBOL_REF_CONSTANT (</code><var>x</var><code>)</code><dd>如果&lsquo;<samp><span class="samp">CONSTANT_POOL_ADDRESS_P (</span><var>x</var><span class="samp">)</span></samp>&rsquo;为真，则为<var>x</var>的常量池实体。否则为空。
+
+          <p><a name="index-SYMBOL_005fREF_005fDATA-2114"></a><br><dt><code>SYMBOL_REF_DATA (</code><var>x</var><code>)</code><dd>一个不透明类型的域，用来存储<code>SYMBOL_REF_DECL</code>或<code>SYMBOL_REF_CONSTANT</code>。
+
+          <p><a name="index-SYMBOL_005fREF_005fFLAGS-2115"></a><br><dt><code>SYMBOL_REF_FLAGS (</code><var>x</var><code>)</code><dd>在一个<code>symbol_ref</code>中，其用于传达关于符号的各种断言。它们中的一些可以使用通用的代码来计算，一些是特定于目标机器的。通用的位：
+
+               
+<a name="index-SYMBOL_005fREF_005fFUNCTION_005fP-2116"></a>
+<a name="index-SYMBOL_005fFLAG_005fFUNCTION-2117"></a>
+<dl><dt><code>SYMBOL_FLAG_FUNCTION</code><dd>用来表示符号引用一个函数。
+
+               <p><a name="index-SYMBOL_005fREF_005fLOCAL_005fP-2118"></a><a name="index-SYMBOL_005fFLAG_005fLOCAL-2119"></a><br><dt><code>SYMBOL_FLAG_LOCAL</code><dd>用来表示符号局部于该模块。参见<code>TARGET_BINDS_LOCAL_P</code>。
+
+               <p><a name="index-SYMBOL_005fREF_005fEXTERNAL_005fP-2120"></a><a name="index-SYMBOL_005fFLAG_005fEXTERNAL-2121"></a><br><dt><code>SYMBOL_FLAG_EXTERNAL</code><dd>用来表示该符号不在该转换单元中定义。注意，其并不是<code>SYMBOL_FLAG_LOCAL</code>的反转。
+
+               <p><a name="index-SYMBOL_005fREF_005fSMALL_005fP-2122"></a><a name="index-SYMBOL_005fFLAG_005fSMALL-2123"></a><br><dt><code>SYMBOL_FLAG_SMALL</code><dd>用来表示符号位于小数据段。参见<code>TARGET_IN_SMALL_DATA_P</code>。
+
+               <p><a name="index-SYMBOL_005fFLAG_005fTLS_005fSHIFT-2124"></a><a name="index-SYMBOL_005fREF_005fTLS_005fMODEL-2125"></a><br><dt><code>SYMBOL_REF_TLS_MODEL (</code><var>x</var><code>)</code><dd>这是多个位的域访问，其返回用于线程局部存储符号的<code>tls_model</code>。对于非线程局部符号，其返回0。
+
+               <p><a name="index-SYMBOL_005fREF_005fHAS_005fBLOCK_005fINFO_005fP-2126"></a><a name="index-SYMBOL_005fFLAG_005fHAS_005fBLOCK_005fINFO-2127"></a><br><dt><code>SYMBOL_FLAG_HAS_BLOCK_INFO</code><dd>用来表示符号具有<code>SYMBOL_REF_BLOCK</code>和<code>SYMBOL_REF_BLOCK_OFFSET</code>域。
+
+               <p><a name="index-SYMBOL_005fREF_005fANCHOR_005fP-2128"></a><a name="index-SYMBOL_005fFLAG_005fANCHOR-2129"></a><a name="index-g_t_0040option_007b_002dfsection_002danchors_007d-2130"></a><br><dt><code>SYMBOL_FLAG_ANCHOR</code><dd>用来表示符号作为section anchor。&ldquo;Section anchors&rdquo;为在<code>object_block</code>中具有一个已知位置的符号，并且可以用来访问该块中的附近成员。它们用来实现<samp><span class="option">-fsection-anchors</span></samp>。
+
+               <p>如果该标记被设置，则<code>SYMBOL_FLAG_HAS_BLOCK_INFO</code>也被设置。
+
+          </dl>
+
+          <p>起始于<code>SYMBOL_FLAG_MACH_DEP</code>的位，可供目标机器使用。
+</dl>
+
+     <p><a name="index-SYMBOL_005fREF_005fBLOCK-2131"></a><br><dt><code>SYMBOL_REF_BLOCK (</code><var>x</var><code>)</code><dd>如果&lsquo;<samp><span class="samp">SYMBOL_REF_HAS_BLOCK_INFO_P (</span><var>x</var><span class="samp">)</span></samp>&rsquo;，则其为该符号所属的&lsquo;<samp><span class="samp">object_block</span></samp>&rsquo;结构体， 或者如果其没有被分配给一个块，则为<code>NULL</code>。
+
+     <p><a name="index-SYMBOL_005fREF_005fBLOCK_005fOFFSET-2132"></a><br><dt><code>SYMBOL_REF_BLOCK_OFFSET (</code><var>x</var><code>)</code><dd>如果&lsquo;<samp><span class="samp">SYMBOL_REF_HAS_BLOCK_INFO_P (</span><var>x</var><span class="samp">)</span></samp>&rsquo;，则其为<var>x</var>的偏移量，从&lsquo;<samp><span class="samp">SYMBOL_REF_BLOCK (</span><var>x</var><span class="samp">)</span></samp>&rsquo;中的第一个对象开始。如果<var>x</var>还没有被分配给一个块，或者其还没有在那个块中给定一个偏移量，则值为负数。
+
+ </dl>
+
+ </body></html>
+

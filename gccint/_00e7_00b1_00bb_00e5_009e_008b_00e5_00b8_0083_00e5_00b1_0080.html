@@ -1,0 +1,377 @@
+<html lang="zh">
+<head>
+<title>类型布局 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f.html#g_t_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f" title="目标宏">
+<link rel="prev" href="_00e5_00ad_0098_00e5_0082_00a8_00e5_00b8_0083_00e5_00b1_0080.html#g_t_00e5_00ad_0098_00e5_0082_00a8_00e5_00b8_0083_00e5_00b1_0080" title="存储布局">
+<link rel="next" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8" title="寄存器">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e7%b1%bb%e5%9e%8b%e5%b8%83%e5%b1%80"></a>
+<a name="g_t_00e7_00b1_00bb_00e5_009e_008b_00e5_00b8_0083_00e5_00b1_0080"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8">寄存器</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e5_00ad_0098_00e5_0082_00a8_00e5_00b8_0083_00e5_00b1_0080.html#g_t_00e5_00ad_0098_00e5_0082_00a8_00e5_00b8_0083_00e5_00b1_0080">存储布局</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f.html#g_t_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f">目标宏</a>
+<hr>
+</div>
+
+<h3 class="section">17.6 源语言的数据类型布局</h3>
+
+<p>这些宏定义了在被编译的程序中使用的标准基础数据类型的大小和其它特征。
+不像之前章节中的宏，这些是应用到C和相关语言的特定特征上，
+而不是存储布局的基础方面。
+
+<div class="defun">
+&mdash; Macro: <b>INT_TYPE_SIZE</b><var><a name="index-INT_005fTYPE_005fSIZE-3814"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>int</code>的位大小。
+如果没有定义，缺省为一个字。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SHORT_TYPE_SIZE</b><var><a name="index-SHORT_005fTYPE_005fSIZE-3815"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>short</code>的位大小。如果没有定义，
+缺省为半个字。（如果比一个存储单元小，则会向上舍入为一个单元。）
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LONG_TYPE_SIZE</b><var><a name="index-LONG_005fTYPE_005fSIZE-3816"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>long</code>的位大小。
+如果没有定义，缺省为一个字。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ADA_LONG_TYPE_SIZE</b><var><a name="index-ADA_005fLONG_005fTYPE_005fSIZE-3817"></a></var><br>
+<blockquote><p>在一些机器上，本地Ada编译器使用的类型<code>long</code>的大小与C使用的不相同。
+这种情况下，定义该宏为一个C表达式用于那个类型的大小。如果没有定义，
+则缺省为<code>LONG_TYPE_SIZE</code>的值。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LONG_LONG_TYPE_SIZE</b><var><a name="index-LONG_005fLONG_005fTYPE_005fSIZE-3818"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>long long</code>的位大小。如果没有定义，
+缺省为两个字。如果你想在你的机器上支持GNU Ada，则该宏的值最少必须为64。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CHAR_TYPE_SIZE</b><var><a name="index-CHAR_005fTYPE_005fSIZE-3819"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>char</code>的位大小。
+如果没有定义，缺省为<code>BITS_PER_UNIT</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>BOOL_TYPE_SIZE</b><var><a name="index-BOOL_005fTYPE_005fSIZE-3820"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上C++类型<code>bool</code>和C99类型<code>_Bool</code>的位大小。
+如果没有定义，并且通常不会定义，缺省为<code>CHAR_TYPE_SIZE</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FLOAT_TYPE_SIZE</b><var><a name="index-FLOAT_005fTYPE_005fSIZE-3821"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>float</code>的位大小。
+如果没有定义，缺省为一个字。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DOUBLE_TYPE_SIZE</b><var><a name="index-DOUBLE_005fTYPE_005fSIZE-3822"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>double</code>的位大小。
+如果没有定义，缺省为两个字。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LONG_DOUBLE_TYPE_SIZE</b><var><a name="index-LONG_005fDOUBLE_005fTYPE_005fSIZE-3823"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>long double</code>的位大小。
+如果没有定义，缺省为两个字。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SHORT_FRACT_TYPE_SIZE</b><var><a name="index-SHORT_005fFRACT_005fTYPE_005fSIZE-3824"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>short _Fract</code>的位大小。
+如果没有定义，缺省为<code>BITS_PER_UNIT</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FRACT_TYPE_SIZE</b><var><a name="index-FRACT_005fTYPE_005fSIZE-3825"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>_Fract</code>的位大小。如果没有定义，
+缺省为<code>BITS_PER_UNIT * 2</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LONG_FRACT_TYPE_SIZE</b><var><a name="index-LONG_005fFRACT_005fTYPE_005fSIZE-3826"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>long _Fract</code>的位大小。
+如果没有定义，缺省为<code>BITS_PER_UNIT * 4</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LONG_LONG_FRACT_TYPE_SIZE</b><var><a name="index-LONG_005fLONG_005fFRACT_005fTYPE_005fSIZE-3827"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>long long _Fract</code>的位大小。
+如果没有定义，缺省为<code>BITS_PER_UNIT * 8</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SHORT_ACCUM_TYPE_SIZE</b><var><a name="index-SHORT_005fACCUM_005fTYPE_005fSIZE-3828"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>short _Accum</code>的位大小。
+如果没有定义，缺省为<code>BITS_PER_UNIT * 2</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ACCUM_TYPE_SIZE</b><var><a name="index-ACCUM_005fTYPE_005fSIZE-3829"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>_Accum</code>的位大小。
+如果没有定义，缺省为<code>BITS_PER_UNIT * 4</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LONG_ACCUM_TYPE_SIZE</b><var><a name="index-LONG_005fACCUM_005fTYPE_005fSIZE-3830"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>long _Accum</code>的位大小。
+如果没有定义，缺省为<code>BITS_PER_UNIT * 8</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LONG_LONG_ACCUM_TYPE_SIZE</b><var><a name="index-LONG_005fLONG_005fACCUM_005fTYPE_005fSIZE-3831"></a></var><br>
+<blockquote><p>一个C表达式，为在target机器上类型<code>long long _Accum</code>的位大小。
+如果没有定义，缺省为<code>BITS_PER_UNIT * 16</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LIBGCC2_LONG_DOUBLE_TYPE_SIZE</b><var><a name="index-LIBGCC2_005fLONG_005fDOUBLE_005fTYPE_005fSIZE-3832"></a></var><br>
+<blockquote><p>定义该宏，如果<code>LONG_DOUBLE_TYPE_SIZE</code>不是常量或者如果你想让<samp><span class="file">libgcc2.a</span></samp>
+中具有大小不是<code>LONG_DOUBLE_TYPE_SIZE</code>的程序。如果没有定义，
+缺省为<code>LONG_DOUBLE_TYPE_SIZE</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LIBGCC2_HAS_DF_MODE</b><var><a name="index-LIBGCC2_005fHAS_005fDF_005fMODE-3833"></a></var><br>
+<blockquote><p>定义该宏，如果<code>LIBGCC2_DOUBLE_TYPE_SIZE</code>和
+<code>LIBGCC2_LONG_DOUBLE_TYPE_SIZE</code>都不是<code>DFmode</code>，
+但是你还想让<samp><span class="file">libgcc2.a</span></samp>中具有<code>DFmode</code>的程序。如果没有定义，
+并且<code>LIBGCC2_DOUBLE_TYPE_SIZE</code>或<code>LIBGCC2_LONG_DOUBLE_TYPE_SIZE</code>为64，
+则缺省为1，否则为0。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LIBGCC2_HAS_XF_MODE</b><var><a name="index-LIBGCC2_005fHAS_005fXF_005fMODE-3834"></a></var><br>
+<blockquote><p>定义该宏，如果<code>LIBGCC2_LONG_DOUBLE_TYPE_SIZE</code>不是<code>XFmode</code>，
+但是你还想让<samp><span class="file">libgcc2.a</span></samp>中具有<code>XFmode</code>的程序。如果没有定义，
+并且<code>LIBGCC2_LONG_DOUBLE_TYPE_SIZE</code>为80，则缺省为1，否则为0。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LIBGCC2_HAS_TF_MODE</b><var><a name="index-LIBGCC2_005fHAS_005fTF_005fMODE-3835"></a></var><br>
+<blockquote><p>定义该宏，如果<code>LIBGCC2_LONG_DOUBLE_TYPE_SIZE</code>不是<code>TFmode</code>，
+但是你还想让<samp><span class="file">libgcc2.a</span></samp>中具有<code>TFmode</code>的程序。如果没有定义，
+并且<code>LIBGCC2_LONG_DOUBLE_TYPE_SIZE</code>为128，则缺省为1，否则为0。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SF_SIZE</b><var><a name="index-SF_005fSIZE-3836"></a></var><br>
+&mdash; Macro: <b>DF_SIZE</b><var><a name="index-DF_005fSIZE-3837"></a></var><br>
+&mdash; Macro: <b>XF_SIZE</b><var><a name="index-XF_005fSIZE-3838"></a></var><br>
+&mdash; Macro: <b>TF_SIZE</b><var><a name="index-TF_005fSIZE-3839"></a></var><br>
+<blockquote><p>定义这些宏为<code>SFmode</code>, <code>DFmode</code>, <code>XFmode</code>和<code>TFmode</code>值的尾数
+位大小，如果在<samp><span class="file">libgcc2.h</span></samp>中的缺省定义不合适。缺省的，
+<code>FLT_MANT_DIG</code>用于<code>SF_SIZE</code>, <code>LDBL_MANT_DIG</code>用于<code>XF_SIZE</code>和
+<code>TF_SIZE</code>，并且<code>DBL_MANT_DIG</code>或<code>LDBL_MANT_DIG</code>用于
+<code>DF_SIZE</code>，根据<code>LIBGCC2_DOUBLE_TYPE_SIZE</code>或
+<code>LIBGCC2_LONG_DOUBLE_TYPE_SIZE</code>是否为64。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_FLT_EVAL_METHOD</b><var><a name="index-TARGET_005fFLT_005fEVAL_005fMETHOD-3840"></a></var><br>
+<blockquote><p>一个C表达式，为<samp><span class="file">float.h</span></samp>中的<code>FLT_EVAL_METHOD</code>的值。
+如果没有定义，则<code>FLT_EVAL_METHOD</code>的值将为0。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>WIDEST_HARDWARE_FP_SIZE</b><var><a name="index-WIDEST_005fHARDWARE_005fFP_005fSIZE-3841"></a></var><br>
+<blockquote><p>一个C表达式，为硬件支持的最宽浮点格式的位数。如果定义该宏，
+则必须指定一个小于或等于<code>LONG_DOUBLE_TYPE_SIZE</code>的值。如果没有定义，
+则缺省为<code>LONG_DOUBLE_TYPE_SIZE</code>的值。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DEFAULT_SIGNED_CHAR</b><var><a name="index-DEFAULT_005fSIGNED_005fCHAR-3842"></a></var><br>
+<blockquote><p>一个表达式，其值为1或者0，根据类型<code>char</code>缺省应该为有符号的还是无符号的。
+用户总是可以使用选项<samp><span class="option">-fsigned-char</span></samp>和<samp><span class="option">-funsigned-char</span></samp>来覆盖该缺省定义。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_DEFAULT_SHORT_ENUMS</b> (<var>void</var>)<var><a name="index-TARGET_005fDEFAULT_005fSHORT_005fENUMS-3843"></a></var><br>
+<blockquote><p>该target钩子应该返回真，如果编译器应该为<code>enum</code>类型设置为可以表示该类型值
+范围的字节数。其应该返回假，如果所有的<code>enum</code>类型应该按照<code>int</code>类型的
+方式来分配。
+
+      <p>缺省为返回假。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SIZE_TYPE</b><var><a name="index-SIZE_005fTYPE-3844"></a></var><br>
+<blockquote><p>一个C表达式，为一个字符串描述了用于size值的数据类型名。
+typedef名<code>size_t</code>使用该字符串的内容来定义。
+
+      <p>字符串可以包含多一个的关键字。如果是这样，则将它们使用空格分开，
+首先是任意长度的关键字，然后是合适<code>unsigned</code> 的，最后是<code>int</code>。
+字符串必须显示的匹配文件<samp><span class="file">c-decl.c</span></samp>中函数<code>init_decl_processing</code>中
+定义的数据类型名。不可以省略掉<code>int</code>或者改变顺序，
+这将会使编译器在启动时崩溃。
+
+      <p>如果没有定义，缺省为<code>"long unsigned int"</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>PTRDIFF_TYPE</b><var><a name="index-PTRDIFF_005fTYPE-3845"></a></var><br>
+<blockquote><p>一个C表达式，为一个字符串，描述了用于两个指针相减的结果的数据类型名。
+typedef名<code>ptrdiff_t</code>使用该字符串的内容来定义。更多信息，
+参见上面的<code>SIZE_TYPE</code>。
+
+      <p>如果没有定义，则缺省为<code>"long int"</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>WCHAR_TYPE</b><var><a name="index-WCHAR_005fTYPE-3846"></a></var><br>
+<blockquote><p>一个C表达式，为一个字符串，描述了用于宽字符的数据类型名。
+typedef名<code>wchar_t</code>使用该字符串的内容来定义。更多信息，
+参见上面的<code>SIZE_TYPE</code>。
+
+      <p>如果没有定义，则缺省为<code>"int"</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>WCHAR_TYPE_SIZE</b><var><a name="index-WCHAR_005fTYPE_005fSIZE-3847"></a></var><br>
+<blockquote><p>一个C表达式，为宽字符数据类型的位数。
+这用于不能使用<code>WCHAR_TYPE</code>的<code>cpp</code>中。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>WINT_TYPE</b><var><a name="index-WINT_005fTYPE-3848"></a></var><br>
+<blockquote><p>一个C表达式，为一个字符串，
+描述了传递给<code>printf</code>并且从<code>getwc</code>中返回的宽字符数据类型名。
+typedef名<code>wint_t</code>使用该字符串的内容来定义。更多信息，
+参见上面的<code>SIZE_TYPE</code>。
+
+      <p>如果没有定义，则缺省为<code>"unsigned int"</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INTMAX_TYPE</b><var><a name="index-INTMAX_005fTYPE-3849"></a></var><br>
+<blockquote><p>一个C表达式，为一个字符串，
+描述了可以表示任何标准或者扩展的有符号整数类型值的数据类型名。
+typedef名<code>intmax_t</code>使用该字符串的内容来定义。更多信息，
+参见上面的<code>SIZE_TYPE</code>。
+
+      <p>如果没有定义，则缺省为<code>"int"</code>, <code>"long int"</code>或
+<code>"long long int"</code>中第一个与<code>long long int</code>具有相同精度的字符串。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>UINTMAX_TYPE</b><var><a name="index-UINTMAX_005fTYPE-3850"></a></var><br>
+<blockquote><p>一个C表达式，为一个字符串，
+描述了可以表示任何标准或者扩展的无符号整数类型值的数据类型名。
+typedef名<code>uintmax_t</code>使用该字符串的内容来定义。更多信息，
+参见上面的<code>SIZE_TYPE</code>。
+
+      <p>如果没有定义，则缺省为<code>"unsigned int"</code>, <code>"long unsigned int"</code>或
+<code>"long long unsigned int"</code>中第一个与<code>long long unsigned int</code>
+具有相同精度的字符串。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_PTRMEMFUNC_VBIT_LOCATION</b><var><a name="index-TARGET_005fPTRMEMFUNC_005fVBIT_005fLOCATION-3851"></a></var><br>
+<blockquote><p>The C++ compiler represents a pointer-to-member-function with a struct
+that looks like:
+
+     <pre class="smallexample">            struct {
+              union {
+                void (*fn)();
+                ptrdiff_t vtable_index;
+              };
+              ptrdiff_t delta;
+            };
+</pre>
+      <p class="noindent">The C++ compiler must use one bit to indicate whether the function that
+will be called through a pointer-to-member-function is virtual. 
+Normally, we assume that the low-order bit of a function pointer must
+always be zero.  Then, by ensuring that the vtable_index is odd, we can
+distinguish which variant of the union is in use.  But, on some
+platforms function pointers can be odd, and so this doesn't work.  In
+that case, we use the low-order bit of the <code>delta</code> field, and shift
+the remainder of the <code>delta</code> field to the left.
+
+      <p>GCC will automatically make the right selection about where to store
+this bit using the <code>FUNCTION_BOUNDARY</code> setting for your platform. 
+However, some platforms such as ARM/Thumb have <code>FUNCTION_BOUNDARY</code>
+set such that functions always start at even addresses, but the lowest
+bit of pointers to functions indicate whether the function at that
+address is in ARM or Thumb mode.  If this is the case of your
+architecture, you should define this macro to
+<code>ptrmemfunc_vbit_in_delta</code>.
+
+      <p>In general, you should not have to define this macro.  On architectures
+in which function addresses are always even, according to
+<code>FUNCTION_BOUNDARY</code>, GCC will automatically define this macro to
+<code>ptrmemfunc_vbit_in_pfn</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_VTABLE_USES_DESCRIPTORS</b><var><a name="index-TARGET_005fVTABLE_005fUSES_005fDESCRIPTORS-3852"></a></var><br>
+<blockquote><p>Normally, the C++ compiler uses function pointers in vtables.  This
+macro allows the target to change to use &ldquo;function descriptors&rdquo;
+instead.  Function descriptors are found on targets for whom a
+function pointer is actually a small data structure.  Normally the
+data structure consists of the actual code address plus a data
+pointer to which the function's data is relative.
+
+      <p>If vtables are used, the value of this macro should be the number
+of words that the function descriptor occupies. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_VTABLE_ENTRY_ALIGN</b><var><a name="index-TARGET_005fVTABLE_005fENTRY_005fALIGN-3853"></a></var><br>
+<blockquote><p>By default, the vtable entries are void pointers, the so the alignment
+is the same as pointer alignment.  The value of this macro specifies
+the alignment of the vtable entry in bits.  It should be defined only
+when special alignment is necessary. */
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_VTABLE_DATA_ENTRY_DISTANCE</b><var><a name="index-TARGET_005fVTABLE_005fDATA_005fENTRY_005fDISTANCE-3854"></a></var><br>
+<blockquote><p>There are a few non-descriptor entries in the vtable at offsets below
+zero.  If these entries must be padded (say, to preserve the alignment
+specified by <code>TARGET_VTABLE_ENTRY_ALIGN</code>), set this to the number
+of words in each data entry. 
+</p></blockquote></div>
+
+ </body></html>
+

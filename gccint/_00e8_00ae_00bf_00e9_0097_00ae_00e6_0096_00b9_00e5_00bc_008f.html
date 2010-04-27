@@ -1,0 +1,102 @@
+<html lang="zh">
+<head>
+<title>访问方式 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="RTL.html#RTL" title="RTL">
+<link rel="prev" href="RTL_00e7_00b1_00bb_00e5_0088_00ab.html#RTL_00e7_00b1_00bb_00e5_0088_00ab" title="RTL类别">
+<link rel="next" href="_00e7_0089_00b9_00e6_00ae_008a_00e8_00ae_00bf_00e9_0097_00ae_00e6_0096_00b9_00e5_00bc_008f.html#g_t_00e7_0089_00b9_00e6_00ae_008a_00e8_00ae_00bf_00e9_0097_00ae_00e6_0096_00b9_00e5_00bc_008f" title="特殊访问方式">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e8%ae%bf%e9%97%ae%e6%96%b9%e5%bc%8f"></a>
+<a name="g_t_00e8_00ae_00bf_00e9_0097_00ae_00e6_0096_00b9_00e5_00bc_008f"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e7_0089_00b9_00e6_00ae_008a_00e8_00ae_00bf_00e9_0097_00ae_00e6_0096_00b9_00e5_00bc_008f.html#g_t_00e7_0089_00b9_00e6_00ae_008a_00e8_00ae_00bf_00e9_0097_00ae_00e6_0096_00b9_00e5_00bc_008f">特殊访问方式</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="RTL_00e7_00b1_00bb_00e5_0088_00ab.html#RTL_00e7_00b1_00bb_00e5_0088_00ab">RTL类别</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="RTL.html#RTL">RTL</a>
+<hr>
+</div>
+
+<h3 class="section">10.3 访问操作数</h3>
+
+<p><a name="index-accessors-2093"></a><a name="index-access-to-operands-2094"></a><a name="index-operand-access-2095"></a>
+<a name="index-XEXP-2096"></a><a name="index-XINT-2097"></a><a name="index-XWINT-2098"></a><a name="index-XSTR-2099"></a>表达式的操作数用宏<code>XEXP</code>、<code>XINT</code>、<code>XWINT</code>和<code>XSTR</code>访问。
+所有这些宏都有两个参数：一个为表达式指针（RTX），
+另一个为操作数序号 ( 从0 开始计算 )。如：
+
+<pre class="smallexample">     XEXP (<var>x</var>, 2)
+</pre>
+ <p class="noindent">表示以表达式方式访问表达式<var>x</var>的第2个操作数。
+
+<pre class="smallexample">     XINT (<var>x</var>, 2)
+</pre>
+ <p class="noindent">表示以整数方式访问<code>x</code>的第2个操作数。
+<code>XSTR</code>表示以字符串方式访问。
+
+ <p>任何一个操作数都能以整数方式、表达式方式或字符串方式来访问，
+但必须根据存贮在操作数中的实际值选择正确的访问方式。
+这可根据表达式的代码而获得，同样也可表达式代码获得操作数的个数。
+
+ <p>例如：若<var>x</var>是<code>subreg</code>表达式，通过表达式代码可知它有二个操作数，
+这两个操作数的访问应该是<code>XEXP (</code><var>x</var><code>, 0)</code> 和<code>XINT (</code><var>x</var><code>, 1)</code>，
+若写成<code>XINT (</code><var>x</var><code>, 0)</code>，那么，你得到的表达式地址将被强制成整数，
+偶尔可能会需要这样做，但在这种情况下用<code>(int) XEXP (</code><var>x</var><code>, 0)</code>表示要更好。
+同样写成<code>XEXP (</code><var>x</var><code>, 1)</code> 也不会导致编译错误，
+它将返回强制为表达式指针而实际为整数的1号操作数，在运行中访问该指针时，
+这可能会导致出错。同样，你也可以写成<code>XEXP (</code><var>x</var><code>, 28)</code>，
+但这超出了此表达式的存贮边界，所得到的将是一个预料不到的结果。
+
+ <p>对向量操作数的访问较为复杂些，可用<code>XVEC</code>宏来获取向量指针本身，
+<code>XVECEXP</code>和<code>XVECLEN</code>宏访问一个向量的元素和长度。
+
+     
+<a name="index-XVEC-2100"></a>
+<dl><dt><code>XVEC (</code><var>exp</var><code>, </code><var>idx</var><code>)</code><dd>获得<var>exp</var>中第<var>idx</var>个操作数的向量指针。
+
+     <p><a name="index-XVECLEN-2101"></a><br><dt><code>XVECLEN (</code><var>exp</var><code>, </code><var>idx</var><code>)</code><dd>获得<var>exp</var>中第<var>idx</var>个操作数（为向量操作数）的向量长度（元素个数），
+其值是<code>int</code>。
+
+     <p><a name="index-XVECEXP-2102"></a><br><dt><code>XVECEXP (</code><var>exp</var><code>, </code><var>idx</var><code>, </code><var>eltnum</var><code>)</code><dd>访问<var>exp</var>中第<var>idx</var>个操作数（为向量操作数）的第<var>eltnum</var>个元素，
+其值是一个RTX。
+
+     <p>需要由你来确保<var>eltnum</var>不为负，并且小于<code>XVECLEN (</code><var>exp</var><code>, </code><var>idx</var><code>)</code>。
+</dl>
+
+ <p>在本节中所定义的所有宏定义都被扩展成左值，
+因而也可用于对操作数、长度和向量元素赋值。
+
+ </body></html>
+

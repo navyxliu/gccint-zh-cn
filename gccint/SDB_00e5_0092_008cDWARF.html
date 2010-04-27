@@ -1,0 +1,149 @@
+<html lang="zh">
+<head>
+<title>SDB和DWARF - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e8_00b0_0083_00e8_00af_0095_00e4_00bf_00a1_00e6_0081_00af.html#g_t_00e8_00b0_0083_00e8_00af_0095_00e4_00bf_00a1_00e6_0081_00af" title="调试信息">
+<link rel="prev" href="_00e6_0096_0087_00e4_00bb_00b6_00e5_0090_008d_00e5_0092_008cDBX.html#g_t_00e6_0096_0087_00e4_00bb_00b6_00e5_0090_008d_00e5_0092_008cDBX" title="文件名和DBX">
+<link rel="next" href="VMS_00e8_00b0_0083_00e8_00af_0095.html#VMS_00e8_00b0_0083_00e8_00af_0095" title="VMS调试">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="SDB%e5%92%8cDWARF"></a>
+<a name="SDB_00e5_0092_008cDWARF"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="VMS_00e8_00b0_0083_00e8_00af_0095.html#VMS_00e8_00b0_0083_00e8_00af_0095">VMS调试</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e6_0096_0087_00e4_00bb_00b6_00e5_0090_008d_00e5_0092_008cDBX.html#g_t_00e6_0096_0087_00e4_00bb_00b6_00e5_0090_008d_00e5_0092_008cDBX">文件名和DBX</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e8_00b0_0083_00e8_00af_0095_00e4_00bf_00a1_00e6_0081_00af.html#g_t_00e8_00b0_0083_00e8_00af_0095_00e4_00bf_00a1_00e6_0081_00af">调试信息</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.22.5 用于SDB和DWARF输出的宏</h4>
+
+<!-- prevent bad page break with this line -->
+<p>这些是用于SDB和DWARF输出的宏。
+
+<div class="defun">
+&mdash; Macro: <b>SDB_DEBUGGING_INFO</b><var><a name="index-SDB_005fDEBUGGING_005fINFO-4534"></a></var><br>
+<blockquote><p>定义该宏，如果对于<samp><span class="option">-g</span></samp>选项，GCC应该为SDB产生COFF风格的调试输出。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DWARF2_DEBUGGING_INFO</b><var><a name="index-DWARF2_005fDEBUGGING_005fINFO-4535"></a></var><br>
+<blockquote><p>定义该宏，如果对于<samp><span class="option">-g</span></samp>选项，GCC应该产生dwarf本版2格式的调试输出。
+
+     <div class="defun">
+&mdash; Target Hook: int <b>TARGET_DWARF_CALLING_CONVENTION</b> (<var>tree function</var>)<var><a name="index-TARGET_005fDWARF_005fCALLING_005fCONVENTION-4536"></a></var><br>
+<blockquote><p>定义该钩子，使得为个函数输出dwarf属性<code>DW_AT_calling_convention</code>。
+返回<code>DW_CC_</code>标记的enum值。
+</p></blockquote></div>
+
+      <p>要支持可选的调用帧调试信息，
+你必须还要定义<code>INCOMING_RETURN_ADDR_RTX</code>，并如果在序言中使用RTL，
+则设置<code>RTX_FRAME_RELATED_P</code>，或者如果没有使用RTL，
+则从<code>TARGET_ASM_FUNCTION_PROLOGUE</code>中调用<code>dwarf2out_def_cfa</code>
+和<code>dwarf2out_reg_save</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DWARF2_FRAME_INFO</b><var><a name="index-DWARF2_005fFRAME_005fINFO-4537"></a></var><br>
+<blockquote><p>定义该宏为非0值，如果GCC应该总是输出Dwarf2帧信息。
+如果<code>DWARF2_UNWIND_INFO</code>（参见 <a href="_00e5_00bc_0082_00e5_00b8_00b8_00e5_008c_00ba_00e5_009f_009f_00e8_00be_0093_00e5_0087_00ba.html#g_t_00e5_00bc_0082_00e5_00b8_00b8_00e5_008c_00ba_00e5_009f_009f_00e8_00be_0093_00e5_0087_00ba">异常区域输出</a>）为非0，
+则GCC将不管你如何定义<code>DWARF2_FRAME_INFO</code>，都会输出该信息。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DWARF2_ASM_LINE_DEBUG_INFO</b><var><a name="index-DWARF2_005fASM_005fLINE_005fDEBUG_005fINFO-4538"></a></var><br>
+<blockquote><p>定义该宏为非0值，如果汇编器能够生成Dwarf2行调试信息section。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_DWARF_DELTA</b> (<var>stream, size, label1, label2</var>)<var><a name="index-ASM_005fOUTPUT_005fDWARF_005fDELTA-4539"></a></var><br>
+<blockquote><p>一条C语句，来输出汇编伪指令，
+以创建一个<var>lab1</var>减去<var>lab2</var>的差，使用给定的<var>size</var>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_DWARF_OFFSET</b> (<var>stream, size, label, section</var>)<var><a name="index-ASM_005fOUTPUT_005fDWARF_005fOFFSET-4540"></a></var><br>
+<blockquote><p>一条C语句，来输出汇编伪指令，
+以创建一个相对的<var>section</var>的给定<var>label</var>的引用，
+使用给定的<var>size</var>。<var>label</var>为在给定<var>section</var>中定义的<var>label</var>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_DWARF_PCREL</b> (<var>stream, size, label</var>)<var><a name="index-ASM_005fOUTPUT_005fDWARF_005fPCREL-4541"></a></var><br>
+<blockquote><p>一条C语句，来输出汇编伪指令，
+以创建一个给定<var>label</var>的引用，使用给定的<var>size</var>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_OUTPUT_DWARF_DTPREL</b> (<var>FILE *FILE, int size, rtx x</var>)<var><a name="index-TARGET_005fASM_005fOUTPUT_005fDWARF_005fDTPREL-4542"></a></var><br>
+<blockquote><p>如果定义，该target钩子为一个函数，其输出一个相对DTP的引用，对给定的TLS符号。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>PUT_SDB_</b><var><small class="dots">...</small><a name="index-PUT_005fSDB_005f-4543"></a></var><br>
+<blockquote><p>定义这些宏来覆盖汇编语法，为特定的SDB汇编伪指令。
+参见<samp><span class="file">sdbout.c</span></samp>，关于这些宏和它们的参数的列表。
+如果使用标准语法，你不需要定义它们。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SDB_DELIM</b><var><a name="index-SDB_005fDELIM-4544"></a></var><br>
+<blockquote><p>一些汇编器不支持分号作为分隔符，即使在SDB汇编伪指令之间。
+这种情况下，定义该宏为要使用的分隔符（通常为&lsquo;<samp><span class="samp">\n</span></samp>&rsquo;）。
+如果只需要改变该宏，则不需要定义新的<code>PUT_SDB_</code><var>op</var>宏集合。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SDB_ALLOW_UNKNOWN_REFERENCES</b><var><a name="index-SDB_005fALLOW_005fUNKNOWN_005fREFERENCES-4545"></a></var><br>
+<blockquote><p>定义该宏以允许对未知结构体，联合体和枚举标记的引用，被输出。
+标准的COFF不允许处理未知的引用，MIPS ECOFF支持该特定。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SDB_ALLOW_FORWARD_REFERENCES</b><var><a name="index-SDB_005fALLOW_005fFORWARD_005fREFERENCES-4546"></a></var><br>
+<blockquote><p>定义该宏以允许对未遇到的结构体，联合体和枚举标记的引用，被输出。
+一些汇编器对此会出错。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SDB_OUTPUT_SOURCE_LINE</b> (<var>stream, line</var>)<var><a name="index-SDB_005fOUTPUT_005fSOURCE_005fLINE-4547"></a></var><br>
+<blockquote><p>一条C语句，输出当前源文件的行号的SDB调试信息在代码前。
+缺省为输出一个<code>.ln</code>伪指令。
+</p></blockquote></div>
+
+ </body></html>
+

@@ -1,0 +1,109 @@
+<html lang="zh">
+<head>
+<title>所有调试器 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e8_00b0_0083_00e8_00af_0095_00e4_00bf_00a1_00e6_0081_00af.html#g_t_00e8_00b0_0083_00e8_00af_0095_00e4_00bf_00a1_00e6_0081_00af" title="调试信息">
+<link rel="next" href="DBX_00e9_0080_0089_00e9_00a1_00b9.html#DBX_00e9_0080_0089_00e9_00a1_00b9" title="DBX选项">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e6%89%80%e6%9c%89%e8%b0%83%e8%af%95%e5%99%a8"></a>
+<a name="g_t_00e6_0089_0080_00e6_009c_0089_00e8_00b0_0083_00e8_00af_0095_00e5_0099_00a8"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="DBX_00e9_0080_0089_00e9_00a1_00b9.html#DBX_00e9_0080_0089_00e9_00a1_00b9">DBX选项</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e8_00b0_0083_00e8_00af_0095_00e4_00bf_00a1_00e6_0081_00af.html#g_t_00e8_00b0_0083_00e8_00af_0095_00e4_00bf_00a1_00e6_0081_00af">调试信息</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.22.1 影响所有调试格式的宏</h4>
+
+<!-- prevent bad page break with this line -->
+<p>这些宏影响所有的调试格式。
+
+<div class="defun">
+&mdash; Macro: <b>DBX_REGISTER_NUMBER</b> (<var>regno</var>)<var><a name="index-DBX_005fREGISTER_005fNUMBER-4500"></a></var><br>
+<blockquote><p>一个C表达式，返回编译器寄存器号<var>regno</var>的DBX寄存器号。
+在提供的缺省宏中，该表达式的值将为<var>regno</var>本身。
+但是有时候，有些寄存器编译器知道但是DBX不知道，或者相反。
+对于这种情况，寄存器可能需要在编译器中具有一个编号，
+而在DBX中具有另一个。
+
+      <p>如果两个寄存器在GCC中具有连续的编号，
+并且可以作为一对用来保存多字的值，
+则它们在使用<code>DBX_REGISTER_NUMBER</code>重新编号之后
+<em>必须</em>还具有连续的编号。
+否则，调试器将无法访问这样的寄存器对，
+因为调试器期望寄存器对在自己的编号方案下也是连续的。
+
+      <p>如果你发现自己定义的<code>DBX_REGISTER_NUMBER</code>不能保持寄存器对，
+则必须重定义实际的寄存器编号方案。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DEBUGGER_AUTO_OFFSET</b> (<var>x</var>)<var><a name="index-DEBUGGER_005fAUTO_005fOFFSET-4501"></a></var><br>
+<blockquote><p>一个C表达式，返回具有地址<var>x</var>（RTL表达式）的自动变量的整数偏移量。
+缺省计算是假设<var>x</var>基于帧指针的，并会给出相对帧指针的偏移量。
+这对于产生DBX调试输出或COFF风格的SDB调试输出，
+并且在使用<samp><span class="option">-g</span></samp>选项时也允许消除帧指针的目标，会有需要。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DEBUGGER_ARG_OFFSET</b> (<var>offset, x</var>)<var><a name="index-DEBUGGER_005fARG_005fOFFSET-4502"></a></var><br>
+<blockquote><p>一个C表达式，返回具有地址<var>x</var>（RTL表达式）的参数的整数偏移量。
+名义上的偏移量为<var>offset</var>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>PREFERRED_DEBUGGING_TYPE</b><var><a name="index-PREFERRED_005fDEBUGGING_005fTYPE-4503"></a></var><br>
+<blockquote><p>一个C表达式，返回当用户只指定<samp><span class="option">-g</span></samp>时，
+GCC应该产生的调试输出类型。
+如果你已经使得GCC支持多种调试输出格式的时候，则定义该宏。
+目前，允许的值为<code>DBX_DEBUG</code>, <code>SDB_DEBUG</code>, <code>DWARF_DEBUG</code>,
+<code>DWARF2_DEBUG</code>, <code>XCOFF_DEBUG</code>,
+<code>VMS_DEBUG</code>和<code>VMS_AND_DWARF2_DEBUG</code>。
+
+      <p>当用户指定<samp><span class="option">-ggdb</span></samp>时，GCC通常还使用该宏的值来选择调试输出格式，
+但是有两个例外。如果定义了<code>DWARF2_DEBUGGING_INFO</code>，
+则GCC使用值<code>DWARF2_DEBUG</code>，如果定义了<code>DBX_DEBUGGING_INFO</code>，
+则GCC使用<code>DBX_DEBUG</code>。
+
+      <p>该宏的值只影响缺省调试输出；用户总是可以通过使用<samp><span class="option">-gstabs</span></samp>,
+<samp><span class="option">-gcoff</span></samp>, <samp><span class="option">-gdwarf-2</span></samp>,
+<samp><span class="option">-gxcoff</span></samp>或<samp><span class="option">-gvms</span></samp>来获得指定类型的输出。
+</p></blockquote></div>
+
+ </body></html>
+

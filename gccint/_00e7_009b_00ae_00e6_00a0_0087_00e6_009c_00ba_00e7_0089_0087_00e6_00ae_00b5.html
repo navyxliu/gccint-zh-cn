@@ -1,0 +1,136 @@
+<html lang="zh">
+<head>
+<title>目标机片段 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e7_0089_0087_00e6_00ae_00b5.html#g_t_00e7_0089_0087_00e6_00ae_00b5" title="片段">
+<link rel="next" href="_00e4_00b8_00bb_00e6_009c_00ba_00e7_0089_0087_00e6_00ae_00b5.html#g_t_00e4_00b8_00bb_00e6_009c_00ba_00e7_0089_0087_00e6_00ae_00b5" title="主机片段">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e7%9b%ae%e6%a0%87%e6%9c%ba%e7%89%87%e6%ae%b5"></a>
+<a name="g_t_00e7_009b_00ae_00e6_00a0_0087_00e6_009c_00ba_00e7_0089_0087_00e6_00ae_00b5"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e4_00b8_00bb_00e6_009c_00ba_00e7_0089_0087_00e6_00ae_00b5.html#g_t_00e4_00b8_00bb_00e6_009c_00ba_00e7_0089_0087_00e6_00ae_00b5">主机片段</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_0089_0087_00e6_00ae_00b5.html#g_t_00e7_0089_0087_00e6_00ae_00b5">片段</a>
+<hr>
+</div>
+
+<h3 class="section">19.1 目标机Makefile片段</h3>
+
+<p><a name="index-target-makefile-fragment-4757"></a><a name="index-g_t_0040file_007bt_002d_0040var_007btarget_007d_007d-4758"></a>
+目标makefile片段能够设置这些Makefile变量。
+
+     
+<a name="index-LIBGCC2_005fCFLAGS-4759"></a>
+<dl><dt><code>LIBGCC2_CFLAGS</code><dd>编译 <samp><span class="file">libgcc2.c</span></samp> 时使用的编译器标记。
+<a name="index-LIB2FUNCS_005fEXTRA-4760"></a><br><dt><code>LIB2FUNCS_EXTRA</code><dd>将被编译或汇编，并插入 <samp><span class="file">libgcc.a</span></samp> 的源文件名列表。
+<a name="index-Floating-Point-Emulation-4761"></a><br><dt><code>Floating Point Emulation</code><dd>要使GCC在 <samp><span class="file">libgcc.a</span></samp> 中包括软浮点库，则使用下面的一些规则
+来定义 <code>FPBIT</code> 和 <code>DPBIT</code>：
+
+     <pre class="smallexample">          # We want fine grained libraries, so use the new code
+          # to build the floating point emulation libraries.
+          FPBIT = fp-bit.c
+          DPBIT = dp-bit.c
+          
+          
+          fp-bit.c: $(srcdir)/config/fp-bit.c
+                  echo '#define FLOAT' &gt; fp-bit.c
+                  cat $(srcdir)/config/fp-bit.c &gt;&gt; fp-bit.c
+          
+          dp-bit.c: $(srcdir)/config/fp-bit.c
+                  cat $(srcdir)/config/fp-bit.c &gt; dp-bit.c
+</pre>
+     <p>可能需要在 <samp><span class="file">fp-bit.c</span></samp> 和 <samp><span class="file">dp-bit.c</span></samp> 的开始处提供额外的
+#define来控制目标机大小端和其它选项。
+<a name="index-CRTSTUFF_005fT_005fCFLAGS-4762"></a><br><dt><code>CRTSTUFF_T_CFLAGS</code><dd>编译 <samp><span class="file">crtstuff.c</span></samp> 时使用的特定标记。see <a href="Initialization.html#Initialization">Initialization</a>。
+<a name="index-CRTSTUFF_005fT_005fCFLAGS_005fS-4763"></a><br><dt><code>CRTSTUFF_T_CFLAGS_S</code><dd>编译共享连接的 <samp><span class="file">crtstuff.c</span></samp> 时使用的特定标记。用于在
+<code>EXTRA-PARTS</code> 中使用 <samp><span class="file">crtbeginS.o</span></samp> 和 <samp><span class="file">crtendS.o</span></samp>
+时。see <a href="Initialization.html#Initialization">Initialization</a>。
+<a name="index-MULTILIB_005fOPTIONS-4764"></a><br><dt><code>MULTILIB_OPTIONS</code><dd>对于一些目标机，使用不同方式调用GCC所产生的目标对象不能被一起连接。
+例如，对于一些目标机，GCC可产生大端和小端代码。对于这些目标机，必须
+安排编译多个版本的 <samp><span class="file">libgcc.a</span></samp>，对应于每个不相兼容的选项集。当
+GCC调用连接器时，它会根据使用的命令行选项来安排连接正确版本的
+<samp><span class="file">libgcc.a</span></samp>。
+
+     <p><code>MULTILIB_OPTIONS</code> 宏列出了必须构建特定版本 <samp><span class="file">libgcc.a</span></samp> 的
+选项集。将互不兼容的选项并排写出，并由斜线分隔。将可以一起使用的选项
+由空格分开。构建程序将会构建所有兼容选项的组合。
+
+     <p>例如，如果将 <code>MULTILIB_OPTIONS</code> 设置为
+&lsquo;<samp><span class="samp">m68000/m68020 msoft-float</span></samp>&rsquo;，<samp><span class="file">Makefile</span></samp> 将会使用下列选项集
+来构建特定版本的 <samp><span class="file">libgcc.a</span></samp>：<samp><span class="option">-m68000</span></samp>, <samp><span class="option">-m68020</span></samp>,
+<samp><span class="option">-msoft-float</span></samp>, &lsquo;<samp><span class="samp">-m68000 -msoft-float</span></samp>&rsquo;, 和
+&lsquo;<samp><span class="samp">-m68020 -msoft-float</span></samp>&rsquo;。
+<a name="index-MULTILIB_005fDIRNAMES-4765"></a><br><dt><code>MULTILIB_DIRNAMES</code><dd>如果使用了 <code>MULTILIB_OPTIONS</code>，该变量指定了用于存放不同库的目录名。
+<code>MULTILIB_OPTIONS</code> 中的每个元素，对应于 <code>MULTILIB_DIRNAMES</code> 中
+的每个元素。如果没有使用 <code>MULTILIB_DIRNAMES</code>，缺省值将为
+<code>MULTILIB_OPTIONS</code>，并使用斜线来替代空格。
+
+     <p>例如，如果 <code>MULTILIB_OPTIONS</code> 设置为 &lsquo;<samp><span class="samp">m68000/m68020 msoft-float</span></samp>&rsquo;，
+则 <code>MULTILIB_DIRNAMES</code> 的缺省值为 &lsquo;<samp><span class="samp">m68000 m68020 msoft-float</span></samp>&rsquo;。
+如果需要不同的目录名时，可以指定不同的值。
+<a name="index-MULTILIB_005fMATCHES-4766"></a><br><dt><code>MULTILIB_MATCHES</code><dd>有时，相同的选项可以被写成两种不同的方式。如果一个选项在
+<code>MULTILIB_OPTIONS</code> 式列出，GCC需要知道它的任何同义形式。这种情况下，
+将 <code>MULTILIB_MATCHES</code> 设置为 &lsquo;<samp><span class="samp">option=option</span></samp>&rsquo; 形式的列表来描述
+所有相关的同义词。例如，&lsquo;<samp><span class="samp">m68000=mc68000 m68020=mc68020</span></samp>&rsquo;。
+<a name="index-MULTILIB_005fEXCEPTIONS-4767"></a><br><dt><code>MULTILIB_EXCEPTIONS</code><dd>有时，当 <code>MULTILIB_OPTIONS</code> 中指定了多个选项集时，会有些组合不能被
+构建。这种情况下，将 <code>MULTILIB_EXCEPTIONS</code> 设置为所有不被构建的例外。
+
+     <p>例如ARM处理器不能执行同时执行硬件浮点指令和缩减大小的THUMB指令，这样就没
+有必要构建这些选项组合的库。因此将 <code>MULTILIB_EXCEPTIONS</code> 设为：
+
+     <pre class="smallexample">          *mthumb/*mhard-float*
+</pre>
+     <p><a name="index-MULTILIB_005fEXTRA_005fOPTS-4768"></a><br><dt><code>MULTILIB_EXTRA_OPTS</code><dd>有时当构建多版本 <samp><span class="file">libgcc.a</span></samp> 时，有些选项需要总是被传给编译器。这种情
+况下，将 <code>MULTILIB_EXTRA_OPTS</code> 设置为用于所有构建时的选项列表。如果设
+置了该宏，则可能要将 <code>CRTSTUFF_T_CFLAGS</code> 设置为跟在其后的破折号。
+<a name="index-NATIVE_005fSYSTEM_005fHEADER_005fDIR-4769"></a><br><dt><code>NATIVE_SYSTEM_HEADER_DIR</code><dd>如果系统头文件的缺省位置不是 <samp><span class="file">/usr/include</span></samp>，则必须将该宏设置为包含头
+文件的目录。该值应该匹配 <code>SYSTEM_INCLUDE_DIR</code> 宏的值。
+<a name="index-SPECS-4770"></a><br><dt><code>SPECS</code><dd>不幸的是，设置 <code>MULTILIB_EXTRA_OPTS</code> 并不足够，因为它并不影响目标库的
+构建，最起码对于缺省multilib的构建是这样的。一种可能的方法是使用
+<code>DRIVER_SELF_SPECS</code> 从 <samp><span class="file">specs</span></samp> 文件中取得选项，就像是它们被传给了
+编译器驱动程序的命令行。但是，你不想在安装工具链之后再增加这些选项，所以你
+可以在安装原始的内嵌 <samp><span class="file">specs</span></samp> 时，调节在构建工具链时使用的 <samp><span class="file">specs</span></samp>
+文件。诀窍是将 <code>SPECS</code> 设置为其它文件名（例如 <samp><span class="file">specs.install</span></samp>），
+然后该文件将会由内建 <samp><span class="file">specs</span></samp> 创建出来，并且引出一个 <samp><span class="file">Makefile</span></samp> 规
+则来生成 <samp><span class="file">specs</span></samp> 文件，在构建时候使用。
+<br><dt><code>T_CFLAGS</code><dd>These are extra flags to pass to the C compiler.  They are used both
+when building GCC, and when compiling things with the just-built GCC. 
+This variable is deprecated and should not be used. 
+</dl>
+
+ </body></html>
+

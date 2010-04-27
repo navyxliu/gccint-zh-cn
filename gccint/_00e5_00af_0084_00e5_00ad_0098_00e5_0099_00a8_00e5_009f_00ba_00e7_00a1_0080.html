@@ -1,0 +1,163 @@
+<html lang="zh">
+<head>
+<title>寄存器基础 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8" title="寄存器">
+<link rel="next" href="_00e5_0088_0086_00e9_0085_008d_00e9_00a1_00ba_00e5_00ba_008f.html#g_t_00e5_0088_0086_00e9_0085_008d_00e9_00a1_00ba_00e5_00ba_008f" title="分配顺序">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%af%84%e5%ad%98%e5%99%a8%e5%9f%ba%e7%a1%80"></a>
+<a name="g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e5_009f_00ba_00e7_00a1_0080"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e5_0088_0086_00e9_0085_008d_00e9_00a1_00ba_00e5_00ba_008f.html#g_t_00e5_0088_0086_00e9_0085_008d_00e9_00a1_00ba_00e5_00ba_008f">分配顺序</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8">寄存器</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.7.1 寄存器的基本特征</h4>
+
+<!-- prevent bad page break with this line -->
+<p>寄存器具有不同的特征。
+
+<div class="defun">
+&mdash; Macro: <b>FIRST_PSEUDO_REGISTER</b><var><a name="index-FIRST_005fPSEUDO_005fREGISTER-3856"></a></var><br>
+<blockquote><p>编译器知道的硬件寄存器个数。它们包括编号0到<code>FIRST_PSEUDO_REGISTER-1</code>；
+因此，第一个伪寄存器的编号实际被赋值为<code>FIRST_PSEUDO_REGISTER</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FIXED_REGISTERS</b><var><a name="index-FIXED_005fREGISTERS-3857"></a></var><br>
+<blockquote><p><a name="index-fixed-register-3858"></a>一个初始化，说明哪些寄存器在整个编译代码中都用于固定用途，
+因此不能用于通用分配。这些将包括栈指针，帧指针（在当不需要帧指针时，
+可以用于通用寄存器的机器上除外），
+在一些机器上被认为是可寻址的寄存器的程序计数器，
+以及其它具有标准用法的编号寄存器。
+
+      <p>这些信息作为一个序列编号来表示，由逗号分隔并由大括号包括。
+第<var>n</var>个编号为1，如果寄存器<var>n</var>为固定的，否则为0。
+
+      <p>从该宏初始化的表，以及由下面的初始化的表，都可以在运行时被覆盖，
+或者通过执行宏<code>CONDITIONAL_REGISTER_USAGE</code>自动完成，
+或者通过用户使用命令选项<samp><span class="option">-ffixed-</span><var>reg</var></samp>,
+<samp><span class="option">-fcall-used-</span><var>reg</var></samp>和<samp><span class="option">-fcall-saved-</span><var>reg</var></samp>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CALL_USED_REGISTERS</b><var><a name="index-CALL_005fUSED_005fREGISTERS-3859"></a></var><br>
+<blockquote><p><a name="index-call_002dused-register-3860"></a><a name="index-call_002dclobbered-register-3861"></a><a name="index-call_002dsaved-register-3862"></a>类似<code>FIXED_REGISTERS</code>，但是对于被函数调用破坏的每个寄存器，
+以及固定寄存器，值为1。因此，
+该宏标识了哪些寄存器不适合用于必须活跃于整个函数调用的值的通用分配。
+
+      <p>如果寄存器在<code>CALL_USED_REGISTERS</code>中具有值0，
+如果寄存器在函数中被使用，则编译器会自动的在函数入口保存它，
+并在函数出口恢复它。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CALL_REALLY_USED_REGISTERS</b><var><a name="index-CALL_005fREALLY_005fUSED_005fREGISTERS-3863"></a></var><br>
+<blockquote><p><a name="index-call_002dused-register-3864"></a><a name="index-call_002dclobbered-register-3865"></a><a name="index-call_002dsaved-register-3866"></a>类似<code>CALL_USED_REGISTERS</code>，除了该宏不需要包含整个<code>FIXED_REGISTERS</code>集。
+（<code>CALL_USED_REGISTERS</code>必须为<code>FIXED_REGISTERS</code>的超集）。
+该宏为可选的。如果没有被指定，其缺省为<code>CALL_USED_REGISTERS</code>的值。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>HARD_REGNO_CALL_PART_CLOBBERED</b> (<var>regno, mode</var>)<var><a name="index-HARD_005fREGNO_005fCALL_005fPART_005fCLOBBERED-3867"></a></var><br>
+<blockquote><p><a name="index-call_002dused-register-3868"></a><a name="index-call_002dclobbered-register-3869"></a><a name="index-call_002dsaved-register-3870"></a>一个C表达式，值为非0，
+如果不允许将机器模式为<var>mode</var>的值存储在编号为<var>regno</var>的硬件寄存器中，
+并且整个调用中没有破坏其某个部分。对于大多数机器，该宏不需要被定义。
+其只用于一些在调用中不保护寄存器的整个内容的机器上。
+</p></blockquote></div>
+
+ <p><a name="index-fixed_005fregs-3871"></a><a name="index-call_005fused_005fregs-3872"></a><a name="index-global_005fregs-3873"></a><a name="index-reg_005fnames-3874"></a><a name="index-reg_005fclass_005fcontents-3875"></a>
+
+<div class="defun">
+&mdash; Macro: <b>CONDITIONAL_REGISTER_USAGE</b><var><a name="index-CONDITIONAL_005fREGISTER_005fUSAGE-3876"></a></var><br>
+<blockquote><p>0条或者多条C语句，其可以条件修改5个变量<code>fixed_regs</code>,
+<code>call_used_rehs</code>, <code>global_regs</code>, <code>reg_names</code> 和
+<code>reg_class_contents</code>，来考虑这些寄存器集对target标号的任何依赖。
+前3个为<code>char []</code>类型（作为布尔向量来解析）。
+<code>global_regs</code>为一个<code>const char *[]</code>，
+<code>reg_class_contents</code>为一个<code>HARD_REG_SET</code>。
+在宏被调用之前，<code>fixed_regs</code>, <code>call_used_regs</code>,
+<code>reg_class_contents</code>和<code>reg_names</code>已经分别通过<code>FIXED_REGISTERS</code>,
+<code>CALL_USED_REGISTERS</code>, <code>REG_CLASS_CONTENTS</code>和<code>REGISTER_NAMES</code>被初始化。
+<code>global_regs</code>已经被清除，并且任何<samp><span class="option">-ffixed-</span><var>reg</var></samp>,
+<samp><span class="option">-fcall-used-</span><var>reg</var></samp>和<samp><span class="option">-fcall-saved-</span><var>reg</var></samp>选项已经被应用。
+
+      <p>如果不需要做什么工作，则不必定义该宏。
+
+      <p><a name="index-disabling-certain-registers-3877"></a><a name="index-controlling-register-usage-3878"></a>如果整个寄存器的类别的使用，取决于target标记，
+则你可以通过使用该宏来指示GCC修改<code>fixed_regs</code>和<code>call_used_regs</code>为1，
+对于类别中的每个不应由GCC使用的寄存器。还有就是，
+定义宏<code>REG_CLASS_FROM_LETTER</code> / <code>REG_CLASS_FROM_CONSTRAINT</code>来返回<code>NO_REGS</code>，
+如果其被调用，并带有一个不应该被使用的类别字母。
+
+      <p>（然而，如果该类没有包含在<code>GENERAL_REGS</code>中，
+并且所有的insn指令模式的约束允许该类通过target开关来控制，
+则GCC将自动避免使用这些寄存器，当target开关与它们相反时。）
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INCOMING_REGNO</b> (<var>out</var>)<var><a name="index-INCOMING_005fREGNO-3879"></a></var><br>
+<blockquote><p>定义该宏，如果target机器具有寄存器窗口。
+该C表达式根据调用函数能看到的寄存器编号<var>out</var>，
+返回被调用函数所能看到的寄存器编号。
+返回<var>out</var>，如果寄存器编号<var>out</var>不是发送寄存器（outbound register）。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>OUTGOING_REGNO</b> (<var>in</var>)<var><a name="index-OUTGOING_005fREGNO-3880"></a></var><br>
+<blockquote><p>定义该宏，如果target机器具有寄存器窗口。
+该C表达式根据被调用函数能看到的寄存器编号<var>in</var>，
+返回调用函数所能看到的寄存器编号。
+返回<var>in</var>，如果寄存器编号<var>in</var>不是运入寄存器（inbound register）。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LOCAL_REGNO</b> (<var>regno</var>)<var><a name="index-LOCAL_005fREGNO-3881"></a></var><br>
+<blockquote><p>定义该宏，如果target机器具有寄存器窗口。该C表达式返回真，
+如果寄存器为调用保存的，但是在寄存器窗口中。不像大多调用保存的寄存器，
+这样的寄存器不需要在函数出口或者非局部调转中被显示的恢复。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>PC_REGNUM</b><var><a name="index-PC_005fREGNUM-3882"></a></var><br>
+<blockquote><p>如果程序计数器具有一个寄存器编号，则定义其为那个寄存器编号。否则不要定义它。
+</p></blockquote></div>
+
+ </body></html>
+

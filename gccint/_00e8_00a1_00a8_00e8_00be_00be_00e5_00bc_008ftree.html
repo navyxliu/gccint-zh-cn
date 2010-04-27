@@ -1,0 +1,495 @@
+<html lang="zh">
+<head>
+<title>表达式tree - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Trees.html#Trees" title="Trees">
+<link rel="prev" href="_00e5_00b1_009e_00e6_0080_00a7.html#g_t_00e5_00b1_009e_00e6_0080_00a7" title="属性">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e8%a1%a8%e8%be%be%e5%bc%8ftree"></a>
+<a name="g_t_00e8_00a1_00a8_00e8_00be_00be_00e5_00bc_008ftree"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e5_00b1_009e_00e6_0080_00a7.html#g_t_00e5_00b1_009e_00e6_0080_00a7">属性</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Trees.html#Trees">Trees</a>
+<hr>
+</div>
+
+<h3 class="section">9.8 表达式</h3>
+
+<p><a name="index-expression-1941"></a><a name="index-TREE_005fTYPE-1942"></a><a name="index-TREE_005fOPERAND-1943"></a><a name="index-INTEGER_005fCST-1944"></a><a name="index-TREE_005fINT_005fCST_005fHIGH-1945"></a><a name="index-TREE_005fINT_005fCST_005fLOW-1946"></a><a name="index-tree_005fint_005fcst_005flt-1947"></a><a name="index-tree_005fint_005fcst_005fequal-1948"></a><a name="index-REAL_005fCST-1949"></a><a name="index-FIXED_005fCST-1950"></a><a name="index-COMPLEX_005fCST-1951"></a><a name="index-VECTOR_005fCST-1952"></a><a name="index-STRING_005fCST-1953"></a><a name="index-TREE_005fSTRING_005fLENGTH-1954"></a><a name="index-TREE_005fSTRING_005fPOINTER-1955"></a><a name="index-PTRMEM_005fCST-1956"></a><a name="index-PTRMEM_005fCST_005fCLASS-1957"></a><a name="index-PTRMEM_005fCST_005fMEMBER-1958"></a><a name="index-VAR_005fDECL-1959"></a><a name="index-NEGATE_005fEXPR-1960"></a><a name="index-ABS_005fEXPR-1961"></a><a name="index-BIT_005fNOT_005fEXPR-1962"></a><a name="index-TRUTH_005fNOT_005fEXPR-1963"></a><a name="index-PREDECREMENT_005fEXPR-1964"></a><a name="index-PREINCREMENT_005fEXPR-1965"></a><a name="index-POSTDECREMENT_005fEXPR-1966"></a><a name="index-POSTINCREMENT_005fEXPR-1967"></a><a name="index-ADDR_005fEXPR-1968"></a><a name="index-INDIRECT_005fREF-1969"></a><a name="index-FIX_005fTRUNC_005fEXPR-1970"></a><a name="index-FLOAT_005fEXPR-1971"></a><a name="index-COMPLEX_005fEXPR-1972"></a><a name="index-CONJ_005fEXPR-1973"></a><a name="index-REALPART_005fEXPR-1974"></a><a name="index-IMAGPART_005fEXPR-1975"></a><a name="index-NON_005fLVALUE_005fEXPR-1976"></a><a name="index-NOP_005fEXPR-1977"></a><a name="index-CONVERT_005fEXPR-1978"></a><a name="index-FIXED_005fCONVERT_005fEXPR-1979"></a><a name="index-THROW_005fEXPR-1980"></a><a name="index-LSHIFT_005fEXPR-1981"></a><a name="index-RSHIFT_005fEXPR-1982"></a><a name="index-BIT_005fIOR_005fEXPR-1983"></a><a name="index-BIT_005fXOR_005fEXPR-1984"></a><a name="index-BIT_005fAND_005fEXPR-1985"></a><a name="index-TRUTH_005fANDIF_005fEXPR-1986"></a><a name="index-TRUTH_005fORIF_005fEXPR-1987"></a><a name="index-TRUTH_005fAND_005fEXPR-1988"></a><a name="index-TRUTH_005fOR_005fEXPR-1989"></a><a name="index-TRUTH_005fXOR_005fEXPR-1990"></a><a name="index-POINTER_005fPLUS_005fEXPR-1991"></a><a name="index-PLUS_005fEXPR-1992"></a><a name="index-MINUS_005fEXPR-1993"></a><a name="index-MULT_005fEXPR-1994"></a><a name="index-RDIV_005fEXPR-1995"></a><a name="index-TRUNC_005fDIV_005fEXPR-1996"></a><a name="index-FLOOR_005fDIV_005fEXPR-1997"></a><a name="index-CEIL_005fDIV_005fEXPR-1998"></a><a name="index-ROUND_005fDIV_005fEXPR-1999"></a><a name="index-TRUNC_005fMOD_005fEXPR-2000"></a><a name="index-FLOOR_005fMOD_005fEXPR-2001"></a><a name="index-CEIL_005fMOD_005fEXPR-2002"></a><a name="index-ROUND_005fMOD_005fEXPR-2003"></a><a name="index-EXACT_005fDIV_005fEXPR-2004"></a><a name="index-ARRAY_005fREF-2005"></a><a name="index-ARRAY_005fRANGE_005fREF-2006"></a><a name="index-TARGET_005fMEM_005fREF-2007"></a><a name="index-LT_005fEXPR-2008"></a><a name="index-LE_005fEXPR-2009"></a><a name="index-GT_005fEXPR-2010"></a><a name="index-GE_005fEXPR-2011"></a><a name="index-EQ_005fEXPR-2012"></a><a name="index-NE_005fEXPR-2013"></a><a name="index-ORDERED_005fEXPR-2014"></a><a name="index-UNORDERED_005fEXPR-2015"></a><a name="index-UNLT_005fEXPR-2016"></a><a name="index-UNLE_005fEXPR-2017"></a><a name="index-UNGT_005fEXPR-2018"></a><a name="index-UNGE_005fEXPR-2019"></a><a name="index-UNEQ_005fEXPR-2020"></a><a name="index-LTGT_005fEXPR-2021"></a><a name="index-MODIFY_005fEXPR-2022"></a><a name="index-INIT_005fEXPR-2023"></a><a name="index-COMPONENT_005fREF-2024"></a><a name="index-COMPOUND_005fEXPR-2025"></a><a name="index-COND_005fEXPR-2026"></a><a name="index-CALL_005fEXPR-2027"></a><a name="index-STMT_005fEXPR-2028"></a><a name="index-BIND_005fEXPR-2029"></a><a name="index-LOOP_005fEXPR-2030"></a><a name="index-EXIT_005fEXPR-2031"></a><a name="index-CLEANUP_005fPOINT_005fEXPR-2032"></a><a name="index-CONSTRUCTOR-2033"></a><a name="index-COMPOUND_005fLITERAL_005fEXPR-2034"></a><a name="index-SAVE_005fEXPR-2035"></a><a name="index-TARGET_005fEXPR-2036"></a><a name="index-AGGR_005fINIT_005fEXPR-2037"></a><a name="index-VA_005fARG_005fEXPR-2038"></a><a name="index-CHANGE_005fDYNAMIC_005fTYPE_005fEXPR-2039"></a><a name="index-OMP_005fPARALLEL-2040"></a><a name="index-OMP_005fFOR-2041"></a><a name="index-OMP_005fSECTIONS-2042"></a><a name="index-OMP_005fSINGLE-2043"></a><a name="index-OMP_005fSECTION-2044"></a><a name="index-OMP_005fMASTER-2045"></a><a name="index-OMP_005fORDERED-2046"></a><a name="index-OMP_005fCRITICAL-2047"></a><a name="index-OMP_005fRETURN-2048"></a><a name="index-OMP_005fCONTINUE-2049"></a><a name="index-OMP_005fATOMIC-2050"></a><a name="index-OMP_005fCLAUSE-2051"></a><a name="index-VEC_005fLSHIFT_005fEXPR-2052"></a><a name="index-VEC_005fRSHIFT_005fEXPR-2053"></a><a name="index-VEC_005fWIDEN_005fMULT_005fHI_005fEXPR-2054"></a><a name="index-VEC_005fWIDEN_005fMULT_005fLO_005fEXPR-2055"></a><a name="index-VEC_005fUNPACK_005fHI_005fEXPR-2056"></a><a name="index-VEC_005fUNPACK_005fLO_005fEXPR-2057"></a><a name="index-VEC_005fUNPACK_005fFLOAT_005fHI_005fEXPR-2058"></a><a name="index-VEC_005fUNPACK_005fFLOAT_005fLO_005fEXPR-2059"></a><a name="index-VEC_005fPACK_005fTRUNC_005fEXPR-2060"></a><a name="index-VEC_005fPACK_005fSAT_005fEXPR-2061"></a><a name="index-VEC_005fPACK_005fFIX_005fTRUNC_005fEXPR-2062"></a><a name="index-VEC_005fEXTRACT_005fEVEN_005fEXPR-2063"></a><a name="index-VEC_005fEXTRACT_005fODD_005fEXPR-2064"></a><a name="index-VEC_005fINTERLEAVE_005fHIGH_005fEXPR-2065"></a><a name="index-VEC_005fINTERLEAVE_005fLOW_005fEXPR-2066"></a>
+表达式的内部表示大多都很简单明了。但是，也有一些事实必须牢记。
+尤其是，表达式“tree”实际上是一个有向无环图。（例如，
+整个源程序中可能会有许多对常整数0的引用；这些将会由同一个表达式节点来表示。）
+当然，你不要以此就认为某些种类的节点是共享的，也不要认为某些种类的节点没有被共享。
+
+ <p>下列宏可以用于所有表达式节点：
+
+     <dl>
+<dt><code>TREE_TYPE</code><a name="index-TREE_005fTYPE-2067"></a><dd>返回表达式的类型。该值可能不是与原始程序中给出的表达式相同精度的类型。
+</dl>
+
+ <p>在下文中，有些节点可能总是期望具有<code>bool</code>类型，
+但是被记载为具有整形或bool型。将来的某个时刻，
+C前端可能也会使用该相同的中间表示，那时，这些节点当然会具有整数类型。
+当然，这并不意味着暗示C++前端中这些节点不具有，或者不会具有整数类型。
+
+ <p>下面，我们列出了各种表达式节点。除了特别注明的以外，
+表达式的操作数都通过<code>TREE_OPERAND</code>宏来访问。
+例如，要访问二元加法表达式<code>expr</code>的第一个操作数，使用：
+
+<pre class="smallexample">     TREE_OPERAND (expr, 0)
+</pre>
+ <p class="noindent">正如这个例子所示，操作数是从0开始索引的。
+
+ <p>所有起始于<code>OMP_</code>的表达式，
+表示使用的是OpenMp API <a href="http://www.openmp.org/">http://www.openmp.org/</a><!-- /@w -->的directives和clauses。
+
+ <p>下面的列表格首先介绍了常数，接着是一元表达式，然后是二元表达式，
+以及各种其它类型的表达式：
+
+     <dl>
+<dt><code>INTEGER_CST</code><dd>这些节点表示整数常量。注意这些常量的类型通过<code>TREE_TYPE</code>来获得；
+并不总是<code>int</code>型的。特别是，
+<code>char</code>型常量使用<code>INTEGER_CST</code>节点表示。
+整数常量<code>e</code>的值通过下面的方式给出
+     <pre class="smallexample">          ((TREE_INT_CST_HIGH (e) &lt;&lt; HOST_BITS_PER_WIDE_INT)
+          + TREE_INST_CST_LOW (e))
+</pre>
+     <p class="noindent">HOST_BITS_PER_WIDE_INT在所有的平台上最少为32。
+<code>TREE_INT_CST_HIGH</code>和<code>TREE_INT_CST_LOW</code>都返回一个
+<code>HOST_WIDE_INT</code>。
+一个<code>INTEGER_CST</code>的值根据常量的类型而被解析为有符号或无符号的数。
+一般来说，上面给出的表达式将会溢出，因此不要用来计算常量的值。
+
+     <p>变量<code>integer_zero_node</code>是一个值为0的整数常量。类似的，
+<code>integer_one_node</code>是值为1的整数常量。
+变量<code>size_zero_node</code>和<code>size_one_node</code>比较类似，
+只是具有<code>size_t</code>类型，而不是<code>int</code>。
+
+     <p>函数<code>tree_int_cst_lt</code>是一个断言，当第一个参数小于第二个时有效。
+两个常量被假设为具有相同的符号性（即，要么都是有符号的，要么都是无符号的。）
+在作比较时，使用常量的全部宽度；并忽略掉通常的类型提升和转换规则。
+类似的，<code>tree_int_cst_equal</code>在两个常熟相等时有效。
+函数<code>tree_int_cst_sgn</code>返回常数的符号。根据常数是大于，等于，或小于0，
+而返回值<code>1</code>, <code>0</code>或<code>-1</code>。此外，会顾及到常数类型的符号性；
+无符号常数是永远小于0的，不论它的位模式如何。
+
+     <br><dt><code>REAL_CST</code><dd>
+FIXME: 讨论如何获得该常量的表示，如何进行比较等等。
+
+     <br><dt><code>FIXED_CST</code><dd>
+这些节点表示定点常数。这些常量的类型通过<code>TREE_TYPE</code>获得。<code>TREE_FIXED_CST_PTR</code>指向struct fixed_value；<code>TREE_FIXED_CST</code>返回结构体本身。Struct fixed_value包含了具有2个HOST_BITS_PER_WIDE_INT大小的<code>data</code>，以及与<code>data</code>关联的定点机器模式<code>mode</code>。
+
+     <br><dt><code>COMPLEX_CST</code><dd>这些节点用于表示复数常量，即<code>__complex__</code> ，其组成部分为常数节点。<code>TREE_REALPART</code>和<code>TREE_IMAGPART</code>返回相应的实部和虚部。
+
+     <br><dt><code>VECTOR_CST</code><dd>这些节点用于表示向量常数，其组成部分为常量节点。每个单独的常量节点或者是一个常整数节点，或者是一个双精度的常数节点。第一个操作数为常数节点的<code>TREE_LIST</code>，并可以通过<code>TREE_VECTOR_CST_ELTS</code>来访问。
+
+     <br><dt><code>STRING_CST</code><dd>这些节点表示字符串常量。<code>TREE_STRING_LENGTH</code>返回<code>int</code>型的字符串长度。<code>TREE_STRING_POINTER</code>是一个<code>char*</code>型，包含了字符串本身。字符串可以不是<code>NUL</code>结尾的，并且可以包含嵌入的<code>NUL</code>字符。因此，如果字符串的结尾存在<code>NUL</code>，则<code>TREE_STRING_LENGTH</code>也包括了结尾的NUL。
+
+     <p>对于宽字符串常量，<code>TREE_STRING_LENGTH</code>为字符串的字节数，并且<code>TREE_STRING_POINTER</code>指向在目标系统上表示的，字符串的字节数组（即，符合目标大小端的整数系列）。宽字符串和非宽字符串常量，只区别于<code>STRING_CST</code>的<code>TREE_TYPE</code>。
+
+     <p>FIXME: 当目标系统的字节与主机系统的字节宽度不同时，字符串的格式没有被很好的定义。
+
+     <br><dt><code>PTRMEM_CST</code><dd>这些节点用来表示指向成员的指针（pointer-to-member）常量。<code>PTRMEM_CST_CLASS</code>是类的类型（或者为<code>RECORD_TYPE</code>，或者为<code>UNION_TYPE</code>），<code>PTRMEM_CST_MEMBER</code>是指向的对象的声明。注意<code>PTRMEM_CST_MEMBER</code>的<code>DECL_CONTEXT</code>一般有别于<code>PTRMEM_CST_CLASS</code>的。例如，给定：
+     <pre class="smallexample">          struct B { int i; };
+          struct D : public B {};
+          int D::*dp = &amp;D::i;
+</pre>
+     <p class="noindent">虽然<code>PTRMEM_CST_MEMBER</code>的<code>DECL_CONTEXT</code>是<code>B</code>，但是由于<code>B::i</code>是<code>B</code>的成员，而不是<code>D</code>的，所以<code>&amp;D::i</code>的<code>PTRMEM_CST_CLASS</code>为<code>D</code>。
+
+     <br><dt><code>VAR_DECL</code><dd>
+这些节点表示变量，包括静态数据成员。更多信息，参见see <a href="Declarations.html#Declarations">Declarations</a>。
+
+     <br><dt><code>NEGATE_EXPR</code><dd>这些节点表示对单个,整数或浮点类型的操作数，进行一元取负运算。取负运算结果的类型可以通过查看表达式的类型来决定。
+
+     <p>该操作在有符号算术溢出时的行为，由<code>flag_wrapv</code>和<code>flag_trapv</code>变量来控制。
+
+     <br><dt><code>ABS_EXPR</code><dd>这些节点表示单个操作数，整数和浮点类型的，的绝对值。这通常用于实现整数类型的内建<code>abs</code>，<code>labs</code>和<code>llabs</code>，以及浮点类型的<code>fabs</code>，<code>fabsf</code>和<code>fabsl</code>。abs操作的类型可以通过查看表达式的类型来决定。
+
+     <p>该节点不用于复数类型。要表示复数的模或者复数abs，使用内建的<code>BUILT_IN_CABS</code>, <code>BUILT_IN_CABSF</code>或<code>BUILT_IN_CABSL</code>，这些被用于实现C99的内建函数<code>cabs</code>, <code>cabsf</code>和<code>cabsl</code>。
+
+     <br><dt><code>BIT_NOT_EXPR</code><dd>这些节点表示按位求补运算，并总是具有整数型。唯一的操作数是要被求补的值。
+
+     <br><dt><code>TRUTH_NOT_EXPR</code><dd>这些节点表示逻辑非，并总是具有整数（或布尔）类型。操作数是要求非的值。操作数的，以及结果的类型总是<code>BOOLEAN_TYPE</code>或<code>INTEGER_TYPE</code>。
+
+     <br><dt><code>PREDECREMENT_EXPR</code><dt><code>PREINCREMENT_EXPR</code><dt><code>POSTDECREMENT_EXPR</code><dt><code>POSTINCREMENT_EXPR</code><dd>这些节点表示递增和递减表达式。单操作数的值将被计算，并且操作数递增或递减。在<code>PREDECREMENT_EXPR</code>和<code>PREINCREMENT_EXPR</code>的情况下，表达式的值是递增或递减之后的结果；在<code>POSTDECREMENT_EXPR</code>和<code>POSTINCREMENT_EXPR</code>的情况下，表达式的值是递增或递减发生前的值。操作数的值，跟结果的一样，将会是整数，布尔，或浮点的。
+
+     <br><dt><code>ADDR_EXPR</code><dd>这些节点用于表示对象的地址。（这些表达式将总是具有指针或引用类型。）操作数或者为表达式，或者可以是一个声明。
+
+     <p>作为扩展，GCC运行用户使用标号的地址。这种情况下，<code>ADDR_EXPR</code>的操作数将为<code>LABEL_DECL</code>。这样的表达式的类型是<code>void*</code>。
+
+     <p>如果求址的对象不是左值，则创建一个临时的，并使用临时对象的地址。
+
+     <br><dt><code>INDIRECT_REF</code><dd>这些节点用来表示由指针指向的对象。操作数是被dereferenced的指针；其总是具有指针或引用类型。
+
+     <br><dt><code>FIX_TRUNC_EXPR</code><dd>这些节点表示浮点值到整数的转换。单操作数将具有一个浮点类型，完整的表达式将具有整数（或布尔）类型。操作数向0方向舍入。
+
+     <br><dt><code>FLOAT_EXPR</code><dd>这些节点表示整数（或布尔）值向浮点值的转换。单操作数将具有整数类型，而完整的表达式将具有浮点类型。
+
+     <p>FIXME: 操作数是如何被舍入的？这是不是取决于<samp><span class="option">-mieee</span></samp>？
+
+     <br><dt><code>COMPLEX_EXPR</code><dd>这些节点用于表示通过两个相同类型（整数或实数）的表达式构造的复数。第一个操作数是实部，第二个操作数是虚部。
+
+     <br><dt><code>CONJ_EXPR</code><dd>这些节点表示它们的操作数的共轭（conjugate）。
+
+     <br><dt><code>REALPART_EXPR</code><dt><code>IMAGPART_EXPR</code><dd>这些节点表示复数的相应实数和虚数部分。
+
+     <br><dt><code>NON_LVALUE_EXPR</code><dd>这些节点指示它们有且仅有的一个操作数不是左值的。后端可以将其作为单操作数来对待。
+
+     <br><dt><code>NOP_EXPR</code><dd>这些节点用于表示不需要任何代码生成的转换。例如，由<code>char*</code>到<code>int*</code>不需要任何代码生成；这样的转换被表示为一个<code>NOP_EXPR</code>。单操作数为要转换的表达式。从指针到引用的转换也被表示为<code>NOP_EXPR</code>。
+
+     <br><dt><code>CONVERT_EXPR</code><dd>这些节点类似于<code>NOP_EXPR</code>，不过用于可能会有代码生成的情况。例如，如果<code>int*</code>被转换为<code>int</code>，则可能会在一些平台上需要生成代码。这些节点从来不被用于C++特定的转换，例如在一个继承体系中不同的类的指针间的转换。这种情况下的任何调整，总是需要被显式的指出。类似的，用户定义的转换也不使用<code>CONVERT_EXPR</code>表示；相反的，而是显式的调用函数。
+
+     <br><dt><code>FIXED_CONVERT_EXPR</code><dd>这些节点用于表示涉及定点值的转换。例如，从一个定点值到另一个定点值，从一个整数到一个定点值，从一个定点值到一个整数，从一个浮点值到一个定点值，或者从一个定点值到一个浮点值。
+
+     <br><dt><code>THROW_EXPR</code><dd>这些节点表示<code>throw</code>表达式。单操作为一个表达式，其代码将被执行用于抛出异常。但是，在表达式中有一个隐式的动作没有表示出来；即调用 <code>__throw</code>。这个函数没有参数。如果使用了<code>setjmp</code>/<code>longjmp</code>异常，则相应的调用函数<code>__sjthrow</code>。通常GCC后端使用函数 <code>emit_throw</code>来生成该代码；你可以检查该函数看看都需要做什么。
+
+     <br><dt><code>LSHIFT_EXPR</code><dt><code>RSHIFT_EXPR</code><dd>这些节点分别表示左移和右移。第一个操作数为要移动的值；其将总是为整数类型。第二个操作数为表示移动位数的表达式。右移将作为算术移动，即，当表达式具有无符号类型则高位填充0，当表达式具有有符号类型则高位填充符号位。注意如果第二个操作数大于或等于第一个操作数的类型大小，则结果无定义。
+
+     <br><dt><code>BIT_IOR_EXPR</code><dt><code>BIT_XOR_EXPR</code><dt><code>BIT_AND_EXPR</code><dd>这些节点分别表示位运算符“或”，“异或”，和“与”。所有操作数将总是为整数类型。
+
+     <br><dt><code>TRUTH_ANDIF_EXPR</code><dt><code>TRUTH_ORIF_EXPR</code><dd>这些节点分别表示逻辑“与”和“或”。这些操作符不是严格的；即第二个操作数只在通过求值第一个操作数无法确定表达式的值的时候，才被计算求值。操作数和结果的类型总是为<code>BOOLEAN_TYPE</code>或<code>INTEGER_TYPE</code>。
+
+     <br><dt><code>TRUTH_AND_EXPR</code><dt><code>TRUTH_OR_EXPR</code><dt><code>TRUTH_XOR_EXPR</code><dd>这些节点表示逻辑与，或和异或。它们为严格的方式；所有参数都总是被计算求值。这在C或C++中没有对应的运算符，但是前端如果可以断定严格的方式没关系，则有时将会生成这些表达式。操作数和结果的类型总是为<code>BOOLEAN_TYPE</code>或<code>INTEGER_TYPE</code>。
+
+     <dt><code>POINTER_PLUS_EXPR</code><dd>该节点表示指针算术运算。第一个操作数总是为一个指针/引用类型。第二个操作数总是为一个与sizetype兼容的无符号整数类型。这是唯一的可以操作指针类型的二元算术运算。
+
+     <dt><code>PLUS_EXPR</code><dt><code>MINUS_EXPR</code><dt><code>MULT_EXPR</code><dd>这些节点表示不同的二元算术运算。分别为加法，减法和乘法。它们的操作数可以为整数或者浮点类型，但不会为一个是浮点类型的，而另一个是整数类型。
+
+     <p>这些运算在有符号算术溢出时的行为，由变量<code>flag_wrapv</code>和<code>flag_trapv</code>来控制。
+
+     <br><dt><code>RDIV_EXPR</code><dd>该节点表示一个浮点除法运算。
+
+     <br><dt><code>TRUNC_DIV_EXPR</code><dt><code>FLOOR_DIV_EXPR</code><dt><code>CEIL_DIV_EXPR</code><dt><code>ROUND_DIV_EXPR</code><dd>这些节点表示返回整数结果的整数除法运算。<code>TRUNC_DIV_EXPR</code>向0方向舍入，<code>FLOOR_DIV_EXPR</code>向负无穷大舍入，<code>CEIL_DIV_EXPR</code>向正无穷大舍入，<code>ROUND_DIV_EXPR</code>向最近的整数舍入。C和C++中的整数除法为截断方式，即<code>TRUNC_DIV_EXPR</code>。
+
+     <p>这些运算在有符号算术溢出时的行为，由变量<code>flag_wrapv</code>和<code>flag_trapv</code>来控制。
+
+     <br><dt><code>TRUNC_MOD_EXPR</code><dt><code>FLOOR_MOD_EXPR</code><dt><code>CEIL_MOD_EXPR</code><dt><code>ROUND_MOD_EXPR</code><dd>
+这些节点表示整数类型的求余或求模运算。两个操作数<code>a</code>和<code>b</code>的整型的模被定义为<code>a - (a/b)*b</code>，其中使用相应的除法操作符进行除法运算。因此，对于<code>TRUNC_MOD_EXPR</code>的定义，是假设使用了向零方向舍去的除法，即<code>TRUNC_DIV_EXPR</code>。C和C++中的整型求余，使用了舍去除法，即<code>TRUNC_MOD_EXPR</code>。
+
+     <br><dt><code>EXACT_DIV_EXPR</code><dd><code>EXACT_DIV_EXPR</code>用来表示整数除法，即分子已知为分母的确切的倍数。这使得后端可以从<code>TRUNC_DIV_EXPR</code>,
+<code>CEIL_DIV_EXPR</code>和<code>FLOOR_DIV_EXPR</code>中，为当前的目标机选择更快的运算。
+
+     <br><dt><code>ARRAY_REF</code><dd>这些节点表示对数组的访问。第一个操作数为数组；第二个为索引。要计算被访问内存的地址，你必须要根据比例，用数组元素的类型大小来乘以索引。这些表达式的类型必须为数组元素的类型。第三和第四个操作数在gimplification之后使用，来表示下界和元素大小；但是不要直接使用它们，相应的，调用<code>array_ref_low_bound</code>和<code>array_ref_element_size</code>。
+
+     <br><dt><code>ARRAY_RANGE_REF</code><dd>这些节点表示对数组的一个范围（或者说切片）的访问。操作数与<code>ARRAY_REF</code>相同，并具有相同的含义。这些表达式的类型必须是一个数组，其元素的类型与第一个操作数的类型相同。数组类型的范围决定了这些表达式访问的数据数目。
+
+     <br><dt><code>TARGET_MEM_REF</code><dd>这些节点表示内存访问，并且其地址直接映射到目标体系结构的寻址模式。第一个参数为<code>TMR_SYMBOL</code>，并且必须为具有固定地址的对象的<code>VAR_DECL</code>。第二个参数为<code>TMR_BASE</code>，第三个为<code>TMR_INDEX</code>。第四个参数为<code>TMR_STEP</code>，并且必须为<code>INTEGER_CST</code>。第五个参数为<code>TMR_OFFSET</code>，并且必须为<code>INTEGER_CST</code>。如果相应的部分没有在地址中出现，则参数可以为NULL。<code>TARGET_MEM_REF</code>的地址通过下列方法来确定。
+
+     <pre class="smallexample">          &amp;TMR_SYMBOL + TMR_BASE + TMR_INDEX * TMR_STEP + TMR_OFFSET
+</pre>
+     <p>第六个参数为对原始内存访问的引用，其被保留下来，用于RTL别名分析。第七个参数为一个标记，表示tree级的别名分析的结果。
+
+     <br><dt><code>LT_EXPR</code><dt><code>LE_EXPR</code><dt><code>GT_EXPR</code><dt><code>GE_EXPR</code><dt><code>EQ_EXPR</code><dt><code>NE_EXPR</code><dd>这些节点表示小于，小于或等于，大于，大于或等于，等于，和不等于的比较运算符。第一个和第二个操作数或者都为整数类型，或者都为浮点类型。这些表达式的结果类型将总是为整数或布尔类型。如果为假，则这些运算返回值0，如果为真，则返回值1。
+
+     <p>对于浮点类型比较运算，如果我们使用了IEEE NaN，并且任意一个操作数为NaN，则<code>NE_EXPR</code>总是返回真，而其余的运算符总是返回假。在一些目标机上，对于IEEE NaN，除了等于和不等于以外的其它比较运算，可能会生成一个浮点异常。
+
+     <br><dt><code>ORDERED_EXPR</code><dt><code>UNORDERED_EXPR</code><dd>这些节点表示non-trapping的有序和无序的比较运算。这些运算接受两个浮点操作数，并确定它们之间是有序的，还是无序的。如果有一个操作数为IEEE NaN，则它们的比较被定以为无序的，否则为有序的。这些表达式的结果类型将总是为整数或者布尔类型。如果为假，则这些运算返回值0，如果为真，则返回值1。
+
+     <br><dt><code>UNLT_EXPR</code><dt><code>UNLE_EXPR</code><dt><code>UNGT_EXPR</code><dt><code>UNGE_EXPR</code><dt><code>UNEQ_EXPR</code><dt><code>LTGT_EXPR</code><dd>这些节点表示无序比较运算符。这些运算接受两个浮点操作数，并分别确定它们之间是否为无序的，小于，小于或等于，大于，大于或等于，或者等于。例如，如果一个操作数为IEEE NaN，或者第一个操作数小于第二个，则<code>UNLT_EXPR</code>返回真。除了<code>LTGT_EXPR</code>可能会产生异常，其它的运算都保证不会产生浮点异常。这些表达式的结果类型将总是为整数或者布尔类型。如果为假，则这些运算返回值0，如果为真，则返回值1。
+
+     <br><dt><code>MODIFY_EXPR</code><dd>这些节点表示赋值。左手边为第一个操作数，右手边为第二个操作数。左手边为一个<code>VAR_DECL</code>, <code>INDIRECT_REF</code>, <code>COMPONENT_REF</code>，或者其它左值。
+
+     <p>这些节点不仅用来表示使用&lsquo;<samp><span class="samp">=</span></samp>&rsquo;进行赋值，也用来表示复合赋值（像&lsquo;<samp><span class="samp">+=</span></samp>&rsquo;），并将其转换成&lsquo;<samp><span class="samp">=</span></samp>&rsquo;赋值。换句话说，对&lsquo;<samp><span class="samp">i += 3</span></samp>&rsquo;的表示，看起来就像是对&lsquo;<samp><span class="samp">i = i + 3</span></samp>&rsquo;的表示。
+
+     <br><dt><code>INIT_EXPR</code><dd>这些节点就像<code>MODIFY_EXPR</code>一样，只不过用于一个变量被初始化的时候，而不是后续的赋值。这意味着，我们可以假设初始化的目标，没有在右手边被用于计算它自己的值；任何在右手边的计算中，对左手边的引用，其行为将是未定义。
+
+     <br><dt><code>COMPONENT_REF</code><dd>这些节点表示对non-static数据成员的访问。第一个操作数为对象（而不是指向它的指针）；第二个操作数为数据成员的<code>FIELD_DECL</code>。第三个操作数表示域的字节偏移量，但不要直接使用；相应的，调用<code>component_ref_field_offset</code>。
+
+     <br><dt><code>COMPOUND_EXPR</code><dd>这些节点表示逗号表达式。第一个操作数为表达式，其值被计算，并在求出第二个操作数的值之前丢掉。整个表达式的值为第二个操作数的值。
+
+     <br><dt><code>COND_EXPR</code><dd>这些节点表示<code>?:</code>表达式。第一个操作数是布尔或者整数类型。如果其求解为非零值，则第二个操作数将被求值，并返回表达式的值。否则，第三个操作数将被求值，并将表达式的值返回。
+
+     <p>第二个操作数必须与整个表达式具有相同的类型，除非它是要无条件的抛出一个异常或者调用一个不返回的函数，这种情况下，其将是void类型。第三个操作数也具有同样的约束。这使得数组的边界检查可以被方便的表示为<code>(i &gt;= 0 &amp;&amp; i &lt; 10) ? i : abort()</code>。
+
+     <p>作为GNU扩展，C语言前端允许<code>?:</code>运算符的第二个操作数可以在源程序中省略掉。例如，<code>x ? : 3</code>等价于<code>x ? x : 3</code>，假设<code>x</code>是一个没有副作用的表达式。但是，在tree的表示中，第二个操作数总是存在的，并且，如果第一个参数确实产生副作用的话，则其可能通过<code>SAVE_EXPR</code>来保护。
+
+     <br><dt><code>CALL_EXPR</code><dd>这些节点用来表示对函数的调用，包括non-static成员函数。<code>CALL_EXPR</code>被实现为一个具有可变数目操作数的表达式节点。不要用<code>TREE_OPERAND</code>来获取这些操作数，最好是用针对<code>CALL_EXPR</code>节点的特定的访问宏和函数。
+
+     <p><code>CALL_EXPR_FN</code>返回一个调用函数的指针；其总是一个类型为<code>POINTER_TYPE</code>的表达式。
+
+     <p>调用函数的参数数目由<code>call_expr_nargs</code>来返回，而参数本身可以使用<code>CALL_EXPR_ARG</code>宏来访问。参数从零开始，从左向右进行索引。你可以使用<code>FOR_EACH_CALL_EXPR_ARG</code>来迭代参数，例如：
+
+     <pre class="smallexample">          tree call, arg;
+          call_expr_arg_iterator iter;
+          FOR_EACH_CALL_EXPR_ARG (arg, iter, call)
+            /* arg is bound to successive arguments of call.  */
+            ...;
+</pre>
+     <p>对于non-static成员函数，将会有一个对应于<code>this</code>指针的操作数。所有的参数都会有相应的表达式，即使函数使用缺省的参数声明，并且在调用的地方，一些参数没有被显式的提供。
+
+     <p><code>CALL_EXPR</code>还有一个<code>CALL_EXPR_STATIC_CHAIN</code>操作数，用于实现嵌套函数。如果没有嵌套函数，则为null。
+
+     <br><dt><code>STMT_EXPR</code><dd>这些节点用于表示GCC的语句表达式扩展。语句表达式扩展，允许代码像这样：
+
+     <pre class="smallexample">          int f() { return ({ int j; j = 3; j + 7; }); }
+</pre>
+     <p>还句话说，一个语句序列可以出现在通常单个表达式出现的地方。<code>STMT_EXPR</code>节点表示这样的表达式。The <code>STMT_EXPR_STMT</code>给出了表达式中包含的语句。表达式的值为最后一条语句的值。更确切的说，为嵌套在<code>BIND_EXPR</code>,
+<code>TRY_FINALLY_EXPR</code>, 或<code>TRY_CATCH_EXPR</code>中的最后一条语句所计算出来的值。例如，
+
+     <pre class="smallexample">          ({ 3; })
+</pre>
+     <p>值为<code>3</code>，而:
+
+     <pre class="smallexample">          ({ if (x) { 3; } })
+</pre>
+     <p>没有值。如果<code>STMT_EXPR</code>没有产生一个值，则类型为<code>void</code>。
+
+     <br><dt><code>BIND_EXPR</code><dd>这些节点表示局部块。第一个操作数为变量的列表，通过它们的<code>TREE_CHAIN</code>域链接。这些将从不会要求被清除。这些变量的作用域就是<code>BIND_EXPR</code>的主体。<code>BIND_EXPR</code>的主体为第二个操作数。
+
+     <br><dt><code>LOOP_EXPR</code><dd>这些节点表示“无限”循环。<code>LOOP_EXPR_BODY</code>表示循环体。其将被永远执行，除非遇到<code>EXIT_EXPR</code>。
+
+     <br><dt><code>EXIT_EXPR</code><dd>这些节点表示从最近包含的<code>LOOP_EXPR</code>中条件退出。单个操作数为条件；如果非零，则循环将被退出。<code>EXIT_EXPR</code>将只是出现在<code>LOOP_EXPR</code>中。
+
+     <br><dt><code>CLEANUP_POINT_EXPR</code><dd>这些节点表示full-expression。单个操作数为被求值的表达式。任何在表达式求值中通过创建临时对象所引起的析构调用，都应该在表达式求值之后立刻执行。
+
+     <br><dt><code>CONSTRUCTOR</code><dd>这些节点表示大括号括起的，对结构体或者数组的初始化。第一个操作数被保留，用于后端。第二个操作数为<code>TREE_LIST</code>。如果<code>CONSTRUCTOR</code>的<code>TREE_TYPE</code>为一个<code>RECORD_TYPE</code>或者<code>UNION_TYPE</code>，则<code>TREE_LIST</code>中每个节点的<code>TREE_PURPOSE</code>将为一个<code>FIELD_DECL</code>，并且每个节点的<code>TREE_VALUE</code>将为初始化该域的表达式。
+
+     <p>如果<code>CONSTRUCTOR</code>的<code>TREE_TYPE</code>为一个<code>ARRAY_TYPE</code>，则<code>TREE_LIST</code>中每个节点的<code>TREE_PURPOSE</code>将为一个<code>INTEGER_CST</code>，或者两个<code>INTEGER_CST</code>的<code>RANGE_EXPR</code>。单个<code>INTEGER_CST</code>指出了数组（从0开始索引）的哪个元素将被赋值。<code>RANGE_EXPR</code>指出了包含端点元素的一个范围将被初始化。这两种情况下，<code>TREE_VALUE</code>都对应初始化者。其值将对于<code>RANGE_EXPR</code>的每个元素都重新计算一次。如果<code>TREE_PURPOSE</code>是<code>NULL_TREE</code>，则初始化是针对下一个可用的数组元素。
+
+     <p>在前端，你不要认为域是按照特定的顺序出现。但是，在中端，域必须按照声明的顺序出现。你不应该假设所有的域都被表示了。没有表示的域将被设置为0。
+
+     <br><dt><code>COMPOUND_LITERAL_EXPR</code><dd><a name="index-COMPOUND_005fLITERAL_005fEXPR_005fDECL_005fSTMT-2068"></a><a name="index-COMPOUND_005fLITERAL_005fEXPR_005fDECL-2069"></a>这些节点表示复合文字。
+<code>COMPOUND_LITERAL_EXPR_DECL_STMT</code>为一个<code>DECL_STMT</code>，
+包含了一个由复合文字表示的未命名对象的匿名<code>VAR_DECL</code>；
+<code>VAR_DECL</code>的<code>DECL_INITIAL</code>是一个<code>CONSTRUCTOR</code>用来表示在
+复合文字中大括号包围的初始值列表。
+匿名的<code>VAR_DECL</code>还可以通过<code>COMPOUND_LITERAL_EXPR_DECL</code>宏直接访问。
+
+     <br><dt><code>SAVE_EXPR</code><dd><code>SAVE_EXPR</code>表示一个被多次使用的表达式（可能会有副作用）。
+副作用应该只在表达式第一次被求值时发生。后续的使用应该只是重用计算所得的值。
+<code>SAVE_EXPR</code>的第一个操作数是要求值的表达式。
+副作用应该在深度优先前续遍历表达式树，第一次遇到<code>SAVE_EXPR</code>时被执行。
+
+     <br><dt><code>TARGET_EXPR</code><dd><code>TARGET_EXPR</code>表示一个临时对象。第一个操作数是临时变量<code>VAR_DECL</code>。
+第二个操作数是临时变量的初始值。初始值将被求值，并且如果不是void型的，
+则（按位）复制到临时变量中。如果初始值是void的，意味着将会自己执行初始化。
+
+     <p>很多时候，<code>TARGET_EXPR</code>会出现在赋值的右边，
+或者作为逗号表达式的第二个操作数。 这种情况下，
+我们说<code>TARGET_EXPR</code>是“normal”的；否则，我们说它是“orphaned”。
+对于一个正常的<code>TARGET_EXPR</code>，临时变量应被视为赋值的左端的一个别名，
+而不是一个新的临时变量。
+
+     <p><code>TARGET_EXPR</code>的第三个操作数，如果存在的话，
+是临时变量的清理表达式（即析构调用）。如果该表达式是孤儿的，
+则该表达式必须当包含它的语句是完整的时候被执行。
+这些清理必须总是按照相反的顺序执行。
+注意如果临时变量是在条件操作符的分支上创建的（即，
+<code>COND_EXPR</code>的第二个或第三个操作数），
+则清理必须只有在该分支实际被执行时才运行。
+
+     <p>关于运行这些清理的更多信息，参见<code>STMT_IS_FULL_EXPR_P</code>。
+
+     <br><dt><code>AGGR_INIT_EXPR</code><dd><code>AGGR_INIT_EXPR</code>表示作为函数调用的返回值或者作为构造函数的结果的初始化。
+<code>AGGR_INIT_EXPR</code>只作为充分表达式出现，
+或作为<code>TARGET_EXPR</code>的第二个操作数。
+<code>AGGR_INIT_EXPR</code>具有跟<code>CALL_EXPR</code>类似的表示。
+可以使用<code>AGGR_INIT_EXPR_FN</code>和<code>AGGR_INIT_EXPR_ARG</code>宏来访问调用的函数，
+以及传递的参数。
+
+     <p>如果<code>AGGR_INIT_VIA_CTOR_P</code>持有<code>AGGR_INIT_EXPR</code>，
+则初始化是通过一个构造函数进行的。<code>AGGR_INIT_EXPR_SLOT</code>操作数的地址，
+其总是一个<code>VAR_DECL</code>，将被接受，并且该值替代参数列表中的第一个参数。
+
+     <p>在这两种情况下，表达式都是void的。
+
+     <br><dt><code>VA_ARG_EXPR</code><dd>该节点用来实现对C/C++可变参数列表机制的支持。
+它表示了像<code>va_arg (ap, type)</code>这样的表达式。
+它的<code>TREE_TYPE</code>用来产生<code>type</code>的树表示，
+唯一的参数用来产生对<code>ap</code>的表示。
+
+     <br><dt><code>CHANGE_DYNAMIC_TYPE_EXPR</code><dd>指出了C++ placement new的特定别名需求。有两个操作数：类型和位置。
+它表示该位置的动态类型被转换为指定的类型。
+别名分析代码在做基于类型的别名分析时，需要考虑到这一点。
+
+     <br><dt><code>OMP_PARALLEL</code><dd>
+表示<code>#pragma omp parallel [clause1 ... clauseN]</code>。具有四个操作数：
+
+     <p>操作数<code>OMP_PARALLEL_BODY</code>在GENERIC和High GIMPLE形式中是有效的。
+它包含了被所有线程执行的代码体。在GIMPLE下降过程中，
+这个操作数变为<code>NULL</code>并且代码体被线性的输出在<code>OMP_PARALLEL</code>之后。
+
+     <p>操作数<code>OMP_PARALLEL_CLAUSES</code>为与指令相关的子句列表。
+
+     <p>操作数<code>OMP_PARALLEL_FN</code>由<code>pass_lower_omp</code>创建，
+它包含了将要包含并行区域体的函数<code>FUNCTION_DECL</code>。
+
+     <p>操作数<code>OMP_PARALLEL_DATA_ARG</code>也由<code>pass_lower_omp</code>创建。
+如果有共享变量用于子线程间通讯，则该操作数将包含<code>VAR_DECL</code>，
+其包含了所有共享的值和变量。
+
+     <br><dt><code>OMP_FOR</code><dd>
+表示<code>#pragma omp for [clause1 ... clauseN]</code>. 其具有5个操作数：
+
+     <p>操作数OMP_FOR_BODY包含了循环体。
+
+     <p>操作数OMP_FOR_CLAUSES为与指令相关的子句列表。
+
+     <p>操作数OMP_FOR_INIT为VAR = N1形式的循环初始化代码。
+
+     <p>操作数OMP_FOR_COND为<code>VAR {&lt;,&gt;,&lt;=,&gt;=} N2</code>形式的循环条件表达式。
+
+     <p>操作数OMP_FOR_INCR为<code>VAR {+=,-=} INCR</code>形式的循环索引增量。
+
+     <p>操作数OMP_FOR_PRE_BODY包含了来自操作数OMP_FOR_INIT, OMP_FOR_COND和OMP_FOR_INC的副作用代码。这些副作用为OMP_FOR块的一部分，但是必须在开始循环体之前被计算求值。
+
+     <p>循环索引变量VAR必须为单个整数变量，其隐式的归每个线程私有。边界N1和N2，以及增量表达式INCR需要为循环不变量整数表达式，其不需要同步就可以被计算求值。按照标准，计算求值的顺序，频率和副作用都没有被指定。
+
+     <br><dt><code>OMP_SECTIONS</code><dd>
+表示<code>#pragma omp sections [clause1 ... clauseN]</code>。
+
+     <p>操作数<code>OMP_SECTIONS_BODY</code>包含了section主体，
+其依次包含了一个<code>OMP_SECTION</code>节点集合，
+每个并发的section通过<code>#pragma omp section</code>来划分。
+
+     <p>操作数<code>OMP_SECTIONS_CLAUSES</code>为与指令相关的子句列表。
+
+     <br><dt><code>OMP_SECTION</code><dd>
+<code>OMP_SECTIONS</code>的Section定界符。
+
+     <br><dt><code>OMP_SINGLE</code><dd>
+表示<code>#pragma omp single</code>
+
+     <p>操作数<code>OMP_SINGLE_BODY</code>包含了被单个线程执行的代码体。
+
+     <p>操作数<code>OMP_SINGLE_CLAUSES</code>为与指令相关的子句列表。
+
+     <br><dt><code>OMP_MASTER</code><dd>
+表示<code>#pragma omp master</code>。
+
+     <p>操作数<code>OMP_MASTER_BODY</code>包含了被主控线程执行的代码体。
+
+     <br><dt><code>OMP_ORDERED</code><dd>
+表示<code>#pragma omp ordered</code>。
+
+     <p>操作数<code>OMP_ORDERED_BODY</code>包含了按照由循环索引变量所指示的顺序序列来执行的代码体。
+
+     <br><dt><code>OMP_CRITICAL</code><dd>
+表示<code>#pragma omp critical [name]</code>。
+
+     <p>操作数<code>OMP_CRITICAL_BODY</code>为临界section。
+
+     <p>操作数<code>OMP_CRITICAL_NAME</code>为可选的用来标记临界section的标识符。
+
+     <br><dt><code>OMP_RETURN</code><dd>
+这个并不表示任何OpenMP指令，它为一个人为标记用来指示OpenMP主体的结束。
+其被用于流图（<code>tree-cfg.c</code>）和OpenMP区域构建代码（<code>omp-low.c</code>）。
+
+     <br><dt><code>OMP_CONTINUE</code><dd>
+类似的，该指令不表示OpenMP指令，它被<code>OMP_FOR</code>和<code>OMP_SECTIONS</code>用于
+标记代码需要循环到下一个迭代（例如<code>OMP_FOR</code>）或者下一个section
+（例如<code>OMP_SECTIONS</code>）的地方。有一些情况，
+<code>OMP_CONTINUE</code>被放在紧挨着<code>OMP_RETURN</code>之前。
+但是，如果在循环体之后需要出现cleanups，
+则它将被生成在<code>OMP_CONTINUE</code>和<code>OMP_RETURN</code>之间。
+
+     <br><dt><code>OMP_ATOMIC</code><dd>
+表示<code>#pragma omp atomic</code>。
+
+     <p>操作数0是要被执行的原子操作的地址。
+
+     <p>操作数1是要计算求值的表达式。gimplifier会尝试三种可供选择的代码生成策略。
+只要可能，则会使用内建的原子更新。如果失败，
+则会尝试进行比较-交换（compare-and-swap）循环。如果还是失败，
+则会使用表达式附近的一个常规临界section。
+
+     <br><dt><code>OMP_CLAUSE</code><dd>
+表示与<code>OMP_</code>指令相关的子句。子句使用<samp><span class="file">tree.h</span></samp>中定义的子代码单独表示。
+子句代码可以为：OMP_CLAUSE_PRIVATE, OMP_CLAUSE_SHARED, OMP_CLAUSE_FIRSTPRIVATE, OMP_CLAUSE_LASTPRIVATE, OMP_CLAUSE_COPYIN, OMP_CLAUSE_COPYPRIVATE, OMP_CLAUSE_IF, OMP_CLAUSE_NUM_THREADS, OMP_CLAUSE_SCHEDULE, OMP_CLAUSE_NOWAIT, OMP_CLAUSE_ORDERED, OMP_CLAUSE_DEFAULT, 和OMP_CLAUSE_REDUCTION。每个代码表示了相应的OpenMP子句。
+
+     <p>与同一指令相关的子句通过<code>OMP_CLAUSE_CHAIN</code>链接在一起。
+那些接受一个变量列表的子句被限制为只有一个，使用<code>OMP_CLAUSE_VAR</code>来访问。
+因此，同一子句<code>C</code>下的多个变量需要被多个链接在一起的<code>C</code>子句表示。
+这样可以有助于在编译过程中增加新的子句。
+
+     <br><dt><code>VEC_LSHIFT_EXPR</code><br><dt><code>VEC_RSHIFT_EXPR</code><dd>这些节点相应的表示整个向量的左移和右移。第一个操作数为要移动的向量；
+其将总是为向量类型。第二个操作数是一个表达式，表示要移动的位数。
+注意如果第二个操作数大于或等于第一个操作数的类型大小，则结果未定义。
+
+     <br><dt><code>VEC_WIDEN_MULT_HI_EXPR</code><br><dt><code>VEC_WIDEN_MULT_LO_EXPR</code><dd>这些节点分别表示两个输入向量的高部和低部的加宽向量乘法。
+它们的操作数为包含同一整数类型的同一数目（<code>N</code>）元素的向量。
+结果为一个包含整数类型的元素大小为两倍宽数目为一半的向量。
+对于<code>VEC_WIDEN_MULT_HI_EXPR</code>，
+两个向量的高<code>N/2</code>个元素相乘得到<code>N/2</code>个积的向量。
+对于<code>VEC_WIDEN_MULT_LO_EXPR</code>，
+两个向量的低<code>N/2</code>个元素相乘得到<code>N/2</code>个积的向量。
+
+     <br><dt><code>VEC_UNPACK_HI_EXPR</code><br><dt><code>VEC_UNPACK_LO_EXPR</code><dd>这些节点分别表示拆分输入向量的高部和低部。
+单操作数为一个包含同一整数或浮点类型的<code>N</code>个元素的向量。
+结果为包含整数或者浮点类型的元素大小为两倍宽数目为一半的向量。
+对于<code>VEC_UNPACK_HI_EXPR</code>，向量的高<code>N/2</code>个元素被提取并扩展（提升）。
+对于<code>VEC_UNPACK_LO_EXPR</code>，向量的低<code>N/2</code>个元素被提取并扩展（提升）。
+
+     <br><dt><code>VEC_UNPACK_FLOAT_HI_EXPR</code><br><dt><code>VEC_UNPACK_FLOAT_LO_EXPR</code><dd>这些节点分别表示拆分输入向量的高部和低部，并将值由定点转换为浮点。
+单操作数为包含同一整数类型的<code>N</code>个元素的向量。
+结果为包含浮点类型的元素大小为两倍宽数目为一半的向量。
+对于<code>VEC_UNPACK_HI_EXPR</code>，向量的高<code>N/2</code>个元素被提取，转换并扩展。
+对于<code>VEC_UNPACK_LO_EXPR</code>，向量的低<code>N/2</code>个元素被提取，转换并扩展。
+
+     <br><dt><code>VEC_PACK_TRUNC_EXPR</code><dd>该节点表示将两个输入向量的截断元素打包成输出向量。
+输入操作数是包含同一整数或者浮点类型的相同数目元素的向量。
+结果为包含整数或者浮点类型的元素大小为一半数目为两倍的向量。
+两个向量的元素合并成输出向量。
+
+     <br><dt><code>VEC_PACK_SAT_EXPR</code><dd>该节点表示使用饱和方式（saturation）将两个输入向量的元素打包成输出向量。
+输入操作数是包含了同一整数类型的相同数目元素的向量。
+结果为一个包含整数类型的元素大小为一半数目为两倍的向量。
+两个向量的元素合并成输出向量。
+
+     <br><dt><code>VEC_PACK_FIX_TRUNC_EXPR</code><dd>该节点表示将将两个输入向量的元素打包成输出向量，并将值由浮点转换为定点。
+输入操作数是包含浮点类型的相同数目元素的向量。
+结果为包含整数类型元素大小一半数目为两倍的向量。两个向量的元素合并成输出向量。
+
+     <br><dt><code>VEC_EXTRACT_EVEN_EXPR</code><br><dt><code>VEC_EXTRACT_ODD_EXPR</code><dd>这些节点分别表示提取两个输入向量的偶数/奇数个元素。
+它们的操作数和结果为包含同一类型的相同数目元素的向量。
+
+     <br><dt><code>VEC_INTERLEAVE_HIGH_EXPR</code><br><dt><code>VEC_INTERLEAVE_LOW_EXPR</code><dd>这些节点分别表示交错合并两个输入向量的高/低元素。
+操作数和结果为包含同一类型的相同数目（<code>N</code>）元素的向量。
+对于<code>VEC_INTERLEAVE_HIGH_EXPR</code>，
+第一个输入向量的高<code>N/2</code>个元素被第二个输入向量的高<code>N/2</code>个元素替换。
+对于<code>VEC_INTERLEAVE_LOW_EXPR</code>，
+第一个输入向量的低<code>N/2</code>个元素被第二个输入向量的低<code>N/2</code>个元素替换。
+</dl>
+
+<!-- Copyright (C) 1988, 1989, 1992, 1994, 1997, 1998, 1999, 2000, 2001, 2002, -->
+<!-- 2003, 2004, 2005, 2006, 2007, 2008 -->
+<!-- Free Software Foundation, Inc. -->
+<!-- This is part of the GCC manual. -->
+<!-- For copying conditions, see the file gcc.texi. -->
+ </body></html>
+

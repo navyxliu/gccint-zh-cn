@@ -1,0 +1,87 @@
+<html lang="zh">
+<head>
+<title>前端配置 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e5_0089_008d_00e7_00ab_00af.html#g_t_00e5_0089_008d_00e7_00ab_00af" title="前端">
+<link rel="prev" href="_00e5_0089_008d_00e7_00ab_00af_00e7_009b_00ae_00e5_00bd_0095.html#g_t_00e5_0089_008d_00e7_00ab_00af_00e7_009b_00ae_00e5_00bd_0095" title="前端目录">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%89%8d%e7%ab%af%e9%85%8d%e7%bd%ae"></a>
+<a name="g_t_00e5_0089_008d_00e7_00ab_00af_00e9_0085_008d_00e7_00bd_00ae"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e5_0089_008d_00e7_00ab_00af_00e7_009b_00ae_00e5_00bd_0095.html#g_t_00e5_0089_008d_00e7_00ab_00af_00e7_009b_00ae_00e5_00bd_0095">前端目录</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_0089_008d_00e7_00ab_00af.html#g_t_00e5_0089_008d_00e7_00ab_00af">前端</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">6.3.8.2 前端<samp><span class="file">config-lang.in</span></samp>文件</h5>
+
+<p>每一个语言子目录都包含一个<samp><span class="file">config-lang.in</span></samp>文件。
+另外主目录下包含一个<samp><span class="file">c-config-lang.in</span></samp>，
+里面含有C语言的限制信息。这个文件是一个shell脚本，
+可以用来定义一些描述语言的变量。
+
+     <dl>
+<dt><code>language</code><dd>必须定义，
+它给出了语言的名字用于作为<samp><span class="option">--enable-languages</span></samp>的参数或其它用途。
+<br><dt><code>lang_requires</code><dd>如果定义，该变量列出了（由空格分开）该前端需要被支持的除了C的语言前端
+（使用所设置的<code>language</code>名字）。例如，Java前端依赖于C++前端，
+所以要设为&lsquo;<samp><span class="samp">lang_requires=c++</span></samp>&rsquo;。
+<br><dt><code>subdir_requires</code><dd>如果定义，该变量列出了（由空格分开）该前端需要存在的除了C的前端目录。
+例如，Objective-C++前端使用了C++和Objective-C前端的源文件，
+所以要设为&lsquo;<samp><span class="samp">subdir_requires="cp objc"</span></samp>&rsquo;。
+<br><dt><code>target_libs</code><dd>如果定义，该变量列出了（由空格分开）
+在顶层<samp><span class="file">Makefile</span></samp>中为该语言构建运行时库的目标，例如<code>target-libobjc</code>。
+<br><dt><code>lang_dirs</code><dd>如果定义，该变量列出了（由空格分开）只有构建该前端时才应被配置的除了运行时库
+之外的顶层目录（与<samp><span class="file">gcc</span></samp>并列）。
+<br><dt><code>build_by_default</code><dd>如果定义为&lsquo;<samp><span class="samp">no</span></samp>&rsquo;，
+则该语言前端只有在<samp><span class="option">--enable-languages</span></samp>中指定参数时才被构建。
+否则，会按照缺省方式来构建前端，
+并且受到<samp><span class="file">configure.ac</span></samp>中特定逻辑的影响（正如目前，
+如果Ada编译器没有安装则禁止Ada前端）。
+<br><dt><code>boot_language</code><dd>如果定义为&lsquo;<samp><span class="samp">yes</span></samp>&rsquo;，则该前端在自举阶段1中会被构建。
+这个只与用它们自己的语言写的前端相关。
+<br><dt><code>compilers</code><dd>如果定义，则为空格分隔的编译器可执行程序列表，其将被驱动调用运行。
+这里的名字将以&lsquo;<samp><span class="samp">\$(exeext)</span></samp>&rsquo;结尾。
+<br><dt><code>outputs</code><dd>如果定义，则为空格分隔的文件列表，其将被<samp><span class="file">configure</span></samp>通过值替换来生成。
+这种机制可以用来从<samp><var>language</var><span class="file">/Makefile.in</span></samp>中创建一个<samp><var>language</var><span class="file">/Makefile</span></samp>文件，但不赞成这样，应该从单个<samp><span class="file">gcc/Makefile</span></samp>中来构建所有。
+<br><dt><code>gtfiles</code><dd>如果定义，则为空格分隔的文件列表，其将被gengtype.c扫描来生成垃圾搜集表，
+和该语言的程序。这不包括所有前端公用的文件。参见<a href="_00e7_00b1_00bb_00e5_009e_008b_00e4_00bf_00a1_00e6_0081_00af.html#g_t_00e7_00b1_00bb_00e5_009e_008b_00e4_00bf_00a1_00e6_0081_00af">类型信息</a>。
+</dl>
+
+ </body></html>
+

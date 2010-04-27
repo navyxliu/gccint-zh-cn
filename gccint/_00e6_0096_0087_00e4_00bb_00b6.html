@@ -1,0 +1,96 @@
+<html lang="zh">
+<head>
+<title>文件 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e7_00b1_00bb_00e5_009e_008b_00e4_00bf_00a1_00e6_0081_00af.html#g_t_00e7_00b1_00bb_00e5_009e_008b_00e4_00bf_00a1_00e6_0081_00af" title="类型信息">
+<link rel="prev" href="GGC-Roots.html#GGC-Roots" title="GGC Roots">
+<link rel="next" href="_00e8_00b0_0083_00e7_0094_00a8_00e5_009e_0083_00e5_009c_00be_00e6_0094_00b6_00e9_009b_0086_00e5_0099_00a8.html#g_t_00e8_00b0_0083_00e7_0094_00a8_00e5_009e_0083_00e5_009c_00be_00e6_0094_00b6_00e9_009b_0086_00e5_0099_00a8" title="调用垃圾收集器">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e6%96%87%e4%bb%b6"></a>
+<a name="g_t_00e6_0096_0087_00e4_00bb_00b6"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e8_00b0_0083_00e7_0094_00a8_00e5_009e_0083_00e5_009c_00be_00e6_0094_00b6_00e9_009b_0086_00e5_0099_00a8.html#g_t_00e8_00b0_0083_00e7_0094_00a8_00e5_009e_0083_00e5_009c_00be_00e6_0094_00b6_00e9_009b_0086_00e5_0099_00a8">调用垃圾收集器</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="GGC-Roots.html#GGC-Roots">GGC Roots</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_00b1_00bb_00e5_009e_008b_00e4_00bf_00a1_00e6_0081_00af.html#g_t_00e7_00b1_00bb_00e5_009e_008b_00e4_00bf_00a1_00e6_0081_00af">类型信息</a>
+<hr>
+</div>
+
+<h3 class="section">22.3 包含类型信息的源文件</h3>
+
+<p><a name="index-generated-files-4800"></a><a name="index-files_002c-generated-4801"></a>
+只要向之前没有 <code>GTY</code> 标记的源文件里添加 <code>GTY</code> 标记，或者
+创建一个新的包含 <code>GTY</code> 标记的源文件，那么就有三件事情需要做：
+
+     <ol type=1 start=1>
+<li>需要将文件添加到类型机构需要扫描的源文件列表中。有四种情况：
+
+          <ol type=a start=1>
+<li>对于一个后端文件，通常会自动完成。如果没有，则需要将其添加到
+<samp><span class="file">config.gcc</span></samp> 里的适当port条目 <code>target_gtfiles</code> 中。
+
+          <li>对于所用前端共享的文件，将文件名添加到 <samp><span class="file">Makefile.in</span></samp> 里的
+<code>GTFILES</code> 变量中。
+
+          <li>对于一个前端的文件，将文件名添加到在适当 <samp><span class="file">config-lang.in</span></samp>
+里定义的 <code>gtfiles</code> 变量中。对于C，文件为 <samp><span class="file">c-config-lang.in</span></samp>。
+
+          <li>对于一些而不是所有的前端的文件，将文件名添加到 <em>所有</em> 使用
+它的前端的 <code>gtfiles</code> 变量中。
+          </ol>
+
+     <li>如果是头文件，则需要检查是否被包含在正确的位置，使得对于生成文件
+为可见的。对于一个后端文件，这应该是自动完成的。对于前端的头文件，
+应该被包含 <samp><span class="file">gtype-</span><var>lang</var><span class="file">.h</span></samp> 的同一文件所包含。对于其它头
+文件，需要被包含在 <samp><span class="file">gtype-desc.c</span></samp> 中。<samp><span class="file">gtype-desc.c</span></samp> 为
+生成文件，所以需要将头文件名添加到 <samp><span class="file">gengtype.c</span></samp> 里的
+<code>open_base_file</code> 里的 <code>ifiles</code> 中。
+
+     <p>对于不是头文件的源文件，类型机构将会生成一个头文件，并且该头文件
+应该被包含在所修改的源文件中。文件名为 <samp><span class="file">gt-</span><var>path</var><span class="file">.h</span></samp>，其
+中 <var>path</var> 是相对于 <samp><span class="file">gcc</span></samp> 目录的路径名，并且由 <tt>-</tt>
+来替换斜线。例如，要被包含在 <samp><span class="file">cp/parser.c</span></samp> 中的头文件命名为
+<samp><span class="file">gt-cp-parser.c</span></samp>。生成的头文件应该被包含在源文件所有其它内容
+之后。不要忘记将该文件在 <samp><span class="file">Makefile</span></samp> 中作为一个依赖条件！
+
+      </ol>
+
+ <p>对于语言前端，还有另一个文件需要在某处被包含。其为
+<samp><span class="file">gtype-</span><var>lang</var><span class="file">.h</span></samp>，其中 <var>lang</var> 是语言子目录的名字。
+
+ </body></html>
+

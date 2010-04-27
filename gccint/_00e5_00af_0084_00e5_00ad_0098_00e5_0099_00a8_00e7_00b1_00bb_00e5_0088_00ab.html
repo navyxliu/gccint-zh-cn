@@ -1,0 +1,532 @@
+<html lang="zh">
+<head>
+<title>寄存器类别 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f.html#g_t_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f" title="目标宏">
+<link rel="prev" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8" title="寄存器">
+<link rel="next" href="_00e6_0097_00a7_00e5_00bc_008f_00e7_00ba_00a6_00e6_009d_009f.html#g_t_00e6_0097_00a7_00e5_00bc_008f_00e7_00ba_00a6_00e6_009d_009f" title="旧式约束">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%af%84%e5%ad%98%e5%99%a8%e7%b1%bb%e5%88%ab"></a>
+<a name="g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e7_00b1_00bb_00e5_0088_00ab"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e6_0097_00a7_00e5_00bc_008f_00e7_00ba_00a6_00e6_009d_009f.html#g_t_00e6_0097_00a7_00e5_00bc_008f_00e7_00ba_00a6_00e6_009d_009f">旧式约束</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8">寄存器</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f.html#g_t_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f">目标宏</a>
+<hr>
+</div>
+
+<h3 class="section">17.8 寄存器类别</h3>
+
+<p><a name="index-register-class-definitions-3907"></a><a name="index-class-definitions_002c-register-3908"></a>
+在许多机器上，编号寄存器并不都是等价的。例如，一些寄存器不可以用作索引寻址；
+一些寄存器不可以用于某些指令。
+这些机器限制使用寄存器类别(<dfn>register classes</dfn>)来描述给编译器。
+
+ <p>你定义一些寄存器类别，给出每个类别的名字并指名哪些寄存器属于它。然后，
+你可以指定哪些寄存器类别对于特定的指令模式可以用作操作数。
+
+ <p><a name="index-ALL_005fREGS-3909"></a><a name="index-NO_005fREGS-3910"></a>总的来说，每个寄存器将属于多个类别。实际上，
+必须有一个名为<code>ALL_REGS</code>的类别，包含所有的寄存器。
+另外必须有一个名为<code>NO_REGS</code>的类别，不包含寄存器。
+通常两个类别的并集将成为另一个类别；但并不这么要求。
+
+ <p><a name="index-GENERAL_005fREGS-3911"></a>其中一个类别必须名为<code>GENERAL_REGS</code>。该名字没有什么特殊的，
+但是操作数约束字母&lsquo;<samp><span class="samp">r</span></samp>&rsquo;和&lsquo;<samp><span class="samp">g</span></samp>&rsquo;专门指定该类。
+如果<code>GENERAL_REGS</code>与<code>ALL_REGS</code>相同，
+则可以将其定义为扩展成<code>ALL_REGS</code>的宏。
+
+ <p>对类别进行排序，使得如果类<var>x</var>包含在类<var>y</var>中，
+则<var>x</var>具有比<var>y</var>更低的类别编号。
+
+ <p>在操作数约束中指定<code>GENERAL_REGS</code>之外的类别的方法，
+是通过机器相关的约束字母。你可以定义该字母来对应于不同的类别，
+然后在操作数约束中使用它们。
+
+ <p>只要有指令同时允许两个类别，就应该定义一个它们的并集的类别。
+例如，如果对于一个特定的操作数，
+有一条指令允许一个浮点（协处理器）寄存器或者一个通用寄存器，
+则应该定义一个类别<code>FLOAT_OR_GENERAL_REGS</code>，其包含它们两。
+否则你不会得到最优的代码。
+
+ <p>你还必须指定关于寄存器类别的冗余信息：对于每个类别，
+有哪些类别包含它以及哪些被它包含；
+对于每个类别对，最大的类包含在它们的并集中。
+
+ <p>当一个值占用多个连续的位于特定类别的寄存器时，
+所有被使用的寄存器必须属于那个类别。因此，
+寄存器类别不能用于要求寄存器对起始于偶数编号的寄存器。
+用来指定该要求的方法是使用<code>HARD_REGNO_MODE_OK</code>。
+
+ <p>用于按位与或者移位指令的操作数的寄存器类别具有特殊的要求：
+对于每个定点机器模式，每个这样的类必须具有一个子类，
+它的寄存器可以按照该机器模式与内存进行传送值。例如，在一些机器上，
+对于单字节值的操作（<code>QImode</code>）被限制为特定的寄存器。这样的话，
+每个用于按位与或者移位指令的寄存器类别必须具有一个子类，
+组成它的寄存器可以用来加载或存储单字节值。
+这使得<code>PREFERRED_RELOAD_CLASS</code>总是具有一个可以返回的值。
+
+<div class="defun">
+&mdash; Data type: <b>enum reg_class</b><var><a name="index-enum-reg_005fclass-3912"></a></var><br>
+<blockquote><p>一个枚举类型，必须使用所有的寄存器类别名作为枚举值来定义。
+<code>NO_REGS</code>必须位于最前面。<code>ALL_REGS</code>必须为最后一个寄存器类别，
+后面再跟随一个枚举值，<code>LIM_REG_CLASSES</code>，其不是一个寄存器类别，
+但是用来告诉有多少个类别。
+
+      <p>每个寄存器类别具有一个编号，其为将类别名映射到<code>int</code>类型的值。
+编号在下面描述的许多表中用作索引。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>N_REG_CLASSES</b><var><a name="index-N_005fREG_005fCLASSES-3913"></a></var><br>
+<blockquote><p>不同寄存器类别的数目，定义为:
+
+     <pre class="smallexample">          #define N_REG_CLASSES (int) LIM_REG_CLASSES
+</pre>
+      </blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>REG_CLASS_NAMES</b><var><a name="index-REG_005fCLASS_005fNAMES-3914"></a></var><br>
+<blockquote><p>一个初始化值，包含了作为C字符串常量的寄存器类别的名字。
+这些名字用于书写一些调试转储。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>REG_CLASS_CONTENTS</b><var><a name="index-REG_005fCLASS_005fCONTENTS-3915"></a></var><br>
+<blockquote><p>一个初始化值，包含了寄存器类别的内容，作为位掩码的整数。
+第<var>n</var>个整数指定了类别<var>n</var>的内容。整数掩码的解析方式为，
+寄存器<var>r</var>在类别中，如果<var>mask</var><code> &amp; (1 &lt;&lt; </code><var>r</var><code>)</code>为1。
+
+      <p>当机器具有多于32个寄存器的时候，一个整数还不能满足。这时整数被替换为子初始化值，
+为括号包裹的多个整数。每个子初始化值必须适合类型<code>HARD_REG_SET</code>的初始化值，
+其在<samp><span class="file">hard-reg-set.h</span></samp>中定义。这种情况下，
+每个子初始化值的第一个整数对应于寄存器0到31，第二个对应于32到63，等等。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>REGNO_REG_CLASS</b> (<var>regno</var>)<var><a name="index-REGNO_005fREG_005fCLASS-3916"></a></var><br>
+<blockquote><p>一个C表达式，其值为包含了硬件寄存器<var>regno</var>的寄存器类别。总的来说，
+会有不止一个这样的类别；选择最小的那个，这意味着没有更小的类别包含该寄存器。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>BASE_REG_CLASS</b><var><a name="index-BASE_005fREG_005fCLASS-3917"></a></var><br>
+<blockquote><p>一个宏，它的定义为有效的基址寄存器必须属于的类别名字。
+基址寄存器用于由寄存器的值加上一个偏移量来表示的地址中。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>MODE_BASE_REG_CLASS</b> (<var>mode</var>)<var><a name="index-MODE_005fBASE_005fREG_005fCLASS-3918"></a></var><br>
+<blockquote><p>这是宏<code>BASE_REG_CLASS</code>的变体，其允许在机器模式相关的方式下选择基址寄存器。
+如果<var>mode</var>为VOIDmode，则其应该返回根<code>BASE_REG_CLASS</code>同样的值。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>MODE_BASE_REG_REG_CLASS</b> (<var>mode</var>)<var><a name="index-MODE_005fBASE_005fREG_005fREG_005fCLASS-3919"></a></var><br>
+<blockquote><p>一个C表达式，其值为有效的基址寄存器必须属于的类别名字，
+且用于一个基址寄存器加上索引寄存器的地址中。你应该定义该宏，
+如果表示为基址寄存器加上索引寄存器的地址具有不同于其它基址寄存器的用法要求时。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>MODE_CODE_BASE_REG_CLASS</b> (<var>mode, outer_code, index_code</var>)<var><a name="index-MODE_005fCODE_005fBASE_005fREG_005fCLASS-3920"></a></var><br>
+<blockquote><p>一个C表达式，其值为有效的基址寄存器必须属于的类别名字。
+<var>outer_code</var>和<var>index_code</var>定义了基址寄存器出现的上下文。
+<var>outer_code</var>为。<var>index_code</var>为相应的索引表达式的代码，
+如果<var>outer_code</var>为<code>PLUS</code>；否则为<code>SCRATCH</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INDEX_REG_CLASS</b><var><a name="index-INDEX_005fREG_005fCLASS-3921"></a></var><br>
+<blockquote><p>一个C表达式，其值为有效的索引寄存器必须属于的类别名字。
+索引寄存器为一个用于地址中的寄存器，
+它的值用于乘于一个标量因子或者加上另一个寄存器（也可以加上一个偏移量）。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>REGNO_OK_FOR_BASE_P</b> (<var>num</var>)<var><a name="index-REGNO_005fOK_005fFOR_005fBASE_005fP-3922"></a></var><br>
+<blockquote><p>一个C表达式，其为非0，
+如果寄存器编号<var>num</var>适合在操作数地址中作为基址寄存器使用。
+其可以为一个合适的硬件寄存器，或者一个已经被分配了这样的硬件寄存器的伪寄存器。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>REGNO_MODE_OK_FOR_BASE_P</b> (<var>num, mode</var>)<var><a name="index-REGNO_005fMODE_005fOK_005fFOR_005fBASE_005fP-3923"></a></var><br>
+<blockquote><p>一个C表达式，类似于<code>REGNO_OK_FOR_BASE_P</code>，
+除了表达式可以检查内存引用的机器模式<var>mode</var>。你应该定义该宏，
+如果内存引用的机器模式影响了一个寄存器是否可以作为基址寄存器使用。
+如果你定义了该宏，则编译器将使用它来替代<code>REGNO_OK_FOR_BASE_P</code>。
+对于出现在<code>MEM</code>之外的地址，即作为一个<code>address_operand</code>，
+mode可以为<code>VOIDmode</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>REGNO_MODE_OK_FOR_REG_BASE_P</b> (<var>num, mode</var>)<var><a name="index-REGNO_005fMODE_005fOK_005fFOR_005fREG_005fBASE_005fP-3924"></a></var><br>
+<blockquote><p>一个C表达式，其为非0，
+如果寄存器编号<var>num</var>适合在表示为基址加索引的地址中作为一个基址寄存器使用，
+并通过模式<var>mode</var>来访问。其可以为一个合适的硬件寄存器，
+或者一个已经被分配了这样的硬件寄存器的伪寄存器。你应该定义该宏，
+如果表示为基址寄存器加上索引寄存器的地址具有不同于其它基址寄存器的用法要求时。
+
+      <p>不赞成使用该宏；请使用更加通用的<code>REGNO_MODE_CODE_OK_FOR_BASE_P</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>REGNO_MODE_CODE_OK_FOR_BASE_P</b> (<var>num, mode, outer_code, index_code</var>)<var><a name="index-REGNO_005fMODE_005fCODE_005fOK_005fFOR_005fBASE_005fP-3925"></a></var><br>
+<blockquote><p>一个C表达式，类似于<code>REGNO_MODE_OK_FOR_BASE_P</code>，
+除了表达式可以检查寄存器出现内存引用中的上下文。<var>outer_code</var>为。
+<var>index_code</var>为相应的索引表达式的代码，如果<var>outer_code</var>为<code>PLUS</code>；
+否则为<code>SCRATCH</code>。对于出现在<code>MEM</code>之外的地址，
+即作为一个<code>address_operand</code>，mode可以为<code>VOIDmode</code>。
+A C expression that is just like <code>REGNO_MODE_OK_FOR_BASE_P</code>, except
+that that expression may examine the context in which the register
+appears in the memory reference.  <var>outer_code</var> is the code of the
+immediately enclosing expression (<code>MEM</code> if at the top level of the
+address, <code>ADDRESS</code> for something that occurs in an
+<code>address_operand</code>).  <var>index_code</var> is the code of the
+corresponding index expression if <var>outer_code</var> is <code>PLUS</code>;
+<code>SCRATCH</code> otherwise.  The mode may be <code>VOIDmode</code> for addresses
+that appear outside a <code>MEM</code>, i.e., as an <code>address_operand</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>REGNO_OK_FOR_INDEX_P</b> (<var>num</var>)<var><a name="index-REGNO_005fOK_005fFOR_005fINDEX_005fP-3926"></a></var><br>
+<blockquote><p>一个C表达式，其为非0，
+如果寄存器编号<var>num</var>适合作为索引寄存器用于操作数地址中。
+其可以为一个合适的硬件寄存器或者一个已经被分配了这样的硬件寄存器的伪寄存器。
+
+      <p>索引寄存器和基址寄存器的区别是，索引寄存器可以被标量化。
+如果一个地址包含了两个寄存器的和，并且都不被标量化，
+则一个可以被标签为“base” 另一个为“index”；但是使用哪个标签，
+必须要适合机器的约束。编译器将尝试两种标签方式，来查找有效的一种，
+并且当两种方式都无法工作时，重载一个或两个寄存器。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>PREFERRED_RELOAD_CLASS</b> (<var>x, class</var>)<var><a name="index-PREFERRED_005fRELOAD_005fCLASS-3927"></a></var><br>
+<blockquote><p>一个C表达式，对寄存器类别进行额外的限制，
+用于当需要复制值<var>x</var>到类别为<var>class</var>的寄存器中。
+值为一个寄存器类别；可能为<var>class</var>或者其它比<var>class</var>小的类别。
+在许多机器上，下列定义是安全的：
+
+     <pre class="smallexample">          #define PREFERRED_RELOAD_CLASS(X,CLASS) CLASS
+</pre>
+      <p>有时返回一个更加限制的类别将会产生更好的代码。例如，在68000上，
+当<var>x</var>为一个整数常量，并且在&lsquo;<samp><span class="samp">moveq</span></samp>&rsquo;指令的范围内，
+则该宏的值总是为<code>DATA_REGS</code>，只要<var>class</var>包含数据寄存器。
+需要一个数据寄存器保证了&lsquo;<samp><span class="samp">moveq</span></samp>&rsquo;将使用。
+
+      <p>一种<code>PREFERRED_RELOAD_CLASS</code>必须不返回<var>class</var>的情况为，
+如果<var>x</var>为一个合法常量其不能被加载到某个寄存器类别中。
+通过返回<code>NO_REGS</code>，你可以强迫<var>x</var>放入内存位置中。例如，
+rs6000可以加载立即数值到通用寄存器中，
+但没有指令可以加载立即数值到浮点寄存器中，
+所以<code>PREFERRED_RELOAD_CLASS</code>返回<code>NO_REGS</code>，
+当<var>x</var>为一个浮点常量时。如果常量不能被加载到任何种类的寄存器中，
+如果<code>LEGITIMATE_CONSTANT_P</code>使常量为非法的，
+而不是使用<code>PREFERRED_RELOAD_CLASS</code>，则代码生成将会更好。
+
+      <p>如果一个insn在寄存器分配之后具有伪寄存器，
+则重载将遍历选择项并且反复调用<code>PREFERRED_RELOAD_CLASS</code>来找到最好的一个。
+返回<code>NO_REGS</code>，在这种情况下，使得重载在约束前增加一个<code>!</code>：
+x86后端使用该特征来劝阻使用387寄存器，当算术在SSE寄存器中进行时（反之亦然）。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>PREFERRED_OUTPUT_RELOAD_CLASS</b> (<var>x, class</var>)<var><a name="index-PREFERRED_005fOUTPUT_005fRELOAD_005fCLASS-3928"></a></var><br>
+<blockquote><p>类似于<code>PREFERRED_RELOAD_CLASS</code>，但是用于输出重载而不是输入重载。
+如果没有定义该宏，则缺省为使用不变的<var>class</var>。
+
+      <p>你还可以使用<code>PREFERRED_OUTPUT_RELOAD_CLASS</code>来劝阻使用一些可选项的重载，
+类似于<code>PREFERRED_RELOAD_CLASS</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LIMIT_RELOAD_CLASS</b> (<var>mode, class</var>)<var><a name="index-LIMIT_005fRELOAD_005fCLASS-3929"></a></var><br>
+<blockquote><p>一个C表达式，对寄存器类别实施额外的限制，
+用于当需要在一个类别为<var>class</var>的重载寄存器中保存机器模式为<var>mode</var>的值的时候。
+
+      <p>不像<code>PREFERRED_RELOAD_CLASS</code>，
+该宏应该用于当有特定的机器模式不能简单的放入特定的重载类别中的时候。
+
+      <p>值为一个寄存器类别；可能为<var>class</var>，或者其它更小的类别。
+
+      <p>不要定义该宏，除非target机器具有一些限制，使得宏需要做一些事情。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: enum reg_class <b>TARGET_SECONDARY_RELOAD</b> (<var>bool in_p, rtx x, enum reg_class reload_class, enum machine_mode reload_mode, secondary_reload_info *sri</var>)<var><a name="index-TARGET_005fSECONDARY_005fRELOAD-3930"></a></var><br>
+<blockquote><p>许多机器具有一些寄存器，其不能直接和内存之间进行复制，
+甚至不能和其它类型的寄存器。一个例子是&lsquo;<samp><span class="samp">MQ</span></samp>&rsquo;寄存器，
+在大多数机器上，只能与通用寄存器直接进行复制，而不能和内存之间。
+下面，我们将使用术语‘中途寄存器’，当一个move操作不能直接执行，
+而必须首先通过将源复制到中途寄存器中，然后再从中途寄存器复制到目的。
+一个中途寄存器总是具有与源和目的相同的机器模式。由于其存放了被复制的实际的值，
+所以重载可能进行优化来重用一个中途寄存器，并且省略掉从源进行复制的操作，
+当它可以确定中途寄存器还保留着所需要的值的时候。
+
+      <p>另一种需要执行二次重载的情况是，在一些机器上，
+其允许所有的寄存器和内存之间进行复制，
+但要求一个scratch寄存器来存储一些内存的位置（例如，在RT上那些具有符号地址的，
+以及在SPARC上当编译PIC时那些具有特定符号地址的）。
+草稿寄存器不需要与被复制的值具有相同的机器模式，并且通常保留一个不同的值。
+在md文件中需要特殊的指令模式来描述复制在草稿寄存器的帮助下如何执行；
+这些指令模式还描述了草稿寄存器的编号，寄存器类别和机器模式。
+
+      <p>在一些情况下，同时需要中途寄存器和草稿寄存器。
+
+      <p>对于输入重载，该target钩子使用非零的<var>in_p</var>来调用，并且<var>x</var>为一个rtx，
+其需要被复制到一个类别为<var>reload_class</var>，机器模式为<var>reload_mode</var>的寄存器中。
+对于输出重载，该target钩子使用为0的<var>in_p</var>调用，并且一个类别为<var>reload_class</var>，
+需要复制到机器模式为reload_mode的rtx <var>x</var>中。
+
+      <p>如果在类别为<var>reload_class</var>的寄存器和<var>x</var>直接进行复制需要一个中途寄存器，
+则钩子<code>secondary_reload</code>应该返回一个该中途寄存器需要的寄存器类别。
+如果不需要中途寄存器，则其应该返回NO_REGS。如果需要多个中途寄存器，
+则描述在复制链中最近的那个。
+
+      <p>如果需要草稿寄存器，
+则还要描述如何如何在重载寄存器和这个最近的中途寄存器直接进行复制。
+或者如果不需要中途寄存器，但仍然需要一个草稿寄存器，
+则描述重载寄存器和重载操作数<var>x</var>之间的复制。
+
+      <p>为此，你需要设置<code>sri-&gt;icode</code>为在md文件中执行move的指令模式的代码。
+操作数0和1分别为该复制的输出和输入。从2以后的操作数为草稿操作数。
+这些草稿操作数必须具有机器模式并且一个single-register-class的输出约束。
+
+      <p>当使用中途寄存器的时候，<code>secondary_reload</code>钩子将会被再次调用，
+来确定如何在中途寄存器和重载操作数之间进行复制，
+所以你的钩子必须还要具有处理中途操作数的寄存器类别的代码。
+
+      <p><var>x</var>可以为伪寄存器或者一个伪寄存器的<code>subreg</code>，
+其可以为一个硬件寄存器或者在内存中。使用<code>true_regnum</code>来查看；
+其将返回-1如果伪寄存器在内存中，以及硬件寄存器编号，如果其在一个寄存器中。
+
+      <p>在内存中的草稿操作数（约束<code>"=m"</code> / <code>"=&amp;m"</code>）目前不被支持。
+为此，目前你必须继续使用<code>SECONDARY_MEMORY_NEEDED</code>。
+
+      <p><code>copy_cost</code>还是要该target钩子来查找值如何被复制。
+如果你想让其包含像分配草稿寄存器所需要的额外代价，
+则可以设置<code>sri-&gt;extra_cost</code>为额外代价。
+或者如果两个相关move会具有比两个单个move之和的代价要低，
+则可以设置<code>sri-&gt;extra_cost</code>为一个负数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SECONDARY_RELOAD_CLASS</b> (<var>class, mode, x</var>)<var><a name="index-SECONDARY_005fRELOAD_005fCLASS-3931"></a></var><br>
+&mdash; Macro: <b>SECONDARY_INPUT_RELOAD_CLASS</b> (<var>class, mode, x</var>)<var><a name="index-SECONDARY_005fINPUT_005fRELOAD_005fCLASS-3932"></a></var><br>
+&mdash; Macro: <b>SECONDARY_OUTPUT_RELOAD_CLASS</b> (<var>class, mode, x</var>)<var><a name="index-SECONDARY_005fOUTPUT_005fRELOAD_005fCLASS-3933"></a></var><br>
+<blockquote><p>These macros are obsolete, new ports should use the target hook
+<code>TARGET_SECONDARY_RELOAD</code> instead.
+
+      <p>These are obsolete macros, replaced by the <code>TARGET_SECONDARY_RELOAD</code>
+target hook.  Older ports still define these macros to indicate to the
+reload phase that it may
+need to allocate at least one register for a reload in addition to the
+register to contain the data.  Specifically, if copying <var>x</var> to a
+register <var>class</var> in <var>mode</var> requires an intermediate register,
+you were supposed to define <code>SECONDARY_INPUT_RELOAD_CLASS</code> to return the
+largest register class all of whose registers can be used as
+intermediate registers or scratch registers.
+
+      <p>If copying a register <var>class</var> in <var>mode</var> to <var>x</var> requires an
+intermediate or scratch register, <code>SECONDARY_OUTPUT_RELOAD_CLASS</code>
+was supposed to be defined be defined to return the largest register
+class required.  If the
+requirements for input and output reloads were the same, the macro
+<code>SECONDARY_RELOAD_CLASS</code> should have been used instead of defining both
+macros identically.
+
+      <p>The values returned by these macros are often <code>GENERAL_REGS</code>. 
+Return <code>NO_REGS</code> if no spare register is needed; i.e., if <var>x</var>
+can be directly copied to or from a register of <var>class</var> in
+<var>mode</var> without requiring a scratch register.  Do not define this
+macro if it would always return <code>NO_REGS</code>.
+
+      <p>If a scratch register is required (either with or without an
+intermediate register), you were supposed to define patterns for
+&lsquo;<samp><span class="samp">reload_in</span><var>m</var></samp>&rsquo; or &lsquo;<samp><span class="samp">reload_out</span><var>m</var></samp>&rsquo;, as required
+(see <a href="_00e6_00a0_0087_00e5_0087_0086_00e5_0090_008d_00e5_00ad_0097.html#g_t_00e6_00a0_0087_00e5_0087_0086_00e5_0090_008d_00e5_00ad_0097">标准名字</a>.  These patterns, which were normally
+implemented with a <code>define_expand</code>, should be similar to the
+&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo; patterns, except that operand 2 is the scratch
+register.
+
+      <p>These patterns need constraints for the reload register and scratch
+register that
+contain a single register class.  If the original reload register (whose
+class is <var>class</var>) can meet the constraint given in the pattern, the
+value returned by these macros is used for the class of the scratch
+register.  Otherwise, two additional reload registers are required. 
+Their classes are obtained from the constraints in the insn pattern.
+
+      <p><var>x</var> might be a pseudo-register or a <code>subreg</code> of a
+pseudo-register, which could either be in a hard register or in memory. 
+Use <code>true_regnum</code> to find out; it will return &minus;1 if the pseudo is
+in memory and the hard register number if it is in a register.
+
+      <p>These macros should not be used in the case where a particular class of
+registers can only be copied to memory and not to another class of
+registers.  In that case, secondary reload registers are not needed and
+would not be helpful.  Instead, a stack location must be used to perform
+the copy and the <code>mov</code><var>m</var> pattern should use memory as an
+intermediate storage.  This case often occurs between floating-point and
+general registers. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SECONDARY_MEMORY_NEEDED</b> (<var>class1, class2, m</var>)<var><a name="index-SECONDARY_005fMEMORY_005fNEEDED-3934"></a></var><br>
+<blockquote><p>一些机器要求某些寄存器必须使用内存才能与其它寄存器进行复制。
+定义该宏在那些机器上，其为一个C表达式，
+为非0如果机器模式为<var>m</var>的对象在类别为<var>class1</var>的寄存器中，
+只能通过将<var>class1</var>的寄存器存储到内存中并且将内存位置加载到<var>class2</var>的寄存中。
+
+      <p>如果其值总是为0，则不要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SECONDARY_MEMORY_NEEDED_RTX</b> (<var>mode</var>)<var><a name="index-SECONDARY_005fMEMORY_005fNEEDED_005fRTX-3935"></a></var><br>
+<blockquote><p>通常当<code>SECONDARY_MEMORY_NEEDED</code>被定义时，
+编译器会分配一个栈槽为需要寄存器复制的内存位置。
+如果该宏被定义，则编译器会替代的使用该宏定义的内存位置。
+
+      <p>如果没有定义<code>SECONDARY_MEMORY_NEEDED</code>，则不要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SECONDARY_MEMORY_NEEDED_MODE</b> (<var>mode</var>)<var><a name="index-SECONDARY_005fMEMORY_005fNEEDED_005fMODE-3936"></a></var><br>
+<blockquote><p>当编译器需要一个二级内存位置在机器模式为<var>mode</var>的寄存器之间进行复制的时候，
+其通常分配足够的内存来存放<code>BITS_PER_WORD</code>个位，
+并且执行该位数宽度的<var>mode</var>的存储和加载操作。
+
+      <p>这在大多数机器上是正确的，
+因为其确保寄存器的所有位被复制并且阻止对寄存器按照较窄的机器模式来访问，
+这对于浮点寄存器通常是禁止的。
+
+      <p>然而，该缺省行为在一些机器上是不正确的，例如DEC Alpha，
+其在浮点寄存器中存储short整数与在整数寄存器中是不同的。
+在那些机器上，缺省的宽度将不正确，你必须定义该宏来抑制这种宽度。
+详情参见<samp><span class="file">alpha.h</span></samp>文件。
+
+      <p>如果没有定义，或者如果<code>BITS_PER_WORD</code>个位数的宽度是正确的，则不要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SMALL_REGISTER_CLASSES</b><var><a name="index-SMALL_005fREGISTER_005fCLASSES-3937"></a></var><br>
+<blockquote><p>在一些机器上，让硬件寄存器的活跃性跨越任意的insn是危险的。
+特别是，这些机器具有要求值要在特定寄存器中的指令（像累加器），
+并且重载将会失败如果所要求的硬件寄存器用于其它目的。
+
+      <p>定义<code>SMALL_REGISTER_CLASSES</code>为一个表达式，非0的值在这些机器上。
+当该宏具有非0值，则编译器尝试最小化硬件寄存器的生命期。
+
+      <p>定义该宏为非0值总是安全的，但是如果你没必要定义它，则你将会减少优化数目。
+如果你没有定义该宏为非0，并且当其需要时，
+则编译器会产生寄存器溢出并且打印一个fatal error消息。
+对于大多数机器，你根本不需要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CLASS_LIKELY_SPILLED_P</b> (<var>class</var>)<var><a name="index-CLASS_005fLIKELY_005fSPILLED_005fP-3938"></a></var><br>
+<blockquote><p>A C expression whose value is nonzero if pseudos that have been assigned
+to registers of class <var>class</var> would likely be spilled because
+registers of <var>class</var> are needed for spill registers.
+
+      <p>The default value of this macro returns 1 if <var>class</var> has exactly one
+register and zero otherwise.  On most machines, this default should be
+used.  Only define this macro to some other expression if pseudos
+allocated by <samp><span class="file">local-alloc.c</span></samp> end up in memory because their hard
+registers were needed for spill registers.  If this macro returns nonzero
+for those classes, those pseudos will only be allocated by
+<samp><span class="file">global.c</span></samp>, which knows how to reallocate the pseudo to another
+register.  If there would not be another register available for
+reallocation, you should not change the definition of this macro since
+the only effect of such a definition would be to slow down register
+allocation. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CLASS_MAX_NREGS</b> (<var>class, mode</var>)<var><a name="index-CLASS_005fMAX_005fNREGS-3939"></a></var><br>
+<blockquote><p>一个C表达式，为需要存放机器模式为<var>mode</var>的值所需要的连续的类别为<var>class</var>的寄存器的最大数。
+
+      <p>这与宏<code>HARD_REGNO_NREGS</code>很相近。实际上，
+宏<code>CLASS_MAX_NREGS (</code><var>class</var><code>, </code><var>mode</var><code>)</code>的值应该为<code>HARD_REGNO_NREGS (</code><var>regno</var><code>,</code><var>mode</var><code>)</code>的最大值。
+
+      <p>该宏有助于处理多字的值，在重载过程中。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CANNOT_CHANGE_MODE_CLASS</b> (<var>from, to, class</var>)<var><a name="index-CANNOT_005fCHANGE_005fMODE_005fCLASS-3940"></a></var><br>
+<blockquote><p>如果被定义，为一个C表达式，其返回非0，对于一个<var>class</var>，
+其由机器模式<var>from</var>到<var>to</var>的改变是无效的。
+
+      <p>例如，加载32位整数或者浮点对象到浮点寄存器中，在Alpha上将被扩展为64位。
+因此加载64位对象并存储为32位对象时将不保存第32位。
+因此，<samp><span class="file">alpha.h</span></samp>定义<code>CANNOT_CHANGE_MODE_CLASS</code>如下：
+
+     <pre class="smallexample">          #define CANNOT_CHANGE_MODE_CLASS(FROM, TO, CLASS) \
+            (GET_MODE_SIZE (FROM) != GET_MODE_SIZE (TO) \
+             ? reg_classes_intersect_p (FLOAT_REGS, (CLASS)) : 0)
+</pre>
+      </blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: const enum reg_class * <b>TARGET_IRA_COVER_CLASSES</b> ()<var><a name="index-TARGET_005fIRA_005fCOVER_005fCLASSES-3941"></a></var><br>
+<blockquote><p>Return an array of cover classes for the Integrated Register Allocator
+(<acronym>IRA</acronym>).  Cover classes are a set of non-intersecting register
+classes covering all hard registers used for register allocation
+purposes.  If a move between two registers in the same cover class is
+possible, it should be cheaper than a load or store of the registers. 
+The array is terminated by a <code>LIM_REG_CLASSES</code> element.
+
+      <p>This hook is called once at compiler startup, after the command-line
+options have been processed. It is then re-examined by every call to
+<code>target_reinit</code>.
+
+      <p>The default implementation returns <code>IRA_COVER_CLASSES</code>, if defined,
+otherwise there is no default implementation.  You must define either this
+macro or <code>IRA_COVER_CLASSES</code> in order to use the integrated register
+allocator with Chaitin-Briggs coloring. If the macro is not defined,
+the only available coloring algorithm is Chow's priority coloring. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>IRA_COVER_CLASSES</b><var><a name="index-IRA_005fCOVER_005fCLASSES-3942"></a></var><br>
+<blockquote><p>See the documentation for <code>TARGET_IRA_COVER_CLASSES</code>. 
+</p></blockquote></div>
+
+ </body></html>
+

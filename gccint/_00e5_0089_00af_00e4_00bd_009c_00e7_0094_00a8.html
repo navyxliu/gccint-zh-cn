@@ -1,0 +1,328 @@
+<html lang="zh">
+<head>
+<title>副作用 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="RTL.html#RTL" title="RTL">
+<link rel="prev" href="RTL_00e5_00a3_00b0_00e6_0098_008e.html#RTL_00e5_00a3_00b0_00e6_0098_008e" title="RTL声明">
+<link rel="next" href="Incdec.html#Incdec" title="Incdec">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%89%af%e4%bd%9c%e7%94%a8"></a>
+<a name="g_t_00e5_0089_00af_00e4_00bd_009c_00e7_0094_00a8"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Incdec.html#Incdec">Incdec</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="RTL_00e5_00a3_00b0_00e6_0098_008e.html#RTL_00e5_00a3_00b0_00e6_0098_008e">RTL声明</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="RTL.html#RTL">RTL</a>
+<hr>
+</div>
+
+<h3 class="section">10.15 副作用表达式</h3>
+
+<p><a name="index-RTL-side-effect-expressions-2551"></a>
+目前为止，所描述的表达式代码都是用来表示一个值，而不是操作。但是机器指令是不会产生值的，而只是通过副作用来改变机器状态。特定的表达式代码被用来表示副作用。
+
+ <p>一条指令的主体，总是这些副作用代码之一；上面描述的表示值的代码，只是作为操作数出现在其中。
+
+     
+<a name="index-set-2552"></a>
+<dl><dt><code>(set </code><var>lval</var> <var>x</var><code>)</code><dd>表示将<var>x</var>的值存放到由<var>lval</var>表示的地方。<var>lval</var>必须是表示可以用来存放的地方的表达式：<code>reg</code>（或者<code>subreg</code>，<code>strict_low_part</code>或者<code>zero_extract</code>），<code>mem</code>，<code>pc</code>，<code>parallel</code>或者<code>cc0</code>。
+
+     <p>如果<var>lval</var>是一个<code>reg</code>，<code>subreg</code>或者<code>mem</code>，其具有一个机器模式；则<var>x</var>必须对这种模式有效。
+
+     <p>如果<var>lval</var>是一个<code>subreg</code>的<code>strict_low_part</code>，则由<code>subreg</code>的机器模式所指定的寄存器的那部分被赋予值<var>x</var>，而寄存器的其它部分不变。
+
+     <p>如果<var>lval</var>是一个<code>zero_extract</code>，则由<code>zero_extract</code>指定的相关位域（内存或者寄存器相关的），被赋予值<var>x</var>，而其它位域不变。注意<code>sign_extract</code>不能出现在<var>lval</var>中。
+
+     <p>如果<var>lval</var>是<code>(cc0)</code>，其没有机器模式，并且<var>x</var>可以为一个<code>compare</code>表达式或者任意模式的值。后者情况表示是一个“test”指令。表达式<code>(set (cc0) (reg:</code><var>m</var> <var>n</var><code>))</code> 等价于 <code>(set (cc0) (compare (reg:</code><var>m</var> <var>n</var><code>)。在编译过程中可以使用前一个表达式来节省空间。
+
+     <p>如果</code><var>lval</var><code>是一个parallel，其用来表示一个函数通过多个寄存器来返回一个结构体的情况。parallel中的每一个元素是一个expr_list，其第一个操作数是一个reg，并且第二个操作数是一个const_int，表示相应寄存器的数据在结构体中的偏移量（以字节为单位）。第一个元素也可能为null，用来指示结构体也有一部分是在内存中传递的。
+
+     <p><a name="index-jump-instructions-and-_0040code_007bset_007d-2553"></a><a name="index-g_t_0040code_007bif_005fthen_005felse_007d-usage-2554"></a>如果</code><var>lval</var><code>是(pc)，则为一个跳转指令，并且</code><var>x</var><code>只有几种可能。其可能为一个label_ref表达式（无条件跳转）。可能为一个if_then_else（条件跳转），这种情况下，第二个或者第三个操作数必须是(pc)（用于不进行跳转的情况），并且另外两个必须是一个label_ref（用于进行跳转的情况）。</code><var>x</var><code>也可以是一个mem或者(plus:SI (pc) </code><var>y</var><code>, 其中y可以为一个reg或者mem；这些独特的模式用来表示通过分支表来进行跳转。
+
+     <p>如果</code><var>lval</var><code>即不是(cc0)也不是(pc),则</code><var>lval</var><code>的模式一定不是VOIDmode，并且</code><var>x</var><code>的模式必须对于</code><var>lval</var><code>的模式有效。
+
+     <p>lval通常通过SET_DEST宏来访问，x通常使用SET_SRC宏。
+
+     <p><a name="index-SET_005fDEST-2555"></a><a name="index-SET_005fSRC-2556"></a></code><var>lval</var><code> is customarily accessed with the SET_DEST macro and
+</code><var>x</var><code> with the SET_SRC macro.
+
+     <p><a name="index-return-2557"></a><br><dt>(return)<dd>As the sole expression in a pattern, represents a return from the
+current function, on machines where this can be done with one
+instruction, such as VAXen.  On machines where a multi-instruction
+``epilogue'' must be executed in order to return from the function,
+returning is done by jumping to a label which precedes the epilogue, and
+the return expression code is never used.
+
+     <p>Inside an if_then_else expression, represents the value to be
+placed in pc to return to the caller.
+
+     <p>Note that an insn pattern of (return) is logically equivalent to
+(set (pc) (return)), but the latter form is never used.
+
+     <p><a name="index-call-2558"></a><br><dt>(call </code><var>function</var> <var>nargs</var><code>)<dd>Represents a function call.  </code><var>function</var><code> is a mem expression
+whose address is the address of the function to be called. 
+</code><var>nargs</var><code> is an expression which can be used for two purposes: on
+some machines it represents the number of bytes of stack argument; on
+others, it represents the number of argument registers.
+
+     <p>Each machine has a standard machine mode which </code><var>function</var><code> must
+have.  The machine description defines macro FUNCTION_MODE to
+expand into the requisite mode name.  The purpose of this mode is to
+specify what kind of addressing is allowed, on machines where the
+allowed kinds of addressing depend on the machine mode being
+addressed.
+
+     <p><a name="index-clobber-2559"></a><br><dt>(clobber </code><var>x</var><code>)<dd>Represents the storing or possible storing of an unpredictable,
+undescribed value into </code><var>x</var><code>, which must be a reg,
+scratch, parallel or mem expression.
+
+     <p>One place this is used is in string instructions that store standard
+values into particular hard registers.  It may not be worth the
+trouble to describe the values that are stored, but it is essential to
+inform the compiler that the registers will be altered, lest it
+attempt to keep data in them across the string instruction.
+
+     <p>If </code><var>x</var><code> is (mem:BLK (const_int 0)) or
+(mem:BLK (scratch)), it means that all memory
+locations must be presumed clobbered.  If </code><var>x</var><code> is a parallel,
+it has the same meaning as a parallel in a set expression.
+
+     <p>Note that the machine description classifies certain hard registers as
+``call-clobbered''.  All function call instructions are assumed by
+default to clobber these registers, so there is no need to use
+clobber expressions to indicate this fact.  Also, each function
+call is assumed to have the potential to alter any memory location,
+unless the function is declared const.
+
+     <p>If the last group of expressions in a parallel are each a
+clobber expression whose arguments are reg or
+match_scratch (see <a href="RTL-Template.html#RTL-Template">RTL Template</a>) expressions, the combiner
+phase can add the appropriate clobber expressions to an insn it
+has constructed when doing so will cause a pattern to be matched.
+
+     <p>This feature can be used, for example, on a machine that whose multiply
+and add instructions don't use an MQ register but which has an
+add-accumulate instruction that does clobber the MQ register.  Similarly,
+a combined instruction might require a temporary register while the
+constituent instructions might not.
+
+     <p>When a clobber expression for a register appears inside a
+parallel with other side effects, the register allocator
+guarantees that the register is unoccupied both before and after that
+insn if it is a hard register clobber.  For pseudo-register clobber,
+the register allocator and the reload pass do not assign the same hard
+register to the clobber and the input operands if there is an insn
+alternative containing the &lsquo;</code><samp><span class="samp">&amp;</span></samp><code>&rsquo; constraint (see <a href="Modifiers.html#Modifiers">Modifiers</a>) for
+the clobber and the hard register is in register classes of the
+clobber in the alternative.  You can clobber either a specific hard
+register, a pseudo register, or a scratch expression; in the
+latter two cases, GCC will allocate a hard register that is available
+there for use as a temporary.
+
+     <p>For instructions that require a temporary register, you should use
+scratch instead of a pseudo-register because this will allow the
+combiner phase to add the clobber when required.  You do this by
+coding (clobber (match_scratch ...)).  If you do
+clobber a pseudo register, use one which appears nowhere else---generate
+a new one each time.  Otherwise, you may confuse CSE.
+
+     <p>There is one other known use for clobbering a pseudo register in a
+parallel: when one of the input operands of the insn is also
+clobbered by the insn.  In this case, using the same pseudo register in
+the clobber and elsewhere in the insn produces the expected results.
+
+     <p><a name="index-use-2560"></a><br><dt>(use </code><var>x</var><code>)<dd>Represents the use of the value of </code><var>x</var><code>.  It indicates that the
+value in </code><var>x</var><code> at this point in the program is needed, even though
+it may not be apparent why this is so.  Therefore, the compiler will
+not attempt to delete previous instructions whose only effect is to
+store a value in </code><var>x</var><code>.  </code><var>x</var><code> must be a reg expression.
+
+     <p>In some situations, it may be tempting to add a use of a
+register in a parallel to describe a situation where the value
+of a special register will modify the behavior of the instruction. 
+An hypothetical example might be a pattern for an addition that can
+either wrap around or use saturating addition depending on the value
+of a special control register:
+
+     <pre class="smallexample">          (parallel [(set (reg:SI 2) (unspec:SI [(reg:SI 3)
+                                                 (reg:SI 4)] 0))
+                     (use (reg:SI 1))])
+</pre>
+     <p class="noindent">This will not work, several of the optimizers only look at expressions
+locally; it is very likely that if you have multiple insns with
+identical inputs to the unspec, they will be optimized away even
+if register 1 changes in between.
+
+     <p>This means that use can </code><em>only</em><code> be used to describe
+that the register is live.  You should think twice before adding
+use statements, more often you will want to use unspec
+instead.  The use RTX is most commonly useful to describe that
+a fixed register is implicitly used in an insn.  It is also safe to use
+in patterns where the compiler knows for other reasons that the result
+of the whole pattern is variable, such as &lsquo;</code><samp><span class="samp">movmem</span><var>m</var></samp><code>&rsquo; or
+&lsquo;</code><samp><span class="samp">call</span></samp><code>&rsquo; patterns.
+
+     <p>During the reload phase, an insn that has a use as pattern
+can carry a reg_equal note.  These use insns will be deleted
+before the reload phase exits.
+
+     <p>During the delayed branch scheduling phase, </code><var>x</var><code> may be an insn. 
+This indicates that </code><var>x</var><code> previously was located at this place in the
+code and its data dependencies need to be taken into account.  These
+use insns will be deleted before the delayed branch scheduling
+phase exits.
+
+     <p><a name="index-parallel-2561"></a><br><dt>(parallel [</code><var>x0</var> <var>x1</var><code> ...])<dd>Represents several side effects performed in parallel.  The square
+brackets stand for a vector; the operand of parallel is a
+vector of expressions.  </code><var>x0</var><code>, </code><var>x1</var><code> and so on are individual
+side effect expressions---expressions of code set, call,
+return, clobber or use.
+
+     <p>``In parallel'' means that first all the values used in the individual
+side-effects are computed, and second all the actual side-effects are
+performed.  For example,
+
+     <pre class="smallexample">          (parallel [(set (reg:SI 1) (mem:SI (reg:SI 1)))
+                     (set (mem:SI (reg:SI 1)) (reg:SI 1))])
+</pre>
+     <p class="noindent">says unambiguously that the values of hard register 1 and the memory
+location addressed by it are interchanged.  In both places where
+(reg:SI 1) appears as a memory address it refers to the value
+in register 1 </code><em>before</em><code> the execution of the insn.
+
+     <p>It follows that it is </code><em>incorrect</em><code> to use parallel and
+expect the result of one set to be available for the next one. 
+For example, people sometimes attempt to represent a jump-if-zero
+instruction this way:
+
+     <pre class="smallexample">          (parallel [(set (cc0) (reg:SI 34))
+                     (set (pc) (if_then_else
+                                  (eq (cc0) (const_int 0))
+                                  (label_ref ...)
+                                  (pc)))])
+</pre>
+     <p class="noindent">But this is incorrect, because it says that the jump condition depends
+on the condition code value </code><em>before</em><code> this instruction, not on the
+new value that is set by this instruction.
+
+     <p><a name="index-peephole-optimization_002c-RTL-representation-2562"></a>Peephole optimization, which takes place together with final assembly
+code output, can produce insns whose patterns consist of a parallel
+whose elements are the operands needed to output the resulting
+assembler code---often reg, mem or constant expressions. 
+This would not be well-formed RTL at any other stage in compilation,
+but it is ok then because no further optimization remains to be done. 
+However, the definition of the macro NOTICE_UPDATE_CC, if
+any, must deal with such insns if you define any peephole optimizations.
+
+     <p><a name="index-cond_005fexec-2563"></a><br><dt>(cond_exec [</code><var>cond</var> <var>expr</var><code>])<dd>Represents a conditionally executed expression.  The </code><var>expr</var><code> is
+executed only if the </code><var>cond</var><code> is nonzero.  The </code><var>cond</var><code> expression
+must not have side-effects, but the </code><var>expr</var><code> may very well have
+side-effects.
+
+     <p><a name="index-sequence-2564"></a><br><dt>(sequence [</code><var>insns</var><code> ...])<dd>Represents a sequence of insns.  Each of the </code><var>insns</var><code> that appears
+in the vector is suitable for appearing in the chain of insns, so it
+must be an insn, jump_insn, call_insn,
+code_label, barrier or note.
+
+     <p>A sequence RTX is never placed in an actual insn during RTL
+generation.  It represents the sequence of insns that result from a
+define_expand </code><em>before</em><code> those insns are passed to
+emit_insn to insert them in the chain of insns.  When actually
+inserted, the individual sub-insns are separated out and the
+sequence is forgotten.
+
+     <p>After delay-slot scheduling is completed, an insn and all the insns that
+reside in its delay slots are grouped together into a sequence. 
+The insn requiring the delay slot is the first insn in the vector;
+subsequent insns are to be placed in the delay slot.
+
+     <p>INSN_ANNULLED_BRANCH_P is set on an insn in a delay slot to
+indicate that a branch insn should be used that will conditionally annul
+the effect of the insns in the delay slots.  In such a case,
+INSN_FROM_TARGET_P indicates that the insn is from the target of
+the branch and should be executed only if the branch is taken; otherwise
+the insn should be executed only if the branch is not taken. 
+See <a href="Delay-Slots.html#Delay-Slots">Delay Slots</a>. 
+</dl>
+
+ <p>These expression codes appear in place of a side effect, as the body of
+an insn, though strictly speaking they do not always describe side
+effects as such:
+
+     
+<a name="index-asm_005finput-2565"></a>
+<dl><dt>(asm_input </code><var>s</var><code>)<dd>Represents literal assembler code as described by the string </code><var>s</var><code>.
+
+     <p><a name="index-unspec-2566"></a><a name="index-unspec_005fvolatile-2567"></a><br><dt>(unspec [</code><var>operands</var><code> ...] </code><var>index</var><code>)<dt>(unspec_volatile [</code><var>operands</var><code> ...] </code><var>index</var><code>)<dd>Represents a machine-specific operation on </code><var>operands</var><code>.  </code><var>index</var><code>
+selects between multiple machine-specific operations. 
+unspec_volatile is used for volatile operations and operations
+that may trap; unspec is used for other operations.
+
+     <p>These codes may appear inside a pattern of an
+insn, inside a parallel, or inside an expression.
+
+     <p><a name="index-addr_005fvec-2568"></a><br><dt>(addr_vec:</code><var>m</var><code> [</code><var>lr0</var> <var>lr1</var><code> ...])<dd>Represents a table of jump addresses.  The vector elements </code><var>lr0</var><code>,
+etc., are label_ref expressions.  The mode </code><var>m</var><code> specifies
+how much space is given to each address; normally </code><var>m</var><code> would be
+Pmode.
+
+     <p><a name="index-addr_005fdiff_005fvec-2569"></a><br><dt>(addr_diff_vec:</code><var>m</var> <var>base</var><code> [</code><var>lr0</var> <var>lr1</var><code> ...] </code><var>min</var> <var>max</var> <var>flags</var><code>)<dd>Represents a table of jump addresses expressed as offsets from
+</code><var>base</var><code>.  The vector elements </code><var>lr0</var><code>, etc., are label_ref
+expressions and so is </code><var>base</var><code>.  The mode </code><var>m</var><code> specifies how much
+space is given to each address-difference.  </code><var>min</var><code> and </code><var>max</var><code>
+are set up by branch shortening and hold a label with a minimum and a
+maximum address, respectively.  </code><var>flags</var><code> indicates the relative
+position of </code><var>base</var><code>, </code><var>min</var><code> and </code><var>max</var><code> to the containing insn
+and of </code><var>min</var><code> and </code><var>max</var><code> to </code><var>base</var><code>.  See rtl.def for details.
+
+     <p><a name="index-prefetch-2570"></a><br><dt>(prefetch:</code><var>m</var> <var>addr</var> <var>rw</var> <var>locality</var><code>)<dd>Represents prefetch of memory at address </code><var>addr</var><code>. 
+Operand </code><var>rw</var><code> is 1 if the prefetch is for data to be written, 0 otherwise;
+targets that do not support write prefetches should treat this as a normal
+prefetch. 
+Operand </code><var>locality</var><code> specifies the amount of temporal locality; 0 if there
+is none or 1, 2, or 3 for increasing levels of temporal locality;
+targets that do not support locality hints should ignore this.
+
+     <p>This insn is used to minimize cache-miss latency by moving data into a
+cache before it is accessed.  It should use only non-faulting data prefetch
+instructions. 
+</dl>
+
+ <p></code>
+
+ </body></html>
+

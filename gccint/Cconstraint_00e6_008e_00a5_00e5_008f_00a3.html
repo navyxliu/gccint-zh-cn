@@ -1,0 +1,121 @@
+<html lang="zh">
+<head>
+<title>Cconstraint接口 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Cconstraint%e6%8e%a5%e5%8f%a3"></a>
+<a name="Cconstraint_00e6_008e_00a5_00e5_008f_00a3"></a>
+<p>
+
+<hr>
+</div>
+
+<h4 class="subsection">16.8.8 从C中测试constraint</h4>
+
+<p><a name="index-testing-constraints-3280"></a><a name="index-constraints_002c-testing-3281"></a>
+有时从C代码中测试约束要比隐式的通过<code>match_operand</code>中的约束字符串有用处。
+生成文件<samp><span class="file">tm_p.h</span></samp>声明了一些接口，用于机器特定的约束。
+这些接口都没有用于在<a href="_00e7_00ae_0080_00e5_008d_0095constraint.html#g_t_00e7_00ae_0080_00e5_008d_0095constraint">简单constraint</a>中描述的通用约束。
+这在将来可能会有所改变。
+
+ <p>警告：<samp><span class="file">tm_p.h</span></samp>可能声明了其它操作约束的函数，除了在这里列的以外。
+不要在机器独立的代码中使用那些函数。它们只是为了实现旧的约束接口。
+它们在将来将会有变动或者消失。
+
+ <p>一些有效的约束名字不是有效的C标志符，
+所以这里有一个mangling框架用于从C中引用它们。
+不包含三角括号或者下划线的约束名保持不变。下划线改写成两次，
+每个&lsquo;<samp><span class="samp">&lt;</span></samp>&rsquo;被&lsquo;<samp><span class="samp">_l</span></samp>&rsquo;替换，每个&lsquo;<samp><span class="samp">&gt;</span></samp>&rsquo;被&lsquo;<samp><span class="samp">_g</span></samp>&rsquo;替换。这里有些例子：
+
+<!-- the @c's prevent double blank lines in the printed manual. -->
+<pre class="example">
+     <p><table summary=""><tr align="left"><td valign="top"><strong>Original</strong> </td><td valign="top"><strong>Mangled</strong>  <br></td></tr><tr align="left"><td valign="top"><code>x</code>     </td><td valign="top"><code>x</code>       <br></td></tr><tr align="left"><td valign="top"><code>P42x</code>  </td><td valign="top"><code>P42x</code>    <br></td></tr><tr align="left"><td valign="top"><code>P4_x</code>  </td><td valign="top"><code>P4__x</code>   <br></td></tr><tr align="left"><td valign="top"><code>P4&gt;x</code>  </td><td valign="top"><code>P4_gx</code>   <br></td></tr><tr align="left"><td valign="top"><code>P4&gt;&gt;</code>  </td><td valign="top"><code>P4_g_g</code>  <br></td></tr><tr align="left"><td valign="top"><code>P4_g&gt;</code> </td><td valign="top"><code>P4__g_g</code>
+     <br></td></tr></table>
+</pre>
+ <p>在该章节中，变量<var>c</var>或者为一个抽象的约束，
+或者为来自<code>enum constraint_num</code>的常量；
+变量<var>m</var>为一个mangled约束名字（通常作为一个大标志符的一部分）。
+
+<div class="defun">
+&mdash; Enum: <b>constraint_num</b><var><a name="index-constraint_005fnum-3282"></a></var><br>
+<blockquote><p>对于每个机器特定的约束，有一个对应的枚举常量：
+&lsquo;<samp><span class="samp">CONSTRAINT_</span></samp>&rsquo;加上约束的mangled名字。
+函数接受一个<code>enum constraint_num</code>作为参数。
+
+      <p>机器独立的约束不具有相关的常量。这在将来可能会有改变。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: inline bool <b>satisfies_constraint_</b><var>m </var>(<var>rtx exp</var>)<var><a name="index-satisfies_005fconstraint_005f-3283"></a></var><br>
+<blockquote><p>对于每个机器特定的，非寄存器约束<var>m</var>，有一个这样函数；其返回<code>true</code>，
+如果<var>exp</var>满足约束。
+这些函数只有当<samp><span class="file">rtl.h</span></samp>被包含在<samp><span class="file">tm_p.h</span></samp>之前时才可见。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: bool <b>constraint_satisfied_p</b> (<var>rtx exp, enum constraint_num c</var>)<var><a name="index-constraint_005fsatisfied_005fp-3284"></a></var><br>
+<blockquote><p>类似<code>satisfies_constraint_</code><var>m</var>函数，只是被测试的约束作为参数给出，
+<var>c</var>。如果<var>c</var>指定一个寄存器约束，该函数将总是返回<code>false</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Function: enum reg_class <b>regclass_for_constraint</b> (<var>enum constraint_num c</var>)<var><a name="index-regclass_005ffor_005fconstraint-3285"></a></var><br>
+<blockquote><p>返回与<var>c</var>关联的寄存器类别。如果<var>c</var>不是寄存器约束，
+或者那些寄存器对于当前选择的子target无效，则返回<code>NO_REGS</code>。
+</p></blockquote></div>
+
+ <p>这里有一个使用<code>satisfies_constraint_</code><var>m</var>的例子。
+在窥孔优化（参见<a href="_00e7_00aa_00a5_00e5_00ad_0094_00e5_00ae_009a_00e4_00b9_0089.html#g_t_00e7_00aa_00a5_00e5_00ad_0094_00e5_00ae_009a_00e4_00b9_0089">窥孔定义</a>）中，操作数约束字符串将被忽略，
+所以如果有相应的约束，它们必须在C条件中被测试。在例子中，优化将被采用，
+如果操作数2不满足&lsquo;<samp><span class="samp">K</span></samp>&rsquo;约束。（这是从 i386机器描述中的窥孔定义简化的版本。）
+
+<pre class="smallexample">     (define_peephole2
+       [(match_scratch:SI 3 "r")
+        (set (match_operand:SI 0 "register_operand" "")
+             (mult:SI (match_operand:SI 1 "memory_operand" "")
+                      (match_operand:SI 2 "immediate_operand" "")))]
+     
+       "!satisfies_constraint_K (operands[2])"
+     
+       [(set (match_dup 3) (match_dup 1))
+        (set (match_dup 0) (mult:SI (match_dup 3) (match_dup 2)))]
+     
+       "")
+</pre>
+ </body></html>
+

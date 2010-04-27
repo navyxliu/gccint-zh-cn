@@ -1,0 +1,128 @@
+<html lang="zh">
+<head>
+<title>基本块 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e6_008e_00a7_00e5_0088_00b6_00e6_00b5_0081.html#g_t_00e6_008e_00a7_00e5_0088_00b6_00e6_00b5_0081" title="控制流">
+<link rel="next" href="_00e8_00be_00b9.html#g_t_00e8_00be_00b9" title="边">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%9f%ba%e6%9c%ac%e5%9d%97"></a>
+<a name="g_t_00e5_009f_00ba_00e6_009c_00ac_00e5_009d_0097"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e8_00be_00b9.html#g_t_00e8_00be_00b9">边</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_008e_00a7_00e5_0088_00b6_00e6_00b5_0081.html#g_t_00e6_008e_00a7_00e5_0088_00b6_00e6_00b5_0081">控制流</a>
+<hr>
+</div>
+
+<h3 class="section">15.1 基本块</h3>
+
+<p><a name="index-basic-block-3087"></a><a name="index-basic_005fblock-3088"></a>基本块是一段直线性的代码序列，并且只有一个入口和一个出口。
+在GCC中，基本块使用<code>basic_block</code>数据类型来表示。
+
+ <p><a name="index-next_005fbb_002c-prev_005fbb_002c-FOR_005fEACH_005fBB-3089"></a>结构体<code>basic_block</code>的两个指针成员，指针<code>next_bb</code>和<code>prev_bb</code>，
+用来维持与底层指令流顺序相同的基本块双向链表。
+基本块之间的链，由给定的操作CFG的API，通过透明的方式进行更新。
+宏<code>FOR_EACH_BB</code>可以用来按照词典顺序（lexicographical order）
+访问所有基本块。
+也可以使用<code>walk_dominator_tree</code>，进行支配遍历（dominator traversal）。
+给定两个基本块A和B，如果A<em>总是</em>在B之前被执行，
+则基本块A支配（dominate）基本块B。
+
+ <p><a name="index-BASIC_005fBLOCK-3090"></a><code>BASIC_BLOCK</code>数组包含了所有的基本块，并且顺序不固定。
+每一个<code>basic_block</code>结构体都有一个域，
+用来保留一个唯一的整数标识符<code>index</code>，
+作为该基本块在<code>BASIC_BLOCK</code>数组中的索引。
+函数中基本块的总数为<code>n_basic_blocks</code>。
+由于中间过程（passes）可以重排，创建，复制和销毁基本块，
+所以基本块的索引和总数在编译过程中都可能改变。
+任何基本块块的索引都不应该比<code>last_basic_block</code>的大。
+
+ <p><a name="index-ENTRY_005fBLOCK_005fPTR_002c-EXIT_005fBLOCK_005fPTR-3091"></a>有专门的基本块来表示一个函数的可能的入口和出口。
+这些基本块被称作<code>ENTRY_BLOCK_PRT</code>和<code>EXIT_BLOCK_PTR</code>。
+这些基本块不包含任何代码，并且不是<code>BASIC_BLOCK</code>数组的成员。
+因此它们被赋予了唯一的负数索引。
+
+ <p>每个<code>basic_block</code>还包含了指针，用来指向基本块中第一条指令
+（<dfn>head</dfn>）和最后一条指令（<dfn>tail</dfn>），
+或者在基本块中包含的指令流的结尾（<dfn>end</dfn>）。
+实际上，由于<code>basic_block</code>数据类型在GCC的两个主要中间表示
+（<code>tree</code>和RTL）中都被用来表示基本块，
+因此具有针对这两种表示的指针，用来指向基本块的头和尾。
+
+ <p><a name="index-NOTE_005fINSN_005fBASIC_005fBLOCK_002c-CODE_005fLABEL_002c-notes-3092"></a>对于RTL，这些指针是<code>rtx head, end</code>。在RTL函数表示中，
+头指针总是指向<code>NOTE_INSN_BASIC_BLOCK</code>或者<code>CODE_LABEL</code>。
+在RTL函数表示中，指令流不仅包含“真正”的指令，
+而且还有注解（<dfn>notes</dfn>）。
+任何移动或者复制基本块的函数都需要注意更新这些注解。
+许多这些注解都期望指令流是由线性区域组成的，所以这使得更新比较困难。
+<code>NOTE_INSN_BASIC_BLOCK</code>注解是唯一类型的，
+可以出现在基本块内包含的指令流中。
+一个基本块的指令流总是跟随一个<code>NOTE_INSN_BASIC_BLOCK</code>，
+但是基本块注解之前可以有0个或多个<code>CODE_LABEL</code>节点。
+基本块结束于一条控制流指令，
+或者后面是紧随<code>CODE_LABEL</code>或者<code>NOTE_INSN_BASIC_BLOCK</code>的最后一条指令。
+<code>CODE_LABEL</code>不能出现在基本块中的指令流里。
+
+ <p><a name="index-can_005ffallthru-3093"></a><a name="index-table-jump-3094"></a>除了注解之外，跳转表向量也被表示为insn流中的“伪指令”。
+这些向量从不出现在基本块中，并应该总是被放在引用它们的
+表跳转指令（tabel jump instructions）的后面。
+在移除table-jump之后，通常很难消除计算地址和引用向量的代码，
+所以对这些向量的清除工作被推迟到活跃分析之后。
+这样，跳转表向量可能会在insn流中出现，但未被引用，没有任何用图。
+在将任何边（edge）作为<dfn>fall-thru</dfn>之前，
+都需要调用<code>can_fallthru</code>函数来检查这种构造方式是否可以。
+
+ <p><a name="index-block-statement-iterators-3095"></a>对于<code>tree</code>的表示，基本块的头和尾由<code>stmt_list</code>域指向，
+但是，决不要直接引用这些特定的<code>tree</code>。替代的，在树级别上，
+使用抽象容器和迭代器来访问基本块中的语句和表达式。
+这些迭代器被称作块语句迭代器（<dfn>block statement iterators</dfn>, BSI）。
+可以在各种<samp><span class="file">tree-*</span></samp>文件中使用grep来查找<code>^bsi</code>。
+下面的片段可以打印（pretty-print）使用GIMPLE表示的程序的所有语句。
+
+<pre class="smallexample">     FOR_EACH_BB (bb)
+       {
+          block_stmt_iterator si;
+     
+          for (si = bsi_start (bb); !bsi_end_p (si); bsi_next (&amp;si))
+            {
+               tree stmt = bsi_stmt (si);
+               print_generic_stmt (stderr, stmt, 0);
+            }
+       }
+</pre>
+ </body></html>
+

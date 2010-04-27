@@ -1,0 +1,377 @@
+<html lang="zh">
+<head>
+<title>调度 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f.html#g_t_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f" title="目标宏">
+<link rel="prev" href="_00e4_00bb_00a3_00e4_00bb_00b7.html#g_t_00e4_00bb_00a3_00e4_00bb_00b7" title="代价">
+<link rel="next" href="_00e6_00ae_00b5.html#g_t_00e6_00ae_00b5" title="段">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e8%b0%83%e5%ba%a6"></a>
+<a name="g_t_00e8_00b0_0083_00e5_00ba_00a6"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e6_00ae_00b5.html#g_t_00e6_00ae_00b5">段</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e4_00bb_00a3_00e4_00bb_00b7.html#g_t_00e4_00bb_00a3_00e4_00bb_00b7">代价</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f.html#g_t_00e7_009b_00ae_00e6_00a0_0087_00e5_00ae_008f">目标宏</a>
+<hr>
+</div>
+
+<h3 class="section">17.18 调整指令调度器</h3>
+
+<p>指令调度器可能需要一些机器特定的调整，来产生好的代码。GCC为此提供了几个target钩子。通常定义它们的一部分就足够了：先尝试该列表中最前面的。
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_ISSUE_RATE</b> (<var>void</var>)<var><a name="index-TARGET_005fSCHED_005fISSUE_005fRATE-4248"></a></var><br>
+<blockquote><p>该钩子返回在target机器上同一时间可以发射的最大指令数目。缺省为1。
+虽然insn调度器本身可以定义同一周期发射一个insn的可能能性，
+但该值可以作为额外的约束，用于相同模拟处理器周期的insn发射
+（参见钩子&lsquo;<samp><span class="samp">TARGET_SCHED_REORDER</span></samp>&rsquo;和&lsquo;<samp><span class="samp">TARGET_SCHED_REORDER2</span></samp>&rsquo;）。
+该值在整个编译过程中必须为常量。如果你需要其依赖指令是什么而变化，
+则必须使用&lsquo;<samp><span class="samp">TARGET_SCHED_VARIABLE_ISSUE</span></samp>&rsquo;。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_VARIABLE_ISSUE</b> (<var>FILE *file, int verbose, rtx insn, int more</var>)<var><a name="index-TARGET_005fSCHED_005fVARIABLE_005fISSUE-4249"></a></var><br>
+<blockquote><p>该钩子在调度器从就绪列表中调度了一个insn之后被执行。
+其应该返回在当前周期仍然可以被发射的insn数目。
+对于<code>CLOBBER</code>和<code>USE</code>之外的insn，缺省为&lsquo;<samp><var>more</var><span class="samp">&nbsp;-&nbsp;1<!-- /@w --></span></samp>&rsquo;，
+其通常不根据发射频率来计数。你应该定义该钩子，
+如果一些insn比其它的需要更多的机器资源，
+使得在同一周期它们后面可以跟随较少的insn。<var>file</var>或者为一个null指针，
+或者一个stdio流，用来写入调试输出。
+<var>verbose</var>为<samp><span class="option">-fsched-verbose-</span><var>n</var></samp>提供的详细级别。
+<var>insn</var>为被调度的指针。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_ADJUST_COST</b> (<var>rtx insn, rtx link, rtx dep_insn, int cost</var>)<var><a name="index-TARGET_005fSCHED_005fADJUST_005fCOST-4250"></a></var><br>
+<blockquote><p>该函数根据<var>insn</var>和<var>dep_insn</var>通过依赖链接的关系来更正<var>cost</var>值。
+其应该返回新的值。缺省为不对<var>cost</var>进行调整。
+例如这可以用于指定调度器使用传统的流水线描述，
+即输出或反向依赖不产生与数据依赖相同的代价。
+如果调度器使用基于流水线描述的自动机，则反向依赖的代码为0，
+输出依赖的代价为1和第一个insn与第二个insn之间的延迟时间的最大值。
+如果这些值无法接受，你应该使用该钩子来修改它们。参见 <a href="_00e5_00a4_0084_00e7_0090_0086_00e5_0099_00a8_00e6_00b5_0081_00e6_00b0_00b4_00e7_00ba_00bf_00e6_008f_008f_00e8_00bf_00b0.html#g_t_00e5_00a4_0084_00e7_0090_0086_00e5_0099_00a8_00e6_00b5_0081_00e6_00b0_00b4_00e7_00ba_00bf_00e6_008f_008f_00e8_00bf_00b0">处理器流水线描述</a>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_ADJUST_PRIORITY</b> (<var>rtx insn, int priority</var>)<var><a name="index-TARGET_005fSCHED_005fADJUST_005fPRIORITY-4251"></a></var><br>
+<blockquote><p>该钩子调整<var>insn</var>的整数调度有限级<var>priority</var>。其应该返回新的priority。
+增加优先级来提前执行<var>insn</var>，减少优先级来推迟执行<var>insn</var>。
+如果不需要调整insn的调度优先级，则不需要定义该钩子。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_REORDER</b> (<var>FILE *file, int verbose, rtx *ready, int *n_readyp, int clock</var>)<var><a name="index-TARGET_005fSCHED_005fREORDER-4252"></a></var><br>
+<blockquote><p>该钩子在调度器调度完就绪列表后被执行，
+以允许机器描述来重新排序（例如在&lsquo;<samp><span class="samp">VLIW</span></samp>&rsquo;机器上，将两个小指令合并一起）。
+<var>file</var>或者为一个null指针，或者一个stdio流，用来写入调试输出。
+<var>verbose</var>为<samp><span class="option">-fsched-verbose-</span><var>n</var></samp>提供的详细级别。
+<var>ready</var>为指向已经被调度的指令就绪列表的指针。
+<var>n_readyp</var>为指向在就绪列表中的元素个数的指针。
+调度器按照相反的顺序读取就绪列表，从<var>ready</var>[<var>*n_readyp</var>-1]开始，
+到<var>ready</var>[0]。<var>clock</var>为调度器的时钟tick。你可以修改就绪列表和insn。
+返回值为这个周期可以发射的insn数；这通常只是为<code>issue_rate</code>。
+参见&lsquo;<samp><span class="samp">TARGET_SCHED_REORDER2</span></samp>&rsquo;。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_REORDER2</b> (<var>FILE *file, int verbose, rtx *ready, int *n_ready, clock</var>)<var><a name="index-TARGET_005fSCHED_005fREORDER2-4253"></a></var><br>
+<blockquote><p>类似于&lsquo;<samp><span class="samp">TARGET_SCHED_REORDER</span></samp>&rsquo;，只不过在不同的时间被调用。
+该函数每当调度器开始一个新的周期时被调用。其在每个周期都被调用一次，
+紧跟在&lsquo;<samp><span class="samp">TARGET_SCHED_VARIABLE_ISSUE</span></samp>&rsquo;之后；
+其可以重排就绪列表并返回在同一周期被调度的insn数目。
+如果常常调度一个insn会引起其他insn可以在同一周期就绪，则定义该钩子会很有用。
+这样其它insn便可以被适当的考虑进来。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_DEPENDENCIES_EVALUATION_HOOK</b> (<var>rtx head, rtx tail</var>)<var><a name="index-TARGET_005fSCHED_005fDEPENDENCIES_005fEVALUATION_005fHOOK-4254"></a></var><br>
+<blockquote><p>该钩子在由两个参数值给出的链中向前评估完insn的依赖关系之后，
+但在insn链的调度之前被调用。例如，其可以被用于更好的insn分类，
+如果其需要依赖分析。该钩子可以使用insn调度器的向后和向前依赖，
+因为它们已经被计算好了。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_INIT</b> (<var>FILE *file, int verbose, int max_ready</var>)<var><a name="index-TARGET_005fSCHED_005fINIT-4255"></a></var><br>
+<blockquote><p>该钩子在每个要被调度的指令块的起始处被调用。<var>file</var>或者为一个null指针，
+或者一个stdio流，用来写入调试输出。
+<var>verbose</var>为<samp><span class="option">-fsched-verbose-</span><var>n</var></samp>提供的详细级别。
+<var>max_ready</var>为在当前调度域中可以同时活跃的insn最大数。
+这可以用来分配需要的草稿空间，例如，&lsquo;<samp><span class="samp">TARGET_SCHED_REORDER</span></samp>&rsquo;。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_FINISH</b> (<var>FILE *file, int verbose</var>)<var><a name="index-TARGET_005fSCHED_005fFINISH-4256"></a></var><br>
+<blockquote><p>该钩子在每个要被调度的指令块的起始处被调用。
+其可以用于执行清除由其它调度钩子完成的任何动作。<var>file</var>或者为一个null指针，
+或者一个stdio流，用来写入调试输出。
+<var>verbose</var>为<samp><span class="option">-fsched-verbose-</span><var>n</var></samp>提供的详细级别。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_INIT_GLOBAL</b> (<var>FILE *file, int verbose, int old_max_uid</var>)<var><a name="index-TARGET_005fSCHED_005fINIT_005fGLOBAL-4257"></a></var><br>
+<blockquote><p>该钩子在函数级初始化的时候被调度器执行。<var>file</var>或者为一个null指针，
+或者一个stdio流，用来写入调试输出。
+<var>verbose</var>为<samp><span class="option">-fsched-verbose-</span><var>n</var></samp>提供的详细级别。
+<var>old_max_uid</var>为调度开始时，最大的insn uid。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_FINISH_GLOBAL</b> (<var>FILE *file, int verbose</var>)<var><a name="index-TARGET_005fSCHED_005fFINISH_005fGLOBAL-4258"></a></var><br>
+<blockquote><p>这是一个清除钩子，对应于<code>TARGET_SCHED_INIT_GLOBAL</code>。
+<var>file</var>或者为一个null指针，或者一个stdio流，用来写入调试输出。
+<var>verbose</var>为<samp><span class="option">-fsched-verbose-</span><var>n</var></samp>提供的详细级别。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_DFA_PRE_CYCLE_INSN</b> (<var>void</var>)<var><a name="index-TARGET_005fSCHED_005fDFA_005fPRE_005fCYCLE_005fINSN-4259"></a></var><br>
+<blockquote><p>该钩子返回一个RTL insn。流水线冒险识别器中的自动机状态，
+按照当新的模拟处理器周期开始，insn被调度的样子被改变。
+该钩子的用法可以简化一些<acronym>VLIW</acronym>处理器的自动机流水线描述。
+如果钩子被定义，其只用于基于自动机的流水线描述。缺省为不改变状态，
+当新的模拟处理器周期开始时。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_INIT_DFA_PRE_CYCLE_INSN</b> (<var>void</var>)<var><a name="index-TARGET_005fSCHED_005fINIT_005fDFA_005fPRE_005fCYCLE_005fINSN-4260"></a></var><br>
+<blockquote><p>该钩子可以用于初始化先前的钩子所使用的数据。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_DFA_POST_CYCLE_INSN</b> (<var>void</var>)<var><a name="index-TARGET_005fSCHED_005fDFA_005fPOST_005fCYCLE_005fINSN-4261"></a></var><br>
+<blockquote><p>该钩子与&lsquo;<samp><span class="samp">TARGET_SCHED_DFA_PRE_CYCLE_INSN</span></samp>&rsquo;类似，但用于改变状态，
+按照当新的模拟处理器周期结束时insn被调度的方式。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_INIT_DFA_POST_CYCLE_INSN</b> (<var>void</var>)<var><a name="index-TARGET_005fSCHED_005fINIT_005fDFA_005fPOST_005fCYCLE_005fINSN-4262"></a></var><br>
+<blockquote><p>该钩子与&lsquo;<samp><span class="samp">TARGET_SCHED_INIT_DFA_PRE_CYCLE_INSN</span></samp>&rsquo;类似，
+但用于初始化先前的钩子所使用的数据。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_DFA_PRE_CYCLE_ADVANCE</b> (<var>void</var>)<var><a name="index-TARGET_005fSCHED_005fDFA_005fPRE_005fCYCLE_005fADVANCE-4263"></a></var><br>
+<blockquote><p>该钩子用来通报target，当前模拟周期将要完成。
+该钩子类似于&lsquo;<samp><span class="samp">TARGET_SCHED_DFA_PRE_CYCLE_INSN</span></samp>&rsquo;，
+但用于在更复杂的情况下改变状态，例如当在一个单独的insn上前移一个状态并不足够时。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_DFA_POST_CYCLE_ADVANCE</b> (<var>void</var>)<var><a name="index-TARGET_005fSCHED_005fDFA_005fPOST_005fCYCLE_005fADVANCE-4264"></a></var><br>
+<blockquote><p>该钩子用来通报target，新的模拟周期刚刚开始。
+该钩子类似于&lsquo;<samp><span class="samp">TARGET_SCHED_DFA_POST_CYCLE_INSN</span></samp>&rsquo;，
+但用于在更复杂的情况下改变状态，例如当在一个单独的insn上前移一个状态并不足够时。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD</b> (<var>void</var>)<var><a name="index-TARGET_005fSCHED_005fFIRST_005fCYCLE_005fMULTIPASS_005fDFA_005fLOOKAHEAD-4265"></a></var><br>
+<blockquote><p>该钩子控制基于<acronym>DFA</acronym>的insn调度器来更好的选择一个insn，
+从就绪insn队列中。通常调度器从队列中选择第一个insn。如果钩子返回一个正值，
+则会有额外的调度器代码来尝试所有的&lsquo;<samp><span class="samp">TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD ()</span></samp>&rsquo;的排列组合，
+来选择一个insn，使得发射该insn将在同一周期产生最大的insn发射数。
+对于<acronym>VLIW</acronym>处理器，
+代码实际上解决了将简单insn打包成<acronym>VLIW</acronym> insn的问题。
+当然，如果<acronym>VLIW</acronym>打包规则在自动机中有描述。
+
+      <p>该代码还能用于超标量<acronym>RISC</acronym>处理器。
+让我们考虑一个具有3级流水的超标量<acronym>RISC</acronym>处理器。
+一些insn可以在流水线<var>A</var>或<var>B</var>中被执行，
+一些insn只能在流水线<var>B</var>或<var>C</var>中执行，
+并且有一个insn可以在流水线<var>B</var>中被执行。处理器可以发射第一个insn到<var>A</var>，
+第二个到<var>B</var>。这种情况下，第三个insn将会等待释放<var>B</var>，直到下一个周期。
+如果调度器先发射第三个insn，则处理器可以一个周期发射所有的3个insn。
+
+      <p>实际上该代码证明了基于自动机的流水线冒险识别器的优点。
+我们最快且最容易的尝试许多insn调度，并选择最好的一种。
+
+      <p>缺省为不进行多遍的调度。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD_GUARD</b> (<var>rtx</var>)<var><a name="index-TARGET_005fSCHED_005fFIRST_005fCYCLE_005fMULTIPASS_005fDFA_005fLOOKAHEAD_005fGUARD-4266"></a></var><br>
+<blockquote><p>该钩子控制了对于多遍insn调度，就绪insn队列中的什么样的insn将被考虑。
+如果钩子返回0，对于最为参数传递的insn，则insn将不被选择发射。
+
+      <p>缺省为所有的就绪insn都可以被选择发射。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_DFA_NEW_CYCLE</b> (<var>FILE *, int, rtx, int, int, int *</var>)<var><a name="index-TARGET_005fSCHED_005fDFA_005fNEW_005fCYCLE-4267"></a></var><br>
+<blockquote><p>该钩子在给定的周期，在发射作为第三个参数传递的insn之前被insn调度器调用。
+如果钩子返回非零，则insn在给定的处理器周期将不被发射。替代的，
+处理器周期将前移。如果最后一个参数的值为0，
+则insn就绪队列没有在新的周期开始时按照通常的方式被排序。
+第一个参数传递了调试输出的文件。第二个参数传递了调试输出的详细级别。
+第四个和第五个参数值分别对应于之前insn被发射的处理器周期，以及当前处理器周期。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_SCHED_IS_COSTLY_DEPENDENCE</b> (<var>struct dep_def *_dep, int cost, int distance</var>)<var><a name="index-TARGET_005fSCHED_005fIS_005fCOSTLY_005fDEPENDENCE-4268"></a></var><br>
+<blockquote><p>该钩子用于定义哪种依赖被target认为是具有昂贵代价的，
+以至于将insn调度成依赖太近是不明智的。参数为：
+第一个参数<var>_dep</var>为被评估的依赖。第二个参数<var>cost</var>为依赖的代价，
+第三个参数<var>distance</var>为两个insn的周期距离。钩子返回<code>true</code>，
+如果考虑两个insn间的距离，它们间的依赖被 target认为是昂贵的，
+否则为<code>false</code>。
+
+      <p>在多发射，乱序机器上，定义该钩子可以有用，
+（a）实际中是无法预测真实的数据/资源延迟，
+但是（b）有一个更好的机会来预测实际要被执行的组，
+并且（c）正确模拟分组会非常重要。在这样的target上，
+可能想要允许发射距离较近的依赖insn，即，比依赖距离近；
+但是对于“昂贵的依赖”不这样做，这样就可以定义该钩子。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_H_I_D_EXTENDED</b> (<var>void</var>)<var><a name="index-TARGET_005fSCHED_005fH_005fI_005fD_005fEXTENDED-4269"></a></var><br>
+<blockquote><p>该钩子在输出一个新的指令到指令流之后被insn调度器调用。
+钩子通知target后端来延伸它的每个指令的数据结构。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>*</b><var> TARGET_SCHED_ALLOC_SCHED_CONTEXT </var>(<var>void</var>)<var><a name="index-g_t_002a-4270"></a></var><br>
+<blockquote>
+      <p>Return a pointer to a store large enough to hold target scheduling context. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_INIT_SCHED_CONTEXT</b> (<var>void *tc, bool clean_p</var>)<var><a name="index-TARGET_005fSCHED_005fINIT_005fSCHED_005fCONTEXT-4271"></a></var><br>
+<blockquote><p>Initialize store pointed to by <var>tc</var> to hold target scheduling context. 
+It <var>clean_p</var> is true then initialize <var>tc</var> as if scheduler is at the
+beginning of the block.  Otherwise, make a copy of the current context in
+<var>tc</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_SET_SCHED_CONTEXT</b> (<var>void *tc</var>)<var><a name="index-TARGET_005fSCHED_005fSET_005fSCHED_005fCONTEXT-4272"></a></var><br>
+<blockquote><p>Copy target scheduling context pointer to by <var>tc</var> to the current context. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_CLEAR_SCHED_CONTEXT</b> (<var>void *tc</var>)<var><a name="index-TARGET_005fSCHED_005fCLEAR_005fSCHED_005fCONTEXT-4273"></a></var><br>
+<blockquote><p>Deallocate internal data in target scheduling context pointed to by <var>tc</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_FREE_SCHED_CONTEXT</b> (<var>void *tc</var>)<var><a name="index-TARGET_005fSCHED_005fFREE_005fSCHED_005fCONTEXT-4274"></a></var><br>
+<blockquote><p>Deallocate a store for target scheduling context pointed to by <var>tc</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>*</b><var> TARGET_SCHED_ALLOC_SCHED_CONTEXT </var>(<var>void</var>)<var><a name="index-g_t_002a-4275"></a></var><br>
+<blockquote><p>Return a pointer to a store large enough to hold target scheduling context. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_INIT_SCHED_CONTEXT</b> (<var>void *tc, bool clean_p</var>)<var><a name="index-TARGET_005fSCHED_005fINIT_005fSCHED_005fCONTEXT-4276"></a></var><br>
+<blockquote><p>Initialize store pointed to by <var>tc</var> to hold target scheduling context. 
+It <var>clean_p</var> is true then initialize <var>tc</var> as if scheduler is at the
+beginning of the block.  Otherwise, make a copy of the current context in
+<var>tc</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_SET_SCHED_CONTEXT</b> (<var>void *tc</var>)<var><a name="index-TARGET_005fSCHED_005fSET_005fSCHED_005fCONTEXT-4277"></a></var><br>
+<blockquote><p>Copy target scheduling context pointer to by <var>tc</var> to the current context. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_CLEAR_SCHED_CONTEXT</b> (<var>void *tc</var>)<var><a name="index-TARGET_005fSCHED_005fCLEAR_005fSCHED_005fCONTEXT-4278"></a></var><br>
+<blockquote><p>Deallocate internal data in target scheduling context pointed to by <var>tc</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_FREE_SCHED_CONTEXT</b> (<var>void *tc</var>)<var><a name="index-TARGET_005fSCHED_005fFREE_005fSCHED_005fCONTEXT-4279"></a></var><br>
+<blockquote><p>Deallocate a store for target scheduling context pointed to by <var>tc</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_SPECULATE_INSN</b> (<var>rtx insn, int request, rtx *new_pat</var>)<var><a name="index-TARGET_005fSCHED_005fSPECULATE_005fINSN-4280"></a></var><br>
+<blockquote><p>该钩子当<var>insn</var>只有投机依赖，并因此可以被投机的调度时，被调用。
+钩子用于检查<var>insn</var>的指令模式是否具有一个投机版本，并且如果检查成功，
+则生成那个投机模式。钩子应该返回1，如果具有投机形式，或者-1，如果不具有。
+<var>request</var>描述了请求投机的类型。如果返回值等于1，
+则<var>new_pat</var>被赋值为生成的投机指令模式。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_NEEDS_BLOCK_P</b> (<var>rtx insn</var>)<var><a name="index-TARGET_005fSCHED_005fNEEDS_005fBLOCK_005fP-4281"></a></var><br>
+<blockquote><p>该钩子在为<var>insn</var>生成恢复代码时，被insn调度器调用。其应该返回非零，
+如果相应的检查指令应该分支跳转到回复代码，否则为0. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: rtx <b>TARGET_SCHED_GEN_CHECK</b> (<var>rtx insn, rtx label, int mutate_p</var>)<var><a name="index-TARGET_005fSCHED_005fGEN_005fCHECK-4282"></a></var><br>
+<blockquote><p>该钩子被insn调度器调用，来为恢复检查指令产生一个指令模式。
+如果<var>mutate_p</var>为0，则<var>insn</var>为一个投机指令，对此应该生成检查。
+<var>label</var>或者为一个基本快的标号，恢复代码应该被生成的地方，
+或者为一个null指针，当请求的检查没有分支到恢复代码（简单的检查）。
+如果<var>mutate_p</var>为非 0，
+则由<var>insn</var>注解的对应于一个简单检查的指令模式应该被生成。
+这种情况下，<var>label</var>不能为null。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD_GUARD_SPEC</b> (<var>rtx insn</var>)<var><a name="index-TARGET_005fSCHED_005fFIRST_005fCYCLE_005fMULTIPASS_005fDFA_005fLOOKAHEAD_005fGUARD_005fSPEC-4283"></a></var><br>
+<blockquote><p>该钩子用于在就绪列表中第一个指令上没有调用&lsquo;<samp><span class="samp">TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD_GUARD</span></samp>&rsquo;的情况。
+钩子用于丢弃从当前周期调度的起始于就绪列表的投机指令。对于非投机指令，
+钩子应该总是返回非零。例如，在ia64后端，钩子用于取消数据投机insn，
+当ALAT表将满时。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_SCHED_SET_SCHED_FLAGS</b> (<var>unsigned int *flags, spec_info_t spec_info</var>)<var><a name="index-TARGET_005fSCHED_005fSET_005fSCHED_005fFLAGS-4284"></a></var><br>
+<blockquote><p>该钩子被insn调度器用于查找什么特点应该被启用。
+<var>flags</var>初始时可以设置了SCHED_RGN或SCHED_EBB位。这指示调度器过程，
+应该提供什么数据。target后端应该修改<var>flags</var>，通过修改对应于下列特点的位：
+USE_DEPS_LIST, USE_GLAT, DETACH_LIFE_INFO和DO_SPECULATION。
+对于DO_SPECULATION特点，一个额外的结构体<var>spec_info</var>应该由target来填充。
+该结构体描述了调度器中可以使用的投机类型。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_SCHED_SMS_RES_MII</b> (<var>struct ddg *g</var>)<var><a name="index-TARGET_005fSCHED_005fSMS_005fRES_005fMII-4285"></a></var><br>
+<blockquote><p>该钩子被swing modulo调度器调用，来计算基于资源的下界，
+其基于在机器上可用的资源以及每个指令要求的资源。
+target后端可以使用<var>g</var>来计算这个边界。如果没有实现该钩子，
+则会使用一个非常简单的下界：指令总数除以发射率。
+</p></blockquote></div>
+
+ </body></html>
+

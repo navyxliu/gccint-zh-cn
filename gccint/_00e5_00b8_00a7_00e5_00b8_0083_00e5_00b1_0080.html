@@ -1,0 +1,276 @@
+<html lang="zh">
+<head>
+<title>帧布局 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e6_00a0_0088_00e5_0092_008c_00e8_00b0_0083_00e7_0094_00a8.html#g_t_00e6_00a0_0088_00e5_0092_008c_00e8_00b0_0083_00e7_0094_00a8" title="栈和调用">
+<link rel="next" href="_00e5_00bc_0082_00e5_00b8_00b8_00e5_00a4_0084_00e7_0090_0086.html#g_t_00e5_00bc_0082_00e5_00b8_00b8_00e5_00a4_0084_00e7_0090_0086" title="异常处理">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e5%b8%a7%e5%b8%83%e5%b1%80"></a>
+<a name="g_t_00e5_00b8_00a7_00e5_00b8_0083_00e5_00b1_0080"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e5_00bc_0082_00e5_00b8_00b8_00e5_00a4_0084_00e7_0090_0086.html#g_t_00e5_00bc_0082_00e5_00b8_00b8_00e5_00a4_0084_00e7_0090_0086">异常处理</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_00a0_0088_00e5_0092_008c_00e8_00b0_0083_00e7_0094_00a8.html#g_t_00e6_00a0_0088_00e5_0092_008c_00e8_00b0_0083_00e7_0094_00a8">栈和调用</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.10.1 基本的帧布局</h4>
+
+<p><a name="index-stack-frame-layout-3957"></a><a name="index-frame-layout-3958"></a>
+<!-- prevent bad page break with this line -->
+这里是基本的栈布局。
+
+<div class="defun">
+&mdash; Macro: <b>STACK_GROWS_DOWNWARD</b><var><a name="index-STACK_005fGROWS_005fDOWNWARD-3959"></a></var><br>
+<blockquote><p>定义该宏，如果将一个字压入栈中使得栈指针移向更小的地址。
+
+      <p>当我们说“定义该宏，如果<small class="dots">...</small>”，这意味着编译器只是使用<code>#ifdef</code>来检查该宏，
+所以具体定义的值并没有关系。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>STACK_PUSH_CODE</b><var><a name="index-STACK_005fPUSH_005fCODE-3960"></a></var><br>
+<blockquote><p>该宏定义了当压栈所使用的操作。对于RTL形式，
+压栈操作将为<code>(set (mem (STACK_PUSH_CODE (reg sp))) ...)</code>。
+
+      <p>可选择的方式为<code>PRE_DEC</code>, <code>POST_DEC</code>, <code>PRE_INC</code>和<code>POST_INC</code>。
+使用哪一个是正确的，取决于栈的方向和栈指针是否指向栈中的最后一项，
+还是指向之后的空间。
+
+      <p>缺省为<code>PRE_DEC</code>，当<code>STACK_GROWS_DOWNWARD</code>被定义时，
+这大多情况下都是正确，否则为<code>PRE_INC</code>，这经常是错误的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FRAME_GROWS_DOWNWARD</b><var><a name="index-FRAME_005fGROWS_005fDOWNWARD-3961"></a></var><br>
+<blockquote><p>定义该宏为非零值，如果局部变量槽的地址位于帧指针的负偏移处。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ARGS_GROW_DOWNWARD</b><var><a name="index-ARGS_005fGROW_005fDOWNWARD-3962"></a></var><br>
+<blockquote><p>定义该宏，如果函数的连续的参数在栈上的地址是递减的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>STARTING_FRAME_OFFSET</b><var><a name="index-STARTING_005fFRAME_005fOFFSET-3963"></a></var><br>
+<blockquote><p>帧指针到第一个被分配的局部变量槽的偏移量。
+
+      <p>如果<code>FRAME_GROWS_DOWNWARD</code>，则通过从<code>STARTING_FRAME_OFFSET</code>减去第一个
+栈槽的长度来查找下一个栈槽的偏移量。否则，通过从<code>STARTING_FRAME_OFFSET</code>
+加上第一个栈槽的长度来查找。
+<!-- i'm not sure if the above is still correct.. had to change it to get -->
+<!-- rid of an overfull.  -mew 2feb93 -->
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>STACK_ALIGNMENT_NEEDED</b><var><a name="index-STACK_005fALIGNMENT_005fNEEDED-3964"></a></var><br>
+<blockquote><p>定义为0，来禁止在重载过程中对栈的对齐。缺省的非0值适合于大多part。
+
+      <p>在一些port上，<code>STARTING_FRAME_OFFSET</code>为非0，
+或者在局部块之后有一块寄存器保存区域，其不需要对齐到<code>STACK_BOUNDARY</code>，
+这样禁止栈对齐并且在后端实现可能会更好。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>STACK_POINTER_OFFSET</b><var><a name="index-STACK_005fPOINTER_005fOFFSET-3965"></a></var><br>
+<blockquote><p>从栈指针寄存器到第一个输出的参数所放在的位置的偏移量。
+如果没有指定，则缺省值0被使用。这对于大多数机器都合适。
+
+      <p>如果<code>ARGS_GROW_DOWNWARD</code>，
+则这是输出参数位于的第一个位置的上面的位置的偏移量。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FIRST_PARM_OFFSET</b> (<var>fundecl</var>)<var><a name="index-FIRST_005fPARM_005fOFFSET-3966"></a></var><br>
+<blockquote><p>参数指针寄存器到第一个参数的地址的偏移量。在一些机器上，
+其可能依赖于函数的数据类型。
+
+      <p>如果<code>ARGS_GROW_DOWNWARD</code>，则这是第一个参数的地址的上面的位置的偏移量。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>STACK_DYNAMIC_OFFSET</b> (<var>fundecl</var>)<var><a name="index-STACK_005fDYNAMIC_005fOFFSET-3967"></a></var><br>
+<blockquote><p>栈指针寄存器到在栈上动态分配的对象的偏移量，例如，通过<code>alloca</code>。
+
+      <p>该宏的缺省值为<code>STACK_POINTER_OFFSET</code>加上输出参数的长度。
+缺省值对于大多数机器是正确的。详情参见<samp><span class="file">function.c</span></samp>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INITIAL_FRAME_ADDRESS_RTX</b><var><a name="index-INITIAL_005fFRAME_005fADDRESS_005fRTX-3968"></a></var><br>
+<blockquote><p>一个C表达式，其值为RTL，表示初始栈帧的地址。
+该地址被传给<code>RETURN_ADDR_RTX</code>和<code>DYNAMIC_CHAIN_ADDRESS</code>。
+如果你没有定义该宏，则一个合理的缺省值将被使用。定义该宏，
+可以使帧指针消除在<code>__builtin_frame_address (count)</code>和
+<code>__builtin_return_address (count)</code>不等于0的情况下工作。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DYNAMIC_CHAIN_ADDRESS</b> (<var>frameaddr</var>)<var><a name="index-DYNAMIC_005fCHAIN_005fADDRESS-3969"></a></var><br>
+<blockquote><p>一个C表达式，其值为RTL，表示栈帧中的地址，指向被存储的调用者的帧。
+假设<var>frameaddr</var>为一个栈帧本身的地址的RTL表达式。
+
+      <p>如果你没有定义该宏，则缺省为返回<var>frameaddr</var>的值——也就是说，
+栈帧地址也是指向之前帧的地址。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SETUP_FRAME_ADDRESSES</b><var><a name="index-SETUP_005fFRAME_005fADDRESSES-3970"></a></var><br>
+<blockquote><p>如果定义，为一个C表达式，其产生机器特定的代码来建立栈，使得可以访问任意的帧。
+例如，在SPARC上，我们必须刷新栈的所有寄存器窗口，在我们可以访问任意栈帧之前。
+你很少会需要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_BUILTIN_SETJMP_FRAME_VALUE</b> ()<var><a name="index-TARGET_005fBUILTIN_005fSETJMP_005fFRAME_005fVALUE-3971"></a></var><br>
+<blockquote><p>该target钩子应该返回一个rtx，用于将当前帧的地址存储到内建的<code>setjmp</code>缓存中。
+缺省值，<code>virtual_stack_vars_rtx</code>，对于大多数机器是正确的。
+一种你可能需要定义该target钩子的原因是，
+如果<code>hard_frame_pointer_rtx</code>在你的机器上是合适的值。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FRAME_ADDR_RTX</b> (<var>frameaddr</var>)<var><a name="index-FRAME_005fADDR_005fRTX-3972"></a></var><br>
+<blockquote><p>一个C表达式，其值为RTL，表示当前帧的帧地址。<var>frameaddr</var>为当前帧的帧指针。
+这用于__builtin_frame_address。你只有当帧地址与帧指针不同的时候才需要定义该宏。
+大多数机器不需要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>RETURN_ADDR_RTX</b> (<var>count, frameaddr</var>)<var><a name="index-RETURN_005fADDR_005fRTX-3973"></a></var><br>
+<blockquote><p>A C expression whose value is RTL representing the value of the return
+address for the frame <var>count</var> steps up from the current frame, after
+the prologue.  <var>frameaddr</var> is the frame pointer of the <var>count</var>
+frame, or the frame pointer of the <var>count</var> &minus; 1 frame if
+<code>RETURN_ADDR_IN_PREVIOUS_FRAME</code> is defined.
+
+      <p>The value of the expression must always be the correct address when
+<var>count</var> is zero, but may be <code>NULL_RTX</code> if there is no way to
+determine the return address of other frames. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>RETURN_ADDR_IN_PREVIOUS_FRAME</b><var><a name="index-RETURN_005fADDR_005fIN_005fPREVIOUS_005fFRAME-3974"></a></var><br>
+<blockquote><p>定义该宏，如果一个特定的栈帧的返回地址是从之前栈帧的帧指针中访问的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INCOMING_RETURN_ADDR_RTX</b><var><a name="index-INCOMING_005fRETURN_005fADDR_005fRTX-3975"></a></var><br>
+<blockquote><p>一个C表达式，其值为RTL，表示在任何函数的起始处，在序言之前，
+流入的返回地址的位置。该RTL或者为一个<code>REG</code>，
+指示返回地址保存在&lsquo;<samp><span class="samp">REG</span></samp>&rsquo;中，或者一个<code>MEM</code>表示位于栈中。
+
+      <p>你只在你想支持调用帧调试信息，像DWARF2提供的那样，的时候才需要定义该宏。
+
+      <p>如果该RTL为一个<code>REG</code>，
+你还要定义<code>DWARF_FRAME_RETURN_COLUMN</code>为<code>DWARF_FRAME_REGNUM (REGNO)</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DWARF_ALT_FRAME_RETURN_COLUMN</b><var><a name="index-DWARF_005fALT_005fFRAME_005fRETURN_005fCOLUMN-3976"></a></var><br>
+<blockquote><p>一个C表达式，其值为一个整数，给出了DWARF2的列号，可以用作替代的返回列。
+column必须不对应于任何gcc硬件寄存器（也就是说，
+其必须不在<code>DWARF_FRAME_REGNUM</code>的范围中）。
+
+      <p>该宏当被设为一个通用寄存器，但是候选的column需要用于signal帧的时候会很有用。
+一些target还使用了不同的帧返回列。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DWARF_ZERO_REG</b><var><a name="index-DWARF_005fZERO_005fREG-3977"></a></var><br>
+<blockquote><p>一个C表达式，其值为一个整数，给出了DWARF2寄存器编号，其被认为总是具有值0。
+这应该只当target的体系结构中具有一个0寄存器并且认为使用寄存器编号来确定栈的
+回溯是一个好主意的时候才被定义。新的part应该避免该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_DWARF_HANDLE_FRAME_UNSPEC</b> (<var>const char *label, rtx pattern, int index</var>)<var><a name="index-TARGET_005fDWARF_005fHANDLE_005fFRAME_005fUNSPEC-3978"></a></var><br>
+<blockquote><p>该target钩子允许后端生成帧相关的insn，其包含了UNSPECs或UNSPEC_VOLATILEs。
+DWARF2调用帧调试信息引擎将会按照如下的形式来调用它
+     <pre class="smallexample">          (set (reg) (unspec [...] UNSPEC_INDEX))
+</pre>
+      <p>和
+     <pre class="smallexample">          (set (reg) (unspec_volatile [...] UNSPECV_INDEX)).
+</pre>
+      <p>来使后端生成调用帧指令。<var>label</var>为insn附带的CFI标号，
+<var>pattern</var>为insn的指令模式，
+<var>index</var>为<code>UNSPEC_INDEX</code>或<code>UNSPECV_INDEX</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INCOMING_FRAME_SP_OFFSET</b><var><a name="index-INCOMING_005fFRAME_005fSP_005fOFFSET-3979"></a></var><br>
+<blockquote><p>一个C表达式，其值为一个整数，给出了偏移字节数，
+从栈指针寄存器到任何函数的起始处，序言之前的栈帧的顶部。
+帧的顶部被定义为之前帧的栈指针的值，就在call指令之前。
+
+      <p>你只有当你想支持像DWARF2提供的那样的帧调试信息时才需要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ARG_POINTER_CFA_OFFSET</b> (<var>fundecl</var>)<var><a name="index-ARG_005fPOINTER_005fCFA_005fOFFSET-3980"></a></var><br>
+<blockquote><p>一个C表达式，其值为一个整数，给出了偏移字节数，从参数指针到规范化帧地址（cfa）。
+最终的值应该与通过<code>INCOMING_FRAME_SP_OFFSET</code>所计算的一致。
+不幸的是这在虚寄存器实例化的时候不可用。
+
+      <p>该宏的缺省值为<code>FIRST_PARM_OFFSET (fundecl)</code>，其对于大多数机器是正确的；
+总的来说，参数在栈帧之前被找到。注意有些情况不是这样的，一些target将寄存器保存在调用者的帧中，像SPARC和rs6000，这样的target就不需要定义该宏。
+
+      <p>你只有当缺省是不正确的时候，
+以及你想支持像DWARF2提供的那样的帧调试信息时才需要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FRAME_POINTER_CFA_OFFSET</b> (<var>fundecl</var>)<var><a name="index-FRAME_005fPOINTER_005fCFA_005fOFFSET-3981"></a></var><br>
+<blockquote><p>如果被定义，则为一个C表达式，其值为一个整数，给出了偏移字节数，
+从帧指针到规范化帧地址（cfa）。
+最终的值应该与通过<code>INCOMING_FRAME_SP_OFFSET</code>所计算的一致。
+
+      <p>通常CFA被作为参数指针的偏移量来计算，通过<code>ARG_POINTER_CFA_OFFSET</code>，
+但是如果参数指针是一个变量，这就不太可能了。如果该宏被定义，
+它暗示了虚寄存器实例化应该基于帧指针而不是参数指针。
+<code>FRAME_POINTER_CFA_OFFSET</code>和<code>ARG_POINTER_CFA_OFFSET</code>只有一个应该被定义。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CFA_FRAME_BASE_OFFSET</b> (<var>fundecl</var>)<var><a name="index-CFA_005fFRAME_005fBASE_005fOFFSET-3982"></a></var><br>
+<blockquote><p>如果定义，则为一个C表达式，其值为一个整数，给出了偏移字节数，
+从规范化帧地址（cfa）到DWARF2调试信息使用的frame base。缺省为0。
+不同的值可以在一些port上减少调试信息的大小。
+</p></blockquote></div>
+
+ </body></html>
+

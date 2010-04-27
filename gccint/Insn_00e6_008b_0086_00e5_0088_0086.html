@@ -1,0 +1,234 @@
+<html lang="zh">
+<head>
+<title>Insn拆分 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0.html#g_t_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0" title="机器描述">
+<link rel="prev" href="_00e6_0089_00a9_00e5_00b1_0095_00e5_00ae_009a_00e4_00b9_0089.html#g_t_00e6_0089_00a9_00e5_00b1_0095_00e5_00ae_009a_00e4_00b9_0089" title="扩展定义">
+<link rel="next" href="_00e5_008c_0085_00e5_0090_00ab_00e6_008c_0087_00e4_00bb_00a4_00e6_00a8_00a1_00e5_00bc_008f.html#g_t_00e5_008c_0085_00e5_0090_00ab_00e6_008c_0087_00e4_00bb_00a4_00e6_00a8_00a1_00e5_00bc_008f" title="包含指令模式">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Insn%e6%8b%86%e5%88%86"></a>
+<a name="Insn_00e6_008b_0086_00e5_0088_0086"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e5_008c_0085_00e5_0090_00ab_00e6_008c_0087_00e4_00bb_00a4_00e6_00a8_00a1_00e5_00bc_008f.html#g_t_00e5_008c_0085_00e5_0090_00ab_00e6_008c_0087_00e4_00bb_00a4_00e6_00a8_00a1_00e5_00bc_008f">包含指令模式</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e6_0089_00a9_00e5_00b1_0095_00e5_00ae_009a_00e4_00b9_0089.html#g_t_00e6_0089_00a9_00e5_00b1_0095_00e5_00ae_009a_00e4_00b9_0089">扩展定义</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0.html#g_t_00e6_009c_00ba_00e5_0099_00a8_00e6_008f_008f_00e8_00bf_00b0">机器描述</a>
+<hr>
+</div>
+
+<h3 class="section">16.16 定义如何拆分指令</h3>
+
+<p><a name="index-insn-splitting-3550"></a><a name="index-instruction-splitting-3551"></a><a name="index-splitting-instructions-3552"></a>
+有两种情况，你应该指定如何将一个指令模式拆分为多个insn。在一些机器上，
+指令需要延迟槽（参见<a href="_00e5_00bb_00b6_00e8_00bf_009f_00e6_00a7_00bd.html#g_t_00e5_00bb_00b6_00e8_00bf_009f_00e6_00a7_00bd">延迟槽</a>）或者指令的输出对于多周期
+（参见<a href="_00e5_00a4_0084_00e7_0090_0086_00e5_0099_00a8_00e6_00b5_0081_00e6_00b0_00b4_00e7_00ba_00bf_00e6_008f_008f_00e8_00bf_00b0.html#g_t_00e5_00a4_0084_00e7_0090_0086_00e5_0099_00a8_00e6_00b5_0081_00e6_00b0_00b4_00e7_00ba_00bf_00e6_008f_008f_00e8_00bf_00b0">处理器流水线描述</a>）不可用，
+则优化这些情况的编译器过程需要能够将insn移入延迟槽中。但是，
+一些insn可能会生成不止一条机器指令。这些insn则不能被放入延迟槽。
+
+ <p>通常你可以重写单个insn为单独的insn列表，每个对应于一条机器指令。
+这样做的缺点是它将造成编译变慢并且需要更多的空间。如果结果insn太复杂，
+则还会抑制一些优化。当编译器有理由相信可以改进指令或者延迟槽调度的时候，
+则会拆分insn。
+
+ <p>insn组合器阶段还拆分putative insns。
+如果三个insn被合并到一个使用复杂表达式的insn，
+其不能被某个<code>define_insn</code>模式匹配，
+则组合器阶段尝试将复杂指令模式拆分为两个被识别的insn。通常，
+它能够将复杂指令模式通过拆分某个子表达式来断开。但是，有些情况下，
+像在一个RISC机器上执行一个大常量的加法，则拆分加法为两个insn的方式是机器相关的。
+
+ <p><a name="index-define_005fsplit-3553"></a><code>define_split</code>定义告诉了编译器如何将一个复杂的insn拆分为多个简单的insn。
+它的形式为：
+
+<pre class="smallexample">     (define_split
+       [<var>insn-pattern</var>]
+       "<var>condition</var>"
+       [<var>new-insn-pattern-1</var>
+        <var>new-insn-pattern-2</var>
+        ...]
+       "<var>preparation-statements</var>")
+</pre>
+ <p><var>insn-pattern</var>为需要被拆分的指令模式，<var>condition</var>为要被测试的最终条件，
+跟<code>define_insn</code>中的一样。当一个insn匹配<var>insn-pattern</var>，
+并且满足条件<var>condition</var>，则它由insn列表<var>new-insn-pattern-1</var>,
+<var>new-insn-pattern-2</var>等来替换。
+
+ <p><var>preparation-statements</var>与那些为<code>define_expand</code>（参见<a href="_00e6_0089_00a9_00e5_00b1_0095_00e5_00ae_009a_00e4_00b9_0089.html#g_t_00e6_0089_00a9_00e5_00b1_0095_00e5_00ae_009a_00e4_00b9_0089">扩展定义</a>）
+指定的语句类似，并且在生成新RTL之前被执行。
+与<code>define_expand</code>中的不同之处为，这些语句不能生成任何新的伪寄存器。
+一旦完成重载，它们则不能在栈帧中分配任何空间。
+
+ <p>指令模式根据两种不同的环境来匹配<var>insn-pattern</var>。
+如果需要为延迟槽调度或者insn调度来拆分insn，则insn已经是有效的，
+这意味着它已经被一些<code>define_insn</code>匹配过，
+并且如果<code>reload_completed</code>为非0，则已经满足那个<code>define_insn</code>的约束。
+在那种情况下，新的insn模式必须也是匹配某个<code>define_insn</code>的insn，
+并且如果<code>reload_completed</code>为非0，则也必须满足那些定义的约束。
+
+ <p>对于这种<code>define_split</code>用法的例子，考虑下面来自<samp><span class="file">a29k.md</span></samp>的例子，
+其将从<code>HImode</code>到<code>SImode</code>的<code>sign_extend</code>拆分为一对shift insn：
+
+<pre class="smallexample">     (define_split
+       [(set (match_operand:SI 0 "gen_reg_operand" "")
+             (sign_extend:SI (match_operand:HI 1 "gen_reg_operand" "")))]
+       ""
+       [(set (match_dup 0)
+             (ashift:SI (match_dup 1)
+                        (const_int 16)))
+        (set (match_dup 0)
+             (ashiftrt:SI (match_dup 0)
+                          (const_int 16)))]
+       "
+     { operands[1] = gen_lowpart (SImode, operands[1]); }")
+</pre>
+ <p>当组合器阶段尝试拆分一个insn模式时，则情况总是为，
+指令模式没有被任何<code>define_insn</code>匹配。
+组合器过程首先尝试将单个<code>set</code>表达式拆分，
+然后是在<code>parallel</code>中的相同的<code>set</code>表达式，
+不过跟随一个伪寄存器的<code>clobber</code>，以作为scratch寄存器来使用。
+这这些情况下，组合器期望能够生成两个新的insn。
+它将验证这些指令模式匹配某个<code>define_insn</code>定义，
+所以你不需要在<code>define_split</code>中做这些测试（当然，there is no point in writing a <code>define_split</code> that will never produce insns that match).
+
+<pre class="smallexample">     (define_split
+       [(set (match_operand:SI 0 "gen_reg_operand" "")
+             (plus:SI (match_operand:SI 1 "gen_reg_operand" "")
+                      (match_operand:SI 2 "non_add_cint_operand" "")))]
+       ""
+       [(set (match_dup 0) (plus:SI (match_dup 1) (match_dup 3)))
+        (set (match_dup 0) (plus:SI (match_dup 0) (match_dup 4)))]
+     "
+     {
+       int low = INTVAL (operands[2]) &amp; 0xffff;
+       int high = (unsigned) INTVAL (operands[2]) &gt;&gt; 16;
+     
+       if (low &amp; 0x8000)
+         high++, low |= 0xffff0000;
+     
+       operands[3] = GEN_INT (high &lt;&lt; 16);
+       operands[4] = GEN_INT (low);
+     }")
+</pre>
+ <p>这里断言<code>non_add_cint_operand</code>匹配任何不是单个add insn的有效操作数的
+<code>const_int</code>。
+
+ <p>使用scratch寄存器的例子，来自同一个文件，
+用来生成等价的寄存器和大常量的比较运算：
+
+<pre class="smallexample">     (define_split
+       [(set (match_operand:CC 0 "cc_reg_operand" "")
+             (compare:CC (match_operand:SI 1 "gen_reg_operand" "")
+                         (match_operand:SI 2 "non_short_cint_operand" "")))
+        (clobber (match_operand:SI 3 "gen_reg_operand" ""))]
+       "find_single_use (operands[0], insn, 0)
+        &amp;&amp; (GET_CODE (*find_single_use (operands[0], insn, 0)) == EQ
+            || GET_CODE (*find_single_use (operands[0], insn, 0)) == NE)"
+       [(set (match_dup 3) (xor:SI (match_dup 1) (match_dup 4)))
+        (set (match_dup 0) (compare:CC (match_dup 3) (match_dup 5)))]
+       "
+     {
+       /* <span class="roman">Get the constant we are comparing against, C, and see what it
+          looks like sign-extended to 16 bits.  Then see what constant
+          could be XOR'ed with C to get the sign-extended value.</span>  */
+     
+       int c = INTVAL (operands[2]);
+       int sextc = (c &lt;&lt; 16) &gt;&gt; 16;
+       int xorv = c ^ sextc;
+     
+       operands[4] = GEN_INT (xorv);
+       operands[5] = GEN_INT (sextc);
+     }")
+</pre>
+ <p>为了避免混淆，不要写这样的<code>define_split</code>，
+其接受匹配某个<code>define_insn</code>的一些insn，同时也接受不匹配的insn。替代的，
+可以写两个分别的<code>define_split</code>定义，一个针对有效的insn，
+一个针对无效的insn。
+
+ <p>允许将跳转指令拆分为一个跳转序列或者在拆分非跳转指令时创建新的跳转。
+由于控制流图和分支预测信息需要更新，所以会有一些限制。
+
+ <p>将跳转指令拆分为由另一个跳转指令覆盖的指令序列，总是有效的，
+因为编译器期望新的跳转具有相同的行为。当新的序列包含多个跳转指令或新的标号时，
+则需要更多的辅助。只允许创建无条件跳转，或者简单的条件跳转指令。另外，
+其必须为每个条件跳转附加一个<code>REG_BR_PROB</code>注解。
+全局变量<code>split_branch_probability</code>保存了原始分支的可能性。
+为了简化边频率的重新计算，新的序列要求只具有向前跳转。
+
+ <p><a name="index-define_005finsn_005fand_005fsplit-3554"></a>对于通常的情况，define_split的模式完全匹配define_insn的模式，
+则可以使用<code>define_insn_and_split</code>。其形式为：
+
+<pre class="smallexample">     (define_insn_and_split
+       [<var>insn-pattern</var>]
+       "<var>condition</var>"
+       "<var>output-template</var>"
+       "<var>split-condition</var>"
+       [<var>new-insn-pattern-1</var>
+        <var>new-insn-pattern-2</var>
+        ...]
+       "<var>preparation-statements</var>"
+       [<var>insn-attributes</var>])
+     
+</pre>
+ <p><var>insn-pattern</var>, <var>condition</var>, <var>output-template</var>和
+<var>insn-attributes</var>跟在<code>define_insn</code>中的用法一样. 
+<var>new-insn-pattern</var>向量和<var>preparation-statements</var>跟在
+<code>define_split</code>中的用法一样。
+<var>split-condition</var>也跟在<code>define_split</code>中的用法一样,
+不同之处是如果condition开始于&lsquo;<samp><span class="samp">&amp;&amp;</span></samp>&rsquo;,
+则用于拆分的条件将被构造为split condition和insn condition的逻辑“and”运算。
+例如，在i386.md中:
+
+<pre class="smallexample">     (define_insn_and_split "zero_extendhisi2_and"
+       [(set (match_operand:SI 0 "register_operand" "=r")
+          (zero_extend:SI (match_operand:HI 1 "register_operand" "0")))
+        (clobber (reg:CC 17))]
+       "TARGET_ZERO_EXTEND_WITH_AND &amp;&amp; !optimize_size"
+       "#"
+       "&amp;&amp; reload_completed"
+       [(parallel [(set (match_dup 0)
+                        (and:SI (match_dup 0) (const_int 65535)))
+                   (clobber (reg:CC 17))])]
+       ""
+       [(set_attr "type" "alu1")])
+     
+</pre>
+ <p>在这种情况下，实际的split condition将为&lsquo;<samp><span class="samp">TARGET_ZERO_EXTEND_WITH_AND &amp;&amp; !optimize_size &amp;&amp; reload_completed</span></samp>&rsquo;。
+
+ <p><code>define_insn_and_split</code>结构提供了与两个单独的<code>define_insn</code>和<code>define_split</code>指令模式相同的功能. 其形式紧凑。
+
+ </body></html>
+

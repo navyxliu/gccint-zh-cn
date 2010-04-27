@@ -1,0 +1,158 @@
+<html lang="zh">
+<head>
+<title>选项属性 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e9_0080_0089_00e9_00a1_00b9.html#g_t_00e9_0080_0089_00e9_00a1_00b9" title="选项">
+<link rel="prev" href="_00e9_0080_0089_00e9_00a1_00b9_00e6_0096_0087_00e4_00bb_00b6_00e6_00a0_00bc_00e5_00bc_008f.html#g_t_00e9_0080_0089_00e9_00a1_00b9_00e6_0096_0087_00e4_00bb_00b6_00e6_00a0_00bc_00e5_00bc_008f" title="选项文件格式">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e9%80%89%e9%a1%b9%e5%b1%9e%e6%80%a7"></a>
+<a name="g_t_00e9_0080_0089_00e9_00a1_00b9_00e5_00b1_009e_00e6_0080_00a7"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e9_0080_0089_00e9_00a1_00b9_00e6_0096_0087_00e4_00bb_00b6_00e6_00a0_00bc_00e5_00bc_008f.html#g_t_00e9_0080_0089_00e9_00a1_00b9_00e6_0096_0087_00e4_00bb_00b6_00e6_00a0_00bc_00e5_00bc_008f">选项文件格式</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e9_0080_0089_00e9_00a1_00b9.html#g_t_00e9_0080_0089_00e9_00a1_00b9">选项</a>
+<hr>
+</div>
+
+<h3 class="section">7.2 选项属性</h3>
+
+<p>选项记录的第二个域可以指定下列属性：
+
+     <dl>
+<dt><code>Common</code><dd>选项对所有语言和目标都有效。
+
+     <br><dt><code>Target</code><dd>选项对所有语言都有效，但是目标特定的。
+
+     <br><dt><var>language</var><dd>当编译给定语言时，选项有效。
+
+     <p>可以为多个不同的语言指定同一个选项。每个语言 <var>language</var> 必须
+已经被之前的 <code>Language</code> 记录声明过。参见 <a href="_00e9_0080_0089_00e9_00a1_00b9_00e6_0096_0087_00e4_00bb_00b6_00e6_00a0_00bc_00e5_00bc_008f.html#g_t_00e9_0080_0089_00e9_00a1_00b9_00e6_0096_0087_00e4_00bb_00b6_00e6_00a0_00bc_00e5_00bc_008f">选项文件格式</a>。
+
+     <br><dt><code>RejectNegative</code><dd>选项没有“no-”形式。所有由“f”，“W”或者“m”开始的选项都被假设具有“no-”形式，
+除非使用这个属性。
+
+     <br><dt><code>Negative(</code><var>othername</var><code>)</code><dd>选项将会关掉另一个选项 <var>othername</var>，这是去掉前导符“-”的选项名字。
+这会通过 <code>Negative</code> 属性来传播一连串的选项关闭行为。
+
+     <br><dt><code>Joined</code><dt><code>Separate</code><dd>选项接受一个强制参数。<code>Joined</code> 指示选项和参数可以被包含在同一个
+<code>argv</code> 项中（例如 <code>-mflush-func=</code><var>name</var>）。
+<code>Separate</code> 指示选项和参数可以为分开的 <code>argv</code> 项（如 <code>-o</code>）。
+一个选项允许同时具有这两个属性。
+
+     <br><dt><code>JoinedOrMissing</code><dd>选项接受一个可选参数。如果参数给出，则会作为选项本身的 <code>argv</code> 项
+的一部分。
+
+     <p>该属性不能和 <code>Joined</code> 或 <code>Separate</code> 一起使用。
+
+     <br><dt><code>UInteger</code><dd>选项的参数是一个非负整数。选项解析器将会在传给选项处理前检测并转换参数。
+
+     <br><dt><code>Var(</code><var>var</var><code>)</code><dd>该选项的状态将被存储在变量 <var>var</var> 中。存储状态的方式取决于选项的类型：
+
+          <ul>
+<li>如果使用了 <code>Mask</code> 或者 <code>InverseMask</code> 属性，则 <var>var</var> 为包含
+mask的整数变量。
+
+          <li>如果选项是一个正常的on/off开关，则 <var>var</var> 为整数变量，并且当启用该选
+项时其值为非零。当使用选项的正面形式时，选项解析器会把变量置为1，当使用
+“no-”形式的时候，置为0。
+
+          <li>如果选项接受一个参数，并且具有 <code>UInteger</code> 属性，则 <var>var</var> 为整数
+变量，并且存储了参数的值。
+
+          <li>否则，如果选项接受一个参数，则 <var>var</var> 为指向参数字符串的指针。如果参数
+是可选的并且没有给出，则该指针将为null。
+</ul>
+
+     <p>选项处理脚本通常会在 <samp><span class="file">options.c</span></samp> 中声明 <var>var</var>，并且在起动时间将
+其初始化为0。你可以使用 <code>VarExists</code> 和 <code>Init</code> 来修改这种行为。
+
+     <br><dt><code>Var(</code><var>var</var><code>, </code><var>set</var><code>)</code><dd>选项控制一个整数变量 <var>var</var>，并且当 <var>var</var> 等于 <var>set</var> 时起作用。
+当使用选项的正面形式时，选项解析器会把变量置为 <var>set</var>，当使用“no-”形式
+的时候，置为 <code>!</code><var>set</var>。
+
+     <p><var>var</var> 的声明方式与上面描述的单一参数形式的具有相同的方式。
+
+     <br><dt><code>VarExists</code><dd>由 <var>Var</var> 属性指定的变量已经存在。这样，就不会有任何定义被增加到
+<samp><span class="file">options.c</span></samp> 中。
+
+     <p>应该只有在 <samp><span class="file">options.c</span></samp> 之外声明了该变量的时候，才使用这个属性。
+
+     <br><dt><code>Init(</code><var>value</var><code>)</code><dd>由属性 <code>Var</code> 指定的变量应该被静态初始化为 <var>value</var>。
+
+     <br><dt><code>Mask(</code><var>name</var><code>)</code><dd>选项与 <code>target_flags</code> 变量（see <a href="Run_002dtime-Target.html#Run_002dtime-Target">Run-time Target</a>）中的一个位
+相关联，并且当该位被置位时才起作用。你还可以指定 <code>Var</code> 去选择一
+个变量，而不只是 <code>target_flags</code>。
+
+     <p>选项处理脚本将会自动为选项分配一个唯一的位。如果选项与 &lsquo;<samp><span class="samp">target_flags</span></samp>&rsquo;
+关联，则脚本会将宏 <code>MASK_</code><var>name</var> 设为合适的位掩码。它还会声明一个
+<code>TARGET_</code><var>name</var> 宏，当选项起作用时其值为1，否则为0。如果使用
+<var>Var</var> 将选项关联到不同的变量上，则相关的宏分别叫做
+<code>OPTION_MASK_</code><var>name</var> 和 <code>OPTION_</code><var>name</var>。
+
+     <p>可以使用 <code>MaskExists</code> 来禁止自动位分配。
+
+     <br><dt><code>InverseMask(</code><var>othername</var><code>)</code><dt><code>InverseMask(</code><var>othername</var><code>, </code><var>thisname</var><code>)</code><dd>选项是具有 <code>Mask(</code><var>othername</var><code>)</code>属性的另一个选项的反面。如果给出了
+<var>thisname</var>，则选项处理脚本会声明一个 <code>TARGET_</code><var>thisname</var> 宏，
+当选项起作用时其为1，否则为0。
+
+     <br><dt><code>MaskExists</code><dd>由 <code>Mask</code> 属性指定的掩码已经存在。这样，就不会有 <code>MASK</code> 和
+<code>TARGET</code> 定义被增加到 <samp><span class="file">options.h</span></samp> 中。
+
+     <p>该属性的主要目的用来支持同义选项。第一个选项应该使用 &lsquo;<samp><span class="samp">Mask(</span><var>name</var><span class="samp">)</span></samp>&rsquo;
+并且其它的应该使用 &lsquo;<samp><span class="samp">Mask(</span><var>name</var><span class="samp">) MaskExists</span></samp>&rsquo;。
+
+     <br><dt><code>Report</code><dd>选项的说明应该通过 <samp><span class="option">-fverbose-asm</span></samp> 来打印。
+
+     <br><dt><code>Undocumented</code><dd>选项有意的不提供文档，并且不应该包括在 <samp><span class="option">--help</span></samp> 输出中。
+
+     <br><dt><code>Condition(</code><var>cond</var><code>)</code><dd>选项应该只在预处理程序条件 <var>cond</var> 为真时才被接受。注意即使 <var>cond</var> 为
+假时，任何与选项相关的C声明也会存在；<var>cond</var>只是简单的控制选项是否被接受，
+以及是否在 <samp><span class="option">--help</span></samp> 输出中被打印。
+
+     <br><dt><code>Save</code><dd>Build the <code>cl_target_option</code> structure to hold a copy of the
+option, add the functions <code>cl_target_option_save</code> and
+<code>cl_target_option_restore</code> to save and restore the options. 
+</dl>
+
+<!-- markers: CROSSREF BUG TODO -->
+<!-- Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, -->
+<!-- 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 Free Software -->
+<!-- Foundation, Inc. -->
+<!-- This is part of the GCC manual. -->
+<!-- For copying conditions, see the file gcc.texi. -->
+ </body></html>
+

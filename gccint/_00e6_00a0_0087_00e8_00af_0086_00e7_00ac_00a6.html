@@ -1,0 +1,83 @@
+<html lang="zh">
+<head>
+<title>标识符 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Tree_00e6_00a6_0082_00e8_00bf_00b0.html#Tree_00e6_00a6_0082_00e8_00bf_00b0" title="Tree概述">
+<link rel="prev" href="_00e5_00ae_008f_00e5_0092_008c_00e5_0087_00bd_00e6_0095_00b0.html#g_t_00e5_00ae_008f_00e5_0092_008c_00e5_0087_00bd_00e6_0095_00b0" title="宏和函数">
+<link rel="next" href="_00e5_00ae_00b9_00e5_0099_00a8.html#g_t_00e5_00ae_00b9_00e5_0099_00a8" title="容器">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e6%a0%87%e8%af%86%e7%ac%a6"></a>
+<a name="g_t_00e6_00a0_0087_00e8_00af_0086_00e7_00ac_00a6"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e5_00ae_00b9_00e5_0099_00a8.html#g_t_00e5_00ae_00b9_00e5_0099_00a8">容器</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e5_00ae_008f_00e5_0092_008c_00e5_0087_00bd_00e6_0095_00b0.html#g_t_00e5_00ae_008f_00e5_0092_008c_00e5_0087_00bd_00e6_0095_00b0">宏和函数</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Tree_00e6_00a6_0082_00e8_00bf_00b0.html#Tree_00e6_00a6_0082_00e8_00bf_00b0">Tree概述</a>
+<hr>
+</div>
+
+<h4 class="subsection">9.2.2 标识符</h4>
+
+<p><a name="index-identifier-1694"></a><a name="index-name-1695"></a><a name="index-IDENTIFIER_005fNODE-1696"></a>
+<code>IDENTIFIER_NODE</code>表示了比标准C或C++关于标识符更略为一般的概念。
+特别是，<code>IDENTIFIER_NODE</code>可以包含一个&lsquo;<samp><span class="samp">$</span></samp>&rsquo;，或其它额外的字符。
+
+ <p>不会有两个不同的<code>IDENTIFIER_NODE</code>表示同一个标识符。
+因此，你可以使用指针相等的方式来比较<code>IDENTIFIER_NODE</code>，
+而不必使用像strcmp这样的函数。
+
+ <p>可以使用下列宏来访问标识符：
+
+     <dl>
+<dt><code>IDENTIFIER_POINTER</code><a name="index-IDENTIFIER_005fPOINTER-1697"></a><dd>标识符所表示的字符串，为一个<code>char*</code>。
+该字符串总是以<code>NUL</code>结束，并且不包含嵌入的<code>NUL</code>字符。
+
+     <br><dt><code>IDENTIFIER_LENGTH</code><a name="index-IDENTIFIER_005fLENGTH-1698"></a><dd>由<code>IDENTIFIER_POINTER</code>返回的字符串的长度，不包括结尾的<code>NUL</code>。
+<code>IDENTIFIER_LENGTH (x)</code>的值总是与<code>strlen (IDENTIFIER_POINTER (x))</code>相同。
+
+     <br><dt><code>IDENTIFIER_OPNAME_P</code><a name="index-IDENTIFIER_005fOPNAME_005fP-1699"></a><dd>该断言当标识符表示的是重载操作符的名字时有效。这种情况下，
+不要依赖<code>IDENTIFIER_POINTER</code>或<code>IDENTIFIER_LENGTH</code>的内容。
+
+     <br><dt><code>IDENTIFIER_TYPENAME_P</code><a name="index-IDENTIFIER_005fTYPENAME_005fP-1700"></a><dd>该断言当标识符表示的是用户定义的转换操作符的名字时有效。这种情况下，
+<code>IDENTIFIER_NODE</code>的<code>TREE_TYPE</code>持有转换操作符转换后的类型。
+</dl>
+
+<!--  -->
+<!-- Containers -->
+<!--  -->
+ </body></html>
+

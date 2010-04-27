@@ -1,0 +1,475 @@
+<html lang="zh">
+<head>
+<title>标号输出 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="_00e6_00b1_0087_00e7_00bc_0096_00e6_00a0_00bc_00e5_00bc_008f.html#g_t_00e6_00b1_0087_00e7_00bc_0096_00e6_00a0_00bc_00e5_00bc_008f" title="汇编格式">
+<link rel="prev" href="_00e6_009c_00aa_00e5_0088_009d_00e5_00a7_008b_00e5_008c_0096_00e7_009a_0084_00e6_0095_00b0_00e6_008d_00ae.html#g_t_00e6_009c_00aa_00e5_0088_009d_00e5_00a7_008b_00e5_008c_0096_00e7_009a_0084_00e6_0095_00b0_00e6_008d_00ae" title="未初始化的数据">
+<link rel="next" href="_00e5_0088_009d_00e5_00a7_008b_00e5_008c_0096.html#g_t_00e5_0088_009d_00e5_00a7_008b_00e5_008c_0096" title="初始化">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.2版本或者之后的任何版本，
+对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文
+字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在
+标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行
+     的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="%e6%a0%87%e5%8f%b7%e8%be%93%e5%87%ba"></a>
+<a name="g_t_00e6_00a0_0087_00e5_008f_00b7_00e8_00be_0093_00e5_0087_00ba"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="_00e5_0088_009d_00e5_00a7_008b_00e5_008c_0096.html#g_t_00e5_0088_009d_00e5_00a7_008b_00e5_008c_0096">初始化</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="_00e6_009c_00aa_00e5_0088_009d_00e5_00a7_008b_00e5_008c_0096_00e7_009a_0084_00e6_0095_00b0_00e6_008d_00ae.html#g_t_00e6_009c_00aa_00e5_0088_009d_00e5_00a7_008b_00e5_008c_0096_00e7_009a_0084_00e6_0095_00b0_00e6_008d_00ae">未初始化的数据</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_00b1_0087_00e7_00bc_0096_00e6_00a0_00bc_00e5_00bc_008f.html#g_t_00e6_00b1_0087_00e7_00bc_0096_00e6_00a0_00bc_00e5_00bc_008f">汇编格式</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.21.4 标号的生成和输出</h4>
+
+<!-- prevent bad page break with this line -->
+<p>这节是关于标号输出的。
+
+ <p><a name="index-assemble_005fname-4376"></a>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_LABEL</b> (<var>stream, name</var>)<var><a name="index-ASM_005fOUTPUT_005fLABEL-4377"></a></var><br>
+<blockquote><p>一条C语句（没有分号），
+用来将名字为<var>name</var>的标号的汇编定义输出到stdio流<var>stream</var>中。
+使用表达式<code>assemble_name (</code><var>stream</var><code>, </code><var>name</var><code>)</code>来输出name本身；
+在此之前和之后，输出定义name的额外的汇编语法，以及换行。
+该宏的缺省定义被提供，其对于多数系统都是正确的。
+</p></blockquote></div>
+
+ <p><a name="index-assemble_005fname_005fraw-4378"></a>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_INTERNAL_LABEL</b> (<var>stream, name</var>)<var><a name="index-ASM_005fOUTPUT_005fINTERNAL_005fLABEL-4379"></a></var><br>
+<blockquote><p>等同于<code>ASM_OUTPUT_LABEL</code>，除了<var>name</var>为已知的，引用了编译器生成的标号。
+缺省定义使用<code>assemble_name_raw</code>，其类似于<code>assemble_name</code>，
+只不过更加高效。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SIZE_ASM_OP</b><var><a name="index-SIZE_005fASM_005fOP-4380"></a></var><br>
+<blockquote><p>一个C字符串，包含了适当的汇编伪指令，用于指定符号的大小，不需要任何参数。
+在使用ELF的系统上，缺省为（在<samp><span class="file">config/elfos.h</span></samp>中）&lsquo;<samp><span class="samp">"\t.size\t"</span></samp>&rsquo;；
+在其它系统上，缺省为不定义该宏。
+
+      <p>只有在你的系统上可以正确的使用<code>ASM_OUTPUT_SIZE_DIRECTIVE</code>和
+<code>ASM_OUTPUT_MEASURED_SIZE</code>的缺省定义时，才定义该宏。
+如果对于那些宏，你需要自己特定的定义，或者如果你根本不需要显式的符号大小，
+则不要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_SIZE_DIRECTIVE</b> (<var>stream, name, size</var>)<var><a name="index-ASM_005fOUTPUT_005fSIZE_005fDIRECTIVE-4381"></a></var><br>
+<blockquote><p>一条C语句（没有分号），用来将一条伪指令输出到stdio流<var>stream</var>中，
+以告诉汇编器符号<var>name</var>的大小为<var>size</var>。<var>size</var>为<code>HOST_WIDE_INT</code>。
+如果你定义了<code>SIZE_ASM_OP</code>，则该宏的缺省定义会被提供。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_MEASURED_SIZE</b> (<var>stream, name</var>)<var><a name="index-ASM_005fOUTPUT_005fMEASURED_005fSIZE-4382"></a></var><br>
+<blockquote><p>一条C语句（没有分号），用来将一条伪指令输出到stdio流<var>stream</var>中，
+以告诉汇编器通过从当前地址减去符号<var>name</var>的地址，来计算符号的大小。
+
+      <p>如果你定义了<code>SIZE_ASM_OP</code>，则该宏的缺省定义会被提供。
+缺省定义假设汇编器可以识别特殊的&lsquo;<samp><span class="samp">.</span></samp>&rsquo;符号，作为引用当前地址，
+并能够计算该处和其它符号的差。如果你的汇编器不识别&lsquo;<samp><span class="samp">.</span></samp>&rsquo;，或者不能计算差，
+你需要重定义<code>ASM_OUTPUT_MEASURED_SIZE</code>来使用其它技术。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TYPE_ASM_OP</b><var><a name="index-TYPE_005fASM_005fOP-4383"></a></var><br>
+<blockquote><p>一个C字符串，包含了适当的汇编伪指令，用于指定符号的类型，不需要任何参数。
+在使用ELF的系统上，缺省为（在<samp><span class="file">config/elfos.h</span></samp>中）&lsquo;<samp><span class="samp">"\t.type\t"</span></samp>&rsquo;；
+在其它系统上，缺省为不定义该宏。
+
+      <p>只有在你的系统上可以正确的使用<code>ASM_OUTPUT_TYPE_DIRECTIVE</code>的缺省定义时，
+才定义该宏。如果对于该宏，你需要自己特定的定义，
+或者如果你根本不需要显式的符号类型，则不要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TYPE_OPERAND_FMT</b><var><a name="index-TYPE_005fOPERAND_005fFMT-4384"></a></var><br>
+<blockquote><p>一个C字符串，
+指定了<code>TYPE_ASM_OP</code>的第二个操作数的格式（使用<code>printf</code>语法）。
+在使用ELF的系统上，缺省为（在<samp><span class="file">config/elfos.h</span></samp>中）&lsquo;<samp><span class="samp">"@%s"</span></samp>&rsquo;；
+在其它系统上，缺省为不定义该宏。
+
+      <p>只有在你的系统上可以正确的使用<code>ASM_OUTPUT_TYPE_DIRECTIVE</code>的缺省定义时，
+才定义该宏。如果对于该宏，你需要自己特定的定义，
+或者如果你根本不需要显式的符号类型，则不要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_TYPE_DIRECTIVE</b> (<var>stream, type</var>)<var><a name="index-ASM_005fOUTPUT_005fTYPE_005fDIRECTIVE-4385"></a></var><br>
+<blockquote><p>一条C语句（没有分号），用以将一条伪指令输出到stdio流<var>stream</var>中，
+以告诉汇编器符号<var>name</var>的类型为<var>type</var>。<var>type</var>是一个C字符串；
+目前该字符串总是&lsquo;<samp><span class="samp">"function"</span></samp>&rsquo;或者&lsquo;<samp><span class="samp">"object"</span></samp>&rsquo;，但你不要依赖于此。
+
+      <p>如果你定义了<code>TYPE_ASM_OP</code>和<code>TYPE_OPERAND_FMT</code>，
+则该宏的缺省定义会被提供。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_DECLARE_FUNCTION_NAME</b> (<var>stream, name, decl</var>)<var><a name="index-ASM_005fDECLARE_005fFUNCTION_005fNAME-4386"></a></var><br>
+<blockquote><p>一条C语句（没有分号），用以将任何声明被定义的函数名字<var>name</var>所需要的文本，
+输出到stdio流<var>stream</var>中。
+该宏负责输出标号定义（或者使用<code>ASM_OUTPUT_LABEL</code>）。
+参数<var>decl</var>为表示函数的<code>FUNCTION_DECL</code>树结点。
+
+      <p>如果该宏没有被定义，
+则函数名被作为标号按照通常的方式来定义（使用<code>ASM_OUTPUT_LABEL</code>）。
+
+      <p>你可能希望在定义该宏时使用<code>ASM_OUTPUT_TYPE_DIRECTIVE</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_DECLARE_FUNCTION_SIZE</b> (<var>stream, name, decl</var>)<var><a name="index-ASM_005fDECLARE_005fFUNCTION_005fSIZE-4387"></a></var><br>
+<blockquote><p>一条C语句（没有分号），用以将任何声明被定义的函数的大小所需要的文本，
+输出到stdio流<var>stream</var>中。参数<var>name</var>为函数的名字。
+参数<var>decl</var>为表示函数的<code>FUNCTION_DECL</code>树结点。
+
+      <p>如果该宏没有被定义，则函数大小没有被定义。
+
+      <p>你可能希望在定义该宏时使用<code>ASM_OUTPUT_MEASURED_SIZE</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_DECLARE_OBJECT_NAME</b> (<var>stream, name, decl</var>)<var><a name="index-ASM_005fDECLARE_005fOBJECT_005fNAME-4388"></a></var><br>
+<blockquote><p>一条C语句（没有分号），
+用以将任何声明被定义的初始化变量名字<var>name</var>所需要的文本，
+输出到stdio流<var>stream</var>中。
+该宏必须输出标号定义（可能使用<code>ASM_OUTPUT_LABEL</code>）。
+参数<var>decl</var>为表示变量的<code>VAR_DECL</code>树结点。
+
+      <p>如果该宏没有被定义，
+则变量名被作为标号按照通常的方式来定义（使用<code>ASM_OUTPUT_LABEL</code>）。
+
+      <p>你可能希望在定义该宏时使用<code>ASM_OUTPUT_TYPE_DIRECTIVE</code>和/或<code>ASM_OUTPUT_SIZE_DIRECTIVE</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_DECLARE_CONSTANT_NAME</b> (<var>stream, name, exp, size</var>)<var><a name="index-ASM_005fDECLARE_005fCONSTANT_005fNAME-4389"></a></var><br>
+<blockquote><p>一条C语句（没有分号），用以将任何声明被定义的常量名字<var>name</var>所需要的文本，
+输出到stdio流<var>stream</var>中。
+该宏负责输出标号定义（可能使用<code>ASM_OUTPUT_LABEL</code>）。
+参数<var>exp</var>为常量的值，<var>size</var>为常量的大小，以字节为单位。
+<var>name</var>为内部标号。
+
+      <p>如果该宏没有被定义，
+则<var>name</var>被作为标号按照通常的方式来定义（使用<code>ASM_OUTPUT_LABEL</code>）。
+
+      <p>你可能希望在定义该宏时使用<code>ASM_OUTPUT_TYPE_DIRECTIVE</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_DECLARE_REGISTER_GLOBAL</b> (<var>stream, decl, regno, name</var>)<var><a name="index-ASM_005fDECLARE_005fREGISTER_005fGLOBAL-4390"></a></var><br>
+<blockquote><p>一条C语句（没有分号），用以将任何为具有名字<var>name</var>的全局变量声明一个寄存器<var>regno</var>所需要的文本，输出到stdio流<var>stream</var>中。
+
+      <p>如果没有定义该宏，则相当于定义其什么都不做。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_FINISH_DECLARE_OBJECT</b> (<var>stream, decl, toplevel, atend</var>)<var><a name="index-ASM_005fFINISH_005fDECLARE_005fOBJECT-4391"></a></var><br>
+<blockquote><p>一条C语句（没有分号），用于在编译器完全处理了初始化者之后，
+来完成声明一个变量名，这样当数组的大小由初始化者控制的时候，
+就有机会来确定数组的大小。这用于需要声明对象的大小的系统上。
+
+      <p>如果没有定义该宏，则相当于定义其什么都不做。
+
+      <p>你可能希望在定义该宏时使用<code>ASM_OUTPUT_SIZE_DIRECTIVE</code>和/或<code>ASM_OUTPUT_MEASURED_SIZE</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_GLOBALIZE_LABEL</b> (<var>FILE *stream, const char *name</var>)<var><a name="index-TARGET_005fASM_005fGLOBALIZE_005fLABEL-4392"></a></var><br>
+<blockquote><p>该target钩子为一个函数，用于将一些命令输出到stdio流<var>stream</var>中，
+从而使得标号<var>name</var>为全局的；也就是，可以从其它文件中引用。
+
+      <p>缺省实现依赖于<code>GLOBAL_ASM_OP</code>的适当定义。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_GLOBALIZE_DECL_NAME</b> (<var>FILE *stream, tree decl</var>)<var><a name="index-TARGET_005fASM_005fGLOBALIZE_005fDECL_005fNAME-4393"></a></var><br>
+<blockquote><p>该target钩子为一个函数，用于将一些命令输出到stdio流<var>stream</var>中，
+从而使得<var>decl</var>相关联的名字为全局的；也就是，可以从其它文件中引用。
+
+      <p>缺省实现使用TARGET_ASM_GLOBALIZE_LABEL target钩子。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_WEAKEN_LABEL</b> (<var>stream, name</var>)<var><a name="index-ASM_005fWEAKEN_005fLABEL-4394"></a></var><br>
+<blockquote><p>一条C语句（没有分号），用于将一些命令输出到stdio流<var>stream</var>中，
+从而使得标号<var>name</var>为弱的；也就是，可以从其它文件中引用，
+但只有在没有其它定义的时候。
+使用表达式<code>assemble_name (</code><var>stream</var><code>, </code><var>name</var><code>)</code>来输出name本身；
+在此之前和之后，输出使得name为弱的额外的汇编语法，以及换行。
+
+      <p>如果没有定义该宏或者<code>ASM_WEAKEN_DECL</code>，
+GCC将不支持弱符号并且你不要定义宏<code>SUPPORTS_WEAK</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_WEAKEN_DECL</b> (<var>stream, decl, name, value</var>)<var><a name="index-ASM_005fWEAKEN_005fDECL-4395"></a></var><br>
+<blockquote><p>组合（并替换）了函数<code>ASM_WEAKEN_LABEL</code>和<code>ASM_OUTPUT_WEAK_ALIAS</code>，
+允许访问相关的函数或变量decl。如果<var>value</var>不为<code>NULL</code>，
+该C语句应该将定义弱符号<var>name</var>具有值<var>value</var>的汇编代码，
+输出到stdio流<var>stream</var>中。如果<var>value</var>为<code>NULL</code>，
+其应该输出命令来使得<var>name</var>为弱的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_WEAKREF</b> (<var>stream, decl, name, value</var>)<var><a name="index-ASM_005fOUTPUT_005fWEAKREF-4396"></a></var><br>
+<blockquote><p>输出一条伪指令，使得<var>name</var>被用来使用弱符号语义引用符号<var>value</var>。
+<code>decl</code>为<code>name</code>的声明。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SUPPORTS_WEAK</b><var><a name="index-SUPPORTS_005fWEAK-4397"></a></var><br>
+<blockquote><p>一个C表达式，如果target支持弱符号，则求值为真。
+
+      <p>如果你没有定义该宏，<samp><span class="file">defaults.h</span></samp>会提供一个缺省的定义。
+如果<code>ASM_WEAKEN_LABEL</code>或者<code>ASM_WEAKEN_DECL</code>被定义，
+则缺省定义为&lsquo;<samp><span class="samp">1</span></samp>&rsquo;；否则为&lsquo;<samp><span class="samp">0</span></samp>&rsquo;。如果你想使用编译器标记，
+例如<samp><span class="option">-melf</span></samp>，来控制弱符号的支持，则定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>MAKE_DECL_ONE_ONLY</b> (<var>decl</var>)<var><a name="index-MAKE_005fDECL_005fONE_005fONLY-4398"></a></var><br>
+<blockquote><p>一条C语句（没有分号），用来标记<var>decl</var>作为public符号生成，
+这样在多个转换单元中额外的副本将被连接器丢弃。
+如果你的目标文件格式提供了这样的支持，
+例如在Microsoft Windows PE/COFF格式中的&lsquo;<samp><span class="samp">COMDAT</span></samp>&rsquo; section标记，
+并且这种支持需要对<var>decl</var>进行改动，例如将其放到独立的section中，则定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SUPPORTS_ONE_ONLY</b><var><a name="index-SUPPORTS_005fONE_005fONLY-4399"></a></var><br>
+<blockquote><p>一个C表达式，如果target支持one-only语义，则其求值为真。
+
+      <p>如果你没有定义该宏，<samp><span class="file">varasm.c</span></samp>会提供一个缺省的定义。
+如果<code>MAKE_DECL_ONE_ONLY</code>被定义，则缺省定义为&lsquo;<samp><span class="samp">1</span></samp>&rsquo;；否则为&lsquo;<samp><span class="samp">0</span></samp>&rsquo;。
+如果你想使用编译器标记来控制one-only符号的支持，
+或者如果设置<code>DECL_ONE_ONLY</code>标记就足以标记声明被作为one-only生成时，
+定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_ASSEMBLE_VISIBILITY</b> (<var>tree decl, const char *visibility</var>)<var><a name="index-TARGET_005fASM_005fASSEMBLE_005fVISIBILITY-4400"></a></var><br>
+<blockquote><p>该target钩子为一个函数，用来将一些命令输出到<var>asm_out_file</var>，
+其将使得与<var>decl</var>相关的符号具有通过<var>visibility</var>指定的隐藏，
+保护或者内部可见的属性。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_WEAK_NOT_IN_ARCHIVE_TOC</b><var><a name="index-TARGET_005fWEAK_005fNOT_005fIN_005fARCHIVE_005fTOC-4401"></a></var><br>
+<blockquote><p>一个C表达式，如果target的连接器期望弱符号不出现在静态归档的目录表中，
+则其求值为真。缺省为<code>0</code>。
+
+      <p>将弱符号置于归档的目录表之外，意味着如果符号将只在一个转换单元中有一个定义，
+并且有从其它转换单元中进行未定义的引用，则该符号将不为弱的。定义该宏为非零，
+将使得这样通常为弱的符号成为非弱的。
+
+      <p>C++ ABI要求该宏为0。当target不能完全遵守C++ ABI，
+并且连接器要求弱符号在静态归档的目录表外面时，定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_EXTERNAL</b> (<var>stream, decl, name</var>)<var><a name="index-ASM_005fOUTPUT_005fEXTERNAL-4402"></a></var><br>
+<blockquote><p>一条C语句（没有分号），
+用于将声明在该编译中被引用但没有被定义的外部符号名字<var>name</var>，
+所需要的任何文本输出到stdio流<var>stream</var>中。<var>decl</var>的值为声明的树结点。
+
+      <p>如果不需要输出任何东西，则不需要定义该宏。
+GNU汇编器和大多数Unix汇编器不需要做任何事情。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_EXTERNAL_LIBCALL</b> (<var>rtx symref</var>)<var><a name="index-TARGET_005fASM_005fEXTERNAL_005fLIBCALL-4403"></a></var><br>
+<blockquote><p>该target钩子是一个函数，用于将一条汇编伪指令输出到<var>asm_out_file</var>中，
+用以声明一个库函数名字为外部的。库函数的名字由<var>symref</var>给出，
+<var>symref</var>为一个<code>symbol_ref</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_MARK_DECL_PRESERVED</b> (<var>tree decl</var>)<var><a name="index-TARGET_005fASM_005fMARK_005fDECL_005fPRESERVED-4404"></a></var><br>
+<blockquote><p>该target钩子为一个函数，用于将一条汇编伪指令输出到<var>asm_out_file</var>中，
+用以注释使用的符号。Darwin target使用.no_dead_code_strip伪指令。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_LABELREF</b> (<var>stream, name</var>)<var><a name="index-ASM_005fOUTPUT_005fLABELREF-4405"></a></var><br>
+<blockquote><p>一条C语句（没有分号），
+用于将名为<var>name</var>的标号的引用的汇编语法输出到stdio流<var>stream</var>中。
+这应该在name前加上&lsquo;<samp><span class="samp">_</span></samp>&rsquo;。该宏用于<code>assemble_name</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_SYMBOL_REF</b> (<var>stream, sym</var>)<var><a name="index-ASM_005fOUTPUT_005fSYMBOL_005fREF-4406"></a></var><br>
+<blockquote><p>一条C语句（没有分号），用于输出对<code>SYMBOL_REF</code> <var>sym</var>的引用。
+如果没有定义，<code>assemble_name</code>将被用来输出符号的名字。
+该宏可以用于修改符号被引用的方式，根据<code>TARGET_ENCODE_SECTION_INFO</code>的信息。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_LABEL_REF</b> (<var>stream, buf</var>)<var><a name="index-ASM_005fOUTPUT_005fLABEL_005fREF-4407"></a></var><br>
+<blockquote><p>一条C语句（没有分号），用于输出对<code>ASM_GENERATE_INTERNAL_LABEL</code>的结果，
+<var>buf</var>的引用。如果没有定义，<code>assemble_name</code>将被用来输出符号的名字。
+该宏不被调用它的<code>output_asm_label</code>或者<code>%l</code>指示符使用；
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_INTERNAL_LABEL</b> (<var>FILE *stream, const char *prefix, unsigned long labelno</var>)<var><a name="index-TARGET_005fASM_005fINTERNAL_005fLABEL-4408"></a></var><br>
+<blockquote><p>一个函数，将标号输出到stdio流<var>stream</var>中，
+标号的名字由字符串<var>prefix</var>和编号<var>labelno</var>组成。
+
+      <p>当然这些标号应该与用户级别函数和变量使用的标号不同。
+否则，程序将具有与内部标号的命名冲突。
+
+      <p>通常要求内部标号不包含在目标文件的符号表中。大多数汇编器具有命名约定，
+来处理这些标号。在许多系统上，位于标号的起始处的字母&lsquo;<samp><span class="samp">L</span></samp>&rsquo;，具有这样的效果。
+你应该找到你的系统使用的约定，并遵守。
+
+      <p>该函数的缺省版本利用<code>ASM_GENERATE_INTERNAL_LABEL</code>了。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_DEBUG_LABEL</b> (<var>stream, prefix, num</var>)<var><a name="index-ASM_005fOUTPUT_005fDEBUG_005fLABEL-4409"></a></var><br>
+<blockquote><p>一条C语句，用来将调试信息标号输出到stdio流<var>stream</var>中，
+标号的名字由字符串<var>prefix</var>和编号<var>num</var>组成。这对VLIW target很有用，
+因为调试信息标号可能需要与分支目标标号进行不同的处理。在一些系统上，
+分支目标标号必须在指令束的起始处，但是调试信息标号可以出现在指令束的中间。
+
+      <p>如果该宏没有被定义，则会使用<code>(*targetm.asm_out.internal_label)</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_GENERATE_INTERNAL_LABEL</b> (<var>string, prefix, num</var>)<var><a name="index-ASM_005fGENERATE_005fINTERNAL_005fLABEL-4410"></a></var><br>
+<blockquote><p>一条C语句，用于将标号存储到字符串<var>string</var>中，
+标号的名字由字符串<var>prefix</var>和编号<var>num</var>组成。
+
+      <p>如果字符串起始于&lsquo;<samp><span class="samp">*</span></samp>&rsquo;，
+则<code>assemble_name</code>将按照不改变剩余字符串的方式被输出。
+这对于<code>ASM_GENERATE_INTERNAL_LABEL</code>非常方便。
+如果字符串不起始于&lsquo;<samp><span class="samp">*</span></samp>&rsquo;，则会使用<code>ASM_OUTPUT_LABELREF</code>来输出字符串，
+并且可能会做改变。（当然，<code>ASM_OUTPUT_LABELREF</code>也是你的机器描述的一部分，
+所以你知道它在你的机器上做了什么。）
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_FORMAT_PRIVATE_NAME</b> (<var>outvar, name, number</var>)<var><a name="index-ASM_005fFORMAT_005fPRIVATE_005fNAME-4411"></a></var><br>
+<blockquote><p>一个C表达式，给<var>outvar</var>（类型为<code>char *</code>*的变量）
+赋值一个新分配的字符串，该字符串由字符串<var>name</var>和编号<var>number</var>组成，
+并增加适当的标点符号。使用<code>alloca</code>为字符串获得空间。
+
+      <p>字符串将被<code>ASM_OUTPUT_LABELREF</code>作为参数使用，
+来产生一个名字为<var>name</var>的内部静态变量的汇编标号。
+因此，字符串必须为有效的汇编代码。参数<var>number</var>在每次执行该宏时都不相同；
+其使得在不同作用域下的内部静态变量的名字不会有冲突。
+
+      <p>理想情况下，该字符串应该不是一个有效的C标识符，
+以阻止任何与用户自己的符号的冲突。大多数汇编器运行点或者百分号在汇编符号中；
+在名字和编号之间加入至少一个这样的字符便可以。
+
+      <p>如果该宏没有被定义，一个缺省的定义将被提供，其在大多数系统上都是正确的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_DEF</b> (<var>stream, name, value</var>)<var><a name="index-ASM_005fOUTPUT_005fDEF-4412"></a></var><br>
+<blockquote><p>一条C语句，用于将定义符号<var>name</var>具有值<var>value</var>的汇编代码输出到stdio流<var>stream</var>中。
+
+      <p><a name="index-SET_005fASM_005fOP-4413"></a>如果定义了<code>SET_ASM_OP</code>，一个缺省的定义将被提供，
+其在大多数系统上都是正确的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_DEF_FROM_DECLS</b> (<var>stream, decl_of_name, decl_of_value</var>)<var><a name="index-ASM_005fOUTPUT_005fDEF_005fFROM_005fDECLS-4414"></a></var><br>
+<blockquote><p>一条C语句，用于将定义树结点为<var>decl_of_name</var>的符号，
+具有树结点<var>decl_of_value</var>的值的汇编代码输出到stdio流<var>stream</var>中。
+该宏将优先于`ASM_OUTPUT_DEF'被使用，如果其被定义，并且如果树结点有效。
+
+      <p><a name="index-SET_005fASM_005fOP-4415"></a>如果定义了<code>SET_ASM_OP</code>，一个缺省的定义将被提供，
+其在大多数系统上都是正确的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_DEFERRED_OUTPUT_DEFS</b> (<var>decl_of_name, decl_of_value</var>)<var><a name="index-TARGET_005fDEFERRED_005fOUTPUT_005fDEFS-4416"></a></var><br>
+<blockquote><p>一条C语句，如果定义树结点为<var>decl_of_name</var>的符号具有树结点为
+<var>decl_of_value</var>的值的汇编代码，应该在当前编译单元结尾处被生成，
+则求值为真。缺省为不推迟定义的输出。
+该宏影响`ASM_OUTPUT_DEF' 和 `ASM_OUTPUT_DEF_FROM_DECLS'的定义输出。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_WEAK_ALIAS</b> (<var>stream, name, value</var>)<var><a name="index-ASM_005fOUTPUT_005fWEAK_005fALIAS-4417"></a></var><br>
+<blockquote><p>一条C语句，用来将定义弱符号<var>name</var>具有值<var>value</var>的汇编代码输出
+到stdio流<var>stream</var>中。如果<var>value</var>为<code>NULL</code>，
+其定义<var>name</var>为未定义的符号。
+
+      <p>如果target只支持弱别名时，定义该宏；否则尽量定义<code>ASM_OUTPUT_DEF</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>OBJC_GEN_METHOD_LABEL</b> (<var>buf, is_inst, class_name, cat_name, sel_name</var>)<var><a name="index-OBJC_005fGEN_005fMETHOD_005fLABEL-4418"></a></var><br>
+<blockquote><p>定义该宏来覆盖缺省的用于Objective-C方法的汇编名。
+
+      <p>缺省名为一个唯一的方法编号，跟随class的名字（例如&lsquo;<samp><span class="samp">_1_Foo</span></samp>&rsquo;）。
+对于在category中的方法，category也包含在汇编名中（例如&lsquo;<samp><span class="samp">_1_Foo_Bar</span></samp>&rsquo;）。
+
+      <p>这些名字在大多数系统上是安全的，但是使得调试变得困难，
+因为方法selector不在名字中。因此一些特定的系统定义了其它计算名字的方式。
+
+      <p><var>buf</var>为<code>char *</code>类型的表达式，给出一个缓存来存储名字；
+其长度等于<var>class_name</var>，<var>cat_name</var>和<var>sel_name</var>的和，
+再加上额外的50个字符。
+
+      <p>参数<var>is_inst</var>指定了方法是一个实例方法，还是一个类方法；
+<var>class_name</var>为类的名字；<var>cat_name</var>为category的名字（或者为空，
+如果方法不在category中）；<var>sel_name</var>为selector的名字。
+
+      <p>在汇编器可以处理带引号的名字的系统上，你可以使用该宏来提供更加可读的名字。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_DECLARE_CLASS_REFERENCE</b> (<var>stream, name</var>)<var><a name="index-ASM_005fDECLARE_005fCLASS_005fREFERENCE-4419"></a></var><br>
+<blockquote><p>一条C语句（没有分号），用于将命令输出到stdio流<var>stream</var>中，
+来声明标号<var>name</var>为Objective-C class引用。
+这只在连接器具有对NeXT-style运行时的特殊支持的target上需要。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_DECLARE_UNRESOLVED_REFERENCE</b> (<var>stream, name</var>)<var><a name="index-ASM_005fDECLARE_005fUNRESOLVED_005fREFERENCE-4420"></a></var><br>
+<blockquote><p>一条C语句（没有分号），用于将命令输出到stdio流<var>stream</var>中，
+来声明标号<var>name</var>为未解决的Objective-C class引用。
+这只在连接器具有对NeXT-style运行时的特殊支持的target上需要。
+</p></blockquote></div>
+
+ </body></html>
+
