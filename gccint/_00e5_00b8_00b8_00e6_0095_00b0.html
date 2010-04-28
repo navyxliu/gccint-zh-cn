@@ -53,123 +53,54 @@ Up:&nbsp;<a rel="up" accesskey="u" href="RTL.html#RTL">RTL</a>
 <h3 class="section">10.7 常量表达式类型</h3>
 
 <p><a name="index-RTL-constants-2347"></a><a name="index-RTL-constant-expression-types-2348"></a>
-The simplest RTL expressions are those that represent constant values.
+最简单的RTL表达式是那些对常数值的表示。
 
      
 <a name="index-const_005fint-2349"></a>
-<dl><dt><code>(const_int </code><var>i</var><code>)</code><dd>This type of expression represents the integer value <var>i</var>.  <var>i</var>
-is customarily accessed with the macro <code>INTVAL</code> as in
-<code>INTVAL (</code><var>exp</var><code>)</code>, which is equivalent to <code>XWINT (</code><var>exp</var><code>, 0)</code>.
+<dl><dt><code>(const_int </code><var>i</var><code>)</code><dd>这类表达式表示整数值<var>i</var>。<var>i</var>通常通过宏<code>INTVAL</code>来访问，<code>INTVAL (</code><var>exp</var><code>)</code>相当于<code>XWINT (</code><var>exp</var><code>, 0)</code>，
+为模式所生成的常量如果位数小于<code>HOST_WIDE_INT</code>，则必须符号扩展为全部宽度（例如，<code>gen_int_mode</code>）。
 
-     <p>Constants generated for modes with fewer bits than <code>HOST_WIDE_INT</code>
-must be sign extended to full width (e.g., with <code>gen_int_mode</code>).
+     <p><a name="index-const0_005frtx-2350"></a><a name="index-const1_005frtx-2351"></a><a name="index-const2_005frtx-2352"></a><a name="index-constm1_005frtx-2353"></a>只有一个表达式对象表示整数值0；是变量<code>const0_rtx</code>的值。同样的，整数值1的唯一表达式为<code>const1_rtx</code>，整数值2的唯一表达式为<code>const2_rtx</code>，负1的唯一表达式为<code>constm1_rtx</code>。任何试图去创建值为0，1，2或者-1的<code>const_int</code>都会返回相应的<code>const0_rtx</code>, <code>const1_rtx</code>, <code>const2_rtx</code>或者<code>constm1_rtx</code>。
 
-     <p><a name="index-const0_005frtx-2350"></a><a name="index-const1_005frtx-2351"></a><a name="index-const2_005frtx-2352"></a><a name="index-constm1_005frtx-2353"></a>There is only one expression object for the integer value zero; it is
-the value of the variable <code>const0_rtx</code>.  Likewise, the only
-expression for integer value one is found in <code>const1_rtx</code>, the only
-expression for integer value two is found in <code>const2_rtx</code>, and the
-only expression for integer value negative one is found in
-<code>constm1_rtx</code>.  Any attempt to create an expression of code
-<code>const_int</code> and value zero, one, two or negative one will return
-<code>const0_rtx</code>, <code>const1_rtx</code>, <code>const2_rtx</code> or
-<code>constm1_rtx</code> as appropriate.
+     <p><a name="index-const_005ftrue_005frtx-2354"></a>类似的，只有一个对象表示值为<code>STORE_FLAG_VALUE</code>的整数，其为<code>const_true_rtx</code>。如果<code>STORE_FLAG_VALUE</code>为1，则<code>const_true_rtx</code>和<code>const1_rtx</code>将会指向同一对象。如果<code>STORE_FLAG_VALUE</code>为-1，<code>const_true_rtx</code>和<code>constm1_rtx</code>将会指向同一对象。
 
-     <p><a name="index-const_005ftrue_005frtx-2354"></a>Similarly, there is only one object for the integer whose value is
-<code>STORE_FLAG_VALUE</code>.  It is found in <code>const_true_rtx</code>.  If
-<code>STORE_FLAG_VALUE</code> is one, <code>const_true_rtx</code> and
-<code>const1_rtx</code> will point to the same object.  If
-<code>STORE_FLAG_VALUE</code> is &minus;1, <code>const_true_rtx</code> and
-<code>constm1_rtx</code> will point to the same object.
+     <p><a name="index-const_005fdouble-2355"></a><br><dt><code>(const_double:</code><var>m</var> <var>i0</var> <var>i1</var><code> ...)</code><dd>表示或者为一个模式为<var>m</var>的浮点常量，或者为一个超过<code>HOST_BITS_PER_WIDE_INT</code>位的，但是小于其两倍的位数的整数常量（GCC并没有提供表示更大的常量的机制）。对于后者，<var>m</var>将为<code>VOIDmode</code>。
 
-     <p><a name="index-const_005fdouble-2355"></a><br><dt><code>(const_double:</code><var>m</var> <var>i0</var> <var>i1</var><code> ...)</code><dd>Represents either a floating-point constant of mode <var>m</var> or an
-integer constant too large to fit into <code>HOST_BITS_PER_WIDE_INT</code>
-bits but small enough to fit within twice that number of bits (GCC
-does not provide a mechanism to represent even larger constants).  In
-the latter case, <var>m</var> will be <code>VOIDmode</code>.
+     <p><a name="index-CONST_005fDOUBLE_005fLOW-2356"></a>如果<var>m</var>为<code>VOIDmode</code>，则值的位数存储在<var>i0</var>和<var>i1</var>中。<var>i0</var>使用宏<code>CONST_DOUBLE_LOW</code>来访问，<var>i1</var>使用<code>CONST_DOUBLE_HIGH</code>。
 
-     <p><a name="index-CONST_005fDOUBLE_005fLOW-2356"></a>If <var>m</var> is <code>VOIDmode</code>, the bits of the value are stored in
-<var>i0</var> and <var>i1</var>.  <var>i0</var> is customarily accessed with the macro
-<code>CONST_DOUBLE_LOW</code> and <var>i1</var> with <code>CONST_DOUBLE_HIGH</code>.
+     <p>如果常量为浮点（不管是什么精度），则用于存储值得整数数目取决于<code>REAL_VALUE_TYPE</code>的大小（see <a href="Floating-Point.html#Floating-Point">Floating Point</a>）。整数表示一个浮点数，但是不如target机器的或者host机器的浮点格式那么精确。要将它们转换为target机器使用的精确的位模式，使用宏<code>REAL_VALUE_TO_TARGET_DOUBLE</code>等（see <a href="Data-Output.html#Data-Output">Data Output</a>）。
 
-     <p>If the constant is floating point (regardless of its precision), then
-the number of integers used to store the value depends on the size of
-<code>REAL_VALUE_TYPE</code> (see <a href="Floating-Point.html#Floating-Point">Floating Point</a>).  The integers
-represent a floating point number, but not precisely in the target
-machine's or host machine's floating point format.  To convert them to
-the precise bit pattern used by the target machine, use the macro
-<code>REAL_VALUE_TO_TARGET_DOUBLE</code> and friends (see <a href="Data-Output.html#Data-Output">Data Output</a>).
+     <p><a name="index-const_005ffixed-2357"></a><br><dt><code>(const_fixed:</code><var>m</var><code> ...)</code><dd>表示一个机器模式为<var>m</var>定点常量。操作数是一个类型为<code>struct fixed_value</code>数据结构，并使用宏<code>CONST_FIXED_VALUE</code>来访问。数据的高部分使用<code>CONST_FIXED_VALUE_HIGH</code>来访问；低部分使用<code>CONST_FIXED_VALUE_LOW</code>来访问。
 
-     <p><a name="index-const_005ffixed-2357"></a><br><dt><code>(const_fixed:</code><var>m</var><code> ...)</code><dd>Represents a fixed-point constant of mode <var>m</var>. 
-The operand is a data structure of type <code>struct fixed_value</code> and
-is accessed with the macro <code>CONST_FIXED_VALUE</code>.  The high part of
-data is accessed with <code>CONST_FIXED_VALUE_HIGH</code>; the low part is
-accessed with <code>CONST_FIXED_VALUE_LOW</code>.
+     <p><a name="index-const_005fvector-2358"></a><br><dt><code>(const_vector:</code><var>m</var><code> [</code><var>x0</var> <var>x1</var><code> ...])</code><dd>表示一个向量常量。方括号代表向量包含的常量元素。<var>x0</var>，<var>x1</var>等等为<code>const_int</code>，<code>const_double</code>或者<code>const_fixed</code>元素。
 
-     <p><a name="index-const_005fvector-2358"></a><br><dt><code>(const_vector:</code><var>m</var><code> [</code><var>x0</var> <var>x1</var><code> ...])</code><dd>Represents a vector constant.  The square brackets stand for the vector
-containing the constant elements.  <var>x0</var>, <var>x1</var> and so on are
-the <code>const_int</code>, <code>const_double</code> or <code>const_fixed</code> elements.
+     <p>在<code>const_vector</code>中的单元数可以通过宏<code>CONST_VECTOR_NUNITS</code>来获得，形如<code>CONST_VECTOR_NUNITS (</code><var>v</var><code>)</code>。
 
-     <p>The number of units in a <code>const_vector</code> is obtained with the macro
-<code>CONST_VECTOR_NUNITS</code> as in <code>CONST_VECTOR_NUNITS (</code><var>v</var><code>)</code>.
+     <p>在向量常量中的单个元素使用宏<code>CONST_VECTOR_ELT</code>来访问，形如<code>CONST_VECTOR_ELT (</code><var>v</var><code>, </code><var>n</var><code>)</code>，其中<var>v</var>为向量常量，<var>n</var>为要访问的元素编号。
 
-     <p>Individual elements in a vector constant are accessed with the macro
-<code>CONST_VECTOR_ELT</code> as in <code>CONST_VECTOR_ELT (</code><var>v</var><code>, </code><var>n</var><code>)</code>
-where <var>v</var> is the vector constant and <var>n</var> is the element
-desired.
+     <p><a name="index-const_005fstring-2359"></a><br><dt><code>(const_string </code><var>str</var><code>)</code><dd>表示一个具有值<var>str</var>的常量字符串。目前这只用于insn属性（see <a href="Insn-Attributes.html#Insn-Attributes">Insn Attributes</a>），因为C中的常量字符串存放在内存中。
 
-     <p><a name="index-const_005fstring-2359"></a><br><dt><code>(const_string </code><var>str</var><code>)</code><dd>Represents a constant string with value <var>str</var>.  Currently this is
-used only for insn attributes (see <a href="Insn-Attributes.html#Insn-Attributes">Insn Attributes</a>) since constant
-strings in C are placed in memory.
+     <p><a name="index-symbol_005fref-2360"></a><br><dt><code>(symbol_ref:</code><var>mode</var> <var>symbol</var><code>)</code><dd>表示引用数据的汇编标号的值。<var>symbol</var>为一个字符串，描述了汇编标号的名字。如果其起始于&lsquo;<samp><span class="samp">*</span></samp>&rsquo;，则标号为<var>symbol</var>不包含&lsquo;<samp><span class="samp">*</span></samp>&rsquo;的其余部分。否则，标号为<var>symbol</var>，通常具有前缀&lsquo;<samp><span class="samp">_</span></samp>&rsquo;。
 
-     <p><a name="index-symbol_005fref-2360"></a><br><dt><code>(symbol_ref:</code><var>mode</var> <var>symbol</var><code>)</code><dd>Represents the value of an assembler label for data.  <var>symbol</var> is
-a string that describes the name of the assembler label.  If it starts
-with a &lsquo;<samp><span class="samp">*</span></samp>&rsquo;, the label is the rest of <var>symbol</var> not including
-the &lsquo;<samp><span class="samp">*</span></samp>&rsquo;.  Otherwise, the label is <var>symbol</var>, usually prefixed
-with &lsquo;<samp><span class="samp">_</span></samp>&rsquo;.
+     <p><code>symbol_ref</code>包含一个机器模式，其通常为<code>Pmode</code>。通常这是唯一的使得符号有效的机器模式。
 
-     <p>The <code>symbol_ref</code> contains a mode, which is usually <code>Pmode</code>. 
-Usually that is the only mode for which a symbol is directly valid.
+     <p><a name="index-label_005fref-2361"></a><br><dt><code>(label_ref:</code><var>mode</var> <var>label</var><code>)</code><dd>表示引用代码的汇编标号的值。其包含一个操作数，一个表达式，其必须为一个<code>code_label</code>或者一个<code>NOTE_INSN_DELETED_LABEL</code>类型的<code>note</code>，其出现在指令序列中，来标识标号应该处于的位置。
 
-     <p><a name="index-label_005fref-2361"></a><br><dt><code>(label_ref:</code><var>mode</var> <var>label</var><code>)</code><dd>Represents the value of an assembler label for code.  It contains one
-operand, an expression, which must be a <code>code_label</code> or a <code>note</code>
-of type <code>NOTE_INSN_DELETED_LABEL</code> that appears in the instruction
-sequence to identify the place where the label should go.
+     <p>对于代码标号引用，使用一个不同的表达式类型的原因是跳转优化可以区分它们。
 
-     <p>The reason for using a distinct expression type for code label
-references is so that jump optimization can distinguish them.
+     <p><code>label_ref</code>包含了一个机器模式，其通常为<code>Pmode</code>。通常这是唯一的使得标号有效的机器模式。
 
-     <p>The <code>label_ref</code> contains a mode, which is usually <code>Pmode</code>. 
-Usually that is the only mode for which a label is directly valid.
+     <p><a name="index-const-2362"></a><br><dt><code>(const:</code><var>m</var> <var>exp</var><code>)</code><dd>表示一个常量，其为汇编时算术计算的结果。操作数<var>exp</var>，为一个表达式，只包含了<code>plus</code>和<code>minus</code>组合的常量（<code>const_int</code>, <code>symbol_ref</code> 和 <code>label_ref</code>表达式）。然而，并不是所有的组合都是有效的，因为汇编器不能对重定位符号做任意的算术运算。
 
-     <p><a name="index-const-2362"></a><br><dt><code>(const:</code><var>m</var> <var>exp</var><code>)</code><dd>Represents a constant that is the result of an assembly-time
-arithmetic computation.  The operand, <var>exp</var>, is an expression that
-contains only constants (<code>const_int</code>, <code>symbol_ref</code> and
-<code>label_ref</code> expressions) combined with <code>plus</code> and
-<code>minus</code>.  However, not all combinations are valid, since the
-assembler cannot do arbitrary arithmetic on relocatable symbols.
+     <p><var>m</var>应该为<code>Pmode</code>。
 
-     <p><var>m</var> should be <code>Pmode</code>.
+     <p><a name="index-high-2363"></a><br><dt><code>(high:</code><var>m</var> <var>exp</var><code>)</code><dd>表示<var>exp</var>的高位，通常为一个<code>symbol_ref</code>。位数是机器相关的并且通常为初始化一个寄存器的高位的指令所指定的位数。其和<code>lo_sum</code>一起使用来表示典型的用于RISC机器的双指令序列来引用一个全局内存位置。
 
-     <p><a name="index-high-2363"></a><br><dt><code>(high:</code><var>m</var> <var>exp</var><code>)</code><dd>Represents the high-order bits of <var>exp</var>, usually a
-<code>symbol_ref</code>.  The number of bits is machine-dependent and is
-normally the number of bits specified in an instruction that initializes
-the high order bits of a register.  It is used with <code>lo_sum</code> to
-represent the typical two-instruction sequence used in RISC machines to
-reference a global memory location.
+     <p><var>m</var>应该为<code>Pmode</code>。
 
-     <p><var>m</var> should be <code>Pmode</code>. 
-</dl>
+ </dl>
 
- <p><a name="index-CONST0_005fRTX-2364"></a><a name="index-CONST1_005fRTX-2365"></a><a name="index-CONST2_005fRTX-2366"></a>The macro <code>CONST0_RTX (</code><var>mode</var><code>)</code> refers to an expression with
-value 0 in mode <var>mode</var>.  If mode <var>mode</var> is of mode class
-<code>MODE_INT</code>, it returns <code>const0_rtx</code>.  If mode <var>mode</var> is of
-mode class <code>MODE_FLOAT</code>, it returns a <code>CONST_DOUBLE</code>
-expression in mode <var>mode</var>.  Otherwise, it returns a
-<code>CONST_VECTOR</code> expression in mode <var>mode</var>.  Similarly, the macro
-<code>CONST1_RTX (</code><var>mode</var><code>)</code> refers to an expression with value 1 in
-mode <var>mode</var> and similarly for <code>CONST2_RTX</code>.  The
-<code>CONST1_RTX</code> and <code>CONST2_RTX</code> macros are undefined
-for vector modes.
+ <p><a name="index-CONST0_005fRTX-2364"></a><a name="index-CONST1_005fRTX-2365"></a><a name="index-CONST2_005fRTX-2366"></a>宏<code>CONST0_RTX (</code><var>mode</var><code>)</code>指定一个具有值0，机器模式为<var>mode</var>的表达式。如果<var>mode</var>为<code>MODE_INT</code>类别，则返回<code>const0_rtx</code>。如果<var>mode</var>为 <code>MODE_FLOAT</code>类别，则返回模式为<var>mode</var>的表达式<code>CONST_DOUBLE</code>。否则，其返回一个模式为<var>mode</var>的表达式<code>CONST_VECTOR</code>。类似的，宏<code>CONST1_RTX (</code><var>mode</var><code>)</code>指定一个具有值1，机器模式为<var>mode</var>的表达式，类似的对于<code>CONST2_RTX</code>。宏<code>CONST1_RTX</code>和<code>CONST2_RTX</code>对于向量模式没有定义。
 
  </body></html>
 

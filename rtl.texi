@@ -1062,250 +1062,134 @@ Algol或者Pascal函数变量，包括一个静态链。（这些目前还没有
 @findex const_int
 @item (const_int @var{i})
 这类表达式表示整数值@var{i}。@var{i}通常通过宏@code{INTVAL}来访问，@code{INTVAL (@var{exp})}相当于@code{XWINT (@var{exp}, 0)}， 
-为模式所生成的常量如果位数小于HOST_WIDE_INT，则必须符号扩展为全部宽度（例如，gen_int_mode）。
-
-只有一个表达式对象表示整数值0；是变量const0_rtx的值。同样的，整数值1的唯一表达式为const1_rtx，整数值2的唯一表达式为const2_rtx，负1的唯一表达式为constm1_rtx。任何试图去创建值为0，1，2或者-1的const_int都会返回相应的const0_rtx, const1_rtx, const2_rtx或者 constm1_rtx
-
-类似的，只有一个对象表示值为STORE_FLAG_VALUE的整数，其为const_true_rtx。如果STORE_FLAG_VALUE为1，则const_true_rtx和const1_rtx将会指向同一对象。如果STORE_FLAG_VALUE为-1，const_true_rtx和constm1_rtx将会指向同一对象。
-
-This type of expression represents the integer value @var{i}.  @var{i}
-is customarily accessed with the macro @code{INTVAL} as in
-@code{INTVAL (@var{exp})}, which is equivalent to @code{XWINT (@var{exp}, 0)}.
-
-Constants generated for modes with fewer bits than @code{HOST_WIDE_INT}
-must be sign extended to full width (e.g., with @code{gen_int_mode}).
+为模式所生成的常量如果位数小于@code{HOST_WIDE_INT}，则必须符号扩展为全部宽度（例如，@code{gen_int_mode}）。
 
 @findex const0_rtx
 @findex const1_rtx
 @findex const2_rtx
 @findex constm1_rtx
-There is only one expression object for the integer value zero; it is
-the value of the variable @code{const0_rtx}.  Likewise, the only
-expression for integer value one is found in @code{const1_rtx}, the only
-expression for integer value two is found in @code{const2_rtx}, and the
-only expression for integer value negative one is found in
-@code{constm1_rtx}.  Any attempt to create an expression of code
-@code{const_int} and value zero, one, two or negative one will return
-@code{const0_rtx}, @code{const1_rtx}, @code{const2_rtx} or
-@code{constm1_rtx} as appropriate.
+只有一个表达式对象表示整数值0；是变量@code{const0_rtx}的值。同样的，整数值1的唯一表达式为@code{const1_rtx}，整数值2的唯一表达式为@code{const2_rtx}，负1的唯一表达式为@code{constm1_rtx}。任何试图去创建值为0，1，2或者-1的@code{const_int}都会返回相应的@code{const0_rtx}, @code{const1_rtx}, @code{const2_rtx}或者@code{constm1_rtx}。
 
 @findex const_true_rtx
-Similarly, there is only one object for the integer whose value is
-@code{STORE_FLAG_VALUE}.  It is found in @code{const_true_rtx}.  If
-@code{STORE_FLAG_VALUE} is one, @code{const_true_rtx} and
-@code{const1_rtx} will point to the same object.  If
-@code{STORE_FLAG_VALUE} is @minus{}1, @code{const_true_rtx} and
-@code{constm1_rtx} will point to the same object.
+类似的，只有一个对象表示值为@code{STORE_FLAG_VALUE}的整数，其为@code{const_true_rtx}。如果@code{STORE_FLAG_VALUE}为1，则@code{const_true_rtx}和@code{const1_rtx}将会指向同一对象。如果@code{STORE_FLAG_VALUE}为-1，@code{const_true_rtx}和@code{constm1_rtx}将会指向同一对象。
 
 @findex const_double
 @item (const_double:@var{m} @var{i0} @var{i1} @dots{})
 表示或者为一个模式为@var{m}的浮点常量，或者为一个超过@code{HOST_BITS_PER_WIDE_INT}位的，但是小于其两倍的位数的整数常量（GCC并没有提供表示更大的常量的机制）。对于后者，@var{m}将为@code{VOIDmode}。 
 
 @findex CONST_DOUBLE_LOW
-If @var{m} is @code{VOIDmode}, the bits of the value are stored in
-@var{i0} and @var{i1}.  @var{i0} is customarily accessed with the macro
-@code{CONST_DOUBLE_LOW} and @var{i1} with @code{CONST_DOUBLE_HIGH}.
+如果@var{m}为@code{VOIDmode}，则值的位数存储在@var{i0}和@var{i1}中。@var{i0}使用宏@code{CONST_DOUBLE_LOW}来访问，@var{i1}使用@code{CONST_DOUBLE_HIGH}。
 
-If the constant is floating point (regardless of its precision), then
-the number of integers used to store the value depends on the size of
-@code{REAL_VALUE_TYPE} (@pxref{Floating Point}).  The integers
-represent a floating point number, but not precisely in the target
-machine's or host machine's floating point format.  To convert them to
-the precise bit pattern used by the target machine, use the macro
-@code{REAL_VALUE_TO_TARGET_DOUBLE} and friends (@pxref{Data Output}).
+如果常量为浮点（不管是什么精度），则用于存储值得整数数目取决于@code{REAL_VALUE_TYPE}的大小（@pxref{Floating Point}）。整数表示一个浮点数，但是不如target机器的或者host机器的浮点格式那么精确。要将它们转换为target机器使用的精确的位模式，使用宏@code{REAL_VALUE_TO_TARGET_DOUBLE}等（@pxref{Data Output}）。
 
 @findex const_fixed
 @item (const_fixed:@var{m} @dots{})
-Represents a fixed-point constant of mode @var{m}.
-The operand is a data structure of type @code{struct fixed_value} and
-is accessed with the macro @code{CONST_FIXED_VALUE}.  The high part of
-data is accessed with @code{CONST_FIXED_VALUE_HIGH}; the low part is
-accessed with @code{CONST_FIXED_VALUE_LOW}.
+表示一个机器模式为@var{m}定点常量。操作数是一个类型为@code{struct fixed_value}数据结构，并使用宏@code{CONST_FIXED_VALUE}来访问。数据的高部分使用@code{CONST_FIXED_VALUE_HIGH}来访问；低部分使用@code{CONST_FIXED_VALUE_LOW}来访问。
 
 @findex const_vector
 @item (const_vector:@var{m} [@var{x0} @var{x1} @dots{}])
-Represents a vector constant.  The square brackets stand for the vector
-containing the constant elements.  @var{x0}, @var{x1} and so on are
-the @code{const_int}, @code{const_double} or @code{const_fixed} elements.
+表示一个向量常量。方括号代表向量包含的常量元素。@var{x0}，@var{x1}等等为@code{const_int}，@code{const_double}或者@code{const_fixed}元素。
 
-The number of units in a @code{const_vector} is obtained with the macro
-@code{CONST_VECTOR_NUNITS} as in @code{CONST_VECTOR_NUNITS (@var{v})}.
+在@code{const_vector}中的单元数可以通过宏@code{CONST_VECTOR_NUNITS}来获得，形如@code{CONST_VECTOR_NUNITS (@var{v})}。
 
-Individual elements in a vector constant are accessed with the macro
-@code{CONST_VECTOR_ELT} as in @code{CONST_VECTOR_ELT (@var{v}, @var{n})}
-where @var{v} is the vector constant and @var{n} is the element
-desired.
+在向量常量中的单个元素使用宏@code{CONST_VECTOR_ELT}来访问，形如@code{CONST_VECTOR_ELT (@var{v}, @var{n})}，其中@var{v}为向量常量，@var{n}为要访问的元素编号。
 
 @findex const_string
 @item (const_string @var{str})
-Represents a constant string with value @var{str}.  Currently this is
-used only for insn attributes (@pxref{Insn Attributes}) since constant
-strings in C are placed in memory.
+表示一个具有值@var{str}的常量字符串。目前这只用于insn属性（@pxref{Insn Attributes}），因为C中的常量字符串存放在内存中。
 
 @findex symbol_ref
 @item (symbol_ref:@var{mode} @var{symbol})
-Represents the value of an assembler label for data.  @var{symbol} is
-a string that describes the name of the assembler label.  If it starts
-with a @samp{*}, the label is the rest of @var{symbol} not including
-the @samp{*}.  Otherwise, the label is @var{symbol}, usually prefixed
-with @samp{_}.
+表示引用数据的汇编标号的值。@var{symbol}为一个字符串，描述了汇编标号的名字。如果其起始于@samp{*}，则标号为@var{symbol}不包含@samp{*}的其余部分。否则，标号为@var{symbol}，通常具有前缀@samp{_}。
 
-The @code{symbol_ref} contains a mode, which is usually @code{Pmode}.
-Usually that is the only mode for which a symbol is directly valid.
+@code{symbol_ref}包含一个机器模式，其通常为@code{Pmode}。通常这是唯一的使得符号有效的机器模式。
 
 @findex label_ref
 @item (label_ref:@var{mode} @var{label})
-Represents the value of an assembler label for code.  It contains one
-operand, an expression, which must be a @code{code_label} or a @code{note}
-of type @code{NOTE_INSN_DELETED_LABEL} that appears in the instruction
-sequence to identify the place where the label should go.
+表示引用代码的汇编标号的值。其包含一个操作数，一个表达式，其必须为一个@code{code_label}或者一个@code{NOTE_INSN_DELETED_LABEL}类型的@code{note}，其出现在指令序列中，来标识标号应该处于的位置。
 
-The reason for using a distinct expression type for code label
-references is so that jump optimization can distinguish them.
+对于代码标号引用，使用一个不同的表达式类型的原因是跳转优化可以区分它们。
 
-The @code{label_ref} contains a mode, which is usually @code{Pmode}.
-Usually that is the only mode for which a label is directly valid.
+@code{label_ref}包含了一个机器模式，其通常为@code{Pmode}。通常这是唯一的使得标号有效的机器模式。
 
 @findex const
 @item (const:@var{m} @var{exp})
-Represents a constant that is the result of an assembly-time
-arithmetic computation.  The operand, @var{exp}, is an expression that
-contains only constants (@code{const_int}, @code{symbol_ref} and
-@code{label_ref} expressions) combined with @code{plus} and
-@code{minus}.  However, not all combinations are valid, since the
-assembler cannot do arbitrary arithmetic on relocatable symbols.
+表示一个常量，其为汇编时算术计算的结果。操作数@var{exp}，为一个表达式，只包含了@code{plus}和@code{minus}组合的常量（@code{const_int}, @code{symbol_ref} 和 @code{label_ref}表达式）。然而，并不是所有的组合都是有效的，因为汇编器不能对重定位符号做任意的算术运算。
 
-@var{m} should be @code{Pmode}.
+@var{m}应该为@code{Pmode}。
 
 @findex high
 @item (high:@var{m} @var{exp})
-Represents the high-order bits of @var{exp}, usually a
-@code{symbol_ref}.  The number of bits is machine-dependent and is
-normally the number of bits specified in an instruction that initializes
-the high order bits of a register.  It is used with @code{lo_sum} to
-represent the typical two-instruction sequence used in RISC machines to
-reference a global memory location.
+表示@var{exp}的高位，通常为一个@code{symbol_ref}。位数是机器相关的并且通常为初始化一个寄存器的高位的指令所指定的位数。其和@code{lo_sum}一起使用来表示典型的用于RISC机器的双指令序列来引用一个全局内存位置。
 
-@var{m} should be @code{Pmode}.
+@var{m}应该为@code{Pmode}。
+
 @end table
 
 @findex CONST0_RTX
 @findex CONST1_RTX
 @findex CONST2_RTX
-The macro @code{CONST0_RTX (@var{mode})} refers to an expression with
-value 0 in mode @var{mode}.  If mode @var{mode} is of mode class
-@code{MODE_INT}, it returns @code{const0_rtx}.  If mode @var{mode} is of
-mode class @code{MODE_FLOAT}, it returns a @code{CONST_DOUBLE}
-expression in mode @var{mode}.  Otherwise, it returns a
-@code{CONST_VECTOR} expression in mode @var{mode}.  Similarly, the macro
-@code{CONST1_RTX (@var{mode})} refers to an expression with value 1 in
-mode @var{mode} and similarly for @code{CONST2_RTX}.  The
-@code{CONST1_RTX} and @code{CONST2_RTX} macros are undefined
-for vector modes.
+宏@code{CONST0_RTX (@var{mode})}指定一个具有值0，机器模式为@var{mode}的表达式。如果@var{mode}为@code{MODE_INT}类别，则返回@code{const0_rtx}。如果@var{mode}为 @code{MODE_FLOAT}类别，则返回模式为@var{mode}的表达式@code{CONST_DOUBLE}。否则，其返回一个模式为@var{mode}的表达式@code{CONST_VECTOR}。类似的，宏@code{CONST1_RTX (@var{mode})}指定一个具有值1，机器模式为@var{mode}的表达式，类似的对于@code{CONST2_RTX}。宏@code{CONST1_RTX}和@code{CONST2_RTX}对于向量模式没有定义。
 
 @node 寄存器和内存
 @section 寄存器和内存
 @cindex RTL register expressions
 @cindex RTL memory expressions
 
-Here are the RTL expression types for describing access to machine
-registers and to main memory.
+这些是描述访问机器寄存器和内存的RTL表达式类型。
 
 @table @code
 @findex reg
 @cindex hard registers
 @cindex pseudo registers
 @item (reg:@var{m} @var{n})
-For small values of the integer @var{n} (those that are less than
-@code{FIRST_PSEUDO_REGISTER}), this stands for a reference to machine
-register number @var{n}: a @dfn{hard register}.  For larger values of
-@var{n}, it stands for a temporary value or @dfn{pseudo register}.
-The compiler's strategy is to generate code assuming an unlimited
-number of such pseudo registers, and later convert them into hard
-registers or into memory references.
+对于值小（那些小于@code{FIRST_PSEUDO_REGISTER}）的整数@var{n}，这表示对机器寄存器号为@var{n}的引用。对于值大的@var{n}，它表示一个临时的值或者伪寄存器（@dfn{pseudo register}）。编译器的策略是，在生成代码时假设有无限数目的伪寄存器，并在之后将它们转换为硬件寄存器（@dfn{hard register}）或者内存的引用。
 
-@var{m} is the machine mode of the reference.  It is necessary because
-machines can generally refer to each register in more than one mode.
-For example, a register may contain a full word but there may be
-instructions to refer to it as a half word or as a single byte, as
-well as instructions to refer to it as a floating point number of
-various precisions.
+@var{m}为引用的机器模式。指定机器模式是有必要的，因为机器通常可以使用多种机器模式来引用每个寄存器。例如，一个寄存器可以包含一个整字，但是可以有指令来作为半字或者一个单独的字节来引用，同样，也有指令可以作为不同精度的浮点来引用。
 
-Even for a register that the machine can access in only one mode,
-the mode must always be specified.
+即使对于机器只能使用一种机器模式来引用的寄存器，mode也必须被指定。
 
-The symbol @code{FIRST_PSEUDO_REGISTER} is defined by the machine
-description, since the number of hard registers on the machine is an
-invariant characteristic of the machine.  Note, however, that not
-all of the machine registers must be general registers.  All the
-machine registers that can be used for storage of data are given
-hard register numbers, even those that can be used only in certain
-instructions or can hold only certain types of data.
+符号@code{FIRST_PSEUDO_REGISTER}被机器描述定义，由于机器的硬件寄存器数目是一个不变的特征。然而要注意，并不是所有的机器寄存器都必须是通用寄存器。所有的可以用于存储数据的机器寄存器都为被给定硬件寄存器编号，即使那些只可以被用于特定指令或者只能存放特定类型数据。
 
-A hard register may be accessed in various modes throughout one
-function, but each pseudo register is given a natural mode
-and is accessed only in that mode.  When it is necessary to describe
-an access to a pseudo register using a nonnatural mode, a @code{subreg}
-expression is used.
+一个硬件寄存器可以在整个函数中按照多种机器模式来访问，但是每个伪寄存器都被给定一个自然的机器模式并且只能按照那个机器模式来访问。当需要描述一个使用非自然机器模式来访问伪寄存器的时候，则使用一个@code{subreg}表达式。
 
-A @code{reg} expression with a machine mode that specifies more than
-one word of data may actually stand for several consecutive registers.
-If in addition the register number specifies a hardware register, then
-it actually represents several consecutive hardware registers starting
-with the specified one.
+一个@code{reg}表达式具有的机器模式，如果指定了多于一个字的数据，则实际上代表了多个连续的寄存器。如果寄存器编号还指定了一个硬件寄存器，则其实际上表示起始于指定寄存器的多个连续的硬件寄存器。
 
-Each pseudo register number used in a function's RTL code is
-represented by a unique @code{reg} expression.
+每个在函数的RTL代码中使用的伪寄存器编号，使用一个唯一的@code{reg}表达式来表示。
 
 @findex FIRST_VIRTUAL_REGISTER
 @findex LAST_VIRTUAL_REGISTER
-Some pseudo register numbers, those within the range of
-@code{FIRST_VIRTUAL_REGISTER} to @code{LAST_VIRTUAL_REGISTER} only
-appear during the RTL generation phase and are eliminated before the
-optimization phases.  These represent locations in the stack frame that
-cannot be determined until RTL generation for the function has been
-completed.  The following virtual register numbers are defined:
+一些伪寄存器编号，处于@code{FIRST_VIRTUAL_REGISTER}到@code{LAST_VIRTUAL_REGISTER}之间，只在RTL生成阶段出现并且在优化阶段之前被消除。这些表示在栈帧中的位置，并且直到函数的RTL生成完成后才能确定。下列虚寄存器编号被定义：
 
 @table @code
 @findex VIRTUAL_INCOMING_ARGS_REGNUM
 @item VIRTUAL_INCOMING_ARGS_REGNUM
-This points to the first word of the incoming arguments passed on the
-stack.  Normally these arguments are placed there by the caller, but the
-callee may have pushed some arguments that were previously passed in
-registers.
+这指向栈上传递的参数的第一个字。通常这些参数由调用者存放，但是被调用者可能已经将之前在寄存器中传递的参数压入栈中。
 
 @cindex @code{FIRST_PARM_OFFSET} and virtual registers
 @cindex @code{ARG_POINTER_REGNUM} and virtual registers
-When RTL generation is complete, this virtual register is replaced
-by the sum of the register given by @code{ARG_POINTER_REGNUM} and the
-value of @code{FIRST_PARM_OFFSET}.
+当RTL生成完成时，该虚寄存器由@code{ARG_POINTER_REGNUM}给定的寄存器和@code{FIRST_PARM_OFFSET}的值的和替换。
 
 @findex VIRTUAL_STACK_VARS_REGNUM
 @cindex @code{FRAME_GROWS_DOWNWARD} and virtual registers
 @item VIRTUAL_STACK_VARS_REGNUM
-If @code{FRAME_GROWS_DOWNWARD} is defined to a nonzero value, this points
-to immediately above the first variable on the stack.  Otherwise, it points
-to the first variable on the stack.
+如果@code{FRAME_GROWS_DOWNWARD}被定义为非0的值，则该宏指向栈上第一个变量的上一个位置。否则，其指向栈上的第一个变量。
 
 @cindex @code{STARTING_FRAME_OFFSET} and virtual registers
 @cindex @code{FRAME_POINTER_REGNUM} and virtual registers
-@code{VIRTUAL_STACK_VARS_REGNUM} is replaced with the sum of the
-register given by @code{FRAME_POINTER_REGNUM} and the value
-@code{STARTING_FRAME_OFFSET}.
+@code{VIRTUAL_STACK_VARS_REGNUM}由@code{FRAME_POINTER_REGNUM}给定的寄存器和@code{STARTING_FRAME_OFFSET}的值的和替换。
 
 @findex VIRTUAL_STACK_DYNAMIC_REGNUM
 @item VIRTUAL_STACK_DYNAMIC_REGNUM
-This points to the location of dynamically allocated memory on the stack
-immediately after the stack pointer has been adjusted by the amount of
-memory desired.
+该宏指向栈指针根据内存需要已经被调整后的栈上动态分配内存的位置。
 
 @cindex @code{STACK_DYNAMIC_OFFSET} and virtual registers
 @cindex @code{STACK_POINTER_REGNUM} and virtual registers
-This virtual register is replaced by the sum of the register given by
-@code{STACK_POINTER_REGNUM} and the value @code{STACK_DYNAMIC_OFFSET}.
+该虚寄存器由@code{STACK_POINTER_REGNUM}给定的寄存器和@code{STACK_DYNAMIC_OFFSET}的值的和替换。
 
 @findex VIRTUAL_OUTGOING_ARGS_REGNUM
 @item VIRTUAL_OUTGOING_ARGS_REGNUM
+其指向栈中，当输出参数的位置，
 This points to the location in the stack at which outgoing arguments
 should be written when the stack is pre-pushed (arguments pushed using
 push insns should always use @code{STACK_POINTER_REGNUM}).
