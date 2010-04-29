@@ -52,165 +52,73 @@ Up:&nbsp;<a rel="up" accesskey="u" href="RTL.html#RTL">RTL</a>
 <h3 class="section">10.18 Insns</h3>
 
 <p><a name="index-insns-2583"></a>
-The RTL representation of the code for a function is a doubly-linked
-chain of objects called <dfn>insns</dfn>.  Insns are expressions with
-special codes that are used for no other purpose.  Some insns are
-actual instructions; others represent dispatch tables for <code>switch</code>
-statements; others represent labels to jump to or various sorts of
-declarative information.
+一个函数的代码的RTL表示是一个被称作<dfn>insns</dfn>对象的双向链表。insn只不过是具有特定代码的表达式。有些insn是实际的指令；有些用来表示<code>switch</code>语句的派遣表。有些用来表示要调转的标号或者不同类别的声明信息。
 
- <p>In addition to its own specific data, each insn must have a unique
-id-number that distinguishes it from all other insns in the current
-function (after delayed branch scheduling, copies of an insn with the
-same id-number may be present in multiple places in a function, but
-these copies will always be identical and will only appear inside a
-<code>sequence</code>), and chain pointers to the preceding and following
-insns.  These three fields occupy the same position in every insn,
-independent of the expression code of the insn.  They could be accessed
-with <code>XEXP</code> and <code>XINT</code>, but instead three special macros are
-always used:
+ <p>除了本身特定的数据，每个insn必须有一个唯一的id号用来区别当前函数中其它的insn（经过分支延迟调度之后，具有相同id号的一个insn 的拷贝，可能会出现在一个函数中的多个地方，但是这些拷贝总是同样的，并且只是出现在一个<code>sequence</code>中），以及指向前面和后面insn的链表指针。这三个域在每个insn中占有相同的位置，并且独立于insn的表达式代码。它们可以通过<code>XEXP</code>和<code>XINT</code>来访问，不过，有三个特定的宏经常会被使用：
 
      
 <a name="index-INSN_005fUID-2584"></a>
-<dl><dt><code>INSN_UID (</code><var>i</var><code>)</code><dd>Accesses the unique id of insn <var>i</var>.
+<dl><dt><code>INSN_UID (</code><var>i</var><code>)</code><dd>访问insn <var>i</var>的唯一id。
 
-     <p><a name="index-PREV_005fINSN-2585"></a><br><dt><code>PREV_INSN (</code><var>i</var><code>)</code><dd>Accesses the chain pointer to the insn preceding <var>i</var>. 
-If <var>i</var> is the first insn, this is a null pointer.
+     <p><a name="index-PREV_005fINSN-2585"></a><br><dt><code>PREV_INSN (</code><var>i</var><code>)</code><dd>访问指向<var>i</var>之前的insn的链表指针。如果<var>i</var>是第一个insn，则是一个null指针。
 
-     <p><a name="index-NEXT_005fINSN-2586"></a><br><dt><code>NEXT_INSN (</code><var>i</var><code>)</code><dd>Accesses the chain pointer to the insn following <var>i</var>. 
-If <var>i</var> is the last insn, this is a null pointer. 
-</dl>
+     <p><a name="index-NEXT_005fINSN-2586"></a><br><dt><code>NEXT_INSN (</code><var>i</var><code>)</code><dd>访问指向<var>i</var>之后的insn的链表指针。如果<var>i</var>是最后一个insn，则是一个null指针。
 
- <p><a name="index-get_005finsns-2587"></a><a name="index-get_005flast_005finsn-2588"></a>The first insn in the chain is obtained by calling <code>get_insns</code>; the
-last insn is the result of calling <code>get_last_insn</code>.  Within the
-chain delimited by these insns, the <code>NEXT_INSN</code> and
-<code>PREV_INSN</code> pointers must always correspond: if <var>insn</var> is not
-the first insn,
+ </dl>
+
+ <p><a name="index-get_005finsns-2587"></a><a name="index-get_005flast_005finsn-2588"></a>链表中的第一个insn可以通过调用<code>get_insns</code>获得；最后一个insn可以通过调用<code>get_last_insn</code>来获得。在由这些insn界定的链中，<code>NEXT_INSN</code>和<code>PREV_INSN</code>指针必须总是相当：如果<var>insn</var> 不是第一个insn，则
 
 <pre class="smallexample">     NEXT_INSN (PREV_INSN (<var>insn</var>)) == <var>insn</var>
 </pre>
- <p class="noindent">is always true and if <var>insn</var> is not the last insn,
+ <p class="noindent">总是真，并且如果<var>insn</var>不是最后一个insn，则
 
 <pre class="smallexample">     PREV_INSN (NEXT_INSN (<var>insn</var>)) == <var>insn</var>
 </pre>
- <p class="noindent">is always true.
+ <p class="noindent">总是真。
 
- <p>After delay slot scheduling, some of the insns in the chain might be
-<code>sequence</code> expressions, which contain a vector of insns.  The value
-of <code>NEXT_INSN</code> in all but the last of these insns is the next insn
-in the vector; the value of <code>NEXT_INSN</code> of the last insn in the vector
-is the same as the value of <code>NEXT_INSN</code> for the <code>sequence</code> in
-which it is contained.  Similar rules apply for <code>PREV_INSN</code>.
+ <p>在延迟槽调度之后，在链中的一些insn可能为<code>sequence</code>表达式，其包含了一个insn向量。这个向量中除了最后一个insn之外，其它insn的<code>NEXT_INSN</code>的值都是向量中的下一个insn；向量中的最后一个insn的<code>NEXT_INSN</code>的值，等于包含<code>sequence</code>的insn的<code>NEXT_INSN</code>的值。对于<code>PREV_INSN</code>，也有类似的规则。
 
- <p>This means that the above invariants are not necessarily true for insns
-inside <code>sequence</code> expressions.  Specifically, if <var>insn</var> is the
-first insn in a <code>sequence</code>, <code>NEXT_INSN (PREV_INSN (</code><var>insn</var><code>))</code>
-is the insn containing the <code>sequence</code> expression, as is the value
-of <code>PREV_INSN (NEXT_INSN (</code><var>insn</var><code>))</code> if <var>insn</var> is the last
-insn in the <code>sequence</code> expression.  You can use these expressions
-to find the containing <code>sequence</code> expression.
+ <p>这意味着上面的恒等式，对于在<code>sequence</code>表达式中的insn不需要成立。特别是，如果<var>insn</var>为<code>sequence</code>中的第一个insn，则<code>NEXT_INSN (PREV_INSN (</code><var>insn</var><code>))</code>为包含<code>sequence</code>表达式的insn，同样如果<var>insn</var>为<code>sequence</code>中的最后一个insn，则<code>PREV_INSN (NEXT_INSN (</code><var>insn</var><code>))</code>的值也是如此。你可以使用这些表达式来查找包含<code>sequence</code>的insn。
 
- <p>Every insn has one of the following six expression codes:
+ <p>每个insn都具有下列六种表达式代码中的一个：
 
      
 <a name="index-insn-2589"></a>
-<dl><dt><code>insn</code><dd>The expression code <code>insn</code> is used for instructions that do not jump
-and do not do function calls.  <code>sequence</code> expressions are always
-contained in insns with code <code>insn</code> even if one of those insns
-should jump or do function calls.
+<dl><dt><code>insn</code><dd>表达式代码<code>insn</code>用于不进行跳转和函数调用的指令。<code>sequence</code>表达式总是包含在表达式代码为<code>insn</code>的insn中，即使它们中的一个insn是跳转或者函数调用。
 
-     <p>Insns with code <code>insn</code> have four additional fields beyond the three
-mandatory ones listed above.  These four are described in a table below.
+     <p>表达式代码为<code>insn</code>的insn，除了上面列出的三个必须的域以外，还具有四个额外的域。这四个域在后面的表中有描述。
 
-     <p><a name="index-jump_005finsn-2590"></a><br><dt><code>jump_insn</code><dd>The expression code <code>jump_insn</code> is used for instructions that may
-jump (or, more generally, may contain <code>label_ref</code> expressions to
-which <code>pc</code> can be set in that instruction).  If there is an
-instruction to return from the current function, it is recorded as a
-<code>jump_insn</code>.
+     <p><a name="index-jump_005finsn-2590"></a><br><dt><code>jump_insn</code><dd>表达式代码<code>jump_insn</code>用于可能执行跳转（或者，更一般的讲，指令中可能包含了<code>label_ref</code>表达式，并用其来设置<code>pc</code>）的指令。如果有一条从当前函数返回的指令，则其被记录为<code>jump_insn</code>。
 
-     <p><a name="index-JUMP_005fLABEL-2591"></a><code>jump_insn</code> insns have the same extra fields as <code>insn</code> insns,
-accessed in the same way and in addition contain a field
-<code>JUMP_LABEL</code> which is defined once jump optimization has completed.
+     <p><a name="index-JUMP_005fLABEL-2591"></a><code>jump_insn</code>具有跟<code>insn</code>相同的额外的域，并使用同样的方式来访问，除此之外，还包含了一个域<code>JUMP_LABEL</code>，其当执行完跳转优化后被定义。
 
-     <p>For simple conditional and unconditional jumps, this field contains
-the <code>code_label</code> to which this insn will (possibly conditionally)
-branch.  In a more complex jump, <code>JUMP_LABEL</code> records one of the
-labels that the insn refers to; other jump target labels are recorded
-as <code>REG_LABEL_TARGET</code> notes.  The exception is <code>addr_vec</code>
-and <code>addr_diff_vec</code>, where <code>JUMP_LABEL</code> is <code>NULL_RTX</code>
-and the only way to find the labels is to scan the entire body of the
-insn.
+     <p>对于简单的条件跳转和无条件跳转，该域包含了该insn将（可能有条件的）分支跳转到的<code>code_label</code>。在更复杂的跳转中，<code>JUMP_LABEL</code>记录了insn引用的其中一个标号；其它跳转目标标号作为<code>REG_LABEL_TARGET</code>注解来记录。<code>addr_vec</code>和<code>addr_diff_vec</code>是例外的情况，对此，<code>JUMP_LABEL</code>为<code>NULL_RTX</code>，而只有扫描整个insn体干才能找到标号。
 
-     <p>Return insns count as jumps, but since they do not refer to any
-labels, their <code>JUMP_LABEL</code> is <code>NULL_RTX</code>.
+     <p>返回指令insn作为跳转看待，但由于它们并不引用任何标号，所以它们的<code>JUMP_LABEL</code>为<code>NULL_RTX</code>。
 
-     <p><a name="index-call_005finsn-2592"></a><br><dt><code>call_insn</code><dd>The expression code <code>call_insn</code> is used for instructions that may do
-function calls.  It is important to distinguish these instructions because
-they imply that certain registers and memory locations may be altered
-unpredictably.
+     <p><a name="index-call_005finsn-2592"></a><br><dt><code>call_insn</code><dd>表达式代码<code>call_insn</code>用于可能执行函数调用的指令。区分这些指令是很重要的，因为它们意味着特定的寄存器和内存位置可以被不可预知的方式改变。
 
-     <p><a name="index-CALL_005fINSN_005fFUNCTION_005fUSAGE-2593"></a><code>call_insn</code> insns have the same extra fields as <code>insn</code> insns,
-accessed in the same way and in addition contain a field
-<code>CALL_INSN_FUNCTION_USAGE</code>, which contains a list (chain of
-<code>expr_list</code> expressions) containing <code>use</code> and <code>clobber</code>
-expressions that denote hard registers and <code>MEM</code>s used or
-clobbered by the called function.
+     <p><a name="index-CALL_005fINSN_005fFUNCTION_005fUSAGE-2593"></a><code>call_insn</code>具有与<code>insn</code>相同的额外的域，并使用相同的方式访问，除此之外，还包含一个域<code>CALL_INSN_FUNCTION_USAGE</code>，其包含了一个列表（<code>expr_list</code>表达式链），包含了<code>use</code>和<code>clobber</code>表达式，表示了被调用函数使用和破坏的硬件寄存器和<code>MEM</code>。
 
-     <p>A <code>MEM</code> generally points to a stack slots in which arguments passed
-to the libcall by reference (see <a href="Register-Arguments.html#Register-Arguments">TARGET_PASS_BY_REFERENCE</a>) are stored.  If the argument is
-caller-copied (see <a href="Register-Arguments.html#Register-Arguments">TARGET_CALLEE_COPIES</a>),
-the stack slot will be mentioned in <code>CLOBBER</code> and <code>USE</code>
-entries; if it's callee-copied, only a <code>USE</code> will appear, and the
-<code>MEM</code> may point to addresses that are not stack slots.
+     <p>一个<code>MEM</code>通常指向一个栈槽，参数在其中按照引用方式（see <a href="Register-Arguments.html#Register-Arguments">TARGET_PASS_BY_REFERENCE</a>）传递给libcall。如果参数是caller-copied（see <a href="Register-Arguments.html#Register-Arguments">TARGET_CALLEE_COPIES</a>），则栈槽会在<code>CLOBBER</code>和<code>USE</code>中被提到；如果是callee-copied，则只会出现<code>USE</code>，并且<code>MEM</code>可能指向不是栈槽的地址。
 
-     <p><code>CLOBBER</code>ed registers in this list augment registers specified in
-<code>CALL_USED_REGISTERS</code> (see <a href="Register-Basics.html#Register-Basics">Register Basics</a>).
+     <p>在列表中，被<code>CLOBBER</code>的寄存器，增加了在<code>CALL_USED_REGISTERS</code>中描述的寄存器（see <a href="Register-Basics.html#Register-Basics">Register Basics</a>）。
 
-     <p><a name="index-code_005flabel-2594"></a><a name="index-CODE_005fLABEL_005fNUMBER-2595"></a><br><dt><code>code_label</code><dd>A <code>code_label</code> insn represents a label that a jump insn can jump
-to.  It contains two special fields of data in addition to the three
-standard ones.  <code>CODE_LABEL_NUMBER</code> is used to hold the <dfn>label
-number</dfn>, a number that identifies this label uniquely among all the
-labels in the compilation (not just in the current function). 
-Ultimately, the label is represented in the assembler output as an
-assembler label, usually of the form &lsquo;<samp><span class="samp">L</span><var>n</var></samp>&rsquo; where <var>n</var> is
-the label number.
+     <p><a name="index-code_005flabel-2594"></a><a name="index-CODE_005fLABEL_005fNUMBER-2595"></a><br><dt><code>code_label</code><dd><code>code_label</code> insn表示一个跳转insn可以跳转到的标号。除了三个标准的域以为，其还包含两个特定的域。<code>CODE_LABEL_NUMBER</code>用于存放<dfn>label number</dfn>，在编译过程中，唯一标识该标号。最终，标号在汇编输出中作为汇编标号来表示，通常的形式为&lsquo;<samp><span class="samp">L</span><var>n</var></samp>&rsquo;，其中<var>n</var>为标号编号。
 
-     <p>When a <code>code_label</code> appears in an RTL expression, it normally
-appears within a <code>label_ref</code> which represents the address of
-the label, as a number.
+     <p>当<code>code_label</code>出现在RTL表达式中，其通常出现在<code>label_ref</code>中，其表示了标号的地址，为一个编号。
 
-     <p>Besides as a <code>code_label</code>, a label can also be represented as a
-<code>note</code> of type <code>NOTE_INSN_DELETED_LABEL</code>.
+     <p>除了作为<code>code_label</code>以外，标号还可以作为类型为<code>NOTE_INSN_DELETED_LABEL</code>的<code>note</code>来表示。
 
-     <p><a name="index-LABEL_005fNUSES-2596"></a>The field <code>LABEL_NUSES</code> is only defined once the jump optimization
-phase is completed.  It contains the number of times this label is
-referenced in the current function.
+     <p><a name="index-LABEL_005fNUSES-2596"></a>域<code>LABEL_NUSES</code>只当完成跳转优化过程后才被定义。其包含了在当前函数中，该标号被引用的次数。
 
-     <p><a name="index-LABEL_005fKIND-2597"></a><a name="index-SET_005fLABEL_005fKIND-2598"></a><a name="index-LABEL_005fALT_005fENTRY_005fP-2599"></a><a name="index-alternate-entry-points-2600"></a>The field <code>LABEL_KIND</code> differentiates four different types of
-labels: <code>LABEL_NORMAL</code>, <code>LABEL_STATIC_ENTRY</code>,
-<code>LABEL_GLOBAL_ENTRY</code>, and <code>LABEL_WEAK_ENTRY</code>.  The only labels
-that do not have type <code>LABEL_NORMAL</code> are <dfn>alternate entry
-points</dfn> to the current function.  These may be static (visible only in
-the containing translation unit), global (exposed to all translation
-units), or weak (global, but can be overridden by another symbol with the
-same name).
+     <p><a name="index-LABEL_005fKIND-2597"></a><a name="index-SET_005fLABEL_005fKIND-2598"></a><a name="index-LABEL_005fALT_005fENTRY_005fP-2599"></a><a name="index-alternate-entry-points-2600"></a>域<code>LABEL_KIND</code>用来区分四种不同类型的标号：<code>LABEL_NORMAL</code>，<code>LABEL_STATIC_ENTRY</code>，<code>LABEL_GLOBAL_ENTRY</code>和<code>LABEL_WEAK_ENTRY</code>。唯一不具有类型<code>LABEL_NORMAL</code>的标号，为当前函数的<dfn>alternate entry points</dfn>。这些可以为static（只在当前转换单元中可见），global（对所有的转换单元可见）或者weak（全局的，但是可以被另一个具有相同名字的符号覆盖）。
 
-     <p>Much of the compiler treats all four kinds of label identically.  Some
-of it needs to know whether or not a label is an alternate entry point;
-for this purpose, the macro <code>LABEL_ALT_ENTRY_P</code> is provided.  It is
-equivalent to testing whether &lsquo;<samp><span class="samp">LABEL_KIND (label) == LABEL_NORMAL</span></samp>&rsquo;. 
-The only place that cares about the distinction between static, global,
-and weak alternate entry points, besides the front-end code that creates
-them, is the function <code>output_alternate_entry_point</code>, in
-<samp><span class="file">final.c</span></samp>.
+     <p>编译器大多将所有四种标号同等对待。有些地方需要知道标号是否为候选入口点；为此，提供了宏<code>LABEL_ALT_ENTRY_P</code>。其等价于测试是否&lsquo;<samp><span class="samp">LABEL_KIND (label) == LABEL_NORMAL</span></samp>&rsquo;。除了前端创建static，global和weak alternate entry points的代码以外，其它唯一关心它们的区别的地方是<samp><span class="file">final.c</span></samp>文件中的函数<code>output_alternate_entry_point</code>。
 
-     <p>To set the kind of a label, use the <code>SET_LABEL_KIND</code> macro.
+     <p>使用宏<code>SET_LABEL_KIND</code>来设置标号的种类。
 
-     <p><a name="index-barrier-2601"></a><br><dt><code>barrier</code><dd>Barriers are placed in the instruction stream when control cannot flow
-past them.  They are placed after unconditional jump instructions to
-indicate that the jumps are unconditional and after calls to
-<code>volatile</code> functions, which do not return (e.g., <code>exit</code>). 
-They contain no information beyond the three standard fields.
+     <p><a name="index-barrier-2601"></a><br><dt><code>barrier</code><dd>栅栏被放在指令流中，控制无法经过的地方。它们被放在无条件跳转指令的后面，表示跳转是无条件的，以及对<code>volatile</code>函数的调用之后，表示不会返回（例如，<code>exit</code>）。除了三个标准的域以外，不包含其它信息。
 
      <p><a name="index-note-2602"></a><a name="index-NOTE_005fLINE_005fNUMBER-2603"></a><a name="index-NOTE_005fSOURCE_005fFILE-2604"></a><br><dt><code>note</code><dd><code>note</code> insns are used to represent additional debugging and
 declarative information.  They contain two nonstandard fields, an

@@ -1189,20 +1189,17 @@ Algol或者Pascal函数变量，包括一个静态链。（这些目前还没有
 
 @findex VIRTUAL_OUTGOING_ARGS_REGNUM
 @item VIRTUAL_OUTGOING_ARGS_REGNUM
-其指向栈中，当输出参数的位置，
-This points to the location in the stack at which outgoing arguments
-should be written when the stack is pre-pushed (arguments pushed using
-push insns should always use @code{STACK_POINTER_REGNUM}).
+其指向栈中，当预先压栈时（使用push insn压栈的参数应该总是使用@code{STACK_POINTER_REGNUM}），书写输出参数的位置。
 
 @cindex @code{STACK_POINTER_OFFSET} and virtual registers
-This virtual register is replaced by the sum of the register given by
-@code{STACK_POINTER_REGNUM} and the value @code{STACK_POINTER_OFFSET}.
+该虚拟寄存器，被替换成由@code{STACK_POINTER_REGNUM}给定的寄存器与值@code{STACK_POINTER_OFFSET}的和。
+
 @end table
 
 @findex subreg
 @item (subreg:@var{m1} @var{reg:m2} @var{bytenum})
 
-@code{subreg} expressions are used to refer to a register in a machine
+@code{subreg}表达式用于引用 expressions are used to refer to a register in a machine
 mode other than its natural one, or to refer to one register of
 a multi-part @code{reg} that actually refers to several registers.
 
@@ -2598,196 +2595,103 @@ asm ("foo %1,%2,%0" : "=a" (outputvar) : "g" (x + y), "di" (*z));
 @section Insns
 @cindex insns
 
-The RTL representation of the code for a function is a doubly-linked
-chain of objects called @dfn{insns}.  Insns are expressions with
-special codes that are used for no other purpose.  Some insns are
-actual instructions; others represent dispatch tables for @code{switch}
-statements; others represent labels to jump to or various sorts of
-declarative information.
+一个函数的代码的RTL表示是一个被称作@dfn{insns}对象的双向链表。insn只不过是具有特定代码的表达式。有些insn是实际的指令；有些用来表示@code{switch}语句的派遣表。有些用来表示要调转的标号或者不同类别的声明信息。
 
-In addition to its own specific data, each insn must have a unique
-id-number that distinguishes it from all other insns in the current
-function (after delayed branch scheduling, copies of an insn with the
-same id-number may be present in multiple places in a function, but
-these copies will always be identical and will only appear inside a
-@code{sequence}), and chain pointers to the preceding and following
-insns.  These three fields occupy the same position in every insn,
-independent of the expression code of the insn.  They could be accessed
-with @code{XEXP} and @code{XINT}, but instead three special macros are
-always used:
+除了本身特定的数据，每个insn必须有一个唯一的id号用来区别当前函数中其它的insn（经过分支延迟调度之后，具有相同id号的一个insn 的拷贝，可能会出现在一个函数中的多个地方，但是这些拷贝总是同样的，并且只是出现在一个@code{sequence}中），以及指向前面和后面insn的链表指针。这三个域在每个insn中占有相同的位置，并且独立于insn的表达式代码。它们可以通过@code{XEXP}和@code{XINT}来访问，不过，有三个特定的宏经常会被使用：
 
 @table @code
 @findex INSN_UID
 @item INSN_UID (@var{i})
-Accesses the unique id of insn @var{i}.
+访问insn @var{i}的唯一id。
 
 @findex PREV_INSN
 @item PREV_INSN (@var{i})
-Accesses the chain pointer to the insn preceding @var{i}.
-If @var{i} is the first insn, this is a null pointer.
+访问指向@var{i}之前的insn的链表指针。如果@var{i}是第一个insn，则是一个null指针。 
 
 @findex NEXT_INSN
 @item NEXT_INSN (@var{i})
-Accesses the chain pointer to the insn following @var{i}.
-If @var{i} is the last insn, this is a null pointer.
+访问指向@var{i}之后的insn的链表指针。如果@var{i}是最后一个insn，则是一个null指针。 
+
 @end table
 
 @findex get_insns
 @findex get_last_insn
-The first insn in the chain is obtained by calling @code{get_insns}; the
-last insn is the result of calling @code{get_last_insn}.  Within the
-chain delimited by these insns, the @code{NEXT_INSN} and
-@code{PREV_INSN} pointers must always correspond: if @var{insn} is not
-the first insn,
+链表中的第一个insn可以通过调用@code{get_insns}获得；最后一个insn可以通过调用@code{get_last_insn}来获得。在由这些insn界定的链中，@code{NEXT_INSN}和@code{PREV_INSN}指针必须总是相当：如果@var{insn} 不是第一个insn，则
 
 @smallexample
 NEXT_INSN (PREV_INSN (@var{insn})) == @var{insn}
 @end smallexample
 
 @noindent
-is always true and if @var{insn} is not the last insn,
+总是真，并且如果@var{insn}不是最后一个insn，则
 
 @smallexample
 PREV_INSN (NEXT_INSN (@var{insn})) == @var{insn}
 @end smallexample
 
 @noindent
-is always true.
+总是真。
 
-After delay slot scheduling, some of the insns in the chain might be
-@code{sequence} expressions, which contain a vector of insns.  The value
-of @code{NEXT_INSN} in all but the last of these insns is the next insn
-in the vector; the value of @code{NEXT_INSN} of the last insn in the vector
-is the same as the value of @code{NEXT_INSN} for the @code{sequence} in
-which it is contained.  Similar rules apply for @code{PREV_INSN}.
+在延迟槽调度之后，在链中的一些insn可能为@code{sequence}表达式，其包含了一个insn向量。这个向量中除了最后一个insn之外，其它insn的@code{NEXT_INSN}的值都是向量中的下一个insn；向量中的最后一个insn的@code{NEXT_INSN}的值，等于包含@code{sequence}的insn的@code{NEXT_INSN}的值。对于@code{PREV_INSN}，也有类似的规则。
 
-This means that the above invariants are not necessarily true for insns
-inside @code{sequence} expressions.  Specifically, if @var{insn} is the
-first insn in a @code{sequence}, @code{NEXT_INSN (PREV_INSN (@var{insn}))}
-is the insn containing the @code{sequence} expression, as is the value
-of @code{PREV_INSN (NEXT_INSN (@var{insn}))} if @var{insn} is the last
-insn in the @code{sequence} expression.  You can use these expressions
-to find the containing @code{sequence} expression.
+这意味着上面的恒等式，对于在@code{sequence}表达式中的insn不需要成立。特别是，如果@var{insn}为@code{sequence}中的第一个insn，则@code{NEXT_INSN (PREV_INSN (@var{insn}))}为包含@code{sequence}表达式的insn，同样如果@var{insn}为@code{sequence}中的最后一个insn，则@code{PREV_INSN (NEXT_INSN (@var{insn}))}的值也是如此。你可以使用这些表达式来查找包含@code{sequence}的insn。
 
-Every insn has one of the following six expression codes:
+每个insn都具有下列六种表达式代码中的一个：
 
 @table @code
 @findex insn
 @item insn
-The expression code @code{insn} is used for instructions that do not jump
-and do not do function calls.  @code{sequence} expressions are always
-contained in insns with code @code{insn} even if one of those insns
-should jump or do function calls.
+表达式代码@code{insn}用于不进行跳转和函数调用的指令。@code{sequence}表达式总是包含在表达式代码为@code{insn}的insn中，即使它们中的一个insn是跳转或者函数调用。
 
-Insns with code @code{insn} have four additional fields beyond the three
-mandatory ones listed above.  These four are described in a table below.
+表达式代码为@code{insn}的insn，除了上面列出的三个必须的域以外，还具有四个额外的域。这四个域在后面的表中有描述。
 
 @findex jump_insn
 @item jump_insn
-The expression code @code{jump_insn} is used for instructions that may
-jump (or, more generally, may contain @code{label_ref} expressions to
-which @code{pc} can be set in that instruction).  If there is an
-instruction to return from the current function, it is recorded as a
-@code{jump_insn}.
+表达式代码@code{jump_insn}用于可能执行跳转（或者，更一般的讲，指令中可能包含了@code{label_ref}表达式，并用其来设置@code{pc}）的指令。如果有一条从当前函数返回的指令，则其被记录为@code{jump_insn}。
 
 @findex JUMP_LABEL
-@code{jump_insn} insns have the same extra fields as @code{insn} insns,
-accessed in the same way and in addition contain a field
-@code{JUMP_LABEL} which is defined once jump optimization has completed.
+@code{jump_insn}具有跟@code{insn}相同的额外的域，并使用同样的方式来访问，除此之外，还包含了一个域@code{JUMP_LABEL}，其当执行完跳转优化后被定义。
 
-For simple conditional and unconditional jumps, this field contains
-the @code{code_label} to which this insn will (possibly conditionally)
-branch.  In a more complex jump, @code{JUMP_LABEL} records one of the
-labels that the insn refers to; other jump target labels are recorded
-as @code{REG_LABEL_TARGET} notes.  The exception is @code{addr_vec}
-and @code{addr_diff_vec}, where @code{JUMP_LABEL} is @code{NULL_RTX}
-and the only way to find the labels is to scan the entire body of the
-insn.
+对于简单的条件跳转和无条件跳转，该域包含了该insn将（可能有条件的）分支跳转到的@code{code_label}。在更复杂的跳转中，@code{JUMP_LABEL}记录了insn引用的其中一个标号；其它跳转目标标号作为@code{REG_LABEL_TARGET}注解来记录。@code{addr_vec}和@code{addr_diff_vec}是例外的情况，对此，@code{JUMP_LABEL}为@code{NULL_RTX}，而只有扫描整个insn体干才能找到标号。
 
-Return insns count as jumps, but since they do not refer to any
-labels, their @code{JUMP_LABEL} is @code{NULL_RTX}.
+返回指令insn作为跳转看待，但由于它们并不引用任何标号，所以它们的@code{JUMP_LABEL}为@code{NULL_RTX}。
 
 @findex call_insn
 @item call_insn
-The expression code @code{call_insn} is used for instructions that may do
-function calls.  It is important to distinguish these instructions because
-they imply that certain registers and memory locations may be altered
-unpredictably.
+表达式代码@code{call_insn}用于可能执行函数调用的指令。区分这些指令是很重要的，因为它们意味着特定的寄存器和内存位置可以被不可预知的方式改变。
 
 @findex CALL_INSN_FUNCTION_USAGE
-@code{call_insn} insns have the same extra fields as @code{insn} insns,
-accessed in the same way and in addition contain a field
-@code{CALL_INSN_FUNCTION_USAGE}, which contains a list (chain of
-@code{expr_list} expressions) containing @code{use} and @code{clobber}
-expressions that denote hard registers and @code{MEM}s used or
-clobbered by the called function.
+@code{call_insn}具有与@code{insn}相同的额外的域，并使用相同的方式访问，除此之外，还包含一个域@code{CALL_INSN_FUNCTION_USAGE}，其包含了一个列表（@code{expr_list}表达式链），包含了@code{use}和@code{clobber}表达式，表示了被调用函数使用和破坏的硬件寄存器和@code{MEM}。
 
-A @code{MEM} generally points to a stack slots in which arguments passed
-to the libcall by reference (@pxref{Register Arguments,
-TARGET_PASS_BY_REFERENCE}) are stored.  If the argument is
-caller-copied (@pxref{Register Arguments, TARGET_CALLEE_COPIES}),
-the stack slot will be mentioned in @code{CLOBBER} and @code{USE}
-entries; if it's callee-copied, only a @code{USE} will appear, and the
-@code{MEM} may point to addresses that are not stack slots.
+一个@code{MEM}通常指向一个栈槽，参数在其中按照引用方式（@pxref{Register Arguments, TARGET_PASS_BY_REFERENCE}）传递给libcall。如果参数是caller-copied（@pxref{Register Arguments, TARGET_CALLEE_COPIES}），则栈槽会在@code{CLOBBER}和@code{USE}中被提到；如果是callee-copied，则只会出现@code{USE}，并且@code{MEM}可能指向不是栈槽的地址。
 
-@code{CLOBBER}ed registers in this list augment registers specified in
-@code{CALL_USED_REGISTERS} (@pxref{Register Basics}).
+在列表中，被@code{CLOBBER}的寄存器，增加了在@code{CALL_USED_REGISTERS}中描述的寄存器（@pxref{Register Basics}）。
 
 @findex code_label
 @findex CODE_LABEL_NUMBER
 @item code_label
-A @code{code_label} insn represents a label that a jump insn can jump
-to.  It contains two special fields of data in addition to the three
-standard ones.  @code{CODE_LABEL_NUMBER} is used to hold the @dfn{label
-number}, a number that identifies this label uniquely among all the
-labels in the compilation (not just in the current function).
-Ultimately, the label is represented in the assembler output as an
-assembler label, usually of the form @samp{L@var{n}} where @var{n} is
-the label number.
+@code{code_label} insn表示一个跳转insn可以跳转到的标号。除了三个标准的域以为，其还包含两个特定的域。@code{CODE_LABEL_NUMBER}用于存放@dfn{label number}，在编译过程中，唯一标识该标号。最终，标号在汇编输出中作为汇编标号来表示，通常的形式为@samp{L@var{n}}，其中@var{n}为标号编号。
 
-When a @code{code_label} appears in an RTL expression, it normally
-appears within a @code{label_ref} which represents the address of
-the label, as a number.
+当@code{code_label}出现在RTL表达式中，其通常出现在@code{label_ref}中，其表示了标号的地址，为一个编号。
 
-Besides as a @code{code_label}, a label can also be represented as a
-@code{note} of type @code{NOTE_INSN_DELETED_LABEL}.
+除了作为@code{code_label}以外，标号还可以作为类型为@code{NOTE_INSN_DELETED_LABEL}的@code{note}来表示。
 
 @findex LABEL_NUSES
-The field @code{LABEL_NUSES} is only defined once the jump optimization
-phase is completed.  It contains the number of times this label is
-referenced in the current function.
+域@code{LABEL_NUSES}只当完成跳转优化过程后才被定义。其包含了在当前函数中，该标号被引用的次数。
 
 @findex LABEL_KIND
 @findex SET_LABEL_KIND
 @findex LABEL_ALT_ENTRY_P
 @cindex alternate entry points
-The field @code{LABEL_KIND} differentiates four different types of
-labels: @code{LABEL_NORMAL}, @code{LABEL_STATIC_ENTRY},
-@code{LABEL_GLOBAL_ENTRY}, and @code{LABEL_WEAK_ENTRY}.  The only labels
-that do not have type @code{LABEL_NORMAL} are @dfn{alternate entry
-points} to the current function.  These may be static (visible only in
-the containing translation unit), global (exposed to all translation
-units), or weak (global, but can be overridden by another symbol with the
-same name).
+域@code{LABEL_KIND}用来区分四种不同类型的标号：@code{LABEL_NORMAL}，@code{LABEL_STATIC_ENTRY}，@code{LABEL_GLOBAL_ENTRY}和@code{LABEL_WEAK_ENTRY}。唯一不具有类型@code{LABEL_NORMAL}的标号，为当前函数的@dfn{alternate entry points}。这些可以为static（只在当前转换单元中可见），global（对所有的转换单元可见）或者weak（全局的，但是可以被另一个具有相同名字的符号覆盖）。
 
-Much of the compiler treats all four kinds of label identically.  Some
-of it needs to know whether or not a label is an alternate entry point;
-for this purpose, the macro @code{LABEL_ALT_ENTRY_P} is provided.  It is
-equivalent to testing whether @samp{LABEL_KIND (label) == LABEL_NORMAL}.
-The only place that cares about the distinction between static, global,
-and weak alternate entry points, besides the front-end code that creates
-them, is the function @code{output_alternate_entry_point}, in
-@file{final.c}.
+编译器大多将所有四种标号同等对待。有些地方需要知道标号是否为候选入口点；为此，提供了宏@code{LABEL_ALT_ENTRY_P}。其等价于测试是否@samp{LABEL_KIND (label) == LABEL_NORMAL}。除了前端创建static，global和weak alternate entry points的代码以外，其它唯一关心它们的区别的地方是@file{final.c}文件中的函数@code{output_alternate_entry_point}。
 
-To set the kind of a label, use the @code{SET_LABEL_KIND} macro.
+使用宏@code{SET_LABEL_KIND}来设置标号的种类。
 
 @findex barrier
 @item barrier
-Barriers are placed in the instruction stream when control cannot flow
-past them.  They are placed after unconditional jump instructions to
-indicate that the jumps are unconditional and after calls to
-@code{volatile} functions, which do not return (e.g., @code{exit}).
-They contain no information beyond the three standard fields.
+栅栏被放在指令流中，控制无法经过的地方。它们被放在无条件跳转指令的后面，表示跳转是无条件的，以及对@code{volatile}函数的调用之后，表示不会返回（例如，@code{exit}）。除了三个标准的域以外，不包含其它信息。
 
 @findex note
 @findex NOTE_LINE_NUMBER
@@ -3269,10 +3173,7 @@ T只有一个@code{pc}表达式。
 
 @cindex @code{mem}, RTL sharing
 @item
-Only one @code{mem} object is normally created for each static
-variable or stack slot, so these objects are frequently shared in all
-the places they appear.  However, separate but equal objects for these
-variables are occasionally made.
+对于每个静态变量或者栈槽，通常只创建一个@code{mem}对象，所以这些对象在它们出现的所有地方被共享。然而，有时会为这些变量创建单独的，但是相等的对象。
 
 @cindex @code{asm_operands}, RTL sharing
 @item

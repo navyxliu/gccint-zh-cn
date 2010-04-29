@@ -53,97 +53,50 @@ Up:&nbsp;<a rel="up" accesskey="u" href="RTL.html#RTL">RTL</a>
 <h3 class="section">10.8 寄存器和内存</h3>
 
 <p><a name="index-RTL-register-expressions-2367"></a><a name="index-RTL-memory-expressions-2368"></a>
-Here are the RTL expression types for describing access to machine
-registers and to main memory.
+这些是描述访问机器寄存器和内存的RTL表达式类型。
 
      
 <a name="index-reg-2369"></a>
 <a name="index-hard-registers-2370"></a>
 <a name="index-pseudo-registers-2371"></a>
-<dl><dt><code>(reg:</code><var>m</var> <var>n</var><code>)</code><dd>For small values of the integer <var>n</var> (those that are less than
-<code>FIRST_PSEUDO_REGISTER</code>), this stands for a reference to machine
-register number <var>n</var>: a <dfn>hard register</dfn>.  For larger values of
-<var>n</var>, it stands for a temporary value or <dfn>pseudo register</dfn>. 
-The compiler's strategy is to generate code assuming an unlimited
-number of such pseudo registers, and later convert them into hard
-registers or into memory references.
+<dl><dt><code>(reg:</code><var>m</var> <var>n</var><code>)</code><dd>对于值小（那些小于<code>FIRST_PSEUDO_REGISTER</code>）的整数<var>n</var>，这表示对机器寄存器号为<var>n</var>的引用。对于值大的<var>n</var>，它表示一个临时的值或者伪寄存器（<dfn>pseudo register</dfn>）。编译器的策略是，在生成代码时假设有无限数目的伪寄存器，并在之后将它们转换为硬件寄存器（<dfn>hard register</dfn>）或者内存的引用。
 
-     <p><var>m</var> is the machine mode of the reference.  It is necessary because
-machines can generally refer to each register in more than one mode. 
-For example, a register may contain a full word but there may be
-instructions to refer to it as a half word or as a single byte, as
-well as instructions to refer to it as a floating point number of
-various precisions.
+     <p><var>m</var>为引用的机器模式。指定机器模式是有必要的，因为机器通常可以使用多种机器模式来引用每个寄存器。例如，一个寄存器可以包含一个整字，但是可以有指令来作为半字或者一个单独的字节来引用，同样，也有指令可以作为不同精度的浮点来引用。
 
-     <p>Even for a register that the machine can access in only one mode,
-the mode must always be specified.
+     <p>即使对于机器只能使用一种机器模式来引用的寄存器，mode也必须被指定。
 
-     <p>The symbol <code>FIRST_PSEUDO_REGISTER</code> is defined by the machine
-description, since the number of hard registers on the machine is an
-invariant characteristic of the machine.  Note, however, that not
-all of the machine registers must be general registers.  All the
-machine registers that can be used for storage of data are given
-hard register numbers, even those that can be used only in certain
-instructions or can hold only certain types of data.
+     <p>符号<code>FIRST_PSEUDO_REGISTER</code>被机器描述定义，由于机器的硬件寄存器数目是一个不变的特征。然而要注意，并不是所有的机器寄存器都必须是通用寄存器。所有的可以用于存储数据的机器寄存器都为被给定硬件寄存器编号，即使那些只可以被用于特定指令或者只能存放特定类型数据。
 
-     <p>A hard register may be accessed in various modes throughout one
-function, but each pseudo register is given a natural mode
-and is accessed only in that mode.  When it is necessary to describe
-an access to a pseudo register using a nonnatural mode, a <code>subreg</code>
-expression is used.
+     <p>一个硬件寄存器可以在整个函数中按照多种机器模式来访问，但是每个伪寄存器都被给定一个自然的机器模式并且只能按照那个机器模式来访问。当需要描述一个使用非自然机器模式来访问伪寄存器的时候，则使用一个<code>subreg</code>表达式。
 
-     <p>A <code>reg</code> expression with a machine mode that specifies more than
-one word of data may actually stand for several consecutive registers. 
-If in addition the register number specifies a hardware register, then
-it actually represents several consecutive hardware registers starting
-with the specified one.
+     <p>一个<code>reg</code>表达式具有的机器模式，如果指定了多于一个字的数据，则实际上代表了多个连续的寄存器。如果寄存器编号还指定了一个硬件寄存器，则其实际上表示起始于指定寄存器的多个连续的硬件寄存器。
 
-     <p>Each pseudo register number used in a function's RTL code is
-represented by a unique <code>reg</code> expression.
+     <p>每个在函数的RTL代码中使用的伪寄存器编号，使用一个唯一的<code>reg</code>表达式来表示。
 
-     <p><a name="index-FIRST_005fVIRTUAL_005fREGISTER-2372"></a><a name="index-LAST_005fVIRTUAL_005fREGISTER-2373"></a>Some pseudo register numbers, those within the range of
-<code>FIRST_VIRTUAL_REGISTER</code> to <code>LAST_VIRTUAL_REGISTER</code> only
-appear during the RTL generation phase and are eliminated before the
-optimization phases.  These represent locations in the stack frame that
-cannot be determined until RTL generation for the function has been
-completed.  The following virtual register numbers are defined:
+     <p><a name="index-FIRST_005fVIRTUAL_005fREGISTER-2372"></a><a name="index-LAST_005fVIRTUAL_005fREGISTER-2373"></a>一些伪寄存器编号，处于<code>FIRST_VIRTUAL_REGISTER</code>到<code>LAST_VIRTUAL_REGISTER</code>之间，只在RTL生成阶段出现并且在优化阶段之前被消除。这些表示在栈帧中的位置，并且直到函数的RTL生成完成后才能确定。下列虚寄存器编号被定义：
 
           
 <a name="index-VIRTUAL_005fINCOMING_005fARGS_005fREGNUM-2374"></a>
-<dl><dt><code>VIRTUAL_INCOMING_ARGS_REGNUM</code><dd>This points to the first word of the incoming arguments passed on the
-stack.  Normally these arguments are placed there by the caller, but the
-callee may have pushed some arguments that were previously passed in
-registers.
+<dl><dt><code>VIRTUAL_INCOMING_ARGS_REGNUM</code><dd>这指向栈上传递的参数的第一个字。通常这些参数由调用者存放，但是被调用者可能已经将之前在寄存器中传递的参数压入栈中。
 
-          <p><a name="index-g_t_0040code_007bFIRST_005fPARM_005fOFFSET_007d-and-virtual-registers-2375"></a><a name="index-g_t_0040code_007bARG_005fPOINTER_005fREGNUM_007d-and-virtual-registers-2376"></a>When RTL generation is complete, this virtual register is replaced
-by the sum of the register given by <code>ARG_POINTER_REGNUM</code> and the
-value of <code>FIRST_PARM_OFFSET</code>.
+          <p><a name="index-g_t_0040code_007bFIRST_005fPARM_005fOFFSET_007d-and-virtual-registers-2375"></a><a name="index-g_t_0040code_007bARG_005fPOINTER_005fREGNUM_007d-and-virtual-registers-2376"></a>当RTL生成完成时，该虚寄存器由<code>ARG_POINTER_REGNUM</code>给定的寄存器和<code>FIRST_PARM_OFFSET</code>的值的和替换。
 
-          <p><a name="index-VIRTUAL_005fSTACK_005fVARS_005fREGNUM-2377"></a><a name="index-g_t_0040code_007bFRAME_005fGROWS_005fDOWNWARD_007d-and-virtual-registers-2378"></a><br><dt><code>VIRTUAL_STACK_VARS_REGNUM</code><dd>If <code>FRAME_GROWS_DOWNWARD</code> is defined to a nonzero value, this points
-to immediately above the first variable on the stack.  Otherwise, it points
-to the first variable on the stack.
+          <p><a name="index-VIRTUAL_005fSTACK_005fVARS_005fREGNUM-2377"></a><a name="index-g_t_0040code_007bFRAME_005fGROWS_005fDOWNWARD_007d-and-virtual-registers-2378"></a><br><dt><code>VIRTUAL_STACK_VARS_REGNUM</code><dd>如果<code>FRAME_GROWS_DOWNWARD</code>被定义为非0的值，则该宏指向栈上第一个变量的上一个位置。否则，其指向栈上的第一个变量。
 
-          <p><a name="index-g_t_0040code_007bSTARTING_005fFRAME_005fOFFSET_007d-and-virtual-registers-2379"></a><a name="index-g_t_0040code_007bFRAME_005fPOINTER_005fREGNUM_007d-and-virtual-registers-2380"></a><code>VIRTUAL_STACK_VARS_REGNUM</code> is replaced with the sum of the
-register given by <code>FRAME_POINTER_REGNUM</code> and the value
-<code>STARTING_FRAME_OFFSET</code>.
+          <p><a name="index-g_t_0040code_007bSTARTING_005fFRAME_005fOFFSET_007d-and-virtual-registers-2379"></a><a name="index-g_t_0040code_007bFRAME_005fPOINTER_005fREGNUM_007d-and-virtual-registers-2380"></a><code>VIRTUAL_STACK_VARS_REGNUM</code>由<code>FRAME_POINTER_REGNUM</code>给定的寄存器和<code>STARTING_FRAME_OFFSET</code>的值的和替换。
 
-          <p><a name="index-VIRTUAL_005fSTACK_005fDYNAMIC_005fREGNUM-2381"></a><br><dt><code>VIRTUAL_STACK_DYNAMIC_REGNUM</code><dd>This points to the location of dynamically allocated memory on the stack
-immediately after the stack pointer has been adjusted by the amount of
-memory desired.
+          <p><a name="index-VIRTUAL_005fSTACK_005fDYNAMIC_005fREGNUM-2381"></a><br><dt><code>VIRTUAL_STACK_DYNAMIC_REGNUM</code><dd>该宏指向栈指针根据内存需要已经被调整后的栈上动态分配内存的位置。
 
-          <p><a name="index-g_t_0040code_007bSTACK_005fDYNAMIC_005fOFFSET_007d-and-virtual-registers-2382"></a><a name="index-g_t_0040code_007bSTACK_005fPOINTER_005fREGNUM_007d-and-virtual-registers-2383"></a>This virtual register is replaced by the sum of the register given by
-<code>STACK_POINTER_REGNUM</code> and the value <code>STACK_DYNAMIC_OFFSET</code>.
+          <p><a name="index-g_t_0040code_007bSTACK_005fDYNAMIC_005fOFFSET_007d-and-virtual-registers-2382"></a><a name="index-g_t_0040code_007bSTACK_005fPOINTER_005fREGNUM_007d-and-virtual-registers-2383"></a>该虚寄存器由<code>STACK_POINTER_REGNUM</code>给定的寄存器和<code>STACK_DYNAMIC_OFFSET</code>的值的和替换。
 
-          <p><a name="index-VIRTUAL_005fOUTGOING_005fARGS_005fREGNUM-2384"></a><br><dt><code>VIRTUAL_OUTGOING_ARGS_REGNUM</code><dd>This points to the location in the stack at which outgoing arguments
-should be written when the stack is pre-pushed (arguments pushed using
-push insns should always use <code>STACK_POINTER_REGNUM</code>).
+          <p><a name="index-VIRTUAL_005fOUTGOING_005fARGS_005fREGNUM-2384"></a><br><dt><code>VIRTUAL_OUTGOING_ARGS_REGNUM</code><dd>其指向栈中，当预先压栈时（使用push insn压栈的参数应该总是使用<code>STACK_POINTER_REGNUM</code>），书写输出参数的位置。
 
-          <p><a name="index-g_t_0040code_007bSTACK_005fPOINTER_005fOFFSET_007d-and-virtual-registers-2385"></a>This virtual register is replaced by the sum of the register given by
-<code>STACK_POINTER_REGNUM</code> and the value <code>STACK_POINTER_OFFSET</code>. 
-</dl>
+          <p><a name="index-g_t_0040code_007bSTACK_005fPOINTER_005fOFFSET_007d-and-virtual-registers-2385"></a>该虚拟寄存器，被替换成由<code>STACK_POINTER_REGNUM</code>给定的寄存器与值<code>STACK_POINTER_OFFSET</code>的和。
+
+     </dl>
 
      <p><a name="index-subreg-2386"></a><br><dt><code>(subreg:</code><var>m1</var> <var>reg:m2</var> <var>bytenum</var><code>)</code><dd>
-<code>subreg</code> expressions are used to refer to a register in a machine
+<code>subreg</code>表达式用于引用 expressions are used to refer to a register in a machine
 mode other than its natural one, or to refer to one register of
 a multi-part <code>reg</code> that actually refers to several registers.
 
