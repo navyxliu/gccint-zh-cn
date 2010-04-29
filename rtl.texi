@@ -2786,35 +2786,17 @@ insn的机器模式通常为@code{VOIDmode}，但有些阶段出于不同的目�
 
 insn的@code{LOG_LINKS}域为@code{insn_list}表达式链。每一个都具有两个操作数：第一个为insn，第二个为另一个@code{insn_list}表达式（链中的下一个）。链中的最后一个@code{insn_list}的第二个操作数为空指针。对于表达式链，重要的是有哪些insn（@code{insn_list}表达式的第一个操作数）。它们的顺序并不重要。
 
-该列表最初由流分析过程建立；在此之前还只是空指针。流分析只将那些可以用于指令合并的数据依赖，加入到列表中。对于每个insn，流分析过程
+该列表最初由流分析过程建立；在此之前还只是空指针。流分析只将那些可以用于指令合并的数据依赖，加入到列表中。
 
-This list is originally set up by the flow analysis pass; it is a null
-pointer until then.  Flow only adds links for those data dependencies
-which can be used for instruction combination.  For each insn, the flow
-analysis pass adds a link to insns which store into registers values
-that are used for the first time in this insn.
-
-The @code{REG_NOTES} field of an insn is a chain similar to the
-@code{LOG_LINKS} field but it includes @code{expr_list} expressions in
-addition to @code{insn_list} expressions.  There are several kinds of
-register notes, which are distinguished by the machine mode, which in a
-register note is really understood as being an @code{enum reg_note}.
-The first operand @var{op} of the note is data whose meaning depends on
-the kind of note.
+insn的@code{REG_NOTES}域是一个类似于@code{LOG_LINKS}域的链，不过除了@code{insn_list}表达式，其还包含@code{expr_list}表达式。有多种寄存器注解，其通过机器模式区分。注解的第一个操作数@var{op}的含义依赖注解的种类。
 
 @findex REG_NOTE_KIND
 @findex PUT_REG_NOTE_KIND
-The macro @code{REG_NOTE_KIND (@var{x})} returns the kind of
-register note.  Its counterpart, the macro @code{PUT_REG_NOTE_KIND
-(@var{x}, @var{newkind})} sets the register note type of @var{x} to be
-@var{newkind}.
+宏@code{REG_NOTE_KIND (@var{x})}返回寄存器注解的种类。宏@code{PUT_REG_NOTE_KIND (@var{x}, @var{newkind})}将@var{x}的寄存器注解类型设置为@var{newkind}。
 
-Register notes are of three classes: They may say something about an
-input to an insn, they may say something about an output of an insn, or
-they may create a linkage between two insns.  There are also a set
-of values that are only used in @code{LOG_LINKS}.
+寄存器注解有三种类别：可以用来说明insn的输入，可以用来说明insn的输出，或者可以用来创建两个insn之间的连接。还有一个值集，只用于@code{LOG_LINKS}中。
 
-These register notes annotate inputs to an insn:
+这些注解用来说明insn的输入：
 
 @table @code
 @findex REG_DEAD
