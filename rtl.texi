@@ -2697,150 +2697,96 @@ PREV_INSN (NEXT_INSN (@var{insn})) == @var{insn}
 @findex NOTE_LINE_NUMBER
 @findex NOTE_SOURCE_FILE
 @item note
-@code{note} insns are used to represent additional debugging and
-declarative information.  They contain two nonstandard fields, an
-integer which is accessed with the macro @code{NOTE_LINE_NUMBER} and a
-string accessed with @code{NOTE_SOURCE_FILE}.
+@code{note} insns用于表示额外的调试和说明信息。它们包含两个非标准的域，一个使用宏@code{NOTE_LINE_NUMBER}访问的整数，以及一个使用@code{NOTE_SOURCE_FILE}访问的字符串。
 
-If @code{NOTE_LINE_NUMBER} is positive, the note represents the
-position of a source line and @code{NOTE_SOURCE_FILE} is the source file name
-that the line came from.  These notes control generation of line
-number data in the assembler output.
+如果@code{NOTE_LINE_NUMBER}是正的，则注解表示源文件行号，并且@code{NOTE_SOURCE_FILE}为源文件名。这些注解控制在汇编输出中的生成行号数据。
 
-Otherwise, @code{NOTE_LINE_NUMBER} is not really a line number but a
-code with one of the following values (and @code{NOTE_SOURCE_FILE}
-must contain a null pointer):
+否则，@code{NOTE_LINE_NUMBER}不是一个行号，而是一个具有下列值之一的代码（并且@code{NOTE_SOURCE_FILE}必须包含一个空指针）：
 
 @table @code
 @findex NOTE_INSN_DELETED
 @item NOTE_INSN_DELETED
-Such a note is completely ignorable.  Some passes of the compiler
-delete insns by altering them into notes of this kind.
+这样的注解被完全忽略掉。编译器的一些过程会通过将insn修改成这种类型的注解，来删除insn。
 
 @findex NOTE_INSN_DELETED_LABEL
 @item NOTE_INSN_DELETED_LABEL
-This marks what used to be a @code{code_label}, but was not used for other
-purposes than taking its address and was transformed to mark that no
-code jumps to it.
+标记了曾经为@code{code_label}，但现在只用于获得其地址，并且没有代码会跳转到这里。
 
 @findex NOTE_INSN_BLOCK_BEG
 @findex NOTE_INSN_BLOCK_END
 @item NOTE_INSN_BLOCK_BEG
 @itemx NOTE_INSN_BLOCK_END
-These types of notes indicate the position of the beginning and end
-of a level of scoping of variable names.  They control the output
-of debugging information.
+这些类型的注解表示处于变量名作用域的起始和结束。它们控制调试信息的输出。
 
 @findex NOTE_INSN_EH_REGION_BEG
 @findex NOTE_INSN_EH_REGION_END
 @item NOTE_INSN_EH_REGION_BEG
 @itemx NOTE_INSN_EH_REGION_END
-These types of notes indicate the position of the beginning and end of a
-level of scoping for exception handling.  @code{NOTE_BLOCK_NUMBER}
-identifies which @code{CODE_LABEL} or @code{note} of type
-@code{NOTE_INSN_DELETED_LABEL} is associated with the given region.
+这些类型的注解表示处于异常处理作用域的起始和结束。@code{NOTE_BLOCK_NUMBER}标识了哪一个类型为@code{NOTE_INSN_DELETED_LABEL}的@code{CODE_LABEL}或@code{note}与给定的区域相关联。
 
 @findex NOTE_INSN_LOOP_BEG
 @findex NOTE_INSN_LOOP_END
 @item NOTE_INSN_LOOP_BEG
 @itemx NOTE_INSN_LOOP_END
-These types of notes indicate the position of the beginning and end
-of a @code{while} or @code{for} loop.  They enable the loop optimizer
-to find loops quickly.
+这些类型的注解表示处于@code{while}或者@code{for}循环的起始和结束。它们使得循环优化可以快速的发现循环。
 
 @findex NOTE_INSN_LOOP_CONT
 @item NOTE_INSN_LOOP_CONT
-Appears at the place in a loop that @code{continue} statements jump to.
+出现在循环中@code{continue}语句跳转的地方。
 
 @findex NOTE_INSN_LOOP_VTOP
 @item NOTE_INSN_LOOP_VTOP
-This note indicates the place in a loop where the exit test begins for
-those loops in which the exit test has been duplicated.  This position
-becomes another virtual start of the loop when considering loop
-invariants.
+该注解表示循环中退出测试（exit test）起始的地方，并且退出测试在循环中被复制。当考虑循环不变量时，该位置为循环的另一个虚拟起始点。
 
 @findex NOTE_INSN_FUNCTION_BEG
 @item NOTE_INSN_FUNCTION_BEG
-Appears at the start of the function body, after the function
-prologue.
+出现在函数序言之后，函数体的起始处。
 
 @end table
 
-These codes are printed symbolically when they appear in debugging dumps.
+在调试转储中，这些代码被符号化的打印。
 @end table
 
 @cindex @code{TImode}, in @code{insn}
 @cindex @code{HImode}, in @code{insn}
 @cindex @code{QImode}, in @code{insn}
-The machine mode of an insn is normally @code{VOIDmode}, but some
-phases use the mode for various purposes.
+insn的机器模式通常为@code{VOIDmode}，但有些阶段出于不同的目的而使用其它机器模式。
 
-The common subexpression elimination pass sets the mode of an insn to
-@code{QImode} when it is the first insn in a block that has already
-been processed.
+公共子表达式消除过程将一个insn的机器模式设为@code{QImode}，当其为已经被处理过的块中的第一个insn时。
 
-The second Haifa scheduling pass, for targets that can multiple issue,
-sets the mode of an insn to @code{TImode} when it is believed that the
-instruction begins an issue group.  That is, when the instruction
-cannot issue simultaneously with the previous.  This may be relied on
-by later passes, in particular machine-dependent reorg.
+第二次Haifa调度过程中，对于可以多发射的目标机，当insn被认为是一个发射组合中的起始指令时，将其机器模式设为@code{TImode}。也就是说，该指令不能和之前的指令同时发射。这可以在后面的过程中用到，特别是机器特定的reorg。
 
-Here is a table of the extra fields of @code{insn}, @code{jump_insn}
-and @code{call_insn} insns:
+下面的表中列出了@code{insn}, @code{jump_insn}和@code{call_insn}的其它域：
 
 @table @code
 @findex PATTERN
 @item PATTERN (@var{i})
-An expression for the side effect performed by this insn.  This must be
-one of the following codes: @code{set}, @code{call}, @code{use},
-@code{clobber}, @code{return}, @code{asm_input}, @code{asm_output},
-@code{addr_vec}, @code{addr_diff_vec}, @code{trap_if}, @code{unspec},
-@code{unspec_volatile}, @code{parallel}, @code{cond_exec}, or @code{sequence}.  If it is a @code{parallel},
-each element of the @code{parallel} must be one these codes, except that
-@code{parallel} expressions cannot be nested and @code{addr_vec} and
-@code{addr_diff_vec} are not permitted inside a @code{parallel} expression.
+一个表达式，为该insn执行的副作用。必须为下列代码中的一个：@code{set}, @code{call}, @code{use}, @code{clobber}, @code{return}, @code{asm_input}, @code{asm_output}, @code{addr_vec}, @code{addr_diff_vec}, @code{trap_if}, @code{unspec}, @code{unspec_volatile}, @code{parallel}, @code{cond_exec}或@code{sequence}。如果其为@code{parallel}，则@code{parallel}中的每个元素必须是这些代码中的一个，并且，@code{parallel}表达式不能被嵌套，@code{addr_vec}和@code{addr_diff_vec}不允许在@code{parallel}表达式中。
 
 @findex INSN_CODE
 @item INSN_CODE (@var{i})
-An integer that says which pattern in the machine description matches
-this insn, or @minus{}1 if the matching has not yet been attempted.
+一个整数，说明机器描述中的哪一个指令模式匹配该insn，或者，如果还没有进行匹配，则为@minus{}1。
 
-Such matching is never attempted and this field remains @minus{}1 on an insn
-whose pattern consists of a single @code{use}, @code{clobber},
-@code{asm_input}, @code{addr_vec} or @code{addr_diff_vec} expression.
+对于指令模式由单个@code{use}, @code{clobber}, @code{asm_input}, @code{addr_vec} 或 @code{addr_diff_vec}表达式组成的insn，则不会进行这样的匹配，并且该域保持为@minus{}1。
 
 @findex asm_noperands
-Matching is also never attempted on insns that result from an @code{asm}
-statement.  These contain at least one @code{asm_operands} expression.
-The function @code{asm_noperands} returns a non-negative value for
-such insns.
+对于来自@code{asm}语句的insn，也不会进行指令模式匹配。这些至少包含了一个@code{asm_operands}表达式。函数@code{asm_noperands}为这样的insn返回一个非负的值。
 
-In the debugging output, this field is printed as a number followed by
-a symbolic representation that locates the pattern in the @file{md}
-file as some small positive or negative offset from a named pattern.
+在调试输出中，该域被打印成一个数字，紧随一个符号表示，用来定位在@file{md}中的指令模式，数字表示相对命名指令模式的正的或者负的偏移量。
 
 @findex LOG_LINKS
 @item LOG_LINKS (@var{i})
-A list (chain of @code{insn_list} expressions) giving information about
-dependencies between instructions within a basic block.  Neither a jump
-nor a label may come between the related insns.  These are only used by
-the schedulers and by combine.  This is a deprecated data structure.
-Def-use and use-def chains are now preferred. 
+一个列表（@code{insn_list}表达式链），给出了基本块中指令之间的依赖信息。相关联的insn之间不会有跳转或者标号。这些只被用于指令调度和组合。这是一个不被推荐的数据结构。现在推荐使用def-use和use-def链。
 
 @findex REG_NOTES
 @item REG_NOTES (@var{i})
-A list (chain of @code{expr_list} and @code{insn_list} expressions)
-giving miscellaneous information about the insn.  It is often
-information pertaining to the registers used in this insn.
+一个列表（@code{expr_list}和@code{insn_list}表达式链），给出了insn的其它信息。通常为从属于该insn使用的寄存器的信息。
+
 @end table
 
-The @code{LOG_LINKS} field of an insn is a chain of @code{insn_list}
-expressions.  Each of these has two operands: the first is an insn,
-and the second is another @code{insn_list} expression (the next one in
-the chain).  The last @code{insn_list} in the chain has a null pointer
-as second operand.  The significant thing about the chain is which
-insns appear in it (as first operands of @code{insn_list}
-expressions).  Their order is not significant.
+insn的@code{LOG_LINKS}域为@code{insn_list}表达式链。每一个都具有两个操作数：第一个为insn，第二个为另一个@code{insn_list}表达式（链中的下一个）。链中的最后一个@code{insn_list}的第二个操作数为空指针。对于表达式链，重要的是有哪些insn（@code{insn_list}表达式的第一个操作数）。它们的顺序并不重要。
+
+该列表最初由流分析过程建立；在此之前还只是空指针。流分析只将那些可以用于指令合并的数据依赖，加入到列表中。对于每个insn，流分析过程
 
 This list is originally set up by the flow analysis pass; it is a null
 pointer until then.  Flow only adds links for those data dependencies
