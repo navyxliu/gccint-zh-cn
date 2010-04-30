@@ -2505,46 +2505,33 @@ instructions.
 
 @findex post_modify
 @item (post_modify:@var{m} @var{x} @var{y})
+表示该副作用为，将@var{x}设置为@var{y}，并且表示@var{x}被修改之前的值。@var{x}必须为一个@code{reg}或者@code{mem}，但是大多数机器只允许@code{reg}。@var{m}必须为机器所使用的指针的机器模式。
 
-Represents the side effect of setting @var{x} to @var{y} and
-represents @var{x} before @var{x} is modified.  @var{x} must be a
-@code{reg} or @code{mem}, but most machines allow only a @code{reg}.
-@var{m} must be the machine mode for pointers on the machine in use.
-
-The expression @var{y} must be one of three forms:
+表达式@var{y}必须为下列三种形式之一：
 @code{(plus:@var{m} @var{x} @var{z})},
-@code{(minus:@var{m} @var{x} @var{z})}, or
+@code{(minus:@var{m} @var{x} @var{z})}, 或者
 @code{(plus:@var{m} @var{x} @var{i})},
-where @var{z} is an index register and @var{i} is a constant.
+其中@var{z}为一个索引寄存器，@var{i}为一个常量。
 
-Here is an example of its use:
+这里为一个有关用法的例子：
 
 @smallexample
 (mem:SF (post_modify:SI (reg:SI 42) (plus (reg:SI 42)
                                           (reg:SI 48))))
 @end smallexample
 
-This says to modify pseudo register 42 by adding the contents of pseudo
-register 48 to it, after the use of what ever 42 points to.
+这说明在使用了伪寄存器42曾经指向的值之后，将伪寄存器42修改为，加上其伪寄存器48的内容，
 
 @findex pre_modify
 @item (pre_modify:@var{m} @var{x} @var{expr})
-Similar except side effects happen before the use.
+类似的，表示副作用在使用之前开始有效。
 @end table
 
-These embedded side effect expressions must be used with care.  Instruction
-patterns may not use them.  Until the @samp{flow} pass of the compiler,
-they may occur only to represent pushes onto the stack.  The @samp{flow}
-pass finds cases where registers are incremented or decremented in one
-instruction and used as an address shortly before or after; these cases are
-then transformed to use pre- or post-increment or -decrement.
+这些嵌入的副作用表达式在使用时要小心。指令模式可以不使用它们。在到达编译器的@samp{flow} pass之前，它们可能只出现在用于表示压栈。@samp{flow} pass查找寄存器在一条指令中被递增或递减，并且在之前或者之后被作为地址使用的情况；这些情况然后被转换成使用前增（减）或后增（减）。
 
-If a register used as the operand of these expressions is used in
-another address in an insn, the original value of the register is used.
-Uses of the register outside of an address are not permitted within the
-same insn as a use in an embedded side effect expression because such
-insns behave differently on different machines and hence must be treated
-as ambiguous and disallowed.
+如果这些表达式中作为操作数的寄存器，在一个insn中的另一个地址中使用，则会使用寄存器的原始的值。在地址之外使用寄存器是不被允许的，因为这样的insn在不同的机器上行为是不同的，因此会有歧义。
+
+
 
 An instruction that can be represented with an embedded side effect
 could also be represented using @code{parallel} containing an additional
