@@ -52,76 +52,45 @@ Up:&nbsp;<a rel="up" accesskey="u" href="RTL.html#RTL">RTL</a>
 <h3 class="section">10.16 地址中嵌入的副作用</h3>
 
 <p><a name="index-RTL-preincrement-2571"></a><a name="index-RTL-postincrement-2572"></a><a name="index-RTL-predecrement-2573"></a><a name="index-RTL-postdecrement-2574"></a>
-Six special side-effect expression codes appear as memory addresses.
+有六个特定的副作用表达式代码作为内存地址出现。
 
      
 <a name="index-pre_005fdec-2575"></a>
-<dl><dt><code>(pre_dec:</code><var>m</var> <var>x</var><code>)</code><dd>Represents the side effect of decrementing <var>x</var> by a standard
-amount and represents also the value that <var>x</var> has after being
-decremented.  <var>x</var> must be a <code>reg</code> or <code>mem</code>, but most
-machines allow only a <code>reg</code>.  <var>m</var> must be the machine mode
-for pointers on the machine in use.  The amount <var>x</var> is decremented
-by is the length in bytes of the machine mode of the containing memory
-reference of which this expression serves as the address.  Here is an
-example of its use:
+<dl><dt><code>(pre_dec:</code><var>m</var> <var>x</var><code>)</code><dd>表示该副作用为，<var>x</var>递减一个标准的数量，并且还表示了递减后的<var>x</var>的值。<var>x</var>必须为一个<code>reg</code>或者<code>mem</code>，但是大多数机器只允许<code>reg</code>。<var>m</var>必须为机器所使用的指针的机器模式。<var>x</var>被递减的数量为，所包含的内存引用的机器模式的长度，以字节为单位。这里有一个关于用法的例子：
 
      <pre class="smallexample">          (mem:DF (pre_dec:SI (reg:SI 39)))
 </pre>
-     <p class="noindent">This says to decrement pseudo register 39 by the length of a <code>DFmode</code>
-value and use the result to address a <code>DFmode</code> value.
+     <p class="noindent">这说明将伪寄存器39递减一个<code>DFmode</code>值的长度，并将结果用来对一个<code>DFmode</code>值进行寻址。
 
-     <p><a name="index-pre_005finc-2576"></a><br><dt><code>(pre_inc:</code><var>m</var> <var>x</var><code>)</code><dd>Similar, but specifies incrementing <var>x</var> instead of decrementing it.
+     <p><a name="index-pre_005finc-2576"></a><br><dt><code>(pre_inc:</code><var>m</var> <var>x</var><code>)</code><dd>类似的，用来说明递增<var>x</var>。
 
-     <p><a name="index-post_005fdec-2577"></a><br><dt><code>(post_dec:</code><var>m</var> <var>x</var><code>)</code><dd>Represents the same side effect as <code>pre_dec</code> but a different
-value.  The value represented here is the value <var>x</var> has <i>before</i>
-being decremented.
+     <p><a name="index-post_005fdec-2577"></a><br><dt><code>(post_dec:</code><var>m</var> <var>x</var><code>)</code><dd>表示与<code>pre_dec</code>相同的副作用，但表示不同的值。这里表示的值为递减<i>之前</i>的<var>x</var>的值。
 
-     <p><a name="index-post_005finc-2578"></a><br><dt><code>(post_inc:</code><var>m</var> <var>x</var><code>)</code><dd>Similar, but specifies incrementing <var>x</var> instead of decrementing it.
+     <p><a name="index-post_005finc-2578"></a><br><dt><code>(post_inc:</code><var>m</var> <var>x</var><code>)</code><dd>类似的，用来说明递增<var>x</var>。
 
-     <p><a name="index-post_005fmodify-2579"></a><br><dt><code>(post_modify:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>
-Represents the side effect of setting <var>x</var> to <var>y</var> and
-represents <var>x</var> before <var>x</var> is modified.  <var>x</var> must be a
-<code>reg</code> or <code>mem</code>, but most machines allow only a <code>reg</code>. 
-<var>m</var> must be the machine mode for pointers on the machine in use.
+     <p><a name="index-post_005fmodify-2579"></a><br><dt><code>(post_modify:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>表示该副作用为，将<var>x</var>设置为<var>y</var>，并且表示<var>x</var>被修改之前的值。<var>x</var>必须为一个<code>reg</code>或者<code>mem</code>，但是大多数机器只允许<code>reg</code>。<var>m</var>必须为机器所使用的指针的机器模式。
 
-     <p>The expression <var>y</var> must be one of three forms:
+     <p>表达式<var>y</var>必须为下列三种形式之一：
 <code>(plus:</code><var>m</var> <var>x</var> <var>z</var><code>)</code>,
-<code>(minus:</code><var>m</var> <var>x</var> <var>z</var><code>)</code>, or
+<code>(minus:</code><var>m</var> <var>x</var> <var>z</var><code>)</code>, 或者
 <code>(plus:</code><var>m</var> <var>x</var> <var>i</var><code>)</code>,
-where <var>z</var> is an index register and <var>i</var> is a constant.
+其中<var>z</var>为一个索引寄存器，<var>i</var>为一个常量。
 
-     <p>Here is an example of its use:
+     <p>这里为一个有关用法的例子：
 
      <pre class="smallexample">          (mem:SF (post_modify:SI (reg:SI 42) (plus (reg:SI 42)
                                                     (reg:SI 48))))
 </pre>
-     <p>This says to modify pseudo register 42 by adding the contents of pseudo
-register 48 to it, after the use of what ever 42 points to.
+     <p>这说明在使用了伪寄存器42曾经指向的值之后，将伪寄存器42修改为，加上其伪寄存器48的内容，
 
-     <p><a name="index-pre_005fmodify-2580"></a><br><dt><code>(pre_modify:</code><var>m</var> <var>x</var> <var>expr</var><code>)</code><dd>Similar except side effects happen before the use. 
+     <p><a name="index-pre_005fmodify-2580"></a><br><dt><code>(pre_modify:</code><var>m</var> <var>x</var> <var>expr</var><code>)</code><dd>类似的，表示副作用在使用之前开始有效。
 </dl>
 
- <p>These embedded side effect expressions must be used with care.  Instruction
-patterns may not use them.  Until the &lsquo;<samp><span class="samp">flow</span></samp>&rsquo; pass of the compiler,
-they may occur only to represent pushes onto the stack.  The &lsquo;<samp><span class="samp">flow</span></samp>&rsquo;
-pass finds cases where registers are incremented or decremented in one
-instruction and used as an address shortly before or after; these cases are
-then transformed to use pre- or post-increment or -decrement.
+ <p>这些嵌入的副作用表达式在使用时要小心。指令模式可以不使用它们。在到达编译器的&lsquo;<samp><span class="samp">flow</span></samp>&rsquo; pass之前，它们可能只出现在用于表示压栈。&lsquo;<samp><span class="samp">flow</span></samp>&rsquo; pass查找寄存器在一条指令中被递增或递减，并且在之前或者之后被作为地址使用的情况；这些情况然后被转换成使用前增（减）或后增（减）。
 
- <p>If a register used as the operand of these expressions is used in
-another address in an insn, the original value of the register is used. 
-Uses of the register outside of an address are not permitted within the
-same insn as a use in an embedded side effect expression because such
-insns behave differently on different machines and hence must be treated
-as ambiguous and disallowed.
+ <p>如果这些表达式中作为操作数的寄存器，在一个insn中的另一个地址中使用，则会使用寄存器的原始的值。在地址之外使用寄存器是不被允许的，因为这样的insn在不同的机器上行为是不同的，因此会有歧义。
 
- <p>An instruction that can be represented with an embedded side effect
-could also be represented using <code>parallel</code> containing an additional
-<code>set</code> to describe how the address register is altered.  This is not
-done because machines that allow these operations at all typically
-allow them wherever a memory address is called for.  Describing them as
-additional parallel stores would require doubling the number of entries
-in the machine description.
+ <p>可以被表示成具有嵌入副作用的指令，也可以被表示成使用<code>parallel</code>，包含一个额外的<code>set</code>来描述地址寄存器如何被修改。
 
  </body></html>
 

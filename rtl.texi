@@ -2790,129 +2790,56 @@ insn的@code{REG_NOTES}域是一个类似于@code{LOG_LINKS}域的链，不过�
 
 @findex REG_LABEL_OPERAND
 @item REG_LABEL_OPERAND
-该insn使用@var{op}，, a @code{code_label} or a @code{note} of type
-@code{NOTE_INSN_DELETED_LABEL}, but is not a @code{jump_insn}, or it
-is a @code{jump_insn} that refers to the operand as an ordinary
-operand.  The label may still eventually be a jump target, but if so
-in an indirect jump in a subsequent insn.  The presence of this note
-allows jump optimization to be aware that @var{op} is, in fact, being
-used, and flow optimization to build an accurate flow graph.
+该insn使用@var{op}，一个类型为@code{NOTE_INSN_DELETED_LABEL}的@code{code_label}或者@code{note}，但是不为@code{jump_insn}。或者，其为一个将操作数作为普通操作数的@code{jump_insn}。标号最终也可以为跳转目标，但这是在后续insn的间接跳转中。该注解使得跳转优化知道@var{op}实际上被使用了，从而流优化可以创建一个精确的流图。
 
 @findex REG_LABEL_TARGET
 @item REG_LABEL_TARGET
-This insn is a @code{jump_insn} but not a @code{addr_vec} or
-@code{addr_diff_vec}.  It uses @var{op}, a @code{code_label} as a
-direct or indirect jump target.  Its purpose is similar to that of
-@code{REG_LABEL_OPERAND}.  This note is only present if the insn has
-multiple targets; the last label in the insn (in the highest numbered
-insn-field) goes into the @code{JUMP_LABEL} field and does not have a
-@code{REG_LABEL_TARGET} note.  @xref{Insns, JUMP_LABEL}.
+该insn为一个@code{jump_insn}，但不是@code{addr_vec}和@code{addr_diff_vec}。其使用@var{op}，一个@code{code_label}，作为直接或间接跳转的目标。其用途与@code{REG_LABEL_OPERAND}类似。该注解只存在于当insn具有多个目标的时候；insn中的最后一个标号（在最高编号的insn域中），放到@code{JUMP_LABEL}域中，并且没有@code{REG_LABEL_TARGET}。@xref{Insns, JUMP_LABEL}。
 
 @findex REG_CROSSING_JUMP
 @item REG_CROSSING_JUMP
-This insn is an branching instruction (either an unconditional jump or
-an indirect jump) which crosses between hot and cold sections, which
-could potentially be very far apart in the executable.  The presence
-of this note indicates to other optimizations that this branching
-instruction should not be ``collapsed'' into a simpler branching
-construct.  It is used when the optimization to partition basic blocks
-into hot and cold sections is turned on.
+该insn为一个分支指令（无条件跳转或者间接跳转），其穿越了热代码段和冷代码段，并可能潜在的位于可执行程序中非常远的部分。该注解用来指示其它优化，表示该分支指令不应该被折叠为简单的分支结构。其用于当优化将基本块分成热代码段和冷代码段的时候。
 
 @findex REG_SETJMP
 @item REG_SETJMP 
-Appears attached to each @code{CALL_INSN} to @code{setjmp} or a 
-related function.
+附加在每个针对@code{setjmp}或者相关的函数的@code{CALL_INSN}上。
+
 @end table
 
-The following notes describe attributes of outputs of an insn:
+下列注解描述了有关insn的输出的属性：
 
 @table @code
 @findex REG_EQUIV
 @findex REG_EQUAL
 @item REG_EQUIV
 @itemx REG_EQUAL
-This note is only valid on an insn that sets only one register and
-indicates that that register will be equal to @var{op} at run time; the
-scope of this equivalence differs between the two types of notes.  The
-value which the insn explicitly copies into the register may look
-different from @var{op}, but they will be equal at run time.  If the
-output of the single @code{set} is a @code{strict_low_part} expression,
-the note refers to the register that is contained in @code{SUBREG_REG}
-of the @code{subreg} expression.
+该注解只用在只设置一个寄存器的insn上，用来表示那个寄存器在运行时等价于@var{op}；该等值的作用域根据两种类型的注解而有所不同。insn显式的复制进寄存器的值可能看起来与@var{op}不同，但它们将在运行时相等。如果单个@code{set}的输出为一个@code{strict_low_part}表达式，则注解是用于@code{subreg}表达式@code{SUBREG_REG}所包含的寄存器。
 
-For @code{REG_EQUIV}, the register is equivalent to @var{op} throughout
-the entire function, and could validly be replaced in all its
-occurrences by @var{op}.  (``Validly'' here refers to the data flow of
-the program; simple replacement may make some insns invalid.)  For
-example, when a constant is loaded into a register that is never
-assigned any other value, this kind of note is used.
+对于@code{REG_EQUIV}，在整个函数中，寄存器都等价于@var{op}，并且可以在其所有出现的地方被@var{op}有效替换。（有效，这里是指程序的数据流；简单的替换可能会使得某些insn无效。）例如，当一个常量被加载到一个寄存器中，并且寄存器不再被赋予任何其它值，则会使用这种注解。
 
-When a parameter is copied into a pseudo-register at entry to a function,
-a note of this kind records that the register is equivalent to the stack
-slot where the parameter was passed.  Although in this case the register
-may be set by other insns, it is still valid to replace the register
-by the stack slot throughout the function.
+当在函数入口处，一个参数被复制到一个伪寄存器中时，这种的注解会用来记录该寄存器等价于传递参数的栈槽。虽然，这种情况下，寄存器可能被其它的insn设置，其也可以在整个函数中被栈槽来替换。
 
-A @code{REG_EQUIV} note is also used on an instruction which copies a
-register parameter into a pseudo-register at entry to a function, if
-there is a stack slot where that parameter could be stored.  Although
-other insns may set the pseudo-register, it is valid for the compiler to
-replace the pseudo-register by stack slot throughout the function,
-provided the compiler ensures that the stack slot is properly
-initialized by making the replacement in the initial copy instruction as
-well.  This is used on machines for which the calling convention
-allocates stack space for register parameters.  See
-@code{REG_PARM_STACK_SPACE} in @ref{Stack Arguments}.
+@code{REG_EQUIV}注解还用于，在函数入口处，将一个寄存器参数复制到一个伪寄存器中的指令，如果存在一个参数本来应该被存放的栈槽。虽然其它insn可以设置该伪寄存器，但编译器还是可以在整个函数中，使用栈槽来替换伪寄存器，假设编译器可以确保栈槽被适当的初始化。这被用于调用约定为寄存器参数分配栈空间的机器上。参见@ref{Stack Arguments}中的@code{REG_PARM_STACK_SPACE}。
 
-In the case of @code{REG_EQUAL}, the register that is set by this insn
-will be equal to @var{op} at run time at the end of this insn but not
-necessarily elsewhere in the function.  In this case, @var{op}
-is typically an arithmetic expression.  For example, when a sequence of
-insns such as a library call is used to perform an arithmetic operation,
-this kind of note is attached to the insn that produces or copies the
-final value.
+对于@code{REG_EQUAL}的情况，被该insn设置的寄存器，将在运行时，在该insn的结尾处，但不必要是函数的其它地方，等价与@var{op}。这种情况下，@var{op}通常为一个算术表达式。例如，当一个库调用的insn序列，被用在一个算术运算上，则该类的注解将被附加在产生或者复制最终值的insn上。
 
-These two notes are used in different ways by the compiler passes.
-@code{REG_EQUAL} is used by passes prior to register allocation (such as
-common subexpression elimination and loop optimization) to tell them how
-to think of that value.  @code{REG_EQUIV} notes are used by register
-allocation to indicate that there is an available substitute expression
-(either a constant or a @code{mem} expression for the location of a
-parameter on the stack) that may be used in place of a register if
-insufficient registers are available.
+这两个注解在编译器过程中，按照不同的方法来使用。@code{REG_EQUAL}用于寄存器分配之前的过程中（例如公共子表达式消除和循环优化），来告诉它们如何考虑那个值。@code{REG_EQUIV}注解用于寄存器分配，来表示存在一个可用的替换表达式（为栈上一个参数位置的常量或者@code{mem}表达式），其可以用在没有足够寄存器的地方。
 
-Except for stack homes for parameters, which are indicated by a
-@code{REG_EQUIV} note and are not useful to the early optimization
-passes and pseudo registers that are equivalent to a memory location
-throughout their entire life, which is not detected until later in
-the compilation, all equivalences are initially indicated by an attached
-@code{REG_EQUAL} note.  In the early stages of register allocation, a
-@code{REG_EQUAL} note is changed into a @code{REG_EQUIV} note if
-@var{op} is a constant and the insn represents the only set of its
-destination register.
+除了为参数提供地方的栈以外，其它所有等值最初都是通过附加一个@code{REG_EQUAL}注解来表示。在寄存器分配的早期阶段，如果@var{op}是一个常量并且insn只表示对其目的寄存器进行设置，则@code{REG_EQUAL}被改变成@code{REG_EQUIV}注解。
 
-Thus, compiler passes prior to register allocation need only check for
-@code{REG_EQUAL} notes and passes subsequent to register allocation
-need only check for @code{REG_EQUIV} notes.
+因此，寄存器分配之前的编译过程，只需要检查@code{REG_EQUAL}注解，而之后的编译过程只需要检查@code{REG_EQUIV}注解。
+
 @end table
 
-这些注解描述了insn之间的联系。它们成对的出现：一个insn具有一对注解，其中之一用来指向第二个insn，
-These notes describe linkages between insns.  They occur in pairs: one
-insn has one of a pair of notes that points to a second insn, which has
-the inverse note pointing back to the first insn.
+这些注解描述了insn之间的联系。它们成对的出现：一个insn具有一对注解，其中之一用来指向第二个insn，并且第二个insn也由一个反过来指向第一个insn的注解。
 
 @table @code
 @findex REG_CC_SETTER
 @findex REG_CC_USER
 @item REG_CC_SETTER
 @itemx REG_CC_USER
-On machines that use @code{cc0}, the insns which set and use @code{cc0}
-set and use @code{cc0} are adjacent.  However, when branch delay slot
-filling is done, this may no longer be true.  In this case a
-@code{REG_CC_USER} note will be placed on the insn setting @code{cc0} to
-point to the insn using @code{cc0} and a @code{REG_CC_SETTER} note will
-be placed on the insn using @code{cc0} to point to the insn setting
-@code{cc0}.
+在使用@code{cc0}的机器上，设置和使用@code{cc0}的insns是相邻的。然而，当做完分支延迟槽填充之后，就不一定是这样的了。这种情况下，@code{REG_CC_USER}注解将被放在设置@code{cc0}的insn上，来指向使用@code{cc0}的insn，并且@code{REG_CC_SETTER}注解将被放在使用@code{cc0}的insn上，来指向设置@code{cc0}的insn。
+
 @end table
 
 这些值只用在@code{LOG_LINKS}域，用来表示每个链接表示的依赖类型。表示一个数据依赖（写后读依赖）的链接，不使用任何代码，它们只是简单的具有@code{VOIDmode}模式，并在打印输出中没有任何描述文本。
