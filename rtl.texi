@@ -2177,13 +2177,13 @@ maximum or the minimum.
 
 如果@var{lval}是一个@code{zero_extract}，则由@code{zero_extract}指定的相关位域（内存或者寄存器相关的），被赋予值@var{x}，而其它位域不变。注意@code{sign_extract}不能出现在@var{lval}中。 
 
-如果@var{lval}是@code{(cc0)}，其没有机器模式，并且@var{x}可以为一个@code{compare}表达式或者任意模式的值。后者情况表示是一个“test”指令。表达式@code{(set (cc0) (reg:@var{m} @var{n}))} 等价于 @code{(set (cc0) (compare (reg:@var{m} @var{n})。在编译过程中可以使用前一个表达式来节省空间。 
+如果@var{lval}是@code{(cc0)}，其没有机器模式，并且@var{x}可以为一个@code{compare}表达式或者任意模式的值。后者情况表示是一个“test”指令。表达式@code{(set (cc0) (reg:@var{m} @var{n}))} 等价于@code{(set (cc0) (compare (reg:@var{m} @var{n})))}。在编译过程中可以使用前一个表达式来节省空间。 
 
 如果@var{lval}是一个@code{parallel}，其用来表示一个函数通过多个寄存器来返回一个结构体的情况。@code{parallel}中的每一个元素是一个@code{expr_list}，其第一个操作数是一个@code{reg}，并且第二个操作数是一个@code{const_int}，表示相应寄存器的数据在结构体中的偏移量（以字节为单位）。第一个元素也可能为null，用来指示结构体也有一部分是在内存中传递的。 
 
 @cindex jump instructions and @code{set}
 @cindex @code{if_then_else} usage
-如果@var{lval}是@code{(pc)}，则为一个跳转指令，并且@var{x}只有几种可能。其可能为一个@code{label_ref}表达式（无条件跳转）。可能为一个@code{if_then_else}（条件跳转），这种情况下，第二个或者第三个操作数必须是@code{(pc)}（用于不进行跳转的情况），并且另外两个必须是一个@code{label_ref}（用于进行跳转的情况）。@var{x}也可以是一个@code{mem}或者@code{(plus:SI (pc) @var{y}, 其中y可以为一个@code{reg}或者@code{mem}；这些独特的模式用来表示通过分支表来进行跳转。 
+如果@var{lval}是@code{(pc)}，则为一个跳转指令，并且@var{x}只有几种可能。其可能为一个@code{label_ref}表达式（无条件跳转）。可能为一个@code{if_then_else}（条件跳转），这种情况下，第二个或者第三个操作数必须是@code{(pc)}（用于不进行跳转的情况），并且另外两个必须是一个@code{label_ref}（用于进行跳转的情况）。@var{x}也可以是一个@code{mem}或者@code{(plus:SI (pc) @var{y})}, 其中y可以为一个@code{reg}或者@code{mem}；这些独特的模式用来表示通过分支表来进行跳转。 
 
 如果@var{lval}即不是@code{(cc0)}也不是@code{(pc)},则@var{lval}的模式一定不是@code{VOIDmode}，并且@var{x}的模式必须对于@var{lval}的模式有效。 
 
@@ -2193,110 +2193,43 @@ maximum or the minimum.
 
 @findex return
 @item (return)
-在指令模式中作为单独的表达式，表示从当前函数的一个返回，在一些机器上，可以使用一条指令来完成，例如VAXen。
-As the sole expression in a pattern, represents a return from the
-current function, on machines where this can be done with one
-instruction, such as VAXen.  On machines where a multi-instruction
-``epilogue'' must be executed in order to return from the function,
-returning is done by jumping to a label which precedes the epilogue, and
-the @code{return} expression code is never used.
+在指令模式中作为单独的表达式，表示从当前函数的一个返回，在一些机器上，可以使用一条指令来完成，例如VAXen。在一些机器上，为了从函数中返回，包括多条指令的尾声必须被执行，则返回操作，通过跳转到一个位于尾声之前的标号来完成，并且不使用@code{return}表达式代码。
 
-Inside an @code{if_then_else} expression, represents the value to be
-placed in @code{pc} to return to the caller.
+在@code{if_then_else}表达式中，表示放在@code{pc}中的，返回给调用者的值。
 
-Note that an insn pattern of @code{(return)} is logically equivalent to
-@code{(set (pc) (return))}, but the latter form is never used.
+注意，指令模式为@code{(return)}的insn，在逻辑上等价于@code{(set (pc) (return))}，但是不使用后者的形式。
 
 @findex call
 @item (call @var{function} @var{nargs})
-Represents a function call.  @var{function} is a @code{mem} expression
-whose address is the address of the function to be called.
-@var{nargs} is an expression which can be used for two purposes: on
-some machines it represents the number of bytes of stack argument; on
-others, it represents the number of argument registers.
+表示一个函数调用。@var{function}为一个@code{mem}表达式，其地址为被调用的函数的地址。@var{nargs}为一个表达式，其可以用于两个目的：在一些机器上，其表示栈参数的字节数目；在其它机器上，其表示参数寄存器的数目。
 
-Each machine has a standard machine mode which @var{function} must
-have.  The machine description defines macro @code{FUNCTION_MODE} to
-expand into the requisite mode name.  The purpose of this mode is to
-specify what kind of addressing is allowed, on machines where the
-allowed kinds of addressing depend on the machine mode being
-addressed.
+每个机器具有一个标准的，@var{function}必须具有的机器模式。机器描述定义了宏@code{FUNCTION_MODE}，来扩展为需要的模式名。在一些机器上，所允许的寻址方式取决于被寻址的机器模式，则该机器模式的用途是来描述，允许什么样的寻址。
 
 @findex clobber
 @item (clobber @var{x})
-Represents the storing or possible storing of an unpredictable,
-undescribed value into @var{x}, which must be a @code{reg},
-@code{scratch}, @code{parallel} or @code{mem} expression.
+表示一个不可预期的存储或者可能的存储，将不可描述的值存储到@var{x}，其必须为一个@code{reg}，@code{scratch}, @code{parallel} 或者 @code{mem}表达式。
 
-One place this is used is in string instructions that store standard
-values into particular hard registers.  It may not be worth the
-trouble to describe the values that are stored, but it is essential to
-inform the compiler that the registers will be altered, lest it
-attempt to keep data in them across the string instruction.
+可以用在字符串指令中，将标准的值存储到特定的硬件寄存器中。不需要去描述被存储的值，只用来告诉编译器寄存器被修改了，以免其尝试在字符串指令中保持数据。
 
-If @var{x} is @code{(mem:BLK (const_int 0))} or
-@code{(mem:BLK (scratch))}, it means that all memory
-locations must be presumed clobbered.  If @var{x} is a @code{parallel},
-it has the same meaning as a @code{parallel} in a @code{set} expression.
+如果@var{x}为@code{(mem:BLK (const_int 0))}或者@code{(mem:BLK (scratch))}，则意味着所有的内存位置必须假设被破坏。如果@var{x}为一个@code{parallel}，其具有与@code{set}表达式中的@code{parallel}相同的含义。
 
-Note that the machine description classifies certain hard registers as
-``call-clobbered''.  All function call instructions are assumed by
-default to clobber these registers, so there is no need to use
-@code{clobber} expressions to indicate this fact.  Also, each function
-call is assumed to have the potential to alter any memory location,
-unless the function is declared @code{const}.
+注意，机器描述将特定的硬件寄存器归类为“call-clobbered”。所有函数调用指令都被假设为，缺省的，会破坏这些寄存器，所以不需要使用@code{clobber}表达式来表示这些。而且，每个函数调用都被假设为潜在的修改任何内存位置，除非函数被声明为@code{const}。
 
-If the last group of expressions in a @code{parallel} are each a
-@code{clobber} expression whose arguments are @code{reg} or
-@code{match_scratch} (@pxref{RTL Template}) expressions, the combiner
-phase can add the appropriate @code{clobber} expressions to an insn it
-has constructed when doing so will cause a pattern to be matched.
+如果在@code{parallel}中的最后一组表达式为@code{clobber}表达式，其参数为@code{reg}或者@code{match_scratch}（@pxref{RTL Template}）表达式，则合并阶段可以向构建的insn中增加适当的@code{clobber}表达式，当这样可以使得指令模式被匹配。
 
-This feature can be used, for example, on a machine that whose multiply
-and add instructions don't use an MQ register but which has an
-add-accumulate instruction that does clobber the MQ register.  Similarly,
-a combined instruction might require a temporary register while the
-constituent instructions might not.
+例如，该特点可以用在，乘法和加法指令不使用MQ寄存器，但具有一个加法累加指令，而且破坏MQ寄存器的机器上。类似的，被合并的指令可能需要临时的寄存器，而成员指令则不需要。
 
-When a @code{clobber} expression for a register appears inside a
-@code{parallel} with other side effects, the register allocator
-guarantees that the register is unoccupied both before and after that
-insn if it is a hard register clobber.  For pseudo-register clobber,
-the register allocator and the reload pass do not assign the same hard
-register to the clobber and the input operands if there is an insn
-alternative containing the @samp{&} constraint (@pxref{Modifiers}) for
-the clobber and the hard register is in register classes of the
-clobber in the alternative.  You can clobber either a specific hard
-register, a pseudo register, or a @code{scratch} expression; in the
-latter two cases, GCC will allocate a hard register that is available
-there for use as a temporary.
+当寄存器的@code{clobber}表达式，出现在具有其它副作用的@code{parallel}中，如果是硬件寄存器，则寄存器分配者来确保在insn之前和之后，该寄存器都不会被占用。对于伪寄存器的破坏，寄存器分配者和重载过程，不对clobber分配相同的硬件寄存器，以及输入操作数。你可以破坏一个特定的硬件寄存器，一个伪寄存器，或者一个@code{scratch}表达式；在后两种情况下，GCC将会分配一个硬件寄存器，临时使用。
 
-For instructions that require a temporary register, you should use
-@code{scratch} instead of a pseudo-register because this will allow the
-combiner phase to add the @code{clobber} when required.  You do this by
-coding (@code{clobber} (@code{match_scratch} @dots{})).  If you do
-clobber a pseudo register, use one which appears nowhere else---generate
-a new one each time.  Otherwise, you may confuse CSE@.
+对于需要临时寄存器的指令，应该使用@code{scratch}，而不是伪寄存器，因为这将使得合并阶段可以在需要的时候增加@code{clobber}。方式为(@code{clobber} (@code{match_scratch} @dots{}))。如果确实是破坏了一个伪寄存器，则使用没有出现在其它地方的伪寄存器，每次生成一个新的。否则，你可能会使CSE（公共子表达式消除）迷惑。
 
-There is one other known use for clobbering a pseudo register in a
-@code{parallel}: when one of the input operands of the insn is also
-clobbered by the insn.  In this case, using the same pseudo register in
-the clobber and elsewhere in the insn produces the expected results.
+还有一种在@code{parallel}中破坏伪寄存器的用法：当insn的输入操作数也被insn破坏。这种情况下，使用相同的伪寄存器。
 
 @findex use
 @item (use @var{x})
-Represents the use of the value of @var{x}.  It indicates that the
-value in @var{x} at this point in the program is needed, even though
-it may not be apparent why this is so.  Therefore, the compiler will
-not attempt to delete previous instructions whose only effect is to
-store a value in @var{x}.  @var{x} must be a @code{reg} expression.
+表示对@var{x}值的使用。其表示@var{x}中的值在程序的这个点上是被需要的，即使可能不清楚为什么。因此，如果先前的执行的作用只是将一个值存储在@var{x}中，则编译器将不会尝试将其删除。@var{x}必须为一个@code{reg}表达式。
 
-In some situations, it may be tempting to add a @code{use} of a
-register in a @code{parallel} to describe a situation where the value
-of a special register will modify the behavior of the instruction.
-An hypothetical example might be a pattern for an addition that can
-either wrap around or use saturating addition depending on the value
-of a special control register:
+在一些情况下，可能会想到，在@code{parallel}中增加一个对寄存器的@code{use}，来描述特定寄存器的值将会影响指令的行为。一个假定的例子为，对于一个加法指令模式，其可以根据特定的控制寄存器的值来执行环绕或者饱和加法：
 
 @smallexample
 (parallel [(set (reg:SI 2) (unspec:SI [(reg:SI 3)
@@ -2306,41 +2239,19 @@ of a special control register:
 
 @noindent
 
-This will not work, several of the optimizers only look at expressions
-locally; it is very likely that if you have multiple insns with
-identical inputs to the @code{unspec}, they will be optimized away even
-if register 1 changes in between.
+这将不会工作，一些优化器将只查看局部的表达式；很可能如果你有多个具有针对@code{unspec}相同输入的insn，它们将被优化掉，即使寄存器1中间有所改变。
 
-This means that @code{use} can @emph{only} be used to describe
-that the register is live.  You should think twice before adding
-@code{use} statements, more often you will want to use @code{unspec}
-instead.  The @code{use} RTX is most commonly useful to describe that
-a fixed register is implicitly used in an insn.  It is also safe to use
-in patterns where the compiler knows for other reasons that the result
-of the whole pattern is variable, such as @samp{movmem@var{m}} or
-@samp{call} patterns.
+这意味着，@code{use}只能被用于描述寄存器是活跃的。在增加@code{use}语句时，你应该多思考一下，通常，你将会使用@code{unspec}来替代。@code{use} RTX最常用于描述一个隐式的用于insn的固定寄存器。还可以安全的用于，编译器知道整个指令模式的结果是可变的，这样的指令模式中，例如@samp{movmem@var{m}}或者@samp{call}。
 
-During the reload phase, an insn that has a @code{use} as pattern
-can carry a reg_equal note.  These @code{use} insns will be deleted
-before the reload phase exits.
+在重载阶段，具有@code{use}指令模式的insn可以附带一个reg_equal注解。这些@code{use} insn将在重载阶段退出之前被删除。
 
-During the delayed branch scheduling phase, @var{x} may be an insn.
-This indicates that @var{x} previously was located at this place in the
-code and its data dependencies need to be taken into account.  These
-@code{use} insns will be deleted before the delayed branch scheduling
-phase exits.
+在延迟分支调度阶段，@var{x}可以为一个insn。这表示@var{x}之前曾经在该位置被定位，它的数据依赖需要被考虑。这些@code{use} insn将在延迟分支调度阶段退出之前被删除。
 
 @findex parallel
 @item (parallel [@var{x0} @var{x1} @dots{}])
-Represents several side effects performed in parallel.  The square
-brackets stand for a vector; the operand of @code{parallel} is a
-vector of expressions.  @var{x0}, @var{x1} and so on are individual
-side effect expressions---expressions of code @code{set}, @code{call},
-@code{return}, @code{clobber} or @code{use}.
+表示并行执行多个副作用。方括号表示一个向量；@code{parallel}的操作数为向量表达式。@var{x0}, @var{x1}等等为单独的副作用表达式，@code{set}, @code{call}, @code{return}, @code{clobber} 或 @code{use}。
 
-``In parallel'' means that first all the values used in the individual
-side-effects are computed, and second all the actual side-effects are
-performed.  For example,
+“并行”意味着，首先所有在单个副作用中使用的值将被计算，然后，所有实际的副作用被执行。例如，
 
 @smallexample
 (parallel [(set (reg:SI 1) (mem:SI (reg:SI 1)))
@@ -2348,15 +2259,10 @@ performed.  For example,
 @end smallexample
 
 @noindent
-says unambiguously that the values of hard register 1 and the memory
-location addressed by it are interchanged.  In both places where
-@code{(reg:SI 1)} appears as a memory address it refers to the value
-in register 1 @emph{before} the execution of the insn.
 
-It follows that it is @emph{incorrect} to use @code{parallel} and
-expect the result of one @code{set} to be available for the next one.
-For example, people sometimes attempt to represent a jump-if-zero
-instruction this way:
+清楚的说明了，将硬件寄存器1的值与其所寻址的内存中的值进行交换。在@code{(reg:SI 1)}作为内存地址出现的两个地方，其都是使用执行insn之前，在寄存器1中的值。
+
+从而，如果使用@code{parallel}，并且期望@code{set}的值，可以用于下一个@code{set}，则是不正确的。例如，人们有时候尝试用这种方式来表示，为零则跳转的指令：
 
 @smallexample
 (parallel [(set (cc0) (reg:SI 34))
@@ -2367,107 +2273,56 @@ instruction this way:
 @end smallexample
 
 @noindent
-But this is incorrect, because it says that the jump condition depends
-on the condition code value @emph{before} this instruction, not on the
-new value that is set by this instruction.
+但这是不正确的，因为其说明了跳转条件取决于，该指令之前的条件代码的值，而不是被该指令设置后的新值。
 
 @cindex peephole optimization, RTL representation
-Peephole optimization, which takes place together with final assembly
-code output, can produce insns whose patterns consist of a @code{parallel}
-whose elements are the operands needed to output the resulting
-assembler code---often @code{reg}, @code{mem} or constant expressions.
-This would not be well-formed RTL at any other stage in compilation,
-but it is ok then because no further optimization remains to be done.
-However, the definition of the macro @code{NOTICE_UPDATE_CC}, if
-any, must deal with such insns if you define any peephole optimizations.
+与最后的汇编代码输出一起执行的窥孔优化，可以产生由@code{parallel}组成的insn，其元素为需要输出汇编代码的操作数，通常为@code{reg}, @code{mem}或者常量表达式。这在其它编译阶段，将不是一个好的RTL形式，但是在这里是可以的，因为已经没有其它的优化了。然而，宏@code{NOTICE_UPDATE_CC}的定义，如果存在，如果定义了窥孔优化，则需要处理这样的insn。
 
 @findex cond_exec
 @item (cond_exec [@var{cond} @var{expr}])
-Represents a conditionally executed expression.  The @var{expr} is
-executed only if the @var{cond} is nonzero.  The @var{cond} expression
-must not have side-effects, but the @var{expr} may very well have
-side-effects.
+表示一个条件执行表达式。只有当@var{cond}为非零时，@var{expr}才被执行。@var{cond}表达式不能具有副作用，但是@var{expr}可以。
 
 @findex sequence
 @item (sequence [@var{insns} @dots{}])
-Represents a sequence of insns.  Each of the @var{insns} that appears
-in the vector is suitable for appearing in the chain of insns, so it
-must be an @code{insn}, @code{jump_insn}, @code{call_insn},
-@code{code_label}, @code{barrier} or @code{note}.
+表示一个insn序列。每个出现在向量中的@var{insns}，都适合出现在insn链中，所以其必须为@code{insn}, @code{jump_insn}, @code{call_insn}, @code{code_label}, @code{barrier} 或 @code{note}。
 
-A @code{sequence} RTX is never placed in an actual insn during RTL
-generation.  It represents the sequence of insns that result from a
-@code{define_expand} @emph{before} those insns are passed to
-@code{emit_insn} to insert them in the chain of insns.  When actually
-inserted, the individual sub-insns are separated out and the
-@code{sequence} is forgotten.
+在RTL生成过程中，不会在实际的insn中放入@code{sequence} RTX。其表示@code{define_expand}产生的insn序列，用来传递给@code{emit_insn}，从而将它们插入到insn链中。当实际被插入的时候，单独的子insn将被分离出来，@code{sequence}将被忽略掉。
 
-After delay-slot scheduling is completed, an insn and all the insns that
-reside in its delay slots are grouped together into a @code{sequence}.
-The insn requiring the delay slot is the first insn in the vector;
-subsequent insns are to be placed in the delay slot.
+当延迟槽调度完成之后，insn和所有位于其延迟槽中的insn被组成一个@code{sequence}。需要延迟槽的insn为向量中的第一个insn；后续的insn为将被放在延迟槽中的insn。
 
-@code{INSN_ANNULLED_BRANCH_P} is set on an insn in a delay slot to
-indicate that a branch insn should be used that will conditionally annul
-the effect of the insns in the delay slots.  In such a case,
-@code{INSN_FROM_TARGET_P} indicates that the insn is from the target of
-the branch and should be executed only if the branch is taken; otherwise
-the insn should be executed only if the branch is not taken.
-@xref{Delay Slots}.
+@code{INSN_ANNULLED_BRANCH_P}用来表示分支insn将会有条件的取消延迟槽中的insn的效果。这种情况下，@code{INSN_FROM_TARGET_P}表示insn是来自分支的目标，并且只有当进行分支时，其才被执行；否则，insn只有当不进行分支时才被执行。@xref{Delay Slots}
+
 @end table
 
-These expression codes appear in place of a side effect, as the body of
-an insn, though strictly speaking they do not always describe side
-effects as such:
+这些表达式代码出现在副作用的地方，作为insn的主体，虽然严格的讲，它们并不总是描述副作用：
 
 @table @code
 @findex asm_input
 @item (asm_input @var{s})
-Represents literal assembler code as described by the string @var{s}.
+表示文字的汇编代码，通过字符串@var{s}来描述。
 
 @findex unspec
 @findex unspec_volatile
 @item (unspec [@var{operands} @dots{}] @var{index})
 @itemx (unspec_volatile [@var{operands} @dots{}] @var{index})
-Represents a machine-specific operation on @var{operands}.  @var{index}
-selects between multiple machine-specific operations.
-@code{unspec_volatile} is used for volatile operations and operations
-that may trap; @code{unspec} is used for other operations.
+表示一个机器特定的针对@var{operands}的操作。@var{index}在多个机器特定的操作之间进行选择。@code{unspec_volatile}用于volatile操作，并且可以有陷阱；@code{unspec}用于其它操作。
 
-These codes may appear inside a @code{pattern} of an
-insn, inside a @code{parallel}, or inside an expression.
+这些代码可以出现在insn的@code{pattern}中，@code{parallel}中，或者表达式中。
 
 @findex addr_vec
 @item (addr_vec:@var{m} [@var{lr0} @var{lr1} @dots{}])
-Represents a table of jump addresses.  The vector elements @var{lr0},
-etc., are @code{label_ref} expressions.  The mode @var{m} specifies
-how much space is given to each address; normally @var{m} would be
-@code{Pmode}.
+表示跳转地址表。向量元素@var{lr0}等等，为@code{label_ref}表达式。机器模式@var{m}描述了为每个地址给定了多少空间；通常@var{m}为@code{Pmode}。
 
 @findex addr_diff_vec
 @item (addr_diff_vec:@var{m} @var{base} [@var{lr0} @var{lr1} @dots{}] @var{min} @var{max} @var{flags})
-Represents a table of jump addresses expressed as offsets from
-@var{base}.  The vector elements @var{lr0}, etc., are @code{label_ref}
-expressions and so is @var{base}.  The mode @var{m} specifies how much
-space is given to each address-difference.  @var{min} and @var{max}
-are set up by branch shortening and hold a label with a minimum and a
-maximum address, respectively.  @var{flags} indicates the relative
-position of @var{base}, @var{min} and @var{max} to the containing insn
-and of @var{min} and @var{max} to @var{base}.  See rtl.def for details.
+表示一个跳转地址表，表示为@var{base}的偏移量。向量元素@var{lr0}等等，为@code{label_ref}表达式，@var{base}也是。机器模式@var{m}描述了为每个地址偏移给定的空间大小。@var{min}和@var{max}由分支缩短过程设置，分别存放了一个具有最小地址和最大地址的标号。详情参见rtl.def。
 
 @findex prefetch
 @item (prefetch:@var{m} @var{addr} @var{rw} @var{locality})
-Represents prefetch of memory at address @var{addr}.
-Operand @var{rw} is 1 if the prefetch is for data to be written, 0 otherwise;
-targets that do not support write prefetches should treat this as a normal
-prefetch.
-Operand @var{locality} specifies the amount of temporal locality; 0 if there
-is none or 1, 2, or 3 for increasing levels of temporal locality;
-targets that do not support locality hints should ignore this.
+表示对地址为@var{addr}的内存进行预取。如果预取的数据将被写，则操作数为@var{rw}，否则为0；不支持写预取的目标机，应该将其作为一个普通的预取。操作数@var{locality}描述了时间局部性的数量；如果没有，则为0，否则按照时间局部性的递增级别，依次为1，2或者3；不支持局部性暗示的目标机，应该忽略该项。
 
-This insn is used to minimize cache-miss latency by moving data into a
-cache before it is accessed.  It should use only non-faulting data prefetch
-instructions.
+该insn用于最小化cache-miss的延迟，通过在访问数据之前将其移送到cache中。其应该只用于非故障的数据预取指令。
+
 @end table
 
 @node Incdec
