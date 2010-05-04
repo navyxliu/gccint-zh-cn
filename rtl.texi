@@ -2770,41 +2770,27 @@ insn的@code{REG_NOTES}域是一个类似于@code{LOG_LINKS}域的链，不过�
 @table @code
 @findex REG_DEAD
 @item REG_DEAD
-The value in @var{op} dies in this insn; that is to say, altering the
-value immediately after this insn would not affect the future behavior
-of the program.
+@var{op}中的值在该insn中死掉；也就是说，紧接这个insn之后，修改该值将不会影响程序将来的行为。
 
-It does not follow that the register @var{op} has no useful value after
-this insn since @var{op} is not necessarily modified by this insn.
-Rather, no subsequent instruction uses the contents of @var{op}.
+这并不是说从该insn之后，寄存器@var{op}就没有有用的值了。而是说，后续的指令不会用到@var{op}的内容。
 
 @findex REG_UNUSED
 @item REG_UNUSED
-The register @var{op} being set by this insn will not be used in a
-subsequent insn.  This differs from a @code{REG_DEAD} note, which
-indicates that the value in an input will not be used subsequently.
-These two notes are independent; both may be present for the same
-register.
+被该insn设置的寄存器@var{op}，将不会在后续的insn中使用。这与@code{REG_DEAD}注解不同，后者表示输入中的值将不会被后续insn使用。这两个注解是不相关的；可能会都出现在同一个寄存器中。
 
 @findex REG_INC
 @item REG_INC
-The register @var{op} is incremented (or decremented; at this level
-there is no distinction) by an embedded side effect inside this insn.
-This means it appears in a @code{post_inc}, @code{pre_inc},
-@code{post_dec} or @code{pre_dec} expression.
+寄存器@var{op}由于insn中嵌入的副作用，而被递增（或递减）。这意味着其出现在@code{post_inc}, @code{pre_inc}, @code{post_dec}或@code{pre_dec}表达式中。
 
 @findex REG_NONNEG
 @item REG_NONNEG
-The register @var{op} is known to have a nonnegative value when this
-insn is reached.  This is used so that decrement and branch until zero
-instructions, such as the m68k dbra, can be matched.
+寄存器@var{op}在到达该insn的时候，被已知为具有一个非负的值。对于递减并分支跳转，直到为零的指令，例如m68k dbra，可以用来进行匹配。
 
-The @code{REG_NONNEG} note is added to insns only if the machine
-description has a @samp{decrement_and_branch_until_zero} pattern.
+@code{REG_NONNEG}注解，只有当机器描述具有@samp{decrement_and_branch_until_zero}指令模式的时候，才被加到insn中。
 
 @findex REG_LABEL_OPERAND
 @item REG_LABEL_OPERAND
-This insn uses @var{op}, a @code{code_label} or a @code{note} of type
+该insn使用@var{op}，, a @code{code_label} or a @code{note} of type
 @code{NOTE_INSN_DELETED_LABEL}, but is not a @code{jump_insn}, or it
 is a @code{jump_insn} that refers to the operand as an ordinary
 operand.  The label may still eventually be a jump target, but if so
@@ -2910,6 +2896,7 @@ Thus, compiler passes prior to register allocation need only check for
 need only check for @code{REG_EQUIV} notes.
 @end table
 
+这些注解描述了insn之间的联系。它们成对的出现：一个insn具有一对注解，其中之一用来指向第二个insn，
 These notes describe linkages between insns.  They occur in pairs: one
 insn has one of a pair of notes that points to a second insn, which has
 the inverse note pointing back to the first insn.
@@ -2928,62 +2915,45 @@ be placed on the insn using @code{cc0} to point to the insn setting
 @code{cc0}.
 @end table
 
-These values are only used in the @code{LOG_LINKS} field, and indicate
-the type of dependency that each link represents.  Links which indicate
-a data dependence (a read after write dependence) do not use any code,
-they simply have mode @code{VOIDmode}, and are printed without any
-descriptive text.
+这些值只用在@code{LOG_LINKS}域，用来表示每个链接表示的依赖类型。表示一个数据依赖（写后读依赖）的链接，不使用任何代码，它们只是简单的具有@code{VOIDmode}模式，并在打印输出中没有任何描述文本。
 
 @table @code
 @findex REG_DEP_TRUE
 @item REG_DEP_TRUE
-This indicates a true dependence (a read after write dependence).
+这表示一个真依赖（写后读依赖）。
 
 @findex REG_DEP_OUTPUT
 @item REG_DEP_OUTPUT
-This indicates an output dependence (a write after write dependence).
+这表示一个输出依赖（写后写依赖）。
 
 @findex REG_DEP_ANTI
 @item REG_DEP_ANTI
-This indicates an anti dependence (a write after read dependence).
+这表示一个反依赖（读后写依赖）。
 
 @end table
 
-These notes describe information gathered from gcov profile data.  They
-are stored in the @code{REG_NOTES} field of an insn as an
-@code{expr_list}.
+这些注解描述了从gcov profile数据中搜集的信息。它们作为@code{expr_list}存储在insn的@code{REG_NOTES}域中。
 
 @table @code
 @findex REG_BR_PROB
 @item REG_BR_PROB
-This is used to specify the ratio of branches to non-branches of a
-branch insn according to the profile data.  The value is stored as a
-value between 0 and REG_BR_PROB_BASE; larger values indicate a higher
-probability that the branch will be taken.
+用于指定分支跳转率，根据profile数据。值位于0和REG_BR_PROB_BASE之间；较大的值表示该分支更可能会被执行。
 
 @findex REG_BR_PRED
 @item REG_BR_PRED
-These notes are found in JUMP insns after delayed branch scheduling
-has taken place.  They indicate both the direction and the likelihood
-of the JUMP@.  The format is a bitmask of ATTR_FLAG_* values.
+这些注解在JUMP insn中，并出现在延迟分支调度之后。它们表示JUMP的方向和可能性。格式为ATTR_FLAG_*值的掩码。
 
 @findex REG_FRAME_RELATED_EXPR
 @item REG_FRAME_RELATED_EXPR
-This is used on an RTX_FRAME_RELATED_P insn wherein the attached expression
-is used in place of the actual insn pattern.  This is done in cases where
-the pattern is either complex or misleading.
+用在RTX_FRAME_RELATED_P insn上，其附加的表达式被用在实际的insn模式上。这用于指令模式过于复杂或者产生误解的情况。
+
 @end table
 
-For convenience, the machine mode in an @code{insn_list} or
-@code{expr_list} is printed using these symbolic codes in debugging dumps.
+为方便起见，在@code{insn_list}或者@code{expr_list}中的机器模式，在调试转储中使用这些符号化的代码来打印。
 
 @findex insn_list
 @findex expr_list
-The only difference between the expression codes @code{insn_list} and
-@code{expr_list} is that the first operand of an @code{insn_list} is
-assumed to be an insn and is printed in debugging dumps as the insn's
-unique id; the first operand of an @code{expr_list} is printed in the
-ordinary way as an expression.
+表达式代码@code{insn_list}和@code{expr_list}之间的唯一区别是，@code{insn_list}的第一个操作数被假设为一个insn，并在调试转储中作为insn的唯一id来打印；而@code{expr_list}的第一个操作数作为表达式，按照普通的方式来打印。
 
 @node 函数调用
 @section 函数调用insns的RTL表示
