@@ -1874,43 +1874,16 @@ in mode @var{m}, which must be a fixed-point machine mode.
 @section 比较运算
 @cindex RTL comparison operations
 
-Comparison operators test a relation on two operands and are considered
-to represent a machine-dependent nonzero value described by, but not
-necessarily equal to, @code{STORE_FLAG_VALUE} (@pxref{Misc})
-if the relation holds, or zero if it does not, for comparison operators
-whose results have a `MODE_INT' mode,
-@code{FLOAT_STORE_FLAG_VALUE} (@pxref{Misc}) if the relation holds, or
-zero if it does not, for comparison operators that return floating-point
-values, and a vector of either @code{VECTOR_STORE_FLAG_VALUE} (@pxref{Misc})
-if the relation holds, or of zeros if it does not, for comparison operators
-that return vector results.
-The mode of the comparison operation is independent of the mode
-of the data being compared.  If the comparison operation is being tested
-(e.g., the first operand of an @code{if_then_else}), the mode must be
-@code{VOIDmode}.
+比较运算符测试两个操作数的关系，对于结果具有`MODE_INT'机器模式的比较运算，如果关系成立，则表示成机器相关的非零值，其由@code{STORE_FLAG_VALUE} (@pxref{Misc})描述，但是不需要相等，如果不成立，则为零。对于结果为浮点值的比较运算，如果关系成立，则为@code{FLOAT_STORE_FLAG_VALUE} (@pxref{Misc})，否则为零。对于返回向量结果的比较运算，如果关系成立，则为@code{VECTOR_STORE_FLAG_VALUE} (@pxref{Misc})，否则为零向量。比较运算的机器模式独立于被比较的数据的机器模式。如果正在测试比较运算（例如，@code{if_then_else}的第一个操作数），则机器模式必须为@code{VOIDmode}。
 
 @cindex condition codes
-There are two ways that comparison operations may be used.  The
-comparison operators may be used to compare the condition codes
-@code{(cc0)} against zero, as in @code{(eq (cc0) (const_int 0))}.  Such
-a construct actually refers to the result of the preceding instruction
-in which the condition codes were set.  The instruction setting the
-condition code must be adjacent to the instruction using the condition
-code; only @code{note} insns may separate them.
+有两种方式可以被比较运算使用。比较运算符可以用于将条件代码@code{(cc0)}与零进行比较，型如@code{(eq (cc0) (const_int 0))}。这种结构实际上是用到了先前指令的结果，条件代码在那里被设置。设置条件代码的指令必须邻接于使用条件代码的指令；只有@code{note} insn可以分开它们。
 
-Alternatively, a comparison operation may directly compare two data
-objects.  The mode of the comparison is determined by the operands; they
-must both be valid for a common machine mode.  A comparison with both
-operands constant would be invalid as the machine mode could not be
-deduced from it, but such a comparison should never exist in RTL due to
-constant folding.
+替换的，比较运算可以直接比较两个数据对象。比较运算的机器模式由操作数来决定；它们必须对一个共同的机器模式有效。对两个操作数都为常量的比较，将是无效的，因为不能从中推导出机器模式，不过这样的比较不会出现在RTL中，因为常数折叠。
 
-In the example above, if @code{(cc0)} were last set to
-@code{(compare @var{x} @var{y})}, the comparison operation is
-identical to @code{(eq @var{x} @var{y})}.  Usually only one style
-of comparisons is supported on a particular machine, but the combine
-pass will try to merge the operations to produce the @code{eq} shown
-in case it exists in the context of the particular insn involved.
+在上面的例子中，如果@code{(cc0)}最后被设置为@code{(compare @var{x} @var{y})}，则比较运算等价于@code{(eq @var{x} @var{y})}。通常，在一个特定的机器上，只支持一种风格的比较。但是，合并过程将尝试合并运算，从而产生@code{eq}。
+
+
 
 Inequality comparisons come in two flavors, signed and unsigned.  Thus,
 there are distinct expression codes @code{gt} and @code{gtu} for signed and
