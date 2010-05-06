@@ -65,191 +65,89 @@ Up:&nbsp;<a rel="up" accesskey="u" href="RTL.html#RTL">RTL</a>
 <a name="index-RTL-addition-2411"></a>
 <a name="index-RTL-addition-with-signed-saturation-2412"></a>
 <a name="index-RTL-addition-with-unsigned-saturation-2413"></a>
-<dl><dt><code>(plus:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(ss_plus:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(us_plus:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>
-These three expressions all represent the sum of the values
-represented by <var>x</var> and <var>y</var> carried out in machine mode
-<var>m</var>.  They differ in their behavior on overflow of integer modes. 
-<code>plus</code> wraps round modulo the width of <var>m</var>; <code>ss_plus</code>
-saturates at the maximum signed value representable in <var>m</var>;
-<code>us_plus</code> saturates at the maximum unsigned value.
+<dl><dt><code>(plus:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(ss_plus:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(us_plus:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>这三个表达式都表示<var>x</var>和<var>y</var>所表示的值的和，机器模式为<var>m</var>。它们在整数机器模式的溢出方面有所不同。<code>plus</code>以<var>m</var>的宽度求模进行环绕；<code>ss_plus</code>饱和为<var>m</var>可表示的有符号最大值；<code>us_plus</code>饱和为无符号最大值。
 
      <!-- ??? What happens on overflow of floating point modes? -->
-     <p><a name="index-lo_005fsum-2414"></a><br><dt><code>(lo_sum:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>
-This expression represents the sum of <var>x</var> and the low-order bits
-of <var>y</var>.  It is used with <code>high</code> (see <a href="Constants.html#Constants">Constants</a>) to
-represent the typical two-instruction sequence used in RISC machines
-to reference a global memory location.
+     <p><a name="index-lo_005fsum-2414"></a><br><dt><code>(lo_sum:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>该表达式表示<var>x</var>与<var>y</var>低位的和。其跟<code>high</code> (see <a href="Constants.html#Constants">Constants</a>)一起使用，来表示在RISC机器中通常使用的两个指令序列，来引用一个全局内存位置。
 
-     <p>The number of low order bits is machine-dependent but is
-normally the number of bits in a <code>Pmode</code> item minus the number of
-bits set by <code>high</code>.
+     <p>低位的位数是机器相关的，但通常为<code>Pmode</code>中的位数减去<code>high</code>所设置的位数。
 
-     <p><var>m</var> should be <code>Pmode</code>.
+     <p><var>m</var>应该为<code>Pmode</code>。
 
      <p><a name="index-minus-2415"></a><a name="index-ss_005fminus-2416"></a><a name="index-us_005fminus-2417"></a><a name="index-RTL-difference-2418"></a><a name="index-RTL-subtraction-2419"></a><a name="index-RTL-subtraction-with-signed-saturation-2420"></a><a name="index-RTL-subtraction-with-unsigned-saturation-2421"></a><br><dt><code>(minus:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(ss_minus:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(us_minus:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>
-These three expressions represent the result of subtracting <var>y</var>
-from <var>x</var>, carried out in mode <var>M</var>.  Behavior on overflow is
-the same as for the three variants of <code>plus</code> (see above).
+这三个表达式表示从<var>x</var>中减去<var>y</var>的结果，机器模式为<var>m</var>。在溢出方面的行为与<code>plus</code>的三种版本相同（参见上面）。
 
-     <p><a name="index-compare-2422"></a><a name="index-RTL-comparison-2423"></a><br><dt><code>(compare:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>Represents the result of subtracting <var>y</var> from <var>x</var> for purposes
-of comparison.  The result is computed without overflow, as if with
-infinite precision.
+     <p><a name="index-compare-2422"></a><a name="index-RTL-comparison-2423"></a><br><dt><code>(compare:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>表示从<var>x</var>中减去<var>y</var>的结果，用于进行比较。计算结果不产生溢出，就好像是有无限的精度一样。
 
-     <p>Of course, machines can't really subtract with infinite precision. 
-However, they can pretend to do so when only the sign of the result will
-be used, which is the case when the result is stored in the condition
-code.  And that is the <em>only</em> way this kind of expression may
-validly be used: as a value to be stored in the condition codes, either
-<code>(cc0)</code> or a register.  See <a href="Comparisons.html#Comparisons">Comparisons</a>.
+     <p>当然，机器不会真的进行无限精度的减法。然而，它们可以假定这样做，当只使用结果的正负符号时，这样情况下，结果被存放在条件代码中。并且，这是这种表达式唯一可以被使用的方式：作为值存储在条件代码中，或者<code>(cc0)</code>，或者一个寄存器。See <a href="Comparisons.html#Comparisons">Comparisons</a>。
 
-     <p>The mode <var>m</var> is not related to the modes of <var>x</var> and <var>y</var>, but
-instead is the mode of the condition code value.  If <code>(cc0)</code> is
-used, it is <code>VOIDmode</code>.  Otherwise it is some mode in class
-<code>MODE_CC</code>, often <code>CCmode</code>.  See <a href="Condition-Code.html#Condition-Code">Condition Code</a>.  If <var>m</var>
-is <code>VOIDmode</code> or <code>CCmode</code>, the operation returns sufficient
-information (in an unspecified format) so that any comparison operator
-can be applied to the result of the <code>COMPARE</code> operation.  For other
-modes in class <code>MODE_CC</code>, the operation only returns a subset of
-this information.
+     <p>机器模式<var>m</var>与<var>x</var>和<var>y</var>的机器模式没有关联，而是条件代码值的机器模式。如果使用<code>(cc0)</code>，则为<code>VOIDmode</code>，否则为类别<code>MODE_CC</code>中的某个模式，通常为<code>CCmode</code>。See <a href="Condition-Code.html#Condition-Code">Condition Code</a>。如果<var>m</var>为<code>VOIDmode</code>或者<code>CCmode</code>，则运算会返回足够的信息，使得任何比较运算符可以被应用到<code>COMPARE</code>运算的结果上。对于类别<code>MODE_CC</code>中的其它机器模式，运算只返回信息的子集。
 
-     <p>Normally, <var>x</var> and <var>y</var> must have the same mode.  Otherwise,
-<code>compare</code> is valid only if the mode of <var>x</var> is in class
-<code>MODE_INT</code> and <var>y</var> is a <code>const_int</code> or
-<code>const_double</code> with mode <code>VOIDmode</code>.  The mode of <var>x</var>
-determines what mode the comparison is to be done in; thus it must not
-be <code>VOIDmode</code>.
+     <p>通常，<var>x</var>和<var>y</var>必须具有相同的机器模式。否则，<code>compare</code>只有当<var>x</var>的机器模式在类别<code>MODE_INT</code>中，并且<var>y</var>为一个机器模式为<code>VOIDmode</code>的<code>const_int</code>或者<code>const_double</code>，这时才有效。<var>x</var>的机器模式决定了比较按照什么机器模式进行；因此其不能为<code>VOIDmode</code>。
 
-     <p>If one of the operands is a constant, it should be placed in the
-second operand and the comparison code adjusted as appropriate.
+     <p>如果其中一个操作数为常量，则其应该被放在第二个操作数的位置，并且相应的调整比较代码。
 
-     <p>A <code>compare</code> specifying two <code>VOIDmode</code> constants is not valid
-since there is no way to know in what mode the comparison is to be
-performed; the comparison must either be folded during the compilation
-or the first operand must be loaded into a register while its mode is
-still known.
+     <p>指定两个<code>VOIDmode</code>常量的<code>compare</code>是无效的，因为无法知道比较要按照什么机器模式进行；比较必须或者在编译过程中被折叠，或者第一个操作数必须被加载到机器模式已知的寄存器中。
 
-     <p><a name="index-neg-2424"></a><a name="index-ss_005fneg-2425"></a><a name="index-us_005fneg-2426"></a><a name="index-negation-2427"></a><a name="index-negation-with-signed-saturation-2428"></a><a name="index-negation-with-unsigned-saturation-2429"></a><br><dt><code>(neg:</code><var>m</var> <var>x</var><code>)</code><dt><code>(ss_neg:</code><var>m</var> <var>x</var><code>)</code><dt><code>(us_neg:</code><var>m</var> <var>x</var><code>)</code><dd>These two expressions represent the negation (subtraction from zero) of
-the value represented by <var>x</var>, carried out in mode <var>m</var>.  They
-differ in the behavior on overflow of integer modes.  In the case of
-<code>neg</code>, the negation of the operand may be a number not representable
-in mode <var>m</var>, in which case it is truncated to <var>m</var>.  <code>ss_neg</code>
-and <code>us_neg</code> ensure that an out-of-bounds result saturates to the
-maximum or minimum signed or unsigned value.
+     <p><a name="index-neg-2424"></a><a name="index-ss_005fneg-2425"></a><a name="index-us_005fneg-2426"></a><a name="index-negation-2427"></a><a name="index-negation-with-signed-saturation-2428"></a><a name="index-negation-with-unsigned-saturation-2429"></a><br><dt><code>(neg:</code><var>m</var> <var>x</var><code>)</code><dt><code>(ss_neg:</code><var>m</var> <var>x</var><code>)</code><dt><code>(us_neg:</code><var>m</var> <var>x</var><code>)</code><dd>这两个表达式表示<var>x</var>所表示的值的负数（零减去该值），机器模式为<var>m</var>。它们在整数机器模式的溢出行为上有所不同。对于<code>neg</code>，操作数的负数可以为无法用机器模式<var>m</var>表示的数，这种情况下，其被截取为<var>m</var>。<code>ss_neg</code>和<code>us_neg</code>确保超出边界的结果饱和为最大或者最小的有符号或者无符号值。
 
-     <p><a name="index-mult-2430"></a><a name="index-ss_005fmult-2431"></a><a name="index-us_005fmult-2432"></a><a name="index-multiplication-2433"></a><a name="index-product-2434"></a><a name="index-multiplication-with-signed-saturation-2435"></a><a name="index-multiplication-with-unsigned-saturation-2436"></a><br><dt><code>(mult:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(ss_mult:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(us_mult:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>Represents the signed product of the values represented by <var>x</var> and
-<var>y</var> carried out in machine mode <var>m</var>. 
-<code>ss_mult</code> and <code>us_mult</code> ensure that an out-of-bounds result
-saturates to the maximum or minimum signed or unsigned value.
+     <p><a name="index-mult-2430"></a><a name="index-ss_005fmult-2431"></a><a name="index-us_005fmult-2432"></a><a name="index-multiplication-2433"></a><a name="index-product-2434"></a><a name="index-multiplication-with-signed-saturation-2435"></a><a name="index-multiplication-with-unsigned-saturation-2436"></a><br><dt><code>(mult:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(ss_mult:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(us_mult:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>表示<var>x</var>和<var>y</var>所表示的值的有符号乘积，机器模式为<var>m</var>。<code>ss_mult</code>和<code>us_mult</code>确保超出边界的结果饱和为最大或者最小的有符号或者无符号值。
 
-     <p>Some machines support a multiplication that generates a product wider
-than the operands.  Write the pattern for this as
+     <p>一些机器支持产生比操作数更宽的乘积。则指令模式可以写成
 
      <pre class="smallexample">          (mult:<var>m</var> (sign_extend:<var>m</var> <var>x</var>) (sign_extend:<var>m</var> <var>y</var>))
 </pre>
-     <p>where <var>m</var> is wider than the modes of <var>x</var> and <var>y</var>, which need
-not be the same.
+     <p>其中<var>m</var>比<var>x</var>和<var>y</var>的机器模式更宽。
 
-     <p>For unsigned widening multiplication, use the same idiom, but with
-<code>zero_extend</code> instead of <code>sign_extend</code>.
+     <p>对于无符号的加宽的乘法，使用相同的语句，只不过把<code>sign_extend</code>替换成<code>zero_extend</code>。
 
-     <p><a name="index-div-2437"></a><a name="index-ss_005fdiv-2438"></a><a name="index-division-2439"></a><a name="index-signed-division-2440"></a><a name="index-signed-division-with-signed-saturation-2441"></a><a name="index-quotient-2442"></a><br><dt><code>(div:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(ss_div:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>Represents the quotient in signed division of <var>x</var> by <var>y</var>,
-carried out in machine mode <var>m</var>.  If <var>m</var> is a floating point
-mode, it represents the exact quotient; otherwise, the integerized
-quotient. 
-<code>ss_div</code> ensures that an out-of-bounds result saturates to the maximum
-or minimum signed value.
+     <p><a name="index-div-2437"></a><a name="index-ss_005fdiv-2438"></a><a name="index-division-2439"></a><a name="index-signed-division-2440"></a><a name="index-signed-division-with-signed-saturation-2441"></a><a name="index-quotient-2442"></a><br><dt><code>(div:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(ss_div:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>表示<var>x</var>有符号除以<var>y</var>的商，机器模式为<var>m</var>。如果<var>m</var>为一个浮点机器模式，则表示确切的商；否则为整数化的商。<code>ss_div</code>确保超出边界的结果饱和为最大或者最小的有符号值。
 
-     <p>Some machines have division instructions in which the operands and
-quotient widths are not all the same; you should represent
-such instructions using <code>truncate</code> and <code>sign_extend</code> as in,
+     <p>一些机器具有的除法指令，其操作数和商的宽度不全相同；你应该使用<code>truncate</code>和<code>sign_extend</code>来表示这样的指令，
 
      <pre class="smallexample">          (truncate:<var>m1</var> (div:<var>m2</var> <var>x</var> (sign_extend:<var>m2</var> <var>y</var>)))
 </pre>
-     <p><a name="index-udiv-2443"></a><a name="index-unsigned-division-2444"></a><a name="index-unsigned-division-with-unsigned-saturation-2445"></a><a name="index-division-2446"></a><br><dt><code>(udiv:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(us_div:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>Like <code>div</code> but represents unsigned division. 
-<code>us_div</code> ensures that an out-of-bounds result saturates to the maximum
-or minimum unsigned value.
+     <p><a name="index-udiv-2443"></a><a name="index-unsigned-division-2444"></a><a name="index-unsigned-division-with-unsigned-saturation-2445"></a><a name="index-division-2446"></a><br><dt><code>(udiv:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(us_div:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>类似<code>div</code>，不过表示无符号除法。<code>us_div</code>确保超出边界的结果饱和为最大或者最小的无符号值。
 
-     <p><a name="index-mod-2447"></a><a name="index-umod-2448"></a><a name="index-remainder-2449"></a><a name="index-division-2450"></a><br><dt><code>(mod:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(umod:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>Like <code>div</code> and <code>udiv</code> but represent the remainder instead of
-the quotient.
+     <p><a name="index-mod-2447"></a><a name="index-umod-2448"></a><a name="index-remainder-2449"></a><a name="index-division-2450"></a><br><dt><code>(mod:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(umod:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>类似<code>div</code>和<code>udiv</code>，不过表示余数。
 
-     <p><a name="index-smin-2451"></a><a name="index-smax-2452"></a><a name="index-signed-minimum-2453"></a><a name="index-signed-maximum-2454"></a><br><dt><code>(smin:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(smax:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>Represents the smaller (for <code>smin</code>) or larger (for <code>smax</code>) of
-<var>x</var> and <var>y</var>, interpreted as signed values in mode <var>m</var>. 
-When used with floating point, if both operands are zeros, or if either
-operand is <code>NaN</code>, then it is unspecified which of the two operands
-is returned as the result.
+     <p><a name="index-smin-2451"></a><a name="index-smax-2452"></a><a name="index-signed-minimum-2453"></a><a name="index-signed-maximum-2454"></a><br><dt><code>(smin:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(smax:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>表示<var>x</var>和<var>y</var>的较小值（<code>smin</code>）或者较大值（<code>smax</code>），按照机器模式为<var>m</var>的有符号值解析。当用于浮点，如果两个操作数都为零，或者其中一个为<code>NaN</code>，则没有规定哪一个操作数被作为结果返回。
 
-     <p><a name="index-umin-2455"></a><a name="index-umax-2456"></a><a name="index-unsigned-minimum-and-maximum-2457"></a><br><dt><code>(umin:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(umax:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>Like <code>smin</code> and <code>smax</code>, but the values are interpreted as unsigned
-integers.
+     <p><a name="index-umin-2455"></a><a name="index-umax-2456"></a><a name="index-unsigned-minimum-and-maximum-2457"></a><br><dt><code>(umin:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dt><code>(umax:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>类似<code>smin</code>和<code>smax</code>，不过值被解析为无符号整数。
 
-     <p><a name="index-not-2458"></a><a name="index-complement_002c-bitwise-2459"></a><a name="index-bitwise-complement-2460"></a><br><dt><code>(not:</code><var>m</var> <var>x</var><code>)</code><dd>Represents the bitwise complement of the value represented by <var>x</var>,
-carried out in mode <var>m</var>, which must be a fixed-point machine mode.
+     <p><a name="index-not-2458"></a><a name="index-complement_002c-bitwise-2459"></a><a name="index-bitwise-complement-2460"></a><br><dt><code>(not:</code><var>m</var> <var>x</var><code>)</code><dd>表示对<var>x</var>所表示的值进行按位求补，机器模式为<var>m</var>，且必须为一个定点机器模式。
 
-     <p><a name="index-and-2461"></a><a name="index-logical_002dand_002c-bitwise-2462"></a><a name="index-bitwise-logical_002dand-2463"></a><br><dt><code>(and:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>Represents the bitwise logical-and of the values represented by
-<var>x</var> and <var>y</var>, carried out in machine mode <var>m</var>, which must be
-a fixed-point machine mode.
+     <p><a name="index-and-2461"></a><a name="index-logical_002dand_002c-bitwise-2462"></a><a name="index-bitwise-logical_002dand-2463"></a><br><dt><code>(and:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>表示对<var>x</var>和<var>y</var>所表示的值按位进行逻辑与，机器模式为<var>m</var>，且必须为一个定点机器模式。
 
-     <p><a name="index-ior-2464"></a><a name="index-inclusive_002dor_002c-bitwise-2465"></a><a name="index-bitwise-inclusive_002dor-2466"></a><br><dt><code>(ior:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>Represents the bitwise inclusive-or of the values represented by <var>x</var>
-and <var>y</var>, carried out in machine mode <var>m</var>, which must be a
-fixed-point mode.
+     <p><a name="index-ior-2464"></a><a name="index-inclusive_002dor_002c-bitwise-2465"></a><a name="index-bitwise-inclusive_002dor-2466"></a><br><dt><code>(ior:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>表示对<var>x</var>和<var>y</var>所表示的值按位进行逻辑或，机器模式为<var>m</var>，且必须为一个定点机器模式。
 
-     <p><a name="index-xor-2467"></a><a name="index-exclusive_002dor_002c-bitwise-2468"></a><a name="index-bitwise-exclusive_002dor-2469"></a><br><dt><code>(xor:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>Represents the bitwise exclusive-or of the values represented by <var>x</var>
-and <var>y</var>, carried out in machine mode <var>m</var>, which must be a
-fixed-point mode.
+     <p><a name="index-xor-2467"></a><a name="index-exclusive_002dor_002c-bitwise-2468"></a><a name="index-bitwise-exclusive_002dor-2469"></a><br><dt><code>(xor:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd>表示对<var>x</var>和<var>y</var>所表示的值按位进行逻辑异或，机器模式为<var>m</var>，且必须为一个定点机器模式。
 
-     <p><a name="index-ashift-2470"></a><a name="index-ss_005fashift-2471"></a><a name="index-us_005fashift-2472"></a><a name="index-left-shift-2473"></a><a name="index-shift-2474"></a><a name="index-arithmetic-shift-2475"></a><a name="index-arithmetic-shift-with-signed-saturation-2476"></a><a name="index-arithmetic-shift-with-unsigned-saturation-2477"></a><br><dt><code>(ashift:</code><var>m</var> <var>x</var> <var>c</var><code>)</code><dt><code>(ss_ashift:</code><var>m</var> <var>x</var> <var>c</var><code>)</code><dt><code>(us_ashift:</code><var>m</var> <var>x</var> <var>c</var><code>)</code><dd>These three expressions represent the result of arithmetically shifting <var>x</var>
-left by <var>c</var> places.  They differ in their behavior on overflow of integer
-modes.  An <code>ashift</code> operation is a plain shift with no special behavior
-in case of a change in the sign bit; <code>ss_ashift</code> and <code>us_ashift</code>
-saturates to the minimum or maximum representable value if any of the bits
-shifted out differs from the final sign bit.
+     <p><a name="index-ashift-2470"></a><a name="index-ss_005fashift-2471"></a><a name="index-us_005fashift-2472"></a><a name="index-left-shift-2473"></a><a name="index-shift-2474"></a><a name="index-arithmetic-shift-2475"></a><a name="index-arithmetic-shift-with-signed-saturation-2476"></a><a name="index-arithmetic-shift-with-unsigned-saturation-2477"></a><br><dt><code>(ashift:</code><var>m</var> <var>x</var> <var>c</var><code>)</code><dt><code>(ss_ashift:</code><var>m</var> <var>x</var> <var>c</var><code>)</code><dt><code>(us_ashift:</code><var>m</var> <var>x</var> <var>c</var><code>)</code><dd>这三个表达式用来表示对<var>x</var>进行向左算术移位<var>c</var>。它们在整数机器模式的溢出方面有所不同。<code>ashift</code>运算是一个普通的移位，当符号位有改变时，其没有特殊的行为；<code>ss_ashift</code>和<code>us_ashift</code>，饱和为可表示的最小或者最大值，如果任何被移出的位与最终的符号位不同。
 
-     <p><var>x</var> have mode <var>m</var>, a fixed-point machine mode.  <var>c</var>
-be a fixed-point mode or be a constant with mode <code>VOIDmode</code>; which
-mode is determined by the mode called for in the machine description
-entry for the left-shift instruction.  For example, on the VAX, the mode
-of <var>c</var> is <code>QImode</code> regardless of <var>m</var>.
+     <p><var>x</var>具有机器模式<var>m</var>，一个定点机器模式。<var>c</var>为一个定点机器模式或者一个模式为<code>VOIDmode</code>的常量。
 
-     <p><a name="index-lshiftrt-2478"></a><a name="index-right-shift-2479"></a><a name="index-ashiftrt-2480"></a><br><dt><code>(lshiftrt:</code><var>m</var> <var>x</var> <var>c</var><code>)</code><dt><code>(ashiftrt:</code><var>m</var> <var>x</var> <var>c</var><code>)</code><dd>Like <code>ashift</code> but for right shift.  Unlike the case for left shift,
-these two operations are distinct.
+     <p><a name="index-lshiftrt-2478"></a><a name="index-right-shift-2479"></a><a name="index-ashiftrt-2480"></a><br><dt><code>(lshiftrt:</code><var>m</var> <var>x</var> <var>c</var><code>)</code><dt><code>(ashiftrt:</code><var>m</var> <var>x</var> <var>c</var><code>)</code><dd>类似于<code>ashift</code>，不过是向右移位。不像向左移位的情况，这两种运算是有区别的。
 
-     <p><a name="index-rotate-2481"></a><a name="index-rotate-2482"></a><a name="index-left-rotate-2483"></a><a name="index-rotatert-2484"></a><a name="index-right-rotate-2485"></a><br><dt><code>(rotate:</code><var>m</var> <var>x</var> <var>c</var><code>)</code><dt><code>(rotatert:</code><var>m</var> <var>x</var> <var>c</var><code>)</code><dd>Similar but represent left and right rotate.  If <var>c</var> is a constant,
-use <code>rotate</code>.
+     <p><a name="index-rotate-2481"></a><a name="index-rotate-2482"></a><a name="index-left-rotate-2483"></a><a name="index-rotatert-2484"></a><a name="index-right-rotate-2485"></a><br><dt><code>(rotate:</code><var>m</var> <var>x</var> <var>c</var><code>)</code><dt><code>(rotatert:</code><var>m</var> <var>x</var> <var>c</var><code>)</code><dd>类似的，只不过是表示向左和向右旋转。如果<var>c</var>为常量，则使用<code>rotate</code>。
 
-     <p><a name="index-abs-2486"></a><a name="index-absolute-value-2487"></a><br><dt><code>(abs:</code><var>m</var> <var>x</var><code>)</code><dd>Represents the absolute value of <var>x</var>, computed in mode <var>m</var>.
+     <p><a name="index-abs-2486"></a><a name="index-absolute-value-2487"></a><br><dt><code>(abs:</code><var>m</var> <var>x</var><code>)</code><dd>表示<var>x</var>的绝对值，按照机器模式<var>m</var>来计算。
 
-     <p><a name="index-sqrt-2488"></a><a name="index-square-root-2489"></a><br><dt><code>(sqrt:</code><var>m</var> <var>x</var><code>)</code><dd>Represents the square root of <var>x</var>, computed in mode <var>m</var>. 
-Most often <var>m</var> will be a floating point mode.
+     <p><a name="index-sqrt-2488"></a><a name="index-square-root-2489"></a><br><dt><code>(sqrt:</code><var>m</var> <var>x</var><code>)</code><dd>表示<var>x</var>的平方根，按照机器模式<var>m</var>来计算。<var>m</var>通常为浮点机器模式。
 
-     <p><a name="index-ffs-2490"></a><br><dt><code>(ffs:</code><var>m</var> <var>x</var><code>)</code><dd>Represents one plus the index of the least significant 1-bit in
-<var>x</var>, represented as an integer of mode <var>m</var>.  (The value is
-zero if <var>x</var> is zero.)  The mode of <var>x</var> need not be <var>m</var>;
-depending on the target machine, various mode combinations may be
-valid.
+     <p><a name="index-ffs-2490"></a><br><dt><code>(ffs:</code><var>m</var> <var>x</var><code>)</code><dd>表示在<var>x</var>中，最低有效，位为1的索引加上1，为一个模式<var>m</var>的整数。（如果<var>x</var>为零，则值为零。）<var>x</var>的机器模式不需要为<var>m</var>；取决于目标机器，可以有不同的机器模式的组合。
 
-     <p><a name="index-clz-2491"></a><br><dt><code>(clz:</code><var>m</var> <var>x</var><code>)</code><dd>Represents the number of leading 0-bits in <var>x</var>, represented as an
-integer of mode <var>m</var>, starting at the most significant bit position. 
-If <var>x</var> is zero, the value is determined by
-<code>CLZ_DEFINED_VALUE_AT_ZERO</code> (see <a href="Misc.html#Misc">Misc</a>).  Note that this is one of
-the few expressions that is not invariant under widening.  The mode of
-<var>x</var> will usually be an integer mode.
+     <p><a name="index-clz-2491"></a><br><dt><code>(clz:</code><var>m</var> <var>x</var><code>)</code><dd>表示<var>x</var>中，从最高有效位开始，起始处为0的位数，为一个模式<var>m</var>的整数。如果<var>x</var>为零，则值由<code>CLZ_DEFINED_VALUE_AT_ZERO</code> (see <a href="Misc.html#Misc">Misc</a>)来确定。注意，。<var>x</var>的机器模式通常为一个整数模式。
 
-     <p><a name="index-ctz-2492"></a><br><dt><code>(ctz:</code><var>m</var> <var>x</var><code>)</code><dd>Represents the number of trailing 0-bits in <var>x</var>, represented as an
-integer of mode <var>m</var>, starting at the least significant bit position. 
-If <var>x</var> is zero, the value is determined by
-<code>CTZ_DEFINED_VALUE_AT_ZERO</code> (see <a href="Misc.html#Misc">Misc</a>).  Except for this case,
-<code>ctz(x)</code> is equivalent to <code>ffs(</code><var>x</var><code>) - 1</code>.  The mode of
-<var>x</var> will usually be an integer mode.
+     <p><a name="index-ctz-2492"></a><br><dt><code>(ctz:</code><var>m</var> <var>x</var><code>)</code><dd>表示<var>x</var>中，从最低有效位开始，结尾处为0的位数，为一个模式<var>m</var>的整数。如果<var>x</var>为零，则值由<code>CTZ_DEFINED_VALUE_AT_ZERO</code> (see <a href="Misc.html#Misc">Misc</a>)来确定。除此之外，<code>ctz(x)</code>等价于<code>ffs(</code><var>x</var><code>) - 1</code>。<var>x</var>的机器模式通常为一个整数模式。
 
-     <p><a name="index-popcount-2493"></a><br><dt><code>(popcount:</code><var>m</var> <var>x</var><code>)</code><dd>Represents the number of 1-bits in <var>x</var>, represented as an integer of
-mode <var>m</var>.  The mode of <var>x</var> will usually be an integer mode.
+     <p><a name="index-popcount-2493"></a><br><dt><code>(popcount:</code><var>m</var> <var>x</var><code>)</code><dd>表示<var>x</var>中为1的位数，为一个模式<var>m</var>的整数。<var>x</var>的机器模式通常为一个整数模式。
 
-     <p><a name="index-parity-2494"></a><br><dt><code>(parity:</code><var>m</var> <var>x</var><code>)</code><dd>Represents the number of 1-bits modulo 2 in <var>x</var>, represented as an
-integer of mode <var>m</var>.  The mode of <var>x</var> will usually be an integer
-mode.
+     <p><a name="index-parity-2494"></a><br><dt><code>(parity:</code><var>m</var> <var>x</var><code>)</code><dd>表示<var>x</var>中为1的位数对2进行求模，为一个模式<var>m</var>的整数。<var>x</var>的机器模式通常为一个整数模式。
 
-     <p><a name="index-bswap-2495"></a><br><dt><code>(bswap:</code><var>m</var> <var>x</var><code>)</code><dd>Represents the value <var>x</var> with the order of bytes reversed, carried out
-in mode <var>m</var>, which must be a fixed-point machine mode. 
-</dl>
+     <p><a name="index-bswap-2495"></a><br><dt><code>(bswap:</code><var>m</var> <var>x</var><code>)</code><dd>表示将<var>x</var>值的字节顺序进行反转，结果为<var>m</var>机器模式，其必须为一个定点机器模式。
+
+ </dl>
 
  </body></html>
 
