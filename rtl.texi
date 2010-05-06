@@ -1198,342 +1198,211 @@ Algol或者Pascal函数变量，包括一个静态链。（这些目前还没有
 
 @findex subreg
 @item (subreg:@var{m1} @var{reg:m2} @var{bytenum})
+@code{subreg}表达式用于按照自然的机器模式之外的，其它机器模式来引用一个寄存器，或者引用有多个寄存器组成的@code{reg}的其中一个寄存器。
 
-@code{subreg}表达式用于引用 expressions are used to refer to a register in a machine
-mode other than its natural one, or to refer to one register of
-a multi-part @code{reg} that actually refers to several registers.
+每个伪寄存器都具有一个自然的机器模式。如果需要按照不同的机器模式来对其操作，则寄存器必须用@code{subreg}进行包含。
 
-Each pseudo register has a natural mode.  If it is necessary to
-operate on it in a different mode, the register must be
-enclosed in a @code{subreg}.  
+目前对于@code{subreg}的第一个操作数，有三种被支持的类型：  
 
-There are currently three supported types for the first operand of a
-@code{subreg}:
 @itemize
 @item pseudo registers
-This is the most common case.  Most @code{subreg}s have pseudo
-@code{reg}s as their first operand.
+这是最常见的情况。大多@code{subreg}将伪寄存器@code{reg}作为它们的第一个操作数。
 
 @item mem
-@code{subreg}s of @code{mem} were common in earlier versions of GCC and
-are still supported.  During the reload pass these are replaced by plain
-@code{mem}s.  On machines that do not do instruction scheduling, use of
-@code{subreg}s of @code{mem} are still used, but this is no longer
-recommended.  Such @code{subreg}s are considered to be
-@code{register_operand}s rather than @code{memory_operand}s before and
-during reload.  Because of this, the scheduling passes cannot properly
-schedule instructions with @code{subreg}s of @code{mem}, so for machines
-that do scheduling, @code{subreg}s of @code{mem} should never be used.
-To support this, the combine and recog passes have explicit code to
-inhibit the creation of @code{subreg}s of @code{mem} when
-@code{INSN_SCHEDULING} is defined.
+@code{mem}的@code{subreg}，在早期版本的GCC中比较常见，现在仍被支持。在重载过程中，这些被普通的@code{mem}替换掉。在不进行指令调度的机器上，仍然使用@code{mem}的@code{subreg}，但是不推荐这样。在重载过程之前和过程之中，这样的@code{subreg}被考虑成@code{register_operand}，而不是@code{memory_operand}。因此，调度过程无法对具有@code{mem}的@code{subreg}这样的指令进行合适的调度。所以，对于进行调度的机器，不要使用@code{mem}的@code{subreg}。为此，当@code{INSN_SCHEDULING}被定义的时候，合并过程和recog过程，具有显式的代码来禁止创建@code{mem}的@code{subreg}。
 
-The use of @code{subreg}s of @code{mem} after the reload pass is an area
-that is not well understood and should be avoided.  There is still some
-code in the compiler to support this, but this code has possibly rotted.
-This use of @code{subreg}s is discouraged and will most likely not be
-supported in the future.
+在重载过程之后使用@code{mem}的@code{subreg}，将难以理解，应该避免这样。编译器中还有一些代码支持这些，但是这些代码可能已经过时了。这种@code{subreg}的用法不被推荐，将来很可能不被支持。
 
 @item hard registers
-It is seldom necessary to wrap hard registers in @code{subreg}s; such
-registers would normally reduce to a single @code{reg} rtx.  This use of
-@code{subreg}s is discouraged and may not be supported in the future.
+很少有必要在@code{subreg}中包裹硬件寄存器；这样的寄存器通常应该被缩减为一个单独的@code{reg} rtx。这种@code{subreg}的用法不被推荐，将来可能不被支持。
 
 @end itemize
 
-@code{subreg}s of @code{subreg}s are not supported.  Using
-@code{simplify_gen_subreg} is the recommended way to avoid this problem.
+@code{subreg}的@code{subreg}不被支持。推荐使用@code{simplify_gen_subreg}来避免这种问题。
 
-@code{subreg}s come in two distinct flavors, each having its own
-usage and rules:
+@code{subreg}有两种不同的风格，分别具有自己的用法和规则：
 
 @table @asis
 @item Paradoxical subregs
-When @var{m1} is strictly wider than @var{m2}, the @code{subreg}
-expression is called @dfn{paradoxical}.  The canonical test for this
-class of @code{subreg} is:
+当@var{m1}严格宽于@var{m2}的时候，@code{subreg}表达式被称作反常的（@dfn{paradoxical}）。对该类别的@code{subreg}的正规测试为：
 
 @smallexample
 GET_MODE_SIZE (@var{m1}) > GET_MODE_SIZE (@var{m2})
 @end smallexample
 
-Paradoxical @code{subreg}s can be used as both lvalues and rvalues.
-When used as an lvalue, the low-order bits of the source value
-are stored in @var{reg} and the high-order bits are discarded.
-When used as an rvalue, the low-order bits of the @code{subreg} are
-taken from @var{reg} while the high-order bits may or may not be
-defined.  
+反常的@code{subreg}可以用于左值和右值。当用于左值时，源值的低位被存储在@var{reg}中，高位被丢弃。当用作右值时，@code{subreg}的低位来自@var{reg}，而高位可以被定义，也可以未被定义。
 
-The high-order bits of rvalues are in the following circumstances:
+右值的高位有以下几种情况：
 
 @itemize
 @item @code{subreg}s of @code{mem}
-When @var{m2} is smaller than a word, the macro @code{LOAD_EXTEND_OP},
-can control how the high-order bits are defined.
+当@var{m2}小于一个字的时候，宏@code{LOAD_EXTEND_OP}可以控制高位如何被定义。
 
 @item @code{subreg} of @code{reg}s
-The upper bits are defined when @code{SUBREG_PROMOTED_VAR_P} is true.
-@code{SUBREG_PROMOTED_UNSIGNED_P} describes what the upper bits hold.
-Such subregs usually represent local variables, register variables
-and parameter pseudo variables that have been promoted to a wider mode.
+当@code{SUBREG_PROMOTED_VAR_P}为真时，高位被定义。@code{SUBREG_PROMOTED_UNSIGNED_P}描述了高位的内容。这样的subreg通常表示已经被提升为更宽的机器模式的局部变量，寄存器变量以及参数伪变量。
 
 @end itemize
 
-@var{bytenum} is always zero for a paradoxical @code{subreg}, even on
-big-endian targets.
+对于反常的@code{subreg}，@var{bytenum}总是为零，即使在大端的目标机上。
 
-For example, the paradoxical @code{subreg}:
+例如反常的@code{subreg}:
 
 @smallexample
 (set (subreg:SI (reg:HI @var{x}) 0) @var{y})
 @end smallexample
 
-stores the lower 2 bytes of @var{y} in @var{x} and discards the upper
-2 bytes.  A subsequent:
+在@var{x}中存储了@var{y}的低位2个字节，并丢弃高位2个字节。接着：
 
 @smallexample
 (set @var{z} (subreg:SI (reg:HI @var{x}) 0))
 @end smallexample
 
-would set the lower two bytes of @var{z} to @var{y} and set the upper
-two bytes to an unknown value assuming @code{SUBREG_PROMOTED_VAR_P} is
-false.
+将会把@var{z}的低位2个字节设置成@var{x}，并将高位两个字节设置为未知的值，假定@code{SUBREG_PROMOTED_VAR_P}为假。
 
 @item Normal subregs 
-When @var{m1} is at least as narrow as @var{m2} the @code{subreg}
-expression is called @dfn{normal}.
+当@var{m1}最多跟@var{m2}一样宽的时候，@code{subreg}表达式被称作正常的（@dfn{normal}）。
 
-Normal @code{subreg}s restrict consideration to certain bits of
-@var{reg}.  There are two cases.  If @var{m1} is smaller than a word,
-the @code{subreg} refers to the least-significant part (or
-@dfn{lowpart}) of one word of @var{reg}.  If @var{m1} is word-sized or
-greater, the @code{subreg} refers to one or more complete words.
+正常的@code{subreg}被限定为@var{reg}的特定位。有两种情况。如果@var{m1}比一个字小，则@code{subreg}指的是一个@var{reg}字的最小有效部分。如果@var{m1}为字大小，或者更大，则@code{subreg}指的是一个或者更多个完整的字。
 
-When used as an lvalue, @code{subreg} is a word-based accessor.
-Storing to a @code{subreg} modifies all the words of @var{reg} that
-overlap the @code{subreg}, but it leaves the other words of @var{reg}
-alone.
+当用作左值时，@code{subreg}为一个基于字的访问。对@code{subreg}进行存储，会修改@var{reg}中所有与code{subreg}重叠的字，并将@var{reg}中的其它字保持不变。
 
-When storing to a normal @code{subreg} that is smaller than a word,
-the other bits of the referenced word are usually left in an undefined
-state.  This laxity makes it easier to generate efficient code for
-such instructions.  To represent an instruction that preserves all the
-bits outside of those in the @code{subreg}, use @code{strict_low_part}
-or @code{zero_extract} around the @code{subreg}.
+当对小于一个字的正常@code{subreg}进行存储的时候，被引用的字的其它位通常处于未定义的状态。这种松弛的方式易于对这样的指令产生高效的代码。要表示保持@code{subreg}之外的所有位的指令，在@code{subreg}周围使用@code{strict_low_part}或者@code{zero_extract}。
 
-@var{bytenum} must identify the offset of the first byte of the
-@code{subreg} from the start of @var{reg}, assuming that @var{reg} is
-laid out in memory order.  The memory order of bytes is defined by
-two target macros, @code{WORDS_BIG_ENDIAN} and @code{BYTES_BIG_ENDIAN}:
+@var{bytenum}必须标识从@var{reg}的起始，@code{subreg}的第一个字节的偏移量，假设@var{reg}按照内存的顺序布局。字节的内存顺序通过两个目标宏定义，@code{WORDS_BIG_ENDIAN}和@code{BYTES_BIG_ENDIAN}：
 
 @itemize
 @item
 @cindex @code{WORDS_BIG_ENDIAN}, effect on @code{subreg}
-@code{WORDS_BIG_ENDIAN}, if set to 1, says that byte number zero is
-part of the most significant word; otherwise, it is part of the least
-significant word.
+@code{WORDS_BIG_ENDIAN}，如果设为1，则说明第零个字节为最大有效字的部分；否则，为最小有效字的部分。
 
 @item
 @cindex @code{BYTES_BIG_ENDIAN}, effect on @code{subreg}
-@code{BYTES_BIG_ENDIAN}, if set to 1, says that byte number zero is
-the most significant byte within a word; otherwise, it is the least
-significant byte within a word.
+@code{BYTES_BIG_ENDIAN}，如果设为1，则说明第零个字节为字中的最高有效字节；否则，为字中的最低有效字节。
+
 @end itemize
 
 @cindex @code{FLOAT_WORDS_BIG_ENDIAN}, (lack of) effect on @code{subreg}
-On a few targets, @code{FLOAT_WORDS_BIG_ENDIAN} disagrees with
-@code{WORDS_BIG_ENDIAN}.  However, most parts of the compiler treat
-floating point values as if they had the same endianness as integer
-values.  This works because they handle them solely as a collection of
-integer values, with no particular numerical value.  Only real.c and
-the runtime libraries care about @code{FLOAT_WORDS_BIG_ENDIAN}.
+在一些目标机上，@code{FLOAT_WORDS_BIG_ENDIAN}与@code{WORDS_BIG_ENDIAN}不一致。然而，编译器的大部分地方会将浮点值看作它们与整数值具有相同的大小端。这是因为只将它们作为整数值的集合来处理，没有特定的数值。只有real.c和运行时库关心@code{FLOAT_WORDS_BIG_ENDIAN}。
 
-Thus, 
+因此，
 
 @smallexample
 (subreg:HI (reg:SI @var{x}) 2)
 @end smallexample
 
-on a @code{BYTES_BIG_ENDIAN}, @samp{UNITS_PER_WORD == 4} target is the same as
+在一个@code{BYTES_BIG_ENDIAN}，@samp{UNITS_PER_WORD == 4}的目标机上，等同于
 
 @smallexample
 (subreg:HI (reg:SI @var{x}) 0)
 @end smallexample
 
-on a little-endian, @samp{UNITS_PER_WORD == 4} target.  Both
-@code{subreg}s access the lower two bytes of register @var{x}.
+在一个小端，@samp{UNITS_PER_WORD == 4}的目标机上。两个@code{subreg}都是访问寄存器@var{x}的低两个字节。
 
 @end table
 
-A @code{MODE_PARTIAL_INT} mode behaves as if it were as wide as the
-corresponding @code{MODE_INT} mode, except that it has an unknown
-number of undefined bits.  For example:
+@code{MODE_PARTIAL_INT}机器模式的行为就好像其与相对应的@code{MODE_INT}机器模式一样宽，只不过其具有未知数目的未定义的位。例如： 
 
 @smallexample
 (subreg:PSI (reg:SI 0) 0)
 @end smallexample
 
-accesses the whole of @samp{(reg:SI 0)}, but the exact relationship
-between the @code{PSImode} value and the @code{SImode} value is not
-defined.  If we assume @samp{UNITS_PER_WORD <= 4}, then the following
-two @code{subreg}s:
+访问整个@samp{(reg:SI 0)}，但是@code{PSImode}值和@code{SImode}值的确切关系没有被定义。如果我们假设@samp{UNITS_PER_WORD <= 4}，则下面两个@code{subreg}：
 
 @smallexample
 (subreg:PSI (reg:DI 0) 0)
 (subreg:PSI (reg:DI 0) 4)
 @end smallexample
 
-represent independent 4-byte accesses to the two halves of
-@samp{(reg:DI 0)}.  Both @code{subreg}s have an unknown number
-of undefined bits.
+表示对@samp{(reg:DI 0)}的两个部分进行无关的四个字节访问。每个@code{subreg}都具有未知数目的未定义位。
 
-If @samp{UNITS_PER_WORD <= 2} then these two @code{subreg}s:
+如果@samp{UNITS_PER_WORD <= 2}，则这两个@code{subreg}
 
 @smallexample
 (subreg:HI (reg:PSI 0) 0)
 (subreg:HI (reg:PSI 0) 2)
 @end smallexample
 
-represent independent 2-byte accesses that together span the whole
-of @samp{(reg:PSI 0)}.  Storing to the first @code{subreg} does not
-affect the value of the second, and vice versa.  @samp{(reg:PSI 0)}
-has an unknown number of undefined bits, so the assignment:
+表示无关的两个字节访问，一起贯穿整个@samp{(reg:PSI 0)}。对第一个@code{subreg}进行存储不影响第二个的值，反之亦然。@samp{(reg:PSI 0)}具有未知数目的未定义位，所以赋值：
 
 @smallexample
 (set (subreg:HI (reg:PSI 0) 0) (reg:HI 4))
 @end smallexample
 
-does not guarantee that @samp{(subreg:HI (reg:PSI 0) 0)} has the
-value @samp{(reg:HI 4)}.
+不保证@samp{(subreg:HI (reg:PSI 0) 0)}具有值@samp{(reg:HI 4)}。
 
 @cindex @code{CANNOT_CHANGE_MODE_CLASS} and subreg semantics
-The rules above apply to both pseudo @var{reg}s and hard @var{reg}s.
-If the semantics are not correct for particular combinations of
-@var{m1}, @var{m2} and hard @var{reg}, the target-specific code
-must ensure that those combinations are never used.  For example:
+上面的规则应用于伪寄存器@var{reg}和硬件寄存器@var{reg}。如果对于@var{m1}, @var{m2}和硬件寄存器@var{reg}的特定组合，其语义不正确，则目标机特定的代码必须确保这些组合不会被用到。例如：
 
 @smallexample
 CANNOT_CHANGE_MODE_CLASS (@var{m2}, @var{m1}, @var{class})
 @end smallexample
 
-must be true for every class @var{class} that includes @var{reg}.
+必须为真，对于每个包含@var{reg}的类别@var{class}。
 
 @findex SUBREG_REG
 @findex SUBREG_BYTE
-The first operand of a @code{subreg} expression is customarily accessed
-with the @code{SUBREG_REG} macro and the second operand is customarily
-accessed with the @code{SUBREG_BYTE} macro.
+@code{subreg}表达式的第一个操作数通常使用@code{SUBREG_REG}宏来访问，第二个操作数通常使用@code{SUBREG_BYTE}宏来访问。
 
-It has been several years since a platform in which
-@code{BYTES_BIG_ENDIAN} not equal to @code{WORDS_BIG_ENDIAN} has
-been tested.  Anyone wishing to support such a platform in the future
-may be confronted with code rot.
+@code{BYTES_BIG_ENDIAN}不等于@code{WORDS_BIG_ENDIAN}的平台是在很多年前被测试的。对于希望在将来支持这样一个平台的人们，可能会面对一些过时的代码。
 
 @findex scratch
 @cindex scratch operands
 @item (scratch:@var{m})
-This represents a scratch register that will be required for the
-execution of a single instruction and not used subsequently.  It is
-converted into a @code{reg} by either the local register allocator or
-the reload pass.
+这表示一个scratch寄存器，其在单个指令的执行中用到，并随后不再被使用。其被局部寄存器分配或者重载过程，转换成一个@code{reg}。
 
-@code{scratch} is usually present inside a @code{clobber} operation
-(@pxref{Side Effects}).
+@code{scratch}通常位于@code{clobber}操作中。(@pxref{Side Effects})。
 
 @findex cc0
 @cindex condition code register
 @item (cc0)
-This refers to the machine's condition code register.  It has no
-operands and may not have a machine mode.  There are two ways to use it:
+为机器的条件代码寄存器。其没有参数，并可以没有机器模式。有两种使用它的方式：
 
 @itemize @bullet
 @item
-To stand for a complete set of condition code flags.  This is best on
-most machines, where each comparison sets the entire series of flags.
+表示一个完整的条件代码标记的集合。这在大多机器上是最好的方式，每个比较都会设置整个标记系列。
 
-With this technique, @code{(cc0)} may be validly used in only two
-contexts: as the destination of an assignment (in test and compare
-instructions) and in comparison operators comparing against zero
-(@code{const_int} with value zero; that is to say, @code{const0_rtx}).
+使用这种技术，@code{(cc0)}只在两种上下文中有效：为一个赋值的对象（在测试和比较指令中）和在跟零进行比较的比较运算符中（值为零的@code{const_int}；也就是说，@code{const0_rtx}）。
 
 @item
-To stand for a single flag that is the result of a single condition.
-This is useful on machines that have only a single flag bit, and in
-which comparison instructions must specify the condition to test.
+表示单个标记，为单个条件的结果。这用于只有一个标记位，比较指令必须指定要测试的条件的机器上。
 
-With this technique, @code{(cc0)} may be validly used in only two
-contexts: as the destination of an assignment (in test and compare
-instructions) where the source is a comparison operator, and as the
-first operand of @code{if_then_else} (in a conditional branch).
+使用这种技术，@code{(cc0)}只在两种上下文中有效：为一个赋值的对象（在测试和比较指令中），其中源操作数为一个比较运算符，以及@code{if_then_else}的第一个参数（在条件分支中）。
+
 @end itemize
 
 @findex cc0_rtx
-There is only one expression object of code @code{cc0}; it is the
-value of the variable @code{cc0_rtx}.  Any attempt to create an
-expression of code @code{cc0} will return @code{cc0_rtx}.
+只有一个代码为@code{cc0}的表达式对象；其为变量@code{cc0_rtx}的值。任何尝试创建一个代码为@code{cc0}的表达式，将返回@code{cc0_rtx}。
 
-Instructions can set the condition code implicitly.  On many machines,
-nearly all instructions set the condition code based on the value that
-they compute or store.  It is not necessary to record these actions
-explicitly in the RTL because the machine description includes a
-prescription for recognizing the instructions that do so (by means of
-the macro @code{NOTICE_UPDATE_CC}).  @xref{Condition Code}.  Only
-instructions whose sole purpose is to set the condition code, and
-instructions that use the condition code, need mention @code{(cc0)}.
+指令可以隐式的设置条件代码。在许多机器上，几乎所有的指令根据它们计算或者存储的值来设置条件码。没有必要在RTL中显式的记录这些行为，因为机器描述包含一个对策，用于识别这样做的指令（通过宏@code{NOTICE_UPDATE_CC}）。@xref{Condition Code}。只有目的纯粹是设置条件码的指令，以及使用条件码的指令，才需要提及@code{(cc0)}。
 
-On some machines, the condition code register is given a register number
-and a @code{reg} is used instead of @code{(cc0)}.  This is usually the
-preferable approach if only a small subset of instructions modify the
-condition code.  Other machines store condition codes in general
-registers; in such cases a pseudo register should be used.
+在一些机器上，条件码寄存器被给定一个寄存器编号，并且一个@code{reg}用于替代@code{(cc0)}。这通常为更好的方式，如果只有一个小的指令子集修改条件码。其它机器将条件码存储在通用寄存器中；这种情况下应该使用伪寄存器。
 
-Some machines, such as the SPARC and RS/6000, have two sets of
-arithmetic instructions, one that sets and one that does not set the
-condition code.  This is best handled by normally generating the
-instruction that does not set the condition code, and making a pattern
-that both performs the arithmetic and sets the condition code register
-(which would not be @code{(cc0)} in this case).  For examples, search
-for @samp{addcc} and @samp{andcc} in @file{sparc.md}.
+一些机器，例如SPARC和RS/6000，具有两个算术指令集合，一个设置条件码，另一个不设置。可以通常情况下生成不设置条件码的指令，并创建一个同时执行算术运算并设置条件码寄存器（这种情况下将不会是@code{(cc0)}）的指令模式。例如，搜一下@file{sparc.md}中的@samp{addcc}和@samp{andcc}。
 
 @findex pc
 @item (pc)
 @cindex program counter
-This represents the machine's program counter.  It has no operands and
-may not have a machine mode.  @code{(pc)} may be validly used only in
-certain specific contexts in jump instructions.
+表示机器的程序计数器。其没有操作数并可能没有机器模式。@code{(pc)}只在跳转指令的特定上下文中使用。
 
 @findex pc_rtx
-There is only one expression object of code @code{pc}; it is the value
-of the variable @code{pc_rtx}.  Any attempt to create an expression of
-code @code{pc} will return @code{pc_rtx}.
+只有一个代码为@code{pc}的表达式对象；其为变量@code{pc_rtx}的值。任何尝试创建一个代码为@code{pc}的表达式，将返回@code{pc_rtx}。
 
-All instructions that do not jump alter the program counter implicitly
-by incrementing it, but there is no need to mention this in the RTL@.
+所有不进行跳转的指令会隐式的通过递增的方式改变程序计数器，但是不需要在RTL中提起这些。
 
 @findex mem
 @item (mem:@var{m} @var{addr} @var{alias})
-This RTX represents a reference to main memory at an address
-represented by the expression @var{addr}.  @var{m} specifies how large
-a unit of memory is accessed.  @var{alias} specifies an alias set for the
-reference.  In general two items are in different alias sets if they cannot
-reference the same memory address.
+该RTX表示对表达式@var{addr}所表示的地址的主内存进行引用。@var{m}描述了被访问的内存的单元大小。@var{alias}描述了该引用的别名集合。总得来说，两个项如果不引用相同的内存地址，则在不同的别名集合里。
 
-The construct @code{(mem:BLK (scratch))} is considered to alias all
-other memories.  Thus it may be used as a memory barrier in epilogue
-stack deallocation patterns.
+结构@code{(mem:BLK (scratch))}被认为是所有其它内存的别名。因此其可以在函数尾声的栈销毁中用作内存栅栏。
 
 @findex concat
 @item (concat@var{m} @var{rtx} @var{rtx})
-This RTX represents the concatenation of two other RTXs.  This is used
-for complex values.  It should only appear in the RTL attached to
-declarations and during RTL generation.  It should not appear in the
-ordinary insn chain.
+该RTX表示对两个其它RTX的连结。这用于复数值。其应该只出现在附加在声明中的RTL中，以及RTL生成中。不应该出现在普通的insn链上。
 
 @findex concatn
 @item (concatn@var{m} [@var{rtx} @dots{}])
-This RTX represents the concatenation of all the @var{rtx} to make a
-single value.  Like @code{concat}, this should only appear in
-declarations, and not in the insn chain.
+该RTX表示将所有的@var{rtx}进行连结，生成一个单个的值。类似@code{concat}，其应该只出现在声明中，不应该出现在insn链上。
+
 @end table
 
 @node 算术运算
