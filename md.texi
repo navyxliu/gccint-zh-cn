@@ -421,37 +421,14 @@ insn的操作数，不具有任何constraint，因为它从来不作为一个整
 
 如果定义了宏ASSEMBLER_DIALECT，则可以在模板中使用'@{option0|option1|option2@}'的形式。这些形式描述了多种汇编语言语法。参见指令输出。
 
-When the RTL contains two operands which are required by constraint to match
-each other, the output template must refer only to the lower-numbered operand.
-Matching operands are not always identical, and the rest of the compiler
-arranges to put the proper RTL expression for printing into the lower-numbered
-operand.
+当RTL包含两个，约束要求必须互相匹配的操作数时，输出模板必须只引用低编号的操作数。匹配的操作数并不总是相同的，编译器的其余部分会将要打印的合适的RTL表达式放到低编号的操作数中。
 
-One use of nonstandard letters or punctuation following @samp{%} is to
-distinguish between different assembler languages for the same machine; for
-example, Motorola syntax versus MIT syntax for the 68000.  Motorola syntax
-requires periods in most opcode names, while MIT syntax does not.  For
-example, the opcode @samp{movel} in MIT syntax is @samp{move.l} in Motorola
-syntax.  The same file of patterns is used for both kinds of output syntax,
-but the character sequence @samp{%.} is used in each place where Motorola
-syntax wants a period.  The @code{PRINT_OPERAND} macro for Motorola syntax
-defines the sequence to output a period; the macro for MIT syntax defines
-it to do nothing.
+紧随@samp{%}之后的非标准字母或者标点符号的一种用法是，为同一机器区别不同的汇编语言；例如，68000的Motorola语法与MIT语法。Motorola语法要求大多操作码的名字中带有句号，而MIT语法不是这样。例如，在MIT语法中的操作码@samp{movel}，在Motorola语法中为@samp{move.l}。这两种输出语法都在同一个文件中的指令模式中实现，只不过字符序列@samp{%.}用在需要句号的Motorola语法中。Motorola语法的@code{PRINT_OPERAND}宏，将该序列定义成输出一个句号；而MIT语法则将其定义为不做任何事情。
 
 @cindex @code{#} in template
-As a special case, a template consisting of the single character @code{#}
-instructs the compiler to first split the insn, and then output the
-resulting instructions separately.  This helps eliminate redundancy in the
-output templates.   If you have a @code{define_insn} that needs to emit
-multiple assembler instructions, and there is an matching @code{define_split}
-already defined, then you can simply use @code{#} as the output template
-instead of writing an output template that emits the multiple assembler
-instructions.
+作为一个特殊情况，由一单个@code{#}字符组成的模板，指示编译器首先拆分insn，然后分别输出所得的指令。这有助于在输出模板中消除冗余。如果你有一个@code{define_insn}，其需要输出多个汇编指令，并且有一个已经定义的匹配的@code{define_split}，则你可以简单的使用@code{#}作为输出模板，来替代书写输出多个汇编指令的输出模板。
 
-If the macro @code{ASSEMBLER_DIALECT} is defined, you can use construct
-of the form @samp{@{option0|option1|option2@}} in the templates.  These
-describe multiple variants of assembler language syntax.
-@xref{指令输出}.
+如果宏@code{ASSEMBLER_DIALECT}被定义，你可以在模板中使用形如@samp{@{option0|option1|option2@}}的结构。这些描述了多个汇编语言语法的变体。@xref{指令输出}。
 
 @node 输出语句
 @section 用于汇编输出的C语句
