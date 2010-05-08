@@ -53,38 +53,22 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Constraints.html#Constraints">Constrain
 <h4 class="subsection">16.8.6 使用<code>enabled</code>属性来禁止insn可选项</h4>
 
 <p><a name="index-enabled-3273"></a>
-The <code>enabled</code> insn attribute may be used to disable certain insn
-alternatives for machine-specific reasons.  This is useful when adding
-new instructions to an existing pattern which are only available for
-certain cpu architecture levels as specified with the <code>-march=</code>
-option.
+insn属性<code>enabled</code>，可以出于机器特定的原因，用来禁止特定的insn的可选项。这用于，当为现有的指令模式，增加新的指令，且其只用于使用<code>-march=</code>选项指定的特定cpu体系结构级别。
 
- <p>If an insn alternative is disabled, then it will never be used.  The
-compiler treats the constraints for the disabled alternative as
-unsatisfiable.
+ <p>如果insn的可选项被禁止，则其将不被使用。编译器将被禁止的可选项的约束视为不被满足。
 
- <p>In order to make use of the <code>enabled</code> attribute a back end has to add
-in the machine description files:
+ <p>为了能够使用<code>enabled</code>属性，后端必须在机器描述文件中增加：
 
      <ol type=1 start=1>
-<li>A definition of the <code>enabled</code> insn attribute.  The attribute is
-defined as usual using the <code>define_attr</code> command.  This
-definition should be based on other insn attributes and/or target flags. 
-The <code>enabled</code> attribute is a numeric attribute and should evaluate to
-<code>(const_int 1)</code> for an enabled alternative and to
-<code>(const_int 0)</code> otherwise. 
-<li>A definition of another insn attribute used to describe for what
-reason an insn alternative might be available or
-not.  E.g. <code>cpu_facility</code> as in the example below. 
-<li>An assignment for the second attribute to each insn definition
-combining instructions which are not all available under the same
-circumstances.  (Note: It obviously only makes sense for definitions
-with more than one alternative.  Otherwise the insn pattern should be
-disabled or enabled using the insn condition.)
+<li>对<code>enabled</code> insn属性的定义。该属性通常使用<code>define_attr</code>命令来定义。该定义应该基于其它insn属性以及/或者目标机标记。<code>enabled</code>属性为数字属性，并且对于被启用的可选项应该求值为<code>(const_int 1)</code>，否则为<code>(const_int 0)</code>。
+
+     <li>另一个insn属性的定义，用于描述为什么一个insn可选项可用或不可用。例如，下面例子中的<code>cpu_facility</code>。
+
+     <li>对每个insn定义，赋予第二个属性。（注意：显然只是针对那些具有多个可选项的定义。其它insn模式应该使用insn条件来禁止或开启。）
+
       </ol>
 
- <p>E.g. the following two patterns could easily be merged using the <code>enabled</code>
-attribute:
+ <p>例如，下面两个指令模式可以容易的使用<code>enabled</code>属性合并在一起：
 
 <pre class="smallexample">     
      (define_insn "*movdi_old"
@@ -103,7 +87,7 @@ attribute:
         lgdr %0,%1")
      
 </pre>
- <p>to:
+ <p>合并成:
 
 <pre class="smallexample">     
      (define_insn "*movdi_combined"
@@ -117,7 +101,7 @@ attribute:
        [(set_attr "cpu_facility" "*,new,new")])
      
 </pre>
- <p>with the <code>enabled</code> attribute defined like this:
+ <p>其中<code>enabled</code>属性的定义为：
 
 <pre class="smallexample">     
      (define_attr "cpu_facility" "standard,new" (const_string "standard"))
