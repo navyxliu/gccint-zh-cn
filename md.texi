@@ -6132,76 +6132,54 @@ extern enum attr_type get_attr_type ();
 @code{ashift}, @code{lshiftrt}和@code{ashiftrt}表达式。
 
 @findex get_attr
-@code{const_int} and @code{symbol_ref} are always valid terms (@pxref{Insn
-Lengths},for additional forms).  @code{symbol_ref} is a string
-denoting a C expression that yields an @code{int} when evaluated by the
-@samp{get_attr_@dots{}} routine.  It should normally be a global
-variable.
+@code{const_int}和@code{symbol_ref}总为有效（其它的形式，@pxref{Insn Lengths}）。@code{symbol_ref}为一个字符串，表示当使用@samp{get_attr_@dots{}}程序求解时，可以生成一个@code{int}的C表达式。其通常应该为一个全局变量。
 
 @findex eq_attr
 @item (eq_attr @var{name} @var{value})
-@var{name} is a string specifying the name of an attribute.
+@var{name}为一个字符串，指定了属性的名字。
 
-@var{value} is a string that is either a valid value for attribute
-@var{name}, a comma-separated list of values, or @samp{!} followed by a
-value or list.  If @var{value} does not begin with a @samp{!}, this
-test is true if the value of the @var{name} attribute of the current
-insn is in the list specified by @var{value}.  If @var{value} begins
-with a @samp{!}, this test is true if the attribute's value is
-@emph{not} in the specified list.
+@var{value}为一个字符串，或者为一个该属性@var{name}的有效值，由逗号分隔的值列表，或者为@samp{!}，后面跟随一个值或者列表。如果@var{value}不是起始于@samp{!}，则该测试为真，如果当前insn的@var{name}属性的值在值列表中。如果@var{value}起始于@samp{!}，则该测试为真，如果属性值不在指定的列表中。
 
-For example,
+例如，
 
 @smallexample
 (eq_attr "type" "load,store")
 @end smallexample
 
 @noindent
-is equivalent to
+
+等价于
 
 @smallexample
 (ior (eq_attr "type" "load") (eq_attr "type" "store"))
 @end smallexample
 
-If @var{name} specifies an attribute of @samp{alternative}, it refers to the
-value of the compiler variable @code{which_alternative}
-(@pxref{Output Statement}) and the values must be small integers.  For
-example,
+如果@var{name}指定了属性@samp{alternative}，则它是指的编译器变量@code{which_alternative}的值（@pxref{Output Statement}），并且值必须为小整数。例如，
 
 @smallexample
 (eq_attr "alternative" "2,3")
 @end smallexample
 
 @noindent
-is equivalent to
+
+等价于
 
 @smallexample
 (ior (eq (symbol_ref "which_alternative") (const_int 2))
      (eq (symbol_ref "which_alternative") (const_int 3)))
 @end smallexample
 
-Note that, for most attributes, an @code{eq_attr} test is simplified in cases
-where the value of the attribute being tested is known for all insns matching
-a particular pattern.  This is by far the most common case.
+注意，对于大多数属性，当被测试的属性的值已知为匹配特定模式的所有insn时，@code{eq_attr}测试将被简化。这是迄今为止最常见的情况。
 
 @findex attr_flag
 @item (attr_flag @var{name})
-The value of an @code{attr_flag} expression is true if the flag
-specified by @var{name} is true for the @code{insn} currently being
-scheduled.
+表达式@code{attr_flag}的值为真，如果由@var{name}指定的标记对于当前被调度的@code{insn}为真。
 
-@var{name} is a string specifying one of a fixed set of flags to test.
-Test the flags @code{forward} and @code{backward} to determine the
-direction of a conditional branch.  Test the flags @code{very_likely},
-@code{likely}, @code{very_unlikely}, and @code{unlikely} to determine
-if a conditional branch is expected to be taken.
+@var{name}为一个字符串，指定了要测试的标记集合。测试标记@code{forward}和@code{backward}可以确定条件分支的方向。测试标记@code{very_likely}, @code{likely}, @code{very_unlikely}和@code{unlikely}可以确定条件分支是否被接受。
 
-If the @code{very_likely} flag is true, then the @code{likely} flag is also
-true.  Likewise for the @code{very_unlikely} and @code{unlikely} flags.
+如果@code{very_likely}为真，则@code{likely}标记也为真。同样对于@code{very_unlikely}和@code{unlikely}也是这样。
 
-This example describes a conditional branch delay slot which
-can be nullified for forward branches that are taken (annul-true) or
-for backward branches which are not taken (annul-false).
+该例子描述了一个条件分支延迟槽，其对于被接受的（annul-true）forward分支或者没有被接受的（annul-false）的backward分支，可以置空（nullified），
 
 @smallexample
 (define_delay (eq_attr "type" "cbranch")
@@ -6212,22 +6190,16 @@ for backward branches which are not taken (annul-false).
         (attr_flag "backward"))])
 @end smallexample
 
-The @code{forward} and @code{backward} flags are false if the current
-@code{insn} being scheduled is not a conditional branch.
+标记@code{forward}和@code{backward}为假，如果当前被调度的@code{insn}不是条件分支。
 
-The @code{very_likely} and @code{likely} flags are true if the
-@code{insn} being scheduled is not a conditional branch.
-The @code{very_unlikely} and @code{unlikely} flags are false if the
-@code{insn} being scheduled is not a conditional branch.
+标记@code{very_likely}和@code{likely}为真，如果被调度的@code{insn}不是条件分支。标记@code{very_unlikely}和@code{unlikely}为假，如果被调度的@code{attr_flag}不是条件分支。
 
-@code{attr_flag} is only used during delay slot scheduling and has no
-meaning to other passes of the compiler.
+@code{attr_flag}只用于延迟槽调度阶段，并且跟编译器的其它过程没有关系。
 
 @findex attr
 @item (attr @var{name})
-The value of another attribute is returned.  This is most useful
-for numeric attributes, as @code{eq_attr} and @code{attr_flag}
-produce more efficient code for non-numeric attributes.
+返回另一个属性的值。这对于数值属性非常有用，因为@code{eq_attr}和@code{attr_flag}可以产生比非数值属性更加有效的代码。
+
 @end table
 
 @end ifset
