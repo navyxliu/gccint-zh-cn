@@ -995,37 +995,20 @@ addl #35,r12
 @item @samp{p}
 允许一个为有效内存地址的操作数。这用于“加载地址”和“地址压栈”指令。
 
-约束中的`p'必须由match_operand中的作为断言的address_operand协同工作。该断言将match_operand中指定的机器模式解析为地址有效的内存引用的机器模式。
-An operand that is a valid memory address is allowed.  This is
-for ``load address'' and ``push address'' instructions.
-
 @findex address_operand
-@samp{p} in the constraint must be accompanied by @code{address_operand}
-as the predicate in the @code{match_operand}.  This predicate interprets
-the mode specified in the @code{match_operand} as the mode of the memory
-reference for which the address would be valid.
+约束中的@samp{p}必须由@code{match_operand}中的作为断言的@code{address_operand}协同工作。该断言将@code{match_operand}中指定的机器模式解析为地址有效的内存引用的机器模式。
 
 @cindex other register constraints
 @cindex extensible constraints
 @item @var{other-letters}
-其它字母可以采用机器相关的方式被定义，用于代表寄存器的特定类别或者其它任意的操作数类型。`d', `a' 和 `f'在68000/68020被定义用来代表数据，地址和浮点寄存器。
-Other letters can be defined in machine-dependent fashion to stand for
-particular classes of registers or other arbitrary operand types.
-@samp{d}, @samp{a} and @samp{f} are defined on the 68000/68020 to stand
-for data, address and floating point registers.
+其它字母可以采用机器相关的方式被定义，用于代表寄存器的特定类别或者其它任意的操作数类型。@samp{d}, @samp{a}和@samp{f}在68000/68020被定义用来代表数据，地址和浮点寄存器。
+
 @end table
 
 @ifset INTERNALS
 为了具有有效的汇编代码，每个操作数必须满足它的约束。但是如果不满足的话，也不会阻止将该指令模式应用到insn上。替代的，它会指示编译器去修改代码以至于约束将被满足。通常，这是通过将一个操作数复制到寄存器中来完成的。
 
 因此，对比下面的两条指令模式：
-In order to have valid assembler code, each operand must satisfy
-its constraint.  But a failure to do so does not prevent the pattern
-from applying to an insn.  Instead, it directs the compiler to modify
-the code so that the constraint will be satisfied.  Usually this is
-done by copying an operand into a register.
-
-Contrast, therefore, the two instruction patterns that follow:
 
 @smallexample
 (define_insn ""
@@ -1038,7 +1021,6 @@ Contrast, therefore, the two instruction patterns that follow:
 
 @noindent
 其具有两个操作数，其中一个必须出现在两个位置，
-which has two operands, one of which must appear in two places, and
 
 @smallexample
 (define_insn ""
@@ -1051,8 +1033,6 @@ which has two operands, one of which must appear in two places, and
 
 @noindent
 其具有三个操作数，其中两个通过约束被要求为是相同的。如果我们考虑如下形式的一条insn 
-which has three operands, two of which are required by a constraint to be
-identical.  If we are considering an insn of the form
 
 @smallexample
 (insn @var{n} @var{prev} @var{next}
@@ -1063,13 +1043,6 @@ identical.  If we are considering an insn of the form
 
 @noindent
 第一个指令模式将根本不会被应用，因为该insn不在合适的地方包含两个相同的子表达式。指令模式会说“这看起来不像是一条加法指令；试一下其它模式”。第二个指令模式将会说，“是的，这是一条加法指令，但是有些问题”。它将指使编译器的重载过程生成额外的insn，使得约束为真。结果可能看起来像：
-the first pattern would not apply at all, because this insn does not
-contain two identical subexpressions in the right place.  The pattern would
-say, ``That does not look like an add instruction; try other patterns''.
-The second pattern would say, ``Yes, that's an add instruction, but there
-is something wrong with it''.  It would direct the reload pass of the
-compiler to generate additional insns to make the constraint true.  The
-results might look like this:
 
 @smallexample
 (insn @var{n2} @var{prev} @var{n}
@@ -1083,14 +1056,6 @@ results might look like this:
 @end smallexample
 
 你必须确保每个操作数，在每个指令模式中，具有能够处理可能会出现的任何RTL表达式的约束。（当使用多个可选项时，每个指令模式，对于每个可能的操作数表达式组合，必须至少具有一个可选项可以处理该操作数的组合。）约束不需要允许任何可能的操作数——如果是这种情况，它们就不做约束了——但是它们必须至少指出可以加载任何可能操作数，使得适合约束的方法。
-It is up to you to make sure that each operand, in each pattern, has
-constraints that can handle any RTL expression that could be present for
-that operand.  (When multiple alternatives are in use, each pattern must,
-for each possible combination of operand expressions, have at least one
-alternative which can handle that combination of operands.)  The
-constraints don't need to @emph{allow} any possible operand---when this is
-the case, they do not constrain---but they must at least point the way to
-reloading any possible operand so that it will fit.
 
 @itemize @bullet
 @item
@@ -1098,68 +1063,28 @@ reloading any possible operand so that it will fit.
 
 例如，操作数对于它的约束允许除了寄存器以外的任何事物，如果它的断言不接受寄存器的话，这样是安全的。
 
-操作数对于断言只接受常量时，如果它的约束包含字母'i'，则是安全的。如果任何可能的常量都被接受，则可以使用'i'；如果断言具有更多的选择性，则约束也可以具有更多的选择性。
-If the constraint accepts whatever operands the predicate permits,
-there is no problem: reloading is never necessary for this operand.
-
-For example, an operand whose constraints permit everything except
-registers is safe provided its predicate rejects registers.
-
-An operand whose predicate accepts only constant values is safe
-provided its constraints include the letter @samp{i}.  If any possible
-constant value is accepted, then nothing less than @samp{i} will do;
-if the predicate is more selective, then the constraints may also be
-more selective.
+操作数对于断言只接受常量时，如果它的约束包含字母@samp{i}，则是安全的。如果任何可能的常量都被接受，则可以使用@samp{i}；如果断言具有更多的选择性，则约束也可以具有更多的选择性。
 
 @item
 任何操作数表达式可以通过复制到寄存器中来进行重载。所以如果一个操作数的约束允许某种寄存器，其当然是安全的。它不需要允许所有类型的寄存器；编译器知道为了使指令有效，如何将一个寄存器复制到另一个合适类别的寄存器中。 
-Any operand expression can be reloaded by copying it into a register.
-So if an operand's constraints allow some kind of register, it is
-certain to be safe.  It need not permit all classes of registers; the
-compiler knows how to copy a register into another register of the
-proper class in order to make an instruction valid.
 
 @cindex nonoffsettable memory reference
 @cindex memory reference, nonoffsettable
 @item
-非偏移表的内存引用可以通过将地址复制到寄存器中来重载。所以如果约束使用字母'o'，则所有内存引用将被照顾到。
-A nonoffsettable memory reference can be reloaded by copying the
-address into a register.  So if the constraint uses the letter
-@samp{o}, all memory references are taken care of.
+非偏移表的内存引用可以通过将地址复制到寄存器中来重载。所以如果约束使用字母@samp{o}，则所有内存引用将被照顾到。
 
 @item
-常量操作数可以通过在内存中分配空间作为预先被初始化的数据来重载。然后可以使用内存引用。所以如果约束使用字母'o'或者'm'，则常量操作数不是问题。
-A constant operand can be reloaded by allocating space in memory to
-hold it as preinitialized data.  Then the memory reference can be used
-in place of the constant.  So if the constraint uses the letters
-@samp{o} or @samp{m}, constant operands are not a problem.
+常量操作数可以通过在内存中分配空间作为预先被初始化的数据来重载。然后可以使用内存引用。所以如果约束使用字母@samp{o}或者@samp{m}，则常量操作数不是问题。
 
 @item
 如果约束允许的常量和伪寄存器没有被分配到硬件寄存器中，并且等价于一个常量，则寄存器将被常量替换。如果断言不允许常量并且insn出于某种原因被识别了，则编译器将会崩溃。因此断言必须总是能够识别任何被约束允许的对象。
-If the constraint permits a constant and a pseudo register used in an insn
-was not allocated to a hard register and is equivalent to a constant,
-the register will be replaced with the constant.  If the predicate does
-not permit a constant and the insn is re-recognized for some reason, the
-compiler will crash.  Thus the predicate must always recognize any
-objects allowed by the constraint.
+
 @end itemize
 
 如果操作数的断言能够识别寄存器，但是约束不允许它们，则能够使编译器崩溃。当该操作数正好是寄存器时，重载过程将被打乱，因为它不知道如何将寄存器临时复制到内存中。
 
-如果断言接受一元操作符，约束将被应用到操作数上。例如，MIPS处理器在ISA3级时，支持一条指令，其将两个SImode的寄存器相加产生一个 DImode的结果，但是必须寄存器能够被正确的符号扩展。该断言对于输入操作数接受一个SImode寄存器的sign_extend。将约束写成指示寄存器的类型需要为sign_extend的操作数。
-If the operand's predicate can recognize registers, but the constraint does
-not permit them, it can make the compiler crash.  When this operand happens
-to be a register, the reload pass will be stymied, because it does not know
-how to copy a register temporarily into memory.
+如果断言接受一元操作符，约束将被应用到操作数上。例如，MIPS处理器在ISA3级时，支持一条指令，其将两个@code{SImode}的寄存器相加产生一个 @code{DImode}的结果，但是必须寄存器能够被正确的符号扩展。该断言对于输入操作数接受一个@code{SImode}寄存器的@code{sign_extend}。将约束写成指示寄存器的类型需要为@code{sign_extend}的操作数。
 
-If the predicate accepts a unary operator, the constraint applies to the
-operand.  For example, the MIPS processor at ISA level 3 supports an
-instruction which adds two registers in @code{SImode} to produce a
-@code{DImode} result, but only if the registers are correctly sign
-extended.  This predicate for the input operands accepts a
-@code{sign_extend} of an @code{SImode} register.  Write the constraint
-to indicate the type of register that is required for the operand of the
-@code{sign_extend}.
 @end ifset
 
 @node 多个可选项
@@ -2839,41 +2764,25 @@ Unsigned constant valid for BccUI instructions
 @subsection 使用@code{enabled}属性来禁止insn可选项
 @cindex enabled
 
-The @code{enabled} insn attribute may be used to disable certain insn
-alternatives for machine-specific reasons.  This is useful when adding
-new instructions to an existing pattern which are only available for
-certain cpu architecture levels as specified with the @code{-march=}
-option.
+insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特定的insn的可选项。这用于，当为现有的指令模式，增加新的指令，且其只用于使用@code{-march=}选项指定的特定cpu体系结构级别。
 
-If an insn alternative is disabled, then it will never be used.  The
-compiler treats the constraints for the disabled alternative as
-unsatisfiable.
+如果insn的可选项被禁止，则其将不被使用。编译器将被禁止的可选项的约束视为不被满足。
 
-In order to make use of the @code{enabled} attribute a back end has to add
-in the machine description files:
+为了能够使用@code{enabled}属性，后端必须在机器描述文件中增加：
 
 @enumerate
 @item
-A definition of the @code{enabled} insn attribute.  The attribute is
-defined as usual using the @code{define_attr} command.  This
-definition should be based on other insn attributes and/or target flags.
-The @code{enabled} attribute is a numeric attribute and should evaluate to
-@code{(const_int 1)} for an enabled alternative and to
-@code{(const_int 0)} otherwise.
+对@code{enabled} insn属性的定义。该属性通常使用@code{define_attr}命令来定义。该定义应该基于其它insn属性以及/或者目标机标记。@code{enabled}属性为数字属性，并且对于被启用的可选项应该求值为@code{(const_int 1)}，否则为@code{(const_int 0)}。
+
 @item
-A definition of another insn attribute used to describe for what
-reason an insn alternative might be available or
-not.  E.g. @code{cpu_facility} as in the example below.
+另一个insn属性的定义，用于描述为什么一个insn可选项可用或不可用。例如，下面例子中的@code{cpu_facility}。
+
 @item
-An assignment for the second attribute to each insn definition
-combining instructions which are not all available under the same
-circumstances.  (Note: It obviously only makes sense for definitions
-with more than one alternative.  Otherwise the insn pattern should be
-disabled or enabled using the insn condition.)
+对每个insn定义，赋予第二个属性。（注意：显然只是针对那些具有多个可选项的定义。其它insn模式应该使用insn条件来禁止或开启。）
+
 @end enumerate
 
-E.g. the following two patterns could easily be merged using the @code{enabled}
-attribute:
+例如，下面两个指令模式可以容易的使用@code{enabled}属性合并在一起：
 
 @smallexample
 
@@ -2894,7 +2803,7 @@ attribute:
 
 @end smallexample
 
-to:
+合并成:
 
 @smallexample
 
@@ -2910,7 +2819,7 @@ to:
 
 @end smallexample
 
-with the @code{enabled} attribute defined like this:
+其中@code{enabled}属性的定义为：
 
 @smallexample
 
@@ -3048,7 +2957,7 @@ C表达式@code{match_test}，可以访问下列变量：
 则（在将来）其将只出现在internals手册版本的机器特定约束表中。
 这可以用于不应该出现在@code{asm}语句中的约束。
 
-@node Cconstraint接口
+@node C constraint接口
 @subsection 从C中测试constraint
 @cindex testing constraints
 @cindex constraints, testing
@@ -6111,22 +6020,17 @@ enum attr_type @{TYPE_BRANCH, TYPE_FP, TYPE_LOAD,
 extern enum attr_type get_attr_type ();
 @end smallexample
 
-如果属性接受数字值，则不会定义 @code{enum} 类型，并且获得属性值的函数将
-返回 @code{int}。
+如果属性接受数字值，则不会定义@code{enum} 类型，并且获得属性值的函数将
+返回@code{int}。
 
-There are attributes which are tied to a specific meaning.  These
-attributes are not free to use for other purposes:
+有些属性被赋予特定的含义。这些属性不能随便用于其它目的：
 
 @table @code
 @item length
-The @code{length} attribute is used to calculate the length of emitted
-code chunks.  This is especially important when verifying branch
-distances. @xref{Insn Lengths}.
+@code{length}属性用于计算每输出的代码块的长度。这尤其在验证分支距离的时候特别重要。@xref{Insn Lengths}。
 
 @item enabled
-The @code{enabled} attribute can be defined to prevent certain
-alternatives of an insn definition from being used during code
-generation. @xref{Disable Insn Alternatives}.
+@code{enabled}属性可以被定义，用来在代码生成过程中，阻止insn定义中的特定的可选项。@xref{Disable Insn Alternatives}
 
 @end table
 
