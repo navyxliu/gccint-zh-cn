@@ -3043,44 +3043,23 @@ C表达式@code{match_test}，可以访问下列变量：
 @cindex pattern names
 @cindex names, pattern
 
-Here is a table of the instruction names that are meaningful in the RTL
-generation pass of the compiler.  Giving one of these names to an
-instruction pattern tells the RTL generation pass that it can use the
-pattern to accomplish a certain task.
+这里有一个在编译器的RTL生成过程中有意义的指令名称表，在指令模式中给定这些名字中的一个，则告诉RTL生成过程，其可以使用该指令模式来完成一个特定的任务。
 
 @table @asis
 @cindex @code{mov@var{m}} instruction pattern
 @item @samp{mov@var{m}}
-Here @var{m} stands for a two-letter machine mode name, in lowercase.
-This instruction pattern moves data with that machine mode from operand
-1 to operand 0.  For example, @samp{movsi} moves full-word data.
+这里@var{m}表示一个两字母的机器模式名字，小写。该指令模式将那种机器模式的数据从操作数1移送到操作数0。例如@samp{movsi}移送整字数据。
 
-If operand 0 is a @code{subreg} with mode @var{m} of a register whose
-own mode is wider than @var{m}, the effect of this instruction is
-to store the specified value in the part of the register that corresponds
-to mode @var{m}.  Bits outside of @var{m}, but which are within the
-same target word as the @code{subreg} are undefined.  Bits which are
-outside the target word are left unchanged.
+如果操作数0为一个寄存器的@code{subreg}，机器模式为@var{m}，寄存器自己的机器模式比@var{m}更宽，则该指令的效果是将指定的值存储在寄存器的对应于机器模式@var{m}的部分。@var{m}之外，且与@code{subreg}在同一个目标字中的位，为未定义。目标字以外的位保持不变。
 
-This class of patterns is special in several ways.  First of all, each
-of these names up to and including full word size @emph{must} be defined,
-because there is no other way to copy a datum from one place to another.
-If there are patterns accepting operands in larger modes,
-@samp{mov@var{m}} must be defined for integer modes of those sizes.
+这类指令模式有几处特别的地方。首先，每个这些直到整字大小的名字，包括整字大小的，必须被定义，因为没有其它方式来从一个地方将数据复制到另一个地方。如果有接受更大机器模式的操作数的指令模式，则必须为那些大小的整数机器模式定义@samp{mov@var{m}}。
 
-Second, these patterns are not used solely in the RTL generation pass.
-Even the reload pass can generate move insns to copy values from stack
-slots into temporary registers.  When it does so, one of the operands is
-a hard register and the other is an operand that can need to be reloaded
-into a register.
+第二，这些指令模式不仅用在RTL生成过程。甚至重载过程可以生成move insn将值从栈槽复制到临时寄存器中。当这样的时候，其中一个操作数为硬件寄存器，另一个为需要被重载到寄存器中的操作数。
 
 @findex force_reg
-Therefore, when given such a pair of operands, the pattern must generate
-RTL which needs no reloading and needs no temporary registers---no
-registers other than the operands.  For example, if you support the
-pattern with a @code{define_expand}, then in such a case the
-@code{define_expand} mustn't call @code{force_reg} or any other such
-function which might generate new pseudo registers.
+因此，当给定这样一对操作数时，指令模式必须生成不需要重载，并且不需要临时寄存器的RTL。例如，如果你使用一个@code{define_expand}来支持该指令模式，则这种情况下，@code{define_expand}一定不能调用@code{force_reg}或者任何其它可能生成新的伪寄存器的函数。
+
+该要求
 
 This requirement exists even for subword modes on a RISC machine where
 fetching those modes from memory normally requires several insns and
