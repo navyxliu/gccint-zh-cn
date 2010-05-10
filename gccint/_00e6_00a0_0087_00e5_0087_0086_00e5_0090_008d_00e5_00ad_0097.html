@@ -53,59 +53,25 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 <h3 class="section">16.9 用于生成的标准指令模式名</h3>
 
 <p><a name="index-standard-pattern-names-3286"></a><a name="index-pattern-names-3287"></a><a name="index-names_002c-pattern-3288"></a>
-Here is a table of the instruction names that are meaningful in the RTL
-generation pass of the compiler.  Giving one of these names to an
-instruction pattern tells the RTL generation pass that it can use the
-pattern to accomplish a certain task.
+这里有一个在编译器的RTL生成过程中有意义的指令名称表，在指令模式中给定这些名字中的一个，则告诉RTL生成过程，其可以使用该指令模式来完成一个特定的任务。
 
      
 <a name="index-g_t_0040code_007bmov_0040var_007bm_007d_007d-instruction-pattern-3289"></a>
-<dl><dt>&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;<dd>Here <var>m</var> stands for a two-letter machine mode name, in lowercase. 
-This instruction pattern moves data with that machine mode from operand
-1 to operand 0.  For example, &lsquo;<samp><span class="samp">movsi</span></samp>&rsquo; moves full-word data.
+<dl><dt>&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;<dd>这里<var>m</var>表示一个两字母的机器模式名字，小写。该指令模式将那种机器模式的数据从操作数1移送到操作数0。例如&lsquo;<samp><span class="samp">movsi</span></samp>&rsquo;移送整字数据。
 
-     <p>If operand 0 is a <code>subreg</code> with mode <var>m</var> of a register whose
-own mode is wider than <var>m</var>, the effect of this instruction is
-to store the specified value in the part of the register that corresponds
-to mode <var>m</var>.  Bits outside of <var>m</var>, but which are within the
-same target word as the <code>subreg</code> are undefined.  Bits which are
-outside the target word are left unchanged.
+     <p>如果操作数0为一个寄存器的<code>subreg</code>，机器模式为<var>m</var>，寄存器自己的机器模式比<var>m</var>更宽，则该指令的效果是将指定的值存储在寄存器的对应于机器模式<var>m</var>的部分。<var>m</var>之外，且与<code>subreg</code>在同一个目标字中的位，为未定义。目标字以外的位保持不变。
 
-     <p>This class of patterns is special in several ways.  First of all, each
-of these names up to and including full word size <em>must</em> be defined,
-because there is no other way to copy a datum from one place to another. 
-If there are patterns accepting operands in larger modes,
-&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo; must be defined for integer modes of those sizes.
+     <p>这类指令模式有几处特别的地方。首先，每个这些直到整字大小的名字，包括整字大小的，必须被定义，因为没有其它方式来从一个地方将数据复制到另一个地方。如果有接受更大机器模式的操作数的指令模式，则必须为那些大小的整数机器模式定义&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;。
 
-     <p>Second, these patterns are not used solely in the RTL generation pass. 
-Even the reload pass can generate move insns to copy values from stack
-slots into temporary registers.  When it does so, one of the operands is
-a hard register and the other is an operand that can need to be reloaded
-into a register.
+     <p>第二，这些指令模式不仅用在RTL生成过程。甚至重载过程可以生成move insn将值从栈槽复制到临时寄存器中。当这样的时候，其中一个操作数为硬件寄存器，另一个为需要被重载到寄存器中的操作数。
 
-     <p><a name="index-force_005freg-3290"></a>Therefore, when given such a pair of operands, the pattern must generate
-RTL which needs no reloading and needs no temporary registers&mdash;no
-registers other than the operands.  For example, if you support the
-pattern with a <code>define_expand</code>, then in such a case the
-<code>define_expand</code> mustn't call <code>force_reg</code> or any other such
-function which might generate new pseudo registers.
+     <p><a name="index-force_005freg-3290"></a>因此，当给定这样一对操作数时，指令模式必须生成不需要重载，并且不需要临时寄存器的RTL。例如，如果你使用一个<code>define_expand</code>来支持该指令模式，则这种情况下，<code>define_expand</code>一定不能调用<code>force_reg</code>或者任何其它可能生成新的伪寄存器的函数。
 
-     <p>This requirement exists even for subword modes on a RISC machine where
-fetching those modes from memory normally requires several insns and
-some temporary registers.
+     <p>甚至对于在RISC机器上的子字机器模式，从内存中获取这些机器模式通常需要多个insn和一些临时变量，该要求也存在。
 
-     <p><a name="index-change_005faddress-3291"></a>During reload a memory reference with an invalid address may be passed
-as an operand.  Such an address will be replaced with a valid address
-later in the reload pass.  In this case, nothing may be done with the
-address except to use it as it stands.  If it is copied, it will not be
-replaced with a valid address.  No attempt should be made to make such
-an address into a valid address and no routine (such as
-<code>change_address</code>) that will do so may be called.  Note that
-<code>general_operand</code> will fail when applied to such an address.
+     <p><a name="index-change_005faddress-3291"></a>重载过程中，具有无效地址的内存引用可以被作为操作数。这样的地址将在重载过程的后面被替换成有效地址。这种情况下，可能对地址没有做任何事情，而只是使用它。如果其被复制，则将无法使用有效的地址进行替换。不要尝试将这样的地址变成有效的地址。注意，<code>general_operand</code>当应用到这样的地址的时候将会失败。
 
-     <p><a name="index-reload_005fin_005fprogress-3292"></a>The global variable <code>reload_in_progress</code> (which must be explicitly
-declared if required) can be used to determine whether such special
-handling is required.
+     <p><a name="index-reload_005fin_005fprogress-3292"></a>全局变量<code>reload_in_progress</code>（其必须被显式的声明）可以用来确定是否需要这样的特殊的处理。
 
      <p>The variety of operands that have reloads depends on the rest of the
 machine description, but typically on a RISC machine these can only be
