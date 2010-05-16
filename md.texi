@@ -3261,46 +3261,29 @@ C表达式@code{match_test}，可以访问下列变量：
 
 @cindex @code{divmod@var{m}4} instruction pattern
 @item @samp{divmod@var{m}4}
-Signed division that produces both a quotient and a remainder.
-Operand 1 is divided by operand 2 to produce a quotient stored
-in operand 0 and a remainder stored in operand 3.
+有符号除法，同时产生商和余数。操作数1被操作数2除，产生商存储在操作数0中，余数存储在操作数3中。
 
-For machines with an instruction that produces both a quotient and a
-remainder, provide a pattern for @samp{divmod@var{m}4} but do not
-provide patterns for @samp{div@var{m}3} and @samp{mod@var{m}3}.  This
-allows optimization in the relatively common case when both the quotient
-and remainder are computed.
+对于具有同时产生商和余数的指令的机器，提供@samp{divmod@var{m}4}指令模式，但不要提供@samp{div@var{m}3} 和 @samp{mod@var{m}3}。这使得当商和余数都被计算的时候，可以优化成相对常见的情况。
 
-If an instruction that just produces a quotient or just a remainder
-exists and is more efficient than the instruction that produces both,
-write the output routine of @samp{divmod@var{m}4} to call
-@code{find_reg_note} and look for a @code{REG_UNUSED} note on the
-quotient or remainder and generate the appropriate instruction.
+如果存在只产生商或者余数的指令，并且比都产生的指令更有效，则将@samp{divmod@var{m}4}的输出例程写成调用@code{find_reg_note}，查看商或者余数的@code{REG_UNUSED}注解，来产生适当的指令。
 
 @cindex @code{udivmod@var{m}4} instruction pattern
 @item @samp{udivmod@var{m}4}
-Similar, but does unsigned division.
+类似的，不过进行无符号除法。
 
 @anchor{shift patterns}
 @cindex @code{ashl@var{m}3} instruction pattern
 @cindex @code{ssashl@var{m}3} instruction pattern
 @cindex @code{usashl@var{m}3} instruction pattern
 @item @samp{ashl@var{m}3}, @samp{ssashl@var{m}3}, @samp{usashl@var{m}3}
-Arithmetic-shift operand 1 left by a number of bits specified by operand
-2, and store the result in operand 0.  Here @var{m} is the mode of
-operand 0 and operand 1; operand 2's mode is specified by the
-instruction pattern, and the compiler will convert the operand to that
-mode before generating the instruction.  The meaning of out-of-range shift
-counts can optionally be specified by @code{TARGET_SHIFT_TRUNCATION_MASK}.
-@xref{TARGET_SHIFT_TRUNCATION_MASK}.  Operand 2 is always a scalar type.
+将操作数1向左算术移位，左移位数由操作数2指定，将结果存储在操作数0中。这里@var{m}为操作数0和1的机器模式；操作数2的机器模式通过指令模式来指定，编译器会在生成指令之前，将操作数转换成该模式。超出范围的移位数目的含义，可以通过@code{TARGET_SHIFT_TRUNCATION_MASK}来指定。@xref{TARGET_SHIFT_TRUNCATION_MASK}。操作数2总是一个标量类型。
 
 @cindex @code{ashr@var{m}3} instruction pattern
 @cindex @code{lshr@var{m}3} instruction pattern
 @cindex @code{rotl@var{m}3} instruction pattern
 @cindex @code{rotr@var{m}3} instruction pattern
 @item @samp{ashr@var{m}3}, @samp{lshr@var{m}3}, @samp{rotl@var{m}3}, @samp{rotr@var{m}3}
-Other shift and rotate instructions, analogous to the
-@code{ashl@var{m}3} instructions.  Operand 2 is always a scalar type.
+其它移位或者旋转指令，类似于@code{ashl@var{m}3}指令。操作数2总是一个标量类型。
 
 @cindex @code{vashl@var{m}3} instruction pattern
 @cindex @code{vashr@var{m}3} instruction pattern
@@ -3308,131 +3291,89 @@ Other shift and rotate instructions, analogous to the
 @cindex @code{vrotl@var{m}3} instruction pattern
 @cindex @code{vrotr@var{m}3} instruction pattern
 @item @samp{vashl@var{m}3}, @samp{vashr@var{m}3}, @samp{vlshr@var{m}3}, @samp{vrotl@var{m}3}, @samp{vrotr@var{m}3}
-Vector shift and rotate instructions that take vectors as operand 2
-instead of a scalar type.
+向量移位和旋转指令，操作数2为向量，而不是标量类型。
 
 @cindex @code{neg@var{m}2} instruction pattern
 @cindex @code{ssneg@var{m}2} instruction pattern
 @cindex @code{usneg@var{m}2} instruction pattern
 @item @samp{neg@var{m}2}, @samp{ssneg@var{m}2}, @samp{usneg@var{m}2}
-Negate operand 1 and store the result in operand 0.
+对操作数1求负，并将结果存放在操作数0中。
 
 @cindex @code{abs@var{m}2} instruction pattern
 @item @samp{abs@var{m}2}
-Store the absolute value of operand 1 into operand 0.
+将操作数1的绝对值存放在操作数0中。
 
 @cindex @code{sqrt@var{m}2} instruction pattern
 @item @samp{sqrt@var{m}2}
-Store the square root of operand 1 into operand 0.
+将操作数1的平方根存储在操作数0中。
 
-The @code{sqrt} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{sqrtf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+@code{sqrt}内建C函数，总是使用对应于C数据类型@code{double}的机器模式，@code{sqrtf}内建函数使用对应于C数据类型@code{float}的机器模式。
 
 @cindex @code{fmod@var{m}3} instruction pattern
 @item @samp{fmod@var{m}3}
-Store the remainder of dividing operand 1 by operand 2 into
-operand 0, rounded towards zero to an integer.
+将操作数1除以操作数2的余数，存储在操作数0中，并向零方向舍入为整数。
 
-The @code{fmod} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{fmodf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+@code{fmod}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{fmodf}内建函数使用对应于C数据类型@code{float}的机器模式。
 
 @cindex @code{remainder@var{m}3} instruction pattern
 @item @samp{remainder@var{m}3}
-Store the remainder of dividing operand 1 by operand 2 into
-operand 0, rounded to the nearest integer.
+将操作数1除以操作数2的余数，存储在操作数0中，并舍入为最接近的整数。
 
-The @code{remainder} built-in function of C always uses the mode
-which corresponds to the C data type @code{double} and the
-@code{remainderf} built-in function uses the mode which corresponds
-to the C data type @code{float}.
+@code{remainder}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{remainderf}内建函数使用对应于C数据类型@code{float}的机器模式。
 
 @cindex @code{cos@var{m}2} instruction pattern
 @item @samp{cos@var{m}2}
-Store the cosine of operand 1 into operand 0.
+将操作数1的余弦存放在操作数0中。
 
-The @code{cos} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{cosf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+@code{cos}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{cosf}内建函数使用对应于C数据类型@code{float}的机器模式。
 
 @cindex @code{sin@var{m}2} instruction pattern
 @item @samp{sin@var{m}2}
-Store the sine of operand 1 into operand 0.
+将操作数1的正弦存放在操作数0中。
 
-The @code{sin} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{sinf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+@code{sin}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{sinf}内建函数使用对应于C数据类型@code{float}的机器模式。
 
 @cindex @code{exp@var{m}2} instruction pattern
 @item @samp{exp@var{m}2}
-Store the exponential of operand 1 into operand 0.
+将操作数1的幂存放在操作数0中。
 
-The @code{exp} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{expf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+@code{exp}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{expf}内建函数使用对应于C数据类型@code{float}的机器模式。
 
 @cindex @code{log@var{m}2} instruction pattern
 @item @samp{log@var{m}2}
-Store the natural logarithm of operand 1 into operand 0.
+将操作数1的自然对数存放在操作数0中。
 
-The @code{log} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{logf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+@code{log}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{logf}内建函数使用对应于C数据类型@code{float}的机器模式。
 
 @cindex @code{pow@var{m}3} instruction pattern
 @item @samp{pow@var{m}3}
-Store the value of operand 1 raised to the exponent operand 2
-into operand 0.
+将操作数1的，指数为操作数2的幂值存放在操作数0中
 
-The @code{pow} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{powf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+@code{pow}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{powf}内建函数使用对应于C数据类型@code{float}的机器模式。
 
 @cindex @code{atan2@var{m}3} instruction pattern
 @item @samp{atan2@var{m}3}
-Store the arc tangent (inverse tangent) of operand 1 divided by
-operand 2 into operand 0, using the signs of both arguments to
-determine the quadrant of the result.
+将操作数1除以操作数2的反正切，存放在操作数0中，使用两个参数的正负符号来确定结果的商。
 
-The @code{atan2} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{atan2f}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+@code{atan2}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{atan2f}内建函数使用对应于C数据类型@code{float}的机器模式。
 
 @cindex @code{floor@var{m}2} instruction pattern
 @item @samp{floor@var{m}2}
-Store the largest integral value not greater than argument.
+存储不大于参数的最大整数值。
 
-The @code{floor} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{floorf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+@code{floor}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{floorf}内建函数使用对应于C数据类型@code{float}的机器模式。
 
 @cindex @code{btrunc@var{m}2} instruction pattern
 @item @samp{btrunc@var{m}2}
-Store the argument rounded to integer towards zero.
+存储将参数向零方向舍入的整数。
 
-The @code{trunc} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{truncf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+@code{trunc}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{truncf}内建函数使用对应于C数据类型@code{float}的机器模式。
 
 @cindex @code{round@var{m}2} instruction pattern
 @item @samp{round@var{m}2}
-Store the argument rounded to integer away from zero.
+存储将参数向远离零的方向舍入的整数。
 
-The @code{round} built-in function of C always uses the mode which
-corresponds to the C data type @code{double} and the @code{roundf}
-built-in function uses the mode which corresponds to the C data
-type @code{float}.
+@code{round}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{roundf}内建函数使用对应于C数据类型@code{float}的机器模式。
 
 @cindex @code{ceil@var{m}2} instruction pattern
 @item @samp{ceil@var{m}2}
