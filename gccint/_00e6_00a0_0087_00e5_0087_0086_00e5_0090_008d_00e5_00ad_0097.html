@@ -73,143 +73,63 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p><a name="index-reload_005fin_005fprogress-3292"></a>全局变量<code>reload_in_progress</code>（其必须被显式的声明）可以用来确定是否需要这样的特殊的处理。
 
-     <p>The variety of operands that have reloads depends on the rest of the
-machine description, but typically on a RISC machine these can only be
-pseudo registers that did not get hard registers, while on other
-machines explicit memory references will get optional reloads.
+     <p>需要进行重载的操作数的种类取决于机器描述的其余部分，不过通常在RISC机器上，只有那些没有获得硬件寄存器的伪寄存器，而在其它机器上，显式的内存引用也有可能需要进行重载。
 
-     <p>If a scratch register is required to move an object to or from memory,
-it can be allocated using <code>gen_reg_rtx</code> prior to life analysis.
+     <p>如果一个scratch寄存器，被需要用来将一个对象与内存之间进行移送，则其可以活跃分析之前，使用<code>gen_reg_rtx</code>来进行分配。
 
-     <p>If there are cases which need scratch registers during or after reload,
-you must provide an appropriate secondary_reload target hook.
+     <p>如果在重载过程中，或者之后，有需要scratch寄存器的情况，则你必须提供一个适当的secondary_reload目标钩子。
 
-     <p><a name="index-can_005fcreate_005fpseudo_005fp-3293"></a>The macro <code>can_create_pseudo_p</code> can be used to determine if it
-is unsafe to create new pseudo registers.  If this variable is nonzero, then
-it is unsafe to call <code>gen_reg_rtx</code> to allocate a new pseudo.
+     <p><a name="index-can_005fcreate_005fpseudo_005fp-3293"></a>宏<code>can_create_pseudo_p</code>可以用来确定创建一个新的伪寄存器是否不安全。如果该变量为非零，则调用<code>gen_reg_rtx</code>来分配一个新的伪寄存器是不安全的。
 
-     <p>The constraints on a &lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo; must permit moving any hard
-register to any other hard register provided that
-<code>HARD_REGNO_MODE_OK</code> permits mode <var>m</var> in both registers and
-<code>REGISTER_MOVE_COST</code> applied to their classes returns a value of 2.
+     <p>&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;上的约束必须允许将任何硬件寄存器移送到任何其它硬件寄存器上，假设<code>HARD_REGNO_MODE_OK</code>在两个寄存器上都允许机器模式<var>m</var>，并且<code>REGISTER_MOVE_COST</code>应用到它们的类别上返回值2。
 
-     <p>It is obligatory to support floating point &lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;
-instructions into and out of any registers that can hold fixed point
-values, because unions and structures (which have modes <code>SImode</code> or
-<code>DImode</code>) can be in those registers and they may have floating
-point members.
+     <p>必须提供浮点&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;指令，用于任何可以存放定点值的寄存器，因为联合体和结构体（具有机器模式<code>SImode</code>或<code>DImode</code>）可以在那些寄存器中，并且它们可以具有浮点成员。
 
-     <p>There may also be a need to support fixed point &lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;
-instructions in and out of floating point registers.  Unfortunately, I
-have forgotten why this was so, and I don't know whether it is still
-true.  If <code>HARD_REGNO_MODE_OK</code> rejects fixed point values in
-floating point registers, then the constraints of the fixed point
-&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo; instructions must be designed to avoid ever trying to
-reload into a floating point register.
+     <p>还需要支持定点&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;指令，用于浮点寄存器。不幸的是，我忘了为什么要这样，并且不知道这是否还是真的。如果<code>HARD_REGNO_MODE_OK</code>排斥在浮点寄存器中的定点值，则定点&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;指令的约束必须被设计成，避免尝试重载到一个浮点寄存器。
 
-     <p><a name="index-g_t_0040code_007breload_005fin_007d-instruction-pattern-3294"></a><a name="index-g_t_0040code_007breload_005fout_007d-instruction-pattern-3295"></a><br><dt>&lsquo;<samp><span class="samp">reload_in</span><var>m</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">reload_out</span><var>m</var></samp>&rsquo;<dd>These named patterns have been obsoleted by the target hook
-<code>secondary_reload</code>.
+     <p><a name="index-g_t_0040code_007breload_005fin_007d-instruction-pattern-3294"></a><a name="index-g_t_0040code_007breload_005fout_007d-instruction-pattern-3295"></a><br><dt>&lsquo;<samp><span class="samp">reload_in</span><var>m</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">reload_out</span><var>m</var></samp>&rsquo;<dd>这些命名指令模式已经被目标钩子<code>secondary_reload</code>废弃。
 
-     <p>Like &lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;, but used when a scratch register is required to
-move between operand 0 and operand 1.  Operand 2 describes the scratch
-register.  See the discussion of the <code>SECONDARY_RELOAD_CLASS</code>
-macro in see <a href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e7_00b1_00bb_00e5_0088_00ab.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e7_00b1_00bb_00e5_0088_00ab">寄存器类别</a>.
+     <p>类似&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;，不过用于当需要使用scratch寄存器在操作数0和操作数1之间移送的时候。操作数2描述scratch寄存器。参见在see <a href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e7_00b1_00bb_00e5_0088_00ab.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e7_00b1_00bb_00e5_0088_00ab">寄存器类别</a>中对<code>SECONDARY_RELOAD_CLASS</code>宏的讨论。
 
-     <p>There are special restrictions on the form of the <code>match_operand</code>s
-used in these patterns.  First, only the predicate for the reload
-operand is examined, i.e., <code>reload_in</code> examines operand 1, but not
-the predicates for operand 0 or 2.  Second, there may be only one
-alternative in the constraints.  Third, only a single register class
-letter may be used for the constraint; subsequent constraint letters
-are ignored.  As a special exception, an empty constraint string
-matches the <code>ALL_REGS</code> register class.  This may relieve ports
-of the burden of defining an <code>ALL_REGS</code> constraint letter just
-for these patterns.
+     <p>这些指令模式中的<code>match_operand</code>的形式，有一些特殊的限制。首先，只有重载操作数的断言才被检查，即<code>reload_in</code>检查操作数1，而不检查操作数0和2。第二，在约束中只能有一个可选项。第三，约束只能使用单个寄存器类别字母；后续的约束字母都被忽略。一个例外是，空的约束字符串匹配<code>ALL_REGS</code>寄存器类别。这可以减轻后端为这些指令模式定义<code>ALL_REGS</code>约束字母的负担。
 
-     <p><a name="index-g_t_0040code_007bmovstrict_0040var_007bm_007d_007d-instruction-pattern-3296"></a><br><dt>&lsquo;<samp><span class="samp">movstrict</span><var>m</var></samp>&rsquo;<dd>Like &lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo; except that if operand 0 is a <code>subreg</code>
-with mode <var>m</var> of a register whose natural mode is wider,
-the &lsquo;<samp><span class="samp">movstrict</span><var>m</var></samp>&rsquo; instruction is guaranteed not to alter
-any of the register except the part which belongs to mode <var>m</var>.
+     <p><a name="index-g_t_0040code_007bmovstrict_0040var_007bm_007d_007d-instruction-pattern-3296"></a><br><dt>&lsquo;<samp><span class="samp">movstrict</span><var>m</var></samp>&rsquo;<dd>类似&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;，只不过，如果操作数0为一个寄存器的机器模式为<var>m</var>的<code>subreg</code>，且寄存器的自然机器模式是较宽的，则&lsquo;<samp><span class="samp">movstrict</span><var>m</var></samp>&rsquo;指令保证不会修改属于机器模式<var>m</var>之外的寄存器的任何部分。
 
-     <p><a name="index-g_t_0040code_007bmovmisalign_0040var_007bm_007d_007d-instruction-pattern-3297"></a><br><dt>&lsquo;<samp><span class="samp">movmisalign</span><var>m</var></samp>&rsquo;<dd>This variant of a move pattern is designed to load or store a value
-from a memory address that is not naturally aligned for its mode. 
-For a store, the memory will be in operand 0; for a load, the memory
-will be in operand 1.  The other operand is guaranteed not to be a
-memory, so that it's easy to tell whether this is a load or store.
+     <p><a name="index-g_t_0040code_007bmovmisalign_0040var_007bm_007d_007d-instruction-pattern-3297"></a><br><dt>&lsquo;<samp><span class="samp">movmisalign</span><var>m</var></samp>&rsquo;<dd>该move指令模式的变体，被设计为从没有与其机器模式自然对齐的内存地址中加载和存储值。对于存储，内存将在操作数0中；对于加载，内存将在操作数1中。其它操作数保证不为内存，所以容易判别是加载还是存储。
 
-     <p>This pattern is used by the autovectorizer, and when expanding a
-<code>MISALIGNED_INDIRECT_REF</code> expression.
+     <p>该指令模式用于向量化，当展开<code>MISALIGNED_INDIRECT_REF</code>表达式的时候。
 
-     <p><a name="index-g_t_0040code_007bload_005fmultiple_007d-instruction-pattern-3298"></a><br><dt>&lsquo;<samp><span class="samp">load_multiple</span></samp>&rsquo;<dd>Load several consecutive memory locations into consecutive registers. 
-Operand 0 is the first of the consecutive registers, operand 1
-is the first memory location, and operand 2 is a constant: the
-number of consecutive registers.
+     <p><a name="index-g_t_0040code_007bload_005fmultiple_007d-instruction-pattern-3298"></a><br><dt>&lsquo;<samp><span class="samp">load_multiple</span></samp>&rsquo;<dd>将多个连续的内存位置加载到连续的寄存器中。操作数0为连续寄存器中的第一个，操作数1为第一个内存位置，操作数2为一个常量：连续寄存器的数目。
 
-     <p>Define this only if the target machine really has such an instruction;
-do not define this if the most efficient way of loading consecutive
-registers from memory is to do them one at a time.
+     <p>只有当目标机器确实具有这样指令的时候才定义该指令模式；如果将内存加载到连续寄存器的最有效的方式，是每次加载一个，则 不用定义该指令模式。
 
-     <p>On some machines, there are restrictions as to which consecutive
-registers can be stored into memory, such as particular starting or
-ending register numbers or only a range of valid counts.  For those
-machines, use a <code>define_expand</code> (see <a href="_00e6_0089_00a9_00e5_00b1_0095_00e5_00ae_009a_00e4_00b9_0089.html#g_t_00e6_0089_00a9_00e5_00b1_0095_00e5_00ae_009a_00e4_00b9_0089">扩展定义</a>)
-and make the pattern fail if the restrictions are not met.
+     <p>在一些机器上，对于哪些连续寄存器可以存储到内存中，会有一些限制，例如特定的起始寄存器或者结尾寄存器的编号，或者一个有效范围。对于那些机器，使用<code>define_expand</code> (see <a href="_00e6_0089_00a9_00e5_00b1_0095_00e5_00ae_009a_00e4_00b9_0089.html#g_t_00e6_0089_00a9_00e5_00b1_0095_00e5_00ae_009a_00e4_00b9_0089">扩展定义</a>)，并当不符合限制的时候，将指令模式变成失败。
 
-     <p>Write the generated insn as a <code>parallel</code> with elements being a
-<code>set</code> of one register from the appropriate memory location (you may
-also need <code>use</code> or <code>clobber</code> elements).  Use a
-<code>match_parallel</code> (see <a href="RTL_00e6_00a8_00a1_00e6_009d_00bf.html#RTL_00e6_00a8_00a1_00e6_009d_00bf">RTL模板</a>) to recognize the insn.  See
-<samp><span class="file">rs6000.md</span></samp> for examples of the use of this insn pattern.
+     <p>将生成的insn写成一个<code>parallel</code>，其元素为一个从适当内存位置到寄存器的<code>set</code>（可能还需要<code>use</code>或元素<code>clobber</code>）。使用<code>match_parallel</code> (see <a href="RTL_00e6_00a8_00a1_00e6_009d_00bf.html#RTL_00e6_00a8_00a1_00e6_009d_00bf">RTL模板</a>)来识别insn。关于使用该insn模式的例子，可以参见<samp><span class="file">rs6000.md</span></samp>。
 
-     <p><a name="index-g_t_0040samp_007bstore_005fmultiple_007d-instruction-pattern-3299"></a><br><dt>&lsquo;<samp><span class="samp">store_multiple</span></samp>&rsquo;<dd>Similar to &lsquo;<samp><span class="samp">load_multiple</span></samp>&rsquo;, but store several consecutive registers
-into consecutive memory locations.  Operand 0 is the first of the
-consecutive memory locations, operand 1 is the first register, and
-operand 2 is a constant: the number of consecutive registers.
+     <p><a name="index-g_t_0040samp_007bstore_005fmultiple_007d-instruction-pattern-3299"></a><br><dt>&lsquo;<samp><span class="samp">store_multiple</span></samp>&rsquo;<dd>类似于&lsquo;<samp><span class="samp">load_multiple</span></samp>&rsquo;，不过是将多个连续的寄存器存储到连续的内存位置。操作数0为连续内存位置的第一个，操作数1为第一个寄存器，操作数2为常量：连续寄存器的数目。
 
-     <p><a name="index-g_t_0040code_007bvec_005fset_0040var_007bm_007d_007d-instruction-pattern-3300"></a><br><dt>&lsquo;<samp><span class="samp">vec_set</span><var>m</var></samp>&rsquo;<dd>Set given field in the vector value.  Operand 0 is the vector to modify,
-operand 1 is new value of field and operand 2 specify the field index.
+     <p><a name="index-g_t_0040code_007bvec_005fset_0040var_007bm_007d_007d-instruction-pattern-3300"></a><br><dt>&lsquo;<samp><span class="samp">vec_set</span><var>m</var></samp>&rsquo;<dd>设置向量中给定的域。操作数0为要修改的向量，操作数1为域的新值，操作数2指定了域的索引。
 
-     <p><a name="index-g_t_0040code_007bvec_005fextract_0040var_007bm_007d_007d-instruction-pattern-3301"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract</span><var>m</var></samp>&rsquo;<dd>Extract given field from the vector value.  Operand 1 is the vector, operand 2
-specify field index and operand 0 place to store value into.
+     <p><a name="index-g_t_0040code_007bvec_005fextract_0040var_007bm_007d_007d-instruction-pattern-3301"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract</span><var>m</var></samp>&rsquo;<dd>从向量中抽取给定的域。操作数1为向量，操作数2指定了域索引，操作数0为存放值的地方。
 
-     <p><a name="index-g_t_0040code_007bvec_005fextract_005feven_0040var_007bm_007d_007d-instruction-pattern-3302"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract_even</span><var>m</var></samp>&rsquo;<dd>Extract even elements from the input vectors (operand 1 and operand 2). 
-The even elements of operand 2 are concatenated to the even elements of operand
-1 in their original order. The result is stored in operand 0. 
-The output and input vectors should have the same modes.
+     <p><a name="index-g_t_0040code_007bvec_005fextract_005feven_0040var_007bm_007d_007d-instruction-pattern-3302"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract_even</span><var>m</var></samp>&rsquo;<dd>从输入向量（操作数1和2）中，抽取偶数元素。操作数2的偶数元素按照它们原来的顺序，连结到操作数1的偶数元素后面。结果存储在操作数0中。输出和输入向量应该具有相同的模式。
 
-     <p><a name="index-g_t_0040code_007bvec_005fextract_005fodd_0040var_007bm_007d_007d-instruction-pattern-3303"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract_odd</span><var>m</var></samp>&rsquo;<dd>Extract odd elements from the input vectors (operand 1 and operand 2). 
-The odd elements of operand 2 are concatenated to the odd elements of operand
-1 in their original order. The result is stored in operand 0. 
-The output and input vectors should have the same modes.
+     <p><a name="index-g_t_0040code_007bvec_005fextract_005fodd_0040var_007bm_007d_007d-instruction-pattern-3303"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract_odd</span><var>m</var></samp>&rsquo;<dd>从输入向量（操作数1和2）中，抽取奇数元素。操作数2的奇数元素按照它们原来的顺序，连结到操作数1的奇数元素后面。结果存储在操作数0中。输出和输入向量应该具有相同的模式。
 
-     <p><a name="index-g_t_0040code_007bvec_005finterleave_005fhigh_0040var_007bm_007d_007d-instruction-pattern-3304"></a><br><dt>&lsquo;<samp><span class="samp">vec_interleave_high</span><var>m</var></samp>&rsquo;<dd>Merge high elements of the two input vectors into the output vector. The output
-and input vectors should have the same modes (<code>N</code> elements). The high
-<code>N/2</code> elements of the first input vector are interleaved with the high
-<code>N/2</code> elements of the second input vector.
+     <p><a name="index-g_t_0040code_007bvec_005finterleave_005fhigh_0040var_007bm_007d_007d-instruction-pattern-3304"></a><br><dt>&lsquo;<samp><span class="samp">vec_interleave_high</span><var>m</var></samp>&rsquo;<dd>将两个输入向量的高部分元素合并到输入向量中。输出和输入向量应该具有相同的模式(<code>N</code>个元素)。第一个输入向量的高<code>N/2</code>个元素被第二个输入向量的高<code>N/2</code>个元素交错的插入。
 
-     <p><a name="index-g_t_0040code_007bvec_005finterleave_005flow_0040var_007bm_007d_007d-instruction-pattern-3305"></a><br><dt>&lsquo;<samp><span class="samp">vec_interleave_low</span><var>m</var></samp>&rsquo;<dd>Merge low elements of the two input vectors into the output vector. The output
-and input vectors should have the same modes (<code>N</code> elements). The low
-<code>N/2</code> elements of the first input vector are interleaved with the low
-<code>N/2</code> elements of the second input vector.
+     <p><a name="index-g_t_0040code_007bvec_005finterleave_005flow_0040var_007bm_007d_007d-instruction-pattern-3305"></a><br><dt>&lsquo;<samp><span class="samp">vec_interleave_low</span><var>m</var></samp>&rsquo;<dd>将两个输入向量的低部分元素合并到输入向量中。输出和输入向量应该具有相同的模式(<code>N</code>个元素)。第一个输入向量的低<code>N/2</code>个元素被第二个输入向量的低<code>N/2</code>个元素交错的插入。
 
-     <p><a name="index-g_t_0040code_007bvec_005finit_0040var_007bm_007d_007d-instruction-pattern-3306"></a><br><dt>&lsquo;<samp><span class="samp">vec_init</span><var>m</var></samp>&rsquo;<dd>Initialize the vector to given values.  Operand 0 is the vector to initialize
-and operand 1 is parallel containing values for individual fields.
+     <p><a name="index-g_t_0040code_007bvec_005finit_0040var_007bm_007d_007d-instruction-pattern-3306"></a><br><dt>&lsquo;<samp><span class="samp">vec_init</span><var>m</var></samp>&rsquo;<dd>将向量初始化为给定的值。操作数0为要初始化的向量，操作数1并行的包含每个域的值。
 
-     <p><a name="index-g_t_0040code_007bpush_0040var_007bm_007d1_007d-instruction-pattern-3307"></a><br><dt>&lsquo;<samp><span class="samp">push</span><var>m</var><span class="samp">1</span></samp>&rsquo;<dd>Output a push instruction.  Operand 0 is value to push.  Used only when
-<code>PUSH_ROUNDING</code> is defined.  For historical reason, this pattern may be
-missing and in such case an <code>mov</code> expander is used instead, with a
-<code>MEM</code> expression forming the push operation.  The <code>mov</code> expander
-method is deprecated.
+     <p><a name="index-g_t_0040code_007bpush_0040var_007bm_007d1_007d-instruction-pattern-3307"></a><br><dt>&lsquo;<samp><span class="samp">push</span><var>m</var><span class="samp">1</span></samp>&rsquo;<dd>输出一个push指令。操作数0是压栈的值。只有当<code>PUSH_ROUNDING</code>被定义时，才被使用。出于历史原因，该指令模式可以缺失，这种情况下使用<code>mov</code>扩展来替代，并用<code>MEM</code>表达式来形成压栈运算。<code>mov</code>扩展方法不被推荐。
 
-     <p><a name="index-g_t_0040code_007badd_0040var_007bm_007d3_007d-instruction-pattern-3308"></a><br><dt>&lsquo;<samp><span class="samp">add</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>Add operand 2 and operand 1, storing the result in operand 0.  All operands
-must have mode <var>m</var>.  This can be used even on two-address machines, by
-means of constraints requiring operands 1 and 0 to be the same location.
+     <p><a name="index-g_t_0040code_007badd_0040var_007bm_007d3_007d-instruction-pattern-3308"></a><br><dt>&lsquo;<samp><span class="samp">add</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>操作数2加上操作数1，将结果存储在操作数0中。所有操作数必须具有机器模式<var>m</var>。这也可以用于两地址机器上，通过约束来要求操作数1和0为相同的位置。
 
-     <p><a name="index-g_t_0040code_007bssadd_0040var_007bm_007d3_007d-instruction-pattern-3309"></a><a name="index-g_t_0040code_007busadd_0040var_007bm_007d3_007d-instruction-pattern-3310"></a><a name="index-g_t_0040code_007bsub_0040var_007bm_007d3_007d-instruction-pattern-3311"></a><a name="index-g_t_0040code_007bsssub_0040var_007bm_007d3_007d-instruction-pattern-3312"></a><a name="index-g_t_0040code_007bussub_0040var_007bm_007d3_007d-instruction-pattern-3313"></a><a name="index-g_t_0040code_007bmul_0040var_007bm_007d3_007d-instruction-pattern-3314"></a><a name="index-g_t_0040code_007bssmul_0040var_007bm_007d3_007d-instruction-pattern-3315"></a><a name="index-g_t_0040code_007busmul_0040var_007bm_007d3_007d-instruction-pattern-3316"></a><a name="index-g_t_0040code_007bdiv_0040var_007bm_007d3_007d-instruction-pattern-3317"></a><a name="index-g_t_0040code_007bssdiv_0040var_007bm_007d3_007d-instruction-pattern-3318"></a><a name="index-g_t_0040code_007budiv_0040var_007bm_007d3_007d-instruction-pattern-3319"></a><a name="index-g_t_0040code_007busdiv_0040var_007bm_007d3_007d-instruction-pattern-3320"></a><a name="index-g_t_0040code_007bmod_0040var_007bm_007d3_007d-instruction-pattern-3321"></a><a name="index-g_t_0040code_007bumod_0040var_007bm_007d3_007d-instruction-pattern-3322"></a><a name="index-g_t_0040code_007bumin_0040var_007bm_007d3_007d-instruction-pattern-3323"></a><a name="index-g_t_0040code_007bumax_0040var_007bm_007d3_007d-instruction-pattern-3324"></a><a name="index-g_t_0040code_007band_0040var_007bm_007d3_007d-instruction-pattern-3325"></a><a name="index-g_t_0040code_007bior_0040var_007bm_007d3_007d-instruction-pattern-3326"></a><a name="index-g_t_0040code_007bxor_0040var_007bm_007d3_007d-instruction-pattern-3327"></a><br><dt>&lsquo;<samp><span class="samp">ssadd</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usadd</span><var>m</var><span class="samp">3</span></samp>&rsquo;<br><dt>&lsquo;<samp><span class="samp">sub</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">sssub</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ussub</span><var>m</var><span class="samp">3</span></samp>&rsquo;<br><dt>&lsquo;<samp><span class="samp">mul</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssmul</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usmul</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">div</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssdiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">udiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usdiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">mod</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umod</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">umin</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umax</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">and</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ior</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">xor</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>Similar, for other arithmetic operations.
+     <p><a name="index-g_t_0040code_007bssadd_0040var_007bm_007d3_007d-instruction-pattern-3309"></a><a name="index-g_t_0040code_007busadd_0040var_007bm_007d3_007d-instruction-pattern-3310"></a><a name="index-g_t_0040code_007bsub_0040var_007bm_007d3_007d-instruction-pattern-3311"></a><a name="index-g_t_0040code_007bsssub_0040var_007bm_007d3_007d-instruction-pattern-3312"></a><a name="index-g_t_0040code_007bussub_0040var_007bm_007d3_007d-instruction-pattern-3313"></a><a name="index-g_t_0040code_007bmul_0040var_007bm_007d3_007d-instruction-pattern-3314"></a><a name="index-g_t_0040code_007bssmul_0040var_007bm_007d3_007d-instruction-pattern-3315"></a><a name="index-g_t_0040code_007busmul_0040var_007bm_007d3_007d-instruction-pattern-3316"></a><a name="index-g_t_0040code_007bdiv_0040var_007bm_007d3_007d-instruction-pattern-3317"></a><a name="index-g_t_0040code_007bssdiv_0040var_007bm_007d3_007d-instruction-pattern-3318"></a><a name="index-g_t_0040code_007budiv_0040var_007bm_007d3_007d-instruction-pattern-3319"></a><a name="index-g_t_0040code_007busdiv_0040var_007bm_007d3_007d-instruction-pattern-3320"></a><a name="index-g_t_0040code_007bmod_0040var_007bm_007d3_007d-instruction-pattern-3321"></a><a name="index-g_t_0040code_007bumod_0040var_007bm_007d3_007d-instruction-pattern-3322"></a><a name="index-g_t_0040code_007bumin_0040var_007bm_007d3_007d-instruction-pattern-3323"></a><a name="index-g_t_0040code_007bumax_0040var_007bm_007d3_007d-instruction-pattern-3324"></a><a name="index-g_t_0040code_007band_0040var_007bm_007d3_007d-instruction-pattern-3325"></a><a name="index-g_t_0040code_007bior_0040var_007bm_007d3_007d-instruction-pattern-3326"></a><a name="index-g_t_0040code_007bxor_0040var_007bm_007d3_007d-instruction-pattern-3327"></a><br><dt>&lsquo;<samp><span class="samp">ssadd</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usadd</span><var>m</var><span class="samp">3</span></samp>&rsquo;<br><dt>&lsquo;<samp><span class="samp">sub</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">sssub</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ussub</span><var>m</var><span class="samp">3</span></samp>&rsquo;<br><dt>&lsquo;<samp><span class="samp">mul</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssmul</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usmul</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">div</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssdiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">udiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usdiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">mod</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umod</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">umin</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umax</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">and</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ior</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">xor</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>类似的，用于其它算术运算。
 
-     <p><a name="index-g_t_0040code_007bmin_0040var_007bm_007d3_007d-instruction-pattern-3328"></a><a name="index-g_t_0040code_007bmax_0040var_007bm_007d3_007d-instruction-pattern-3329"></a><br><dt>&lsquo;<samp><span class="samp">smin</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">smax</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>Signed minimum and maximum operations.  When used with floating point,
-if both operands are zeros, or if either operand is <code>NaN</code>, then
-it is unspecified which of the two operands is returned as the result.
+     <p><a name="index-g_t_0040code_007bmin_0040var_007bm_007d3_007d-instruction-pattern-3328"></a><a name="index-g_t_0040code_007bmax_0040var_007bm_007d3_007d-instruction-pattern-3329"></a><br><dt>&lsquo;<samp><span class="samp">smin</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">smax</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>有符号的最小值和最大值运算。当用于浮点，如果两个操作数都为零，或者有一个为<code>NaN</code>，则没有明确指定哪个操作数作为结果返回。
 
      <p><a name="index-g_t_0040code_007breduc_005fsmin_005f_0040var_007bm_007d_007d-instruction-pattern-3330"></a><a name="index-g_t_0040code_007breduc_005fsmax_005f_0040var_007bm_007d_007d-instruction-pattern-3331"></a><br><dt>&lsquo;<samp><span class="samp">reduc_smin_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">reduc_smax_</span><var>m</var></samp>&rsquo;<dd>Find the signed minimum/maximum of the elements of a vector. The vector is
 operand 1, and the scalar result is stored in the least significant bits of

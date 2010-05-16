@@ -2994,170 +2994,90 @@ C表达式@code{match_test}，可以访问下列变量：
 @findex reload_in_progress
 全局变量@code{reload_in_progress}（其必须被显式的声明）可以用来确定是否需要这样的特殊的处理。
 
+需要进行重载的操作数的种类取决于机器描述的其余部分，不过通常在RISC机器上，只有那些没有获得硬件寄存器的伪寄存器，而在其它机器上，显式的内存引用也有可能需要进行重载。
 
+如果一个scratch寄存器，被需要用来将一个对象与内存之间进行移送，则其可以活跃分析之前，使用@code{gen_reg_rtx}来进行分配。
 
-The variety of operands that have reloads depends on the rest of the
-machine description, but typically on a RISC machine these can only be
-pseudo registers that did not get hard registers, while on other
-machines explicit memory references will get optional reloads.
-
-If a scratch register is required to move an object to or from memory,
-it can be allocated using @code{gen_reg_rtx} prior to life analysis.
-
-If there are cases which need scratch registers during or after reload,
-you must provide an appropriate secondary_reload target hook.
+如果在重载过程中，或者之后，有需要scratch寄存器的情况，则你必须提供一个适当的secondary_reload目标钩子。
 
 @findex can_create_pseudo_p
-The macro @code{can_create_pseudo_p} can be used to determine if it
-is unsafe to create new pseudo registers.  If this variable is nonzero, then
-it is unsafe to call @code{gen_reg_rtx} to allocate a new pseudo.
+宏@code{can_create_pseudo_p}可以用来确定创建一个新的伪寄存器是否不安全。如果该变量为非零，则调用@code{gen_reg_rtx}来分配一个新的伪寄存器是不安全的。
 
-The constraints on a @samp{mov@var{m}} must permit moving any hard
-register to any other hard register provided that
-@code{HARD_REGNO_MODE_OK} permits mode @var{m} in both registers and
-@code{REGISTER_MOVE_COST} applied to their classes returns a value of 2.
+@samp{mov@var{m}}上的约束必须允许将任何硬件寄存器移送到任何其它硬件寄存器上，假设@code{HARD_REGNO_MODE_OK}在两个寄存器上都允许机器模式@var{m}，并且@code{REGISTER_MOVE_COST}应用到它们的类别上返回值2。
 
-It is obligatory to support floating point @samp{mov@var{m}}
-instructions into and out of any registers that can hold fixed point
-values, because unions and structures (which have modes @code{SImode} or
-@code{DImode}) can be in those registers and they may have floating
-point members.
+必须提供浮点@samp{mov@var{m}}指令，用于任何可以存放定点值的寄存器，因为联合体和结构体（具有机器模式@code{SImode}或@code{DImode}）可以在那些寄存器中，并且它们可以具有浮点成员。
 
-There may also be a need to support fixed point @samp{mov@var{m}}
-instructions in and out of floating point registers.  Unfortunately, I
-have forgotten why this was so, and I don't know whether it is still
-true.  If @code{HARD_REGNO_MODE_OK} rejects fixed point values in
-floating point registers, then the constraints of the fixed point
-@samp{mov@var{m}} instructions must be designed to avoid ever trying to
-reload into a floating point register.
+还需要支持定点@samp{mov@var{m}}指令，用于浮点寄存器。不幸的是，我忘了为什么要这样，并且不知道这是否还是真的。如果@code{HARD_REGNO_MODE_OK}排斥在浮点寄存器中的定点值，则定点@samp{mov@var{m}}指令的约束必须被设计成，避免尝试重载到一个浮点寄存器。
 
 @cindex @code{reload_in} instruction pattern
 @cindex @code{reload_out} instruction pattern
 @item @samp{reload_in@var{m}}
 @itemx @samp{reload_out@var{m}}
-These named patterns have been obsoleted by the target hook
-@code{secondary_reload}.
+这些命名指令模式已经被目标钩子@code{secondary_reload}废弃。
 
-Like @samp{mov@var{m}}, but used when a scratch register is required to
-move between operand 0 and operand 1.  Operand 2 describes the scratch
-register.  See the discussion of the @code{SECONDARY_RELOAD_CLASS}
-macro in @pxref{寄存器类别}.
+类似@samp{mov@var{m}}，不过用于当需要使用scratch寄存器在操作数0和操作数1之间移送的时候。操作数2描述scratch寄存器。参见在@pxref{寄存器类别}中对@code{SECONDARY_RELOAD_CLASS}宏的讨论。
 
-There are special restrictions on the form of the @code{match_operand}s
-used in these patterns.  First, only the predicate for the reload
-operand is examined, i.e., @code{reload_in} examines operand 1, but not
-the predicates for operand 0 or 2.  Second, there may be only one
-alternative in the constraints.  Third, only a single register class
-letter may be used for the constraint; subsequent constraint letters
-are ignored.  As a special exception, an empty constraint string
-matches the @code{ALL_REGS} register class.  This may relieve ports
-of the burden of defining an @code{ALL_REGS} constraint letter just
-for these patterns.
+这些指令模式中的@code{match_operand}的形式，有一些特殊的限制。首先，只有重载操作数的断言才被检查，即@code{reload_in}检查操作数1，而不检查操作数0和2。第二，在约束中只能有一个可选项。第三，约束只能使用单个寄存器类别字母；后续的约束字母都被忽略。一个例外是，空的约束字符串匹配@code{ALL_REGS}寄存器类别。这可以减轻后端为这些指令模式定义@code{ALL_REGS}约束字母的负担。
 
 @cindex @code{movstrict@var{m}} instruction pattern
 @item @samp{movstrict@var{m}}
-Like @samp{mov@var{m}} except that if operand 0 is a @code{subreg}
-with mode @var{m} of a register whose natural mode is wider,
-the @samp{movstrict@var{m}} instruction is guaranteed not to alter
-any of the register except the part which belongs to mode @var{m}.
+类似@samp{mov@var{m}}，只不过，如果操作数0为一个寄存器的机器模式为@var{m}的@code{subreg}，且寄存器的自然机器模式是较宽的，则@samp{movstrict@var{m}}指令保证不会修改属于机器模式@var{m}之外的寄存器的任何部分。
 
 @cindex @code{movmisalign@var{m}} instruction pattern
 @item @samp{movmisalign@var{m}}
-This variant of a move pattern is designed to load or store a value
-from a memory address that is not naturally aligned for its mode.
-For a store, the memory will be in operand 0; for a load, the memory
-will be in operand 1.  The other operand is guaranteed not to be a
-memory, so that it's easy to tell whether this is a load or store.
+该move指令模式的变体，被设计为从没有与其机器模式自然对齐的内存地址中加载和存储值。对于存储，内存将在操作数0中；对于加载，内存将在操作数1中。其它操作数保证不为内存，所以容易判别是加载还是存储。
 
-This pattern is used by the autovectorizer, and when expanding a
-@code{MISALIGNED_INDIRECT_REF} expression.
+该指令模式用于向量化，当展开@code{MISALIGNED_INDIRECT_REF}表达式的时候。
 
 @cindex @code{load_multiple} instruction pattern
 @item @samp{load_multiple}
-Load several consecutive memory locations into consecutive registers.
-Operand 0 is the first of the consecutive registers, operand 1
-is the first memory location, and operand 2 is a constant: the
-number of consecutive registers.
+将多个连续的内存位置加载到连续的寄存器中。操作数0为连续寄存器中的第一个，操作数1为第一个内存位置，操作数2为一个常量：连续寄存器的数目。
 
-Define this only if the target machine really has such an instruction;
-do not define this if the most efficient way of loading consecutive
-registers from memory is to do them one at a time.
+只有当目标机器确实具有这样指令的时候才定义该指令模式；如果将内存加载到连续寄存器的最有效的方式，是每次加载一个，则 不用定义该指令模式。
 
-On some machines, there are restrictions as to which consecutive
-registers can be stored into memory, such as particular starting or
-ending register numbers or only a range of valid counts.  For those
-machines, use a @code{define_expand} (@pxref{扩展定义})
-and make the pattern fail if the restrictions are not met.
+在一些机器上，对于哪些连续寄存器可以存储到内存中，会有一些限制，例如特定的起始寄存器或者结尾寄存器的编号，或者一个有效范围。对于那些机器，使用@code{define_expand} (@pxref{扩展定义})，并当不符合限制的时候，将指令模式变成失败。
 
-Write the generated insn as a @code{parallel} with elements being a
-@code{set} of one register from the appropriate memory location (you may
-also need @code{use} or @code{clobber} elements).  Use a
-@code{match_parallel} (@pxref{RTL模板}) to recognize the insn.  See
-@file{rs6000.md} for examples of the use of this insn pattern.
+将生成的insn写成一个@code{parallel}，其元素为一个从适当内存位置到寄存器的@code{set}（可能还需要@code{use}或元素@code{clobber}）。使用@code{match_parallel} (@pxref{RTL模板})来识别insn。关于使用该insn模式的例子，可以参见@file{rs6000.md}。
 
 @cindex @samp{store_multiple} instruction pattern
 @item @samp{store_multiple}
-Similar to @samp{load_multiple}, but store several consecutive registers
-into consecutive memory locations.  Operand 0 is the first of the
-consecutive memory locations, operand 1 is the first register, and
-operand 2 is a constant: the number of consecutive registers.
+类似于@samp{load_multiple}，不过是将多个连续的寄存器存储到连续的内存位置。操作数0为连续内存位置的第一个，操作数1为第一个寄存器，操作数2为常量：连续寄存器的数目。 
 
 @cindex @code{vec_set@var{m}} instruction pattern
 @item @samp{vec_set@var{m}}
-Set given field in the vector value.  Operand 0 is the vector to modify,
-operand 1 is new value of field and operand 2 specify the field index.
+设置向量中给定的域。操作数0为要修改的向量，操作数1为域的新值，操作数2指定了域的索引。
 
 @cindex @code{vec_extract@var{m}} instruction pattern
 @item @samp{vec_extract@var{m}}
-Extract given field from the vector value.  Operand 1 is the vector, operand 2
-specify field index and operand 0 place to store value into.
+从向量中抽取给定的域。操作数1为向量，操作数2指定了域索引，操作数0为存放值的地方。
 
 @cindex @code{vec_extract_even@var{m}} instruction pattern
 @item @samp{vec_extract_even@var{m}}
-Extract even elements from the input vectors (operand 1 and operand 2). 
-The even elements of operand 2 are concatenated to the even elements of operand
-1 in their original order. The result is stored in operand 0. 
-The output and input vectors should have the same modes. 
+从输入向量（操作数1和2）中，抽取偶数元素。操作数2的偶数元素按照它们原来的顺序，连结到操作数1的偶数元素后面。结果存储在操作数0中。输出和输入向量应该具有相同的模式。
 
 @cindex @code{vec_extract_odd@var{m}} instruction pattern
 @item @samp{vec_extract_odd@var{m}}
-Extract odd elements from the input vectors (operand 1 and operand 2). 
-The odd elements of operand 2 are concatenated to the odd elements of operand 
-1 in their original order. The result is stored in operand 0.
-The output and input vectors should have the same modes.
+从输入向量（操作数1和2）中，抽取奇数元素。操作数2的奇数元素按照它们原来的顺序，连结到操作数1的奇数元素后面。结果存储在操作数0中。输出和输入向量应该具有相同的模式。
 
 @cindex @code{vec_interleave_high@var{m}} instruction pattern
 @item @samp{vec_interleave_high@var{m}}
-Merge high elements of the two input vectors into the output vector. The output
-and input vectors should have the same modes (@code{N} elements). The high
-@code{N/2} elements of the first input vector are interleaved with the high
-@code{N/2} elements of the second input vector.
+将两个输入向量的高部分元素合并到输入向量中。输出和输入向量应该具有相同的模式(@code{N}个元素)。第一个输入向量的高@code{N/2}个元素被第二个输入向量的高@code{N/2}个元素交错的插入。
 
 @cindex @code{vec_interleave_low@var{m}} instruction pattern
 @item @samp{vec_interleave_low@var{m}}
-Merge low elements of the two input vectors into the output vector. The output
-and input vectors should have the same modes (@code{N} elements). The low
-@code{N/2} elements of the first input vector are interleaved with the low 
-@code{N/2} elements of the second input vector.
+将两个输入向量的低部分元素合并到输入向量中。输出和输入向量应该具有相同的模式(@code{N}个元素)。第一个输入向量的低@code{N/2}个元素被第二个输入向量的低@code{N/2}个元素交错的插入。
 
 @cindex @code{vec_init@var{m}} instruction pattern
 @item @samp{vec_init@var{m}}
-Initialize the vector to given values.  Operand 0 is the vector to initialize
-and operand 1 is parallel containing values for individual fields.
+将向量初始化为给定的值。操作数0为要初始化的向量，操作数1并行的包含每个域的值。
 
 @cindex @code{push@var{m}1} instruction pattern
 @item @samp{push@var{m}1}
-Output a push instruction.  Operand 0 is value to push.  Used only when
-@code{PUSH_ROUNDING} is defined.  For historical reason, this pattern may be
-missing and in such case an @code{mov} expander is used instead, with a
-@code{MEM} expression forming the push operation.  The @code{mov} expander
-method is deprecated.
+输出一个push指令。操作数0是压栈的值。只有当@code{PUSH_ROUNDING}被定义时，才被使用。出于历史原因，该指令模式可以缺失，这种情况下使用@code{mov}扩展来替代，并用@code{MEM}表达式来形成压栈运算。@code{mov}扩展方法不被推荐。
 
 @cindex @code{add@var{m}3} instruction pattern
 @item @samp{add@var{m}3}
-Add operand 2 and operand 1, storing the result in operand 0.  All operands
-must have mode @var{m}.  This can be used even on two-address machines, by
-means of constraints requiring operands 1 and 0 to be the same location.
+操作数2加上操作数1，将结果存储在操作数0中。所有操作数必须具有机器模式@var{m}。这也可以用于两地址机器上，通过约束来要求操作数1和0为相同的位置。
 
 @cindex @code{ssadd@var{m}3} instruction pattern
 @cindex @code{usadd@var{m}3} instruction pattern
@@ -3186,14 +3106,12 @@ means of constraints requiring operands 1 and 0 to be the same location.
 @itemx @samp{mod@var{m}3}, @samp{umod@var{m}3}
 @itemx @samp{umin@var{m}3}, @samp{umax@var{m}3}
 @itemx @samp{and@var{m}3}, @samp{ior@var{m}3}, @samp{xor@var{m}3}
-Similar, for other arithmetic operations.
+类似的，用于其它算术运算。
 
 @cindex @code{min@var{m}3} instruction pattern
 @cindex @code{max@var{m}3} instruction pattern
 @item @samp{smin@var{m}3}, @samp{smax@var{m}3}
-Signed minimum and maximum operations.  When used with floating point,
-if both operands are zeros, or if either operand is @code{NaN}, then
-it is unspecified which of the two operands is returned as the result.
+有符号的最小值和最大值运算。当用于浮点，如果两个操作数都为零，或者有一个为@code{NaN}，则没有明确指定哪个操作数作为结果返回。
 
 @cindex @code{reduc_smin_@var{m}} instruction pattern
 @cindex @code{reduc_smax_@var{m}} instruction pattern
