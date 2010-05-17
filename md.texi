@@ -3417,57 +3417,33 @@ C表达式@code{match_test}，可以访问下列变量：
 
 @cindex @code{ffs@var{m}2} instruction pattern
 @item @samp{ffs@var{m}2}
-Store into operand 0 one plus the index of the least significant 1-bit
-of operand 1.  If operand 1 is zero, store zero.  @var{m} is the mode
-of operand 0; operand 1's mode is specified by the instruction
-pattern, and the compiler will convert the operand to that mode before
-generating the instruction.
+将操作数1的最小有效，置1的位的索引，加上1，存放在操作数0中。如果操作数1为零，则存储零。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
 
-The @code{ffs} built-in function of C always uses the mode which
-corresponds to the C data type @code{int}.
+@code{ffs}内建C函数总是使用对应于C数据类型@code{int}的机器模式。
 
 @cindex @code{clz@var{m}2} instruction pattern
 @item @samp{clz@var{m}2}
-Store into operand 0 the number of leading 0-bits in @var{x}, starting
-at the most significant bit position.  If @var{x} is 0, the
-@code{CLZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc}) macro defines if
-the result is undefined or has a useful value.
-@var{m} is the mode of operand 0; operand 1's mode is
-specified by the instruction pattern, and the compiler will convert the
-operand to that mode before generating the instruction.
+将@var{x}中，从最高有效位开始，起始处置0的位的数目，存放在操作数0中。如果@var{x}为0，则@code{CLZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc})宏定义了结果是否为未定义或者一个有用的值。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
 
 @cindex @code{ctz@var{m}2} instruction pattern
 @item @samp{ctz@var{m}2}
-Store into operand 0 the number of trailing 0-bits in @var{x}, starting
-at the least significant bit position.  If @var{x} is 0, the
-@code{CTZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc}) macro defines if
-the result is undefined or has a useful value.
-@var{m} is the mode of operand 0; operand 1's mode is
-specified by the instruction pattern, and the compiler will convert the
-operand to that mode before generating the instruction.
+将@var{x}中，从最小有效位开始，结尾处置0的位的数目，存放在操作数0中。如果@var{x}为0，则@code{CTZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc})宏定义了结果是否为未定义或者一个有用的值。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
 
 @cindex @code{popcount@var{m}2} instruction pattern
 @item @samp{popcount@var{m}2}
-Store into operand 0 the number of 1-bits in @var{x}.  @var{m} is the
-mode of operand 0; operand 1's mode is specified by the instruction
-pattern, and the compiler will convert the operand to that mode before
-generating the instruction.
+将@var{x}中置1的位的数目，存放在操作数0中。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
 
 @cindex @code{parity@var{m}2} instruction pattern
 @item @samp{parity@var{m}2}
-Store into operand 0 the parity of @var{x}, i.e.@: the number of 1-bits
-in @var{x} modulo 2.  @var{m} is the mode of operand 0; operand 1's mode
-is specified by the instruction pattern, and the compiler will convert
-the operand to that mode before generating the instruction.
+将@var{x}的奇偶校验存放在操作数0中，即：@var{x}中置1的位数对2求模。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
 
 @cindex @code{one_cmpl@var{m}2} instruction pattern
 @item @samp{one_cmpl@var{m}2}
-Store the bitwise-complement of operand 1 into operand 0.
+对操作数1进行按位求补，并存放在操作数0中。
 
 @cindex @code{cmp@var{m}} instruction pattern
 @item @samp{cmp@var{m}}
-Compare operand 0 and operand 1, and set the condition codes.
-The RTL pattern should look like this:
+比较操作数0和1，并设置条件代码。RTL指令模式应该像这样：
 
 @smallexample
 (set (cc0) (compare (match_operand:@var{m} 0 @dots{})
@@ -3476,17 +3452,13 @@ The RTL pattern should look like this:
 
 @cindex @code{tst@var{m}} instruction pattern
 @item @samp{tst@var{m}}
-Compare operand 0 against zero, and set the condition codes.
-The RTL pattern should look like this:
+将操作数0与零进行比较，并设置条件码。RTL指令模式应该像这样：
 
 @smallexample
 (set (cc0) (match_operand:@var{m} 0 @dots{}))
 @end smallexample
 
-@samp{tst@var{m}} patterns should not be defined for machines that do
-not use @code{(cc0)}.  Doing so would confuse the optimizer since it
-would no longer be clear which @code{set} operations were comparisons.
-The @samp{cmp@var{m}} patterns should be used instead.
+@samp{tst@var{m}}指令模式不应该为不使用@code{(cc0)}的机器定义。这样做会使得编译器变得迷惑，因为其将会不清楚哪一个@code{set}操作为比较。应该使用@samp{cmp@var{m}}。
 
 @cindex @code{movmem@var{m}} instruction pattern
 @item @samp{movmem@var{m}}
