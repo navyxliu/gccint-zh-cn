@@ -3657,24 +3657,13 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @item @samp{return}
 子程序返回指令。该指令模式名应该只有当，单个指令可以做从函数中返回时的所有工作的时候，才被定义。
 
-类似@samp{mov@var{m}}指令模式，该指令模式也在RTL生成阶段之后被使用。这种情况下，其用来支持一些机器，从函数中返回通常需要多个指令，但是某些类别的函数只需要一条指令来实现返回。
- patterns, this pattern is also used after the
-RTL generation phase.  In this case it is to support machines where
-multiple instructions are usually needed to return from a function, but
-some class of functions only requires one instruction to implement a
-return.  Normally, the applicable functions are those which do not need
-to save any registers or allocate stack space.
+类似@samp{mov@var{m}}指令模式，该指令模式也在RTL生成阶段之后被使用。这种情况下，其用来支持一些机器，从函数中返回通常需要多个指令，但是某些类别的函数只需要一条指令来实现返回。通常，可以适用的函数为那些不需要保存任何寄存器或者分配栈空间的函数。
 
 @findex reload_completed
 @findex leaf_function_p
-For such machines, the condition specified in this pattern should only
-be true when @code{reload_completed} is nonzero and the function's
-epilogue would only be a single instruction.  For machines with register
-windows, the routine @code{leaf_function_p} may be used to determine if
-a register window push is required.
+对于这样的机器，该指令模式中指定的条件，应该只有当@code{reload_completed}为非零的时候才为真，并且函数的尾声应该只为一单个指令。对于有寄存器窗口的机器，例程@code{leaf_function_p}可以用来确定是否需要对寄存器窗口压栈。
 
-Machines that have conditional return instructions should define patterns
-such as
+具有条件性返回指令的机器，应该将指令模式定义成
 
 @smallexample
 (define_insn ""
@@ -3688,30 +3677,21 @@ such as
   "@dots{}")
 @end smallexample
 
-where @var{condition} would normally be the same condition specified on the
-named @samp{return} pattern.
+其中@var{condition}通常为，在@samp{return}指令模式中指定的相同的条件。 
 
 @cindex @code{untyped_return} instruction pattern
 @item @samp{untyped_return}
-Untyped subroutine return instruction.  This instruction pattern should
-be defined to support @code{__builtin_return} on machines where special
-instructions are needed to return a value of any type.
+未定义类型的子程序返回指令。该指令模式应该被定义，来支持@code{__builtin_return}，在一些机器上，需要特殊的指令来返回一个任意类型的值。
 
-Operand 0 is a memory location where the result of calling a function
-with @code{__builtin_apply} is stored; operand 1 is a @code{parallel}
-expression where each element is a @code{set} expression that indicates
-the restoring of a function return value from the result block.
+操作数0为一个内存位置，存放使用@code{__builtin_apply}调用函数的结果；操作数1为一个@code{parallel}表达式，每个元素都是一个@code{set}表达式，指示了从结果块中恢复函数的返回值。
 
 @cindex @code{nop} instruction pattern
 @item @samp{nop}
-No-op instruction.  This instruction pattern name should always be defined
-to output a no-op in assembler code.  @code{(const_int 0)} will do as an
-RTL pattern.
+空操作指令。该指令模式名应该总是被定义，用来在汇编代码中输出一个no-op。@code{(const_int 0)}将作为一个RTL指令模式。
 
 @cindex @code{indirect_jump} instruction pattern
 @item @samp{indirect_jump}
-An instruction to jump to an address which is operand zero.
-This pattern name is mandatory on all machines.
+一个指令，跳转到操作数0表示的地址。该指令模式名在所有机器上都必须存在。
 
 @cindex @code{casesi} instruction pattern
 @item @samp{casesi}
