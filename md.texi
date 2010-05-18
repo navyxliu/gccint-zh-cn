@@ -3594,141 +3594,71 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 
 @cindex @code{add@var{mode}cc} instruction pattern
 @item @samp{add@var{mode}cc}
-Similar to @samp{mov@var{mode}cc} but for conditional addition.  Conditionally
-move operand 2 or (operands 2 + operand 3) into operand 0 according to the
-comparison in operand 1.  If the comparison is true, operand 2 is moved into
-operand 0, otherwise (operand 2 + operand 3) is moved.
+类似于@samp{mov@var{mode}cc}，不过是条件加法。根据在操作数1中的比较，条件性的将操作数2或者(操作数2 + 操作数3)，移送到操作数0中。如果比较为真，则操作数2被移送到操作数0中，否则(操作数2 + 操作数3)被移送。
 
 @cindex @code{s@var{cond}} instruction pattern
 @item @samp{s@var{cond}}
-Store zero or nonzero in the operand according to the condition codes.
-Value stored is nonzero iff the condition @var{cond} is true.
-@var{cond} is the name of a comparison operation expression code, such
-as @code{eq}, @code{lt} or @code{leu}.
+根据条件码将零或者非零存放在操作数中。当且仅当条件@var{cond}为真时，存储的值才为非零。@var{cond}为一个比较运算表达式代码的名字，例如@code{eq}, @code{lt}或@code{leu}。
 
-You specify the mode that the operand must have when you write the
-@code{match_operand} expression.  The compiler automatically sees
-which mode you have used and supplies an operand of that mode.
+当书写@code{match_operand}表达式的时候，你来指定操作数必须具有的机器模式。编译器自动的查看你使用的机器模式，并提供那个机器模式的操作数。
 
-The value stored for a true condition must have 1 as its low bit, or
-else must be negative.  Otherwise the instruction is not suitable and
-you should omit it from the machine description.  You describe to the
-compiler exactly which value is stored by defining the macro
-@code{STORE_FLAG_VALUE} (@pxref{Misc}).  If a description cannot be
-found that can be used for all the @samp{s@var{cond}} patterns, you
-should omit those operations from the machine description.
+对于条件为真时所存储的值，其低位必须为1，不然必须为负。否则，指令就不适合，你应该从机器描述中将其去掉。你可以通过定义宏@code{STORE_FLAG_VALUE} (@pxref{Misc})，来描述哪个值被存放。如果不能找到一个用于所有@samp{s@var{cond}}指令模式的描述，则你应该从机器描述中去掉这些操作。
 
-These operations may fail, but should do so only in relatively
-uncommon cases; if they would fail for common cases involving
-integer comparisons, it is best to omit these patterns.
+这些操作可以失败，但应该只在相对不常见的情况下这样做；如果它们对于常见的情况，包括整数比较，会失败，则最好去掉这些指令模式。
 
-If these operations are omitted, the compiler will usually generate code
-that copies the constant one to the target and branches around an
-assignment of zero to the target.  If this code is more efficient than
-the potential instructions used for the @samp{s@var{cond}} pattern
-followed by those required to convert the result into a 1 or a zero in
-@code{SImode}, you should omit the @samp{s@var{cond}} operations from
-the machine description.
+如果这些操作被去掉，则编译器通常会生成，将常量复制到目标，并在将零赋值给目标的语句附近进行分支跳转。如果这样的代码比用于@samp{s@var{cond}}模式的指令，后面跟着需要将结果转成@code{SImode}的1或者零的的指令，更有效，则你应该从机器描述中去掉@samp{s@var{cond}}操作。
 
 @cindex @code{b@var{cond}} instruction pattern
 @item @samp{b@var{cond}}
-Conditional branch instruction.  Operand 0 is a @code{label_ref} that
-refers to the label to jump to.  Jump if the condition codes meet
-condition @var{cond}.
+条件分支指令。操作数0为一个@code{label_ref}指出要跳转到的标号。如果条件码符合条件@var{cond}则跳转。
 
-Some machines do not follow the model assumed here where a comparison
-instruction is followed by a conditional branch instruction.  In that
-case, the @samp{cmp@var{m}} (and @samp{tst@var{m}}) patterns should
-simply store the operands away and generate all the required insns in a
-@code{define_expand} (@pxref{Expander Definitions}) for the conditional
-branch operations.  All calls to expand @samp{b@var{cond}} patterns are
-immediately preceded by calls to expand either a @samp{cmp@var{m}}
-pattern or a @samp{tst@var{m}} pattern.
+一些机器不遵循这里假设的模型，即一个比较指令，跟随一个条件跳转指令。那种情况下，@samp{cmp@var{m}} (和 @samp{tst@var{m}})指令模式，应该简单的将操作数存放开，并在@code{define_expand} (@pxref{Expander Definitions})中为条件分支操作，生成所有需要的insn。所有对扩展@samp{b@var{cond}}指令模式的调用，都会立即优先执行对扩展@samp{cmp@var{m}}或者@samp{tst@var{m}}的调用。
 
-Machines that use a pseudo register for the condition code value, or
-where the mode used for the comparison depends on the condition being
-tested, should also use the above mechanism.  @xref{Jump Patterns}.
+对条件代码值使用伪寄存器的，或者用于比较的机器模式取决于被测试的条件的机器，也应该使用上面的机制。@xref{Jump Patterns}。
 
-The above discussion also applies to the @samp{mov@var{mode}cc} and
-@samp{s@var{cond}} patterns.
+上面的讨论也应用在@samp{mov@var{mode}cc}和@samp{s@var{cond}}指令模式上。
 
 @cindex @code{cbranch@var{mode}4} instruction pattern
 @item @samp{cbranch@var{mode}4}
-Conditional branch instruction combined with a compare instruction.
-Operand 0 is a comparison operator.  Operand 1 and operand 2 are the
-first and second operands of the comparison, respectively.  Operand 3
-is a @code{label_ref} that refers to the label to jump to.
+条件分支指令，结合一个比较指令。操作数0为比较运算符。操作数1和2分别为比较运算的第一个和第二个操作数。操作数3为一个@code{label_ref}，指出了跳转的标号。
 
 @cindex @code{jump} instruction pattern
 @item @samp{jump}
-A jump inside a function; an unconditional branch.  Operand 0 is the
-@code{label_ref} of the label to jump to.  This pattern name is mandatory
-on all machines.
+函数内部跳转；无条件分支。操作数0为一个@code{label_ref}，指出了跳转的标号。该指令模式名在所有机器上都是强制必须的。
 
 @cindex @code{call} instruction pattern
 @item @samp{call}
-Subroutine call instruction returning no value.  Operand 0 is the
-function to call; operand 1 is the number of bytes of arguments pushed
-as a @code{const_int}; operand 2 is the number of registers used as
-operands.
+没有返回值的子程序调用指令。操作数0为调用的函数；操作数1为压栈的参数的字节数，为一个@code{const_int}；操作数2为用作操作数的寄存器数目。
 
-On most machines, operand 2 is not actually stored into the RTL
-pattern.  It is supplied for the sake of some RISC machines which need
-to put this information into the assembler code; they can put it in
-the RTL instead of operand 1.
+在大多机器上，操作数2没有被实际存放在RTL模式中。提供它是出于安全考虑，一些RISC机器需要将该信息放到汇编代码中；它们可以将其放在RTL中，而不是操作数1中。
 
-Operand 0 should be a @code{mem} RTX whose address is the address of the
-function.  Note, however, that this address can be a @code{symbol_ref}
-expression even if it would not be a legitimate memory address on the
-target machine.  If it is also not a valid argument for a call
-instruction, the pattern for this operation should be a
-@code{define_expand} (@pxref{Expander Definitions}) that places the
-address into a register and uses that register in the call instruction.
+操作数0应该为一个@code{mem} RTX，其地址为函数的地址。然而注意，该地址可以为一个@code{symbol_ref}表达式，即使其在目标机器上可能不是一个合法的内存地址。如果其也不是调用指令的有效参数，则该操作的指令模式应该为一个@code{define_expand} (@pxref{Expander Definitions})，其将地址放入寄存器中，并在调用指令中使用寄存器。
 
 @cindex @code{call_value} instruction pattern
 @item @samp{call_value}
-Subroutine call instruction returning a value.  Operand 0 is the hard
-register in which the value is returned.  There are three more
-operands, the same as the three operands of the @samp{call}
-instruction (but with numbers increased by one).
+有返回值的子程序调用指令。操作数0为硬件寄存器，存放返回值。还有三个操作数，与@samp{call}指令相同（只不过将编号加一）。
 
-Subroutines that return @code{BLKmode} objects use the @samp{call}
-insn.
+返回 @code{BLKmode}对象的子程序，使用@samp{call} insn。
 
 @cindex @code{call_pop} instruction pattern
 @cindex @code{call_value_pop} instruction pattern
 @item @samp{call_pop}, @samp{call_value_pop}
-Similar to @samp{call} and @samp{call_value}, except used if defined and
-if @code{RETURN_POPS_ARGS} is nonzero.  They should emit a @code{parallel}
-that contains both the function call and a @code{set} to indicate the
-adjustment made to the frame pointer.
+类似于@samp{call} 和 @samp{call_value}，只不过用于其被定义，并且@code{RETURN_POPS_ARGS}为非零的时候。它们应该生成一个 @code{parallel}，包含函数调用和一个@code{set}，来指示对帧指针的调整。
 
-For machines where @code{RETURN_POPS_ARGS} can be nonzero, the use of these
-patterns increases the number of functions for which the frame pointer
-can be eliminated, if desired.
+对于@code{RETURN_POPS_ARGS}可以为非零的机器，使用这些指令模式可以增加帧指针被消除掉的函数的数目。
 
 @cindex @code{untyped_call} instruction pattern
 @item @samp{untyped_call}
-Subroutine call instruction returning a value of any type.  Operand 0 is
-the function to call; operand 1 is a memory location where the result of
-calling the function is to be stored; operand 2 is a @code{parallel}
-expression where each element is a @code{set} expression that indicates
-the saving of a function return value into the result block.
+返回一个任意类型的值的子函数调用指令。操作数0为调用的函数；操作数1为内存位置，存放调用函数后的结果；操作数2为一个@code{parallel}表达式，其中每个元素都为一个@code{set}表达式，用来指示将函数返回值保存到结果块中。
 
-This instruction pattern should be defined to support
-@code{__builtin_apply} on machines where special instructions are needed
-to call a subroutine with arbitrary arguments or to save the value
-returned.  This instruction pattern is required on machines that have
-multiple registers that can hold a return value
-(i.e.@: @code{FUNCTION_VALUE_REGNO_P} is true for more than one register).
+该指令模式应该被定义，来支持@code{__builtin_apply}，在一些机器上，需要特殊的指令来调用一个具有任意参数的子程序，或者将返回值保存。在具有多个寄存器，可以存放一个返回值（即@code{FUNCTION_VALUE_REGNO_P}对多个寄存器都为真）的机器上，需要该指令模式。
 
 @cindex @code{return} instruction pattern
 @item @samp{return}
-Subroutine return instruction.  This instruction pattern name should be
-defined only if a single instruction can do all the work of returning
-from a function.
+子程序返回指令。该指令模式名应该只有当，单个指令可以做从函数中返回时的所有工作的时候，才被定义。
 
-Like the @samp{mov@var{m}} patterns, this pattern is also used after the
+类似@samp{mov@var{m}}指令模式，该指令模式也在RTL生成阶段之后被使用。这种情况下，其用来支持一些机器，从函数中返回通常需要多个指令，但是某些类别的函数只需要一条指令来实现返回。
+ patterns, this pattern is also used after the
 RTL generation phase.  In this case it is to support machines where
 multiple instructions are usually needed to return from a function, but
 some class of functions only requires one instruction to implement a
