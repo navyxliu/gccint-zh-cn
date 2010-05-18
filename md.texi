@@ -3695,60 +3695,40 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 
 @cindex @code{casesi} instruction pattern
 @item @samp{casesi}
-Instruction to jump through a dispatch table, including bounds checking.
-This instruction takes five operands:
+通过派遣表进行跳转的指令，包括边界检查。该指令接受五个操作数：
 
 @enumerate
 @item
-The index to dispatch on, which has mode @code{SImode}.
+派遣的索引，具有机器模式@code{SImode}。
 
 @item
-The lower bound for indices in the table, an integer constant.
+表中索引的较低边界，一个整数常量。
 
 @item
-The total range of indices in the table---the largest index
-minus the smallest one (both inclusive).
+表中索引的整个范围---最大索引减去最小的。
 
 @item
-A label that precedes the table itself.
+位于表之前的标号。
 
 @item
-A label to jump to if the index has a value outside the bounds.
+一个标号，如果索引值超出边界，则跳转到该地方。
 @end enumerate
 
-The table is a @code{addr_vec} or @code{addr_diff_vec} inside of a
-@code{jump_insn}.  The number of elements in the table is one plus the
-difference between the upper bound and the lower bound.
+表为@code{jump_insn}中的一个@code{addr_vec} 或 @code{addr_diff_vec}。表中的元素个数为一加上上界和下界的差。
 
 @cindex @code{tablejump} instruction pattern
 @item @samp{tablejump}
-Instruction to jump to a variable address.  This is a low-level
-capability which can be used to implement a dispatch table when there
-is no @samp{casesi} pattern.
+跳转到一个可变地址的指令。这是一个低级别的能力，可以用来实现一个派遣表，当没有@samp{casesi}指令模式的时候。
 
-This pattern requires two operands: the address or offset, and a label
-which should immediately precede the jump table.  If the macro
-@code{CASE_VECTOR_PC_RELATIVE} evaluates to a nonzero value then the first
-operand is an offset which counts from the address of the table; otherwise,
-it is an absolute address to jump to.  In either case, the first operand has
-mode @code{Pmode}.
+该指令模式需要两个操作数：地址或偏移量，以及一个标号，其直接位于跳转表的前面。如果宏@code{CASE_VECTOR_PC_RELATIVE}求值为一个非零值，则第一个操作数为一个偏移量，其从表的地址开始计算；否则，其为一个跳转的绝对地址。这两种情况下，第一个操作数都为@code{Pmode}。
 
-The @samp{tablejump} insn is always the last insn before the jump
-table it uses.  Its assembler code normally has no need to use the
-second operand, but you should incorporate it in the RTL pattern so
-that the jump optimizer will not delete the table as unreachable code.
-
+@samp{tablejump} insn总是其使用的跳转表之前的最后一个insn。其汇编代码通常不需要用到第二个操作数，但是你应该在RTL指令模式中包含它，使得跳转优化不会将表作为不可到达代码删除。
 
 @cindex @code{decrement_and_branch_until_zero} instruction pattern
 @item @samp{decrement_and_branch_until_zero}
-Conditional branch instruction that decrements a register and
-jumps if the register is nonzero.  Operand 0 is the register to
-decrement and test; operand 1 is the label to jump to if the
-register is nonzero.  @xref{Looping Patterns}.
+条件分支指令，递减一个寄存器并且如果寄存器非零则跳转。操作数0为递减并测试的寄存器；操作数1为如果寄存器非零，则跳转的标号。@xref{Looping Patterns}。
 
-This optional instruction pattern is only used by the combiner,
-typically for loops reversed by the loop optimizer when strength
-reduction is enabled.
+该可选的指令模式只用于合并器，通常被循环优化器使用，当启动强度消减的时候。
 
 @cindex @code{doloop_end} instruction pattern
 @item @samp{doloop_end}
