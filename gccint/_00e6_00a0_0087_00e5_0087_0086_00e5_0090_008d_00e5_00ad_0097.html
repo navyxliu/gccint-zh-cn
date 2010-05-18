@@ -310,131 +310,51 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 </pre>
      <p>&lsquo;<samp><span class="samp">tst</span><var>m</var></samp>&rsquo;指令模式不应该为不使用<code>(cc0)</code>的机器定义。这样做会使得编译器变得迷惑，因为其将会不清楚哪一个<code>set</code>操作为比较。应该使用&lsquo;<samp><span class="samp">cmp</span><var>m</var></samp>&rsquo;。
 
-     <p><a name="index-g_t_0040code_007bmovmem_0040var_007bm_007d_007d-instruction-pattern-3424"></a><br><dt>&lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo;<dd>Block move instruction.  The destination and source blocks of memory
-are the first two operands, and both are <code>mem:BLK</code>s with an
-address in mode <code>Pmode</code>.
+     <p><a name="index-g_t_0040code_007bmovmem_0040var_007bm_007d_007d-instruction-pattern-3424"></a><br><dt>&lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo;<dd>块移动指令。内存的目的块和源块为前两个操作数，都为地址是<code>Pmode</code>的<code>mem:BLK</code>。
 
-     <p>The number of bytes to move is the third operand, in mode <var>m</var>. 
-Usually, you specify <code>word_mode</code> for <var>m</var>.  However, if you can
-generate better code knowing the range of valid lengths is smaller than
-those representable in a full word, you should provide a pattern with a
-mode corresponding to the range of values you can handle efficiently
-(e.g., <code>QImode</code> for values in the range 0&ndash;127; note we avoid numbers
-that appear negative) and also a pattern with <code>word_mode</code>.
+     <p>要移动的字节数为第三个操作数，机器模式为<var>m</var>。通常，你会将<var>m</var>指定为<code>word_mode</code>。然而，如果你可以生成更好的代码，知道有效长度的范围比一整个字要小，则你应该提供一个指令模式，其机器模式对应于你可以更有效的处理的值的范围（例如，<code>QImode</code>对于范围0&ndash;127；注意我们回避了负数），并且一个使用<code>word_mode</code>的指令模式。
 
-     <p>The fourth operand is the known shared alignment of the source and
-destination, in the form of a <code>const_int</code> rtx.  Thus, if the
-compiler knows that both source and destination are word-aligned,
-it may provide the value 4 for this operand.
+     <p>第四个操作数为已知的源和目的的共享对齐，形式为一个<code>const_int</code> rtx。因此，如果编译器知道源和目的都是字对齐的，则其可以为该操作数提供值4。
 
-     <p>Optional operands 5 and 6 specify expected alignment and size of block
-respectively.  The expected alignment differs from alignment in operand 4
-in a way that the blocks are not required to be aligned according to it in
-all cases. This expected alignment is also in bytes, just like operand 4. 
-Expected size, when unknown, is set to <code>(const_int -1)</code>.
+     <p>可选的操作数5和6，分别指定了期望的对齐方式和块的大小。期望的对齐方式不同于操作数4中的对齐方式，块并不要求所有的情况下都按照这样对齐。期望的对齐方式也是以字节为单位，类似于操作数4。期望的大小，当不知道的时候，被设置为<code>(const_int -1)</code>。
 
-     <p>Descriptions of multiple <code>movmem</code><var>m</var> patterns can only be
-beneficial if the patterns for smaller modes have fewer restrictions
-on their first, second and fourth operands.  Note that the mode <var>m</var>
-in <code>movmem</code><var>m</var> does not impose any restriction on the mode of
-individually moved data units in the block.
+     <p>描述多个<code>movmem</code><var>m</var>指令模式，只有当对于更小的机器模式的指令模式，对操作数1，2，4具有更少限制的时候，才会获利。注意<code>movmem</code><var>m</var>中的机器模式<var>m</var>不对块中单独的被移动的数据单元的机器模式做任何限制。
 
-     <p>These patterns need not give special consideration to the possibility
-that the source and destination strings might overlap.
+     <p>这些指令模式不需要对源和目的可能重叠的情况，进行特殊的考虑。
 
-     <p><a name="index-g_t_0040code_007bmovstr_007d-instruction-pattern-3425"></a><br><dt>&lsquo;<samp><span class="samp">movstr</span></samp>&rsquo;<dd>String copy instruction, with <code>stpcpy</code> semantics.  Operand 0 is
-an output operand in mode <code>Pmode</code>.  The addresses of the
-destination and source strings are operands 1 and 2, and both are
-<code>mem:BLK</code>s with addresses in mode <code>Pmode</code>.  The execution of
-the expansion of this pattern should store in operand 0 the address in
-which the <code>NUL</code> terminator was stored in the destination string.
+     <p><a name="index-g_t_0040code_007bmovstr_007d-instruction-pattern-3425"></a><br><dt>&lsquo;<samp><span class="samp">movstr</span></samp>&rsquo;<dd>字符串复制指令，具有<code>stpcpy</code>的语义。操作数0为输出操作数，机器模式为<code>Pmode</code>。目的字符串和源字符串的地址为操作数1和2，都是地址为<code>Pmode</code>的<code>mem:BLK</code>。对该指令模式的执行，应该将地址存放在操作数0中，其中<code>NUL</code>终结符存放在目标字符串中。
 
-     <p><a name="index-g_t_0040code_007bsetmem_0040var_007bm_007d_007d-instruction-pattern-3426"></a><br><dt>&lsquo;<samp><span class="samp">setmem</span><var>m</var></samp>&rsquo;<dd>Block set instruction.  The destination string is the first operand,
-given as a <code>mem:BLK</code> whose address is in mode <code>Pmode</code>.  The
-number of bytes to set is the second operand, in mode <var>m</var>.  The value to
-initialize the memory with is the third operand. Targets that only support the
-clearing of memory should reject any value that is not the constant 0.  See
-&lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo; for a discussion of the choice of mode.
+     <p><a name="index-g_t_0040code_007bsetmem_0040var_007bm_007d_007d-instruction-pattern-3426"></a><br><dt>&lsquo;<samp><span class="samp">setmem</span><var>m</var></samp>&rsquo;<dd>块设置指令。目的字符串为第一个操作数，作为一个<code>mem:BLK</code>，其地址的机器模式为codePmode。被设置的字节的数目是第二个操作数，机器模式为<var>m</var>。用于初始化内存的值为第三个操作数。只支持清空内存的目标机应该拒绝任何不为常数0的值。关于对机器模式选择的讨论，参见&lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo;。
 
-     <p>The fourth operand is the known alignment of the destination, in the form
-of a <code>const_int</code> rtx.  Thus, if the compiler knows that the
-destination is word-aligned, it may provide the value 4 for this
-operand.
+     <p>第四个操作数为目标的已知对齐方式，形式为<code>const_int</code> rtx。因此，如果编译器知道目的操作数是字对齐的，则其可以为该操作数提供值4。
 
-     <p>Optional operands 5 and 6 specify expected alignment and size of block
-respectively.  The expected alignment differs from alignment in operand 4
-in a way that the blocks are not required to be aligned according to it in
-all cases. This expected alignment is also in bytes, just like operand 4. 
-Expected size, when unknown, is set to <code>(const_int -1)</code>.
+     <p>可选的操作数5和6，分别指定了期望的对齐方式和块的大小。期望的对齐方式不同于操作数4中的对齐方式，块并不要求所有的情况下都按照这样对齐。期望的对齐方式也是以字节为单位，类似于操作数4。期望的大小，当不知道的时候，被设置为<code>(const_int -1)</code>。
 
-     <p>The use for multiple <code>setmem</code><var>m</var> is as for <code>movmem</code><var>m</var>.
+     <p>对多个<code>setmem</code><var>m</var>的使用，类似于<code>movmem</code><var>m</var>
 
-     <p><a name="index-g_t_0040code_007bcmpstrn_0040var_007bm_007d_007d-instruction-pattern-3427"></a><br><dt>&lsquo;<samp><span class="samp">cmpstrn</span><var>m</var></samp>&rsquo;<dd>String compare instruction, with five operands.  Operand 0 is the output;
-it has mode <var>m</var>.  The remaining four operands are like the operands
-of &lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo;.  The two memory blocks specified are compared
-byte by byte in lexicographic order starting at the beginning of each
-string.  The instruction is not allowed to prefetch more than one byte
-at a time since either string may end in the first byte and reading past
-that may access an invalid page or segment and cause a fault.  The
-effect of the instruction is to store a value in operand 0 whose sign
-indicates the result of the comparison.
+     <p><a name="index-g_t_0040code_007bcmpstrn_0040var_007bm_007d_007d-instruction-pattern-3427"></a><br><dt>&lsquo;<samp><span class="samp">cmpstrn</span><var>m</var></samp>&rsquo;<dd>字符串比较指令，有5个操作数。操作数0为输出，机器模式为<var>m</var>。剩下的4个操作数类似于&lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo;的操作数。两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。指令不允许一次取多个字节，因为每个字符串都可能在第一个字节中终止，读取后面的字节可能会访问一个无效的页或者段，并产生一个缺失。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
 
-     <p><a name="index-g_t_0040code_007bcmpstr_0040var_007bm_007d_007d-instruction-pattern-3428"></a><br><dt>&lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;<dd>String compare instruction, without known maximum length.  Operand 0 is the
-output; it has mode <var>m</var>.  The second and third operand are the blocks of
-memory to be compared; both are <code>mem:BLK</code> with an address in mode
-<code>Pmode</code>.
+     <p><a name="index-g_t_0040code_007bcmpstr_0040var_007bm_007d_007d-instruction-pattern-3428"></a><br><dt>&lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;<dd>字符串比较指令，不知道最大的长度。操作数0为输出，机器模式为<var>m</var>。第二个和第三个操作数为被比较的内存块；都是机器模式为<code>Pmode</code>的<code>mem:BLK</code>。
 
-     <p>The fourth operand is the known shared alignment of the source and
-destination, in the form of a <code>const_int</code> rtx.  Thus, if the
-compiler knows that both source and destination are word-aligned,
-it may provide the value 4 for this operand.
+     <p>第四个操作数为源和目的的已知共享的对齐方式，形式为<code>const_int</code> rtx。因此，如果编译器知道源和目的都是字对齐的，则其可以为该操作数提供值4。
 
-     <p>The two memory blocks specified are compared byte by byte in lexicographic
-order starting at the beginning of each string.  The instruction is not allowed
-to prefetch more than one byte at a time since either string may end in the
-first byte and reading past that may access an invalid page or segment and
-cause a fault.  The effect of the instruction is to store a value in operand 0
-whose sign indicates the result of the comparison.
+     <p>两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。指令不允许一次取多个字节，因为每个字符串都可能在第一个字节中终止，读取后面的字节可能会访问一个无效的页或者段，并产生一个缺失。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
 
-     <p><a name="index-g_t_0040code_007bcmpmem_0040var_007bm_007d_007d-instruction-pattern-3429"></a><br><dt>&lsquo;<samp><span class="samp">cmpmem</span><var>m</var></samp>&rsquo;<dd>Block compare instruction, with five operands like the operands
-of &lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;.  The two memory blocks specified are compared
-byte by byte in lexicographic order starting at the beginning of each
-block.  Unlike &lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo; the instruction can prefetch
-any bytes in the two memory blocks.  The effect of the instruction is
-to store a value in operand 0 whose sign indicates the result of the
-comparison.
+     <p><a name="index-g_t_0040code_007bcmpmem_0040var_007bm_007d_007d-instruction-pattern-3429"></a><br><dt>&lsquo;<samp><span class="samp">cmpmem</span><var>m</var></samp>&rsquo;<dd>块比较指令，这5个操作数类似于&lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;。两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。不像&lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;，该指令可以在两个内存块中取任意个字节。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
 
-     <p><a name="index-g_t_0040code_007bstrlen_0040var_007bm_007d_007d-instruction-pattern-3430"></a><br><dt>&lsquo;<samp><span class="samp">strlen</span><var>m</var></samp>&rsquo;<dd>Compute the length of a string, with three operands. 
-Operand 0 is the result (of mode <var>m</var>), operand 1 is
-a <code>mem</code> referring to the first character of the string,
-operand 2 is the character to search for (normally zero),
-and operand 3 is a constant describing the known alignment
-of the beginning of the string.
+     <p><a name="index-g_t_0040code_007bstrlen_0040var_007bm_007d_007d-instruction-pattern-3430"></a><br><dt>&lsquo;<samp><span class="samp">strlen</span><var>m</var></samp>&rsquo;<dd>计算字符串的长度，有3个操作数。操作数0为结果（机器模式为<var>m</var>），操作数1为一个<code>mem</code>，指出字符串的第一个字符，操作数2为要查找的字符（通常为零），操作数3为一个常量，描述了字符串起始处的已知对齐方式。
 
-     <p><a name="index-g_t_0040code_007bfloat_0040var_007bmn_007d2_007d-instruction-pattern-3431"></a><br><dt>&lsquo;<samp><span class="samp">float</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>Convert signed integer operand 1 (valid for fixed point mode <var>m</var>) to
-floating point mode <var>n</var> and store in operand 0 (which has mode
-<var>n</var>).
+     <p><a name="index-g_t_0040code_007bfloat_0040var_007bmn_007d2_007d-instruction-pattern-3431"></a><br><dt>&lsquo;<samp><span class="samp">float</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将有符号整数，操作数1（对于定点机器模式<var>m</var>有效），转换成浮点机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。
 
-     <p><a name="index-g_t_0040code_007bfloatuns_0040var_007bmn_007d2_007d-instruction-pattern-3432"></a><br><dt>&lsquo;<samp><span class="samp">floatuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>Convert unsigned integer operand 1 (valid for fixed point mode <var>m</var>)
-to floating point mode <var>n</var> and store in operand 0 (which has mode
-<var>n</var>).
+     <p><a name="index-g_t_0040code_007bfloatuns_0040var_007bmn_007d2_007d-instruction-pattern-3432"></a><br><dt>&lsquo;<samp><span class="samp">floatuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将无符号整数，操作数1（对于定点机器模式<var>m</var>有效），转换成浮点机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。
 
-     <p><a name="index-g_t_0040code_007bfix_0040var_007bmn_007d2_007d-instruction-pattern-3433"></a><br><dt>&lsquo;<samp><span class="samp">fix</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>Convert operand 1 (valid for floating point mode <var>m</var>) to fixed
-point mode <var>n</var> as a signed number and store in operand 0 (which
-has mode <var>n</var>).  This instruction's result is defined only when
-the value of operand 1 is an integer.
+     <p><a name="index-g_t_0040code_007bfix_0040var_007bmn_007d2_007d-instruction-pattern-3433"></a><br><dt>&lsquo;<samp><span class="samp">fix</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点机器模式<var>m</var>有效），转换成定点机器模式<var>n</var>，作为一个有符号数并存放在操作数0（机器模式为<var>n</var>）中。该指令的结果，只有当操作数1的值为整数时，才被定义。
 
-     <p>If the machine description defines this pattern, it also needs to
-define the <code>ftrunc</code> pattern.
+     <p>如果机器描述定义了该指令模式，则其还需要定义<code>ftrunc</code>指令模式。
 
-     <p><a name="index-g_t_0040code_007bfixuns_0040var_007bmn_007d2_007d-instruction-pattern-3434"></a><br><dt>&lsquo;<samp><span class="samp">fixuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>Convert operand 1 (valid for floating point mode <var>m</var>) to fixed
-point mode <var>n</var> as an unsigned number and store in operand 0 (which
-has mode <var>n</var>).  This instruction's result is defined only when the
-value of operand 1 is an integer.
+     <p><a name="index-g_t_0040code_007bfixuns_0040var_007bmn_007d2_007d-instruction-pattern-3434"></a><br><dt>&lsquo;<samp><span class="samp">fixuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点机器模式<var>m</var>有效），转换成定点机器模式<var>n</var>，作为一个无符号数并存放在操作数0（机器模式为<var>n</var>）中。该指令的结果，只有当操作数1的值为整数时，才被定义。
 
-     <p><a name="index-g_t_0040code_007bftrunc_0040var_007bm_007d2_007d-instruction-pattern-3435"></a><br><dt>&lsquo;<samp><span class="samp">ftrunc</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>Convert operand 1 (valid for floating point mode <var>m</var>) to an
-integer value, still represented in floating point mode <var>m</var>, and
-store it in operand 0 (valid for floating point mode <var>m</var>).
+     <p><a name="index-g_t_0040code_007bftrunc_0040var_007bm_007d2_007d-instruction-pattern-3435"></a><br><dt>&lsquo;<samp><span class="samp">ftrunc</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点机器模式<var>m</var>有效），转换成整数值，仍按照浮点机器模式<var>m</var>来表示，并存放在操作数0（对于浮点机器模式<var>m</var>有效）中。
 
      <p><a name="index-g_t_0040code_007bfix_005ftrunc_0040var_007bmn_007d2_007d-instruction-pattern-3436"></a><br><dt>&lsquo;<samp><span class="samp">fix_trunc</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>Like &lsquo;<samp><span class="samp">fix</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo; but works for any floating point value
 of mode <var>m</var> by converting the value to an integer.
