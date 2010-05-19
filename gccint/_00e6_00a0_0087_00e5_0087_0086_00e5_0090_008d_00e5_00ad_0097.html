@@ -436,22 +436,11 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p><a name="index-g_t_0040code_007breturn_007d-instruction-pattern-3459"></a><br><dt>&lsquo;<samp><span class="samp">return</span></samp>&rsquo;<dd>子程序返回指令。该指令模式名应该只有当，单个指令可以做从函数中返回时的所有工作的时候，才被定义。
 
-     <p>类似&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;指令模式，该指令模式也在RTL生成阶段之后被使用。这种情况下，其用来支持一些机器，从函数中返回通常需要多个指令，但是某些类别的函数只需要一条指令来实现返回。
- patterns, this pattern is also used after the
-RTL generation phase.  In this case it is to support machines where
-multiple instructions are usually needed to return from a function, but
-some class of functions only requires one instruction to implement a
-return.  Normally, the applicable functions are those which do not need
-to save any registers or allocate stack space.
+     <p>类似&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;指令模式，该指令模式也在RTL生成阶段之后被使用。这种情况下，其用来支持一些机器，从函数中返回通常需要多个指令，但是某些类别的函数只需要一条指令来实现返回。通常，可以适用的函数为那些不需要保存任何寄存器或者分配栈空间的函数。
 
-     <p><a name="index-reload_005fcompleted-3460"></a><a name="index-leaf_005ffunction_005fp-3461"></a>For such machines, the condition specified in this pattern should only
-be true when <code>reload_completed</code> is nonzero and the function's
-epilogue would only be a single instruction.  For machines with register
-windows, the routine <code>leaf_function_p</code> may be used to determine if
-a register window push is required.
+     <p><a name="index-reload_005fcompleted-3460"></a><a name="index-leaf_005ffunction_005fp-3461"></a>对于这样的机器，该指令模式中指定的条件，应该只有当<code>reload_completed</code>为非零的时候才为真，并且函数的尾声应该只为一单个指令。对于有寄存器窗口的机器，例程<code>leaf_function_p</code>可以用来确定是否需要对寄存器窗口压栈。
 
-     <p>Machines that have conditional return instructions should define patterns
-such as
+     <p>具有条件性返回指令的机器，应该将指令模式定义成
 
      <pre class="smallexample">          (define_insn ""
             [(set (pc)
@@ -463,108 +452,56 @@ such as
             "<var>condition</var>"
             "...")
 </pre>
-     <p>where <var>condition</var> would normally be the same condition specified on the
-named &lsquo;<samp><span class="samp">return</span></samp>&rsquo; pattern.
+     <p>其中<var>condition</var>通常为，在&lsquo;<samp><span class="samp">return</span></samp>&rsquo;指令模式中指定的相同的条件。
 
-     <p><a name="index-g_t_0040code_007buntyped_005freturn_007d-instruction-pattern-3462"></a><br><dt>&lsquo;<samp><span class="samp">untyped_return</span></samp>&rsquo;<dd>Untyped subroutine return instruction.  This instruction pattern should
-be defined to support <code>__builtin_return</code> on machines where special
-instructions are needed to return a value of any type.
+     <p><a name="index-g_t_0040code_007buntyped_005freturn_007d-instruction-pattern-3462"></a><br><dt>&lsquo;<samp><span class="samp">untyped_return</span></samp>&rsquo;<dd>未定义类型的子程序返回指令。该指令模式应该被定义，来支持<code>__builtin_return</code>，在一些机器上，需要特殊的指令来返回一个任意类型的值。
 
-     <p>Operand 0 is a memory location where the result of calling a function
-with <code>__builtin_apply</code> is stored; operand 1 is a <code>parallel</code>
-expression where each element is a <code>set</code> expression that indicates
-the restoring of a function return value from the result block.
+     <p>操作数0为一个内存位置，存放使用<code>__builtin_apply</code>调用函数的结果；操作数1为一个<code>parallel</code>表达式，每个元素都是一个<code>set</code>表达式，指示了从结果块中恢复函数的返回值。
 
-     <p><a name="index-g_t_0040code_007bnop_007d-instruction-pattern-3463"></a><br><dt>&lsquo;<samp><span class="samp">nop</span></samp>&rsquo;<dd>No-op instruction.  This instruction pattern name should always be defined
-to output a no-op in assembler code.  <code>(const_int 0)</code> will do as an
-RTL pattern.
+     <p><a name="index-g_t_0040code_007bnop_007d-instruction-pattern-3463"></a><br><dt>&lsquo;<samp><span class="samp">nop</span></samp>&rsquo;<dd>空操作指令。该指令模式名应该总是被定义，用来在汇编代码中输出一个no-op。<code>(const_int 0)</code>将作为一个RTL指令模式。
 
-     <p><a name="index-g_t_0040code_007bindirect_005fjump_007d-instruction-pattern-3464"></a><br><dt>&lsquo;<samp><span class="samp">indirect_jump</span></samp>&rsquo;<dd>An instruction to jump to an address which is operand zero. 
-This pattern name is mandatory on all machines.
+     <p><a name="index-g_t_0040code_007bindirect_005fjump_007d-instruction-pattern-3464"></a><br><dt>&lsquo;<samp><span class="samp">indirect_jump</span></samp>&rsquo;<dd>一个指令，跳转到操作数0表示的地址。该指令模式名在所有机器上都必须存在。
 
-     <p><a name="index-g_t_0040code_007bcasesi_007d-instruction-pattern-3465"></a><br><dt>&lsquo;<samp><span class="samp">casesi</span></samp>&rsquo;<dd>Instruction to jump through a dispatch table, including bounds checking. 
-This instruction takes five operands:
+     <p><a name="index-g_t_0040code_007bcasesi_007d-instruction-pattern-3465"></a><br><dt>&lsquo;<samp><span class="samp">casesi</span></samp>&rsquo;<dd>通过派遣表进行跳转的指令，包括边界检查。该指令接受五个操作数：
 
           <ol type=1 start=1>
-<li>The index to dispatch on, which has mode <code>SImode</code>.
+<li>派遣的索引，具有机器模式<code>SImode</code>。
 
-          <li>The lower bound for indices in the table, an integer constant.
+          <li>表中索引的较低边界，一个整数常量。
 
-          <li>The total range of indices in the table&mdash;the largest index
-minus the smallest one (both inclusive).
+          <li>表中索引的整个范围&mdash;最大索引减去最小的。
 
-          <li>A label that precedes the table itself.
+          <li>位于表之前的标号。
 
-          <li>A label to jump to if the index has a value outside the bounds.
+          <li>一个标号，如果索引值超出边界，则跳转到该地方。
           </ol>
 
-     <p>The table is a <code>addr_vec</code> or <code>addr_diff_vec</code> inside of a
-<code>jump_insn</code>.  The number of elements in the table is one plus the
-difference between the upper bound and the lower bound.
+     <p>表为<code>jump_insn</code>中的一个<code>addr_vec</code> 或 <code>addr_diff_vec</code>。表中的元素个数为一加上上界和下界的差。
 
-     <p><a name="index-g_t_0040code_007btablejump_007d-instruction-pattern-3466"></a><br><dt>&lsquo;<samp><span class="samp">tablejump</span></samp>&rsquo;<dd>Instruction to jump to a variable address.  This is a low-level
-capability which can be used to implement a dispatch table when there
-is no &lsquo;<samp><span class="samp">casesi</span></samp>&rsquo; pattern.
+     <p><a name="index-g_t_0040code_007btablejump_007d-instruction-pattern-3466"></a><br><dt>&lsquo;<samp><span class="samp">tablejump</span></samp>&rsquo;<dd>跳转到一个可变地址的指令。这是一个低级别的能力，可以用来实现一个派遣表，当没有&lsquo;<samp><span class="samp">casesi</span></samp>&rsquo;指令模式的时候。
 
-     <p>This pattern requires two operands: the address or offset, and a label
-which should immediately precede the jump table.  If the macro
-<code>CASE_VECTOR_PC_RELATIVE</code> evaluates to a nonzero value then the first
-operand is an offset which counts from the address of the table; otherwise,
-it is an absolute address to jump to.  In either case, the first operand has
-mode <code>Pmode</code>.
+     <p>该指令模式需要两个操作数：地址或偏移量，以及一个标号，其直接位于跳转表的前面。如果宏<code>CASE_VECTOR_PC_RELATIVE</code>求值为一个非零值，则第一个操作数为一个偏移量，其从表的地址开始计算；否则，其为一个跳转的绝对地址。这两种情况下，第一个操作数都为<code>Pmode</code>。
 
-     <p>The &lsquo;<samp><span class="samp">tablejump</span></samp>&rsquo; insn is always the last insn before the jump
-table it uses.  Its assembler code normally has no need to use the
-second operand, but you should incorporate it in the RTL pattern so
-that the jump optimizer will not delete the table as unreachable code.
+     <p>&lsquo;<samp><span class="samp">tablejump</span></samp>&rsquo; insn总是其使用的跳转表之前的最后一个insn。其汇编代码通常不需要用到第二个操作数，但是你应该在RTL指令模式中包含它，使得跳转优化不会将表作为不可到达代码删除。
 
-     <p><a name="index-g_t_0040code_007bdecrement_005fand_005fbranch_005funtil_005fzero_007d-instruction-pattern-3467"></a><br><dt>&lsquo;<samp><span class="samp">decrement_and_branch_until_zero</span></samp>&rsquo;<dd>Conditional branch instruction that decrements a register and
-jumps if the register is nonzero.  Operand 0 is the register to
-decrement and test; operand 1 is the label to jump to if the
-register is nonzero.  See <a href="Looping-Patterns.html#Looping-Patterns">Looping Patterns</a>.
+     <p><a name="index-g_t_0040code_007bdecrement_005fand_005fbranch_005funtil_005fzero_007d-instruction-pattern-3467"></a><br><dt>&lsquo;<samp><span class="samp">decrement_and_branch_until_zero</span></samp>&rsquo;<dd>条件分支指令，递减一个寄存器并且如果寄存器非零则跳转。操作数0为递减并测试的寄存器；操作数1为如果寄存器非零，则跳转的标号。See <a href="Looping-Patterns.html#Looping-Patterns">Looping Patterns</a>。
 
-     <p>This optional instruction pattern is only used by the combiner,
-typically for loops reversed by the loop optimizer when strength
-reduction is enabled.
+     <p>该可选的指令模式只用于合并器，通常被循环优化器使用，当启动强度消减的时候。
 
-     <p><a name="index-g_t_0040code_007bdoloop_005fend_007d-instruction-pattern-3468"></a><br><dt>&lsquo;<samp><span class="samp">doloop_end</span></samp>&rsquo;<dd>Conditional branch instruction that decrements a register and jumps if
-the register is nonzero.  This instruction takes five operands: Operand
-0 is the register to decrement and test; operand 1 is the number of loop
-iterations as a <code>const_int</code> or <code>const0_rtx</code> if this cannot be
-determined until run-time; operand 2 is the actual or estimated maximum
-number of iterations as a <code>const_int</code>; operand 3 is the number of
-enclosed loops as a <code>const_int</code> (an innermost loop has a value of
-1); operand 4 is the label to jump to if the register is nonzero. 
-See <a href="Looping-Patterns.html#Looping-Patterns">Looping Patterns</a>.
+     <p><a name="index-g_t_0040code_007bdoloop_005fend_007d-instruction-pattern-3468"></a><br><dt>&lsquo;<samp><span class="samp">doloop_end</span></samp>&rsquo;<dd>条件分支指令，递减一个寄存器，并且如果寄存器非零则跳转。该指令接受五个操作数：操作数0是用来递减和测试的寄存器；操作数1是循环迭代的次数，为一个<code>const_int</code>，或者如果直到运行时才能确定，则为<code>const0_rtx</code>；操作数2为实际的或者估算的最大迭代数，为一个<code>const_int</code>；操作数3为被包含的循环数，为一个<code>const_int</code>（最内层循环的值为1）；操作数4为如果寄存器非零，要跳转的标号。See <a href="Looping-Patterns.html#Looping-Patterns">Looping Patterns</a>。
 
-     <p>This optional instruction pattern should be defined for machines with
-low-overhead looping instructions as the loop optimizer will try to
-modify suitable loops to utilize it.  If nested low-overhead looping is
-not supported, use a <code>define_expand</code> (see <a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)
-and make the pattern fail if operand 3 is not <code>const1_rtx</code>. 
-Similarly, if the actual or estimated maximum number of iterations is
-too large for this instruction, make it fail.
+     <p>该可选的指令模式应该为，具有低开销循环指令的机器定义，循环优化器会尝试修改合适的循环来利用它。如果不支持嵌套的低开销循环，则使用<code>define_expand</code> (see <a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)，并如果操作数3不为<code>const1_rtx</code>，则使得指令模式失败。类似的，如果实际的或者估算的最大迭代数目对于该指令来说太大，则使其失败。
 
-     <p><a name="index-g_t_0040code_007bdoloop_005fbegin_007d-instruction-pattern-3469"></a><br><dt>&lsquo;<samp><span class="samp">doloop_begin</span></samp>&rsquo;<dd>Companion instruction to <code>doloop_end</code> required for machines that
-need to perform some initialization, such as loading special registers
-used by a low-overhead looping instruction.  If initialization insns do
-not always need to be emitted, use a <code>define_expand</code>
-(see <a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>) and make it fail.
+     <p><a name="index-g_t_0040code_007bdoloop_005fbegin_007d-instruction-pattern-3469"></a><br><dt>&lsquo;<samp><span class="samp">doloop_begin</span></samp>&rsquo;<dd>与<code>doloop_end</code>成套的指令，被用于需要执行一些初始化的机器，例如加载用于低开销循环指令中的特定寄存器。如果初始化insn不总是需要被生成，则使用<code>define_expand</code>
+(see <a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)，并使其失败。
 
-     <p><a name="index-g_t_0040code_007bcanonicalize_005ffuncptr_005ffor_005fcompare_007d-instruction-pattern-3470"></a><br><dt>&lsquo;<samp><span class="samp">canonicalize_funcptr_for_compare</span></samp>&rsquo;<dd>Canonicalize the function pointer in operand 1 and store the result
-into operand 0.
+     <p><a name="index-g_t_0040code_007bcanonicalize_005ffuncptr_005ffor_005fcompare_007d-instruction-pattern-3470"></a><br><dt>&lsquo;<samp><span class="samp">canonicalize_funcptr_for_compare</span></samp>&rsquo;<dd>正规化操作数1中的函数指针，并将结果存放在操作数0中。
 
-     <p>Operand 0 is always a <code>reg</code> and has mode <code>Pmode</code>; operand 1
-may be a <code>reg</code>, <code>mem</code>, <code>symbol_ref</code>, <code>const_int</code>, etc
-and also has mode <code>Pmode</code>.
+     <p>操作数0总是一个<code>reg</code>，并具有机器模式<code>Pmode</code>；操作数1可以为一个<code>reg</code>, <code>mem</code>, <code>symbol_ref</code>, <code>const_int</code>等等，也具有机器模式<code>Pmode</code>。
 
-     <p>Canonicalization of a function pointer usually involves computing
-the address of the function which would be called if the function
-pointer were used in an indirect call.
+     <p>正规化一个函数指针，通常涉及到计算函数的地址，该函数指针用在间接调用中。
 
-     <p>Only define this pattern if function pointers on the target machine
-can have different values but still call the same function when
-used in an indirect call.
+     <p>只有当目标机器上，对于函数指针可以有不同的值，但是当在间接调用的时候，其还是调用相同的函数的时候，才定义该指令模式。
 
      <p><a name="index-g_t_0040code_007bsave_005fstack_005fblock_007d-instruction-pattern-3471"></a><a name="index-g_t_0040code_007bsave_005fstack_005ffunction_007d-instruction-pattern-3472"></a><a name="index-g_t_0040code_007bsave_005fstack_005fnonlocal_007d-instruction-pattern-3473"></a><a name="index-g_t_0040code_007brestore_005fstack_005fblock_007d-instruction-pattern-3474"></a><a name="index-g_t_0040code_007brestore_005fstack_005ffunction_007d-instruction-pattern-3475"></a><a name="index-g_t_0040code_007brestore_005fstack_005fnonlocal_007d-instruction-pattern-3476"></a><br><dt>&lsquo;<samp><span class="samp">save_stack_block</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">save_stack_function</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">save_stack_nonlocal</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_block</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_function</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_nonlocal</span></samp>&rsquo;<dd>Most machines save and restore the stack pointer by copying it to or
 from an object of mode <code>Pmode</code>.  Do not define these patterns on
