@@ -3764,54 +3764,24 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @itemx @samp{restore_stack_block}
 @itemx @samp{restore_stack_function}
 @itemx @samp{restore_stack_nonlocal}
-Most machines save and restore the stack pointer by copying it to or
-from an object of mode @code{Pmode}.  Do not define these patterns on
-such machines.
+大多数机器用来保存和恢复栈指针的方式，是通过将其复制到一个机器模式为@code{Pmode}的对象。不要在这样的机器上定义这些指令模式。
 
-Some machines require special handling for stack pointer saves and
-restores.  On those machines, define the patterns corresponding to the
-non-standard cases by using a @code{define_expand} (@pxref{Expander
-Definitions}) that produces the required insns.  The three types of
-saves and restores are:
+一些机器要求对栈指针的保存和恢复，进行特殊的处理。在那些机器上，根据非标准的情况来定义指令模式，使用@code{define_expand} (@pxref{Expander Definitions})来产生要求的insn。三种保存和恢复类型：
 
 @enumerate
 @item
-@samp{save_stack_block} saves the stack pointer at the start of a block
-that allocates a variable-sized object, and @samp{restore_stack_block}
-restores the stack pointer when the block is exited.
+@samp{save_stack_block}将栈指针存放在用来分配可变大小的对象块的起始处，@samp{restore_stack_block}当退出块的时候恢复栈指针。
 
 @item
-@samp{save_stack_function} and @samp{restore_stack_function} do a
-similar job for the outermost block of a function and are used when the
-function allocates variable-sized objects or calls @code{alloca}.  Only
-the epilogue uses the restored stack pointer, allowing a simpler save or
-restore sequence on some machines.
+@samp{save_stack_function} 和 @samp{restore_stack_function}为函数最外层的快做类似的工作，并用于当函数分配可变大小的对象或者调用@code{alloca}的时候。只有尾声使用被恢复的栈指针，这使得在一些机器上，可以有更简单的保存或恢复序列。
 
 @item
-@samp{save_stack_nonlocal} is used in functions that contain labels
-branched to by nested functions.  It saves the stack pointer in such a
-way that the inner function can use @samp{restore_stack_nonlocal} to
-restore the stack pointer.  The compiler generates code to restore the
-frame and argument pointer registers, but some machines require saving
-and restoring additional data such as register window information or
-stack backchains.  Place insns in these patterns to save and restore any
-such required data.
+@samp{save_stack_nonlocal}用在包含嵌套函数分支跳转标号的函数中。其保存栈指针的方式为，最内层函数可以使用@samp{restore_stack_nonlocal}来恢复栈指针。编译器生成代码，用来恢复帧寄存器和参数指针寄存器，但是一些机器要求保存和恢复额外的数据，例如寄存器窗口信息或者栈后退链。在这些指令模式中放置保存和恢复这些要求的数据的insn。
 @end enumerate
 
-When saving the stack pointer, operand 0 is the save area and operand 1
-is the stack pointer.  The mode used to allocate the save area defaults
-to @code{Pmode} but you can override that choice by defining the
-@code{STACK_SAVEAREA_MODE} macro (@pxref{Storage Layout}).  You must
-specify an integral mode, or @code{VOIDmode} if no save area is needed
-for a particular type of save (either because no save is needed or
-because a machine-specific save area can be used).  Operand 0 is the
-stack pointer and operand 1 is the save area for restore operations.  If
-@samp{save_stack_block} is defined, operand 0 must not be
-@code{VOIDmode} since these saves can be arbitrarily nested.
+当保存栈指针时，操作数0是保存区域，操作数1是栈指针。用于分配保存区域的机器模式缺省为@code{Pmode}，不过你可以通过定义@code{STACK_SAVEAREA_MODE}宏(@pxref{Storage Layout})来覆盖该选择。你必须指定一个整数机器模式，或者@code{VOIDmode}，如果对于特定的类型不需要保存区域（或者因为没有需要保存的，或者因为可以使用机器特定的保存区域）。操作数0为栈指针，操作数1为用于恢复操作的保存区域。如果@samp{save_stack_block}被定义，则操作数0一定不能为@code{VOIDmode}，因为这些保存操作数可以被任意的嵌套。
 
-A save area is a @code{mem} that is at a constant offset from
-@code{virtual_stack_vars_rtx} when the stack pointer is saved for use by
-nonlocal gotos and a @code{reg} in the other two cases.
+当栈指针被保存，是用于非局部goto，则保存区域为一个@code{mem}，为一个相对于@code{virtual_stack_vars_rtx}的常量偏移，其它两种情况下，保存区域为一个@code{reg}。
 
 @cindex @code{allocate_stack} instruction pattern
 @item @samp{allocate_stack}
