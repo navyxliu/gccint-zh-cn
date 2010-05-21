@@ -503,50 +503,21 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>只有当目标机器上，对于函数指针可以有不同的值，但是当在间接调用的时候，其还是调用相同的函数的时候，才定义该指令模式。
 
-     <p><a name="index-g_t_0040code_007bsave_005fstack_005fblock_007d-instruction-pattern-3471"></a><a name="index-g_t_0040code_007bsave_005fstack_005ffunction_007d-instruction-pattern-3472"></a><a name="index-g_t_0040code_007bsave_005fstack_005fnonlocal_007d-instruction-pattern-3473"></a><a name="index-g_t_0040code_007brestore_005fstack_005fblock_007d-instruction-pattern-3474"></a><a name="index-g_t_0040code_007brestore_005fstack_005ffunction_007d-instruction-pattern-3475"></a><a name="index-g_t_0040code_007brestore_005fstack_005fnonlocal_007d-instruction-pattern-3476"></a><br><dt>&lsquo;<samp><span class="samp">save_stack_block</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">save_stack_function</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">save_stack_nonlocal</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_block</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_function</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_nonlocal</span></samp>&rsquo;<dd>Most machines save and restore the stack pointer by copying it to or
-from an object of mode <code>Pmode</code>.  Do not define these patterns on
-such machines.
+     <p><a name="index-g_t_0040code_007bsave_005fstack_005fblock_007d-instruction-pattern-3471"></a><a name="index-g_t_0040code_007bsave_005fstack_005ffunction_007d-instruction-pattern-3472"></a><a name="index-g_t_0040code_007bsave_005fstack_005fnonlocal_007d-instruction-pattern-3473"></a><a name="index-g_t_0040code_007brestore_005fstack_005fblock_007d-instruction-pattern-3474"></a><a name="index-g_t_0040code_007brestore_005fstack_005ffunction_007d-instruction-pattern-3475"></a><a name="index-g_t_0040code_007brestore_005fstack_005fnonlocal_007d-instruction-pattern-3476"></a><br><dt>&lsquo;<samp><span class="samp">save_stack_block</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">save_stack_function</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">save_stack_nonlocal</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_block</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_function</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_nonlocal</span></samp>&rsquo;<dd>大多数机器用来保存和恢复栈指针的方式，是通过将其复制到一个机器模式为<code>Pmode</code>的对象。不要在这样的机器上定义这些指令模式。
 
-     <p>Some machines require special handling for stack pointer saves and
-restores.  On those machines, define the patterns corresponding to the
-non-standard cases by using a <code>define_expand</code> (see <a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>) that produces the required insns.  The three types of
-saves and restores are:
+     <p>一些机器要求对栈指针的保存和恢复，进行特殊的处理。在那些机器上，根据非标准的情况来定义指令模式，使用<code>define_expand</code> (see <a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)来产生要求的insn。三种保存和恢复类型：
 
           <ol type=1 start=1>
-<li>&lsquo;<samp><span class="samp">save_stack_block</span></samp>&rsquo; saves the stack pointer at the start of a block
-that allocates a variable-sized object, and &lsquo;<samp><span class="samp">restore_stack_block</span></samp>&rsquo;
-restores the stack pointer when the block is exited.
+<li>&lsquo;<samp><span class="samp">save_stack_block</span></samp>&rsquo;将栈指针存放在用来分配可变大小的对象块的起始处，&lsquo;<samp><span class="samp">restore_stack_block</span></samp>&rsquo;当退出块的时候恢复栈指针。
 
-          <li>&lsquo;<samp><span class="samp">save_stack_function</span></samp>&rsquo; and &lsquo;<samp><span class="samp">restore_stack_function</span></samp>&rsquo; do a
-similar job for the outermost block of a function and are used when the
-function allocates variable-sized objects or calls <code>alloca</code>.  Only
-the epilogue uses the restored stack pointer, allowing a simpler save or
-restore sequence on some machines.
+          <li>&lsquo;<samp><span class="samp">save_stack_function</span></samp>&rsquo; 和 &lsquo;<samp><span class="samp">restore_stack_function</span></samp>&rsquo;为函数最外层的快做类似的工作，并用于当函数分配可变大小的对象或者调用<code>alloca</code>的时候。只有尾声使用被恢复的栈指针，这使得在一些机器上，可以有更简单的保存或恢复序列。
 
-          <li>&lsquo;<samp><span class="samp">save_stack_nonlocal</span></samp>&rsquo; is used in functions that contain labels
-branched to by nested functions.  It saves the stack pointer in such a
-way that the inner function can use &lsquo;<samp><span class="samp">restore_stack_nonlocal</span></samp>&rsquo; to
-restore the stack pointer.  The compiler generates code to restore the
-frame and argument pointer registers, but some machines require saving
-and restoring additional data such as register window information or
-stack backchains.  Place insns in these patterns to save and restore any
-such required data.
+          <li>&lsquo;<samp><span class="samp">save_stack_nonlocal</span></samp>&rsquo;用在包含嵌套函数分支跳转标号的函数中。其保存栈指针的方式为，最内层函数可以使用&lsquo;<samp><span class="samp">restore_stack_nonlocal</span></samp>&rsquo;来恢复栈指针。编译器生成代码，用来恢复帧寄存器和参数指针寄存器，但是一些机器要求保存和恢复额外的数据，例如寄存器窗口信息或者栈后退链。在这些指令模式中放置保存和恢复这些要求的数据的insn。
           </ol>
 
-     <p>When saving the stack pointer, operand 0 is the save area and operand 1
-is the stack pointer.  The mode used to allocate the save area defaults
-to <code>Pmode</code> but you can override that choice by defining the
-<code>STACK_SAVEAREA_MODE</code> macro (see <a href="Storage-Layout.html#Storage-Layout">Storage Layout</a>).  You must
-specify an integral mode, or <code>VOIDmode</code> if no save area is needed
-for a particular type of save (either because no save is needed or
-because a machine-specific save area can be used).  Operand 0 is the
-stack pointer and operand 1 is the save area for restore operations.  If
-&lsquo;<samp><span class="samp">save_stack_block</span></samp>&rsquo; is defined, operand 0 must not be
-<code>VOIDmode</code> since these saves can be arbitrarily nested.
+     <p>当保存栈指针时，操作数0是保存区域，操作数1是栈指针。用于分配保存区域的机器模式缺省为<code>Pmode</code>，不过你可以通过定义<code>STACK_SAVEAREA_MODE</code>宏(see <a href="Storage-Layout.html#Storage-Layout">Storage Layout</a>)来覆盖该选择。你必须指定一个整数机器模式，或者<code>VOIDmode</code>，如果对于特定的类型不需要保存区域（或者因为没有需要保存的，或者因为可以使用机器特定的保存区域）。操作数0为栈指针，操作数1为用于恢复操作的保存区域。如果&lsquo;<samp><span class="samp">save_stack_block</span></samp>&rsquo;被定义，则操作数0一定不能为<code>VOIDmode</code>，因为这些保存操作数可以被任意的嵌套。
 
-     <p>A save area is a <code>mem</code> that is at a constant offset from
-<code>virtual_stack_vars_rtx</code> when the stack pointer is saved for use by
-nonlocal gotos and a <code>reg</code> in the other two cases.
+     <p>当栈指针被保存，是用于非局部goto，则保存区域为一个<code>mem</code>，为一个相对于<code>virtual_stack_vars_rtx</code>的常量偏移，其它两种情况下，保存区域为一个<code>reg</code>。
 
      <p><a name="index-g_t_0040code_007ballocate_005fstack_007d-instruction-pattern-3477"></a><br><dt>&lsquo;<samp><span class="samp">allocate_stack</span></samp>&rsquo;<dd>Subtract (or add if <code>STACK_GROWS_DOWNWARD</code> is undefined) operand 1 from
 the stack pointer to create space for dynamically allocated data.
