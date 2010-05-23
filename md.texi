@@ -3809,50 +3809,23 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 
 @cindex @code{builtin_setjmp_setup} instruction pattern
 @item @samp{builtin_setjmp_setup}
-This pattern, if defined, contains additional code needed to initialize
-the @code{jmp_buf}.  You will not normally need to define this pattern.
-A typical reason why you might need this pattern is if some value, such
-as a pointer to a global table, must be restored.  Though it is
-preferred that the pointer value be recalculated if possible (given the
-address of a label for instance).  The single argument is a pointer to
-the @code{jmp_buf}.  Note that the buffer is five words long and that
-the first three are normally used by the generic mechanism.
+该指令模式，如果被定义，则包含了需要初始化@code{jmp_buf}的代码。你通常不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须被恢复。尽管如此，还是推荐指针值如果可能（例如，给定一个标号的地址），则应被重新计算。有一单个操作数，
 
 @cindex @code{builtin_setjmp_receiver} instruction pattern
 @item @samp{builtin_setjmp_receiver}
-This pattern, if defined, contains code needed at the site of an
-built-in setjmp that isn't needed at the site of a nonlocal goto.  You
-will not normally need to define this pattern.  A typical reason why you
-might need this pattern is if some value, such as a pointer to a global
-table, must be restored.  It takes one argument, which is the label
-to which builtin_longjmp transfered control; this pattern may be emitted
-at a small offset from that label.
+该指令模式，如果被定义，包含了在内建setjmp的地方，并且在非局部goto的地方不需要的代码。你通常不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须被恢复。其接受一个参数，为builtin_longjmp将控制转出的标号；该指令模式可以被生成为对于标号的一个小的偏移。
 
 @cindex @code{builtin_longjmp} instruction pattern
 @item @samp{builtin_longjmp}
-This pattern, if defined, performs the entire action of the longjmp.
-You will not normally need to define this pattern unless you also define
-@code{builtin_setjmp_setup}.  The single argument is a pointer to the
-@code{jmp_buf}.
+该指令模式，如果被定义，则执行整个longjmp动作。你通常不需要定义该指令模式，除非你还定义了@code{builtin_setjmp_setup}。单个操作数为指向@code{jmp_buf}的指针。
 
 @cindex @code{eh_return} instruction pattern
 @item @samp{eh_return}
-This pattern, if defined, affects the way @code{__builtin_eh_return},
-and thence the call frame exception handling library routines, are
-built.  It is intended to handle non-trivial actions needed along
-the abnormal return path.
+该指令模式，如果被定义，则影响@code{__builtin_eh_return}的方式，并且调用帧异常处理库函数会被建立。其用于处理异常返回路径所需要的非平凡的动作。
 
-The address of the exception handler to which the function should return
-is passed as operand to this pattern.  It will normally need to copied by
-the pattern to some special register or memory location.
-If the pattern needs to determine the location of the target call
-frame in order to do so, it may use @code{EH_RETURN_STACKADJ_RTX},
-if defined; it will have already been assigned.
+函数应该返回的异常处理的地址，被作为操作数传给该指令模式。其通常需要被指令模式复制到某个特定的寄存器或者内存位置。如果该指令模式需要确定目标调用帧的位置，则可以使用@code{EH_RETURN_STACKADJ_RTX}。
 
-If this pattern is not defined, the default action will be to simply
-copy the return address to @code{EH_RETURN_HANDLER_RTX}.  Either
-that macro or this pattern needs to be defined if call frame exception
-handling is to be used.
+如果该指令模式没有被定义，缺省的动作为简单的将返回地址复制给@code{EH_RETURN_HANDLER_RTX}。或者宏，或者该指令模式，应该被定义，如果使用了调用帧异常处理。
 
 @cindex @code{prologue} instruction pattern
 @anchor{prologue instruction pattern}
