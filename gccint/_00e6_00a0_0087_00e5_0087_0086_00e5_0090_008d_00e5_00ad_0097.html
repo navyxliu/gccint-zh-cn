@@ -561,14 +561,11 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p><code>sibcall_epilogue</code>指令模式一定不能破坏任何用于传递的参数，或者用于传给当前函数的参数的栈槽。
 
-     <p><a name="index-g_t_0040code_007btrap_007d-instruction-pattern-3489"></a><br><dt>&lsquo;<samp><span class="samp">trap</span></samp>&rsquo;<dd>This pattern, if defined, signals an error, typically by causing some
-kind of signal to be raised.  Among other places, it is used by the Java
-front end to signal `invalid array index' exceptions.
+     <p><a name="index-g_t_0040code_007btrap_007d-instruction-pattern-3489"></a><br><dt>&lsquo;<samp><span class="samp">trap</span></samp>&rsquo;<dd>该指令模式，如果被定义，则会发射一个错误信号。在其它地方，其被Java前端使用，来发射“无效的数组索引”异常信号。
 
-     <p><a name="index-g_t_0040code_007bconditional_005ftrap_007d-instruction-pattern-3490"></a><br><dt>&lsquo;<samp><span class="samp">conditional_trap</span></samp>&rsquo;<dd>Conditional trap instruction.  Operand 0 is a piece of RTL which
-performs a comparison.  Operand 1 is the trap code, an integer.
+     <p><a name="index-g_t_0040code_007bconditional_005ftrap_007d-instruction-pattern-3490"></a><br><dt>&lsquo;<samp><span class="samp">conditional_trap</span></samp>&rsquo;<dd>条件陷阱指令。操作数0为执行比较的RTL。操作数1为陷阱代码，为一个整数。
 
-     <p>A typical <code>conditional_trap</code> pattern looks like
+     <p>典型的<code>conditional_trap</code>指令模式型如：
 
      <pre class="smallexample">          (define_insn "conditional_trap"
             [(trap_if (match_operator 0 "trap_operator"
@@ -578,159 +575,72 @@ performs a comparison.  Operand 1 is the trap code, an integer.
             "...")
 </pre>
      <p><a name="index-g_t_0040code_007bprefetch_007d-instruction-pattern-3491"></a><br><dt>&lsquo;<samp><span class="samp">prefetch</span></samp>&rsquo;<dd>
-This pattern, if defined, emits code for a non-faulting data prefetch
-instruction.  Operand 0 is the address of the memory to prefetch.  Operand 1
-is a constant 1 if the prefetch is preparing for a write to the memory
-address, or a constant 0 otherwise.  Operand 2 is the expected degree of
-temporal locality of the data and is a value between 0 and 3, inclusive; 0
-means that the data has no temporal locality, so it need not be left in the
-cache after the access; 3 means that the data has a high degree of temporal
-locality and should be left in all levels of cache possible;  1 and 2 mean,
-respectively, a low or moderate degree of temporal locality.
+该指令模式，如果被定义，则产生无故障的数据预取指令代码。操作数0为预取的内存地址。操作数1为常量1，如果预取打算去写一个内存地址，否则为常量0。操作数2为数据的时间局部性的等级，值在0和3之间。0意味着数据没有时间局部性，所以在访问之后不需要留在缓存中；3意味着数据具有高等级的时间局部性，应该尽可能的留在所有级别的缓存中；1和2分别意味着，低等级和中等级的时间局部性。
 
-     <p>Targets that do not support write prefetches or locality hints can ignore
-the values of operands 1 and 2.
+     <p>不支持写预取或者局部性暗示的目标机，可以忽略操作数1和2的值。
 
      <p><a name="index-g_t_0040code_007bblockage_007d-instruction-pattern-3492"></a><br><dt>&lsquo;<samp><span class="samp">blockage</span></samp>&rsquo;<dd>
-This pattern defines a pseudo insn that prevents the instruction
-scheduler from moving instructions across the boundary defined by the
-blockage insn.  Normally an UNSPEC_VOLATILE pattern.
+该指令模式定义了一个伪insn，用来阻止指令调度器将指令跨越所定义的insn块边界进行移动。通常为一个UNSPEC_VOLATILE指令模式。
 
      <p><a name="index-g_t_0040code_007bmemory_005fbarrier_007d-instruction-pattern-3493"></a><br><dt>&lsquo;<samp><span class="samp">memory_barrier</span></samp>&rsquo;<dd>
-If the target memory model is not fully synchronous, then this pattern
-should be defined to an instruction that orders both loads and stores
-before the instruction with respect to loads and stores after the instruction. 
-This pattern has no operands.
+如果目标机内存模型不完全同步，则该指令模式应该被定义为一条指令，在期望进行加载和存储的指令之前。该指令模式没有操作数。
 
      <p><a name="index-g_t_0040code_007bsync_005fcompare_005fand_005fswap_0040var_007bmode_007d_007d-instruction-pattern-3494"></a><br><dt>&lsquo;<samp><span class="samp">sync_compare_and_swap</span><var>mode</var></samp>&rsquo;<dd>
-This pattern, if defined, emits code for an atomic compare-and-swap
-operation.  Operand 1 is the memory on which the atomic operation is
-performed.  Operand 2 is the &ldquo;old&rdquo; value to be compared against the
-current contents of the memory location.  Operand 3 is the &ldquo;new&rdquo; value
-to store in the memory if the compare succeeds.  Operand 0 is the result
-of the operation; it should contain the contents of the memory
-before the operation.  If the compare succeeds, this should obviously be
-a copy of operand 2.
+该指令模式，如果被定义，产生一个比较并交换的原子操作代码。操作数1为执行原子操作的内存。操作数2为，与当前内存位置的内容进行比较的“旧”值。操作数3为，如果比较成功存放在内存中的“新”值。如果比较成功，其当然为对操作数2的一个复制。
 
-     <p>This pattern must show that both operand 0 and operand 1 are modified.
+     <p>该指令模式必须同时显示出操作数0和1被修改。
 
-     <p>This pattern must issue any memory barrier instructions such that all
-memory operations before the atomic operation occur before the atomic
-operation and all memory operations after the atomic operation occur
-after the atomic operation.
+     <p>该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
 
-     <p><a name="index-g_t_0040code_007bsync_005fcompare_005fand_005fswap_005fcc_0040var_007bmode_007d_007d-instruction-pattern-3495"></a><br><dt>&lsquo;<samp><span class="samp">sync_compare_and_swap_cc</span><var>mode</var></samp>&rsquo;<dd>
-This pattern is just like <code>sync_compare_and_swap</code><var>mode</var>, except
-it should act as if compare part of the compare-and-swap were issued via
-<code>cmp</code><var>m</var>.  This comparison will only be used with <code>EQ</code> and
-<code>NE</code> branches and <code>setcc</code> operations.
+     <p><a name="index-g_t_0040code_007bsync_005fcompare_005fand_005fswap_005fcc_0040var_007bmode_007d_007d-instruction-pattern-3495"></a><br><dt>&lsquo;<samp><span class="samp">sync_compare_and_swap_cc</span><var>mode</var></samp>&rsquo;<dd>该指令模式与<code>sync_compare_and_swap</code><var>mode</var>类似，除了其比较和交换的比较部分就好像是通过<code>cmp</code><var>m</var>来发出的。该比较只与<code>EQ</code>和<code>NE</code>分支跳转，以及<code>setcc</code>操作一起使用。
 
-     <p>Some targets do expose the success or failure of the compare-and-swap
-operation via the status flags.  Ideally we wouldn't need a separate
-named pattern in order to take advantage of this, but the combine pass
-does not handle patterns with multiple sets, which is required by
-definition for <code>sync_compare_and_swap</code><var>mode</var>.
+     <p>一些目标机确实是通过状态标记来暴露比较并交换操作的成功或失败。理想的，我们不需要一个单独的命名指令模式来利用该特性，但是合并过程无法处理具有多个set的指令模式，而这正是定义<code>sync_compare_and_swap</code><var>mode</var>所需要的。
 
-     <p><a name="index-g_t_0040code_007bsync_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3496"></a><a name="index-g_t_0040code_007bsync_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3497"></a><a name="index-g_t_0040code_007bsync_005fior_0040var_007bmode_007d_007d-instruction-pattern-3498"></a><a name="index-g_t_0040code_007bsync_005fand_0040var_007bmode_007d_007d-instruction-pattern-3499"></a><a name="index-g_t_0040code_007bsync_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3500"></a><a name="index-g_t_0040code_007bsync_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3501"></a><br><dt>&lsquo;<samp><span class="samp">sync_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_nand</span><var>mode</var></samp>&rsquo;<dd>
-These patterns emit code for an atomic operation on memory. 
-Operand 0 is the memory on which the atomic operation is performed. 
-Operand 1 is the second operand to the binary operator.
+     <p><a name="index-g_t_0040code_007bsync_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3496"></a><a name="index-g_t_0040code_007bsync_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3497"></a><a name="index-g_t_0040code_007bsync_005fior_0040var_007bmode_007d_007d-instruction-pattern-3498"></a><a name="index-g_t_0040code_007bsync_005fand_0040var_007bmode_007d_007d-instruction-pattern-3499"></a><a name="index-g_t_0040code_007bsync_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3500"></a><a name="index-g_t_0040code_007bsync_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3501"></a><br><dt>&lsquo;<samp><span class="samp">sync_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_nand</span><var>mode</var></samp>&rsquo;<dd>该指令模式产生一个在内存上进行原子操作的代码。操作数0为进行原子操作的内存。操作数1为二元操作符的第二个操作数。
 
-     <p>The &ldquo;nand&rdquo; operation is <code>~op0 &amp; op1</code>.
+     <p>&ldquo;nand&rdquo;运算为<code>~op0 &amp; op1</code>。
 
-     <p>This pattern must issue any memory barrier instructions such that all
-memory operations before the atomic operation occur before the atomic
-operation and all memory operations after the atomic operation occur
-after the atomic operation.
+     <p>该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
 
-     <p>If these patterns are not defined, the operation will be constructed
-from a compare-and-swap operation, if defined.
+     <p>如果这些指令模式没有被定义，则操作将通过一个比较并交换操作，如果定义，来构建。
 
-     <p><a name="index-g_t_0040code_007bsync_005fold_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3502"></a><a name="index-g_t_0040code_007bsync_005fold_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3503"></a><a name="index-g_t_0040code_007bsync_005fold_005fior_0040var_007bmode_007d_007d-instruction-pattern-3504"></a><a name="index-g_t_0040code_007bsync_005fold_005fand_0040var_007bmode_007d_007d-instruction-pattern-3505"></a><a name="index-g_t_0040code_007bsync_005fold_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3506"></a><a name="index-g_t_0040code_007bsync_005fold_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3507"></a><br><dt>&lsquo;<samp><span class="samp">sync_old_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_old_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_old_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_nand</span><var>mode</var></samp>&rsquo;<dd>
-These patterns are emit code for an atomic operation on memory,
-and return the value that the memory contained before the operation. 
-Operand 0 is the result value, operand 1 is the memory on which the
-atomic operation is performed, and operand 2 is the second operand
-to the binary operator.
+     <p><a name="index-g_t_0040code_007bsync_005fold_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3502"></a><a name="index-g_t_0040code_007bsync_005fold_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3503"></a><a name="index-g_t_0040code_007bsync_005fold_005fior_0040var_007bmode_007d_007d-instruction-pattern-3504"></a><a name="index-g_t_0040code_007bsync_005fold_005fand_0040var_007bmode_007d_007d-instruction-pattern-3505"></a><a name="index-g_t_0040code_007bsync_005fold_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3506"></a><a name="index-g_t_0040code_007bsync_005fold_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3507"></a><br><dt>&lsquo;<samp><span class="samp">sync_old_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_old_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_old_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_nand</span><var>mode</var></samp>&rsquo;<dd>这些指令模式产生在内存上的原子操作代码，并且返回操作之前内存中的值。操作数0为结果值，操作数1为执行原子操作的内存，操作数2为二元操作的第二个操作数。
 
-     <p>This pattern must issue any memory barrier instructions such that all
-memory operations before the atomic operation occur before the atomic
-operation and all memory operations after the atomic operation occur
-after the atomic operation.
+     <p>该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
 
-     <p>If these patterns are not defined, the operation will be constructed
-from a compare-and-swap operation, if defined.
+     <p>如果这些指令模式没有被定义，则操作将通过一个比较并交换操作，如果定义，来构建。
 
-     <p><a name="index-g_t_0040code_007bsync_005fnew_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3508"></a><a name="index-g_t_0040code_007bsync_005fnew_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3509"></a><a name="index-g_t_0040code_007bsync_005fnew_005fior_0040var_007bmode_007d_007d-instruction-pattern-3510"></a><a name="index-g_t_0040code_007bsync_005fnew_005fand_0040var_007bmode_007d_007d-instruction-pattern-3511"></a><a name="index-g_t_0040code_007bsync_005fnew_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3512"></a><a name="index-g_t_0040code_007bsync_005fnew_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3513"></a><br><dt>&lsquo;<samp><span class="samp">sync_new_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_new_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_new_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_nand</span><var>mode</var></samp>&rsquo;<dd>
-These patterns are like their <code>sync_old_</code><var>op</var> counterparts,
-except that they return the value that exists in the memory location
-after the operation, rather than before the operation.
+     <p><a name="index-g_t_0040code_007bsync_005fnew_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3508"></a><a name="index-g_t_0040code_007bsync_005fnew_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3509"></a><a name="index-g_t_0040code_007bsync_005fnew_005fior_0040var_007bmode_007d_007d-instruction-pattern-3510"></a><a name="index-g_t_0040code_007bsync_005fnew_005fand_0040var_007bmode_007d_007d-instruction-pattern-3511"></a><a name="index-g_t_0040code_007bsync_005fnew_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3512"></a><a name="index-g_t_0040code_007bsync_005fnew_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3513"></a><br><dt>&lsquo;<samp><span class="samp">sync_new_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_new_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_new_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_nand</span><var>mode</var></samp>&rsquo;<dd>这些指令模式类似于<code>sync_old_</code><var>op</var>所对应的指令模式，除了它们返回操作之后内存位置中存在的值，而不是操作之前。
 
-     <p><a name="index-g_t_0040code_007bsync_005flock_005ftest_005fand_005fset_0040var_007bmode_007d_007d-instruction-pattern-3514"></a><br><dt>&lsquo;<samp><span class="samp">sync_lock_test_and_set</span><var>mode</var></samp>&rsquo;<dd>
-This pattern takes two forms, based on the capabilities of the target. 
-In either case, operand 0 is the result of the operand, operand 1 is
-the memory on which the atomic operation is performed, and operand 2
-is the value to set in the lock.
+     <p><a name="index-g_t_0040code_007bsync_005flock_005ftest_005fand_005fset_0040var_007bmode_007d_007d-instruction-pattern-3514"></a><br><dt>&lsquo;<samp><span class="samp">sync_lock_test_and_set</span><var>mode</var></samp>&rsquo;<dd>该指令模式根据目标机的能力，可以接受两种形式。两种情况下，操作数0为结果操作数，操作数1为执行原子操作的内存，操作数2为在锁中设置的值。
 
-     <p>In the ideal case, this operation is an atomic exchange operation, in
-which the previous value in memory operand is copied into the result
-operand, and the value operand is stored in the memory operand.
+     <p>理想的情况下，该操作为一个原子交换操作，内存操作数中之前的值被复制到结果操作数中，值操作数被保存在内存操作数中。
 
-     <p>For less capable targets, any value operand that is not the constant 1
-should be rejected with <code>FAIL</code>.  In this case the target may use
-an atomic test-and-set bit operation.  The result operand should contain
-1 if the bit was previously set and 0 if the bit was previously clear. 
-The true contents of the memory operand are implementation defined.
+     <p>对于能力差些的目标机，任何不为常量1的值操作数，将使用<code>FAIL</code>进行拒绝。这种情况下，目标机可以使用一个原子的测试并置位操作。结果操作数应该包含1，如果该位在之前被设置，或者为0，如果该位在之前被清空。内存操作数的真实内容由实现来定义。
 
-     <p>This pattern must issue any memory barrier instructions such that the
-pattern as a whole acts as an acquire barrier, that is all memory
-operations after the pattern do not occur until the lock is acquired.
+     <p>该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
 
-     <p>If this pattern is not defined, the operation will be constructed from
-a compare-and-swap operation, if defined.
+     <p>如果这些指令模式没有被定义，则操作将通过一个比较并交换操作，如果定义，来构建。
 
-     <p><a name="index-g_t_0040code_007bsync_005flock_005frelease_0040var_007bmode_007d_007d-instruction-pattern-3515"></a><br><dt>&lsquo;<samp><span class="samp">sync_lock_release</span><var>mode</var></samp>&rsquo;<dd>
-This pattern, if defined, releases a lock set by
-<code>sync_lock_test_and_set</code><var>mode</var>.  Operand 0 is the memory
-that contains the lock; operand 1 is the value to store in the lock.
+     <p><a name="index-g_t_0040code_007bsync_005flock_005frelease_0040var_007bmode_007d_007d-instruction-pattern-3515"></a><br><dt>&lsquo;<samp><span class="samp">sync_lock_release</span><var>mode</var></samp>&rsquo;<dd>该指令模式，如果被定义，释放由<code>sync_lock_test_and_set</code><var>mode</var>设置的锁。操作数0为包含锁的内存；操作数1为存放在锁中的值。
 
-     <p>If the target doesn't implement full semantics for
-<code>sync_lock_test_and_set</code><var>mode</var>, any value operand which is not
-the constant 0 should be rejected with <code>FAIL</code>, and the true contents
-of the memory operand are implementation defined.
+     <p>如果目标机没有实现<code>sync_lock_test_and_set</code><var>mode</var>的完整语义，则任何不是常量0的值操作数将使用<code>FAIL</code>来拒绝，内存操作数的真实内容由实现来定义。
 
-     <p>This pattern must issue any memory barrier instructions such that the
-pattern as a whole acts as a release barrier, that is the lock is
-released only after all previous memory operations have completed.
+     <p>该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
 
-     <p>If this pattern is not defined, then a <code>memory_barrier</code> pattern
-will be emitted, followed by a store of the value to the memory operand.
+     <p>如果这些指令模式没有被定义，则会产生一个<code>memory_barrier</code>指令模式，紧跟一个将值存储到内存操作数的操作。
 
-     <p><a name="index-g_t_0040code_007bstack_005fprotect_005fset_007d-instruction-pattern-3516"></a><br><dt>&lsquo;<samp><span class="samp">stack_protect_set</span></samp>&rsquo;<dd>
-This pattern, if defined, moves a <code>Pmode</code> value from the memory
-in operand 1 to the memory in operand 0 without leaving the value in
-a register afterward.  This is to avoid leaking the value some place
-that an attacker might use to rewrite the stack guard slot after
-having clobbered it.
+     <p><a name="index-g_t_0040code_007bstack_005fprotect_005fset_007d-instruction-pattern-3516"></a><br><dt>&lsquo;<samp><span class="samp">stack_protect_set</span></samp>&rsquo;<dd>该指令模式，如果被定义，将内存操作数1中的<code>Pmode</code>值移送到内存操作数0中，并在之后不将该值留在寄存器中。这避免在某处泄露该值，从而使得攻击者用来重写栈保护槽。
 
-     <p>If this pattern is not defined, then a plain move pattern is generated.
+     <p>如果该指令模式没有被定义，则生成一个普通的move指令模式。
 
-     <p><a name="index-g_t_0040code_007bstack_005fprotect_005ftest_007d-instruction-pattern-3517"></a><br><dt>&lsquo;<samp><span class="samp">stack_protect_test</span></samp>&rsquo;<dd>
-This pattern, if defined, compares a <code>Pmode</code> value from the
-memory in operand 1 with the memory in operand 0 without leaving the
-value in a register afterward and branches to operand 2 if the values
-weren't equal.
+     <p><a name="index-g_t_0040code_007bstack_005fprotect_005ftest_007d-instruction-pattern-3517"></a><br><dt>&lsquo;<samp><span class="samp">stack_protect_test</span></samp>&rsquo;<dd>该指令模式，如果被定义，比较内存操作数1和内存操作数0中的<code>Pmode</code>值，在之后不将该值留在寄存器中，并且如果值不等，则分支跳转到操作数2。
 
-     <p>If this pattern is not defined, then a plain compare pattern and
-conditional branch pattern is used.
+     <p>如果该指令模式没有被定义，则使用一个普通的比较和条件分支指令模式。
 
-     <p><a name="index-g_t_0040code_007bclear_005fcache_007d-instruction-pattern-3518"></a><br><dt>&lsquo;<samp><span class="samp">clear_cache</span></samp>&rsquo;<dd>
-This pattern, if defined, flushes the instruction cache for a region of
-memory.  The region is bounded to by the Pmode pointers in operand 0
-inclusive and operand 1 exclusive.
+     <p><a name="index-g_t_0040code_007bclear_005fcache_007d-instruction-pattern-3518"></a><br><dt>&lsquo;<samp><span class="samp">clear_cache</span></samp>&rsquo;<dd>该指令模式，如果被定义，刷新一个内存区域的缓存。该区域的界限由操作数0（包含）和操作数1（不包含）中的Pmode指针界定。
 
-     <p>If this pattern is not defined, a call to the library function
-<code>__clear_cache</code> is used.
+     <p>如果该指令模式没有被定义，则使用对库函数<code>__clear_cache</code>的一个调用。
 
  </dl>
 
