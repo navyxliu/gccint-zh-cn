@@ -519,128 +519,47 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>当栈指针被保存，是用于非局部goto，则保存区域为一个<code>mem</code>，为一个相对于<code>virtual_stack_vars_rtx</code>的常量偏移，其它两种情况下，保存区域为一个<code>reg</code>。
 
-     <p><a name="index-g_t_0040code_007ballocate_005fstack_007d-instruction-pattern-3477"></a><br><dt>&lsquo;<samp><span class="samp">allocate_stack</span></samp>&rsquo;<dd>Subtract (or add if <code>STACK_GROWS_DOWNWARD</code> is undefined) operand 1 from
-the stack pointer to create space for dynamically allocated data.
+     <p><a name="index-g_t_0040code_007ballocate_005fstack_007d-instruction-pattern-3477"></a><br><dt>&lsquo;<samp><span class="samp">allocate_stack</span></samp>&rsquo;<dd>从栈指针中减去（或者增加，如果<code>STACK_GROWS_DOWNWARD</code>未定义）操作数1，来为动态分配的数据创建空间。将由此产生的指向该空间的指针存放在操作数0中。如果你是从主栈中分配空间，则可以通过生成一个insn，将<code>virtual_stack_dynamic_rtx</code>复制到操作数0中。如果你是从其它地方分配空间，则可以生成将该空间的位置复制到操作数0中的代码。对于后者情况，你必须确保该空间当主栈中对应的空间被释放的时候，其也被释放。
 
-     <p>Store the resultant pointer to this space into operand 0.  If you
-are allocating space from the main stack, do this by emitting a
-move insn to copy <code>virtual_stack_dynamic_rtx</code> to operand 0. 
-If you are allocating the space elsewhere, generate code to copy the
-location of the space to operand 0.  In the latter case, you must
-ensure this space gets freed when the corresponding space on the main
-stack is free.
+     <p>如果所有需要做的事情只是减法操作，则不用定义该指令模式。一些机器还要求其它的操作，例如栈探测，或者维护后向链。定义该指令模式除了更新栈指针之外的，来生成那些操作。
 
-     <p>Do not define this pattern if all that must be done is the subtraction. 
-Some machines require other operations such as stack probes or
-maintaining the back chain.  Define this pattern to emit those
-operations in addition to updating the stack pointer.
+     <p><a name="index-g_t_0040code_007bcheck_005fstack_007d-instruction-pattern-3478"></a><br><dt>&lsquo;<samp><span class="samp">check_stack</span></samp>&rsquo;<dd>如果在你的系统上，不能通过使用加载或者存储指令(see <a href="Stack-Checking.html#Stack-Checking">Stack Checking</a>)探测栈，从而进行栈检查，则定义该指令模式来执行所需要的检查，并且如果栈已经溢出则产生一个错误信号。有单个操作数，为栈中从当前栈指针开始，最远的栈位置。通常，在需要该指令模式的机器上，你将从一个全局的或者线程特定的变量或者寄存器中获得栈的限制。
 
-     <p><a name="index-g_t_0040code_007bcheck_005fstack_007d-instruction-pattern-3478"></a><br><dt>&lsquo;<samp><span class="samp">check_stack</span></samp>&rsquo;<dd>If stack checking cannot be done on your system by probing the stack with
-a load or store instruction (see <a href="Stack-Checking.html#Stack-Checking">Stack Checking</a>), define this pattern
-to perform the needed check and signaling an error if the stack
-has overflowed.  The single operand is the location in the stack furthest
-from the current stack pointer that you need to validate.  Normally,
-on machines where this pattern is needed, you would obtain the stack
-limit from a global or thread-specific variable or register.
+     <p><a name="index-g_t_0040code_007bnonlocal_005fgoto_007d-instruction-pattern-3479"></a><br><dt>&lsquo;<samp><span class="samp">nonlocal_goto</span></samp>&rsquo;<dd>生成产生一个非局部goto的代码，例如，从一个函数跳转到一个外部函数的标号。该指令模式有四个参数，每个参数表示一个在跳转中用到的值。第一个参数被加载到帧指针中，第二个为分支跳转的地址，第三个为栈被保存的地址，最后一个为标号的地址，放在静态链中。
 
-     <p><a name="index-g_t_0040code_007bnonlocal_005fgoto_007d-instruction-pattern-3479"></a><br><dt>&lsquo;<samp><span class="samp">nonlocal_goto</span></samp>&rsquo;<dd>Emit code to generate a non-local goto, e.g., a jump from one function
-to a label in an outer function.  This pattern has four arguments,
-each representing a value to be used in the jump.  The first
-argument is to be loaded into the frame pointer, the second is
-the address to branch to (code to dispatch to the actual label),
-the third is the address of a location where the stack is saved,
-and the last is the address of the label, to be placed in the
-location for the incoming static chain.
+     <p>在大多上机器上，你不需要定义该指令模式，因为GCC会产生正确的代码，用来加载帧指针和静态链，恢复栈（使用&lsquo;<samp><span class="samp">restore_stack_nonlocal</span></samp>&rsquo;指令模式，如果定义），并间接跳转。你只有当该代码在你的机器上不工作的情况下，才需定义该指令模式。
 
-     <p>On most machines you need not define this pattern, since GCC will
-already generate the correct code, which is to load the frame pointer
-and static chain, restore the stack (using the
-&lsquo;<samp><span class="samp">restore_stack_nonlocal</span></samp>&rsquo; pattern, if defined), and jump indirectly
-to the dispatcher.  You need only define this pattern if this code will
-not work on your machine.
+     <p><a name="index-g_t_0040code_007bnonlocal_005fgoto_005freceiver_007d-instruction-pattern-3480"></a><br><dt>&lsquo;<samp><span class="samp">nonlocal_goto_receiver</span></samp>&rsquo;<dd>该指令模式，如果定义，包含了非局部goto的目标处所需要的代码。通常不需要定义该指令模式。通常需要该指令模式的原因是，如果一些值，例如全局表的指针，必须在帧指针被恢复的时候，其也被恢复。注意，非局部goto，只出现在一个转换单元中，所以被给定模块的所有函数共享的全局表指针，不需要被恢复。该指令模式没有参数。
 
-     <p><a name="index-g_t_0040code_007bnonlocal_005fgoto_005freceiver_007d-instruction-pattern-3480"></a><br><dt>&lsquo;<samp><span class="samp">nonlocal_goto_receiver</span></samp>&rsquo;<dd>This pattern, if defined, contains code needed at the target of a
-nonlocal goto after the code already generated by GCC.  You will not
-normally need to define this pattern.  A typical reason why you might
-need this pattern is if some value, such as a pointer to a global table,
-must be restored when the frame pointer is restored.  Note that a nonlocal
-goto only occurs within a unit-of-translation, so a global table pointer
-that is shared by all functions of a given module need not be restored. 
-There are no arguments.
+     <p><a name="index-g_t_0040code_007bexception_005freceiver_007d-instruction-pattern-3481"></a><br><dt>&lsquo;<samp><span class="samp">exception_receiver</span></samp>&rsquo;<dd>该指令模式，如果被定义，包含了在一个异常处理的地方所需要的代码，其在非局部goto的地方不需要。通常你不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须在控制流分支跳转到异常处理之后，被恢复。该指令模式没有参数。
 
-     <p><a name="index-g_t_0040code_007bexception_005freceiver_007d-instruction-pattern-3481"></a><br><dt>&lsquo;<samp><span class="samp">exception_receiver</span></samp>&rsquo;<dd>This pattern, if defined, contains code needed at the site of an
-exception handler that isn't needed at the site of a nonlocal goto.  You
-will not normally need to define this pattern.  A typical reason why you
-might need this pattern is if some value, such as a pointer to a global
-table, must be restored after control flow is branched to the handler of
-an exception.  There are no arguments.
+     <p><a name="index-g_t_0040code_007bbuiltin_005fsetjmp_005fsetup_007d-instruction-pattern-3482"></a><br><dt>&lsquo;<samp><span class="samp">builtin_setjmp_setup</span></samp>&rsquo;<dd>该指令模式，如果被定义，则包含了需要初始化<code>jmp_buf</code>的代码。你通常不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须被恢复。尽管如此，还是推荐指针值如果可能（例如，给定一个标号的地址），则应被重新计算。有一单个操作数，
 
-     <p><a name="index-g_t_0040code_007bbuiltin_005fsetjmp_005fsetup_007d-instruction-pattern-3482"></a><br><dt>&lsquo;<samp><span class="samp">builtin_setjmp_setup</span></samp>&rsquo;<dd>This pattern, if defined, contains additional code needed to initialize
-the <code>jmp_buf</code>.  You will not normally need to define this pattern. 
-A typical reason why you might need this pattern is if some value, such
-as a pointer to a global table, must be restored.  Though it is
-preferred that the pointer value be recalculated if possible (given the
-address of a label for instance).  The single argument is a pointer to
-the <code>jmp_buf</code>.  Note that the buffer is five words long and that
-the first three are normally used by the generic mechanism.
+     <p><a name="index-g_t_0040code_007bbuiltin_005fsetjmp_005freceiver_007d-instruction-pattern-3483"></a><br><dt>&lsquo;<samp><span class="samp">builtin_setjmp_receiver</span></samp>&rsquo;<dd>该指令模式，如果被定义，包含了在内建setjmp的地方，并且在非局部goto的地方不需要的代码。你通常不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须被恢复。其接受一个参数，为builtin_longjmp将控制转出的标号；该指令模式可以被生成为对于标号的一个小的偏移。
 
-     <p><a name="index-g_t_0040code_007bbuiltin_005fsetjmp_005freceiver_007d-instruction-pattern-3483"></a><br><dt>&lsquo;<samp><span class="samp">builtin_setjmp_receiver</span></samp>&rsquo;<dd>This pattern, if defined, contains code needed at the site of an
-built-in setjmp that isn't needed at the site of a nonlocal goto.  You
-will not normally need to define this pattern.  A typical reason why you
-might need this pattern is if some value, such as a pointer to a global
-table, must be restored.  It takes one argument, which is the label
-to which builtin_longjmp transfered control; this pattern may be emitted
-at a small offset from that label.
+     <p><a name="index-g_t_0040code_007bbuiltin_005flongjmp_007d-instruction-pattern-3484"></a><br><dt>&lsquo;<samp><span class="samp">builtin_longjmp</span></samp>&rsquo;<dd>该指令模式，如果被定义，则执行整个longjmp动作。你通常不需要定义该指令模式，除非你还定义了<code>builtin_setjmp_setup</code>。单个操作数为指向<code>jmp_buf</code>的指针。
 
-     <p><a name="index-g_t_0040code_007bbuiltin_005flongjmp_007d-instruction-pattern-3484"></a><br><dt>&lsquo;<samp><span class="samp">builtin_longjmp</span></samp>&rsquo;<dd>This pattern, if defined, performs the entire action of the longjmp. 
-You will not normally need to define this pattern unless you also define
-<code>builtin_setjmp_setup</code>.  The single argument is a pointer to the
-<code>jmp_buf</code>.
+     <p><a name="index-g_t_0040code_007beh_005freturn_007d-instruction-pattern-3485"></a><br><dt>&lsquo;<samp><span class="samp">eh_return</span></samp>&rsquo;<dd>该指令模式，如果被定义，则影响<code>__builtin_eh_return</code>的方式，并且调用帧异常处理库函数会被建立。其用于处理异常返回路径所需要的非平凡的动作。
 
-     <p><a name="index-g_t_0040code_007beh_005freturn_007d-instruction-pattern-3485"></a><br><dt>&lsquo;<samp><span class="samp">eh_return</span></samp>&rsquo;<dd>This pattern, if defined, affects the way <code>__builtin_eh_return</code>,
-and thence the call frame exception handling library routines, are
-built.  It is intended to handle non-trivial actions needed along
-the abnormal return path.
+     <p>函数应该返回的异常处理的地址，被作为操作数传给该指令模式。其通常需要被指令模式复制到某个特定的寄存器或者内存位置。如果该指令模式需要确定目标调用帧的位置，则可以使用<code>EH_RETURN_STACKADJ_RTX</code>。
 
-     <p>The address of the exception handler to which the function should return
-is passed as operand to this pattern.  It will normally need to copied by
-the pattern to some special register or memory location. 
-If the pattern needs to determine the location of the target call
-frame in order to do so, it may use <code>EH_RETURN_STACKADJ_RTX</code>,
-if defined; it will have already been assigned.
+     <p>如果该指令模式没有被定义，缺省的动作为简单的将返回地址复制给<code>EH_RETURN_HANDLER_RTX</code>。或者宏，或者该指令模式，应该被定义，如果使用了调用帧异常处理。
 
-     <p>If this pattern is not defined, the default action will be to simply
-copy the return address to <code>EH_RETURN_HANDLER_RTX</code>.  Either
-that macro or this pattern needs to be defined if call frame exception
-handling is to be used.
+     <p><a name="index-g_t_0040code_007bprologue_007d-instruction-pattern-3486"></a><a name="prologue-instruction-pattern"></a><br><dt>&lsquo;<samp><span class="samp">prologue</span></samp>&rsquo;<dd>该指令模式，如果被定义，用来产生函数的入口RTL。函数入口负责设置栈帧，初始化帧指针寄存器，保存被调用者需要保存的寄存器，等等。
 
-     <p><a name="index-g_t_0040code_007bprologue_007d-instruction-pattern-3486"></a><a name="prologue-instruction-pattern"></a><br><dt>&lsquo;<samp><span class="samp">prologue</span></samp>&rsquo;<dd>This pattern, if defined, emits RTL for entry to a function.  The function
-entry is responsible for setting up the stack frame, initializing the frame
-pointer register, saving callee saved registers, etc.
+     <p>使用一个序言指令模式，通常的方式为定义<code>TARGET_ASM_FUNCTION_PROLOGUE</code>来产生序言的汇编代码。
 
-     <p>Using a prologue pattern is generally preferred over defining
-<code>TARGET_ASM_FUNCTION_PROLOGUE</code> to emit assembly code for the prologue.
+     <p><code>prologue</code>指令模式对于执行指令调度的目标机尤其有用。
 
-     <p>The <code>prologue</code> pattern is particularly useful for targets which perform
-instruction scheduling.
+     <p><a name="index-g_t_0040code_007bepilogue_007d-instruction-pattern-3487"></a><a name="epilogue-instruction-pattern"></a><br><dt>&lsquo;<samp><span class="samp">epilogue</span></samp>&rsquo;<dd>该指令模式为函数的出口生成RTL。函数出口负责撤销栈帧的分配，恢复被调用者所保存的寄存器，并产生返回指令。
 
-     <p><a name="index-g_t_0040code_007bepilogue_007d-instruction-pattern-3487"></a><a name="epilogue-instruction-pattern"></a><br><dt>&lsquo;<samp><span class="samp">epilogue</span></samp>&rsquo;<dd>This pattern emits RTL for exit from a function.  The function
-exit is responsible for deallocating the stack frame, restoring callee saved
-registers and emitting the return instruction.
+     <p>使用尾声指令模式，通常的方式为定义<code>TARGET_ASM_FUNCTION_EPILOGUE</code>，来产生尾声的汇编代码。
 
-     <p>Using an epilogue pattern is generally preferred over defining
-<code>TARGET_ASM_FUNCTION_EPILOGUE</code> to emit assembly code for the epilogue.
+     <p><code>prologue</code>指令模式对于执行指令调度的，或者它们的返回指令具有延迟槽的目标机，尤其有用。
 
-     <p>The <code>epilogue</code> pattern is particularly useful for targets which perform
-instruction scheduling or which have delay slots for their return instruction.
+     <p><a name="index-g_t_0040code_007bsibcall_005fepilogue_007d-instruction-pattern-3488"></a><br><dt>&lsquo;<samp><span class="samp">sibcall_epilogue</span></samp>&rsquo;<dd>该指令模式，如果被定义，产生一个函数的出口RTL，并且最终不分支跳转会到调用函数。该指令模式将在任何兄弟调用（即尾调用）地点之前被产生。
 
-     <p><a name="index-g_t_0040code_007bsibcall_005fepilogue_007d-instruction-pattern-3488"></a><br><dt>&lsquo;<samp><span class="samp">sibcall_epilogue</span></samp>&rsquo;<dd>This pattern, if defined, emits RTL for exit from a function without the final
-branch back to the calling function.  This pattern will be emitted before any
-sibling call (aka tail call) sites.
-
-     <p>The <code>sibcall_epilogue</code> pattern must not clobber any arguments used for
-parameter passing or any stack slots for arguments passed to the current
-function.
+     <p><code>sibcall_epilogue</code>指令模式一定不能破坏任何用于传递的参数，或者用于传给当前函数的参数的栈槽。
 
      <p><a name="index-g_t_0040code_007btrap_007d-instruction-pattern-3489"></a><br><dt>&lsquo;<samp><span class="samp">trap</span></samp>&rsquo;<dd>This pattern, if defined, signals an error, typically by causing some
 kind of signal to be raised.  Among other places, it is used by the Java
