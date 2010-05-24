@@ -11,36 +11,15 @@
 @chapter GENERIC
 @cindex GENERIC
 
-The purpose of GENERIC is simply to provide a
-language-independent way of representing an entire function in
-trees.  To this end, it was necessary to add a few new tree codes
-to the back end, but most everything was already there.  If you
-can express it with the codes in @code{gcc/tree.def}, it's
-GENERIC@.
+GENERIC的目的是简单的提供一个使用tree来表示整个函数的语言无关的方式。为此，之前需要为后端增加一些新的tree代码，但是大多数东西都已经存在。如果你可以使用@code{gcc/tree.def}中的代码来表示，则其即为GENERIC。
 
-Early on, there was a great deal of debate about how to think
-about statements in a tree IL@.  In GENERIC, a statement is
-defined as any expression whose value, if any, is ignored.  A
-statement will always have @code{TREE_SIDE_EFFECTS} set (or it
-will be discarded), but a non-statement expression may also have
-side effects.  A @code{CALL_EXPR}, for instance.
+早期，有一个很大的争论，关于如何在tree IL级别来考虑语句。在GENERIC中，一条语句被定义为任意的表达式，其值，如果存在，被忽略。语句总是设置@code{TREE_SIDE_EFFECTS}，不过一个非语句的表达式也可以具有副作用。例如，@code{CALL_EXPR}。
 
-It would be possible for some local optimizations to work on the
-GENERIC form of a function; indeed, the adapted tree inliner
-works fine on GENERIC, but the current compiler performs inlining
-after lowering to GIMPLE (a restricted form described in the next
-section). Indeed, currently the frontends perform this lowering
-before handing off to @code{tree_rest_of_compilation}, but this
-seems inelegant.
 
-If necessary, a front end can use some language-dependent tree
-codes in its GENERIC representation, so long as it provides a
-hook for converting them to GIMPLE and doesn't expect them to
-work with any (hypothetical) optimizers that run before the
-conversion to GIMPLE@. The intermediate representation used while
-parsing C and C++ looks very little like GENERIC, but the C and
-C++ gimplifier hooks are perfectly happy to take it as input and
-spit out GIMPLE@.
+对于一些局部优化，可以在函数的GENERIC形式上进行工作；的确，被改写的tree内联在GENERIC上可以很好的工作，不过目前编译器是在下降到GIMPLE（一个严格的形式，在下节有描述）之后，才执行内联的。确实，目前前端是在移交给@code{tree_rest_of_compilation}之前，来执行该下降，不过这看起来不太优雅。
+
+
+如果有必要，前端可以在其GENERIC表示中使用一些语言相关的tree代码，只要其提供一个钩子，将它们转换成GIMPLE，并且不要期望它们可以与任何（假象的）运行在转换成GIMPLE之前的优化器一起工作。当解析C和C++时使用的中间表示，看起来非常像GENERIC，不过C和C++ gimplifier钩子会将其作为输入，并输出GIMPLE。
 
 @menu
 * 语句::
@@ -50,12 +29,9 @@ spit out GIMPLE@.
 @section 语句
 @cindex Statements
 
-Most statements in GIMPLE are assignment statements, represented by
-@code{GIMPLE_ASSIGN}.  No other C expressions can appear at statement level;
-a reference to a volatile object is converted into a
-@code{GIMPLE_ASSIGN}.
+大多数GIMPLE语句为赋值语句，由@code{GIMPLE_ASSIGN}来表示。没有其它C表达式可以出现在语句级别；对一个volatile对象的引用被转换成一个@code{GIMPLE_ASSIGN}。
 
-There are also several varieties of complex statements.
+还有几个复杂语句的变体。
 
 @menu
 * 块::
@@ -69,69 +45,34 @@ There are also several varieties of complex statements.
 @subsection 块
 @cindex Blocks
 
-Block scopes and the variables they declare in GENERIC are
-expressed using the @code{BIND_EXPR} code, which in previous
-versions of GCC was primarily used for the C statement-expression
-extension.
+块作用域和它们声明的变量，在GENERIC中使用@code{BIND_EXPR}代码来表示。这在之前的GCC版本中被主要表示为C语句表达式扩展。
 
-Variables in a block are collected into @code{BIND_EXPR_VARS} in
-declaration order.  Any runtime initialization is moved out of
-@code{DECL_INITIAL} and into a statement in the controlled block.
-When gimplifying from C or C++, this initialization replaces the
-@code{DECL_STMT}.
+块中的变量按照声明的顺序被搜集到@code{BIND_EXPR_VARS}中。任何运行时的初始化被从@code{DECL_INITIAL}中移出，并移送到控制块中的一条语句。当从C或者C++进行gimplifying的时候，该初始化用来替换@code{DECL_STMT}。
 
-Variable-length arrays (VLAs) complicate this process, as their
-size often refers to variables initialized earlier in the block.
-To handle this, we currently split the block at that point, and
-move the VLA into a new, inner @code{BIND_EXPR}.  This strategy
-may change in the future.
+可变长度的数组（VLA）使得该处理变得复杂，因为它们的大小经常是一个块中早前被初始化的变量。为了进行处理，我们目前将块在那个点进行拆分，将VLA移送到一个新的，内部的@code{BIND_EXPR}。该策略在将来可能会改变。
 
-A C++ program will usually contain more @code{BIND_EXPR}s than
-there are syntactic blocks in the source code, since several C++
-constructs have implicit scopes associated with them.  On the
-other hand, although the C++ front end uses pseudo-scopes to
-handle cleanups for objects with destructors, these don't
-translate into the GIMPLE form; multiple declarations at the same
-level use the same @code{BIND_EXPR}.
+C++程序通常包含比源代码中语法块更多的@code{BIND_EXPR}，因为多个C++构造函数具有隐式的与它们相关联的作用域。另一方面，虽然C++前端使用伪作用域来处理析构函数对对象的清除，这些并不被转换成GIMPLE形式；在相同级别上的多个声明使用相同的@code{BIND_EXPR}。
 
 @node 语句序列
 @subsection 语句序列
 @cindex Statement Sequences
-
-Multiple statements at the same nesting level are collected into
-a @code{STATEMENT_LIST}.  Statement lists are modified and
-traversed using the interface in @samp{tree-iterator.h}.
+同一嵌套级别的多个语句被搜集到一个@code{STATEMENT_LIST}中。语句列表使用@samp{tree-iterator.h}中的接口来进行修改和遍历。
 
 @node 空语句
 @subsection 空语句
 @cindex Empty Statements
+没有作用效果的语句会尽可能的被丢弃。但是如果它们嵌套在另一个结构中，并且出于某种原因该结构不能被丢弃，则使用空语句来替换，通过@code{build_empty_stmt}来生成。起初，所有的空语句是共享的，但是这在实际中产生了许多麻烦。
 
-Whenever possible, statements with no effect are discarded.  But
-if they are nested within another construct which cannot be
-discarded for some reason, they are instead replaced with an
-empty statement, generated by @code{build_empty_stmt}.
-Initially, all empty statements were shared, after the pattern of
-the Java front end, but this caused a lot of trouble in practice.
-
-An empty statement is represented as @code{(void)0}.
+空语句被表示为@code{(void)0}。
 
 @node 跳转
 @subsection 跳转
 @cindex Jumps
+其它的跳转由@code{GOTO_EXPR}或者@code{RETURN_EXPR}表示。
 
-Other jumps are expressed by either @code{GOTO_EXPR} or
-@code{RETURN_EXPR}.
+@code{GOTO_EXPR}的操作数必须为一个标号或者一个包含跳转地址的变量。
 
-The operand of a @code{GOTO_EXPR} must be either a label or a
-variable containing the address to jump to.
-
-The operand of a @code{RETURN_EXPR} is either @code{NULL_TREE},
-@code{RESULT_DECL}, or a @code{MODIFY_EXPR} which sets the return
-value.  It would be nice to move the @code{MODIFY_EXPR} into a
-separate statement, but the special return semantics in
-@code{expand_return} make that difficult.  It may still happen in
-the future, perhaps by moving most of that logic into
-@code{expand_assignment}.
+@code{RETURN_EXPR}的操作数为@code{NULL_TREE}，@code{RESULT_DECL}，或者@code{MODIFY_EXPR}，其用来设置返回值。将@code{MODIFY_EXPR}移送到一个单独的语句会好些，不过@code{expand_return}中的特定的return语义使得有些困难。这在将来可能会发生，可能会通过将大部分逻辑移送到@code{expand_assignment}中。
 
 @node 清除
 @subsection 清除
