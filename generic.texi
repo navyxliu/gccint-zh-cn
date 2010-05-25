@@ -77,44 +77,25 @@ C++程序通常包含比源代码中语法块更多的@code{BIND_EXPR}，因为�
 @node 清除
 @subsection 清除
 @cindex Cleanups
+对于C++局部对象的析构，以及类似的动态清除操作在GIMPLE中通过一个@code{TRY_FINALLY_EXPR}来表示。@code{TRY_FINALLY_EXPR}有两个操作数，均为要执行的语句序列。第一个序列会被执行。当其执行完毕时，第二个序列会被执行。
 
-Destructors for local C++ objects and similar dynamic cleanups are
-represented in GIMPLE by a @code{TRY_FINALLY_EXPR}.
-@code{TRY_FINALLY_EXPR} has two operands, both of which are a sequence
-of statements to execute.  The first sequence is executed.  When it
-completes the second sequence is executed.
-
-The first sequence may complete in the following ways:
+第一个序列可以按照下列方式来执行完毕：
 
 @enumerate
 
-@item Execute the last statement in the sequence and fall off the
-end.
+@item 执行了序列中的最后一条语句，并结束。
 
-@item Execute a goto statement (@code{GOTO_EXPR}) to an ordinary
-label outside the sequence.
+@item 执行一个goto语句(@code{GOTO_EXPR})，跳到序列之外的一个普通标号。 t
 
-@item Execute a return statement (@code{RETURN_EXPR}).
+@item 执行一个return语句(@code{RETURN_EXPR})。
 
-@item Throw an exception.  This is currently not explicitly represented in
-GIMPLE.
+@item 抛出一个异常。这在当前没有用GIMPLE显式的表示。
 
 @end enumerate
 
-The second sequence is not executed if the first sequence completes by
-calling @code{setjmp} or @code{exit} or any other function that does
-not return.  The second sequence is also not executed if the first
-sequence completes via a non-local goto or a computed goto (in general
-the compiler does not know whether such a goto statement exits the
-first sequence or not, so we assume that it doesn't).
+如果第一个序列通过调用@code{setjmp}或@code{exit}，或者其它不返回的函数，来执行完毕，则第二个序列不会被执行。如果第一个序列通过一个非局部goto或者一个计算goto（总的来说，编译器不知道这样一个goto语句是否会退出第一个序列，所以我们假设其没有退出）来执行完毕，则第二个序列也不会被执行。
 
-After the second sequence is executed, if it completes normally by
-falling off the end, execution continues wherever the first sequence
-would have continued, by falling off the end, or doing a goto, etc.
+第二个序列被执行完之后，如果其正常的执行到结尾，并结束，则只要第一个序列被继续执行，其也会被继续。
 
-@code{TRY_FINALLY_EXPR} complicates the flow graph, since the cleanup
-needs to appear on every edge out of the controlled block; this
-reduces the freedom to move code across these edges.  Therefore, the
-EH lowering pass which runs before most of the optimization passes
-eliminates these expressions by explicitly adding the cleanup to each
-edge.  Rethrowing the exception is represented using @code{RESX_EXPR}.
+@code{TRY_FINALLY_EXPR}使流图变得复杂，因为清除工作需要在流出控制块的每条边上都出现；这就减少了将代码跨越这些边进行移动的自由。因此，运行于大多数优化过程之前的EH下降过程，通过显式的增加对每个边的清除操作，来消除这些表达式。再次抛出异常使用@code{RESX_EXPR}来表示。
+

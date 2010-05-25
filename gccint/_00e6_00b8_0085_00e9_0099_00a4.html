@@ -50,47 +50,27 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e8_00af_00ad_00e5_008f_00a5.html#g_t
 
 <h4 class="subsection">11.1.5 清除</h4>
 
-<p><a name="index-Cleanups-2673"></a>
-Destructors for local C++ objects and similar dynamic cleanups are
-represented in GIMPLE by a <code>TRY_FINALLY_EXPR</code>. 
-<code>TRY_FINALLY_EXPR</code> has two operands, both of which are a sequence
-of statements to execute.  The first sequence is executed.  When it
-completes the second sequence is executed.
+<p><a name="index-Cleanups-2673"></a>对于C++局部对象的析构，以及类似的动态清除操作在GIMPLE中通过一个<code>TRY_FINALLY_EXPR</code>来表示。<code>TRY_FINALLY_EXPR</code>有两个操作数，均为要执行的语句序列。第一个序列会被执行。当其执行完毕时，第二个序列会被执行。
 
- <p>The first sequence may complete in the following ways:
+ <p>第一个序列可以按照下列方式来执行完毕：
 
      <ol type=1 start=1>
 
-     <li>Execute the last statement in the sequence and fall off the
-end.
+     <li>执行了序列中的最后一条语句，并结束。
 
-     <li>Execute a goto statement (<code>GOTO_EXPR</code>) to an ordinary
-label outside the sequence.
+     <li>执行一个goto语句(<code>GOTO_EXPR</code>)，跳到序列之外的一个普通标号。 t
 
-     <li>Execute a return statement (<code>RETURN_EXPR</code>).
+     <li>执行一个return语句(<code>RETURN_EXPR</code>)。
 
-     <li>Throw an exception.  This is currently not explicitly represented in
-GIMPLE.
+     <li>抛出一个异常。这在当前没有用GIMPLE显式的表示。
 
       </ol>
 
- <p>The second sequence is not executed if the first sequence completes by
-calling <code>setjmp</code> or <code>exit</code> or any other function that does
-not return.  The second sequence is also not executed if the first
-sequence completes via a non-local goto or a computed goto (in general
-the compiler does not know whether such a goto statement exits the
-first sequence or not, so we assume that it doesn't).
+ <p>如果第一个序列通过调用<code>setjmp</code>或<code>exit</code>，或者其它不返回的函数，来执行完毕，则第二个序列不会被执行。如果第一个序列通过一个非局部goto或者一个计算goto（总的来说，编译器不知道这样一个goto语句是否会退出第一个序列，所以我们假设其没有退出）来执行完毕，则第二个序列也不会被执行。
 
- <p>After the second sequence is executed, if it completes normally by
-falling off the end, execution continues wherever the first sequence
-would have continued, by falling off the end, or doing a goto, etc.
+ <p>第二个序列被执行完之后，如果其正常的执行到结尾，并结束，则只要第一个序列被继续执行，其也会被继续。
 
- <p><code>TRY_FINALLY_EXPR</code> complicates the flow graph, since the cleanup
-needs to appear on every edge out of the controlled block; this
-reduces the freedom to move code across these edges.  Therefore, the
-EH lowering pass which runs before most of the optimization passes
-eliminates these expressions by explicitly adding the cleanup to each
-edge.  Rethrowing the exception is represented using <code>RESX_EXPR</code>.
+ <p><code>TRY_FINALLY_EXPR</code>使流图变得复杂，因为清除工作需要在流出控制块的每条边上都出现；这就减少了将代码跨越这些边进行移动的自由。因此，运行于大多数优化过程之前的EH下降过程，通过显式的增加对每个边的清除操作，来消除这些表达式。再次抛出异常使用<code>RESX_EXPR</code>来表示。
 
 <!-- Copyright (c) 2008, 2009 Free Software Foundation, Inc. -->
 <!-- Free Software Foundation, Inc. -->
