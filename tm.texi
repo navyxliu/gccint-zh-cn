@@ -1886,51 +1886,31 @@ The default version of this hook always returns @code{true}.
 
 @cindex leaf functions
 @cindex functions, leaf
-在一些机器上，一个叶子函数（即，不做任何调用的函数）可以运行的更加有效，
-如果其使用它自己的寄存器窗口。通常这意味着，
-需要通过调用者传递参数的寄存器来接收它的参数，而不是它们通常到达的寄存器。
+在一些机器上，一个叶子函数（即，不做任何调用的函数），如果其不创建自己的寄存器窗口，则可以运行的更加有效。通常这意味着，其需要通过调用者传递参数的寄存器来接收它的参数，而不是它们通常到达的寄存器。
 
-对叶子函数的特殊处理通常只在其它条件满足时才被执行；例如，
-通常它们可能只用于它自己的变量和临时对象的那些寄存器。
-我们使用词语“叶子函数”来指一个适合这样的处理的函数，
-所以没有函数调用的函数并不一定是“叶子函数”。
+通常只有当叶子函数还满足其它条件时，才会对其进行特殊的对待；例如，通常它们可能只使用，用于它自己的变量和临时对象的那些寄存器。我们使用术语“叶子函数”来指一个适合这样特殊处理的函数，所以没有函数调用的函数并不一定是“叶子函数”。
 
-GCC在它知道函数是否适合作为叶子函数来对待之前分配寄存器编号。
-所以它需要重编号寄存器，以便输出一个叶子函数。下面的宏用来完成此事。
+GCC是在它知道函数是否适合作为叶子函数来对待之前，分配寄存器编号的。所以它需要重编号寄存器，以便输出一个叶子函数。下面的宏用来完成此事。
 
 @defmac LEAF_REGISTERS
-一个char向量的名字，按照硬件寄存器编号进行索引，
-对于允许作为叶子函数处理的候选的寄存器，其值为1。
+一个char向量的名字，按照硬件寄存器编号进行索引，对于允许作为叶子函数处理的候选寄存器，其值为1。
 
-如果叶子函数处理涉及到重编号寄存器，
-则这里标记的寄存器应该是重编号之前的——那些GCC普通分配的。
-重编号后，在汇编代码中实际被使用的寄存器，不要在该向量中被标记为1。
+如果叶子函数处理涉及到重编号寄存器，则这里标记的寄存器应该是重编号之前的——那些GCC通常分配的。重编号后，在汇编代码中实际被使用的寄存器，不要在该向量中被标记为1。
 
-定义该宏，只当target机器提供了优化叶子函数处理的方法。
+只有当目标机器提供了优化叶子函数处理的方法时，才定义该宏。
 @end defmac
 
 @defmac LEAF_REG_REMAP (@var{regno})
-一个C表达式，当函数作为叶子函数来处理时，
-其值为应该对@var{regno}进行重编号的寄存器编号。
+一个C表达式，当函数作为叶子函数来处理时，其值为应该对@var{regno}进行重编的寄存器编号。
 
-如果@var{regno}为一个在重编号前不应该出现在叶子函数中的寄存器编号，
-则表达式应该求值为-1，这将造成编译器中断退出。
+如果@var{regno}为一个在重编号前不应该出现在叶子函数中的寄存器编号，则表达式的值应该为-1，这将造成编译器中断退出。
 
-定义该宏，只当target机器提供了优化叶子函数处理的方法，
-并且寄存器需要被重编号。
+只有当目标机器提供了优化叶子函数处理的方法，并且寄存器需要被重编号的时候，才定义该宏。
 @end defmac
 
 @findex current_function_is_leaf
 @findex current_function_uses_only_leaf_regs
-@code{TARGET_ASM_FUNCTION_PROLOGUE}和@code{TARGET_ASM_FUNCTION_EPILOGUE}
-通常需要单独处理叶子函数。
-它们可以测试C变量@code{current_function_is_leaf}，其对于叶子函数非0。
-@code{current_function_is_leaf}在局部寄存器分配之前被设置，
-并且可以用于剩余的编译器过程。
-它们还可以测试C变量@code{current_function_uses_only_leaf_regs}，
-其对于只用叶子寄存器的叶子函数为非0。
-@code{current_function_uses_only_leaf_regs}在所有修改指令的过程被运行完
-之后可用，并且只有当@code{LEAF_REGISTERS}被定义时才有用。
+@code{TARGET_ASM_FUNCTION_PROLOGUE}和@code{TARGET_ASM_FUNCTION_EPILOGUE}通常必须专门处理叶子函数。它们可以测试C变量@code{current_function_is_leaf}，其对于叶子函数为非0。@code{current_function_is_leaf}在局部寄存器分配之前被设置，并且可以用于剩余的编译器过程。它们还可以测试C变量@code{current_function_uses_only_leaf_regs}，其对于只用叶子寄存器的叶子函数为非0。@code{current_function_uses_only_leaf_regs}在所有修改指令的过程被运行完之后可用，并且只有当@code{LEAF_REGISTERS}被定义时才有用。
 
 @c changed this to fix overfull.  ALSO:  why the "it" at the beginning
 @c of the next paragraph?!  --mew 2feb93
