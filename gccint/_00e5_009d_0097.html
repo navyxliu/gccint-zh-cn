@@ -51,30 +51,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e8_00af_00ad_00e5_008f_00a5.html#g_t
 <h4 class="subsection">11.1.1 块</h4>
 
 <p><a name="index-Blocks-2669"></a>
-Block scopes and the variables they declare in GENERIC are
-expressed using the <code>BIND_EXPR</code> code, which in previous
-versions of GCC was primarily used for the C statement-expression
-extension.
+块作用域和它们声明的变量，在GENERIC中使用<code>BIND_EXPR</code>代码来表示。这在之前的GCC版本中被主要表示为C语句表达式扩展。
 
- <p>Variables in a block are collected into <code>BIND_EXPR_VARS</code> in
-declaration order.  Any runtime initialization is moved out of
-<code>DECL_INITIAL</code> and into a statement in the controlled block. 
-When gimplifying from C or C++, this initialization replaces the
-<code>DECL_STMT</code>.
+ <p>块中的变量按照声明的顺序被搜集到<code>BIND_EXPR_VARS</code>中。任何运行时的初始化被从<code>DECL_INITIAL</code>中移出，并移送到控制块中的一条语句。当从C或者C++进行gimplifying的时候，该初始化用来替换<code>DECL_STMT</code>。
 
- <p>Variable-length arrays (VLAs) complicate this process, as their
-size often refers to variables initialized earlier in the block. 
-To handle this, we currently split the block at that point, and
-move the VLA into a new, inner <code>BIND_EXPR</code>.  This strategy
-may change in the future.
+ <p>可变长度的数组（VLA）使得该处理变得复杂，因为它们的大小经常是一个块中早前被初始化的变量。为了进行处理，我们目前将块在那个点进行拆分，将VLA移送到一个新的，内部的<code>BIND_EXPR</code>。该策略在将来可能会改变。
 
- <p>A C++ program will usually contain more <code>BIND_EXPR</code>s than
-there are syntactic blocks in the source code, since several C++
-constructs have implicit scopes associated with them.  On the
-other hand, although the C++ front end uses pseudo-scopes to
-handle cleanups for objects with destructors, these don't
-translate into the GIMPLE form; multiple declarations at the same
-level use the same <code>BIND_EXPR</code>.
+ <p>C++程序通常包含比源代码中语法块更多的<code>BIND_EXPR</code>，因为多个C++构造函数具有隐式的与它们相关联的作用域。另一方面，虽然C++前端使用伪作用域来处理析构函数对对象的清除，这些并不被转换成GIMPLE形式；在相同级别上的多个声明使用相同的<code>BIND_EXPR</code>。
 
  </body></html>
 

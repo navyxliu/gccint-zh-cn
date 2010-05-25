@@ -51,36 +51,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
 <h2 class="chapter">11 GENERIC</h2>
 
 <p><a name="index-GENERIC-2667"></a>
-The purpose of GENERIC is simply to provide a
-language-independent way of representing an entire function in
-trees.  To this end, it was necessary to add a few new tree codes
-to the back end, but most everything was already there.  If you
-can express it with the codes in <code>gcc/tree.def</code>, it's
-GENERIC.
+GENERIC的目的是简单的提供一个使用tree来表示整个函数的语言无关的方式。为此，之前需要为后端增加一些新的tree代码，但是大多数东西都已经存在。如果你可以使用<code>gcc/tree.def</code>中的代码来表示，则其即为GENERIC。
 
- <p>Early on, there was a great deal of debate about how to think
-about statements in a tree IL.  In GENERIC, a statement is
-defined as any expression whose value, if any, is ignored.  A
-statement will always have <code>TREE_SIDE_EFFECTS</code> set (or it
-will be discarded), but a non-statement expression may also have
-side effects.  A <code>CALL_EXPR</code>, for instance.
+ <p>早期，有一个很大的争论，关于如何在tree IL级别来考虑语句。在GENERIC中，一条语句被定义为任意的表达式，其值，如果存在，被忽略。语句总是设置<code>TREE_SIDE_EFFECTS</code>，不过一个非语句的表达式也可以具有副作用。例如，<code>CALL_EXPR</code>。
 
- <p>It would be possible for some local optimizations to work on the
-GENERIC form of a function; indeed, the adapted tree inliner
-works fine on GENERIC, but the current compiler performs inlining
-after lowering to GIMPLE (a restricted form described in the next
-section). Indeed, currently the frontends perform this lowering
-before handing off to <code>tree_rest_of_compilation</code>, but this
-seems inelegant.
+ <p>对于一些局部优化，可以在函数的GENERIC形式上进行工作；的确，被改写的tree内联在GENERIC上可以很好的工作，不过目前编译器是在下降到GIMPLE（一个严格的形式，在下节有描述）之后，才执行内联的。确实，目前前端是在移交给<code>tree_rest_of_compilation</code>之前，来执行该下降，不过这看起来不太优雅。
 
- <p>If necessary, a front end can use some language-dependent tree
-codes in its GENERIC representation, so long as it provides a
-hook for converting them to GIMPLE and doesn't expect them to
-work with any (hypothetical) optimizers that run before the
-conversion to GIMPLE. The intermediate representation used while
-parsing C and C++ looks very little like GENERIC, but the C and
-C++ gimplifier hooks are perfectly happy to take it as input and
-spit out GIMPLE.
+ <p>如果有必要，前端可以在其GENERIC表示中使用一些语言相关的tree代码，只要其提供一个钩子，将它们转换成GIMPLE，并且不要期望它们可以与任何（假象的）运行在转换成GIMPLE之前的优化器一起工作。当解析C和C++时使用的中间表示，看起来非常像GENERIC，不过C和C++ gimplifier钩子会将其作为输入，并输出GIMPLE。
 
 <ul class="menu">
 <li><a accesskey="1" href="_00e8_00af_00ad_00e5_008f_00a5.html#g_t_00e8_00af_00ad_00e5_008f_00a5">语句</a>
