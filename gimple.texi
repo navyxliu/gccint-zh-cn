@@ -2242,83 +2242,46 @@ any new basic blocks which are necessary.
 @section 增加一个新的GIMPLE语句代码
 @cindex Adding a new GIMPLE statement code
 
-The first step in adding a new GIMPLE statement code, is
-modifying the file @code{gimple.def}, which contains all the GIMPLE
-codes.  Then you must add a corresponding structure, and an entry
-in @code{union gimple_statement_d}, both of which are located in
-@code{gimple.h}.  This in turn, will require you to add a corresponding
-@code{GTY} tag in @code{gsstruct.def}, and code to handle this tag in
-@code{gss_for_code} which is located in @code{gimple.c}.
+增加一个新的GIMPLE语句代码，第一步是修改文件@code{gimple.def}，其包含了所有的GIMPLE代码。然后，你必须增加一个相应的结构体，以及@code{union gimple_statement_d}中的一个实体，这些都在@code{gimple.h}中。这将要求你在@code{gsstruct.def}中增加一个相应的@code{GTY}标记，以及在@code{gss_for_code}中增加处理该标记的代码，这位于@code{gimple.c}中。
 
-In order for the garbage collector to know the size of the
-structure you created in @code{gimple.h}, you need to add a case to
-handle your new GIMPLE statement in @code{gimple_size} which is located
-in @code{gimple.c}.
+为了让垃圾搜集器知道你在@code{gimple.h}中创建的结构体的大小，你需要在@code{gimple_size}增加一个case来处理你的新的GIMPLE语句，位于@code{gimple.c}中。
 
-You will probably want to create a function to build the new
-gimple statement in @code{gimple.c}.  The function should be called
-@code{gimple_build_<@code{NEW_TUPLE_NAME}>}, and should return the new tuple
-of type gimple.
+你可能想创建一个函数来构建新的gimple语句，在@code{gimple.c}中。该函数应该被称作@code{gimple_build_<@code{NEW_TUPLE_NAME}>}，并返回类型为gimple的新的元组。
 
-If your new statement requires accessors for any members or
-operands it may have, put simple inline accessors in
-@code{gimple.h} and any non-trivial accessors in @code{gimple.c} with a
-corresponding prototype in @code{gimple.h}.
-
+如果你的新语句需要对其成员或者操作数进行访问的代码，则在@code{gimple.h}中放入简单的inline访问代码，以及在@code{gimple.c}中任何不平凡的访问代码，并在@code{gimple.h}中有相应的函数原型。
 
 @node 语句和操作数遍历
 @section 语句和操作数遍历
 @cindex Statement and operand traversals
- 
-There are two functions available for walking statements and
-sequences: @code{walk_gimple_stmt} and @code{walk_gimple_seq},
-accordingly, and a third function for walking the operands in a
-statement: @code{walk_gimple_op}.
+有两个函数可以用于遍历语句和序列：分别为@code{walk_gimple_stmt}和@code{walk_gimple_seq}。还有第三个函数用于遍历语句中的操作数：@code{walk_gimple_op}。
 
 @deftypefn {GIMPLE function} tree walk_gimple_stmt (gimple_stmt_iterator *gsi, walk_stmt_fn callback_stmt, walk_tree_fn callback_op, struct walk_stmt_info *wi)
-This function is used to walk the current statement in @code{GSI},
-optionally using traversal state stored in @code{WI}.  If @code{WI} is @code{NULL}, no
-state is kept during the traversal.
+该函数用于在@code{GSI}中遍历当前语句，并可选的使用@code{WI}中存放的遍历状态。如果@code{WI}为@code{NULL}，则在遍历中不保存状态。
 
-The callback @code{CALLBACK_STMT} is called.  If @code{CALLBACK_STMT} returns
-true, it means that the callback function has handled all the
-operands of the statement and it is not necessary to walk its
-operands.
+回调函数@code{CALLBACK_STMT}被调用。如果@code{CALLBACK_STMT}返回真，则意味着回调函数已经处理了语句的所有操作数，并且无需遍历它的操作数。
 
-If @code{CALLBACK_STMT} is @code{NULL} or it returns false, @code{CALLBACK_OP} is
-called on each operand of the statement via @code{walk_gimple_op}.  If
-@code{walk_gimple_op} returns non-@code{NULL} for any operand, the remaining
-operands are not scanned.
+如果@code{CALLBACK_STMT}为@code{NULL}或者返回假，则@code{CALLBACK_OP}会在语句的每个操作数上被调用，通过@code{walk_gimple_op}。如果@code{walk_gimple_op}对任意操作数返回了非@code{NULL}，则剩下的操作数将不被扫描。
 
-The return value is that returned by the last call to
-@code{walk_gimple_op}, or @code{NULL_TREE} if no @code{CALLBACK_OP} is specified.
+返回值为对@code{walk_gimple_op}最后调用所返回的值，或者如果没有指定@code{CALLBACK_OP}则返回@code{NULL_TREE}。
+
 @end deftypefn
 
 
 @deftypefn {GIMPLE function} tree walk_gimple_op (gimple stmt, walk_tree_fn callback_op, struct walk_stmt_info *wi)
-Use this function to walk the operands of statement @code{STMT}.  Every
-operand is walked via @code{walk_tree} with optional state information
-in @code{WI}.
+使用该函数来遍历语句@code{STMT}的操作数。每个操作数通过@code{walk_tree}来遍历，并使用@code{WI}中可选的状态信息。
 
-@code{CALLBACK_OP} is called on each operand of @code{STMT} via @code{walk_tree}.
-Additional parameters to @code{walk_tree} must be stored in @code{WI}.  For
-each operand @code{OP}, @code{walk_tree} is called as:
+@code{CALLBACK_OP}在@code{STMT}的每个操作数上被调用，通过@code{walk_tree}。@code{walk_tree}的其它参数必须存放在@code{WI}中。对于每个操作数@code{OP}，@code{walk_tree}被调用为：
 
 @smallexample
     walk_tree (&@code{OP}, @code{CALLBACK_OP}, @code{WI}, @code{WI}- @code{PSET})
 @end smallexample
 
-If @code{CALLBACK_OP} returns non-@code{NULL} for an operand, the remaining
-operands are not scanned.  The return value is that returned by
-the last call to @code{walk_tree}, or @code{NULL_TREE} if no @code{CALLBACK_OP} is
-specified.
+如果@code{CALLBACK_OP}对于一个操作数返回非@code{NULL}，则剩下的操作数不再被扫描。返回值为对@code{walk_tree}最后调用所返回的值，或者如果没有指定@code{CALLBACK_OP}则返回@code{NULL_TREE}。
+
 @end deftypefn
 
 
 @deftypefn {GIMPLE function} tree walk_gimple_seq (gimple_seq seq, walk_stmt_fn callback_stmt, walk_tree_fn callback_op, struct walk_stmt_info *wi)
-This function walks all the statements in the sequence @code{SEQ}
-calling @code{walk_gimple_stmt} on each one.  @code{WI} is as in
-@code{walk_gimple_stmt}.  If @code{walk_gimple_stmt} returns non-@code{NULL}, the walk
-is stopped and the value returned.  Otherwise, all the statements
-are walked and @code{NULL_TREE} returned.
+该函数遍历序列@code{SEQ}中的所有语句，在每个语句上调用@code{walk_gimple_stmt}。@code{WI}跟@code{walk_gimple_stmt}中的一样。如果@code{walk_gimple_stmt}返回非@code{NULL}，则停止遍历，并返回值。否则，所有语句都被遍历并返回@code{NULL_TREE}。
+
 @end deftypefn
