@@ -41,20 +41,12 @@ C和C++前端目前直接从前端tree转换成GIMPLE，并将其交给后端，
 @section 元组表示
 @cindex tuples
 
-GIMPLE instructions are tuples of variable size divided in two
-groups: a header describing the instruction and its locations,
-and a variable length body with all the operands. Tuples are
-organized into a hierarchy with 3 main classes of tuples.
+GIMPLE指令为可变大小的元组，并由两部分组成：一个描述指令和位置的头，一个具有所有操作数的可变长度的身体。元组被组织成一个层次结构，并有3个主要类别。
 
 @subsection @code{gimple_statement_base} (gsbase)
 @cindex gimple_statement_base
 
-This is the root of the hierarchy, it holds basic information
-needed by most GIMPLE statements. There are some fields that
-may not be relevant to every GIMPLE statement, but those were
-moved into the base structure to take advantage of holes left by
-other fields (thus making the structure more compact).  The
-structure takes 4 words (32 bytes) on 64 bit hosts:
+这是层次结构的根，其存放了大多GIMPLE语句所需要的基本信息。有一些域并不与所有的GIMPLE语句相关，但是被挪到基础结构中是为了利用其它域剩下的空位（从而使得结构体更加紧凑）。结构体在64位主机上占用4个字（32个字节 ）：
 
 @multitable {@code{references_memory_p}} {Size (bits)}
 @item Field				@tab Size (bits)
@@ -77,95 +69,55 @@ structure takes 4 words (32 bytes) on 64 bit hosts:
 
 @itemize @bullet
 @item @code{code}
-Main identifier for a GIMPLE instruction. 
+GIMPLE指令的主要标识 
 
 @item @code{subcode}
-Used to distinguish different variants of the same basic
-instruction or provide flags applicable to a given code. The
-@code{subcode} flags field has different uses depending on the code of
-the instruction, but mostly it distinguishes instructions of the
-same family. The most prominent use of this field is in
-assignments, where subcode indicates the operation done on the
-RHS of the assignment. For example, a = b + c is encoded as
-@code{GIMPLE_ASSIGN <PLUS_EXPR, a, b, c>}.
+用来区分相同基本指令的不同变体，或者提供使用于给定代码的标记。@code{subcode}标记域具有不同的用法，并取决于指令的代码，但是其主要是用来区分相同家族的指令。该域最突出的用法是在赋值中，其子代码指出了在赋值的右手边所进行的操作。例如，a = b + c被编码为@code{GIMPLE_ASSIGN <PLUS_EXPR, a, b, c>}。
 
 @item @code{no_warning}
-Bitflag to indicate whether a warning has already been issued on
-this statement.
+位标记，用来指出是否在该语句上已经产生了一个警告。
 
 @item @code{visited}
-General purpose ``visited'' marker. Set and cleared by each pass
-when needed.
+通用目的的“访问”标记 。由每个编译过程根据需要来设置和清除。
 
 @item @code{nontemporal_move}
-Bitflag used in assignments that represent non-temporal moves.
-Although this bitflag is only used in assignments, it was moved
-into the base to take advantage of the bit holes left by the
-previous fields.
+位标记，用在赋值中，用来表示非临时的移动。虽然该位标记只用于赋值，但其被放到这里是为了利用先前域所剩下的空位。
 
 @item @code{plf}
-Pass Local Flags. This 2-bit mask can be used as general purpose
-markers by any pass. Passes are responsible for clearing and
-setting these two flags accordingly.
+编译过程局部标记。该2个位的掩码可以由任何编译过程用作通用的标记。编译过程负责相应的清除和设置这两个标记。
 
 @item @code{modified}
-Bitflag to indicate whether the statement has been modified.
-Used mainly by the operand scanner to determine when to re-scan a
-statement for operands.
+位标记，用来指出语句是否被修改。主要由操作数扫描器来使用，用来确定什么时候重新扫描一条语句的操作数。
 
 @item @code{has_volatile_ops}
-Bitflag to indicate whether this statement contains operands that
-have been marked volatile.
+位标记，用来指出语句是否包含被标记为volatile的操作数。
 
 @item @code{references_memory_p}
-Bitflag to indicate whether this statement contains memory
-references (i.e., its operands are either global variables, or
-pointer dereferences or anything that must reside in memory).
+位标记，用来指出语句是否包含内存引用（即，其操作数为全局变量，或者指针解引用，或者任何必须在内存中的）。
 
 @item @code{uid}
-This is an unsigned integer used by passes that want to assign
-IDs to every statement. These IDs must be assigned and used by
-each pass.
+为无符号整数，由想要为每条语句分配ID的编译过程使用。这些ID必须由每个编译过程来分配和使用。
 
 @item @code{location}
-This is a @code{location_t} identifier to specify source code
-location for this statement. It is inherited from the front
-end.
+为一个@code{location_t}标识符，用来指定该语句的源代码位置。其从前端继承下来。
 
 @item @code{num_ops}
-Number of operands that this statement has. This specifies the
-size of the operand vector embedded in the tuple. Only used in
-some tuples, but it is declared in the base tuple to take
-advantage of the 32-bit hole left by the previous fields.
+该语句具有的操作数个数。这描述了元组中嵌套的操作数向量的大小。只在一些元组中使用，但其声明在基础元组中是为了利用先前语所剩下的32位空位。
 
 @item @code{bb}
-Basic block holding the instruction.
+包含该语句的基本块。
  
 @item @code{block}
-Lexical block holding this statement.  Also used for debug
-information generation.
+包含该语句的词法块。还用于调试信息的生成。
+
 @end itemize
 
 @subsection @code{gimple_statement_with_ops}
 @cindex gimple_statement_with_ops
 
-This tuple is actually split in two:
-@code{gimple_statement_with_ops_base} and
-@code{gimple_statement_with_ops}. This is needed to accommodate the
-way the operand vector is allocated. The operand vector is
-defined to be an array of 1 element. So, to allocate a dynamic
-number of operands, the memory allocator (@code{gimple_alloc}) simply
-allocates enough memory to hold the structure itself plus @code{N
-- 1} operands which run ``off the end'' of the structure. For
-example, to allocate space for a tuple with 3 operands,
-@code{gimple_alloc} reserves @code{sizeof (struct
-gimple_statement_with_ops) + 2 * sizeof (tree)} bytes.
+该元组实际分成两部分：@code{gimple_statement_with_ops_base} 和 @code{gimple_statement_with_ops}。这是为了适应操作数向量的分配方法。操作数向量被定义为有1个元素的数组。所以，要分配动态数目的操作数，内存分配器(@code{gimple_alloc})只是简单的分配足够的内存来存放结构体本身，以及在结构体尾部加上@code{N - 1}个操作数。例如，要为有3个操作数的元组分配空间，@code{gimple_alloc}预留了@code{sizeof (struct gimple_statement_with_ops) + 2 * sizeof (tree)}个字节。
 
-On the other hand, several fields in this tuple need to be shared
-with the @code{gimple_statement_with_memory_ops} tuple. So, these
-common fields are placed in @code{gimple_statement_with_ops_base} which
-is then inherited from the other two tuples.
-
+另一方面，该元组中的一些域需要与@code{gimple_statement_with_memory_ops}元组共享。所以，这些公共域被放在@code{gimple_statement_with_ops_base}中，然后由其它两个元组来继承。
 
 @multitable {@code{addresses_taken}}	{56 + 8 * @code{num_ops} bytes}
 @item	@code{gsbase}		@tab 256	
@@ -178,36 +130,24 @@ is then inherited from the other two tuples.
 
 @itemize @bullet
 @item @code{gsbase}
-Inherited from @code{struct gimple_statement_base}.
+继承自@code{struct gimple_statement_base}。
 
 @item @code{addresses_taken}
-Bitmap holding the UIDs of all the @code{VAR_DECL}s whose addresses are
-taken by this statement. For example, a statement of the form
-@code{p = &b} will have the UID for symbol @code{b} in this set.
+位图，存放了所有@code{VAR_DECL}的UID，该语句使用了这些@code{VAR_DECL}的地址。例如，形式为@code{p = &b}的语句将在该集合中具有符号@code{b}的UID。
 
 @item @code{def_ops}
-Array of pointers into the operand array indicating all the slots that
-contain a variable written-to by the statement. This array is
-also used for immediate use chaining. Note that it would be
-possible to not rely on this array, but the changes required to
-implement this are pretty invasive.
+指针数组，指向操作数数组，指出该包含语句写入的变量的所有插槽。该数组还用于立即使用链。注意，是可以不依赖该数组的，但是这种实现会很具有入侵性。
 
 @item @code{use_ops}
-Similar to @code{def_ops} but for variables read by the statement.
+类似于@code{def_ops}，不过是针对语句读取的变量。
 
 @item @code{op}
-Array of trees with @code{num_ops} slots.
+具有@code{num_ops}插槽的tree数组。
 @end itemize
 
 @subsection @code{gimple_statement_with_memory_ops}
 
-This tuple is essentially identical to @code{gimple_statement_with_ops},
-except that it contains 4 additional fields to hold vectors
-related memory stores and loads.  Similar to the previous case,
-the structure is split in two to accommodate for the operand
-vector (@code{gimple_statement_with_memory_ops_base} and
-@code{gimple_statement_with_memory_ops}).
-
+该元组本质上等同于@code{gimple_statement_with_ops}，除了其包含4个额外的域，来存放与内存存储和加载相关的向量。类似于先前的情况，结构体被分成两部分，用来容纳操作数向量(@code{gimple_statement_with_memory_ops_base}和@code{gimple_statement_with_memory_ops})。
 
 @multitable {@code{addresses_taken}}	{88 + 8 * @code{num_ops} bytes}
 @item Field				@tab Size (bits)
@@ -225,33 +165,20 @@ vector (@code{gimple_statement_with_memory_ops_base} and
 
 @itemize @bullet
 @item @code{vdef_ops}
-Similar to @code{def_ops} but for @code{VDEF} operators. There is
-one entry per memory symbol written by this statement. This is
-used to maintain the memory SSA use-def and def-def chains.
+类似于@code{def_ops}，不过用于@code{VDEF}操作符。这是该语句写入的内存符号的一个实体。这用于维护内存SSA use-def和def-def链。
 
 @item @code{vuse_ops}
-Similar to @code{use_ops} but for @code{VUSE} operators. There is
-one entry per memory symbol loaded by this statement. This is
-used to maintain the memory SSA use-def chains.
+类似于@code{use_ops}，不过用于@code{VUSE}操作数。这是该语句加载的内存符号的一个实体。这用于维护内存SSA use-def链。
 
 @item @code{stores}
-Bitset with all the UIDs for the symbols written-to by the
-statement.  This is different than @code{vdef_ops} in that all the
-affected symbols are mentioned in this set.  If memory
-partitioning is enabled, the @code{vdef_ops} vector will refer to memory
-partitions. Furthermore, no SSA information is stored in this
-set.
+位集合，该语句写入的符号的所有UID。这与@code{vdef_ops}不同之处是，所有被影响的符号都在该集合中被提到。如果开启了内存划分，则@code{vdef_ops}向量将指向内存划分。而且，该集合中不存放SSA信息。
 
 @item @code{loads}
-Similar to @code{stores}, but for memory loads. (Note that there
-is some amount of redundancy here, it should be possible to
-reduce memory utilization further by removing these sets).
+类似于@code{stores}，不过用于内存加载。（注意，这里有一些冗余，应该可以通过移除这些集合来减少内存使用）。
+
 @end itemize
 
-All the other tuples are defined in terms of these three basic
-ones. Each tuple will add some fields. The main gimple type
-is defined to be the union of all these structures (@code{GTY} markers
-elided for clarity):
+所有其它元组按照这三个基本元组来定义。每个元组会增加一些域。gimple类型被定义成所有这些结构体的联合体（为了清晰，省略掉了@code{GTY}标记）：
 
 @smallexample
 union gimple_statement_d
@@ -285,10 +212,10 @@ union gimple_statement_d
 @section GIMPLE指令集
 @cindex GIMPLE instruction set
 
-The following table briefly describes the GIMPLE instruction set.
+下面的表格简短地描述了GIMPLE指令集。
 
 @multitable {@code{GIMPLE_CHANGE_DYNAMIC_TYPE}} {High GIMPLE} {Low GIMPLE}
-@item Instruction			@tab High GIMPLE	@tab Low GIMPLE
+@item 指令			@tab 高层GIMPLE	    @tab 低层GIMPLE
 @item @code{GIMPLE_ASM}			@tab x			@tab x
 @item @code{GIMPLE_ASSIGN}		@tab x			@tab x
 @item @code{GIMPLE_BIND}		@tab x			@tab
@@ -324,99 +251,57 @@ The following table briefly describes the GIMPLE instruction set.
 @section 异常处理
 @cindex GIMPLE Exception Handling
 
-Other exception handling constructs are represented using
-@code{GIMPLE_TRY_CATCH}.  @code{GIMPLE_TRY_CATCH} has two operands.  The
-first operand is a sequence of statements to execute.  If executing
-these statements does not throw an exception, then the second operand
-is ignored.  Otherwise, if an exception is thrown, then the second
-operand of the @code{GIMPLE_TRY_CATCH} is checked.  The second
-operand may have the following forms:
+其它异常处理结构使用@code{GIMPLE_TRY_CATCH}来表示。@code{GIMPLE_TRY_CATCH}有两个操作数。第一个操作数为一个要执行的语句序列。如果执行这些语句并没有抛出异常，则第二个操作数被忽略。否则，如果有异常被抛出，则@code{GIMPLE_TRY_CATCH}的第二个操作数将被检查。第二个操作数可以具有以下形式：
 
 @enumerate
 
-@item A sequence of statements to execute.  When an exception occurs,
-these statements are executed, and then the exception is rethrown.
+@item 一个要执行的语句序列。当发生异常时，这些语句被执行，然后异常被重新抛出。
 
-@item A sequence of @code{GIMPLE_CATCH} statements.  Each
-@code{GIMPLE_CATCH} has a list of applicable exception types and
-handler code.  If the thrown exception matches one of the caught
-types, the associated handler code is executed.  If the handler
-code falls off the bottom, execution continues after the original
-@code{GIMPLE_TRY_CATCH}.
+@item 一个@code{GIMPLE_CATCH}语句序列。每个@code{GIMPLE_CATCH}有一个可适用的异常类型列表和处理代码。如果被抛出的异常匹配其中一个类型，则相关的处理代码被执行。如果处理代码执行到结尾并结束，则在最初的@code{GIMPLE_TRY_CATCH}之后继续执行。
 
-@item An @code{GIMPLE_EH_FILTER} statement.  This has a list of
-permitted exception types, and code to handle a match failure.  If the
-thrown exception does not match one of the allowed types, the
-associated match failure code is executed.  If the thrown exception
-does match, it continues unwinding the stack looking for the next
-handler.
+@item 一条@code{GIMPLE_EH_FILTER}语句。具有一个允许的异常类型列表，和当匹配失败时的处理代码。如果被抛出的异常不匹配所允许的类型之一，则相关的匹配失败代码会被执行。如果抛出的异常确实匹配，则继续查找下一个处理。
 
 @end enumerate
 
-Currently throwing an exception is not directly represented in
-GIMPLE, since it is implemented by calling a function.  At some
-point in the future we will want to add some way to express that
-the call will throw an exception of a known type.
+目前抛出异常并不直接用GIMPLE来表示，而是通过调用一个函数来实现。将来的某个时候，我们将增加某种方式来表示抛出已知类型的异常的调用。
 
-Just before running the optimizers, the compiler lowers the
-high-level EH constructs above into a set of @samp{goto}s, magic
-labels, and EH regions.  Continuing to unwind at the end of a
-cleanup is represented with a @code{GIMPLE_RESX}.
-
+就在运行优化器之前，编译器将高级别的EH结构下降为一组@samp{goto}，魔术标号，以及EH区域。
 
 @node Temporaries
 @section Temporaries
 @cindex Temporaries
 
-When gimplification encounters a subexpression that is too
-complex, it creates a new temporary variable to hold the value of
-the subexpression, and adds a new statement to initialize it
-before the current statement. These special temporaries are known
-as @samp{expression temporaries}, and are allocated using
-@code{get_formal_tmp_var}.  The compiler tries to always evaluate
-identical expressions into the same temporary, to simplify
-elimination of redundant calculations.
+当gimplification遇到一个过于复杂的子表达式的时候，会创建一个新的临时变量来存放子表达式的值，并且在当前语句之前，增加一条新的语句对其初始化。这些特殊的临时对象被称作@samp{expression temporaries}，并使用@code{get_formal_tmp_var}来分配。编译器总是尝试将相等的表达式放到同一个临时对象中，来简化冗余计算消除。
 
-We can only use expression temporaries when we know that it will
-not be reevaluated before its value is used, and that it will not
-be otherwise modified@footnote{These restrictions are derived
-from those in Morgan 4.8.}. Other temporaries can be allocated
-using @code{get_initialized_tmp_var} or @code{create_tmp_var}.
+只有当我们知道在使用表达式临时对象的值之前，其不会被重新求值的时候，才可以使用，否则其将不能被修改@footnote{这些限制源自Morgan 4.8.}。其它临时对象可以使用@code{get_initialized_tmp_var}或@code{create_tmp_var}来分配。
 
-Currently, an expression like @code{a = b + 5} is not reduced any
-further.  We tried converting it to something like
+目前，像@code{a = b + 5}这样的表达式没有被进一步简化。我们曾经尝试将其转换成型如
+
 @smallexample
   T1 = b + 5;
   a = T1;
 @end smallexample
-but this bloated the representation for minimal benefit.  However, a
-variable which must live in memory cannot appear in an expression; its
-value is explicitly loaded into a temporary first.  Similarly, storing
-the value of an expression to a memory variable goes through a
-temporary.
+
+的样子。但这会使表示变得膨胀，而无法获益。然而，必须在内存中的变量不能出现在表达式中；其值先被显式的加载到一个临时对象中。类似的，将表达式的值存放到内存变量中，也要通过一个临时对象。
 
 @node 操作数
 @section 操作数
 @cindex Operands
 
-In general, expressions in GIMPLE consist of an operation and the
-appropriate number of simple operands; these operands must either be a
-GIMPLE rvalue (@code{is_gimple_val}), i.e.@: a constant or a register
-variable.  More complex operands are factored out into temporaries, so
-that
+总得来说，GIMPLE表达式由一个运算和适当数目的简单操作数组成；这些操作数必须或者为GIMPLE右值(@code{is_gimple_val})，即一个常量，或者一个寄存器变量。更复杂的操作数被分解到临时对象中，所以，
+
 @smallexample
   a = b + c + d
 @end smallexample
-becomes
+会变成
 @smallexample
   T1 = b + c;
   a = T1 + d;
 @end smallexample
 
-The same rule holds for arguments to a @code{GIMPLE_CALL}.
+对于@code{GIMPLE_CALL}的参数也是同样的规则。
 
-The target of an assignment is usually a variable, but can also be an
-@code{INDIRECT_REF} or a compound lvalue as described below.
+一个赋值的目标通常为一个变量，但是也可以为一个@code{INDIRECT_REF}或者一个由下面描述的复合左值。
 
 @menu
 * 复合表达式::
@@ -429,40 +314,31 @@ The target of an assignment is usually a variable, but can also be an
 @subsection 复合表达式
 @cindex Compound Expressions
 
-The left-hand side of a C comma expression is simply moved into a separate
-statement.
+C逗号表达式的左手边被简单的移送到一个独立的语句中。
 
 @node 复合左值
 @subsection 复合左值
 @cindex Compound Lvalues
 
-Currently compound lvalues involving array and structure field references
-are not broken down; an expression like @code{a.b[2] = 42} is not reduced
-any further (though complex array subscripts are).  This restriction is a
-workaround for limitations in later optimizers; if we were to convert this
-to
+目前涉及到数组和结构体域引用的复合左值，没有被分解；像@code{a.b[2] = 42}这样的表达式不再被简化（虽然是复杂的数组下标）。这种限制可以解决之后的优化器的局限性；如果我们要将其转换成
 
 @smallexample
   T1 = &a.b;
   T1[2] = 42;
 @end smallexample
 
-alias analysis would not remember that the reference to @code{T1[2]} came
-by way of @code{a.b}, so it would think that the assignment could alias
-another member of @code{a}; this broke @code{struct-alias-1.c}.  Future
-optimizer improvements may make this limitation unnecessary.
+则别名分析无法记住对@code{T1[2]}的引用是来自@code{a.b}，所以，其会认为该赋值会与@code{a}的另一个成员有别名关系；这会使@code{struct-alias-1.c}运行失败。将来对优化器的改进可以不再需要限制。
 
 @node 条件表达式
 @subsection 条件表达式
 @cindex Conditional Expressions
 
-A C @code{?:} expression is converted into an @code{if} statement with
-each branch assigning to the same temporary.  So,
+C @code{?:} 表达式被转换成一条@code{if}语句，每个分支被分配给相同的临时对象。所以，
 
 @smallexample
   a = b ? c : d;
 @end smallexample
-becomes
+会变成
 @smallexample
   if (b == 1)
     T1 = c;
@@ -471,20 +347,15 @@ becomes
   a = T1;
 @end smallexample
 
-The GIMPLE level if-conversion pass re-introduces @code{?:}
-expression, if appropriate. It is used to vectorize loops with
-conditions using vector conditional operations.
+GIMPLE级别的if-conversion过程在适当的时候，重新引入了@code{?:}表达式。其用于向量化循环。
 
-Note that in GIMPLE, @code{if} statements are represented using
-@code{GIMPLE_COND}, as described below.
+注意在GIMPLE中，@code{if}语句通过@code{GIMPLE_COND}来表示，正如下面所描述。
 
 @node 逻辑运算符
 @subsection 逻辑运算符
 @cindex Logical Operators
 
-Except when they appear in the condition operand of a
-@code{GIMPLE_COND}, logical `and' and `or' operators are simplified
-as follows: @code{a = b && c} becomes
+除非它们出现在@code{GIMPLE_COND}的条件操作数中，否则逻辑的`and'和`or'操作符将按照下列方式进行简化：@code{a = b && c}变成
 
 @smallexample
   T1 = (bool)b;
@@ -493,8 +364,7 @@ as follows: @code{a = b && c} becomes
   a = T1;
 @end smallexample
 
-Note that @code{T1} in this example cannot be an expression temporary,
-because it has two different assignments.
+注意该例子中的@code{T1}不能为表达式临时对象，因为其具有两个不同的赋值。
 
 @subsection 操作操作数
 
