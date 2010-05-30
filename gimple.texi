@@ -1936,96 +1936,79 @@ Set the @code{CLEANUP_EH_ONLY} flag for a @code{WCE} tuple.
 @section GIMPLE序列 
 @cindex GIMPLE sequences 
 
-GIMPLE sequences are the tuple equivalent of @code{STATEMENT_LIST}'s
-used in @code{GENERIC}.  They are used to chain statements together, and
-when used in conjunction with sequence iterators, provide a
-framework for iterating through statements.
+GIMPLE序列等价于@code{GENERIC}中使用的@code{STATEMENT_LIST}。它们用于将语句链接在一起，当和序列迭代器一起使用的时候，可以提供一个迭代语句的框架。
 
-GIMPLE sequences are of type struct @code{gimple_sequence}, but are more
-commonly passed by reference to functions dealing with sequences.
-The type for a sequence pointer is @code{gimple_seq} which is the same
-as struct @code{gimple_sequence} *.  When declaring a local sequence,
-you can define a local variable of type struct @code{gimple_sequence}.
-When declaring a sequence allocated on the garbage collected
-heap, use the function @code{gimple_seq_alloc} documented below.
+GIMPLE序列的类型为struct @code{gimple_sequence}。序列指针的类型为@code{gimple_seq}，其与struct @code{gimple_sequence} *相同。当声明一个局部序列时，你可以定义一个类型为struct @code{gimple_sequence}的局部变量。当声明一个分配在垃圾搜集堆中的序列时，使用下面介绍的函数@code{gimple_seq_alloc}。
 
-There are convenience functions for iterating through sequences
-in the section entitled Sequence Iterators.
+在标题为序列迭代器的章节中，有一些便利的函数用于在序列中进行迭代。
 
-Below is a list of functions to manipulate and query sequences.
+下面是一个函数列表，用来操作和查询序列。
 
 @deftypefn {GIMPLE function} void gimple_seq_add_stmt (gimple_seq *seq, gimple g)
-Link a gimple statement to the end of the sequence *@code{SEQ} if @code{G} is
-not @code{NULL}.  If *@code{SEQ} is @code{NULL}, allocate a sequence before linking.
+如果@code{G}不为@code{NULL}，将一条gimple语句链接到序列*@code{SEQ}的结尾。如果*@code{SEQ}为@code{NULL}，则在链接之前分配一个序列。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_seq_add_seq (gimple_seq *dest, gimple_seq src)
-Append sequence @code{SRC} to the end of sequence *@code{DEST} if @code{SRC} is not
-@code{NULL}.  If *@code{DEST} is @code{NULL}, allocate a new sequence before
-appending.
+如果@code{SRC}不为@code{NULL}，则将序列@code{SRC}追加到序列*@code{DEST}的结尾。如果*@code{DEST}为@code{NULL}，则在追加之前分配一个新的序列。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_seq gimple_seq_deep_copy (gimple_seq src)
-Perform a deep copy of sequence @code{SRC} and return the result.
+对序列@code{SRC}执行深度复制，并返回结果。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_seq gimple_seq_reverse (gimple_seq seq)
-Reverse the order of the statements in the sequence @code{SEQ}.  Return
-@code{SEQ}.
+反转序列@code{SEQ}中语句的顺序。返回@code{SEQ}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple gimple_seq_first (gimple_seq s)
-Return the first statement in sequence @code{S}.
+返回序列@code{S}中的第一条语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple gimple_seq_last (gimple_seq s)
-Return the last statement in sequence @code{S}.
+返回序列@code{S}中的最后一条语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_seq_set_last (gimple_seq s, gimple last)
-Set the last statement in sequence @code{S} to the statement in @code{LAST}.
+将序列@code{S}中的最后一条语句设置为@code{LAST}中的语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_seq_set_first (gimple_seq s, gimple first)
-Set the first statement in sequence @code{S} to the statement in @code{FIRST}.
+将序列@code{S}中的第一条语句设置为@code{FIRST}中的语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_seq_init (gimple_seq s)
-Initialize sequence @code{S} to an empty sequence.
+将序列@code{S}初始化为空序列。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_seq gimple_seq_alloc (void)
-Allocate a new sequence in the garbage collected store and return
-it.
+在可以被垃圾搜集的存储中分配一个新的序列，并将其返回。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_seq_copy (gimple_seq dest, gimple_seq src)
-Copy the sequence @code{SRC} into the sequence @code{DEST}.
+将序列@code{SRC}复制到序列@code{DEST}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} bool gimple_seq_empty_p (gimple_seq s)
-Return true if the sequence @code{S} is empty.
+如果序列@code{S}为空，则返回真。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_seq bb_seq (basic_block bb)
-Returns the sequence of statements in @code{BB}.
+返回@code{BB}中的语句序列。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void set_bb_seq (basic_block bb, gimple_seq seq)
-Sets the sequence of statements in @code{BB} to @code{SEQ}.
+将@code{BB}中的语句序列设置成@code{SEQ}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} bool gimple_seq_singleton_p (gimple_seq seq)
-Determine whether @code{SEQ} contains exactly one statement.
+确定序列@code{SEQ}中是否只包含一条语句。
 @end deftypefn
 
 @node 序列迭代器 
 @section 序列迭代器 
 @cindex Sequence iterators 
 
-Sequence iterators are convenience constructs for iterating
-through statements in a sequence.  Given a sequence @code{SEQ}, here is
-a typical use of gimple sequence iterators:
+序列迭代器为一些便利的结构，用于在序列中迭代语句。给定序列@code{SEQ}，典型的对gimple序列迭代器的使用为：
 
 @smallexample
 gimple_stmt_iterator gsi;
@@ -2037,17 +2020,15 @@ for (gsi = gsi_start (seq); !gsi_end_p (gsi); gsi_next (&gsi))
   @}
 @end smallexample
 
-Backward iterations are possible:
+也可以向后迭代：
 
 @smallexample
         for (gsi = gsi_last (seq); !gsi_end_p (gsi); gsi_prev (&gsi))
 @end smallexample
 
-Forward and backward iterations on basic blocks are possible with
-@code{gsi_start_bb} and @code{gsi_last_bb}.
+在基本块上进行前向和后向迭代可以通过配合使用@code{gsi_start_bb}和@code{gsi_last_bb}。
 
-In the documentation below we sometimes refer to enum
-@code{gsi_iterator_update}.  The valid options for this enumeration are:
+在下面的介绍中，我们有时会用到enum @code{gsi_iterator_update}。对于该枚举的有效操作有：
 
 @itemize @bullet
 @item @code{GSI_NEW_STMT}
