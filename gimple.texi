@@ -513,191 +513,176 @@ program is running.
 @subsection 语句有效性
 
 @deftypefn {GIMPLE function} is_gimple_assign (gimple g)
-Return true if the code of g is @code{GIMPLE_ASSIGN}.
+返回真，如果g的代码为@code{GIMPLE_ASSIGN}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} is_gimple_call (gimple g)
-Return true if the code of g is @code{GIMPLE_CALL}
+返回真，如果g的代码为@code{GIMPLE_CALL}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} gimple_assign_cast_p (gimple g)
-Return true if g is a @code{GIMPLE_ASSIGN} that performs a type cast
-operation
+返回真，如果g为一个@code{GIMPLE_ASSIGN}并执行一个类型转换操作。
 @end deftypefn
 
 @node 操作GIMPLE语句
 @section 操作GIMPLE语句
 @cindex Manipulating GIMPLE statements
 
-This section documents all the functions available to handle each
-of the GIMPLE instructions.
+这章介绍了所有可用于处理每个GIMPLE指令的函数。
 
 @subsection 通用访问方法
-The following are common accessors for gimple statements.
+下列为对gimple语句的通用访问。
 
 @deftypefn {GIMPLE function} enum gimple_code gimple_code (gimple g)
-Return the code for statement @code{G}.
+返回语句@code{G}的代码。
 @end deftypefn
  
 @deftypefn {GIMPLE function} basic_block gimple_bb (gimple g)
-Return the basic block to which statement @code{G} belongs to.
+返回语句@code{G}所属的基本块。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_block (gimple g)
-Return the lexical scope block holding statement @code{G}.
+返回包含语句@code{G}的词法作用域。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_expr_type (gimple stmt)
-Return the type of the main expression computed by @code{STMT}. Return
-@code{void_type_node} if @code{STMT} computes nothing. This will only return
-something meaningful for @code{GIMPLE_ASSIGN}, @code{GIMPLE_COND} and
-@code{GIMPLE_CALL}.  For all other tuple codes, it will return
-@code{void_type_node}.
+返回@code{STMT}所计算的主表达式。如果@code{STMT}不做任何计算，则返回@code{void_type_node}。这将只为@code{GIMPLE_ASSIGN}, @code{GIMPLE_COND} 和 @code{GIMPLE_CALL}返回一些有意义的东西。对于所有其它元组代码，其将返回@code{void_type_node}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} enum tree_code gimple_expr_code (gimple stmt)
-Return the tree code for the expression computed by @code{STMT}.  This
-is only meaningful for @code{GIMPLE_CALL}, @code{GIMPLE_ASSIGN} and
-@code{GIMPLE_COND}.  If @code{STMT} is @code{GIMPLE_CALL}, it will return @code{CALL_EXPR}.
-For @code{GIMPLE_COND}, it returns the code of the comparison predicate.
-For @code{GIMPLE_ASSIGN} it returns the code of the operation performed
-by the @code{RHS} of the assignment.
+返回@code{STMT}所计算的表达式的tree代码。这将只为@code{GIMPLE_CALL}, @code{GIMPLE_ASSIGN}和@code{GIMPLE_COND}返回一些有意义的东西。如果@code{STMT}为@code{GIMPLE_CALL}，其将返回@code{CALL_EXPR}。对于@code{GIMPLE_COND}，其返回比较断言的代码。对于@code{GIMPLE_ASSIGN}，其返回赋值语句的右手边所执行的操作代码。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_set_block (gimple g, tree block)
-Set the lexical scope block of @code{G} to @code{BLOCK}.
+将@code{G}的词法作用域块设置为@code{BLOCK}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} location_t gimple_locus (gimple g)
-Return locus information for statement @code{G}.
+返回语句@code{G}的locus信息。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_locus (gimple g, location_t locus)
-Set locus information for statement @code{G}.
+为语句@code{G}设置locus信息。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_locus_empty_p (gimple g)
-Return true if @code{G} does not have locus information.
+返回真，如果@code{G}不具有locus信息。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_no_warning_p (gimple stmt)
-Return true if no warnings should be emitted for statement @code{STMT}.
+返回真，如果对于语句@code{STMT}不会产生警告。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_visited (gimple stmt, bool visited_p)
-Set the visited status on statement @code{STMT} to @code{VISITED_P}.
+在语句@code{STMT}上将访问状态设置成@code{VISITED_P}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_visited_p (gimple stmt)
-Return the visited status on statement @code{STMT}.
+返回语句@code{STMT}上的访问状态。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_plf (gimple stmt, enum plf_mask plf, bool val_p)
-Set pass local flag @code{PLF} on statement @code{STMT} to @code{VAL_P}.
+将语句@code{STMT}上的编译过程局部标记@code{PLF}设置为@code{VAL_P}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} unsigned int gimple_plf (gimple stmt, enum plf_mask plf)
-Return the value of pass local flag @code{PLF} on statement @code{STMT}.
+返回语句@code{STMT}上的编译过程局部标记@code{PLF}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_has_ops (gimple g)
-Return true if statement @code{G} has register or memory operands.
+返回真，如果语句@code{G}具有寄存器或内存操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_has_mem_ops (gimple g)
-Return true if statement @code{G} has memory operands.
+返回真，如果语句@code{G}具有内存操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} unsigned gimple_num_ops (gimple g)
-Return the number of operands for statement @code{G}.
+返回语句@code{G}的操作数个数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree *gimple_ops (gimple g)
-Return the array of operands for statement @code{G}.
+返回语句@code{G}的操作数数组。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_op (gimple g, unsigned i)
-Return operand @code{I} for statement @code{G}.
+返回语句@code{G}的操作数@code{I}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree *gimple_op_ptr (gimple g, unsigned i)
-Return a pointer to operand @code{I} for statement @code{G}.
+返回语句@code{G}的操作数@code{I}的指针。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_op (gimple g, unsigned i, tree op)
-Set operand @code{I} of statement @code{G} to @code{OP}.
+将语句@code{G}的操作数@code{I}设置为@code{OP}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bitmap gimple_addresses_taken (gimple stmt)
-Return the set of symbols that have had their address taken by
-@code{STMT}.
+返回@code{STMT}使用过其地址的符号集合。
 @end deftypefn
  
 @deftypefn {GIMPLE function} struct def_optype_d *gimple_def_ops (gimple g)
-Return the set of @code{DEF} operands for statement @code{G}.
+返回语句@code{G}的@code{DEF}操作数集合。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_def_ops (gimple g, struct def_optype_d *def)
-Set @code{DEF} to be the set of @code{DEF} operands for statement @code{G}.
+将语句@code{G}的@code{DEF}操作数集合设置为@code{DEF}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} struct use_optype_d *gimple_use_ops (gimple g)
-Return the set of @code{USE} operands for statement @code{G}.
+返回语句@code{G}的@code{USE}操作数集合。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_use_ops (gimple g, struct use_optype_d *use)
-Set @code{USE} to be the set of @code{USE} operands for statement @code{G}.
+将语句@code{G}的@code{USE}操作数集合设置为@code{USE}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} struct voptype_d *gimple_vuse_ops (gimple g)
-Return the set of @code{VUSE} operands for statement @code{G}.
+返回语句@code{G}的@code{VUSE}操作数集合。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_vuse_ops (gimple g, struct voptype_d *ops)
-Set @code{OPS} to be the set of @code{VUSE} operands for statement @code{G}.
+将语句@code{G}的@code{VUSE}操作数集合设置为@code{OPS}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} struct voptype_d *gimple_vdef_ops (gimple g)
-Return the set of @code{VDEF} operands for statement @code{G}.
+返回语句@code{G}的@code{VDEF}操作数集合。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_vdef_ops (gimple g, struct voptype_d *ops)
-Set @code{OPS} to be the set of @code{VDEF} operands for statement @code{G}.
+将语句@code{G}的@code{VDEF}操作数集合设置为@code{OPS}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bitmap gimple_loaded_syms (gimple g)
-Return the set of symbols loaded by statement @code{G}.  Each element of
-the set is the @code{DECL_UID} of the corresponding symbol.
+返回语句@code{G}所加载的符号集合。集合中的每个元素为对应符号的@code{DECL_UID}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bitmap gimple_stored_syms (gimple g)
-Return the set of symbols stored by statement @code{G}.  Each element of
-the set is the @code{DECL_UID} of the corresponding symbol.
+返回语句@code{G}所存储的符号集合。集合中的每个元素为对应符号的@code{DECL_UID}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_modified_p (gimple g)
-Return true if statement @code{G} has operands and the modified field
-has been set.
+返回真，如果语句@code{G}具有操作数并且被修改域已经被设置。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_has_volatile_ops (gimple stmt)
-Return true if statement @code{STMT} contains volatile operands.
+返回真，如果语句@code{STMT}包含volatile操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_has_volatile_ops (gimple stmt, bool volatilep)
-Return true if statement @code{STMT} contains volatile operands.
+返回真，如果语句@code{STMT}包含volatile操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void update_stmt (gimple s)
-Mark statement @code{S} as modified, and update it.
+将语句@code{S}标记为已经被修改，并对其进行更新。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void update_stmt_if_modified (gimple s)
-Update statement @code{S} if it has been marked modified.
+更新语句@code{S}，如果其已经被标记为被修改。
 @end deftypefn
  
 @deftypefn {GIMPLE function} gimple gimple_copy (gimple stmt)
-Return a deep copy of statement @code{STMT}.
+返回语句@code{STMT}的一个深度复制。
 @end deftypefn
 
 @node 元组特定访问方法
