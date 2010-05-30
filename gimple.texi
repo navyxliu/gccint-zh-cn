@@ -2104,85 +2104,67 @@ for (gsi = gsi_start (seq); !gsi_end_p (gsi); gsi_next (&gsi))
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_link_before (gimple_stmt_iterator *i, gimple g, enum gsi_iterator_update mode)
-Links statement @code{G} before the statement pointed-to by iterator @code{I}.
-Updates iterator @code{I} according to @code{MODE}.
+将语句@code{G}链接在由迭代器@code{I}指向的语句之前。根据@code{MODE}来更新迭代器@code{I}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_link_seq_after (gimple_stmt_iterator *i, gimple_seq seq, enum gsi_iterator_update mode)
-Links sequence @code{SEQ} after the statement pointed-to by iterator @code{I}.
-@code{MODE} is as in @code{gsi_insert_after}.
+将序列@code{SEQ}链接在由迭代器@code{I}指向的语句之后。@code{MODE}与在@code{gsi_insert_after}中的相同。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_link_after (gimple_stmt_iterator *i, gimple g, enum gsi_iterator_update mode)
-Links statement @code{G} after the statement pointed-to by iterator @code{I}.
-@code{MODE} is as in @code{gsi_insert_after}.
+将语句@code{G}链接在由迭代器@code{I}指向的语句之后。@code{MODE}与在@code{gsi_insert_after}中的相同。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_seq gsi_split_seq_after (gimple_stmt_iterator i)
-Move all statements in the sequence after @code{I} to a new sequence.
-Return this new sequence.
+将@code{I}之后的所有语句移送到新的序列中。返回该新的序列。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_seq gsi_split_seq_before (gimple_stmt_iterator *i)
-Move all statements in the sequence before @code{I} to a new sequence.
-Return this new sequence.
+将@code{I}之前的所有语句移送到新的序列中。返回该新的序列。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_replace (gimple_stmt_iterator *i, gimple stmt, bool update_eh_info)
-Replace the statement pointed-to by @code{I} to @code{STMT}.  If @code{UPDATE_EH_INFO}
-is true, the exception handling information of the original
-statement is moved to the new statement.
+将由@code{I}指向的语句替换为@code{STMT}。如果@code{UPDATE_EH_INFO}为真，则原来语句的异常处理信息被移送到新的语句中。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_insert_before (gimple_stmt_iterator *i, gimple stmt, enum gsi_iterator_update mode)
-Insert statement @code{STMT} before the statement pointed-to by iterator
-@code{I}, update @code{STMT}'s basic block and scan it for new operands.  @code{MODE}
-specifies how to update iterator @code{I} after insertion (see enum
-@code{gsi_iterator_update}).
+在由迭代器@code{I}指向的语句之前插入语句@code{STMT}，更新@code{STMT}的基本块并扫描新的操作数。@code{MODE}描述了插入操作之后，如何更新迭代器@code{I}(参见enum @code{gsi_iterator_update})。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_insert_seq_before (gimple_stmt_iterator *i, gimple_seq seq, enum gsi_iterator_update mode)
-Like @code{gsi_insert_before}, but for all the statements in @code{SEQ}.
+类似于@code{gsi_insert_before}，不过是对于@code{SEQ}中的所有语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_insert_after (gimple_stmt_iterator *i, gimple stmt, enum gsi_iterator_update mode)
-Insert statement @code{STMT} after the statement pointed-to by iterator
-@code{I}, update @code{STMT}'s basic block and scan it for new operands.  @code{MODE}
-specifies how to update iterator @code{I} after insertion (see enum
-@code{gsi_iterator_update}).
+在由迭代器@code{I}指向的语句之后插入语句@code{STMT}，更新@code{STMT}的基本块并扫描新的操作数。@code{MODE}描述了插入操作之后，如何更新迭代器@code{I}(参见enum @code{gsi_iterator_update})。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_insert_seq_after (gimple_stmt_iterator *i, gimple_seq seq, enum gsi_iterator_update mode)
-Like @code{gsi_insert_after}, but for all the statements in @code{SEQ}.
+类似于@code{gsi_insert_after}，不过是对于@code{SEQ}中的所有语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_stmt_iterator gsi_for_stmt (gimple stmt)
-Finds iterator for @code{STMT}.
+查找@code{STMT}的迭代器。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_move_after (gimple_stmt_iterator *from, gimple_stmt_iterator *to)
-Move the statement at @code{FROM} so it comes right after the statement
-at @code{TO}.
+将语句移送到@code{FROM}处，使得其正好位于@code{TO}处的语句之后。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_move_before (gimple_stmt_iterator *from, gimple_stmt_iterator *to)
-Move the statement at @code{FROM} so it comes right before the statement
-at @code{TO}.
+将语句移送到@code{FROM}处，使得其正好位于@code{TO}处的语句之前。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_move_to_bb_end (gimple_stmt_iterator *from, basic_block bb)
-Move the statement at @code{FROM} to the end of basic block @code{BB}.
+将@code{FROM}处的语句移送到基本块@code{BB}的结尾。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_insert_on_edge (edge e, gimple stmt)
-Add @code{STMT} to the pending list of edge @code{E}.  No actual insertion is
-made until a call to @code{gsi_commit_edge_inserts}() is made.
+将@code{STMT}增加到边@code{E}的待定列表中。直到调用@code{gsi_commit_edge_inserts}()之前，不会进行实际的插入操作。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_insert_seq_on_edge (edge e, gimple_seq seq)
-Add the sequence of statements in @code{SEQ} to the pending list of edge
-@code{E}.  No actual insertion is made until a call to
-@code{gsi_commit_edge_inserts}() is made.
+将@code{SEQ}中语句序列增加到边@code{E}的待定列表中。直到调用@code{gsi_commit_edge_inserts}()之前，不会进行实际的插入操作。
 @end deftypefn
 
 @deftypefn {GIMPLE function} basic_block gsi_insert_on_edge_immediate (edge e, gimple stmt)
