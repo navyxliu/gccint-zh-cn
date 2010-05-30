@@ -2032,93 +2032,75 @@ for (gsi = gsi_start (seq); !gsi_end_p (gsi); gsi_next (&gsi))
 
 @itemize @bullet
 @item @code{GSI_NEW_STMT}
-Only valid when a single statement is added.  Move the iterator to it.
+只有当增加单个语句被时才有效。将迭代器移动到该处。
 
 @item @code{GSI_SAME_STMT}
-Leave the iterator at the same statement.
+将迭代器放在相同的语句处。
 
 @item @code{GSI_CONTINUE_LINKING}
-Move iterator to whatever position is suitable for linking other
-statements in the same direction.
+将迭代器移动到在相同方向上，适合链接其它语句的位置。
 @end itemize
 
-Below is a list of the functions used to manipulate and use
-statement iterators.
+下面为一个函数列表，用于操作和使用语句迭代器。
 
 @deftypefn {GIMPLE function} gimple_stmt_iterator gsi_start (gimple_seq seq)
-Return a new iterator pointing to the sequence @code{SEQ}'s first
-statement.  If @code{SEQ} is empty, the iterator's basic block is @code{NULL}.
-Use @code{gsi_start_bb} instead when the iterator needs to always have
-the correct basic block set.
+返回一个新的迭代器，指向序列@code{SEQ}的第一个语句。如果@code{SEQ}为空，则迭代器的基本块为@code{NULL}。当迭代器总是需要正确设置基本块的时候，使用@code{gsi_start_bb}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_stmt_iterator gsi_start_bb (basic_block bb)
-Return a new iterator pointing to the first statement in basic
-block @code{BB}.
+返回一个新的迭代器，指向基本块@code{BB}中的第一条语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_stmt_iterator gsi_last (gimple_seq seq)
-Return a new iterator initially pointing to the last statement of
-sequence @code{SEQ}.  If @code{SEQ} is empty, the iterator's basic block is
-@code{NULL}.  Use @code{gsi_last_bb} instead when the iterator needs to always
-have the correct basic block set.
+返回一个新的迭代器，初始化为指向序列@code{SEQ}中的最后一条语句。如果@code{SEQ}为空，则迭代器的基本块为@code{NULL}。当迭代器总是需要正确设置基本块的时候，使用@code{gsi_last_bb}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_stmt_iterator gsi_last_bb (basic_block bb)
-Return a new iterator pointing to the last statement in basic
-block @code{BB}.
+返回一个新的迭代器，指向基本块@code{BB}中的最后一条语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} bool gsi_end_p (gimple_stmt_iterator i)
-Return @code{TRUE} if at the end of @code{I}.
+如果位于@code{I}的结尾，则返回@code{TRUE}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} bool gsi_one_before_end_p (gimple_stmt_iterator i)
-Return @code{TRUE} if we're one statement before the end of @code{I}.
+如果是@code{I}的结尾之前的一个语句，则返回@code{TRUE}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_next (gimple_stmt_iterator *i)
-Advance the iterator to the next gimple statement.
+将迭代器前进到下一个gimple语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_prev (gimple_stmt_iterator *i)
-Advance the iterator to the previous gimple statement.
+将迭代器前进到前一个gimple语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple gsi_stmt (gimple_stmt_iterator i)
-Return the current stmt.
+返回当前的stmt。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_stmt_iterator gsi_after_labels (basic_block bb)
-Return a block statement iterator that points to the first
-non-label statement in block @code{BB}.
+返回一个块语句迭代器，指向块@code{BB}中的第一个非标号的语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple *gsi_stmt_ptr (gimple_stmt_iterator *i)
-Return a pointer to the current stmt.
+返回指向当前stmt的指针。
 @end deftypefn
 
 @deftypefn {GIMPLE function} basic_block gsi_bb (gimple_stmt_iterator i)
-Return the basic block associated with this iterator.
+返回与该迭代器关联的基本块。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_seq gsi_seq (gimple_stmt_iterator i)
-Return the sequence associated with this iterator.
+返回与该迭代器关联的序列。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_remove (gimple_stmt_iterator *i, bool remove_eh_info)
-Remove the current stmt from the sequence.  The iterator is
-updated to point to the next statement.  When @code{REMOVE_EH_INFO} is
-true we remove the statement pointed to by iterator @code{I} from the @code{EH}
-tables.  Otherwise we do not modify the @code{EH} tables.  Generally,
-@code{REMOVE_EH_INFO} should be true when the statement is going to be
-removed from the @code{IL} and not reinserted elsewhere.
+从序列中移除当前stmt。迭代器被更新为指向下一条语句。当@code{REMOVE_EH_INFO}为真，则我们将迭代器@code{I}指向的语句从@code{EH}表中移除。否则我们不修改@code{EH}表。通常当语句将从@code{IL}中被移除，并不被插入到其它地方的时候，@code{REMOVE_EH_INFO}应该为真。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_link_seq_before (gimple_stmt_iterator *i, gimple_seq seq, enum gsi_iterator_update mode)
-Links the sequence of statements @code{SEQ} before the statement pointed
-by iterator @code{I}.  @code{MODE} indicates what to do with the iterator
-after insertion (see @code{enum gsi_iterator_update} above).
+将语句序列@code{SEQ}链接在由迭代器@code{I}指向的语句之前。@code{MODE}指出了插入操作之后，迭代器要做什么（参见上面的@code{enum gsi_iterator_update}）。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_link_before (gimple_stmt_iterator *i, gimple g, enum gsi_iterator_update mode)
@@ -2204,18 +2186,15 @@ Add the sequence of statements in @code{SEQ} to the pending list of edge
 @end deftypefn
 
 @deftypefn {GIMPLE function} basic_block gsi_insert_on_edge_immediate (edge e, gimple stmt)
-Similar to @code{gsi_insert_on_edge}+@code{gsi_commit_edge_inserts}.  If a new
-block has to be created, it is returned.
+类似于@code{gsi_insert_on_edge}+@code{gsi_commit_edge_inserts}。如果需要创建一个新的块，则将其返回。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_commit_one_edge_insert (edge e, basic_block *new_bb)
-Commit insertions pending at edge @code{E}.  If a new block is created,
-set @code{NEW_BB} to this block, otherwise set it to @code{NULL}.
+提交在边@code{E}上进行的插入操作。如果创建了新的基本块，则将@code{NEW_BB}设置为该块，否则将其设置为@code{NULL}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gsi_commit_edge_inserts (void)
-This routine will commit all pending edge insertions, creating
-any new basic blocks which are necessary.
+该函数将提交所有要进行的边插入操作，并在需要的时候创建新的基本块。
 @end deftypefn
 
 
