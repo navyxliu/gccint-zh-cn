@@ -53,214 +53,200 @@ Up:&nbsp;<a rel="up" accesskey="u" href="GIMPLE.html#GIMPLE">GIMPLE</a>
 <h3 class="section">12.6 操作GIMPLE语句</h3>
 
 <p><a name="index-Manipulating-GIMPLE-statements-2700"></a>
-This section documents all the functions available to handle each
-of the GIMPLE instructions.
+这章介绍了所有可用于处理每个GIMPLE指令的函数。
 
 <h4 class="subsection">12.6.1 通用访问方法</h4>
 
-<p>The following are common accessors for gimple statements.
+<p>下列为对gimple语句的通用访问。
 
 <div class="defun">
 &mdash; GIMPLE function: enum <b>gimple_code</b><var> gimple_code </var>(<var>gimple g</var>)<var><a name="index-gimple_005fcode-2701"></a></var><br>
-<blockquote><p>Return the code for statement <code>G</code>. 
+<blockquote><p>返回语句<code>G</code>的代码。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: basic_block <b>gimple_bb</b> (<var>gimple g</var>)<var><a name="index-gimple_005fbb-2702"></a></var><br>
-<blockquote><p>Return the basic block to which statement <code>G</code> belongs to. 
+<blockquote><p>返回语句<code>G</code>所属的基本块。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: tree <b>gimple_block</b> (<var>gimple g</var>)<var><a name="index-gimple_005fblock-2703"></a></var><br>
-<blockquote><p>Return the lexical scope block holding statement <code>G</code>. 
+<blockquote><p>返回包含语句<code>G</code>的词法作用域。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: tree <b>gimple_expr_type</b> (<var>gimple stmt</var>)<var><a name="index-gimple_005fexpr_005ftype-2704"></a></var><br>
-<blockquote><p>Return the type of the main expression computed by <code>STMT</code>. Return
-<code>void_type_node</code> if <code>STMT</code> computes nothing. This will only return
-something meaningful for <code>GIMPLE_ASSIGN</code>, <code>GIMPLE_COND</code> and
-<code>GIMPLE_CALL</code>.  For all other tuple codes, it will return
-<code>void_type_node</code>. 
+<blockquote><p>返回<code>STMT</code>所计算的主表达式。如果<code>STMT</code>不做任何计算，则返回<code>void_type_node</code>。这将只为<code>GIMPLE_ASSIGN</code>, <code>GIMPLE_COND</code> 和 <code>GIMPLE_CALL</code>返回一些有意义的东西。对于所有其它元组代码，其将返回<code>void_type_node</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: enum <b>tree_code</b><var> gimple_expr_code </var>(<var>gimple stmt</var>)<var><a name="index-tree_005fcode-2705"></a></var><br>
-<blockquote><p>Return the tree code for the expression computed by <code>STMT</code>.  This
-is only meaningful for <code>GIMPLE_CALL</code>, <code>GIMPLE_ASSIGN</code> and
-<code>GIMPLE_COND</code>.  If <code>STMT</code> is <code>GIMPLE_CALL</code>, it will return <code>CALL_EXPR</code>. 
-For <code>GIMPLE_COND</code>, it returns the code of the comparison predicate. 
-For <code>GIMPLE_ASSIGN</code> it returns the code of the operation performed
-by the <code>RHS</code> of the assignment. 
+<blockquote><p>返回<code>STMT</code>所计算的表达式的tree代码。这将只为<code>GIMPLE_CALL</code>, <code>GIMPLE_ASSIGN</code>和<code>GIMPLE_COND</code>返回一些有意义的东西。如果<code>STMT</code>为<code>GIMPLE_CALL</code>，其将返回<code>CALL_EXPR</code>。对于<code>GIMPLE_COND</code>，其返回比较断言的代码。对于<code>GIMPLE_ASSIGN</code>，其返回赋值语句的右手边所执行的操作代码。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gimple_set_block</b> (<var>gimple g, tree block</var>)<var><a name="index-gimple_005fset_005fblock-2706"></a></var><br>
-<blockquote><p>Set the lexical scope block of <code>G</code> to <code>BLOCK</code>. 
+<blockquote><p>将<code>G</code>的词法作用域块设置为<code>BLOCK</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: location_t <b>gimple_locus</b> (<var>gimple g</var>)<var><a name="index-gimple_005flocus-2707"></a></var><br>
-<blockquote><p>Return locus information for statement <code>G</code>. 
+<blockquote><p>返回语句<code>G</code>的locus信息。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gimple_set_locus</b> (<var>gimple g, location_t locus</var>)<var><a name="index-gimple_005fset_005flocus-2708"></a></var><br>
-<blockquote><p>Set locus information for statement <code>G</code>. 
+<blockquote><p>为语句<code>G</code>设置locus信息。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: bool <b>gimple_locus_empty_p</b> (<var>gimple g</var>)<var><a name="index-gimple_005flocus_005fempty_005fp-2709"></a></var><br>
-<blockquote><p>Return true if <code>G</code> does not have locus information. 
+<blockquote><p>返回真，如果<code>G</code>不具有locus信息。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: bool <b>gimple_no_warning_p</b> (<var>gimple stmt</var>)<var><a name="index-gimple_005fno_005fwarning_005fp-2710"></a></var><br>
-<blockquote><p>Return true if no warnings should be emitted for statement <code>STMT</code>. 
+<blockquote><p>返回真，如果对于语句<code>STMT</code>不会产生警告。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gimple_set_visited</b> (<var>gimple stmt, bool visited_p</var>)<var><a name="index-gimple_005fset_005fvisited-2711"></a></var><br>
-<blockquote><p>Set the visited status on statement <code>STMT</code> to <code>VISITED_P</code>. 
+<blockquote><p>在语句<code>STMT</code>上将访问状态设置成<code>VISITED_P</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: bool <b>gimple_visited_p</b> (<var>gimple stmt</var>)<var><a name="index-gimple_005fvisited_005fp-2712"></a></var><br>
-<blockquote><p>Return the visited status on statement <code>STMT</code>. 
+<blockquote><p>返回语句<code>STMT</code>上的访问状态。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gimple_set_plf</b> (<var>gimple stmt, enum plf_mask plf, bool val_p</var>)<var><a name="index-gimple_005fset_005fplf-2713"></a></var><br>
-<blockquote><p>Set pass local flag <code>PLF</code> on statement <code>STMT</code> to <code>VAL_P</code>. 
+<blockquote><p>将语句<code>STMT</code>上的编译过程局部标记<code>PLF</code>设置为<code>VAL_P</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: unsigned <b>int</b><var> gimple_plf </var>(<var>gimple stmt, enum plf_mask plf</var>)<var><a name="index-int-2714"></a></var><br>
-<blockquote><p>Return the value of pass local flag <code>PLF</code> on statement <code>STMT</code>. 
+<blockquote><p>返回语句<code>STMT</code>上的编译过程局部标记<code>PLF</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: bool <b>gimple_has_ops</b> (<var>gimple g</var>)<var><a name="index-gimple_005fhas_005fops-2715"></a></var><br>
-<blockquote><p>Return true if statement <code>G</code> has register or memory operands. 
+<blockquote><p>返回真，如果语句<code>G</code>具有寄存器或内存操作数。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: bool <b>gimple_has_mem_ops</b> (<var>gimple g</var>)<var><a name="index-gimple_005fhas_005fmem_005fops-2716"></a></var><br>
-<blockquote><p>Return true if statement <code>G</code> has memory operands. 
+<blockquote><p>返回真，如果语句<code>G</code>具有内存操作数。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: unsigned <b>gimple_num_ops</b> (<var>gimple g</var>)<var><a name="index-gimple_005fnum_005fops-2717"></a></var><br>
-<blockquote><p>Return the number of operands for statement <code>G</code>. 
+<blockquote><p>返回语句<code>G</code>的操作数个数。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: tree <b>*gimple_ops</b> (<var>gimple g</var>)<var><a name="index-g_t_002agimple_005fops-2718"></a></var><br>
-<blockquote><p>Return the array of operands for statement <code>G</code>. 
+<blockquote><p>返回语句<code>G</code>的操作数数组。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: tree <b>gimple_op</b> (<var>gimple g, unsigned i</var>)<var><a name="index-gimple_005fop-2719"></a></var><br>
-<blockquote><p>Return operand <code>I</code> for statement <code>G</code>. 
+<blockquote><p>返回语句<code>G</code>的操作数<code>I</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: tree <b>*gimple_op_ptr</b> (<var>gimple g, unsigned i</var>)<var><a name="index-g_t_002agimple_005fop_005fptr-2720"></a></var><br>
-<blockquote><p>Return a pointer to operand <code>I</code> for statement <code>G</code>. 
+<blockquote><p>返回语句<code>G</code>的操作数<code>I</code>的指针。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gimple_set_op</b> (<var>gimple g, unsigned i, tree op</var>)<var><a name="index-gimple_005fset_005fop-2721"></a></var><br>
-<blockquote><p>Set operand <code>I</code> of statement <code>G</code> to <code>OP</code>. 
+<blockquote><p>将语句<code>G</code>的操作数<code>I</code>设置为<code>OP</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: bitmap <b>gimple_addresses_taken</b> (<var>gimple stmt</var>)<var><a name="index-gimple_005faddresses_005ftaken-2722"></a></var><br>
-<blockquote><p>Return the set of symbols that have had their address taken by
-<code>STMT</code>. 
+<blockquote><p>返回<code>STMT</code>使用过其地址的符号集合。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: struct <b>def_optype_d</b><var> *gimple_def_ops </var>(<var>gimple g</var>)<var><a name="index-def_005foptype_005fd-2723"></a></var><br>
-<blockquote><p>Return the set of <code>DEF</code> operands for statement <code>G</code>. 
+<blockquote><p>返回语句<code>G</code>的<code>DEF</code>操作数集合。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gimple_set_def_ops</b> (<var>gimple g, struct def_optype_d *def</var>)<var><a name="index-gimple_005fset_005fdef_005fops-2724"></a></var><br>
-<blockquote><p>Set <code>DEF</code> to be the set of <code>DEF</code> operands for statement <code>G</code>. 
+<blockquote><p>将语句<code>G</code>的<code>DEF</code>操作数集合设置为<code>DEF</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: struct <b>use_optype_d</b><var> *gimple_use_ops </var>(<var>gimple g</var>)<var><a name="index-use_005foptype_005fd-2725"></a></var><br>
-<blockquote><p>Return the set of <code>USE</code> operands for statement <code>G</code>. 
+<blockquote><p>返回语句<code>G</code>的<code>USE</code>操作数集合。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gimple_set_use_ops</b> (<var>gimple g, struct use_optype_d *use</var>)<var><a name="index-gimple_005fset_005fuse_005fops-2726"></a></var><br>
-<blockquote><p>Set <code>USE</code> to be the set of <code>USE</code> operands for statement <code>G</code>. 
+<blockquote><p>将语句<code>G</code>的<code>USE</code>操作数集合设置为<code>USE</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: struct <b>voptype_d</b><var> *gimple_vuse_ops </var>(<var>gimple g</var>)<var><a name="index-voptype_005fd-2727"></a></var><br>
-<blockquote><p>Return the set of <code>VUSE</code> operands for statement <code>G</code>. 
+<blockquote><p>返回语句<code>G</code>的<code>VUSE</code>操作数集合。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gimple_set_vuse_ops</b> (<var>gimple g, struct voptype_d *ops</var>)<var><a name="index-gimple_005fset_005fvuse_005fops-2728"></a></var><br>
-<blockquote><p>Set <code>OPS</code> to be the set of <code>VUSE</code> operands for statement <code>G</code>. 
+<blockquote><p>将语句<code>G</code>的<code>VUSE</code>操作数集合设置为<code>OPS</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: struct <b>voptype_d</b><var> *gimple_vdef_ops </var>(<var>gimple g</var>)<var><a name="index-voptype_005fd-2729"></a></var><br>
-<blockquote><p>Return the set of <code>VDEF</code> operands for statement <code>G</code>. 
+<blockquote><p>返回语句<code>G</code>的<code>VDEF</code>操作数集合。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gimple_set_vdef_ops</b> (<var>gimple g, struct voptype_d *ops</var>)<var><a name="index-gimple_005fset_005fvdef_005fops-2730"></a></var><br>
-<blockquote><p>Set <code>OPS</code> to be the set of <code>VDEF</code> operands for statement <code>G</code>. 
+<blockquote><p>将语句<code>G</code>的<code>VDEF</code>操作数集合设置为<code>OPS</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: bitmap <b>gimple_loaded_syms</b> (<var>gimple g</var>)<var><a name="index-gimple_005floaded_005fsyms-2731"></a></var><br>
-<blockquote><p>Return the set of symbols loaded by statement <code>G</code>.  Each element of
-the set is the <code>DECL_UID</code> of the corresponding symbol. 
+<blockquote><p>返回语句<code>G</code>所加载的符号集合。集合中的每个元素为对应符号的<code>DECL_UID</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: bitmap <b>gimple_stored_syms</b> (<var>gimple g</var>)<var><a name="index-gimple_005fstored_005fsyms-2732"></a></var><br>
-<blockquote><p>Return the set of symbols stored by statement <code>G</code>.  Each element of
-the set is the <code>DECL_UID</code> of the corresponding symbol. 
+<blockquote><p>返回语句<code>G</code>所存储的符号集合。集合中的每个元素为对应符号的<code>DECL_UID</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: bool <b>gimple_modified_p</b> (<var>gimple g</var>)<var><a name="index-gimple_005fmodified_005fp-2733"></a></var><br>
-<blockquote><p>Return true if statement <code>G</code> has operands and the modified field
-has been set. 
+<blockquote><p>返回真，如果语句<code>G</code>具有操作数并且被修改域已经被设置。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: bool <b>gimple_has_volatile_ops</b> (<var>gimple stmt</var>)<var><a name="index-gimple_005fhas_005fvolatile_005fops-2734"></a></var><br>
-<blockquote><p>Return true if statement <code>STMT</code> contains volatile operands. 
+<blockquote><p>返回真，如果语句<code>STMT</code>包含volatile操作数。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gimple_set_has_volatile_ops</b> (<var>gimple stmt, bool volatilep</var>)<var><a name="index-gimple_005fset_005fhas_005fvolatile_005fops-2735"></a></var><br>
-<blockquote><p>Return true if statement <code>STMT</code> contains volatile operands. 
+<blockquote><p>返回真，如果语句<code>STMT</code>包含volatile操作数。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>update_stmt</b> (<var>gimple s</var>)<var><a name="index-update_005fstmt-2736"></a></var><br>
-<blockquote><p>Mark statement <code>S</code> as modified, and update it. 
+<blockquote><p>将语句<code>S</code>标记为已经被修改，并对其进行更新。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>update_stmt_if_modified</b> (<var>gimple s</var>)<var><a name="index-update_005fstmt_005fif_005fmodified-2737"></a></var><br>
-<blockquote><p>Update statement <code>S</code> if it has been marked modified. 
+<blockquote><p>更新语句<code>S</code>，如果其已经被标记为被修改。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: gimple <b>gimple_copy</b> (<var>gimple stmt</var>)<var><a name="index-gimple_005fcopy-2738"></a></var><br>
-<blockquote><p>Return a deep copy of statement <code>STMT</code>. 
+<blockquote><p>返回语句<code>STMT</code>的一个深度复制。
 </p></blockquote></div>
 
  </body></html>

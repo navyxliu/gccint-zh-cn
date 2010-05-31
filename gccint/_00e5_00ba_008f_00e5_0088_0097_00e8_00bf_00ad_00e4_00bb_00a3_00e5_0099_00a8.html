@@ -53,9 +53,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="GIMPLE.html#GIMPLE">GIMPLE</a>
 <h3 class="section">12.9 序列迭代器</h3>
 
 <p><a name="index-Sequence-iterators-3003"></a>
-Sequence iterators are convenience constructs for iterating
-through statements in a sequence.  Given a sequence <code>SEQ</code>, here is
-a typical use of gimple sequence iterators:
+序列迭代器为一些便利的结构，用于在序列中迭代语句。给定序列<code>SEQ</code>，典型的对gimple序列迭代器的使用为：
 
 <pre class="smallexample">     gimple_stmt_iterator gsi;
      
@@ -65,236 +63,195 @@ a typical use of gimple sequence iterators:
          /* Do something with gimple statement <code>G</code>.  */
        }
 </pre>
- <p>Backward iterations are possible:
+ <p>也可以向后迭代：
 
 <pre class="smallexample">             for (gsi = gsi_last (seq); !gsi_end_p (gsi); gsi_prev (&amp;gsi))
 </pre>
- <p>Forward and backward iterations on basic blocks are possible with
-<code>gsi_start_bb</code> and <code>gsi_last_bb</code>.
+ <p>在基本块上进行前向和后向迭代可以通过配合使用<code>gsi_start_bb</code>和<code>gsi_last_bb</code>。
 
- <p>In the documentation below we sometimes refer to enum
-<code>gsi_iterator_update</code>.  The valid options for this enumeration are:
+ <p>在下面的介绍中，我们有时会用到enum <code>gsi_iterator_update</code>。对于该枚举的有效操作有：
 
      <ul>
 <li><code>GSI_NEW_STMT</code>
-Only valid when a single statement is added.  Move the iterator to it.
+只有当增加单个语句被时才有效。将迭代器移动到该处。
 
      <li><code>GSI_SAME_STMT</code>
-Leave the iterator at the same statement.
+将迭代器放在相同的语句处。
 
      <li><code>GSI_CONTINUE_LINKING</code>
-Move iterator to whatever position is suitable for linking other
-statements in the same direction. 
+将迭代器移动到在相同方向上，适合链接其它语句的位置。
 </ul>
 
- <p>Below is a list of the functions used to manipulate and use
-statement iterators.
+ <p>下面为一个函数列表，用于操作和使用语句迭代器。
 
 <div class="defun">
 &mdash; GIMPLE function: gimple_stmt_iterator <b>gsi_start</b> (<var>gimple_seq seq</var>)<var><a name="index-gsi_005fstart-3004"></a></var><br>
-<blockquote><p>Return a new iterator pointing to the sequence <code>SEQ</code>'s first
-statement.  If <code>SEQ</code> is empty, the iterator's basic block is <code>NULL</code>. 
-Use <code>gsi_start_bb</code> instead when the iterator needs to always have
-the correct basic block set. 
+<blockquote><p>返回一个新的迭代器，指向序列<code>SEQ</code>的第一个语句。如果<code>SEQ</code>为空，则迭代器的基本块为<code>NULL</code>。当迭代器总是需要正确设置基本块的时候，使用<code>gsi_start_bb</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: gimple_stmt_iterator <b>gsi_start_bb</b> (<var>basic_block bb</var>)<var><a name="index-gsi_005fstart_005fbb-3005"></a></var><br>
-<blockquote><p>Return a new iterator pointing to the first statement in basic
-block <code>BB</code>. 
+<blockquote><p>返回一个新的迭代器，指向基本块<code>BB</code>中的第一条语句。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: gimple_stmt_iterator <b>gsi_last</b> (<var>gimple_seq seq</var>)<var><a name="index-gsi_005flast-3006"></a></var><br>
-<blockquote><p>Return a new iterator initially pointing to the last statement of
-sequence <code>SEQ</code>.  If <code>SEQ</code> is empty, the iterator's basic block is
-<code>NULL</code>.  Use <code>gsi_last_bb</code> instead when the iterator needs to always
-have the correct basic block set. 
+<blockquote><p>返回一个新的迭代器，初始化为指向序列<code>SEQ</code>中的最后一条语句。如果<code>SEQ</code>为空，则迭代器的基本块为<code>NULL</code>。当迭代器总是需要正确设置基本块的时候，使用<code>gsi_last_bb</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: gimple_stmt_iterator <b>gsi_last_bb</b> (<var>basic_block bb</var>)<var><a name="index-gsi_005flast_005fbb-3007"></a></var><br>
-<blockquote><p>Return a new iterator pointing to the last statement in basic
-block <code>BB</code>. 
+<blockquote><p>返回一个新的迭代器，指向基本块<code>BB</code>中的最后一条语句。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: bool <b>gsi_end_p</b> (<var>gimple_stmt_iterator i</var>)<var><a name="index-gsi_005fend_005fp-3008"></a></var><br>
-<blockquote><p>Return <code>TRUE</code> if at the end of <code>I</code>. 
+<blockquote><p>如果位于<code>I</code>的结尾，则返回<code>TRUE</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: bool <b>gsi_one_before_end_p</b> (<var>gimple_stmt_iterator i</var>)<var><a name="index-gsi_005fone_005fbefore_005fend_005fp-3009"></a></var><br>
-<blockquote><p>Return <code>TRUE</code> if we're one statement before the end of <code>I</code>. 
+<blockquote><p>如果是<code>I</code>的结尾之前的一个语句，则返回<code>TRUE</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_next</b> (<var>gimple_stmt_iterator *i</var>)<var><a name="index-gsi_005fnext-3010"></a></var><br>
-<blockquote><p>Advance the iterator to the next gimple statement. 
+<blockquote><p>将迭代器前进到下一个gimple语句。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_prev</b> (<var>gimple_stmt_iterator *i</var>)<var><a name="index-gsi_005fprev-3011"></a></var><br>
-<blockquote><p>Advance the iterator to the previous gimple statement. 
+<blockquote><p>将迭代器前进到前一个gimple语句。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: gimple <b>gsi_stmt</b> (<var>gimple_stmt_iterator i</var>)<var><a name="index-gsi_005fstmt-3012"></a></var><br>
-<blockquote><p>Return the current stmt. 
+<blockquote><p>返回当前的stmt。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: gimple_stmt_iterator <b>gsi_after_labels</b> (<var>basic_block bb</var>)<var><a name="index-gsi_005fafter_005flabels-3013"></a></var><br>
-<blockquote><p>Return a block statement iterator that points to the first
-non-label statement in block <code>BB</code>. 
+<blockquote><p>返回一个块语句迭代器，指向块<code>BB</code>中的第一个非标号的语句。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: gimple <b>*gsi_stmt_ptr</b> (<var>gimple_stmt_iterator *i</var>)<var><a name="index-g_t_002agsi_005fstmt_005fptr-3014"></a></var><br>
-<blockquote><p>Return a pointer to the current stmt. 
+<blockquote><p>返回指向当前stmt的指针。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: basic_block <b>gsi_bb</b> (<var>gimple_stmt_iterator i</var>)<var><a name="index-gsi_005fbb-3015"></a></var><br>
-<blockquote><p>Return the basic block associated with this iterator. 
+<blockquote><p>返回与该迭代器关联的基本块。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: gimple_seq <b>gsi_seq</b> (<var>gimple_stmt_iterator i</var>)<var><a name="index-gsi_005fseq-3016"></a></var><br>
-<blockquote><p>Return the sequence associated with this iterator. 
+<blockquote><p>返回与该迭代器关联的序列。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_remove</b> (<var>gimple_stmt_iterator *i, bool remove_eh_info</var>)<var><a name="index-gsi_005fremove-3017"></a></var><br>
-<blockquote><p>Remove the current stmt from the sequence.  The iterator is
-updated to point to the next statement.  When <code>REMOVE_EH_INFO</code> is
-true we remove the statement pointed to by iterator <code>I</code> from the <code>EH</code>
-tables.  Otherwise we do not modify the <code>EH</code> tables.  Generally,
-<code>REMOVE_EH_INFO</code> should be true when the statement is going to be
-removed from the <code>IL</code> and not reinserted elsewhere. 
+<blockquote><p>从序列中移除当前stmt。迭代器被更新为指向下一条语句。当<code>REMOVE_EH_INFO</code>为真，则我们将迭代器<code>I</code>指向的语句从<code>EH</code>表中移除。否则我们不修改<code>EH</code>表。通常当语句将从<code>IL</code>中被移除，并不被插入到其它地方的时候，<code>REMOVE_EH_INFO</code>应该为真。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_link_seq_before</b> (<var>gimple_stmt_iterator *i, gimple_seq seq, enum gsi_iterator_update mode</var>)<var><a name="index-gsi_005flink_005fseq_005fbefore-3018"></a></var><br>
-<blockquote><p>Links the sequence of statements <code>SEQ</code> before the statement pointed
-by iterator <code>I</code>.  <code>MODE</code> indicates what to do with the iterator
-after insertion (see <code>enum gsi_iterator_update</code> above). 
+<blockquote><p>将语句序列<code>SEQ</code>链接在由迭代器<code>I</code>指向的语句之前。<code>MODE</code>指出了插入操作之后，迭代器要做什么（参见上面的<code>enum gsi_iterator_update</code>）。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_link_before</b> (<var>gimple_stmt_iterator *i, gimple g, enum gsi_iterator_update mode</var>)<var><a name="index-gsi_005flink_005fbefore-3019"></a></var><br>
-<blockquote><p>Links statement <code>G</code> before the statement pointed-to by iterator <code>I</code>. 
-Updates iterator <code>I</code> according to <code>MODE</code>. 
+<blockquote><p>将语句<code>G</code>链接在由迭代器<code>I</code>指向的语句之前。根据<code>MODE</code>来更新迭代器<code>I</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_link_seq_after</b> (<var>gimple_stmt_iterator *i, gimple_seq seq, enum gsi_iterator_update mode</var>)<var><a name="index-gsi_005flink_005fseq_005fafter-3020"></a></var><br>
-<blockquote><p>Links sequence <code>SEQ</code> after the statement pointed-to by iterator <code>I</code>. 
-<code>MODE</code> is as in <code>gsi_insert_after</code>. 
+<blockquote><p>将序列<code>SEQ</code>链接在由迭代器<code>I</code>指向的语句之后。<code>MODE</code>与在<code>gsi_insert_after</code>中的相同。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_link_after</b> (<var>gimple_stmt_iterator *i, gimple g, enum gsi_iterator_update mode</var>)<var><a name="index-gsi_005flink_005fafter-3021"></a></var><br>
-<blockquote><p>Links statement <code>G</code> after the statement pointed-to by iterator <code>I</code>. 
-<code>MODE</code> is as in <code>gsi_insert_after</code>. 
+<blockquote><p>将语句<code>G</code>链接在由迭代器<code>I</code>指向的语句之后。<code>MODE</code>与在<code>gsi_insert_after</code>中的相同。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: gimple_seq <b>gsi_split_seq_after</b> (<var>gimple_stmt_iterator i</var>)<var><a name="index-gsi_005fsplit_005fseq_005fafter-3022"></a></var><br>
-<blockquote><p>Move all statements in the sequence after <code>I</code> to a new sequence. 
-Return this new sequence. 
+<blockquote><p>将<code>I</code>之后的所有语句移送到新的序列中。返回该新的序列。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: gimple_seq <b>gsi_split_seq_before</b> (<var>gimple_stmt_iterator *i</var>)<var><a name="index-gsi_005fsplit_005fseq_005fbefore-3023"></a></var><br>
-<blockquote><p>Move all statements in the sequence before <code>I</code> to a new sequence. 
-Return this new sequence. 
+<blockquote><p>将<code>I</code>之前的所有语句移送到新的序列中。返回该新的序列。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_replace</b> (<var>gimple_stmt_iterator *i, gimple stmt, bool update_eh_info</var>)<var><a name="index-gsi_005freplace-3024"></a></var><br>
-<blockquote><p>Replace the statement pointed-to by <code>I</code> to <code>STMT</code>.  If <code>UPDATE_EH_INFO</code>
-is true, the exception handling information of the original
-statement is moved to the new statement. 
+<blockquote><p>将由<code>I</code>指向的语句替换为<code>STMT</code>。如果<code>UPDATE_EH_INFO</code>为真，则原来语句的异常处理信息被移送到新的语句中。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_insert_before</b> (<var>gimple_stmt_iterator *i, gimple stmt, enum gsi_iterator_update mode</var>)<var><a name="index-gsi_005finsert_005fbefore-3025"></a></var><br>
-<blockquote><p>Insert statement <code>STMT</code> before the statement pointed-to by iterator
-<code>I</code>, update <code>STMT</code>'s basic block and scan it for new operands.  <code>MODE</code>
-specifies how to update iterator <code>I</code> after insertion (see enum
-<code>gsi_iterator_update</code>). 
+<blockquote><p>在由迭代器<code>I</code>指向的语句之前插入语句<code>STMT</code>，更新<code>STMT</code>的基本块并扫描新的操作数。<code>MODE</code>描述了插入操作之后，如何更新迭代器<code>I</code>(参见enum <code>gsi_iterator_update</code>)。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_insert_seq_before</b> (<var>gimple_stmt_iterator *i, gimple_seq seq, enum gsi_iterator_update mode</var>)<var><a name="index-gsi_005finsert_005fseq_005fbefore-3026"></a></var><br>
-<blockquote><p>Like <code>gsi_insert_before</code>, but for all the statements in <code>SEQ</code>. 
+<blockquote><p>类似于<code>gsi_insert_before</code>，不过是对于<code>SEQ</code>中的所有语句。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_insert_after</b> (<var>gimple_stmt_iterator *i, gimple stmt, enum gsi_iterator_update mode</var>)<var><a name="index-gsi_005finsert_005fafter-3027"></a></var><br>
-<blockquote><p>Insert statement <code>STMT</code> after the statement pointed-to by iterator
-<code>I</code>, update <code>STMT</code>'s basic block and scan it for new operands.  <code>MODE</code>
-specifies how to update iterator <code>I</code> after insertion (see enum
-<code>gsi_iterator_update</code>). 
+<blockquote><p>在由迭代器<code>I</code>指向的语句之后插入语句<code>STMT</code>，更新<code>STMT</code>的基本块并扫描新的操作数。<code>MODE</code>描述了插入操作之后，如何更新迭代器<code>I</code>(参见enum <code>gsi_iterator_update</code>)。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_insert_seq_after</b> (<var>gimple_stmt_iterator *i, gimple_seq seq, enum gsi_iterator_update mode</var>)<var><a name="index-gsi_005finsert_005fseq_005fafter-3028"></a></var><br>
-<blockquote><p>Like <code>gsi_insert_after</code>, but for all the statements in <code>SEQ</code>. 
+<blockquote><p>类似于<code>gsi_insert_after</code>，不过是对于<code>SEQ</code>中的所有语句。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: gimple_stmt_iterator <b>gsi_for_stmt</b> (<var>gimple stmt</var>)<var><a name="index-gsi_005ffor_005fstmt-3029"></a></var><br>
-<blockquote><p>Finds iterator for <code>STMT</code>. 
+<blockquote><p>查找<code>STMT</code>的迭代器。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_move_after</b> (<var>gimple_stmt_iterator *from, gimple_stmt_iterator *to</var>)<var><a name="index-gsi_005fmove_005fafter-3030"></a></var><br>
-<blockquote><p>Move the statement at <code>FROM</code> so it comes right after the statement
-at <code>TO</code>. 
+<blockquote><p>将语句移送到<code>FROM</code>处，使得其正好位于<code>TO</code>处的语句之后。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_move_before</b> (<var>gimple_stmt_iterator *from, gimple_stmt_iterator *to</var>)<var><a name="index-gsi_005fmove_005fbefore-3031"></a></var><br>
-<blockquote><p>Move the statement at <code>FROM</code> so it comes right before the statement
-at <code>TO</code>. 
+<blockquote><p>将语句移送到<code>FROM</code>处，使得其正好位于<code>TO</code>处的语句之前。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_move_to_bb_end</b> (<var>gimple_stmt_iterator *from, basic_block bb</var>)<var><a name="index-gsi_005fmove_005fto_005fbb_005fend-3032"></a></var><br>
-<blockquote><p>Move the statement at <code>FROM</code> to the end of basic block <code>BB</code>. 
+<blockquote><p>将<code>FROM</code>处的语句移送到基本块<code>BB</code>的结尾。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_insert_on_edge</b> (<var>edge e, gimple stmt</var>)<var><a name="index-gsi_005finsert_005fon_005fedge-3033"></a></var><br>
-<blockquote><p>Add <code>STMT</code> to the pending list of edge <code>E</code>.  No actual insertion is
-made until a call to <code>gsi_commit_edge_inserts</code>() is made. 
+<blockquote><p>将<code>STMT</code>增加到边<code>E</code>的待定列表中。直到调用<code>gsi_commit_edge_inserts</code>()之前，不会进行实际的插入操作。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_insert_seq_on_edge</b> (<var>edge e, gimple_seq seq</var>)<var><a name="index-gsi_005finsert_005fseq_005fon_005fedge-3034"></a></var><br>
-<blockquote><p>Add the sequence of statements in <code>SEQ</code> to the pending list of edge
-<code>E</code>.  No actual insertion is made until a call to
-<code>gsi_commit_edge_inserts</code>() is made. 
+<blockquote><p>将<code>SEQ</code>中语句序列增加到边<code>E</code>的待定列表中。直到调用<code>gsi_commit_edge_inserts</code>()之前，不会进行实际的插入操作。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: basic_block <b>gsi_insert_on_edge_immediate</b> (<var>edge e, gimple stmt</var>)<var><a name="index-gsi_005finsert_005fon_005fedge_005fimmediate-3035"></a></var><br>
-<blockquote><p>Similar to <code>gsi_insert_on_edge</code>+<code>gsi_commit_edge_inserts</code>.  If a new
-block has to be created, it is returned. 
+<blockquote><p>类似于<code>gsi_insert_on_edge</code>+<code>gsi_commit_edge_inserts</code>。如果需要创建一个新的块，则将其返回。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_commit_one_edge_insert</b> (<var>edge e, basic_block *new_bb</var>)<var><a name="index-gsi_005fcommit_005fone_005fedge_005finsert-3036"></a></var><br>
-<blockquote><p>Commit insertions pending at edge <code>E</code>.  If a new block is created,
-set <code>NEW_BB</code> to this block, otherwise set it to <code>NULL</code>. 
+<blockquote><p>提交在边<code>E</code>上进行的插入操作。如果创建了新的基本块，则将<code>NEW_BB</code>设置为该块，否则将其设置为<code>NULL</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; GIMPLE function: void <b>gsi_commit_edge_inserts</b> (<var>void</var>)<var><a name="index-gsi_005fcommit_005fedge_005finserts-3037"></a></var><br>
-<blockquote><p>This routine will commit all pending edge insertions, creating
-any new basic blocks which are necessary. 
+<blockquote><p>该函数将提交所有要进行的边插入操作，并在需要的时候创建新的基本块。
 </p></blockquote></div>
 
  </body></html>
