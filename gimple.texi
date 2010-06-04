@@ -368,58 +368,37 @@ GIMPLE级别的if-conversion过程在适当的时候，重新引入了@code{?:}�
 
 @subsection 操作操作数
 
-All gimple operands are of type @code{tree}.  But only certain
-types of trees are allowed to be used as operand tuples.  Basic
-validation is controlled by the function
-@code{get_gimple_rhs_class}, which given a tree code, returns an
-@code{enum} with the following values of type @code{enum
-gimple_rhs_class}
+所有的gimple操作数都是@code{tree}类型的。不过只有特定类型的tree可以被用作操作数元组。函数@code{get_gimple_rhs_class}可以进行基本的验证，其给定一个tree代码，返回一个@code{enum}，为下列@code{enum gimple_rhs_class}类型的值
 
 @itemize @bullet
 @item @code{GIMPLE_INVALID_RHS}
-The tree cannot be used as a GIMPLE operand.
+该tree不能用作GIMPLE操作数。
 
 @item @code{GIMPLE_BINARY_RHS}
-The tree is a valid GIMPLE binary operation.
+该tree为一个有效的GIMPLE二元运算。
 
 @item @code{GIMPLE_UNARY_RHS}
-The tree is a valid GIMPLE unary operation.
+该tree为一个有效的GIMPLE一元运算。
 
 @item @code{GIMPLE_SINGLE_RHS}
-The tree is a single object, that cannot be split into simpler
-operands (for instance, @code{SSA_NAME}, @code{VAR_DECL}, @code{COMPONENT_REF}, etc).
+该tree为单个对象，不能被拆分成更简单的操作数（例如，@code{SSA_NAME}, @code{VAR_DECL}, @code{COMPONENT_REF}等等）。
 
-This operand class also acts as an escape hatch for tree nodes
-that may be flattened out into the operand vector, but would need
-more than two slots on the RHS.  For instance, a @code{COND_EXPR}
-expression of the form @code{(a op b) ? x : y} could be flattened
-out on the operand vector using 4 slots, but it would also
-require additional processing to distinguish @code{c = a op b}
-from @code{c = a op b ? x : y}.  Something similar occurs with
-@code{ASSERT_EXPR}.   In time, these special case tree
-expressions should be flattened into the operand vector.
+该操作数类别还作为转义通口，对于那些可以被平整到操作数向量中，但是右手边会需要多于两个插槽的tree节点。例如，@code{(a op b) ? x : y}的@code{COND_EXPR}表达式，会被平整到使用4个插槽的操作数向量中，但是其还需要额外的处理来从@code{c = a op b ? x : y}中判断@code{c = a op b}。对于@code{ASSERT_EXPR}，也有类似的情况。这些特殊情况的tree表达式应该被平整到操作数向量中。
 @end itemize
 
-For tree nodes in the categories @code{GIMPLE_BINARY_RHS} and
-@code{GIMPLE_UNARY_RHS}, they cannot be stored inside tuples directly.
-They first need to be flattened and separated into individual
-components.  For instance, given the GENERIC expression
+对于在@code{GIMPLE_BINARY_RHS}和@code{GIMPLE_UNARY_RHS}类别中的tree节点，它们不能被直接存放在元组中。需要首先被平整，分隔到独立的部分。例如，给定GENERIC表达式
 
 @smallexample
 a = b + c
 @end smallexample
 
-its tree representation is:
+其tree表示为:
 
 @smallexample
 MODIFY_EXPR <VAR_DECL  <a>, PLUS_EXPR <VAR_DECL <b>, VAR_DECL <c>>>
 @end smallexample
 
-In this case, the GIMPLE form for this statement is logically
-identical to its GENERIC form but in GIMPLE, the @code{PLUS_EXPR}
-on the RHS of the assignment is not represented as a tree,
-instead the two operands are taken out of the @code{PLUS_EXPR} sub-tree
-and flattened into the GIMPLE tuple as follows:
+这种情况下，该语句的GIMPLE形式逻辑上等同于它的GENERIC形式，但是在GIMPLE中，赋值语句的右手边@code{PLUS_EXPR}，不被表示成一个tree，替代的，@code{PLUS_EXPR}的两个操作数子树被拿出来，并平整到GIMPLE元组中，如下：
 
 @smallexample
 GIMPLE_ASSIGN <PLUS_EXPR, VAR_DECL <a>, VAR_DECL <b>, VAR_DECL <c>>
@@ -427,86 +406,59 @@ GIMPLE_ASSIGN <PLUS_EXPR, VAR_DECL <a>, VAR_DECL <b>, VAR_DECL <c>>
 
 @subsection 操作数向量分配
 
-The operand vector is stored at the bottom of the three tuple
-structures that accept operands. This means, that depending on
-the code of a given statement, its operand vector will be at
-different offsets from the base of the structure.  To access
-tuple operands use the following accessors
+操作数向量被存放在三元组结构的底部。这意味着，取决于给定语句的代码，其操作数向量相对于基本结构体的偏移量会不同。使用下列方法来访问元组操作数
 
 @deftypefn {GIMPLE function} unsigned gimple_num_ops (gimple g)
-Returns the number of operands in statement G.
+返回语句@code{G}中的操作数个数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_op (gimple g, unsigned i)
-Returns operand @code{I} from statement @code{G}.
+返回语句@code{G}的第@code{I}个操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree *gimple_ops (gimple g)
-Returns a pointer into the operand vector for statement @code{G}.  This
-is computed using an internal table called @code{gimple_ops_offset_}[].
-This table is indexed by the gimple code of @code{G}.
+返回指向语句@code{G}的操作数向量的指针。这通过内部称作@code{gimple_ops_offset_}[]的表来计算。该表的索引为@code{G}的gimple代码。
 
-When the compiler is built, this table is filled-in using the
-sizes of the structures used by each statement code defined in
-gimple.def.  Since the operand vector is at the bottom of the
-structure, for a gimple code @code{C} the offset is computed as sizeof
-(struct-of @code{C}) - sizeof (tree).
+当编译器被构建时，将gimple.def中定义的每个语句代码，所对应的结构体大小来填充该表。因为操作数向量在结构体的底部，所以对于gimple代码@code{C}，其偏移量被计算为sizeof (struct-of @code{C}) - sizeof (tree)。
 
-This mechanism adds one memory indirection to every access when
-using @code{gimple_op}(), if this becomes a bottleneck, a pass can
-choose to memoize the result from @code{gimple_ops}() and use that to
-access the operands.
+该机制对于使用@code{gimple_op}()的每次访问，都增加了一个内存重定向，如果这会变成瓶颈，则编译过程可以选择记住@code{gimple_ops}()的结果，并使用它来访问操作数。
 @end deftypefn
 
 @subsection 操作数有效性
 
-When adding a new operand to a gimple statement, the operand will
-be validated according to what each tuple accepts in its operand
-vector.  These predicates are called by the
-@code{gimple_<name>_set_...()}.  Each tuple will use one of the
-following predicates (Note, this list is not exhaustive):
+当为gimple语句增加一个新的操作数，将根据每个元组在它操作数向量中可以接受的情况来验证该操作数。这些断言由@code{gimple_<name>_set_...()}调用。元组会使用下列断言（注意，该列表并不全）：
 
 @deftypefn {GIMPLE function} is_gimple_operand (tree t)
-This is the most permissive of the predicates.  It essentially
-checks whether t has a @code{gimple_rhs_class} of @code{GIMPLE_SINGLE_RHS}.
+这是条件最宽的断言。其实质上是检查t是否具有@code{GIMPLE_SINGLE_RHS}的@code{gimple_rhs_class}。
 @end deftypefn
 
 
 @deftypefn {GIMPLE function} is_gimple_val (tree t)
-Returns true if t is a "GIMPLE value", which are all the
-non-addressable stack variables (variables for which
-@code{is_gimple_reg} returns true) and constants (expressions for which
-@code{is_gimple_min_invariant} returns true).
+返回真，如果t为一个“GIMPLE值”，其为所有非寻址的栈变量（@code{is_gimple_reg}返回真的变量）和常量（@code{is_gimple_min_invariant}返回真的表达式）。
 @end deftypefn
 
 @deftypefn {GIMPLE function} is_gimple_addressable (tree t)
-Returns true if t is a symbol or memory reference whose address
-can be taken.
+返回真，如果t为一个符号，或者内存引用，其地址可以被使用。
 @end deftypefn
 
 @deftypefn {GIMPLE function} is_gimple_asm_val (tree t)
-Similar to @code{is_gimple_val} but it also accepts hard registers.
+类似于@code{is_gimple_val}，不过其还接受硬件寄存器。
 @end deftypefn
 
 @deftypefn {GIMPLE function} is_gimple_call_addr (tree t)
-Return true if t is a valid expression to use as the function
-called by a @code{GIMPLE_CALL}.
+返回真，如果t为一个有效的表达式，被作用由@code{GIMPLE_CALL}调用的函数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} is_gimple_constant (tree t)
-Return true if t is a valid gimple constant.
+返回真，如果t为一个有效的gimple常量。
 @end deftypefn
 
 @deftypefn {GIMPLE function} is_gimple_min_invariant (tree t)
-Return true if t is a valid minimal invariant.  This is different
-from constants, in that the specific value of t may not be known
-at compile time, but it is known that it doesn't change (e.g.,
-the address of a function local variable).
+返回真，如果t为一个有效的最小不变量。这与常量不同，其特定的值在编译的时候可能不已知，但是知道其不会改变（例如，函数局部变量的地址）。
 @end deftypefn
 
 @deftypefn {GIMPLE function} is_gimple_min_invariant_address (tree t)
-Return true if t is an @code{ADDR_EXPR} that does not change once the
-program is running.
+返回真，如果t为一个@code{ADDR_EXPR}，其在程序运行时不会改变。
 @end deftypefn
 
 
