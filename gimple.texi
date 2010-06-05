@@ -678,71 +678,64 @@ GIMPLE_ASSIGN <PLUS_EXPR, VAR_DECL <a>, VAR_DECL <b>, VAR_DECL <c>>
 @cindex @code{GIMPLE_ASM}
 
 @deftypefn {GIMPLE function} gimple gimple_build_asm (const char *string, ninputs, noutputs, nclobbers, ...)
-Build a @code{GIMPLE_ASM} statement.  This statement is used for
-building in-line assembly constructs.  @code{STRING} is the assembly
-code.  @code{NINPUT} is the number of register inputs.  @code{NOUTPUT} is the
-number of register outputs.  @code{NCLOBBERS} is the number of clobbered
-registers.  The rest of the arguments trees for each input,
-output, and clobbered registers.
+构建一条@code{GIMPLE_ASM}语句。该语句用于内联的汇编结构。@code{STRING}为汇编代码。@code{NINPUT}为寄存器输入的数目。@code{NOUTPUT}为寄存器输出的数目。@code{NCLOBBERS}为被破坏的寄存器的数目。剩下的参数tree对应于每个输入，输出和被破坏的寄存器。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple gimple_build_asm_vec (const char *, VEC(tree,gc) *, VEC(tree,gc) *, VEC(tree,gc) *)
-Identical to gimple_build_asm, but the arguments are passed in
-VECs.
+等同于gimple_build_asm，不过参数在VEC中传递。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_asm_ninputs (gimple g)
-Return the number of input operands for @code{GIMPLE_ASM} @code{G}. 
+返回@code{GIMPLE_ASM} @code{G}的输入操作数的数目。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_asm_noutputs (gimple g)
-Return the number of output operands for @code{GIMPLE_ASM} @code{G}. 
+返回@code{GIMPLE_ASM} @code{G}的输出操作数的数目。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_asm_nclobbers (gimple g)
-Return the number of clobber operands for @code{GIMPLE_ASM} @code{G}. 
+返回@code{GIMPLE_ASM} @code{G}的破坏操作数的数目。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_asm_input_op (gimple g, unsigned index)
-Return input operand @code{INDEX} of @code{GIMPLE_ASM} @code{G}. 
+返回@code{GIMPLE_ASM} @code{G}的索引为@code{INDEX}的输入操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_asm_set_input_op (gimple g, unsigned index, tree in_op)
-Set @code{IN_OP} to be input operand @code{INDEX} in @code{GIMPLE_ASM} @code{G}. 
+将@code{IN_OP}设置为@code{GIMPLE_ASM} @code{G}的索引为@code{INDEX}的输入操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_asm_output_op (gimple g, unsigned index)
-Return output operand @code{INDEX} of @code{GIMPLE_ASM} @code{G}. 
+返回@code{GIMPLE_ASM} @code{G}的索引为@code{INDEX}的输出操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_asm_set_output_op (gimple g, @
 unsigned index, tree out_op)
-Set @code{OUT_OP} to be output operand @code{INDEX} in @code{GIMPLE_ASM} @code{G}. 
+将@code{OUT_OP}设置为@code{GIMPLE_ASM} @code{G}的索引为@code{INDEX}的输出操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_asm_clobber_op (gimple g, unsigned index)
-Return clobber operand @code{INDEX} of @code{GIMPLE_ASM} @code{G}. 
+返回@code{GIMPLE_ASM} @code{G}的索引为@code{INDEX}的破坏操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_asm_set_clobber_op (gimple g, unsigned index, tree clobber_op)
-Set @code{CLOBBER_OP} to be clobber operand @code{INDEX} in @code{GIMPLE_ASM} @code{G}. 
+将@code{CLOBBER_OP}设置为@code{GIMPLE_ASM} @code{G}的索引为@code{INDEX}的破坏操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} const char *gimple_asm_string (gimple g)
-Return the string representing the assembly instruction in
-@code{GIMPLE_ASM} @code{G}. 
+返回@code{GIMPLE_ASM} @code{G}中的字符串表示的汇编指令。
 @end deftypefn
 
 @deftypefn {GIMPLE function} bool gimple_asm_volatile_p (gimple g)
-Return true if @code{G} is an asm statement marked volatile. 
+返回真，如果@code{G}为一个标记为volatile的asm语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_asm_set_volatile (gimple g)
-Mark asm statement @code{G} as volatile. 
+将asm语句@code{G}标记为volatile。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_asm_clear_volatile (gimple g)
-Remove volatile marker from asm statement @code{G}. 
+从asm语句@code{G}中移除volatile标记。 
 @end deftypefn
 
 @node @code{GIMPLE_ASSIGN}
@@ -750,106 +743,75 @@ Remove volatile marker from asm statement @code{G}.
 @cindex @code{GIMPLE_ASSIGN}
 
 @deftypefn {GIMPLE function} gimple gimple_build_assign (tree lhs, tree rhs)
-Build a @code{GIMPLE_ASSIGN} statement.  The left-hand side is an lvalue
-passed in lhs.  The right-hand side can be either a unary or
-binary tree expression.  The expression tree rhs will be
-flattened and its operands assigned to the corresponding operand
-slots in the new statement.  This function is useful when you
-already have a tree expression that you want to convert into a
-tuple.  However, try to avoid building expression trees for the
-sole purpose of calling this function.  If you already have the
-operands in separate trees, it is better to use
-@code{gimple_build_assign_with_ops}.
+构建一条@code{GIMPLE_ASSIGN}语句。左手边为lhs中传递的左值。右手边可以为一个一元或者二元tree表达式。表达式tree rhs将被平整，其操作数赋值给新语句中相应的操作数插槽中。该函数可用于，你已经有一个tree表达式，并想将其转成元组的时候。然而，不用为了调用该函数，而特意构建表达式tree。如果操作数已经是在独立的tree中，则最好使用@code{gimple_build_assign_with_ops}。
 @end deftypefn
 
 
 @deftypefn {GIMPLE function} gimple gimplify_assign (tree dst, tree src, gimple_seq *seq_p)
-Build a new @code{GIMPLE_ASSIGN} tuple and append it to the end of
-@code{*SEQ_P}.
+构建一个新的@code{GIMPLE_ASSIGN}元组，并将其追加到@code{*SEQ_P}的结尾。
 @end deftypefn
 
-@code{DST}/@code{SRC} are the destination and source respectively.  You can
-pass ungimplified trees in @code{DST} or @code{SRC}, in which
-case they will be converted to a gimple operand if necessary.
+@code{DST}/@code{SRC}分别为目的和源。你可以在@code{DST}或@code{SRC}中传递ungimplified tree，它们会在需要的时候被转换成gimple操作数。
 
-This function returns the newly created @code{GIMPLE_ASSIGN} tuple.
+该函数返回新创建的@code{GIMPLE_ASSIGN}元组。
 
 @deftypefn {GIMPLE function} gimple gimple_build_assign_with_ops @
 (enum tree_code subcode, tree lhs, tree op1, tree op2)
-This function is similar to @code{gimple_build_assign}, but is used to
-build a @code{GIMPLE_ASSIGN} statement when the operands of the
-right-hand side of the assignment are already split into
-different operands.
+该函数类似于@code{gimple_build_assign}，不过是当赋值的右手边操作数已经被拆分成不同操作数的时候，用来构建一个@code{GIMPLE_ASSIGN}语句。
 
-The left-hand side is an lvalue passed in lhs.  Subcode is the
-@code{tree_code} for the right-hand side of the assignment.  Op1 and op2
-are the operands.  If op2 is null, subcode must be a @code{tree_code}
-for a unary expression.
+左手边为在lhs中传递的左值。subcode为赋值的右手边的@code{tree_code}。op1和op2为操作数。如果op2为null，则subcode必须为一个一元表达式的
 @end deftypefn
 
 @deftypefn {GIMPLE function} enum tree_code gimple_assign_rhs_code (gimple g)
-Return the code of the expression computed on the @code{RHS} of
-assignment statement @code{G}.
+返回赋值语句@code{G}的@code{RHS}上的表达式代码。
 @end deftypefn
  
-
 @deftypefn {GIMPLE function} enum gimple_rhs_class gimple_assign_rhs_class (gimple g)
-Return the gimple rhs class of the code for the expression
-computed on the rhs of assignment statement @code{G}.  This will never
-return @code{GIMPLE_INVALID_RHS}.
+返回赋值语句@code{G}右手边的表达式代码的gimple rhs类别。这个永远不会返回@code{GIMPLE_INVALID_RHS}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_assign_lhs (gimple g)
-Return the @code{LHS} of assignment statement @code{G}.
+返回赋值语句@code{G}的@code{LHS}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree *gimple_assign_lhs_ptr (gimple g)
-Return a pointer to the @code{LHS} of assignment statement @code{G}.
+返回指向赋值语句@code{G}的@code{LHS}的指针。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_assign_rhs1 (gimple g)
-Return the first operand on the @code{RHS} of assignment statement @code{G}.
+返回指向赋值语句@code{G}的@code{RHS}的第一个操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree *gimple_assign_rhs1_ptr (gimple g)
-Return the address of the first operand on the @code{RHS} of assignment
-statement @code{G}.
+返回指向赋值语句@code{G}的@code{RHS}的第一个操作数的地址。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_assign_rhs2 (gimple g)
-Return the second operand on the @code{RHS} of assignment statement @code{G}.
+返回指向赋值语句@code{G}的@code{RHS}的第二个操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree *gimple_assign_rhs2_ptr (gimple g)
-Return the address of the second operand on the @code{RHS} of assignment
-statement @code{G}.
+返回指向赋值语句@code{G}的@code{RHS}的第二个操作数的地址。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_assign_set_lhs (gimple g, tree lhs)
-Set @code{LHS} to be the @code{LHS} operand of assignment statement @code{G}.
+将@code{LHS}设置为赋值语句@code{G}的@code{LHS}操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_assign_set_rhs1 (gimple g, tree rhs)
-Set @code{RHS} to be the first operand on the @code{RHS} of assignment
-statement @code{G}.
-@end deftypefn
- 
-@deftypefn {GIMPLE function} tree gimple_assign_rhs2 (gimple g)
-Return the second operand on the @code{RHS} of assignment statement @code{G}.
+将@code{RHS}设置为赋值语句@code{G}的@code{RHS}的第一个操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree *gimple_assign_rhs2_ptr (gimple g)
-Return a pointer to the second operand on the @code{RHS} of assignment
-statement @code{G}.
+返回指向赋值语句@code{G}的@code{RHS}的第二个操作数的指针。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_assign_set_rhs2 (gimple g, tree rhs)
-Set @code{RHS} to be the second operand on the @code{RHS} of assignment
-statement @code{G}.
+将@code{RHS}设置为赋值语句@code{G}的@code{RHS}的第二个操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_assign_cast_p (gimple s)
-Return true if @code{S} is an type-cast assignment.
+返回真，如果@code{S}为一个有类型转换的赋值。
 @end deftypefn
 
 
@@ -1848,24 +1810,23 @@ cleanup body for @code{GIMPLE_TRY} @code{G}.
 @cindex @code{GIMPLE_WITH_CLEANUP_EXPR}
 
 @deftypefn {GIMPLE function} gimple gimple_build_wce (gimple_seq cleanup)
-Build a @code{GIMPLE_WITH_CLEANUP_EXPR} statement.  @code{CLEANUP} is the
-clean-up expression.
+构建一条@code{GIMPLE_WITH_CLEANUP_EXPR}语句。@code{CLEANUP}为一个清除表达式。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_seq gimple_wce_cleanup (gimple g)
-Return the cleanup sequence for cleanup statement @code{G}. 
+返回清除语句@code{G}的清除序列。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_wce_set_cleanup (gimple g, gimple_seq cleanup)
-Set @code{CLEANUP} to be the cleanup sequence for @code{G}. 
+将@code{CLEANUP}设置为@code{G}的清除序列。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} bool gimple_wce_cleanup_eh_only (gimple g)
-Return the @code{CLEANUP_EH_ONLY} flag for a @code{WCE} tuple. 
+返回@code{WCE}元组的@code{CLEANUP_EH_ONLY}标记。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_wce_set_cleanup_eh_only (gimple g, bool eh_only_p)
-Set the @code{CLEANUP_EH_ONLY} flag for a @code{WCE} tuple. 
+为@code{WCE}元组设置@code{CLEANUP_EH_ONLY}标记。 
 @end deftypefn
 
 
