@@ -339,17 +339,9 @@ GCC尝试通过倒数方式将除法转换为乘法。过程位于@file{tree-ssa
 这些优化还用到了@file{tree-ssa-loop-manip.c}, @file{cfgloop.c}, 
 @file{cfgloopanal.c}和@file{cfgloopmanip.c}中的各种函数。
 
-conceptually unrolled by a factor @code{VF} (vectorization factor), which is
-the number of elements operated upon in parallel in each iteration, and the 
-@code{VF} copies of each scalar operation are fused to form a vector operation.
-Additional loop transformations such as peeling and versioning may take place
-to align the number of iterations, and to align the memory accesses in the loop.
-The pass is implemented in @file{tree-vectorizer.c} (the main driver and general
-utilities), @file{tree-vect-analyze.c} and @file{tree-vect-transform.c}.
-Analysis of data references is in @file{tree-data-ref.c}.
+向量化。该过程将循环由标量类型操作转换为向量类型操作。跨越循环迭代的数据并行被利用，将数据元素从连续的迭代中组合成一个向量，对它们并行的操作。取决于可用的目标机的支持，循环在概念上按照因子@code{VF}（vectorization factor）被展开。
 
-向量化。该过程将循环由标量类型操作转换为向量类型操作。
-该过程在@file{tree-parloops.c}（主驱动程序和通用程序），
+自动并行化。该过程将循环迭代空间拆分到几个线程来运行。该过程在tree-parloops.c中实现。
 
 @item 用于向量化的Tree级if转换 （Tree level if-conversion for vectorizer） 
 
@@ -577,12 +569,7 @@ LCM程序在@file{lcm.c}中。
 该过程的源文件为@file{gcse.c}。
 
 @item If转换（If conversion） 
-
-This pass attempts to replace conditional branches and surrounding
-assignments with arithmetic, boolean value producing comparison
-instructions, and conditional move instructions.  In the very last
-invocation after reload, it will generate predicated instructions
-when supported by the target.  The pass is located in @file{ifcvt.c}.
+该过程尝试使用产生比较指令和条件移送指令的算术的布尔值，来替换条件分支和附近的赋值。在重载之后最近的调用中，当目标机支持的时候，其将生成断言指令。该过程位于@file{ifcvt.c}。
 
 @item Web构造（Web construction） 
 
@@ -638,30 +625,14 @@ when supported by the target.  The pass is located in @file{ifcvt.c}.
 
 @itemize @bullet
 @item
-Register move optimizations.  This pass makes some simple RTL code
-transformations which improve the subsequent register allocation.  The
-source file is @file{regmove.c}.
+寄存器移送优化。该过程进行一些简单的RTL代码转换，来改进后续的寄存器分配。源文件为@file{regmove.c}。
 
 @item
-The integrated register allocator (@acronym{IRA}).  It is called
-integrated because coalescing, register live range splitting, and hard
-register preferencing are done on-the-fly during coloring.  It also
-has better integration with the reload pass.  Pseudo-registers spilled
-by the allocator or the reload have still a chance to get
-hard-registers if the reload evicts some pseudo-registers from
-hard-registers.  The allocator helps to choose better pseudos for
-spilling based on their live ranges and to coalesce stack slots
-allocated for the spilled pseudo-registers.  IRA is a regional
-register allocator which is transformed into Chaitin-Briggs allocator
-if there is one region.  By default, IRA chooses regions using
-register pressure but the user can force it to use one region or
-regions corresponding to all loops.
+集成寄存器分配(@acronym{IRA})。其被称作集成的，是因为合并，寄存器活跃范围拆分，以及硬件寄存器优先选定，都在图着色中被执行。其还更好的与重载过程集合在一起。寄存器分配或者重载所溢出的伪寄存器还有机会来获得硬件寄存器，如果重载从硬件寄存器中赶出了一些伪寄存器。寄存器分配可以帮助选择更好的伪寄存器来溢出，基于它们的活跃返回，并且合并为溢出的伪寄存器所分配的栈槽。IRA为一个区域的寄存器分配，如果只有一个区域，则其被转换成Chaitin-Briggs寄存器分配。缺省的IRA使用寄存器压力来选择区域，不过用户可以强制其使用一个区域或者对应于所有循环的多个区域。
 
-Source files of the allocator are @file{ira.c}, @file{ira-build.c},
+寄存器分配的源文件为@file{ira.c}, @file{ira-build.c},
 @file{ira-costs.c}, @file{ira-conflicts.c}, @file{ira-color.c},
-@file{ira-emit.c}, @file{ira-lives}, plus header files @file{ira.h}
-and @file{ira-int.h} used for the communication between the allocator
-and the rest of the compiler and between the IRA files.
+@file{ira-emit.c}, @file{ira-lives}，以及头文件@file{ira.h}和@file{ira-int.h}，用于在分配器和编译器其它部分，以及IRA文件之间的交互。
 
 @cindex reloading
 @item
