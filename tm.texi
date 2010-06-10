@@ -7909,16 +7909,9 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
 所以对于这种情况你可以返回任何值。如果总是返回@code{UNKNOWN}，则不要定义该宏。
 在定义该宏的机器上，你通常要定义其为常量@code{SIGN_EXTEND}或者@code{ZERO_EXTEND}。
 
-You may return a non-@code{UNKNOWN} value even if for some hard registers
-the sign extension is not performed, if for the @code{REGNO_REG_CLASS}
-of these hard registers @code{CANNOT_CHANGE_MODE_CLASS} returns nonzero
-when the @var{from} mode is @var{mem_mode} and the @var{to} mode is any
-integral mode larger than this but not larger than @code{word_mode}.
+你可以返回一个非@code{UNKNOWN}的值，即使对于一些硬件寄存器并没有执行符号扩展，如果对于这些硬件寄存器的@code{REGNO_REG_CLASS}，当@var{from}机器模式为@var{mem_mode}，并且@var{to}机器模式为任何大于其但是不大于@code{word_mode}的整形机器模式的时候，@code{CANNOT_CHANGE_MODE_CLASS}返回非零。
 
-You must return @code{UNKNOWN} if for some hard registers that allow this
-mode, @code{CANNOT_CHANGE_MODE_CLASS} says that they cannot change to
-@code{word_mode}, but that they can change to another integral mode that
-is larger then @var{mem_mode} but still smaller than @code{word_mode}.
+你必须返回@code{UNKNOWN}，如果一些硬件寄存器允许该机器模式，@code{CANNOT_CHANGE_MODE_CLASS}说它们不能变成@code{word_mode}，但是它们可以变成其它大于@var{mem_mode}且仍然小于@code{word_mode}的整形机器模式。
 @end defmac
 
 @defmac SHORT_IMMEDIATES_SIGN_EXTEND
@@ -7947,16 +7940,9 @@ is larger then @var{mem_mode} but still smaller than @code{word_mode}.
 @end defmac
 
 @defmac SHIFT_COUNT_TRUNCATED
-A C expression that is nonzero if on this machine the number of bits
-actually used for the count of a shift operation is equal to the number
-of bits needed to represent the size of the object being shifted.  When
-this macro is nonzero, the compiler will assume that it is safe to omit
-a sign-extend, zero-extend, and certain bitwise `and' instructions that
-truncates the count of a shift operation.  On machines that have
-instructions that act on bit-fields at variable positions, which may
-include `bit test' instructions, a nonzero @code{SHIFT_COUNT_TRUNCATED}
-also enables deletion of truncations of the values that serve as
-arguments to bit-field instructions.
+一个C表达式，为非零，如果在该机器上，实际用于计算移位运算的位数等同于，用来表示被移位的对象大小的位数。当该宏为非零的时候，编译器将假设可以安全的忽略掉对移位运算的计数进行截取的有符号扩展，零扩展和按位与指令。在一些机器上，具有指令可以作用于可变位置的位域，其可能会包含‘位测试’指令，非零的@code{SHIFT_COUNT_TRUNCATED}还可以使得作为位域指令参数的值的截取运算。
+
+如果指令会截取计数（对于位移运算）和
 
 If both types of instructions truncate the count (for shifts) and
 position (for bit-field operations), or if no variable-position bit-field
@@ -8802,67 +8788,41 @@ and ia64.  The default is @code{false}.
 @end deftypefn
 
 @deftypefn {Target Hook} const char *TARGET_INVALID_ARG_FOR_UNPROTOTYPED_FN (tree @var{typelist}, tree @var{funcdecl}, tree @var{val})
-If defined, this macro returns the diagnostic message when it is
-illegal to pass argument @var{val} to function @var{funcdecl}
-with prototype @var{typelist}.
+如果被定义，则当传递参数@var{val}给函数原型为@var{typelist}的函数@var{funcdecl}是非法的时候，该宏会返回诊断信息。
 @end deftypefn
 
 @deftypefn {Target Hook} {const char *} TARGET_INVALID_CONVERSION (tree @var{fromtype}, tree @var{totype})
-If defined, this macro returns the diagnostic message when it is
-invalid to convert from @var{fromtype} to @var{totype}, or @code{NULL}
-if validity should be determined by the front end.
+如果被定义，则当从@var{fromtype}转换成@var{totype}是无效的时候，该宏会返回诊断信息，或者返回@code{NULL}，如果有效性应该由前端来确定。
 @end deftypefn
 
 @deftypefn {Target Hook} {const char *} TARGET_INVALID_UNARY_OP (int @var{op}, tree @var{type})
-If defined, this macro returns the diagnostic message when it is
-invalid to apply operation @var{op} (where unary plus is denoted by
-@code{CONVERT_EXPR}) to an operand of type @var{type}, or @code{NULL}
-if validity should be determined by the front end.
+如果被定义，则当在类型为@var{type}的操作数上执行@var{op}（一元的加号通过@code{CONVERT_EXPR}来表示）是无效的时候，该宏会返回诊断信息，或者返回@code{NULL}，如果有效性应该由前端来确定。
 @end deftypefn
 
 @deftypefn {Target Hook} {const char *} TARGET_INVALID_BINARY_OP (int @var{op}, tree @var{type1}, tree @var{type2})
-If defined, this macro returns the diagnostic message when it is
-invalid to apply operation @var{op} to operands of types @var{type1}
-and @var{type2}, or @code{NULL} if validity should be determined by
-the front end.
+如果被定义，则当在类型为@var{type1}和@var{type2}的操作数上执行@var{op}是无效的时候，该宏会返回诊断信息，或者返回@code{NULL}，如果有效性应该由前端来确定。
 @end deftypefn
 
 @defmac TARGET_USE_JCR_SECTION
-This macro determines whether to use the JCR section to register Java
-classes. By default, TARGET_USE_JCR_SECTION is defined to 1 if both
-SUPPORTS_WEAK and TARGET_HAVE_NAMED_SECTIONS are true, else 0.
+该宏定义是否使用JCR段来记录Java类。缺省的，如果SUPPORTS_WEAK和TARGET_HAVE_NAMED_SECTIONS都为真，则TARGET_USE_JCR_SECTION被定义为1，否则为0。
 @end defmac
 
 @defmac OBJC_JBLEN
-This macro determines the size of the objective C jump buffer for the
-NeXT runtime. By default, OBJC_JBLEN is defined to an innocuous value.
+该宏为NeXT运行时，确定objective C跳转缓存的大小。缺省的，OBJC_JBLEN被定义为一个无害的值。
 @end defmac
 
 @defmac LIBGCC2_UNWIND_ATTRIBUTE
-Define this macro if any target-specific attributes need to be attached
-to the functions in @file{libgcc} that provide low-level support for 
-call stack unwinding.  It is used in declarations in @file{unwind-generic.h}
-and the associated definitions of those functions.
+定义该宏，如果对于@file{libgcc}中那些为调用栈展开（call stack unwinding）提供低级别支持的函数上，需要附加目标机特定的属性时。其被用在@file{unwind-generic.h}中的声明和那些函数相关的定义中。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_UPDATE_STACK_BOUNDARY (void)
-Define this macro to update the current function stack boundary if
-necessary.
+如果需要，定义该宏来更新当前函数栈边界。
 @end deftypefn
 
 @deftypefn {Target Hook} rtx TARGET_GET_DRAP_RTX (void)
-Define this macro to an rtx for Dynamic Realign Argument Pointer if a
-different argument pointer register is needed to access the function's
-argument list when stack is aligned.
+定义该宏为动态重对齐参数指针（Dynamic Realign Argument Pointer）的rtx，如果当栈被对齐时，需要用不同的参数指针寄存器来访问函数的参数列表。
 @end deftypefn
 
 @deftypefn {Target Hook} {bool} TARGET_ALLOCATE_STACK_SLOTS_FOR_ARGS (void)
-When optimization is disabled, this hook indicates whether or not
-arguments should be allocated to stack slots.  Normally, GCC allocates
-stacks slots for arguments when not optimizing in order to make
-debugging easier.  However, when a function is declared with
-@code{__attribute__((naked))}, there is no stack frame, and the compiler
-cannot safely move arguments from the registers in which they are passed
-to the stack.  Therefore, this hook should return true in general, but
-false for naked functions.  The default implementation always returns true.
+当优化被禁止时，该钩子用来指示参数是否应该被分配到栈槽中。通常，GCC当不做优化时，会为参数分配栈槽，以便于调试。然而，当函数使用@code{__attribute__((naked))}声明时，将没有栈帧，因此编译器不能安全的将参数从用来传递它们的寄存器中移送到栈上。因此，该钩子通常应该返回真，但是对于裸露的函数应该返回假。缺省的实现总是返回真。
 @end deftypefn
