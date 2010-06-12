@@ -52,14 +52,14 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_00af_0084_00e5_00ad_0098_00e5_009
 
 <h4 class="subsection">17.7.4 处理叶子函数</h4>
 
-<p><a name="index-leaf-functions-3898"></a><a name="index-functions_002c-leaf-3899"></a>在一些机器上，一个叶子函数（即，不做任何调用的函数），如果其不创建自己的寄存器窗口，则可以运行的更加有效。通常这意味着，其需要通过调用者传递参数的寄存器来接收它的参数，而不是它们通常到达的寄存器。
+<p><a name="index-leaf-functions-3897"></a><a name="index-functions_002c-leaf-3898"></a>在一些机器上，一个叶子函数（即，不做任何调用的函数），如果其不创建自己的寄存器窗口，则可以运行的更加有效。通常这意味着，其需要通过调用者传递参数的寄存器来接收它的参数，而不是它们通常到达的寄存器。
 
  <p>通常只有当叶子函数还满足其它条件时，才会对其进行特殊的对待；例如，通常它们可能只使用，用于它自己的变量和临时对象的那些寄存器。我们使用术语“叶子函数”来指一个适合这样特殊处理的函数，所以没有函数调用的函数并不一定是“叶子函数”。
 
  <p>GCC是在它知道函数是否适合作为叶子函数来对待之前，分配寄存器编号的。所以它需要重编号寄存器，以便输出一个叶子函数。下面的宏用来完成此事。
 
 <div class="defun">
-&mdash; Macro: <b>LEAF_REGISTERS</b><var><a name="index-LEAF_005fREGISTERS-3900"></a></var><br>
+&mdash; Macro: <b>LEAF_REGISTERS</b><var><a name="index-LEAF_005fREGISTERS-3899"></a></var><br>
 <blockquote><p>一个char向量的名字，按照硬件寄存器编号进行索引，对于允许作为叶子函数处理的候选寄存器，其值为1。
 
       <p>如果叶子函数处理涉及到重编号寄存器，则这里标记的寄存器应该是重编号之前的——那些GCC通常分配的。重编号后，在汇编代码中实际被使用的寄存器，不要在该向量中被标记为1。
@@ -68,7 +68,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_00af_0084_00e5_00ad_0098_00e5_009
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>LEAF_REG_REMAP</b> (<var>regno</var>)<var><a name="index-LEAF_005fREG_005fREMAP-3901"></a></var><br>
+&mdash; Macro: <b>LEAF_REG_REMAP</b> (<var>regno</var>)<var><a name="index-LEAF_005fREG_005fREMAP-3900"></a></var><br>
 <blockquote><p>一个C表达式，当函数作为叶子函数来处理时，其值为应该对<var>regno</var>进行重编的寄存器编号。
 
       <p>如果<var>regno</var>为一个在重编号前不应该出现在叶子函数中的寄存器编号，则表达式的值应该为-1，这将造成编译器中断退出。
@@ -76,7 +76,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e5_00af_0084_00e5_00ad_0098_00e5_009
       <p>只有当目标机器提供了优化叶子函数处理的方法，并且寄存器需要被重编号的时候，才定义该宏。
 </p></blockquote></div>
 
- <p><a name="index-current_005ffunction_005fis_005fleaf-3902"></a><a name="index-current_005ffunction_005fuses_005fonly_005fleaf_005fregs-3903"></a><code>TARGET_ASM_FUNCTION_PROLOGUE</code>和<code>TARGET_ASM_FUNCTION_EPILOGUE</code>通常必须专门处理叶子函数。它们可以测试C变量<code>current_function_is_leaf</code>，其对于叶子函数为非0。<code>current_function_is_leaf</code>在局部寄存器分配之前被设置，并且可以用于剩余的编译器过程。它们还可以测试C变量<code>current_function_uses_only_leaf_regs</code>，其对于只用叶子寄存器的叶子函数为非0。<code>current_function_uses_only_leaf_regs</code>在所有修改指令的过程被运行完之后可用，并且只有当<code>LEAF_REGISTERS</code>被定义时才有用。
+ <p><a name="index-current_005ffunction_005fis_005fleaf-3901"></a><a name="index-current_005ffunction_005fuses_005fonly_005fleaf_005fregs-3902"></a><code>TARGET_ASM_FUNCTION_PROLOGUE</code>和<code>TARGET_ASM_FUNCTION_EPILOGUE</code>通常必须专门处理叶子函数。它们可以测试C变量<code>current_function_is_leaf</code>，其对于叶子函数为非0。<code>current_function_is_leaf</code>在局部寄存器分配之前被设置，并且可以用于剩余的编译器过程。它们还可以测试C变量<code>current_function_uses_only_leaf_regs</code>，其对于只用叶子寄存器的叶子函数为非0。<code>current_function_uses_only_leaf_regs</code>在所有修改指令的过程被运行完之后可用，并且只有当<code>LEAF_REGISTERS</code>被定义时才有用。
 
 <!-- changed this to fix overfull.  ALSO:  why the "it" at the beginning -->
 <!-- of the next paragraph?!  -mew 2feb93 -->

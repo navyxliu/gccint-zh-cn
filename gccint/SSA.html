@@ -51,7 +51,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Tree-SSA.html#Tree-SSA">Tree SSA</a>
 
 <h3 class="section">13.3 静态单赋值</h3>
 
-<p><a name="index-SSA-3053"></a><a name="index-static-single-assignment-3054"></a>
+<p><a name="index-SSA-3052"></a><a name="index-static-single-assignment-3053"></a>
 大多数树优化器都依赖于静态单赋值（SSA）形式所提供的数据流信息。
 我们是按照<cite>R. Cytron, J. Ferrante, B. Rosen, M. Wegman, and
 K. Zadeck.  Efficiently Computing Static Single Assignment Form and the
@@ -70,7 +70,7 @@ and Systems, 13(4):451-490, October 1991</cite>中的描述来实现SSA形式的
 用包含了版本号和创建<code>SSA_NAME</code>的语句的<code>SSA_NAME</code>节点包裹起来。
 只有定义和虚定义可能会创建新的<code>SSA_NAME</code>节点。
 
- <p><a name="index-PHI-nodes-3055"></a>有时，控制流使得无法确定变量的最近版本是多少。这种情况下，
+ <p><a name="index-PHI-nodes-3054"></a>有时，控制流使得无法确定变量的最近版本是多少。这种情况下，
 编译器插入一个那个变量的人造定义，称作<dfn>PHI function</dfn>或者<dfn>PHI node</dfn>。
 这个新的定义将变量的所有可能引入的版本合并一起，以创建一个新的名字。例如，
 
@@ -92,34 +92,34 @@ and Systems, 13(4):451-490, October 1991</cite>中的描述来实现SSA形式的
  <p>下面的宏可以用来检查PHI节点。
 
 <div class="defun">
-&mdash; Macro: <b>PHI_RESULT</b> (<var>phi</var>)<var><a name="index-PHI_005fRESULT-3056"></a></var><br>
+&mdash; Macro: <b>PHI_RESULT</b> (<var>phi</var>)<var><a name="index-PHI_005fRESULT-3055"></a></var><br>
 <blockquote><p>返回由PHI节点<var>phi</var>(即, <var>phi</var>'s LHS)创建的<code>SSA_NAME</code>。
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>PHI_NUM_ARGS</b> (<var>phi</var>)<var><a name="index-PHI_005fNUM_005fARGS-3057"></a></var><br>
+&mdash; Macro: <b>PHI_NUM_ARGS</b> (<var>phi</var>)<var><a name="index-PHI_005fNUM_005fARGS-3056"></a></var><br>
 <blockquote><p>返回<var>phi</var>中的参数个数。这个数目就是持有<var>phi</var>的基本块所引入的边的数目。
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>PHI_ARG_ELT</b> (<var>phi, i</var>)<var><a name="index-PHI_005fARG_005fELT-3058"></a></var><br>
+&mdash; Macro: <b>PHI_ARG_ELT</b> (<var>phi, i</var>)<var><a name="index-PHI_005fARG_005fELT-3057"></a></var><br>
 <blockquote><p>返回<var>phi</var>的第<var>i</var>个参数的tuple表示。
 tuple中的每个元素包含了一个<code>SSA_NAME</code> <var>var</var>和<var>var</var>借以流向的引入边。
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>PHI_ARG_EDGE</b> (<var>phi, i</var>)<var><a name="index-PHI_005fARG_005fEDGE-3059"></a></var><br>
+&mdash; Macro: <b>PHI_ARG_EDGE</b> (<var>phi, i</var>)<var><a name="index-PHI_005fARG_005fEDGE-3058"></a></var><br>
 <blockquote><p>返回<var>phi</var>的第<var>i</var>个参数对应的引入边。
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>PHI_ARG_DEF</b> (<var>phi, i</var>)<var><a name="index-PHI_005fARG_005fDEF-3060"></a></var><br>
+&mdash; Macro: <b>PHI_ARG_DEF</b> (<var>phi, i</var>)<var><a name="index-PHI_005fARG_005fDEF-3059"></a></var><br>
 <blockquote><p>返回<var>phi</var>的第<var>i</var>个参数的<code>SSA_NAME</code>。
 </p></blockquote></div>
 
 <h4 class="subsection">13.3.1 保持SSA形式</h4>
 
-<p><a name="index-update_005fssa-3061"></a><a name="index-preserving-SSA-form-3062"></a>一些优化过程会改变函数并使得不再具有SSA特性。
+<p><a name="index-update_005fssa-3060"></a><a name="index-preserving-SSA-form-3061"></a>一些优化过程会改变函数并使得不再具有SSA特性。
 这可能会发生在当一个过程增加了新的符号或者改变了程序使得变量不再被别名的时候。
 不管什么时候发生类似的情况，受到影响的符号必须被再次重命名为SSA形式。
 产生新代码或者替代存在的语句的转换也需要更新SSA形式。
@@ -212,7 +212,7 @@ PHI节点的插入是可选的。它们并不完全必要用于保持SSA形式�
 
 <h4 class="subsection">13.3.2 保持虚SSA形式</h4>
 
-<p><a name="index-preserving-virtual-SSA-form-3063"></a>
+<p><a name="index-preserving-virtual-SSA-form-3062"></a>
 虚SSA形式比非虚SSA形式要难以保持，主要是因为语句的虚操作数集可能会意外的改变。
 通常，语句修改应该被对<code>push_stmt_changes</code>和<code>pop_stmt_changes</code>的调用
 所包裹。例如，
@@ -237,25 +237,25 @@ PHI节点的插入是可选的。它们并不完全必要用于保持SSA形式�
 
 <h4 class="subsection">13.3.3 检验<code>SSA_NAME</code>节点</h4>
 
-<p><a name="index-examining-SSA_005fNAMEs-3064"></a>
+<p><a name="index-examining-SSA_005fNAMEs-3063"></a>
 下面的宏可以用来检查<code>SSA_NAME</code>节点
 
 <div class="defun">
-&mdash; Macro: <b>SSA_NAME_DEF_STMT</b> (<var>var</var>)<var><a name="index-SSA_005fNAME_005fDEF_005fSTMT-3065"></a></var><br>
+&mdash; Macro: <b>SSA_NAME_DEF_STMT</b> (<var>var</var>)<var><a name="index-SSA_005fNAME_005fDEF_005fSTMT-3064"></a></var><br>
 <blockquote><p>返回创建<code>SSA_NAME</code> <var>var</var>的语句<var>s</var>。
 如过<var>s</var>是空语句（即，<code>IS_EMPTY_STMT (</code><var>s</var><code>)</code>返回<code>true</code>），
 则意味着对该变量的第一个引用是一个USE或者VUSE。
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>SSA_NAME_VERSION</b> (<var>var</var>)<var><a name="index-SSA_005fNAME_005fVERSION-3066"></a></var><br>
+&mdash; Macro: <b>SSA_NAME_VERSION</b> (<var>var</var>)<var><a name="index-SSA_005fNAME_005fVERSION-3065"></a></var><br>
 <blockquote><p>返回<code>SSA_NAME</code>对象<var>var</var>的版本号。
 </p></blockquote></div>
 
 <h4 class="subsection">13.3.4 遍历use-def链</h4>
 
 <div class="defun">
-&mdash; Tree SSA function: void <b>walk_use_def_chains</b> (<var>var, fn, data</var>)<var><a name="index-walk_005fuse_005fdef_005fchains-3067"></a></var><br>
+&mdash; Tree SSA function: void <b>walk_use_def_chains</b> (<var>var, fn, data</var>)<var><a name="index-walk_005fuse_005fdef_005fchains-3066"></a></var><br>
 <blockquote>
       <p>对use-def链的遍历起始于<code>SSA_NAME</code>节点<var>var</var>。
 对每一个发现的可达定义调用函数<var>fn</var>。函数<var>fn</var>接受三个参数：<var>var</var>，
@@ -278,7 +278,7 @@ PHI节点的插入是可选的。它们并不完全必要用于保持SSA形式�
 <h4 class="subsection">13.3.5 遍历支配树</h4>
 
 <div class="defun">
-&mdash; Tree SSA function: void <b>walk_dominator_tree</b> (<var>walk_data, bb</var>)<var><a name="index-walk_005fdominator_005ftree-3068"></a></var><br>
+&mdash; Tree SSA function: void <b>walk_dominator_tree</b> (<var>walk_data, bb</var>)<var><a name="index-walk_005fdominator_005ftree-3067"></a></var><br>
 <blockquote>
       <p>该函数遍历当前CFG的支配树，
 并调用在<samp><span class="file">domwalk.h</span></samp>中<var>struct dom_walk_data</var>里定义的一系列回调函数。

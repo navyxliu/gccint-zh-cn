@@ -124,12 +124,7 @@ LCM程序在<samp><span class="file">lcm.c</span></samp>中。
 该过程的源文件为<samp><span class="file">gcse.c</span></samp>。
 
      <li>If转换（If conversion）
-
-     <p>This pass attempts to replace conditional branches and surrounding
-assignments with arithmetic, boolean value producing comparison
-instructions, and conditional move instructions.  In the very last
-invocation after reload, it will generate predicated instructions
-when supported by the target.  The pass is located in <samp><span class="file">ifcvt.c</span></samp>.
+该过程尝试使用产生比较指令和条件移送指令的算术的布尔值，来替换条件分支和附近的赋值。在重载之后最近的调用中，当目标机支持的时候，其将生成断言指令。该过程位于<samp><span class="file">ifcvt.c</span></samp>。
 
      <li>Web构造（Web construction）
 
@@ -182,29 +177,13 @@ when supported by the target.  The pass is located in <samp><span class="file">i
 或者使用等价表达式来替换（例如常数），或者将它们放在栈中。这由几个子过程来完成：
 
           <ul>
-<li>Register move optimizations.  This pass makes some simple RTL code
-transformations which improve the subsequent register allocation.  The
-source file is <samp><span class="file">regmove.c</span></samp>.
+<li>寄存器移送优化。该过程进行一些简单的RTL代码转换，来改进后续的寄存器分配。源文件为<samp><span class="file">regmove.c</span></samp>。
 
-          <li>The integrated register allocator (<acronym>IRA</acronym>).  It is called
-integrated because coalescing, register live range splitting, and hard
-register preferencing are done on-the-fly during coloring.  It also
-has better integration with the reload pass.  Pseudo-registers spilled
-by the allocator or the reload have still a chance to get
-hard-registers if the reload evicts some pseudo-registers from
-hard-registers.  The allocator helps to choose better pseudos for
-spilling based on their live ranges and to coalesce stack slots
-allocated for the spilled pseudo-registers.  IRA is a regional
-register allocator which is transformed into Chaitin-Briggs allocator
-if there is one region.  By default, IRA chooses regions using
-register pressure but the user can force it to use one region or
-regions corresponding to all loops.
+          <li>集成寄存器分配(<acronym>IRA</acronym>)。其被称作集成的，是因为合并，寄存器活跃范围拆分，以及硬件寄存器优先选定，都在图着色中被执行。其还更好的与重载过程集合在一起。寄存器分配或者重载所溢出的伪寄存器还有机会来获得硬件寄存器，如果重载从硬件寄存器中赶出了一些伪寄存器。寄存器分配可以帮助选择更好的伪寄存器来溢出，基于它们的活跃返回，并且合并为溢出的伪寄存器所分配的栈槽。IRA为一个区域的寄存器分配，如果只有一个区域，则其被转换成Chaitin-Briggs寄存器分配。缺省的IRA使用寄存器压力来选择区域，不过用户可以强制其使用一个区域或者对应于所有循环的多个区域。
 
-          <p>Source files of the allocator are <samp><span class="file">ira.c</span></samp>, <samp><span class="file">ira-build.c</span></samp>,
+          <p>寄存器分配的源文件为<samp><span class="file">ira.c</span></samp>, <samp><span class="file">ira-build.c</span></samp>,
 <samp><span class="file">ira-costs.c</span></samp>, <samp><span class="file">ira-conflicts.c</span></samp>, <samp><span class="file">ira-color.c</span></samp>,
-<samp><span class="file">ira-emit.c</span></samp>, <samp><span class="file">ira-lives</span></samp>, plus header files <samp><span class="file">ira.h</span></samp>
-and <samp><span class="file">ira-int.h</span></samp> used for the communication between the allocator
-and the rest of the compiler and between the IRA files.
+<samp><span class="file">ira-emit.c</span></samp>, <samp><span class="file">ira-lives</span></samp>，以及头文件<samp><span class="file">ira.h</span></samp>和<samp><span class="file">ira-int.h</span></samp>，用于在分配器和编译器其它部分，以及IRA文件之间的交互。
 
           <p><a name="index-reloading-1688"></a><li>重载（reloading）。该过程使用分配的硬件寄存器编号来重新为伪寄存器编号。
 没有获得硬件寄存器的伪寄存器被分配到栈槽中。然后寻找那些由于无法放入寄存器，

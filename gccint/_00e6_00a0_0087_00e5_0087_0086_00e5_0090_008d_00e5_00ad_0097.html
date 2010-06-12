@@ -52,11 +52,11 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
 <h3 class="section">16.9 用于生成的标准指令模式名</h3>
 
-<p><a name="index-standard-pattern-names-3286"></a><a name="index-pattern-names-3287"></a><a name="index-names_002c-pattern-3288"></a>
+<p><a name="index-standard-pattern-names-3285"></a><a name="index-pattern-names-3286"></a><a name="index-names_002c-pattern-3287"></a>
 这里有一个在编译器的RTL生成过程中有意义的指令名称表，在指令模式中给定这些名字中的一个，则告诉RTL生成过程，其可以使用该指令模式来完成一个特定的任务。
 
      
-<a name="index-g_t_0040code_007bmov_0040var_007bm_007d_007d-instruction-pattern-3289"></a>
+<a name="index-g_t_0040code_007bmov_0040var_007bm_007d_007d-instruction-pattern-3288"></a>
 <dl><dt>&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;<dd>这里<var>m</var>表示一个两字母的机器模式名字，小写。该指令模式将那种机器模式的数据从操作数1移送到操作数0。例如&lsquo;<samp><span class="samp">movsi</span></samp>&rsquo;移送整字数据。
 
      <p>如果操作数0为一个寄存器的<code>subreg</code>，机器模式为<var>m</var>，寄存器自己的机器模式比<var>m</var>更宽，则该指令的效果是将指定的值存储在寄存器的对应于机器模式<var>m</var>的部分。<var>m</var>之外，且与<code>subreg</code>在同一个目标字中的位，为未定义。目标字以外的位保持不变。
@@ -65,13 +65,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>第二，这些指令模式不仅用在RTL生成过程。甚至重载过程可以生成move insn将值从栈槽复制到临时寄存器中。当这样的时候，其中一个操作数为硬件寄存器，另一个为需要被重载到寄存器中的操作数。
 
-     <p><a name="index-force_005freg-3290"></a>因此，当给定这样一对操作数时，指令模式必须生成不需要重载，并且不需要临时寄存器的RTL。例如，如果你使用一个<code>define_expand</code>来支持该指令模式，则这种情况下，<code>define_expand</code>一定不能调用<code>force_reg</code>或者任何其它可能生成新的伪寄存器的函数。
+     <p><a name="index-force_005freg-3289"></a>因此，当给定这样一对操作数时，指令模式必须生成不需要重载，并且不需要临时寄存器的RTL。例如，如果你使用一个<code>define_expand</code>来支持该指令模式，则这种情况下，<code>define_expand</code>一定不能调用<code>force_reg</code>或者任何其它可能生成新的伪寄存器的函数。
 
      <p>甚至对于在RISC机器上的子字机器模式，从内存中获取这些机器模式通常需要多个insn和一些临时变量，该要求也存在。
 
-     <p><a name="index-change_005faddress-3291"></a>重载过程中，具有无效地址的内存引用可以被作为操作数。这样的地址将在重载过程的后面被替换成有效地址。这种情况下，可能对地址没有做任何事情，而只是使用它。如果其被复制，则将无法使用有效的地址进行替换。不要尝试将这样的地址变成有效的地址。注意，<code>general_operand</code>当应用到这样的地址的时候将会失败。
+     <p><a name="index-change_005faddress-3290"></a>重载过程中，具有无效地址的内存引用可以被作为操作数。这样的地址将在重载过程的后面被替换成有效地址。这种情况下，可能对地址没有做任何事情，而只是使用它。如果其被复制，则将无法使用有效的地址进行替换。不要尝试将这样的地址变成有效的地址。注意，<code>general_operand</code>当应用到这样的地址的时候将会失败。
 
-     <p><a name="index-reload_005fin_005fprogress-3292"></a>全局变量<code>reload_in_progress</code>（其必须被显式的声明）可以用来确定是否需要这样的特殊的处理。
+     <p><a name="index-reload_005fin_005fprogress-3291"></a>全局变量<code>reload_in_progress</code>（其必须被显式的声明）可以用来确定是否需要这样的特殊的处理。
 
      <p>需要进行重载的操作数的种类取决于机器描述的其余部分，不过通常在RISC机器上，只有那些没有获得硬件寄存器的伪寄存器，而在其它机器上，显式的内存引用也有可能需要进行重载。
 
@@ -79,7 +79,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>如果在重载过程中，或者之后，有需要scratch寄存器的情况，则你必须提供一个适当的secondary_reload目标钩子。
 
-     <p><a name="index-can_005fcreate_005fpseudo_005fp-3293"></a>宏<code>can_create_pseudo_p</code>可以用来确定创建一个新的伪寄存器是否不安全。如果该变量为非零，则调用<code>gen_reg_rtx</code>来分配一个新的伪寄存器是不安全的。
+     <p><a name="index-can_005fcreate_005fpseudo_005fp-3292"></a>宏<code>can_create_pseudo_p</code>可以用来确定创建一个新的伪寄存器是否不安全。如果该变量为非零，则调用<code>gen_reg_rtx</code>来分配一个新的伪寄存器是不安全的。
 
      <p>&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;上的约束必须允许将任何硬件寄存器移送到任何其它硬件寄存器上，假设<code>HARD_REGNO_MODE_OK</code>在两个寄存器上都允许机器模式<var>m</var>，并且<code>REGISTER_MOVE_COST</code>应用到它们的类别上返回值2。
 
@@ -87,19 +87,19 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>还需要支持定点&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;指令，用于浮点寄存器。不幸的是，我忘了为什么要这样，并且不知道这是否还是真的。如果<code>HARD_REGNO_MODE_OK</code>排斥在浮点寄存器中的定点值，则定点&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;指令的约束必须被设计成，避免尝试重载到一个浮点寄存器。
 
-     <p><a name="index-g_t_0040code_007breload_005fin_007d-instruction-pattern-3294"></a><a name="index-g_t_0040code_007breload_005fout_007d-instruction-pattern-3295"></a><br><dt>&lsquo;<samp><span class="samp">reload_in</span><var>m</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">reload_out</span><var>m</var></samp>&rsquo;<dd>这些命名指令模式已经被目标钩子<code>secondary_reload</code>废弃。
+     <p><a name="index-g_t_0040code_007breload_005fin_007d-instruction-pattern-3293"></a><a name="index-g_t_0040code_007breload_005fout_007d-instruction-pattern-3294"></a><br><dt>&lsquo;<samp><span class="samp">reload_in</span><var>m</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">reload_out</span><var>m</var></samp>&rsquo;<dd>这些命名指令模式已经被目标钩子<code>secondary_reload</code>废弃。
 
      <p>类似&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;，不过用于当需要使用scratch寄存器在操作数0和操作数1之间移送的时候。操作数2描述scratch寄存器。参见在see <a href="_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e7_00b1_00bb_00e5_0088_00ab.html#g_t_00e5_00af_0084_00e5_00ad_0098_00e5_0099_00a8_00e7_00b1_00bb_00e5_0088_00ab">寄存器类别</a>中对<code>SECONDARY_RELOAD_CLASS</code>宏的讨论。
 
      <p>这些指令模式中的<code>match_operand</code>的形式，有一些特殊的限制。首先，只有重载操作数的断言才被检查，即<code>reload_in</code>检查操作数1，而不检查操作数0和2。第二，在约束中只能有一个可选项。第三，约束只能使用单个寄存器类别字母；后续的约束字母都被忽略。一个例外是，空的约束字符串匹配<code>ALL_REGS</code>寄存器类别。这可以减轻后端为这些指令模式定义<code>ALL_REGS</code>约束字母的负担。
 
-     <p><a name="index-g_t_0040code_007bmovstrict_0040var_007bm_007d_007d-instruction-pattern-3296"></a><br><dt>&lsquo;<samp><span class="samp">movstrict</span><var>m</var></samp>&rsquo;<dd>类似&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;，只不过，如果操作数0为一个寄存器的机器模式为<var>m</var>的<code>subreg</code>，且寄存器的自然机器模式是较宽的，则&lsquo;<samp><span class="samp">movstrict</span><var>m</var></samp>&rsquo;指令保证不会修改属于机器模式<var>m</var>之外的寄存器的任何部分。
+     <p><a name="index-g_t_0040code_007bmovstrict_0040var_007bm_007d_007d-instruction-pattern-3295"></a><br><dt>&lsquo;<samp><span class="samp">movstrict</span><var>m</var></samp>&rsquo;<dd>类似&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;，只不过，如果操作数0为一个寄存器的机器模式为<var>m</var>的<code>subreg</code>，且寄存器的自然机器模式是较宽的，则&lsquo;<samp><span class="samp">movstrict</span><var>m</var></samp>&rsquo;指令保证不会修改属于机器模式<var>m</var>之外的寄存器的任何部分。
 
-     <p><a name="index-g_t_0040code_007bmovmisalign_0040var_007bm_007d_007d-instruction-pattern-3297"></a><br><dt>&lsquo;<samp><span class="samp">movmisalign</span><var>m</var></samp>&rsquo;<dd>该move指令模式的变体，被设计为从没有与其机器模式自然对齐的内存地址中加载和存储值。对于存储，内存将在操作数0中；对于加载，内存将在操作数1中。其它操作数保证不为内存，所以容易判别是加载还是存储。
+     <p><a name="index-g_t_0040code_007bmovmisalign_0040var_007bm_007d_007d-instruction-pattern-3296"></a><br><dt>&lsquo;<samp><span class="samp">movmisalign</span><var>m</var></samp>&rsquo;<dd>该move指令模式的变体，被设计为从没有与其机器模式自然对齐的内存地址中加载和存储值。对于存储，内存将在操作数0中；对于加载，内存将在操作数1中。其它操作数保证不为内存，所以容易判别是加载还是存储。
 
      <p>该指令模式用于向量化，当展开<code>MISALIGNED_INDIRECT_REF</code>表达式的时候。
 
-     <p><a name="index-g_t_0040code_007bload_005fmultiple_007d-instruction-pattern-3298"></a><br><dt>&lsquo;<samp><span class="samp">load_multiple</span></samp>&rsquo;<dd>将多个连续的内存位置加载到连续的寄存器中。操作数0为连续寄存器中的第一个，操作数1为第一个内存位置，操作数2为一个常量：连续寄存器的数目。
+     <p><a name="index-g_t_0040code_007bload_005fmultiple_007d-instruction-pattern-3297"></a><br><dt>&lsquo;<samp><span class="samp">load_multiple</span></samp>&rsquo;<dd>将多个连续的内存位置加载到连续的寄存器中。操作数0为连续寄存器中的第一个，操作数1为第一个内存位置，操作数2为一个常量：连续寄存器的数目。
 
      <p>只有当目标机器确实具有这样指令的时候才定义该指令模式；如果将内存加载到连续寄存器的最有效的方式，是每次加载一个，则 不用定义该指令模式。
 
@@ -107,210 +107,210 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>将生成的insn写成一个<code>parallel</code>，其元素为一个从适当内存位置到寄存器的<code>set</code>（可能还需要<code>use</code>或元素<code>clobber</code>）。使用<code>match_parallel</code> (see <a href="RTL_00e6_00a8_00a1_00e6_009d_00bf.html#RTL_00e6_00a8_00a1_00e6_009d_00bf">RTL模板</a>)来识别insn。关于使用该insn模式的例子，可以参见<samp><span class="file">rs6000.md</span></samp>。
 
-     <p><a name="index-g_t_0040samp_007bstore_005fmultiple_007d-instruction-pattern-3299"></a><br><dt>&lsquo;<samp><span class="samp">store_multiple</span></samp>&rsquo;<dd>类似于&lsquo;<samp><span class="samp">load_multiple</span></samp>&rsquo;，不过是将多个连续的寄存器存储到连续的内存位置。操作数0为连续内存位置的第一个，操作数1为第一个寄存器，操作数2为常量：连续寄存器的数目。
+     <p><a name="index-g_t_0040samp_007bstore_005fmultiple_007d-instruction-pattern-3298"></a><br><dt>&lsquo;<samp><span class="samp">store_multiple</span></samp>&rsquo;<dd>类似于&lsquo;<samp><span class="samp">load_multiple</span></samp>&rsquo;，不过是将多个连续的寄存器存储到连续的内存位置。操作数0为连续内存位置的第一个，操作数1为第一个寄存器，操作数2为常量：连续寄存器的数目。
 
-     <p><a name="index-g_t_0040code_007bvec_005fset_0040var_007bm_007d_007d-instruction-pattern-3300"></a><br><dt>&lsquo;<samp><span class="samp">vec_set</span><var>m</var></samp>&rsquo;<dd>设置向量中给定的域。操作数0为要修改的向量，操作数1为域的新值，操作数2指定了域的索引。
+     <p><a name="index-g_t_0040code_007bvec_005fset_0040var_007bm_007d_007d-instruction-pattern-3299"></a><br><dt>&lsquo;<samp><span class="samp">vec_set</span><var>m</var></samp>&rsquo;<dd>设置向量中给定的域。操作数0为要修改的向量，操作数1为域的新值，操作数2指定了域的索引。
 
-     <p><a name="index-g_t_0040code_007bvec_005fextract_0040var_007bm_007d_007d-instruction-pattern-3301"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract</span><var>m</var></samp>&rsquo;<dd>从向量中抽取给定的域。操作数1为向量，操作数2指定了域索引，操作数0为存放值的地方。
+     <p><a name="index-g_t_0040code_007bvec_005fextract_0040var_007bm_007d_007d-instruction-pattern-3300"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract</span><var>m</var></samp>&rsquo;<dd>从向量中抽取给定的域。操作数1为向量，操作数2指定了域索引，操作数0为存放值的地方。
 
-     <p><a name="index-g_t_0040code_007bvec_005fextract_005feven_0040var_007bm_007d_007d-instruction-pattern-3302"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract_even</span><var>m</var></samp>&rsquo;<dd>从输入向量（操作数1和2）中，抽取偶数元素。操作数2的偶数元素按照它们原来的顺序，连结到操作数1的偶数元素后面。结果存储在操作数0中。输出和输入向量应该具有相同的模式。
+     <p><a name="index-g_t_0040code_007bvec_005fextract_005feven_0040var_007bm_007d_007d-instruction-pattern-3301"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract_even</span><var>m</var></samp>&rsquo;<dd>从输入向量（操作数1和2）中，抽取偶数元素。操作数2的偶数元素按照它们原来的顺序，连结到操作数1的偶数元素后面。结果存储在操作数0中。输出和输入向量应该具有相同的模式。
 
-     <p><a name="index-g_t_0040code_007bvec_005fextract_005fodd_0040var_007bm_007d_007d-instruction-pattern-3303"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract_odd</span><var>m</var></samp>&rsquo;<dd>从输入向量（操作数1和2）中，抽取奇数元素。操作数2的奇数元素按照它们原来的顺序，连结到操作数1的奇数元素后面。结果存储在操作数0中。输出和输入向量应该具有相同的模式。
+     <p><a name="index-g_t_0040code_007bvec_005fextract_005fodd_0040var_007bm_007d_007d-instruction-pattern-3302"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract_odd</span><var>m</var></samp>&rsquo;<dd>从输入向量（操作数1和2）中，抽取奇数元素。操作数2的奇数元素按照它们原来的顺序，连结到操作数1的奇数元素后面。结果存储在操作数0中。输出和输入向量应该具有相同的模式。
 
-     <p><a name="index-g_t_0040code_007bvec_005finterleave_005fhigh_0040var_007bm_007d_007d-instruction-pattern-3304"></a><br><dt>&lsquo;<samp><span class="samp">vec_interleave_high</span><var>m</var></samp>&rsquo;<dd>将两个输入向量的高部分元素合并到输入向量中。输出和输入向量应该具有相同的模式(<code>N</code>个元素)。第一个输入向量的高<code>N/2</code>个元素被第二个输入向量的高<code>N/2</code>个元素交错的插入。
+     <p><a name="index-g_t_0040code_007bvec_005finterleave_005fhigh_0040var_007bm_007d_007d-instruction-pattern-3303"></a><br><dt>&lsquo;<samp><span class="samp">vec_interleave_high</span><var>m</var></samp>&rsquo;<dd>将两个输入向量的高部分元素合并到输入向量中。输出和输入向量应该具有相同的模式(<code>N</code>个元素)。第一个输入向量的高<code>N/2</code>个元素被第二个输入向量的高<code>N/2</code>个元素交错的插入。
 
-     <p><a name="index-g_t_0040code_007bvec_005finterleave_005flow_0040var_007bm_007d_007d-instruction-pattern-3305"></a><br><dt>&lsquo;<samp><span class="samp">vec_interleave_low</span><var>m</var></samp>&rsquo;<dd>将两个输入向量的低部分元素合并到输入向量中。输出和输入向量应该具有相同的模式(<code>N</code>个元素)。第一个输入向量的低<code>N/2</code>个元素被第二个输入向量的低<code>N/2</code>个元素交错的插入。
+     <p><a name="index-g_t_0040code_007bvec_005finterleave_005flow_0040var_007bm_007d_007d-instruction-pattern-3304"></a><br><dt>&lsquo;<samp><span class="samp">vec_interleave_low</span><var>m</var></samp>&rsquo;<dd>将两个输入向量的低部分元素合并到输入向量中。输出和输入向量应该具有相同的模式(<code>N</code>个元素)。第一个输入向量的低<code>N/2</code>个元素被第二个输入向量的低<code>N/2</code>个元素交错的插入。
 
-     <p><a name="index-g_t_0040code_007bvec_005finit_0040var_007bm_007d_007d-instruction-pattern-3306"></a><br><dt>&lsquo;<samp><span class="samp">vec_init</span><var>m</var></samp>&rsquo;<dd>将向量初始化为给定的值。操作数0为要初始化的向量，操作数1并行的包含每个域的值。
+     <p><a name="index-g_t_0040code_007bvec_005finit_0040var_007bm_007d_007d-instruction-pattern-3305"></a><br><dt>&lsquo;<samp><span class="samp">vec_init</span><var>m</var></samp>&rsquo;<dd>将向量初始化为给定的值。操作数0为要初始化的向量，操作数1并行的包含每个域的值。
 
-     <p><a name="index-g_t_0040code_007bpush_0040var_007bm_007d1_007d-instruction-pattern-3307"></a><br><dt>&lsquo;<samp><span class="samp">push</span><var>m</var><span class="samp">1</span></samp>&rsquo;<dd>输出一个push指令。操作数0是压栈的值。只有当<code>PUSH_ROUNDING</code>被定义时，才被使用。出于历史原因，该指令模式可以缺失，这种情况下使用<code>mov</code>扩展来替代，并用<code>MEM</code>表达式来形成压栈运算。<code>mov</code>扩展方法不被推荐。
+     <p><a name="index-g_t_0040code_007bpush_0040var_007bm_007d1_007d-instruction-pattern-3306"></a><br><dt>&lsquo;<samp><span class="samp">push</span><var>m</var><span class="samp">1</span></samp>&rsquo;<dd>输出一个push指令。操作数0是压栈的值。只有当<code>PUSH_ROUNDING</code>被定义时，才被使用。出于历史原因，该指令模式可以缺失，这种情况下使用<code>mov</code>扩展来替代，并用<code>MEM</code>表达式来形成压栈运算。<code>mov</code>扩展方法不被推荐。
 
-     <p><a name="index-g_t_0040code_007badd_0040var_007bm_007d3_007d-instruction-pattern-3308"></a><br><dt>&lsquo;<samp><span class="samp">add</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>操作数2加上操作数1，将结果存储在操作数0中。所有操作数必须具有机器模式<var>m</var>。这也可以用于两地址机器上，通过约束来要求操作数1和0为相同的位置。
+     <p><a name="index-g_t_0040code_007badd_0040var_007bm_007d3_007d-instruction-pattern-3307"></a><br><dt>&lsquo;<samp><span class="samp">add</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>操作数2加上操作数1，将结果存储在操作数0中。所有操作数必须具有机器模式<var>m</var>。这也可以用于两地址机器上，通过约束来要求操作数1和0为相同的位置。
 
-     <p><a name="index-g_t_0040code_007bssadd_0040var_007bm_007d3_007d-instruction-pattern-3309"></a><a name="index-g_t_0040code_007busadd_0040var_007bm_007d3_007d-instruction-pattern-3310"></a><a name="index-g_t_0040code_007bsub_0040var_007bm_007d3_007d-instruction-pattern-3311"></a><a name="index-g_t_0040code_007bsssub_0040var_007bm_007d3_007d-instruction-pattern-3312"></a><a name="index-g_t_0040code_007bussub_0040var_007bm_007d3_007d-instruction-pattern-3313"></a><a name="index-g_t_0040code_007bmul_0040var_007bm_007d3_007d-instruction-pattern-3314"></a><a name="index-g_t_0040code_007bssmul_0040var_007bm_007d3_007d-instruction-pattern-3315"></a><a name="index-g_t_0040code_007busmul_0040var_007bm_007d3_007d-instruction-pattern-3316"></a><a name="index-g_t_0040code_007bdiv_0040var_007bm_007d3_007d-instruction-pattern-3317"></a><a name="index-g_t_0040code_007bssdiv_0040var_007bm_007d3_007d-instruction-pattern-3318"></a><a name="index-g_t_0040code_007budiv_0040var_007bm_007d3_007d-instruction-pattern-3319"></a><a name="index-g_t_0040code_007busdiv_0040var_007bm_007d3_007d-instruction-pattern-3320"></a><a name="index-g_t_0040code_007bmod_0040var_007bm_007d3_007d-instruction-pattern-3321"></a><a name="index-g_t_0040code_007bumod_0040var_007bm_007d3_007d-instruction-pattern-3322"></a><a name="index-g_t_0040code_007bumin_0040var_007bm_007d3_007d-instruction-pattern-3323"></a><a name="index-g_t_0040code_007bumax_0040var_007bm_007d3_007d-instruction-pattern-3324"></a><a name="index-g_t_0040code_007band_0040var_007bm_007d3_007d-instruction-pattern-3325"></a><a name="index-g_t_0040code_007bior_0040var_007bm_007d3_007d-instruction-pattern-3326"></a><a name="index-g_t_0040code_007bxor_0040var_007bm_007d3_007d-instruction-pattern-3327"></a><br><dt>&lsquo;<samp><span class="samp">ssadd</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usadd</span><var>m</var><span class="samp">3</span></samp>&rsquo;<br><dt>&lsquo;<samp><span class="samp">sub</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">sssub</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ussub</span><var>m</var><span class="samp">3</span></samp>&rsquo;<br><dt>&lsquo;<samp><span class="samp">mul</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssmul</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usmul</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">div</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssdiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">udiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usdiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">mod</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umod</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">umin</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umax</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">and</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ior</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">xor</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>类似的，用于其它算术运算。
+     <p><a name="index-g_t_0040code_007bssadd_0040var_007bm_007d3_007d-instruction-pattern-3308"></a><a name="index-g_t_0040code_007busadd_0040var_007bm_007d3_007d-instruction-pattern-3309"></a><a name="index-g_t_0040code_007bsub_0040var_007bm_007d3_007d-instruction-pattern-3310"></a><a name="index-g_t_0040code_007bsssub_0040var_007bm_007d3_007d-instruction-pattern-3311"></a><a name="index-g_t_0040code_007bussub_0040var_007bm_007d3_007d-instruction-pattern-3312"></a><a name="index-g_t_0040code_007bmul_0040var_007bm_007d3_007d-instruction-pattern-3313"></a><a name="index-g_t_0040code_007bssmul_0040var_007bm_007d3_007d-instruction-pattern-3314"></a><a name="index-g_t_0040code_007busmul_0040var_007bm_007d3_007d-instruction-pattern-3315"></a><a name="index-g_t_0040code_007bdiv_0040var_007bm_007d3_007d-instruction-pattern-3316"></a><a name="index-g_t_0040code_007bssdiv_0040var_007bm_007d3_007d-instruction-pattern-3317"></a><a name="index-g_t_0040code_007budiv_0040var_007bm_007d3_007d-instruction-pattern-3318"></a><a name="index-g_t_0040code_007busdiv_0040var_007bm_007d3_007d-instruction-pattern-3319"></a><a name="index-g_t_0040code_007bmod_0040var_007bm_007d3_007d-instruction-pattern-3320"></a><a name="index-g_t_0040code_007bumod_0040var_007bm_007d3_007d-instruction-pattern-3321"></a><a name="index-g_t_0040code_007bumin_0040var_007bm_007d3_007d-instruction-pattern-3322"></a><a name="index-g_t_0040code_007bumax_0040var_007bm_007d3_007d-instruction-pattern-3323"></a><a name="index-g_t_0040code_007band_0040var_007bm_007d3_007d-instruction-pattern-3324"></a><a name="index-g_t_0040code_007bior_0040var_007bm_007d3_007d-instruction-pattern-3325"></a><a name="index-g_t_0040code_007bxor_0040var_007bm_007d3_007d-instruction-pattern-3326"></a><br><dt>&lsquo;<samp><span class="samp">ssadd</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usadd</span><var>m</var><span class="samp">3</span></samp>&rsquo;<br><dt>&lsquo;<samp><span class="samp">sub</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">sssub</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ussub</span><var>m</var><span class="samp">3</span></samp>&rsquo;<br><dt>&lsquo;<samp><span class="samp">mul</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssmul</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usmul</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">div</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssdiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">udiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usdiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">mod</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umod</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">umin</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umax</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">and</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ior</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">xor</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>类似的，用于其它算术运算。
 
-     <p><a name="index-g_t_0040code_007bmin_0040var_007bm_007d3_007d-instruction-pattern-3328"></a><a name="index-g_t_0040code_007bmax_0040var_007bm_007d3_007d-instruction-pattern-3329"></a><br><dt>&lsquo;<samp><span class="samp">smin</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">smax</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>有符号的最小值和最大值运算。当用于浮点，如果两个操作数都为零，或者有一个为<code>NaN</code>，则没有明确指定哪个操作数作为结果返回。
+     <p><a name="index-g_t_0040code_007bmin_0040var_007bm_007d3_007d-instruction-pattern-3327"></a><a name="index-g_t_0040code_007bmax_0040var_007bm_007d3_007d-instruction-pattern-3328"></a><br><dt>&lsquo;<samp><span class="samp">smin</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">smax</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>有符号的最小值和最大值运算。当用于浮点，如果两个操作数都为零，或者有一个为<code>NaN</code>，则没有明确指定哪个操作数作为结果返回。
 
-     <p><a name="index-g_t_0040code_007breduc_005fsmin_005f_0040var_007bm_007d_007d-instruction-pattern-3330"></a><a name="index-g_t_0040code_007breduc_005fsmax_005f_0040var_007bm_007d_007d-instruction-pattern-3331"></a><br><dt>&lsquo;<samp><span class="samp">reduc_smin_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">reduc_smax_</span><var>m</var></samp>&rsquo;<dd>查找向量的有符号最小/最大元素。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
+     <p><a name="index-g_t_0040code_007breduc_005fsmin_005f_0040var_007bm_007d_007d-instruction-pattern-3329"></a><a name="index-g_t_0040code_007breduc_005fsmax_005f_0040var_007bm_007d_007d-instruction-pattern-3330"></a><br><dt>&lsquo;<samp><span class="samp">reduc_smin_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">reduc_smax_</span><var>m</var></samp>&rsquo;<dd>查找向量的有符号最小/最大元素。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
 
-     <p><a name="index-g_t_0040code_007breduc_005fumin_005f_0040var_007bm_007d_007d-instruction-pattern-3332"></a><a name="index-g_t_0040code_007breduc_005fumax_005f_0040var_007bm_007d_007d-instruction-pattern-3333"></a><br><dt>&lsquo;<samp><span class="samp">reduc_umin_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">reduc_umax_</span><var>m</var></samp>&rsquo;<dd>查找向量的无符号最小/最大元素。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
+     <p><a name="index-g_t_0040code_007breduc_005fumin_005f_0040var_007bm_007d_007d-instruction-pattern-3331"></a><a name="index-g_t_0040code_007breduc_005fumax_005f_0040var_007bm_007d_007d-instruction-pattern-3332"></a><br><dt>&lsquo;<samp><span class="samp">reduc_umin_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">reduc_umax_</span><var>m</var></samp>&rsquo;<dd>查找向量的无符号最小/最大元素。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
 
-     <p><a name="index-g_t_0040code_007breduc_005fsplus_005f_0040var_007bm_007d_007d-instruction-pattern-3334"></a><br><dt>&lsquo;<samp><span class="samp">reduc_splus_</span><var>m</var></samp>&rsquo;<dd>计算向量的有符号元素的和。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
+     <p><a name="index-g_t_0040code_007breduc_005fsplus_005f_0040var_007bm_007d_007d-instruction-pattern-3333"></a><br><dt>&lsquo;<samp><span class="samp">reduc_splus_</span><var>m</var></samp>&rsquo;<dd>计算向量的有符号元素的和。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
 
-     <p><a name="index-g_t_0040code_007breduc_005fuplus_005f_0040var_007bm_007d_007d-instruction-pattern-3335"></a><br><dt>&lsquo;<samp><span class="samp">reduc_uplus_</span><var>m</var></samp>&rsquo;<dd>计算向量的无符号元素的和。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
+     <p><a name="index-g_t_0040code_007breduc_005fuplus_005f_0040var_007bm_007d_007d-instruction-pattern-3334"></a><br><dt>&lsquo;<samp><span class="samp">reduc_uplus_</span><var>m</var></samp>&rsquo;<dd>计算向量的无符号元素的和。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
 
-     <p><a name="index-g_t_0040code_007bsdot_005fprod_0040var_007bm_007d_007d-instruction-pattern-3336"></a><br><dt>&lsquo;<samp><span class="samp">sdot_prod</span><var>m</var></samp>&rsquo;<dd><a name="index-g_t_0040code_007budot_005fprod_0040var_007bm_007d_007d-instruction-pattern-3337"></a><br><dt>&lsquo;<samp><span class="samp">udot_prod</span><var>m</var></samp>&rsquo;<dd>计算两个有符号/无符号元素乘积的和。操作数1和2为相同的模式。它们的乘积，为一个宽的模式，被计算并增加到操作数3上。操作数3的机器模式等于或宽于乘积的机器模式。结果被放在操作数0上，其与操作数3具有相同的机器模式。
+     <p><a name="index-g_t_0040code_007bsdot_005fprod_0040var_007bm_007d_007d-instruction-pattern-3335"></a><br><dt>&lsquo;<samp><span class="samp">sdot_prod</span><var>m</var></samp>&rsquo;<dd><a name="index-g_t_0040code_007budot_005fprod_0040var_007bm_007d_007d-instruction-pattern-3336"></a><br><dt>&lsquo;<samp><span class="samp">udot_prod</span><var>m</var></samp>&rsquo;<dd>计算两个有符号/无符号元素乘积的和。操作数1和2为相同的模式。它们的乘积，为一个宽的模式，被计算并增加到操作数3上。操作数3的机器模式等于或宽于乘积的机器模式。结果被放在操作数0上，其与操作数3具有相同的机器模式。
 
-     <p><a name="index-g_t_0040code_007bssum_005fwiden_0040var_007bm3_007d_007d-instruction-pattern-3338"></a><br><dt>&lsquo;<samp><span class="samp">ssum_widen</span><var>m3</var></samp>&rsquo;<dd><a name="index-g_t_0040code_007busum_005fwiden_0040var_007bm3_007d_007d-instruction-pattern-3339"></a><br><dt>&lsquo;<samp><span class="samp">usum_widen</span><var>m3</var></samp>&rsquo;<dd>操作数0和2具有相同的机器模式，其比操作数1的宽。将操作数1加上操作数2，并将加宽的结果放在操作数0中。（这用于表示元素累加到一个更宽模式的累加器中）
+     <p><a name="index-g_t_0040code_007bssum_005fwiden_0040var_007bm3_007d_007d-instruction-pattern-3337"></a><br><dt>&lsquo;<samp><span class="samp">ssum_widen</span><var>m3</var></samp>&rsquo;<dd><a name="index-g_t_0040code_007busum_005fwiden_0040var_007bm3_007d_007d-instruction-pattern-3338"></a><br><dt>&lsquo;<samp><span class="samp">usum_widen</span><var>m3</var></samp>&rsquo;<dd>操作数0和2具有相同的机器模式，其比操作数1的宽。将操作数1加上操作数2，并将加宽的结果放在操作数0中。（这用于表示元素累加到一个更宽模式的累加器中）
 
-     <p><a name="index-g_t_0040code_007bvec_005fshl_005f_0040var_007bm_007d_007d-instruction-pattern-3340"></a><a name="index-g_t_0040code_007bvec_005fshr_005f_0040var_007bm_007d_007d-instruction-pattern-3341"></a><br><dt>&lsquo;<samp><span class="samp">vec_shl_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_shr_</span><var>m</var></samp>&rsquo;<dd>整个向量向左/向右移位。操作数1为被移位的向量。操作数2为移位的位数。操作数0为移位后的结果向量被存储的地方。输出和输入向量应该具有相同的模式。
+     <p><a name="index-g_t_0040code_007bvec_005fshl_005f_0040var_007bm_007d_007d-instruction-pattern-3339"></a><a name="index-g_t_0040code_007bvec_005fshr_005f_0040var_007bm_007d_007d-instruction-pattern-3340"></a><br><dt>&lsquo;<samp><span class="samp">vec_shl_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_shr_</span><var>m</var></samp>&rsquo;<dd>整个向量向左/向右移位。操作数1为被移位的向量。操作数2为移位的位数。操作数0为移位后的结果向量被存储的地方。输出和输入向量应该具有相同的模式。
 
-     <p><a name="index-g_t_0040code_007bvec_005fpack_005ftrunc_005f_0040var_007bm_007d_007d-instruction-pattern-3342"></a><br><dt>&lsquo;<samp><span class="samp">vec_pack_trunc_</span><var>m</var></samp>&rsquo;<dd>变窄（降级）并合并两个向量的元素。操作数1和2为具有相同机器模式，N个，大小为S的整数或者浮点元素的向量。操作数0为结果向量，通过使用截取的方式，将它们变窄并连接成，2×N个大小为N/2的元素。
+     <p><a name="index-g_t_0040code_007bvec_005fpack_005ftrunc_005f_0040var_007bm_007d_007d-instruction-pattern-3341"></a><br><dt>&lsquo;<samp><span class="samp">vec_pack_trunc_</span><var>m</var></samp>&rsquo;<dd>变窄（降级）并合并两个向量的元素。操作数1和2为具有相同机器模式，N个，大小为S的整数或者浮点元素的向量。操作数0为结果向量，通过使用截取的方式，将它们变窄并连接成，2×N个大小为N/2的元素。
 
-     <p><a name="index-g_t_0040code_007bvec_005fpack_005fssat_005f_0040var_007bm_007d_007d-instruction-pattern-3343"></a><a name="index-g_t_0040code_007bvec_005fpack_005fusat_005f_0040var_007bm_007d_007d-instruction-pattern-3344"></a><br><dt>&lsquo;<samp><span class="samp">vec_pack_ssat_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_pack_usat_</span><var>m</var></samp>&rsquo;<dd>变窄（降级）并合并两个向量的元素。操作数1和2为具有相同机器模式，N个，大小为S的整数元素的向量。操作数0为结果向量，通过使用有符号/无符号饱和算术的方式，将它们变窄并连接成。
+     <p><a name="index-g_t_0040code_007bvec_005fpack_005fssat_005f_0040var_007bm_007d_007d-instruction-pattern-3342"></a><a name="index-g_t_0040code_007bvec_005fpack_005fusat_005f_0040var_007bm_007d_007d-instruction-pattern-3343"></a><br><dt>&lsquo;<samp><span class="samp">vec_pack_ssat_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_pack_usat_</span><var>m</var></samp>&rsquo;<dd>变窄（降级）并合并两个向量的元素。操作数1和2为具有相同机器模式，N个，大小为S的整数元素的向量。操作数0为结果向量，通过使用有符号/无符号饱和算术的方式，将它们变窄并连接成。
 
-     <p><a name="index-g_t_0040code_007bvec_005fpack_005fsfix_005ftrunc_005f_0040var_007bm_007d_007d-instruction-pattern-3345"></a><a name="index-g_t_0040code_007bvec_005fpack_005fufix_005ftrunc_005f_0040var_007bm_007d_007d-instruction-pattern-3346"></a><br><dt>&lsquo;<samp><span class="samp">vec_pack_sfix_trunc_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_pack_ufix_trunc_</span><var>m</var></samp>&rsquo;<dd>将两个向量的元素变窄，转成有符号/无符号整数类型并合并。操作数1和2为具有相同机器模式，N个，大小为S的浮点元素的向量。操作数0为结果向量，由2×N个大小为N/2的元素连接而成。
+     <p><a name="index-g_t_0040code_007bvec_005fpack_005fsfix_005ftrunc_005f_0040var_007bm_007d_007d-instruction-pattern-3344"></a><a name="index-g_t_0040code_007bvec_005fpack_005fufix_005ftrunc_005f_0040var_007bm_007d_007d-instruction-pattern-3345"></a><br><dt>&lsquo;<samp><span class="samp">vec_pack_sfix_trunc_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_pack_ufix_trunc_</span><var>m</var></samp>&rsquo;<dd>将两个向量的元素变窄，转成有符号/无符号整数类型并合并。操作数1和2为具有相同机器模式，N个，大小为S的浮点元素的向量。操作数0为结果向量，由2×N个大小为N/2的元素连接而成。
 
-     <p><a name="index-g_t_0040code_007bvec_005funpacks_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3347"></a><a name="index-g_t_0040code_007bvec_005funpacks_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3348"></a><br><dt>&lsquo;<samp><span class="samp">vec_unpacks_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_unpacks_lo_</span><var>m</var></samp>&rsquo;<dd>抽取并变宽（提升），具有有符号整数或浮点元素的，向量的高/低部分。输入向量（操作数1）具有N个大小为S的元素。使用有符号或者浮点扩展，将向量的高/低元素进行变宽（提升），并将结果，N/2个大小为2*S的值，放在输出向量（操作数0）中。
+     <p><a name="index-g_t_0040code_007bvec_005funpacks_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3346"></a><a name="index-g_t_0040code_007bvec_005funpacks_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3347"></a><br><dt>&lsquo;<samp><span class="samp">vec_unpacks_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_unpacks_lo_</span><var>m</var></samp>&rsquo;<dd>抽取并变宽（提升），具有有符号整数或浮点元素的，向量的高/低部分。输入向量（操作数1）具有N个大小为S的元素。使用有符号或者浮点扩展，将向量的高/低元素进行变宽（提升），并将结果，N/2个大小为2*S的值，放在输出向量（操作数0）中。
 
-     <p><a name="index-g_t_0040code_007bvec_005funpacku_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3349"></a><a name="index-g_t_0040code_007bvec_005funpacku_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3350"></a><br><dt>&lsquo;<samp><span class="samp">vec_unpacku_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_unpacku_lo_</span><var>m</var></samp>&rsquo;<dd>抽取并变宽（提升），具有无符号整数元素的，向量的高/低部分。输入向量（操作数1）具有N个大小为S的元素。使用零扩展，将向量的高/低元素进行变宽（提升），并将结果，N/2个大小为2*S的值，放在输出向量（操作数0）中。
+     <p><a name="index-g_t_0040code_007bvec_005funpacku_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3348"></a><a name="index-g_t_0040code_007bvec_005funpacku_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3349"></a><br><dt>&lsquo;<samp><span class="samp">vec_unpacku_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_unpacku_lo_</span><var>m</var></samp>&rsquo;<dd>抽取并变宽（提升），具有无符号整数元素的，向量的高/低部分。输入向量（操作数1）具有N个大小为S的元素。使用零扩展，将向量的高/低元素进行变宽（提升），并将结果，N/2个大小为2*S的值，放在输出向量（操作数0）中。
 
-     <p><a name="index-g_t_0040code_007bvec_005funpacks_005ffloat_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3351"></a><a name="index-g_t_0040code_007bvec_005funpacks_005ffloat_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3352"></a><a name="index-g_t_0040code_007bvec_005funpacku_005ffloat_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3353"></a><a name="index-g_t_0040code_007bvec_005funpacku_005ffloat_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3354"></a><br><dt>&lsquo;<samp><span class="samp">vec_unpacks_float_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_unpacks_float_lo_</span><var>m</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">vec_unpacku_float_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_unpacku_float_lo_</span><var>m</var></samp>&rsquo;<dd>抽取具有有符号/无符号整数元素的，向量的高/低部分，并转换成浮点类型。输入向量（操作数1）具有N个大小为S的元素。使用浮点转换，将向量的高/低元素进行转换，并将结果，N/2个大小为2*S的值，放在输出向量（操作数0）中。
+     <p><a name="index-g_t_0040code_007bvec_005funpacks_005ffloat_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3350"></a><a name="index-g_t_0040code_007bvec_005funpacks_005ffloat_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3351"></a><a name="index-g_t_0040code_007bvec_005funpacku_005ffloat_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3352"></a><a name="index-g_t_0040code_007bvec_005funpacku_005ffloat_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3353"></a><br><dt>&lsquo;<samp><span class="samp">vec_unpacks_float_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_unpacks_float_lo_</span><var>m</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">vec_unpacku_float_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_unpacku_float_lo_</span><var>m</var></samp>&rsquo;<dd>抽取具有有符号/无符号整数元素的，向量的高/低部分，并转换成浮点类型。输入向量（操作数1）具有N个大小为S的元素。使用浮点转换，将向量的高/低元素进行转换，并将结果，N/2个大小为2*S的值，放在输出向量（操作数0）中。
 
-     <p><a name="index-g_t_0040code_007bvec_005fwiden_005fumult_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3355"></a><a name="index-g_t_0040code_007bvec_005fwiden_005fumult_005flo_005f_005f_0040var_007bm_007d_007d-instruction-pattern-3356"></a><a name="index-g_t_0040code_007bvec_005fwiden_005fsmult_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3357"></a><a name="index-g_t_0040code_007bvec_005fwiden_005fsmult_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3358"></a><br><dt>&lsquo;<samp><span class="samp">vec_widen_umult_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_widen_umult_lo_</span><var>m</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">vec_widen_smult_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_widen_smult_lo_</span><var>m</var></samp>&rsquo;<dd>有符号/无符号加宽乘法。两个输入（操作数1和2）为，N个大小为S的有符号/无符号元素的向量。将两个向量的高/低元素相乘，并将N/2个大小为2×S的乘积放在输出向量（操作数0）中。
+     <p><a name="index-g_t_0040code_007bvec_005fwiden_005fumult_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3354"></a><a name="index-g_t_0040code_007bvec_005fwiden_005fumult_005flo_005f_005f_0040var_007bm_007d_007d-instruction-pattern-3355"></a><a name="index-g_t_0040code_007bvec_005fwiden_005fsmult_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3356"></a><a name="index-g_t_0040code_007bvec_005fwiden_005fsmult_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3357"></a><br><dt>&lsquo;<samp><span class="samp">vec_widen_umult_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_widen_umult_lo_</span><var>m</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">vec_widen_smult_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_widen_smult_lo_</span><var>m</var></samp>&rsquo;<dd>有符号/无符号加宽乘法。两个输入（操作数1和2）为，N个大小为S的有符号/无符号元素的向量。将两个向量的高/低元素相乘，并将N/2个大小为2×S的乘积放在输出向量（操作数0）中。
 
-     <p><a name="index-g_t_0040code_007bmulhisi3_007d-instruction-pattern-3359"></a><br><dt>&lsquo;<samp><span class="samp">mulhisi3</span></samp>&rsquo;<dd>机器模式为<code>HImode</code>的操作数1和2相乘，并将<code>SImode</code>乘积放在操作数0中。
+     <p><a name="index-g_t_0040code_007bmulhisi3_007d-instruction-pattern-3358"></a><br><dt>&lsquo;<samp><span class="samp">mulhisi3</span></samp>&rsquo;<dd>机器模式为<code>HImode</code>的操作数1和2相乘，并将<code>SImode</code>乘积放在操作数0中。
 
-     <p><a name="index-g_t_0040code_007bmulqihi3_007d-instruction-pattern-3360"></a><a name="index-g_t_0040code_007bmulsidi3_007d-instruction-pattern-3361"></a><br><dt>&lsquo;<samp><span class="samp">mulqihi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">mulsidi3</span></samp>&rsquo;<dd>类似的其它宽度的加宽乘法指令。
+     <p><a name="index-g_t_0040code_007bmulqihi3_007d-instruction-pattern-3359"></a><a name="index-g_t_0040code_007bmulsidi3_007d-instruction-pattern-3360"></a><br><dt>&lsquo;<samp><span class="samp">mulqihi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">mulsidi3</span></samp>&rsquo;<dd>类似的其它宽度的加宽乘法指令。
 
-     <p><a name="index-g_t_0040code_007bumulqihi3_007d-instruction-pattern-3362"></a><a name="index-g_t_0040code_007bumulhisi3_007d-instruction-pattern-3363"></a><a name="index-g_t_0040code_007bumulsidi3_007d-instruction-pattern-3364"></a><br><dt>&lsquo;<samp><span class="samp">umulqihi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umulhisi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umulsidi3</span></samp>&rsquo;<dd>类似的加宽乘法指令，进行无符号乘法。
+     <p><a name="index-g_t_0040code_007bumulqihi3_007d-instruction-pattern-3361"></a><a name="index-g_t_0040code_007bumulhisi3_007d-instruction-pattern-3362"></a><a name="index-g_t_0040code_007bumulsidi3_007d-instruction-pattern-3363"></a><br><dt>&lsquo;<samp><span class="samp">umulqihi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umulhisi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umulsidi3</span></samp>&rsquo;<dd>类似的加宽乘法指令，进行无符号乘法。
 
-     <p><a name="index-g_t_0040code_007busmulqihi3_007d-instruction-pattern-3365"></a><a name="index-g_t_0040code_007busmulhisi3_007d-instruction-pattern-3366"></a><a name="index-g_t_0040code_007busmulsidi3_007d-instruction-pattern-3367"></a><br><dt>&lsquo;<samp><span class="samp">usmulqihi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usmulhisi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usmulsidi3</span></samp>&rsquo;<dd>类似的加宽乘法指令，将第一个操作数解析为无符号的，第二个为有符号的，然后进行有符号乘法。
+     <p><a name="index-g_t_0040code_007busmulqihi3_007d-instruction-pattern-3364"></a><a name="index-g_t_0040code_007busmulhisi3_007d-instruction-pattern-3365"></a><a name="index-g_t_0040code_007busmulsidi3_007d-instruction-pattern-3366"></a><br><dt>&lsquo;<samp><span class="samp">usmulqihi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usmulhisi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usmulsidi3</span></samp>&rsquo;<dd>类似的加宽乘法指令，将第一个操作数解析为无符号的，第二个为有符号的，然后进行有符号乘法。
 
-     <p><a name="index-g_t_0040code_007bsmul_0040var_007bm_007d3_005fhighpart_007d-instruction-pattern-3368"></a><br><dt>&lsquo;<samp><span class="samp">smul</span><var>m</var><span class="samp">3_highpart</span></samp>&rsquo;<dd>对机器模式为<var>m</var>的操作数1和2进行有符号乘法，并将乘积的最高有效的一半放在操作数0中。乘积的最低有效的一半被丢弃。
+     <p><a name="index-g_t_0040code_007bsmul_0040var_007bm_007d3_005fhighpart_007d-instruction-pattern-3367"></a><br><dt>&lsquo;<samp><span class="samp">smul</span><var>m</var><span class="samp">3_highpart</span></samp>&rsquo;<dd>对机器模式为<var>m</var>的操作数1和2进行有符号乘法，并将乘积的最高有效的一半放在操作数0中。乘积的最低有效的一半被丢弃。
 
-     <p><a name="index-g_t_0040code_007bumul_0040var_007bm_007d3_005fhighpart_007d-instruction-pattern-3369"></a><br><dt>&lsquo;<samp><span class="samp">umul</span><var>m</var><span class="samp">3_highpart</span></samp>&rsquo;<dd>类似的，只不过乘法是无符号的。
+     <p><a name="index-g_t_0040code_007bumul_0040var_007bm_007d3_005fhighpart_007d-instruction-pattern-3368"></a><br><dt>&lsquo;<samp><span class="samp">umul</span><var>m</var><span class="samp">3_highpart</span></samp>&rsquo;<dd>类似的，只不过乘法是无符号的。
 
-     <p><a name="index-g_t_0040code_007bmadd_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3370"></a><br><dt>&lsquo;<samp><span class="samp">madd</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>将操作数1和2进行相乘，有符号扩展成机器模式<var>n</var>，加上操作数3，并将结果存放在操作数0中。操作数1和2具有机器模式<var>m</var>，操作数0和3具有机器模式<var>n</var>。两种机器模式必须都为整数或者浮点模式，并且<var>n</var>必须为<var>m</var>的两倍大小。
+     <p><a name="index-g_t_0040code_007bmadd_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3369"></a><br><dt>&lsquo;<samp><span class="samp">madd</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>将操作数1和2进行相乘，有符号扩展成机器模式<var>n</var>，加上操作数3，并将结果存放在操作数0中。操作数1和2具有机器模式<var>m</var>，操作数0和3具有机器模式<var>n</var>。两种机器模式必须都为整数或者浮点模式，并且<var>n</var>必须为<var>m</var>的两倍大小。
 
      <p>换句话说，<code>madd</code><var>m</var><var>n</var><code>4</code>类似于<code>mul</code><var>m</var><var>n</var><code>3</code>，只不过其还加上操作数3。
 
      <p>这些指令不允许执行<code>FAIL</code>。
 
-     <p><a name="index-g_t_0040code_007bumadd_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3371"></a><br><dt>&lsquo;<samp><span class="samp">umadd</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>madd</code><var>m</var><var>n</var><code>4</code>，只不过零扩展乘法操作数，而不是有符号扩展它们。
+     <p><a name="index-g_t_0040code_007bumadd_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3370"></a><br><dt>&lsquo;<samp><span class="samp">umadd</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>madd</code><var>m</var><var>n</var><code>4</code>，只不过零扩展乘法操作数，而不是有符号扩展它们。
 
-     <p><a name="index-g_t_0040code_007bssmadd_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3372"></a><br><dt>&lsquo;<samp><span class="samp">ssmadd</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>madd</code><var>m</var><var>n</var><code>4</code>，不过所有的运算都必须是有符号饱和的。
+     <p><a name="index-g_t_0040code_007bssmadd_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3371"></a><br><dt>&lsquo;<samp><span class="samp">ssmadd</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>madd</code><var>m</var><var>n</var><code>4</code>，不过所有的运算都必须是有符号饱和的。
 
-     <p><a name="index-g_t_0040code_007busmadd_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3373"></a><br><dt>&lsquo;<samp><span class="samp">usmadd</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>umadd</code><var>m</var><var>n</var><code>4</code>，不过所有的运算都必须是无符号饱和的。
+     <p><a name="index-g_t_0040code_007busmadd_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3372"></a><br><dt>&lsquo;<samp><span class="samp">usmadd</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>umadd</code><var>m</var><var>n</var><code>4</code>，不过所有的运算都必须是无符号饱和的。
 
-     <p><a name="index-g_t_0040code_007bmsub_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3374"></a><br><dt>&lsquo;<samp><span class="samp">msub</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>将操作数1和2相乘，有符号扩展为机器模式<var>n</var>，减去操作数3，并将结果存放在操作数0中。操作数1和2具有机器模式<var>m</var>，操作数0和3具有机器模式<var>n</var>。两种机器模式必须都为整数或者浮点模式，并且<var>n</var>必须为<var>m</var>的两倍大小。
+     <p><a name="index-g_t_0040code_007bmsub_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3373"></a><br><dt>&lsquo;<samp><span class="samp">msub</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>将操作数1和2相乘，有符号扩展为机器模式<var>n</var>，减去操作数3，并将结果存放在操作数0中。操作数1和2具有机器模式<var>m</var>，操作数0和3具有机器模式<var>n</var>。两种机器模式必须都为整数或者浮点模式，并且<var>n</var>必须为<var>m</var>的两倍大小。
 
      <p>换句话说，<code>msub</code><var>m</var><var>n</var><code>4</code>类似于<code>mul</code><var>m</var><var>n</var><code>3</code>，只不过其还减去操作数3。
 
      <p>这些指令不允许执行<code>FAIL</code>。
 
-     <p><a name="index-g_t_0040code_007bumsub_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3375"></a><br><dt>&lsquo;<samp><span class="samp">umsub</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>msub</code><var>m</var><var>n</var><code>4</code>，不过零扩展乘法操作数，而不是有符号扩展它们。
+     <p><a name="index-g_t_0040code_007bumsub_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3374"></a><br><dt>&lsquo;<samp><span class="samp">umsub</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>msub</code><var>m</var><var>n</var><code>4</code>，不过零扩展乘法操作数，而不是有符号扩展它们。
 
-     <p><a name="index-g_t_0040code_007bssmsub_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3376"></a><br><dt>&lsquo;<samp><span class="samp">ssmsub</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>msub</code><var>m</var><var>n</var><code>4</code>，不过所有的运算都必须是有符号饱和的。
+     <p><a name="index-g_t_0040code_007bssmsub_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3375"></a><br><dt>&lsquo;<samp><span class="samp">ssmsub</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>msub</code><var>m</var><var>n</var><code>4</code>，不过所有的运算都必须是有符号饱和的。
 
-     <p><a name="index-g_t_0040code_007busmsub_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3377"></a><br><dt>&lsquo;<samp><span class="samp">usmsub</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>umsub</code><var>m</var><var>n</var><code>4</code>，不过所有的运算都必须是无符号饱和的。
+     <p><a name="index-g_t_0040code_007busmsub_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3376"></a><br><dt>&lsquo;<samp><span class="samp">usmsub</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>umsub</code><var>m</var><var>n</var><code>4</code>，不过所有的运算都必须是无符号饱和的。
 
-     <p><a name="index-g_t_0040code_007bdivmod_0040var_007bm_007d4_007d-instruction-pattern-3378"></a><br><dt>&lsquo;<samp><span class="samp">divmod</span><var>m</var><span class="samp">4</span></samp>&rsquo;<dd>有符号除法，同时产生商和余数。操作数1被操作数2除，产生商存储在操作数0中，余数存储在操作数3中。
+     <p><a name="index-g_t_0040code_007bdivmod_0040var_007bm_007d4_007d-instruction-pattern-3377"></a><br><dt>&lsquo;<samp><span class="samp">divmod</span><var>m</var><span class="samp">4</span></samp>&rsquo;<dd>有符号除法，同时产生商和余数。操作数1被操作数2除，产生商存储在操作数0中，余数存储在操作数3中。
 
      <p>对于具有同时产生商和余数的指令的机器，提供&lsquo;<samp><span class="samp">divmod</span><var>m</var><span class="samp">4</span></samp>&rsquo;指令模式，但不要提供&lsquo;<samp><span class="samp">div</span><var>m</var><span class="samp">3</span></samp>&rsquo; 和 &lsquo;<samp><span class="samp">mod</span><var>m</var><span class="samp">3</span></samp>&rsquo;。这使得当商和余数都被计算的时候，可以优化成相对常见的情况。
 
      <p>如果存在只产生商或者余数的指令，并且比都产生的指令更有效，则将&lsquo;<samp><span class="samp">divmod</span><var>m</var><span class="samp">4</span></samp>&rsquo;的输出例程写成调用<code>find_reg_note</code>，查看商或者余数的<code>REG_UNUSED</code>注解，来产生适当的指令。
 
-     <p><a name="index-g_t_0040code_007budivmod_0040var_007bm_007d4_007d-instruction-pattern-3379"></a><br><dt>&lsquo;<samp><span class="samp">udivmod</span><var>m</var><span class="samp">4</span></samp>&rsquo;<dd>类似的，不过进行无符号除法。
+     <p><a name="index-g_t_0040code_007budivmod_0040var_007bm_007d4_007d-instruction-pattern-3378"></a><br><dt>&lsquo;<samp><span class="samp">udivmod</span><var>m</var><span class="samp">4</span></samp>&rsquo;<dd>类似的，不过进行无符号除法。
 
-     <p><a name="shift-patterns"></a><a name="index-g_t_0040code_007bashl_0040var_007bm_007d3_007d-instruction-pattern-3380"></a><a name="index-g_t_0040code_007bssashl_0040var_007bm_007d3_007d-instruction-pattern-3381"></a><a name="index-g_t_0040code_007busashl_0040var_007bm_007d3_007d-instruction-pattern-3382"></a><br><dt>&lsquo;<samp><span class="samp">ashl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssashl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usashl</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1向左算术移位，左移位数由操作数2指定，将结果存储在操作数0中。这里<var>m</var>为操作数0和1的机器模式；操作数2的机器模式通过指令模式来指定，编译器会在生成指令之前，将操作数转换成该模式。超出范围的移位数目的含义，可以通过<code>TARGET_SHIFT_TRUNCATION_MASK</code>来指定。See <a href="TARGET_005fSHIFT_005fTRUNCATION_005fMASK.html#TARGET_005fSHIFT_005fTRUNCATION_005fMASK">TARGET_SHIFT_TRUNCATION_MASK</a>。操作数2总是一个标量类型。
+     <p><a name="shift-patterns"></a><a name="index-g_t_0040code_007bashl_0040var_007bm_007d3_007d-instruction-pattern-3379"></a><a name="index-g_t_0040code_007bssashl_0040var_007bm_007d3_007d-instruction-pattern-3380"></a><a name="index-g_t_0040code_007busashl_0040var_007bm_007d3_007d-instruction-pattern-3381"></a><br><dt>&lsquo;<samp><span class="samp">ashl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssashl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usashl</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1向左算术移位，左移位数由操作数2指定，将结果存储在操作数0中。这里<var>m</var>为操作数0和1的机器模式；操作数2的机器模式通过指令模式来指定，编译器会在生成指令之前，将操作数转换成该模式。超出范围的移位数目的含义，可以通过<code>TARGET_SHIFT_TRUNCATION_MASK</code>来指定。See <a href="TARGET_005fSHIFT_005fTRUNCATION_005fMASK.html#TARGET_005fSHIFT_005fTRUNCATION_005fMASK">TARGET_SHIFT_TRUNCATION_MASK</a>。操作数2总是一个标量类型。
 
-     <p><a name="index-g_t_0040code_007bashr_0040var_007bm_007d3_007d-instruction-pattern-3383"></a><a name="index-g_t_0040code_007blshr_0040var_007bm_007d3_007d-instruction-pattern-3384"></a><a name="index-g_t_0040code_007brotl_0040var_007bm_007d3_007d-instruction-pattern-3385"></a><a name="index-g_t_0040code_007brotr_0040var_007bm_007d3_007d-instruction-pattern-3386"></a><br><dt>&lsquo;<samp><span class="samp">ashr</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">lshr</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">rotl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">rotr</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>其它移位或者旋转指令，类似于<code>ashl</code><var>m</var><code>3</code>指令。操作数2总是一个标量类型。
+     <p><a name="index-g_t_0040code_007bashr_0040var_007bm_007d3_007d-instruction-pattern-3382"></a><a name="index-g_t_0040code_007blshr_0040var_007bm_007d3_007d-instruction-pattern-3383"></a><a name="index-g_t_0040code_007brotl_0040var_007bm_007d3_007d-instruction-pattern-3384"></a><a name="index-g_t_0040code_007brotr_0040var_007bm_007d3_007d-instruction-pattern-3385"></a><br><dt>&lsquo;<samp><span class="samp">ashr</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">lshr</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">rotl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">rotr</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>其它移位或者旋转指令，类似于<code>ashl</code><var>m</var><code>3</code>指令。操作数2总是一个标量类型。
 
-     <p><a name="index-g_t_0040code_007bvashl_0040var_007bm_007d3_007d-instruction-pattern-3387"></a><a name="index-g_t_0040code_007bvashr_0040var_007bm_007d3_007d-instruction-pattern-3388"></a><a name="index-g_t_0040code_007bvlshr_0040var_007bm_007d3_007d-instruction-pattern-3389"></a><a name="index-g_t_0040code_007bvrotl_0040var_007bm_007d3_007d-instruction-pattern-3390"></a><a name="index-g_t_0040code_007bvrotr_0040var_007bm_007d3_007d-instruction-pattern-3391"></a><br><dt>&lsquo;<samp><span class="samp">vashl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">vashr</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">vlshr</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">vrotl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">vrotr</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>向量移位和旋转指令，操作数2为向量，而不是标量类型。
+     <p><a name="index-g_t_0040code_007bvashl_0040var_007bm_007d3_007d-instruction-pattern-3386"></a><a name="index-g_t_0040code_007bvashr_0040var_007bm_007d3_007d-instruction-pattern-3387"></a><a name="index-g_t_0040code_007bvlshr_0040var_007bm_007d3_007d-instruction-pattern-3388"></a><a name="index-g_t_0040code_007bvrotl_0040var_007bm_007d3_007d-instruction-pattern-3389"></a><a name="index-g_t_0040code_007bvrotr_0040var_007bm_007d3_007d-instruction-pattern-3390"></a><br><dt>&lsquo;<samp><span class="samp">vashl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">vashr</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">vlshr</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">vrotl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">vrotr</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>向量移位和旋转指令，操作数2为向量，而不是标量类型。
 
-     <p><a name="index-g_t_0040code_007bneg_0040var_007bm_007d2_007d-instruction-pattern-3392"></a><a name="index-g_t_0040code_007bssneg_0040var_007bm_007d2_007d-instruction-pattern-3393"></a><a name="index-g_t_0040code_007busneg_0040var_007bm_007d2_007d-instruction-pattern-3394"></a><br><dt>&lsquo;<samp><span class="samp">neg</span><var>m</var><span class="samp">2</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssneg</span><var>m</var><span class="samp">2</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usneg</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>对操作数1求负，并将结果存放在操作数0中。
+     <p><a name="index-g_t_0040code_007bneg_0040var_007bm_007d2_007d-instruction-pattern-3391"></a><a name="index-g_t_0040code_007bssneg_0040var_007bm_007d2_007d-instruction-pattern-3392"></a><a name="index-g_t_0040code_007busneg_0040var_007bm_007d2_007d-instruction-pattern-3393"></a><br><dt>&lsquo;<samp><span class="samp">neg</span><var>m</var><span class="samp">2</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssneg</span><var>m</var><span class="samp">2</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usneg</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>对操作数1求负，并将结果存放在操作数0中。
 
-     <p><a name="index-g_t_0040code_007babs_0040var_007bm_007d2_007d-instruction-pattern-3395"></a><br><dt>&lsquo;<samp><span class="samp">abs</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的绝对值存放在操作数0中。
+     <p><a name="index-g_t_0040code_007babs_0040var_007bm_007d2_007d-instruction-pattern-3394"></a><br><dt>&lsquo;<samp><span class="samp">abs</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的绝对值存放在操作数0中。
 
-     <p><a name="index-g_t_0040code_007bsqrt_0040var_007bm_007d2_007d-instruction-pattern-3396"></a><br><dt>&lsquo;<samp><span class="samp">sqrt</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的平方根存储在操作数0中。
+     <p><a name="index-g_t_0040code_007bsqrt_0040var_007bm_007d2_007d-instruction-pattern-3395"></a><br><dt>&lsquo;<samp><span class="samp">sqrt</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的平方根存储在操作数0中。
 
      <p><code>sqrt</code>内建C函数，总是使用对应于C数据类型<code>double</code>的机器模式，<code>sqrtf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007bfmod_0040var_007bm_007d3_007d-instruction-pattern-3397"></a><br><dt>&lsquo;<samp><span class="samp">fmod</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1除以操作数2的余数，存储在操作数0中，并向零方向舍入为整数。
+     <p><a name="index-g_t_0040code_007bfmod_0040var_007bm_007d3_007d-instruction-pattern-3396"></a><br><dt>&lsquo;<samp><span class="samp">fmod</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1除以操作数2的余数，存储在操作数0中，并向零方向舍入为整数。
 
      <p><code>fmod</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>fmodf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007bremainder_0040var_007bm_007d3_007d-instruction-pattern-3398"></a><br><dt>&lsquo;<samp><span class="samp">remainder</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1除以操作数2的余数，存储在操作数0中，并舍入为最接近的整数。
+     <p><a name="index-g_t_0040code_007bremainder_0040var_007bm_007d3_007d-instruction-pattern-3397"></a><br><dt>&lsquo;<samp><span class="samp">remainder</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1除以操作数2的余数，存储在操作数0中，并舍入为最接近的整数。
 
      <p><code>remainder</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>remainderf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007bcos_0040var_007bm_007d2_007d-instruction-pattern-3399"></a><br><dt>&lsquo;<samp><span class="samp">cos</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的余弦存放在操作数0中。
+     <p><a name="index-g_t_0040code_007bcos_0040var_007bm_007d2_007d-instruction-pattern-3398"></a><br><dt>&lsquo;<samp><span class="samp">cos</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的余弦存放在操作数0中。
 
      <p><code>cos</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>cosf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007bsin_0040var_007bm_007d2_007d-instruction-pattern-3400"></a><br><dt>&lsquo;<samp><span class="samp">sin</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的正弦存放在操作数0中。
+     <p><a name="index-g_t_0040code_007bsin_0040var_007bm_007d2_007d-instruction-pattern-3399"></a><br><dt>&lsquo;<samp><span class="samp">sin</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的正弦存放在操作数0中。
 
      <p><code>sin</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>sinf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007bexp_0040var_007bm_007d2_007d-instruction-pattern-3401"></a><br><dt>&lsquo;<samp><span class="samp">exp</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的幂存放在操作数0中。
+     <p><a name="index-g_t_0040code_007bexp_0040var_007bm_007d2_007d-instruction-pattern-3400"></a><br><dt>&lsquo;<samp><span class="samp">exp</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的幂存放在操作数0中。
 
      <p><code>exp</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>expf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007blog_0040var_007bm_007d2_007d-instruction-pattern-3402"></a><br><dt>&lsquo;<samp><span class="samp">log</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的自然对数存放在操作数0中。
+     <p><a name="index-g_t_0040code_007blog_0040var_007bm_007d2_007d-instruction-pattern-3401"></a><br><dt>&lsquo;<samp><span class="samp">log</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的自然对数存放在操作数0中。
 
      <p><code>log</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>logf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007bpow_0040var_007bm_007d3_007d-instruction-pattern-3403"></a><br><dt>&lsquo;<samp><span class="samp">pow</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1的，指数为操作数2的幂值存放在操作数0中
+     <p><a name="index-g_t_0040code_007bpow_0040var_007bm_007d3_007d-instruction-pattern-3402"></a><br><dt>&lsquo;<samp><span class="samp">pow</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1的，指数为操作数2的幂值存放在操作数0中
 
      <p><code>pow</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>powf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007batan2_0040var_007bm_007d3_007d-instruction-pattern-3404"></a><br><dt>&lsquo;<samp><span class="samp">atan2</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1除以操作数2的反正切，存放在操作数0中，使用两个参数的正负符号来确定结果的商。
+     <p><a name="index-g_t_0040code_007batan2_0040var_007bm_007d3_007d-instruction-pattern-3403"></a><br><dt>&lsquo;<samp><span class="samp">atan2</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1除以操作数2的反正切，存放在操作数0中，使用两个参数的正负符号来确定结果的商。
 
      <p><code>atan2</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>atan2f</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007bfloor_0040var_007bm_007d2_007d-instruction-pattern-3405"></a><br><dt>&lsquo;<samp><span class="samp">floor</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>存储不大于参数的最大整数值。
+     <p><a name="index-g_t_0040code_007bfloor_0040var_007bm_007d2_007d-instruction-pattern-3404"></a><br><dt>&lsquo;<samp><span class="samp">floor</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>存储不大于参数的最大整数值。
 
      <p><code>floor</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>floorf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007bbtrunc_0040var_007bm_007d2_007d-instruction-pattern-3406"></a><br><dt>&lsquo;<samp><span class="samp">btrunc</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>存储将参数向零方向舍入的整数。
+     <p><a name="index-g_t_0040code_007bbtrunc_0040var_007bm_007d2_007d-instruction-pattern-3405"></a><br><dt>&lsquo;<samp><span class="samp">btrunc</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>存储将参数向零方向舍入的整数。
 
      <p><code>trunc</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>truncf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007bround_0040var_007bm_007d2_007d-instruction-pattern-3407"></a><br><dt>&lsquo;<samp><span class="samp">round</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>存储将参数向远离零的方向舍入的整数。
+     <p><a name="index-g_t_0040code_007bround_0040var_007bm_007d2_007d-instruction-pattern-3406"></a><br><dt>&lsquo;<samp><span class="samp">round</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>存储将参数向远离零的方向舍入的整数。
 
      <p><code>round</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>roundf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007bceil_0040var_007bm_007d2_007d-instruction-pattern-3408"></a><br><dt>&lsquo;<samp><span class="samp">ceil</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>存储将参数向远离零的方向舍入的整数。
+     <p><a name="index-g_t_0040code_007bceil_0040var_007bm_007d2_007d-instruction-pattern-3407"></a><br><dt>&lsquo;<samp><span class="samp">ceil</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>存储将参数向远离零的方向舍入的整数。
 
      <p><code>ceil</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>ceilf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007bnearbyint_0040var_007bm_007d2_007d-instruction-pattern-3409"></a><br><dt>&lsquo;<samp><span class="samp">nearbyint</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将参数根据缺省的舍入模式，舍入为整数。
+     <p><a name="index-g_t_0040code_007bnearbyint_0040var_007bm_007d2_007d-instruction-pattern-3408"></a><br><dt>&lsquo;<samp><span class="samp">nearbyint</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将参数根据缺省的舍入模式，舍入为整数。
 
      <p><code>nearbyint</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>nearbyintf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007brint_0040var_007bm_007d2_007d-instruction-pattern-3410"></a><br><dt>&lsquo;<samp><span class="samp">rint</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将参数根据缺省的舍入模式，舍入为整数，并且当结果与参数的值不同的时候，抛出不精确异常。
+     <p><a name="index-g_t_0040code_007brint_0040var_007bm_007d2_007d-instruction-pattern-3409"></a><br><dt>&lsquo;<samp><span class="samp">rint</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将参数根据缺省的舍入模式，舍入为整数，并且当结果与参数的值不同的时候，抛出不精确异常。
 
      <p><code>rint</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>rintf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007blrint_0040var_007bm_007d_0040var_007bn_007d2_007d-3411"></a><br><dt>&lsquo;<samp><span class="samp">lrint</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点模式<var>m</var>有效）转换成定点机器模式<var>n</var>，作为有符号数，根据当前的舍入模式，并存储在操作数0（具有机器模式<var>n</var>）中。
+     <p><a name="index-g_t_0040code_007blrint_0040var_007bm_007d_0040var_007bn_007d2_007d-3410"></a><br><dt>&lsquo;<samp><span class="samp">lrint</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点模式<var>m</var>有效）转换成定点机器模式<var>n</var>，作为有符号数，根据当前的舍入模式，并存储在操作数0（具有机器模式<var>n</var>）中。
 
-     <p><a name="index-g_t_0040code_007blround_0040var_007bm_007d_0040var_007bn_007d2_007d-3412"></a><br><dt>&lsquo;<samp><span class="samp">lround</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点模式<var>m</var>有效）转换成定点机器模式<var>n</var>，舍入到最近的，远离零方向的有符号数，并存储在操作数0（具有机器模式<var>n</var>）中。
+     <p><a name="index-g_t_0040code_007blround_0040var_007bm_007d_0040var_007bn_007d2_007d-3411"></a><br><dt>&lsquo;<samp><span class="samp">lround</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点模式<var>m</var>有效）转换成定点机器模式<var>n</var>，舍入到最近的，远离零方向的有符号数，并存储在操作数0（具有机器模式<var>n</var>）中。
 
-     <p><a name="index-g_t_0040code_007blfloor_0040var_007bm_007d_0040var_007bn_007d2_007d-3413"></a><br><dt>&lsquo;<samp><span class="samp">lfloor</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点模式<var>m</var>有效）转换成定点机器模式<var>n</var>，向下舍入成有符号数，并存储在操作数0（具有机器模式<var>n</var>）中。
+     <p><a name="index-g_t_0040code_007blfloor_0040var_007bm_007d_0040var_007bn_007d2_007d-3412"></a><br><dt>&lsquo;<samp><span class="samp">lfloor</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点模式<var>m</var>有效）转换成定点机器模式<var>n</var>，向下舍入成有符号数，并存储在操作数0（具有机器模式<var>n</var>）中。
 
-     <p><a name="index-g_t_0040code_007blceil_0040var_007bm_007d_0040var_007bn_007d2_007d-3414"></a><br><dt>&lsquo;<samp><span class="samp">lceil</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点模式<var>m</var>有效）转换成定点机器模式<var>n</var>，向上舍入成有符号数，并存储在操作数0（具有机器模式<var>n</var>）中。
+     <p><a name="index-g_t_0040code_007blceil_0040var_007bm_007d_0040var_007bn_007d2_007d-3413"></a><br><dt>&lsquo;<samp><span class="samp">lceil</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点模式<var>m</var>有效）转换成定点机器模式<var>n</var>，向上舍入成有符号数，并存储在操作数0（具有机器模式<var>n</var>）中。
 
-     <p><a name="index-g_t_0040code_007bcopysign_0040var_007bm_007d3_007d-instruction-pattern-3415"></a><br><dt>&lsquo;<samp><span class="samp">copysign</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1的数量级和操作数的符号组成的值，存放在操作数0中。
+     <p><a name="index-g_t_0040code_007bcopysign_0040var_007bm_007d3_007d-instruction-pattern-3414"></a><br><dt>&lsquo;<samp><span class="samp">copysign</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1的数量级和操作数的符号组成的值，存放在操作数0中。
 
      <p><code>copysign</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>copysignf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007bffs_0040var_007bm_007d2_007d-instruction-pattern-3416"></a><br><dt>&lsquo;<samp><span class="samp">ffs</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的最小有效，置1的位的索引，加上1，存放在操作数0中。如果操作数1为零，则存储零。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+     <p><a name="index-g_t_0040code_007bffs_0040var_007bm_007d2_007d-instruction-pattern-3415"></a><br><dt>&lsquo;<samp><span class="samp">ffs</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的最小有效，置1的位的索引，加上1，存放在操作数0中。如果操作数1为零，则存储零。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
 
      <p><code>ffs</code>内建C函数总是使用对应于C数据类型<code>int</code>的机器模式。
 
-     <p><a name="index-g_t_0040code_007bclz_0040var_007bm_007d2_007d-instruction-pattern-3417"></a><br><dt>&lsquo;<samp><span class="samp">clz</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将<var>x</var>中，从最高有效位开始，起始处置0的位的数目，存放在操作数0中。如果<var>x</var>为0，则<code>CLZ_DEFINED_VALUE_AT_ZERO</code> (see <a href="Misc.html#Misc">Misc</a>)宏定义了结果是否为未定义或者一个有用的值。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+     <p><a name="index-g_t_0040code_007bclz_0040var_007bm_007d2_007d-instruction-pattern-3416"></a><br><dt>&lsquo;<samp><span class="samp">clz</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将<var>x</var>中，从最高有效位开始，起始处置0的位的数目，存放在操作数0中。如果<var>x</var>为0，则<code>CLZ_DEFINED_VALUE_AT_ZERO</code> (see <a href="Misc.html#Misc">Misc</a>)宏定义了结果是否为未定义或者一个有用的值。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
 
-     <p><a name="index-g_t_0040code_007bctz_0040var_007bm_007d2_007d-instruction-pattern-3418"></a><br><dt>&lsquo;<samp><span class="samp">ctz</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将<var>x</var>中，从最小有效位开始，结尾处置0的位的数目，存放在操作数0中。如果<var>x</var>为0，则<code>CTZ_DEFINED_VALUE_AT_ZERO</code> (see <a href="Misc.html#Misc">Misc</a>)宏定义了结果是否为未定义或者一个有用的值。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+     <p><a name="index-g_t_0040code_007bctz_0040var_007bm_007d2_007d-instruction-pattern-3417"></a><br><dt>&lsquo;<samp><span class="samp">ctz</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将<var>x</var>中，从最小有效位开始，结尾处置0的位的数目，存放在操作数0中。如果<var>x</var>为0，则<code>CTZ_DEFINED_VALUE_AT_ZERO</code> (see <a href="Misc.html#Misc">Misc</a>)宏定义了结果是否为未定义或者一个有用的值。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
 
-     <p><a name="index-g_t_0040code_007bpopcount_0040var_007bm_007d2_007d-instruction-pattern-3419"></a><br><dt>&lsquo;<samp><span class="samp">popcount</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将<var>x</var>中置1的位的数目，存放在操作数0中。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+     <p><a name="index-g_t_0040code_007bpopcount_0040var_007bm_007d2_007d-instruction-pattern-3418"></a><br><dt>&lsquo;<samp><span class="samp">popcount</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将<var>x</var>中置1的位的数目，存放在操作数0中。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
 
-     <p><a name="index-g_t_0040code_007bparity_0040var_007bm_007d2_007d-instruction-pattern-3420"></a><br><dt>&lsquo;<samp><span class="samp">parity</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将<var>x</var>的奇偶校验存放在操作数0中，即：<var>x</var>中置1的位数对2求模。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+     <p><a name="index-g_t_0040code_007bparity_0040var_007bm_007d2_007d-instruction-pattern-3419"></a><br><dt>&lsquo;<samp><span class="samp">parity</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将<var>x</var>的奇偶校验存放在操作数0中，即：<var>x</var>中置1的位数对2求模。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
 
-     <p><a name="index-g_t_0040code_007bone_005fcmpl_0040var_007bm_007d2_007d-instruction-pattern-3421"></a><br><dt>&lsquo;<samp><span class="samp">one_cmpl</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>对操作数1进行按位求补，并存放在操作数0中。
+     <p><a name="index-g_t_0040code_007bone_005fcmpl_0040var_007bm_007d2_007d-instruction-pattern-3420"></a><br><dt>&lsquo;<samp><span class="samp">one_cmpl</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>对操作数1进行按位求补，并存放在操作数0中。
 
-     <p><a name="index-g_t_0040code_007bcmp_0040var_007bm_007d_007d-instruction-pattern-3422"></a><br><dt>&lsquo;<samp><span class="samp">cmp</span><var>m</var></samp>&rsquo;<dd>比较操作数0和1，并设置条件代码。RTL指令模式应该像这样：
+     <p><a name="index-g_t_0040code_007bcmp_0040var_007bm_007d_007d-instruction-pattern-3421"></a><br><dt>&lsquo;<samp><span class="samp">cmp</span><var>m</var></samp>&rsquo;<dd>比较操作数0和1，并设置条件代码。RTL指令模式应该像这样：
 
      <pre class="smallexample">          (set (cc0) (compare (match_operand:<var>m</var> 0 ...)
                               (match_operand:<var>m</var> 1 ...)))
 </pre>
-     <p><a name="index-g_t_0040code_007btst_0040var_007bm_007d_007d-instruction-pattern-3423"></a><br><dt>&lsquo;<samp><span class="samp">tst</span><var>m</var></samp>&rsquo;<dd>将操作数0与零进行比较，并设置条件码。RTL指令模式应该像这样：
+     <p><a name="index-g_t_0040code_007btst_0040var_007bm_007d_007d-instruction-pattern-3422"></a><br><dt>&lsquo;<samp><span class="samp">tst</span><var>m</var></samp>&rsquo;<dd>将操作数0与零进行比较，并设置条件码。RTL指令模式应该像这样：
 
      <pre class="smallexample">          (set (cc0) (match_operand:<var>m</var> 0 ...))
 </pre>
      <p>&lsquo;<samp><span class="samp">tst</span><var>m</var></samp>&rsquo;指令模式不应该为不使用<code>(cc0)</code>的机器定义。这样做会使得编译器变得迷惑，因为其将会不清楚哪一个<code>set</code>操作为比较。应该使用&lsquo;<samp><span class="samp">cmp</span><var>m</var></samp>&rsquo;。
 
-     <p><a name="index-g_t_0040code_007bmovmem_0040var_007bm_007d_007d-instruction-pattern-3424"></a><br><dt>&lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo;<dd>块移动指令。内存的目的块和源块为前两个操作数，都为地址是<code>Pmode</code>的<code>mem:BLK</code>。
+     <p><a name="index-g_t_0040code_007bmovmem_0040var_007bm_007d_007d-instruction-pattern-3423"></a><br><dt>&lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo;<dd>块移动指令。内存的目的块和源块为前两个操作数，都为地址是<code>Pmode</code>的<code>mem:BLK</code>。
 
      <p>要移动的字节数为第三个操作数，机器模式为<var>m</var>。通常，你会将<var>m</var>指定为<code>word_mode</code>。然而，如果你可以生成更好的代码，知道有效长度的范围比一整个字要小，则你应该提供一个指令模式，其机器模式对应于你可以更有效的处理的值的范围（例如，<code>QImode</code>对于范围0&ndash;127；注意我们回避了负数），并且一个使用<code>word_mode</code>的指令模式。
 
@@ -322,9 +322,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>这些指令模式不需要对源和目的可能重叠的情况，进行特殊的考虑。
 
-     <p><a name="index-g_t_0040code_007bmovstr_007d-instruction-pattern-3425"></a><br><dt>&lsquo;<samp><span class="samp">movstr</span></samp>&rsquo;<dd>字符串复制指令，具有<code>stpcpy</code>的语义。操作数0为输出操作数，机器模式为<code>Pmode</code>。目的字符串和源字符串的地址为操作数1和2，都是地址为<code>Pmode</code>的<code>mem:BLK</code>。对该指令模式的执行，应该将地址存放在操作数0中，其中<code>NUL</code>终结符存放在目标字符串中。
+     <p><a name="index-g_t_0040code_007bmovstr_007d-instruction-pattern-3424"></a><br><dt>&lsquo;<samp><span class="samp">movstr</span></samp>&rsquo;<dd>字符串复制指令，具有<code>stpcpy</code>的语义。操作数0为输出操作数，机器模式为<code>Pmode</code>。目的字符串和源字符串的地址为操作数1和2，都是地址为<code>Pmode</code>的<code>mem:BLK</code>。对该指令模式的执行，应该将地址存放在操作数0中，其中<code>NUL</code>终结符存放在目标字符串中。
 
-     <p><a name="index-g_t_0040code_007bsetmem_0040var_007bm_007d_007d-instruction-pattern-3426"></a><br><dt>&lsquo;<samp><span class="samp">setmem</span><var>m</var></samp>&rsquo;<dd>块设置指令。目的字符串为第一个操作数，作为一个<code>mem:BLK</code>，其地址的机器模式为codePmode。被设置的字节的数目是第二个操作数，机器模式为<var>m</var>。用于初始化内存的值为第三个操作数。只支持清空内存的目标机应该拒绝任何不为常数0的值。关于对机器模式选择的讨论，参见&lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo;。
+     <p><a name="index-g_t_0040code_007bsetmem_0040var_007bm_007d_007d-instruction-pattern-3425"></a><br><dt>&lsquo;<samp><span class="samp">setmem</span><var>m</var></samp>&rsquo;<dd>块设置指令。目的字符串为第一个操作数，作为一个<code>mem:BLK</code>，其地址的机器模式为codePmode。被设置的字节的数目是第二个操作数，机器模式为<var>m</var>。用于初始化内存的值为第三个操作数。只支持清空内存的目标机应该拒绝任何不为常数0的值。关于对机器模式选择的讨论，参见&lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo;。
 
      <p>第四个操作数为目标的已知对齐方式，形式为<code>const_int</code> rtx。因此，如果编译器知道目的操作数是字对齐的，则其可以为该操作数提供值4。
 
@@ -332,69 +332,69 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>对多个<code>setmem</code><var>m</var>的使用，类似于<code>movmem</code><var>m</var>
 
-     <p><a name="index-g_t_0040code_007bcmpstrn_0040var_007bm_007d_007d-instruction-pattern-3427"></a><br><dt>&lsquo;<samp><span class="samp">cmpstrn</span><var>m</var></samp>&rsquo;<dd>字符串比较指令，有5个操作数。操作数0为输出，机器模式为<var>m</var>。剩下的4个操作数类似于&lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo;的操作数。两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。指令不允许一次取多个字节，因为每个字符串都可能在第一个字节中终止，读取后面的字节可能会访问一个无效的页或者段，并产生一个缺失。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
+     <p><a name="index-g_t_0040code_007bcmpstrn_0040var_007bm_007d_007d-instruction-pattern-3426"></a><br><dt>&lsquo;<samp><span class="samp">cmpstrn</span><var>m</var></samp>&rsquo;<dd>字符串比较指令，有5个操作数。操作数0为输出，机器模式为<var>m</var>。剩下的4个操作数类似于&lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo;的操作数。两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。指令不允许一次取多个字节，因为每个字符串都可能在第一个字节中终止，读取后面的字节可能会访问一个无效的页或者段，并产生一个缺失。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
 
-     <p><a name="index-g_t_0040code_007bcmpstr_0040var_007bm_007d_007d-instruction-pattern-3428"></a><br><dt>&lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;<dd>字符串比较指令，不知道最大的长度。操作数0为输出，机器模式为<var>m</var>。第二个和第三个操作数为被比较的内存块；都是机器模式为<code>Pmode</code>的<code>mem:BLK</code>。
+     <p><a name="index-g_t_0040code_007bcmpstr_0040var_007bm_007d_007d-instruction-pattern-3427"></a><br><dt>&lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;<dd>字符串比较指令，不知道最大的长度。操作数0为输出，机器模式为<var>m</var>。第二个和第三个操作数为被比较的内存块；都是机器模式为<code>Pmode</code>的<code>mem:BLK</code>。
 
      <p>第四个操作数为源和目的的已知共享的对齐方式，形式为<code>const_int</code> rtx。因此，如果编译器知道源和目的都是字对齐的，则其可以为该操作数提供值4。
 
      <p>两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。指令不允许一次取多个字节，因为每个字符串都可能在第一个字节中终止，读取后面的字节可能会访问一个无效的页或者段，并产生一个缺失。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
 
-     <p><a name="index-g_t_0040code_007bcmpmem_0040var_007bm_007d_007d-instruction-pattern-3429"></a><br><dt>&lsquo;<samp><span class="samp">cmpmem</span><var>m</var></samp>&rsquo;<dd>块比较指令，这5个操作数类似于&lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;。两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。不像&lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;，该指令可以在两个内存块中取任意个字节。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
+     <p><a name="index-g_t_0040code_007bcmpmem_0040var_007bm_007d_007d-instruction-pattern-3428"></a><br><dt>&lsquo;<samp><span class="samp">cmpmem</span><var>m</var></samp>&rsquo;<dd>块比较指令，这5个操作数类似于&lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;。两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。不像&lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;，该指令可以在两个内存块中取任意个字节。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
 
-     <p><a name="index-g_t_0040code_007bstrlen_0040var_007bm_007d_007d-instruction-pattern-3430"></a><br><dt>&lsquo;<samp><span class="samp">strlen</span><var>m</var></samp>&rsquo;<dd>计算字符串的长度，有3个操作数。操作数0为结果（机器模式为<var>m</var>），操作数1为一个<code>mem</code>，指出字符串的第一个字符，操作数2为要查找的字符（通常为零），操作数3为一个常量，描述了字符串起始处的已知对齐方式。
+     <p><a name="index-g_t_0040code_007bstrlen_0040var_007bm_007d_007d-instruction-pattern-3429"></a><br><dt>&lsquo;<samp><span class="samp">strlen</span><var>m</var></samp>&rsquo;<dd>计算字符串的长度，有3个操作数。操作数0为结果（机器模式为<var>m</var>），操作数1为一个<code>mem</code>，指出字符串的第一个字符，操作数2为要查找的字符（通常为零），操作数3为一个常量，描述了字符串起始处的已知对齐方式。
 
-     <p><a name="index-g_t_0040code_007bfloat_0040var_007bmn_007d2_007d-instruction-pattern-3431"></a><br><dt>&lsquo;<samp><span class="samp">float</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将有符号整数，操作数1（对于定点机器模式<var>m</var>有效），转换成浮点机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。
+     <p><a name="index-g_t_0040code_007bfloat_0040var_007bmn_007d2_007d-instruction-pattern-3430"></a><br><dt>&lsquo;<samp><span class="samp">float</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将有符号整数，操作数1（对于定点机器模式<var>m</var>有效），转换成浮点机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。
 
-     <p><a name="index-g_t_0040code_007bfloatuns_0040var_007bmn_007d2_007d-instruction-pattern-3432"></a><br><dt>&lsquo;<samp><span class="samp">floatuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将无符号整数，操作数1（对于定点机器模式<var>m</var>有效），转换成浮点机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。
+     <p><a name="index-g_t_0040code_007bfloatuns_0040var_007bmn_007d2_007d-instruction-pattern-3431"></a><br><dt>&lsquo;<samp><span class="samp">floatuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将无符号整数，操作数1（对于定点机器模式<var>m</var>有效），转换成浮点机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。
 
-     <p><a name="index-g_t_0040code_007bfix_0040var_007bmn_007d2_007d-instruction-pattern-3433"></a><br><dt>&lsquo;<samp><span class="samp">fix</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点机器模式<var>m</var>有效），转换成定点机器模式<var>n</var>，作为一个有符号数并存放在操作数0（机器模式为<var>n</var>）中。该指令的结果，只有当操作数1的值为整数时，才被定义。
+     <p><a name="index-g_t_0040code_007bfix_0040var_007bmn_007d2_007d-instruction-pattern-3432"></a><br><dt>&lsquo;<samp><span class="samp">fix</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点机器模式<var>m</var>有效），转换成定点机器模式<var>n</var>，作为一个有符号数并存放在操作数0（机器模式为<var>n</var>）中。该指令的结果，只有当操作数1的值为整数时，才被定义。
 
      <p>如果机器描述定义了该指令模式，则其还需要定义<code>ftrunc</code>指令模式。
 
-     <p><a name="index-g_t_0040code_007bfixuns_0040var_007bmn_007d2_007d-instruction-pattern-3434"></a><br><dt>&lsquo;<samp><span class="samp">fixuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点机器模式<var>m</var>有效），转换成定点机器模式<var>n</var>，作为一个无符号数并存放在操作数0（机器模式为<var>n</var>）中。该指令的结果，只有当操作数1的值为整数时，才被定义。
+     <p><a name="index-g_t_0040code_007bfixuns_0040var_007bmn_007d2_007d-instruction-pattern-3433"></a><br><dt>&lsquo;<samp><span class="samp">fixuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点机器模式<var>m</var>有效），转换成定点机器模式<var>n</var>，作为一个无符号数并存放在操作数0（机器模式为<var>n</var>）中。该指令的结果，只有当操作数1的值为整数时，才被定义。
 
-     <p><a name="index-g_t_0040code_007bftrunc_0040var_007bm_007d2_007d-instruction-pattern-3435"></a><br><dt>&lsquo;<samp><span class="samp">ftrunc</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点机器模式<var>m</var>有效），转换成整数值，仍按照浮点机器模式<var>m</var>来表示，并存放在操作数0（对于浮点机器模式<var>m</var>有效）中。
+     <p><a name="index-g_t_0040code_007bftrunc_0040var_007bm_007d2_007d-instruction-pattern-3434"></a><br><dt>&lsquo;<samp><span class="samp">ftrunc</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对于浮点机器模式<var>m</var>有效），转换成整数值，仍按照浮点机器模式<var>m</var>来表示，并存放在操作数0（对于浮点机器模式<var>m</var>有效）中。
 
-     <p><a name="index-g_t_0040code_007bfix_005ftrunc_0040var_007bmn_007d2_007d-instruction-pattern-3436"></a><br><dt>&lsquo;<samp><span class="samp">fix_trunc</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>类似于&lsquo;<samp><span class="samp">fix</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;，不过工作于，将任意机器模式为<var>m</var>的浮点值，转换成整数。
+     <p><a name="index-g_t_0040code_007bfix_005ftrunc_0040var_007bmn_007d2_007d-instruction-pattern-3435"></a><br><dt>&lsquo;<samp><span class="samp">fix_trunc</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>类似于&lsquo;<samp><span class="samp">fix</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;，不过工作于，将任意机器模式为<var>m</var>的浮点值，转换成整数。
 
-     <p><a name="index-g_t_0040code_007bfixuns_005ftrunc_0040var_007bmn_007d2_007d-instruction-pattern-3437"></a><br><dt>&lsquo;<samp><span class="samp">fixuns_trunc</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>类似&lsquo;<samp><span class="samp">fixuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;，不过工作于，将任意机器模式为<var>m</var>的浮点值，转换成整数。
+     <p><a name="index-g_t_0040code_007bfixuns_005ftrunc_0040var_007bmn_007d2_007d-instruction-pattern-3436"></a><br><dt>&lsquo;<samp><span class="samp">fixuns_trunc</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>类似&lsquo;<samp><span class="samp">fixuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;，不过工作于，将任意机器模式为<var>m</var>的浮点值，转换成整数。
 
-     <p><a name="index-g_t_0040code_007btrunc_0040var_007bmn_007d2_007d-instruction-pattern-3438"></a><br><dt>&lsquo;<samp><span class="samp">trunc</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对机器模式<var>m</var>有效），截取为机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。两个机器模式都必须同为定点的或者浮点的。
+     <p><a name="index-g_t_0040code_007btrunc_0040var_007bmn_007d2_007d-instruction-pattern-3437"></a><br><dt>&lsquo;<samp><span class="samp">trunc</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对机器模式<var>m</var>有效），截取为机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。两个机器模式都必须同为定点的或者浮点的。
 
-     <p><a name="index-g_t_0040code_007bextend_0040var_007bmn_007d2_007d-instruction-pattern-3439"></a><br><dt>&lsquo;<samp><span class="samp">extend</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对机器模式<var>m</var>有效）符号扩展成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。两个机器模式都必须同为定点的或者浮点的。
+     <p><a name="index-g_t_0040code_007bextend_0040var_007bmn_007d2_007d-instruction-pattern-3438"></a><br><dt>&lsquo;<samp><span class="samp">extend</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对机器模式<var>m</var>有效）符号扩展成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。两个机器模式都必须同为定点的或者浮点的。
 
-     <p><a name="index-g_t_0040code_007bzero_005fextend_0040var_007bmn_007d2_007d-instruction-pattern-3440"></a><br><dt>&lsquo;<samp><span class="samp">zero_extend</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对机器模式<var>m</var>有效）零扩展成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。两个机器模式都必须同为定点的或者浮点的。
+     <p><a name="index-g_t_0040code_007bzero_005fextend_0040var_007bmn_007d2_007d-instruction-pattern-3439"></a><br><dt>&lsquo;<samp><span class="samp">zero_extend</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1（对机器模式<var>m</var>有效）零扩展成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。两个机器模式都必须同为定点的或者浮点的。
 
-     <p><a name="index-g_t_0040code_007bfract_0040var_007bmn_007d2_007d-instruction-pattern-3441"></a><br><dt>&lsquo;<samp><span class="samp">fract</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将机器模式为<var>m</var>的操作数1，转换成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。机器模式<var>m</var>和<var>n</var>可以为定点到定点，有符号整数到定点，定点到有符号整数，浮点到浮点，或者定点到浮点。当发生溢出时，结果未定义。
+     <p><a name="index-g_t_0040code_007bfract_0040var_007bmn_007d2_007d-instruction-pattern-3440"></a><br><dt>&lsquo;<samp><span class="samp">fract</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将机器模式为<var>m</var>的操作数1，转换成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。机器模式<var>m</var>和<var>n</var>可以为定点到定点，有符号整数到定点，定点到有符号整数，浮点到浮点，或者定点到浮点。当发生溢出时，结果未定义。
 
-     <p><a name="index-g_t_0040code_007bsatfract_0040var_007bmn_007d2_007d-instruction-pattern-3442"></a><br><dt>&lsquo;<samp><span class="samp">satfract</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将机器模式为<var>m</var>的操作数1，转换成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。机器模式<var>m</var>和<var>n</var>可以为定点到定点，有符号整数到定点，或者浮点到定点。当发生溢出时，指令将结果饱和为最大或最小值。
+     <p><a name="index-g_t_0040code_007bsatfract_0040var_007bmn_007d2_007d-instruction-pattern-3441"></a><br><dt>&lsquo;<samp><span class="samp">satfract</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将机器模式为<var>m</var>的操作数1，转换成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。机器模式<var>m</var>和<var>n</var>可以为定点到定点，有符号整数到定点，或者浮点到定点。当发生溢出时，指令将结果饱和为最大或最小值。
 
-     <p><a name="index-g_t_0040code_007bfractuns_0040var_007bmn_007d2_007d-instruction-pattern-3443"></a><br><dt>&lsquo;<samp><span class="samp">fractuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将机器模式为<var>m</var>的操作数1，转换成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。机器模式<var>m</var>和<var>n</var>可以为无符号整数到定点，或者定点到无符号整数。当发生溢出时，结果未定义。
+     <p><a name="index-g_t_0040code_007bfractuns_0040var_007bmn_007d2_007d-instruction-pattern-3442"></a><br><dt>&lsquo;<samp><span class="samp">fractuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将机器模式为<var>m</var>的操作数1，转换成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。机器模式<var>m</var>和<var>n</var>可以为无符号整数到定点，或者定点到无符号整数。当发生溢出时，结果未定义。
 
-     <p><a name="index-g_t_0040code_007bsatfractuns_0040var_007bmn_007d2_007d-instruction-pattern-3444"></a><br><dt>&lsquo;<samp><span class="samp">satfractuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将机器模式为<var>m</var>的，无符号整数，操作数1，转换成定点机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。当发生溢出时，指令将结果饱和为最大或最小值。
+     <p><a name="index-g_t_0040code_007bsatfractuns_0040var_007bmn_007d2_007d-instruction-pattern-3443"></a><br><dt>&lsquo;<samp><span class="samp">satfractuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd>将机器模式为<var>m</var>的，无符号整数，操作数1，转换成定点机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。当发生溢出时，指令将结果饱和为最大或最小值。
 
-     <p><a name="index-g_t_0040code_007bextv_007d-instruction-pattern-3445"></a><br><dt>&lsquo;<samp><span class="samp">extv</span></samp>&rsquo;<dd>从操作数1（寄存器或者内存操作数）中抽取一个位域，其中操作数2指定了宽度，按位为单位，操作数3为起始位，并将结果存放在操作数0中。操作数0必须具有机器模式<code>word_mode</code>。操作数1可以具有机器模式<code>byte_mode</code> 或 <code>word_mode</code>；通常<code>word_mode</code>只允许用于寄存器。操作数2和3必须对<code>word_mode</code>有效。
+     <p><a name="index-g_t_0040code_007bextv_007d-instruction-pattern-3444"></a><br><dt>&lsquo;<samp><span class="samp">extv</span></samp>&rsquo;<dd>从操作数1（寄存器或者内存操作数）中抽取一个位域，其中操作数2指定了宽度，按位为单位，操作数3为起始位，并将结果存放在操作数0中。操作数0必须具有机器模式<code>word_mode</code>。操作数1可以具有机器模式<code>byte_mode</code> 或 <code>word_mode</code>；通常<code>word_mode</code>只允许用于寄存器。操作数2和3必须对<code>word_mode</code>有效。
 
      <p>RTL生成过程，生成的该指令，操作数2和3为常量，并且对于操作数2，常量不为零。
 
      <p>位域的值，在存放到操作数0之前，被有符号扩展为一整个字的整数。
 
-     <p><a name="index-g_t_0040code_007bextzv_007d-instruction-pattern-3446"></a><br><dt>&lsquo;<samp><span class="samp">extzv</span></samp>&rsquo;<dd>类似&lsquo;<samp><span class="samp">extv</span></samp>&rsquo;，只不过位域的值被零扩展。
+     <p><a name="index-g_t_0040code_007bextzv_007d-instruction-pattern-3445"></a><br><dt>&lsquo;<samp><span class="samp">extzv</span></samp>&rsquo;<dd>类似&lsquo;<samp><span class="samp">extv</span></samp>&rsquo;，只不过位域的值被零扩展。
 
-     <p><a name="index-g_t_0040code_007binsv_007d-instruction-pattern-3447"></a><br><dt>&lsquo;<samp><span class="samp">insv</span></samp>&rsquo;<dd>将操作数3（必须对<code>word_mode</code>有效）存储到操作数0中的位域，其中操作数1指定了位宽，操作数2指定了起始位。操作数0可以具有机器模式<code>byte_mode</code> 或 <code>word_mode</code>；通常<code>word_mode</code>只允许用于寄存器。操作数1和2必须对<code>word_mode</code>有效。
+     <p><a name="index-g_t_0040code_007binsv_007d-instruction-pattern-3446"></a><br><dt>&lsquo;<samp><span class="samp">insv</span></samp>&rsquo;<dd>将操作数3（必须对<code>word_mode</code>有效）存储到操作数0中的位域，其中操作数1指定了位宽，操作数2指定了起始位。操作数0可以具有机器模式<code>byte_mode</code> 或 <code>word_mode</code>；通常<code>word_mode</code>只允许用于寄存器。操作数1和2必须对<code>word_mode</code>有效。
 
      <p>RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操作数1，常量不为零。
 
-     <p><a name="index-g_t_0040code_007bmov_0040var_007bmode_007dcc_007d-instruction-pattern-3448"></a><br><dt>&lsquo;<samp><span class="samp">mov</span><var>mode</var><span class="samp">cc</span></samp>&rsquo;<dd>根据对操作数1的比较，有条件的将操作数2或者3移送到操作数0中。如果比较为真，则操作数2被移送到操作数0中，否则操作数3被移送。
+     <p><a name="index-g_t_0040code_007bmov_0040var_007bmode_007dcc_007d-instruction-pattern-3447"></a><br><dt>&lsquo;<samp><span class="samp">mov</span><var>mode</var><span class="samp">cc</span></samp>&rsquo;<dd>根据对操作数1的比较，有条件的将操作数2或者3移送到操作数0中。如果比较为真，则操作数2被移送到操作数0中，否则操作数3被移送。
 
      <p>操作数的机器模式不需要与被移送的操作数的相同。一些机器，例如sparc64，具有可以根据浮点条件码，条件移送整数值的指令，以及相反的指令。
 
      <p>如果机器没有条件移送指令，则不要定义这些指令模式。
 
-     <p><a name="index-g_t_0040code_007badd_0040var_007bmode_007dcc_007d-instruction-pattern-3449"></a><br><dt>&lsquo;<samp><span class="samp">add</span><var>mode</var><span class="samp">cc</span></samp>&rsquo;<dd>类似于&lsquo;<samp><span class="samp">mov</span><var>mode</var><span class="samp">cc</span></samp>&rsquo;，不过是条件加法。根据在操作数1中的比较，条件性的将操作数2或者(操作数2 + 操作数3)，移送到操作数0中。如果比较为真，则操作数2被移送到操作数0中，否则(操作数2 + 操作数3)被移送。
+     <p><a name="index-g_t_0040code_007badd_0040var_007bmode_007dcc_007d-instruction-pattern-3448"></a><br><dt>&lsquo;<samp><span class="samp">add</span><var>mode</var><span class="samp">cc</span></samp>&rsquo;<dd>类似于&lsquo;<samp><span class="samp">mov</span><var>mode</var><span class="samp">cc</span></samp>&rsquo;，不过是条件加法。根据在操作数1中的比较，条件性的将操作数2或者(操作数2 + 操作数3)，移送到操作数0中。如果比较为真，则操作数2被移送到操作数0中，否则(操作数2 + 操作数3)被移送。
 
-     <p><a name="index-g_t_0040code_007bs_0040var_007bcond_007d_007d-instruction-pattern-3450"></a><br><dt>&lsquo;<samp><span class="samp">s</span><var>cond</var></samp>&rsquo;<dd>根据条件码将零或者非零存放在操作数中。当且仅当条件<var>cond</var>为真时，存储的值才为非零。<var>cond</var>为一个比较运算表达式代码的名字，例如<code>eq</code>, <code>lt</code>或<code>leu</code>。
+     <p><a name="index-g_t_0040code_007bs_0040var_007bcond_007d_007d-instruction-pattern-3449"></a><br><dt>&lsquo;<samp><span class="samp">s</span><var>cond</var></samp>&rsquo;<dd>根据条件码将零或者非零存放在操作数中。当且仅当条件<var>cond</var>为真时，存储的值才为非零。<var>cond</var>为一个比较运算表达式代码的名字，例如<code>eq</code>, <code>lt</code>或<code>leu</code>。
 
      <p>当书写<code>match_operand</code>表达式的时候，你来指定操作数必须具有的机器模式。编译器自动的查看你使用的机器模式，并提供那个机器模式的操作数。
 
@@ -404,7 +404,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>如果这些操作被去掉，则编译器通常会生成，将常量复制到目标，并在将零赋值给目标的语句附近进行分支跳转。如果这样的代码比用于&lsquo;<samp><span class="samp">s</span><var>cond</var></samp>&rsquo;模式的指令，后面跟着需要将结果转成<code>SImode</code>的1或者零的的指令，更有效，则你应该从机器描述中去掉&lsquo;<samp><span class="samp">s</span><var>cond</var></samp>&rsquo;操作。
 
-     <p><a name="index-g_t_0040code_007bb_0040var_007bcond_007d_007d-instruction-pattern-3451"></a><br><dt>&lsquo;<samp><span class="samp">b</span><var>cond</var></samp>&rsquo;<dd>条件分支指令。操作数0为一个<code>label_ref</code>指出要跳转到的标号。如果条件码符合条件<var>cond</var>则跳转。
+     <p><a name="index-g_t_0040code_007bb_0040var_007bcond_007d_007d-instruction-pattern-3450"></a><br><dt>&lsquo;<samp><span class="samp">b</span><var>cond</var></samp>&rsquo;<dd>条件分支指令。操作数0为一个<code>label_ref</code>指出要跳转到的标号。如果条件码符合条件<var>cond</var>则跳转。
 
      <p>一些机器不遵循这里假设的模型，即一个比较指令，跟随一个条件跳转指令。那种情况下，&lsquo;<samp><span class="samp">cmp</span><var>m</var></samp>&rsquo; (和 &lsquo;<samp><span class="samp">tst</span><var>m</var></samp>&rsquo;)指令模式，应该简单的将操作数存放开，并在<code>define_expand</code> (see <a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)中为条件分支操作，生成所有需要的insn。所有对扩展&lsquo;<samp><span class="samp">b</span><var>cond</var></samp>&rsquo;指令模式的调用，都会立即优先执行对扩展&lsquo;<samp><span class="samp">cmp</span><var>m</var></samp>&rsquo;或者&lsquo;<samp><span class="samp">tst</span><var>m</var></samp>&rsquo;的调用。
 
@@ -412,33 +412,33 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>上面的讨论也应用在&lsquo;<samp><span class="samp">mov</span><var>mode</var><span class="samp">cc</span></samp>&rsquo;和&lsquo;<samp><span class="samp">s</span><var>cond</var></samp>&rsquo;指令模式上。
 
-     <p><a name="index-g_t_0040code_007bcbranch_0040var_007bmode_007d4_007d-instruction-pattern-3452"></a><br><dt>&lsquo;<samp><span class="samp">cbranch</span><var>mode</var><span class="samp">4</span></samp>&rsquo;<dd>条件分支指令，结合一个比较指令。操作数0为比较运算符。操作数1和2分别为比较运算的第一个和第二个操作数。操作数3为一个<code>label_ref</code>，指出了跳转的标号。
+     <p><a name="index-g_t_0040code_007bcbranch_0040var_007bmode_007d4_007d-instruction-pattern-3451"></a><br><dt>&lsquo;<samp><span class="samp">cbranch</span><var>mode</var><span class="samp">4</span></samp>&rsquo;<dd>条件分支指令，结合一个比较指令。操作数0为比较运算符。操作数1和2分别为比较运算的第一个和第二个操作数。操作数3为一个<code>label_ref</code>，指出了跳转的标号。
 
-     <p><a name="index-g_t_0040code_007bjump_007d-instruction-pattern-3453"></a><br><dt>&lsquo;<samp><span class="samp">jump</span></samp>&rsquo;<dd>函数内部跳转；无条件分支。操作数0为一个<code>label_ref</code>，指出了跳转的标号。该指令模式名在所有机器上都是强制必须的。
+     <p><a name="index-g_t_0040code_007bjump_007d-instruction-pattern-3452"></a><br><dt>&lsquo;<samp><span class="samp">jump</span></samp>&rsquo;<dd>函数内部跳转；无条件分支。操作数0为一个<code>label_ref</code>，指出了跳转的标号。该指令模式名在所有机器上都是强制必须的。
 
-     <p><a name="index-g_t_0040code_007bcall_007d-instruction-pattern-3454"></a><br><dt>&lsquo;<samp><span class="samp">call</span></samp>&rsquo;<dd>没有返回值的子程序调用指令。操作数0为调用的函数；操作数1为压栈的参数的字节数，为一个<code>const_int</code>；操作数2为用作操作数的寄存器数目。
+     <p><a name="index-g_t_0040code_007bcall_007d-instruction-pattern-3453"></a><br><dt>&lsquo;<samp><span class="samp">call</span></samp>&rsquo;<dd>没有返回值的子程序调用指令。操作数0为调用的函数；操作数1为压栈的参数的字节数，为一个<code>const_int</code>；操作数2为用作操作数的寄存器数目。
 
      <p>在大多机器上，操作数2没有被实际存放在RTL模式中。提供它是出于安全考虑，一些RISC机器需要将该信息放到汇编代码中；它们可以将其放在RTL中，而不是操作数1中。
 
      <p>操作数0应该为一个<code>mem</code> RTX，其地址为函数的地址。然而注意，该地址可以为一个<code>symbol_ref</code>表达式，即使其在目标机器上可能不是一个合法的内存地址。如果其也不是调用指令的有效参数，则该操作的指令模式应该为一个<code>define_expand</code> (see <a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)，其将地址放入寄存器中，并在调用指令中使用寄存器。
 
-     <p><a name="index-g_t_0040code_007bcall_005fvalue_007d-instruction-pattern-3455"></a><br><dt>&lsquo;<samp><span class="samp">call_value</span></samp>&rsquo;<dd>有返回值的子程序调用指令。操作数0为硬件寄存器，存放返回值。还有三个操作数，与&lsquo;<samp><span class="samp">call</span></samp>&rsquo;指令相同（只不过将编号加一）。
+     <p><a name="index-g_t_0040code_007bcall_005fvalue_007d-instruction-pattern-3454"></a><br><dt>&lsquo;<samp><span class="samp">call_value</span></samp>&rsquo;<dd>有返回值的子程序调用指令。操作数0为硬件寄存器，存放返回值。还有三个操作数，与&lsquo;<samp><span class="samp">call</span></samp>&rsquo;指令相同（只不过将编号加一）。
 
      <p>返回 <code>BLKmode</code>对象的子程序，使用&lsquo;<samp><span class="samp">call</span></samp>&rsquo; insn。
 
-     <p><a name="index-g_t_0040code_007bcall_005fpop_007d-instruction-pattern-3456"></a><a name="index-g_t_0040code_007bcall_005fvalue_005fpop_007d-instruction-pattern-3457"></a><br><dt>&lsquo;<samp><span class="samp">call_pop</span></samp>&rsquo;, &lsquo;<samp><span class="samp">call_value_pop</span></samp>&rsquo;<dd>类似于&lsquo;<samp><span class="samp">call</span></samp>&rsquo; 和 &lsquo;<samp><span class="samp">call_value</span></samp>&rsquo;，只不过用于其被定义，并且<code>RETURN_POPS_ARGS</code>为非零的时候。它们应该生成一个 <code>parallel</code>，包含函数调用和一个<code>set</code>，来指示对帧指针的调整。
+     <p><a name="index-g_t_0040code_007bcall_005fpop_007d-instruction-pattern-3455"></a><a name="index-g_t_0040code_007bcall_005fvalue_005fpop_007d-instruction-pattern-3456"></a><br><dt>&lsquo;<samp><span class="samp">call_pop</span></samp>&rsquo;, &lsquo;<samp><span class="samp">call_value_pop</span></samp>&rsquo;<dd>类似于&lsquo;<samp><span class="samp">call</span></samp>&rsquo; 和 &lsquo;<samp><span class="samp">call_value</span></samp>&rsquo;，只不过用于其被定义，并且<code>RETURN_POPS_ARGS</code>为非零的时候。它们应该生成一个 <code>parallel</code>，包含函数调用和一个<code>set</code>，来指示对帧指针的调整。
 
      <p>对于<code>RETURN_POPS_ARGS</code>可以为非零的机器，使用这些指令模式可以增加帧指针被消除掉的函数的数目。
 
-     <p><a name="index-g_t_0040code_007buntyped_005fcall_007d-instruction-pattern-3458"></a><br><dt>&lsquo;<samp><span class="samp">untyped_call</span></samp>&rsquo;<dd>返回一个任意类型的值的子函数调用指令。操作数0为调用的函数；操作数1为内存位置，存放调用函数后的结果；操作数2为一个<code>parallel</code>表达式，其中每个元素都为一个<code>set</code>表达式，用来指示将函数返回值保存到结果块中。
+     <p><a name="index-g_t_0040code_007buntyped_005fcall_007d-instruction-pattern-3457"></a><br><dt>&lsquo;<samp><span class="samp">untyped_call</span></samp>&rsquo;<dd>返回一个任意类型的值的子函数调用指令。操作数0为调用的函数；操作数1为内存位置，存放调用函数后的结果；操作数2为一个<code>parallel</code>表达式，其中每个元素都为一个<code>set</code>表达式，用来指示将函数返回值保存到结果块中。
 
      <p>该指令模式应该被定义，来支持<code>__builtin_apply</code>，在一些机器上，需要特殊的指令来调用一个具有任意参数的子程序，或者将返回值保存。在具有多个寄存器，可以存放一个返回值（即<code>FUNCTION_VALUE_REGNO_P</code>对多个寄存器都为真）的机器上，需要该指令模式。
 
-     <p><a name="index-g_t_0040code_007breturn_007d-instruction-pattern-3459"></a><br><dt>&lsquo;<samp><span class="samp">return</span></samp>&rsquo;<dd>子程序返回指令。该指令模式名应该只有当，单个指令可以做从函数中返回时的所有工作的时候，才被定义。
+     <p><a name="index-g_t_0040code_007breturn_007d-instruction-pattern-3458"></a><br><dt>&lsquo;<samp><span class="samp">return</span></samp>&rsquo;<dd>子程序返回指令。该指令模式名应该只有当，单个指令可以做从函数中返回时的所有工作的时候，才被定义。
 
      <p>类似&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;指令模式，该指令模式也在RTL生成阶段之后被使用。这种情况下，其用来支持一些机器，从函数中返回通常需要多个指令，但是某些类别的函数只需要一条指令来实现返回。通常，可以适用的函数为那些不需要保存任何寄存器或者分配栈空间的函数。
 
-     <p><a name="index-reload_005fcompleted-3460"></a><a name="index-leaf_005ffunction_005fp-3461"></a>对于这样的机器，该指令模式中指定的条件，应该只有当<code>reload_completed</code>为非零的时候才为真，并且函数的尾声应该只为一单个指令。对于有寄存器窗口的机器，例程<code>leaf_function_p</code>可以用来确定是否需要对寄存器窗口压栈。
+     <p><a name="index-reload_005fcompleted-3459"></a><a name="index-leaf_005ffunction_005fp-3460"></a>对于这样的机器，该指令模式中指定的条件，应该只有当<code>reload_completed</code>为非零的时候才为真，并且函数的尾声应该只为一单个指令。对于有寄存器窗口的机器，例程<code>leaf_function_p</code>可以用来确定是否需要对寄存器窗口压栈。
 
      <p>具有条件性返回指令的机器，应该将指令模式定义成
 
@@ -454,15 +454,15 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 </pre>
      <p>其中<var>condition</var>通常为，在&lsquo;<samp><span class="samp">return</span></samp>&rsquo;指令模式中指定的相同的条件。
 
-     <p><a name="index-g_t_0040code_007buntyped_005freturn_007d-instruction-pattern-3462"></a><br><dt>&lsquo;<samp><span class="samp">untyped_return</span></samp>&rsquo;<dd>未定义类型的子程序返回指令。该指令模式应该被定义，来支持<code>__builtin_return</code>，在一些机器上，需要特殊的指令来返回一个任意类型的值。
+     <p><a name="index-g_t_0040code_007buntyped_005freturn_007d-instruction-pattern-3461"></a><br><dt>&lsquo;<samp><span class="samp">untyped_return</span></samp>&rsquo;<dd>未定义类型的子程序返回指令。该指令模式应该被定义，来支持<code>__builtin_return</code>，在一些机器上，需要特殊的指令来返回一个任意类型的值。
 
      <p>操作数0为一个内存位置，存放使用<code>__builtin_apply</code>调用函数的结果；操作数1为一个<code>parallel</code>表达式，每个元素都是一个<code>set</code>表达式，指示了从结果块中恢复函数的返回值。
 
-     <p><a name="index-g_t_0040code_007bnop_007d-instruction-pattern-3463"></a><br><dt>&lsquo;<samp><span class="samp">nop</span></samp>&rsquo;<dd>空操作指令。该指令模式名应该总是被定义，用来在汇编代码中输出一个no-op。<code>(const_int 0)</code>将作为一个RTL指令模式。
+     <p><a name="index-g_t_0040code_007bnop_007d-instruction-pattern-3462"></a><br><dt>&lsquo;<samp><span class="samp">nop</span></samp>&rsquo;<dd>空操作指令。该指令模式名应该总是被定义，用来在汇编代码中输出一个no-op。<code>(const_int 0)</code>将作为一个RTL指令模式。
 
-     <p><a name="index-g_t_0040code_007bindirect_005fjump_007d-instruction-pattern-3464"></a><br><dt>&lsquo;<samp><span class="samp">indirect_jump</span></samp>&rsquo;<dd>一个指令，跳转到操作数0表示的地址。该指令模式名在所有机器上都必须存在。
+     <p><a name="index-g_t_0040code_007bindirect_005fjump_007d-instruction-pattern-3463"></a><br><dt>&lsquo;<samp><span class="samp">indirect_jump</span></samp>&rsquo;<dd>一个指令，跳转到操作数0表示的地址。该指令模式名在所有机器上都必须存在。
 
-     <p><a name="index-g_t_0040code_007bcasesi_007d-instruction-pattern-3465"></a><br><dt>&lsquo;<samp><span class="samp">casesi</span></samp>&rsquo;<dd>通过派遣表进行跳转的指令，包括边界检查。该指令接受五个操作数：
+     <p><a name="index-g_t_0040code_007bcasesi_007d-instruction-pattern-3464"></a><br><dt>&lsquo;<samp><span class="samp">casesi</span></samp>&rsquo;<dd>通过派遣表进行跳转的指令，包括边界检查。该指令接受五个操作数：
 
           <ol type=1 start=1>
 <li>派遣的索引，具有机器模式<code>SImode</code>。
@@ -478,24 +478,24 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>表为<code>jump_insn</code>中的一个<code>addr_vec</code> 或 <code>addr_diff_vec</code>。表中的元素个数为一加上上界和下界的差。
 
-     <p><a name="index-g_t_0040code_007btablejump_007d-instruction-pattern-3466"></a><br><dt>&lsquo;<samp><span class="samp">tablejump</span></samp>&rsquo;<dd>跳转到一个可变地址的指令。这是一个低级别的能力，可以用来实现一个派遣表，当没有&lsquo;<samp><span class="samp">casesi</span></samp>&rsquo;指令模式的时候。
+     <p><a name="index-g_t_0040code_007btablejump_007d-instruction-pattern-3465"></a><br><dt>&lsquo;<samp><span class="samp">tablejump</span></samp>&rsquo;<dd>跳转到一个可变地址的指令。这是一个低级别的能力，可以用来实现一个派遣表，当没有&lsquo;<samp><span class="samp">casesi</span></samp>&rsquo;指令模式的时候。
 
      <p>该指令模式需要两个操作数：地址或偏移量，以及一个标号，其直接位于跳转表的前面。如果宏<code>CASE_VECTOR_PC_RELATIVE</code>求值为一个非零值，则第一个操作数为一个偏移量，其从表的地址开始计算；否则，其为一个跳转的绝对地址。这两种情况下，第一个操作数都为<code>Pmode</code>。
 
      <p>&lsquo;<samp><span class="samp">tablejump</span></samp>&rsquo; insn总是其使用的跳转表之前的最后一个insn。其汇编代码通常不需要用到第二个操作数，但是你应该在RTL指令模式中包含它，使得跳转优化不会将表作为不可到达代码删除。
 
-     <p><a name="index-g_t_0040code_007bdecrement_005fand_005fbranch_005funtil_005fzero_007d-instruction-pattern-3467"></a><br><dt>&lsquo;<samp><span class="samp">decrement_and_branch_until_zero</span></samp>&rsquo;<dd>条件分支指令，递减一个寄存器并且如果寄存器非零则跳转。操作数0为递减并测试的寄存器；操作数1为如果寄存器非零，则跳转的标号。See <a href="Looping-Patterns.html#Looping-Patterns">Looping Patterns</a>。
+     <p><a name="index-g_t_0040code_007bdecrement_005fand_005fbranch_005funtil_005fzero_007d-instruction-pattern-3466"></a><br><dt>&lsquo;<samp><span class="samp">decrement_and_branch_until_zero</span></samp>&rsquo;<dd>条件分支指令，递减一个寄存器并且如果寄存器非零则跳转。操作数0为递减并测试的寄存器；操作数1为如果寄存器非零，则跳转的标号。See <a href="Looping-Patterns.html#Looping-Patterns">Looping Patterns</a>。
 
      <p>该可选的指令模式只用于合并器，通常被循环优化器使用，当启动强度消减的时候。
 
-     <p><a name="index-g_t_0040code_007bdoloop_005fend_007d-instruction-pattern-3468"></a><br><dt>&lsquo;<samp><span class="samp">doloop_end</span></samp>&rsquo;<dd>条件分支指令，递减一个寄存器，并且如果寄存器非零则跳转。该指令接受五个操作数：操作数0是用来递减和测试的寄存器；操作数1是循环迭代的次数，为一个<code>const_int</code>，或者如果直到运行时才能确定，则为<code>const0_rtx</code>；操作数2为实际的或者估算的最大迭代数，为一个<code>const_int</code>；操作数3为被包含的循环数，为一个<code>const_int</code>（最内层循环的值为1）；操作数4为如果寄存器非零，要跳转的标号。See <a href="Looping-Patterns.html#Looping-Patterns">Looping Patterns</a>。
+     <p><a name="index-g_t_0040code_007bdoloop_005fend_007d-instruction-pattern-3467"></a><br><dt>&lsquo;<samp><span class="samp">doloop_end</span></samp>&rsquo;<dd>条件分支指令，递减一个寄存器，并且如果寄存器非零则跳转。该指令接受五个操作数：操作数0是用来递减和测试的寄存器；操作数1是循环迭代的次数，为一个<code>const_int</code>，或者如果直到运行时才能确定，则为<code>const0_rtx</code>；操作数2为实际的或者估算的最大迭代数，为一个<code>const_int</code>；操作数3为被包含的循环数，为一个<code>const_int</code>（最内层循环的值为1）；操作数4为如果寄存器非零，要跳转的标号。See <a href="Looping-Patterns.html#Looping-Patterns">Looping Patterns</a>。
 
      <p>该可选的指令模式应该为，具有低开销循环指令的机器定义，循环优化器会尝试修改合适的循环来利用它。如果不支持嵌套的低开销循环，则使用<code>define_expand</code> (see <a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)，并如果操作数3不为<code>const1_rtx</code>，则使得指令模式失败。类似的，如果实际的或者估算的最大迭代数目对于该指令来说太大，则使其失败。
 
-     <p><a name="index-g_t_0040code_007bdoloop_005fbegin_007d-instruction-pattern-3469"></a><br><dt>&lsquo;<samp><span class="samp">doloop_begin</span></samp>&rsquo;<dd>与<code>doloop_end</code>成套的指令，被用于需要执行一些初始化的机器，例如加载用于低开销循环指令中的特定寄存器。如果初始化insn不总是需要被生成，则使用<code>define_expand</code>
+     <p><a name="index-g_t_0040code_007bdoloop_005fbegin_007d-instruction-pattern-3468"></a><br><dt>&lsquo;<samp><span class="samp">doloop_begin</span></samp>&rsquo;<dd>与<code>doloop_end</code>成套的指令，被用于需要执行一些初始化的机器，例如加载用于低开销循环指令中的特定寄存器。如果初始化insn不总是需要被生成，则使用<code>define_expand</code>
 (see <a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)，并使其失败。
 
-     <p><a name="index-g_t_0040code_007bcanonicalize_005ffuncptr_005ffor_005fcompare_007d-instruction-pattern-3470"></a><br><dt>&lsquo;<samp><span class="samp">canonicalize_funcptr_for_compare</span></samp>&rsquo;<dd>正规化操作数1中的函数指针，并将结果存放在操作数0中。
+     <p><a name="index-g_t_0040code_007bcanonicalize_005ffuncptr_005ffor_005fcompare_007d-instruction-pattern-3469"></a><br><dt>&lsquo;<samp><span class="samp">canonicalize_funcptr_for_compare</span></samp>&rsquo;<dd>正规化操作数1中的函数指针，并将结果存放在操作数0中。
 
      <p>操作数0总是一个<code>reg</code>，并具有机器模式<code>Pmode</code>；操作数1可以为一个<code>reg</code>, <code>mem</code>, <code>symbol_ref</code>, <code>const_int</code>等等，也具有机器模式<code>Pmode</code>。
 
@@ -503,7 +503,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>只有当目标机器上，对于函数指针可以有不同的值，但是当在间接调用的时候，其还是调用相同的函数的时候，才定义该指令模式。
 
-     <p><a name="index-g_t_0040code_007bsave_005fstack_005fblock_007d-instruction-pattern-3471"></a><a name="index-g_t_0040code_007bsave_005fstack_005ffunction_007d-instruction-pattern-3472"></a><a name="index-g_t_0040code_007bsave_005fstack_005fnonlocal_007d-instruction-pattern-3473"></a><a name="index-g_t_0040code_007brestore_005fstack_005fblock_007d-instruction-pattern-3474"></a><a name="index-g_t_0040code_007brestore_005fstack_005ffunction_007d-instruction-pattern-3475"></a><a name="index-g_t_0040code_007brestore_005fstack_005fnonlocal_007d-instruction-pattern-3476"></a><br><dt>&lsquo;<samp><span class="samp">save_stack_block</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">save_stack_function</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">save_stack_nonlocal</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_block</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_function</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_nonlocal</span></samp>&rsquo;<dd>大多数机器用来保存和恢复栈指针的方式，是通过将其复制到一个机器模式为<code>Pmode</code>的对象。不要在这样的机器上定义这些指令模式。
+     <p><a name="index-g_t_0040code_007bsave_005fstack_005fblock_007d-instruction-pattern-3470"></a><a name="index-g_t_0040code_007bsave_005fstack_005ffunction_007d-instruction-pattern-3471"></a><a name="index-g_t_0040code_007bsave_005fstack_005fnonlocal_007d-instruction-pattern-3472"></a><a name="index-g_t_0040code_007brestore_005fstack_005fblock_007d-instruction-pattern-3473"></a><a name="index-g_t_0040code_007brestore_005fstack_005ffunction_007d-instruction-pattern-3474"></a><a name="index-g_t_0040code_007brestore_005fstack_005fnonlocal_007d-instruction-pattern-3475"></a><br><dt>&lsquo;<samp><span class="samp">save_stack_block</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">save_stack_function</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">save_stack_nonlocal</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_block</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_function</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_nonlocal</span></samp>&rsquo;<dd>大多数机器用来保存和恢复栈指针的方式，是通过将其复制到一个机器模式为<code>Pmode</code>的对象。不要在这样的机器上定义这些指令模式。
 
      <p>一些机器要求对栈指针的保存和恢复，进行特殊的处理。在那些机器上，根据非标准的情况来定义指令模式，使用<code>define_expand</code> (see <a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)来产生要求的insn。三种保存和恢复类型：
 
@@ -519,51 +519,51 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>当栈指针被保存，是用于非局部goto，则保存区域为一个<code>mem</code>，为一个相对于<code>virtual_stack_vars_rtx</code>的常量偏移，其它两种情况下，保存区域为一个<code>reg</code>。
 
-     <p><a name="index-g_t_0040code_007ballocate_005fstack_007d-instruction-pattern-3477"></a><br><dt>&lsquo;<samp><span class="samp">allocate_stack</span></samp>&rsquo;<dd>从栈指针中减去（或者增加，如果<code>STACK_GROWS_DOWNWARD</code>未定义）操作数1，来为动态分配的数据创建空间。将由此产生的指向该空间的指针存放在操作数0中。如果你是从主栈中分配空间，则可以通过生成一个insn，将<code>virtual_stack_dynamic_rtx</code>复制到操作数0中。如果你是从其它地方分配空间，则可以生成将该空间的位置复制到操作数0中的代码。对于后者情况，你必须确保该空间当主栈中对应的空间被释放的时候，其也被释放。
+     <p><a name="index-g_t_0040code_007ballocate_005fstack_007d-instruction-pattern-3476"></a><br><dt>&lsquo;<samp><span class="samp">allocate_stack</span></samp>&rsquo;<dd>从栈指针中减去（或者增加，如果<code>STACK_GROWS_DOWNWARD</code>未定义）操作数1，来为动态分配的数据创建空间。将由此产生的指向该空间的指针存放在操作数0中。如果你是从主栈中分配空间，则可以通过生成一个insn，将<code>virtual_stack_dynamic_rtx</code>复制到操作数0中。如果你是从其它地方分配空间，则可以生成将该空间的位置复制到操作数0中的代码。对于后者情况，你必须确保该空间当主栈中对应的空间被释放的时候，其也被释放。
 
      <p>如果所有需要做的事情只是减法操作，则不用定义该指令模式。一些机器还要求其它的操作，例如栈探测，或者维护后向链。定义该指令模式除了更新栈指针之外的，来生成那些操作。
 
-     <p><a name="index-g_t_0040code_007bcheck_005fstack_007d-instruction-pattern-3478"></a><br><dt>&lsquo;<samp><span class="samp">check_stack</span></samp>&rsquo;<dd>如果在你的系统上，不能通过使用加载或者存储指令(see <a href="Stack-Checking.html#Stack-Checking">Stack Checking</a>)探测栈，从而进行栈检查，则定义该指令模式来执行所需要的检查，并且如果栈已经溢出则产生一个错误信号。有单个操作数，为栈中从当前栈指针开始，最远的栈位置。通常，在需要该指令模式的机器上，你将从一个全局的或者线程特定的变量或者寄存器中获得栈的限制。
+     <p><a name="index-g_t_0040code_007bcheck_005fstack_007d-instruction-pattern-3477"></a><br><dt>&lsquo;<samp><span class="samp">check_stack</span></samp>&rsquo;<dd>如果在你的系统上，不能通过使用加载或者存储指令(see <a href="Stack-Checking.html#Stack-Checking">Stack Checking</a>)探测栈，从而进行栈检查，则定义该指令模式来执行所需要的检查，并且如果栈已经溢出则产生一个错误信号。有单个操作数，为栈中从当前栈指针开始，最远的栈位置。通常，在需要该指令模式的机器上，你将从一个全局的或者线程特定的变量或者寄存器中获得栈的限制。
 
-     <p><a name="index-g_t_0040code_007bnonlocal_005fgoto_007d-instruction-pattern-3479"></a><br><dt>&lsquo;<samp><span class="samp">nonlocal_goto</span></samp>&rsquo;<dd>生成产生一个非局部goto的代码，例如，从一个函数跳转到一个外部函数的标号。该指令模式有四个参数，每个参数表示一个在跳转中用到的值。第一个参数被加载到帧指针中，第二个为分支跳转的地址，第三个为栈被保存的地址，最后一个为标号的地址，放在静态链中。
+     <p><a name="index-g_t_0040code_007bnonlocal_005fgoto_007d-instruction-pattern-3478"></a><br><dt>&lsquo;<samp><span class="samp">nonlocal_goto</span></samp>&rsquo;<dd>生成产生一个非局部goto的代码，例如，从一个函数跳转到一个外部函数的标号。该指令模式有四个参数，每个参数表示一个在跳转中用到的值。第一个参数被加载到帧指针中，第二个为分支跳转的地址，第三个为栈被保存的地址，最后一个为标号的地址，放在静态链中。
 
      <p>在大多上机器上，你不需要定义该指令模式，因为GCC会产生正确的代码，用来加载帧指针和静态链，恢复栈（使用&lsquo;<samp><span class="samp">restore_stack_nonlocal</span></samp>&rsquo;指令模式，如果定义），并间接跳转。你只有当该代码在你的机器上不工作的情况下，才需定义该指令模式。
 
-     <p><a name="index-g_t_0040code_007bnonlocal_005fgoto_005freceiver_007d-instruction-pattern-3480"></a><br><dt>&lsquo;<samp><span class="samp">nonlocal_goto_receiver</span></samp>&rsquo;<dd>该指令模式，如果定义，包含了非局部goto的目标处所需要的代码。通常不需要定义该指令模式。通常需要该指令模式的原因是，如果一些值，例如全局表的指针，必须在帧指针被恢复的时候，其也被恢复。注意，非局部goto，只出现在一个转换单元中，所以被给定模块的所有函数共享的全局表指针，不需要被恢复。该指令模式没有参数。
+     <p><a name="index-g_t_0040code_007bnonlocal_005fgoto_005freceiver_007d-instruction-pattern-3479"></a><br><dt>&lsquo;<samp><span class="samp">nonlocal_goto_receiver</span></samp>&rsquo;<dd>该指令模式，如果定义，包含了非局部goto的目标处所需要的代码。通常不需要定义该指令模式。通常需要该指令模式的原因是，如果一些值，例如全局表的指针，必须在帧指针被恢复的时候，其也被恢复。注意，非局部goto，只出现在一个转换单元中，所以被给定模块的所有函数共享的全局表指针，不需要被恢复。该指令模式没有参数。
 
-     <p><a name="index-g_t_0040code_007bexception_005freceiver_007d-instruction-pattern-3481"></a><br><dt>&lsquo;<samp><span class="samp">exception_receiver</span></samp>&rsquo;<dd>该指令模式，如果被定义，包含了在一个异常处理的地方所需要的代码，其在非局部goto的地方不需要。通常你不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须在控制流分支跳转到异常处理之后，被恢复。该指令模式没有参数。
+     <p><a name="index-g_t_0040code_007bexception_005freceiver_007d-instruction-pattern-3480"></a><br><dt>&lsquo;<samp><span class="samp">exception_receiver</span></samp>&rsquo;<dd>该指令模式，如果被定义，包含了在一个异常处理的地方所需要的代码，其在非局部goto的地方不需要。通常你不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须在控制流分支跳转到异常处理之后，被恢复。该指令模式没有参数。
 
-     <p><a name="index-g_t_0040code_007bbuiltin_005fsetjmp_005fsetup_007d-instruction-pattern-3482"></a><br><dt>&lsquo;<samp><span class="samp">builtin_setjmp_setup</span></samp>&rsquo;<dd>该指令模式，如果被定义，则包含了需要初始化<code>jmp_buf</code>的代码。你通常不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须被恢复。尽管如此，还是推荐指针值如果可能（例如，给定一个标号的地址），则应被重新计算。有一单个操作数，
+     <p><a name="index-g_t_0040code_007bbuiltin_005fsetjmp_005fsetup_007d-instruction-pattern-3481"></a><br><dt>&lsquo;<samp><span class="samp">builtin_setjmp_setup</span></samp>&rsquo;<dd>该指令模式，如果被定义，则包含了需要初始化<code>jmp_buf</code>的代码。你通常不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须被恢复。尽管如此，还是推荐指针值如果可能（例如，给定一个标号的地址），则应被重新计算。有一单个操作数，
 
-     <p><a name="index-g_t_0040code_007bbuiltin_005fsetjmp_005freceiver_007d-instruction-pattern-3483"></a><br><dt>&lsquo;<samp><span class="samp">builtin_setjmp_receiver</span></samp>&rsquo;<dd>该指令模式，如果被定义，包含了在内建setjmp的地方，并且在非局部goto的地方不需要的代码。你通常不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须被恢复。其接受一个参数，为builtin_longjmp将控制转出的标号；该指令模式可以被生成为对于标号的一个小的偏移。
+     <p><a name="index-g_t_0040code_007bbuiltin_005fsetjmp_005freceiver_007d-instruction-pattern-3482"></a><br><dt>&lsquo;<samp><span class="samp">builtin_setjmp_receiver</span></samp>&rsquo;<dd>该指令模式，如果被定义，包含了在内建setjmp的地方，并且在非局部goto的地方不需要的代码。你通常不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须被恢复。其接受一个参数，为builtin_longjmp将控制转出的标号；该指令模式可以被生成为对于标号的一个小的偏移。
 
-     <p><a name="index-g_t_0040code_007bbuiltin_005flongjmp_007d-instruction-pattern-3484"></a><br><dt>&lsquo;<samp><span class="samp">builtin_longjmp</span></samp>&rsquo;<dd>该指令模式，如果被定义，则执行整个longjmp动作。你通常不需要定义该指令模式，除非你还定义了<code>builtin_setjmp_setup</code>。单个操作数为指向<code>jmp_buf</code>的指针。
+     <p><a name="index-g_t_0040code_007bbuiltin_005flongjmp_007d-instruction-pattern-3483"></a><br><dt>&lsquo;<samp><span class="samp">builtin_longjmp</span></samp>&rsquo;<dd>该指令模式，如果被定义，则执行整个longjmp动作。你通常不需要定义该指令模式，除非你还定义了<code>builtin_setjmp_setup</code>。单个操作数为指向<code>jmp_buf</code>的指针。
 
-     <p><a name="index-g_t_0040code_007beh_005freturn_007d-instruction-pattern-3485"></a><br><dt>&lsquo;<samp><span class="samp">eh_return</span></samp>&rsquo;<dd>该指令模式，如果被定义，则影响<code>__builtin_eh_return</code>的方式，并且调用帧异常处理库函数会被建立。其用于处理异常返回路径所需要的非平凡的动作。
+     <p><a name="index-g_t_0040code_007beh_005freturn_007d-instruction-pattern-3484"></a><br><dt>&lsquo;<samp><span class="samp">eh_return</span></samp>&rsquo;<dd>该指令模式，如果被定义，则影响<code>__builtin_eh_return</code>的方式，并且调用帧异常处理库函数会被建立。其用于处理异常返回路径所需要的非平凡的动作。
 
      <p>函数应该返回的异常处理的地址，被作为操作数传给该指令模式。其通常需要被指令模式复制到某个特定的寄存器或者内存位置。如果该指令模式需要确定目标调用帧的位置，则可以使用<code>EH_RETURN_STACKADJ_RTX</code>。
 
      <p>如果该指令模式没有被定义，缺省的动作为简单的将返回地址复制给<code>EH_RETURN_HANDLER_RTX</code>。或者宏，或者该指令模式，应该被定义，如果使用了调用帧异常处理。
 
-     <p><a name="index-g_t_0040code_007bprologue_007d-instruction-pattern-3486"></a><a name="prologue-instruction-pattern"></a><br><dt>&lsquo;<samp><span class="samp">prologue</span></samp>&rsquo;<dd>该指令模式，如果被定义，用来产生函数的入口RTL。函数入口负责设置栈帧，初始化帧指针寄存器，保存被调用者需要保存的寄存器，等等。
+     <p><a name="index-g_t_0040code_007bprologue_007d-instruction-pattern-3485"></a><a name="prologue-instruction-pattern"></a><br><dt>&lsquo;<samp><span class="samp">prologue</span></samp>&rsquo;<dd>该指令模式，如果被定义，用来产生函数的入口RTL。函数入口负责设置栈帧，初始化帧指针寄存器，保存被调用者需要保存的寄存器，等等。
 
      <p>使用一个序言指令模式，通常的方式为定义<code>TARGET_ASM_FUNCTION_PROLOGUE</code>来产生序言的汇编代码。
 
      <p><code>prologue</code>指令模式对于执行指令调度的目标机尤其有用。
 
-     <p><a name="index-g_t_0040code_007bepilogue_007d-instruction-pattern-3487"></a><a name="epilogue-instruction-pattern"></a><br><dt>&lsquo;<samp><span class="samp">epilogue</span></samp>&rsquo;<dd>该指令模式为函数的出口生成RTL。函数出口负责撤销栈帧的分配，恢复被调用者所保存的寄存器，并产生返回指令。
+     <p><a name="index-g_t_0040code_007bepilogue_007d-instruction-pattern-3486"></a><a name="epilogue-instruction-pattern"></a><br><dt>&lsquo;<samp><span class="samp">epilogue</span></samp>&rsquo;<dd>该指令模式为函数的出口生成RTL。函数出口负责撤销栈帧的分配，恢复被调用者所保存的寄存器，并产生返回指令。
 
      <p>使用尾声指令模式，通常的方式为定义<code>TARGET_ASM_FUNCTION_EPILOGUE</code>，来产生尾声的汇编代码。
 
      <p><code>prologue</code>指令模式对于执行指令调度的，或者它们的返回指令具有延迟槽的目标机，尤其有用。
 
-     <p><a name="index-g_t_0040code_007bsibcall_005fepilogue_007d-instruction-pattern-3488"></a><br><dt>&lsquo;<samp><span class="samp">sibcall_epilogue</span></samp>&rsquo;<dd>该指令模式，如果被定义，产生一个函数的出口RTL，并且最终不分支跳转会到调用函数。该指令模式将在任何兄弟调用（即尾调用）地点之前被产生。
+     <p><a name="index-g_t_0040code_007bsibcall_005fepilogue_007d-instruction-pattern-3487"></a><br><dt>&lsquo;<samp><span class="samp">sibcall_epilogue</span></samp>&rsquo;<dd>该指令模式，如果被定义，产生一个函数的出口RTL，并且最终不分支跳转会到调用函数。该指令模式将在任何兄弟调用（即尾调用）地点之前被产生。
 
      <p><code>sibcall_epilogue</code>指令模式一定不能破坏任何用于传递的参数，或者用于传给当前函数的参数的栈槽。
 
-     <p><a name="index-g_t_0040code_007btrap_007d-instruction-pattern-3489"></a><br><dt>&lsquo;<samp><span class="samp">trap</span></samp>&rsquo;<dd>该指令模式，如果被定义，则会发射一个错误信号。在其它地方，其被Java前端使用，来发射“无效的数组索引”异常信号。
+     <p><a name="index-g_t_0040code_007btrap_007d-instruction-pattern-3488"></a><br><dt>&lsquo;<samp><span class="samp">trap</span></samp>&rsquo;<dd>该指令模式，如果被定义，则会发射一个错误信号。在其它地方，其被Java前端使用，来发射“无效的数组索引”异常信号。
 
-     <p><a name="index-g_t_0040code_007bconditional_005ftrap_007d-instruction-pattern-3490"></a><br><dt>&lsquo;<samp><span class="samp">conditional_trap</span></samp>&rsquo;<dd>条件陷阱指令。操作数0为执行比较的RTL。操作数1为陷阱代码，为一个整数。
+     <p><a name="index-g_t_0040code_007bconditional_005ftrap_007d-instruction-pattern-3489"></a><br><dt>&lsquo;<samp><span class="samp">conditional_trap</span></samp>&rsquo;<dd>条件陷阱指令。操作数0为执行比较的RTL。操作数1为陷阱代码，为一个整数。
 
      <p>典型的<code>conditional_trap</code>指令模式型如：
 
@@ -574,29 +574,29 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
             ""
             "...")
 </pre>
-     <p><a name="index-g_t_0040code_007bprefetch_007d-instruction-pattern-3491"></a><br><dt>&lsquo;<samp><span class="samp">prefetch</span></samp>&rsquo;<dd>
+     <p><a name="index-g_t_0040code_007bprefetch_007d-instruction-pattern-3490"></a><br><dt>&lsquo;<samp><span class="samp">prefetch</span></samp>&rsquo;<dd>
 该指令模式，如果被定义，则产生无故障的数据预取指令代码。操作数0为预取的内存地址。操作数1为常量1，如果预取打算去写一个内存地址，否则为常量0。操作数2为数据的时间局部性的等级，值在0和3之间。0意味着数据没有时间局部性，所以在访问之后不需要留在缓存中；3意味着数据具有高等级的时间局部性，应该尽可能的留在所有级别的缓存中；1和2分别意味着，低等级和中等级的时间局部性。
 
      <p>不支持写预取或者局部性暗示的目标机，可以忽略操作数1和2的值。
 
-     <p><a name="index-g_t_0040code_007bblockage_007d-instruction-pattern-3492"></a><br><dt>&lsquo;<samp><span class="samp">blockage</span></samp>&rsquo;<dd>
+     <p><a name="index-g_t_0040code_007bblockage_007d-instruction-pattern-3491"></a><br><dt>&lsquo;<samp><span class="samp">blockage</span></samp>&rsquo;<dd>
 该指令模式定义了一个伪insn，用来阻止指令调度器将指令跨越所定义的insn块边界进行移动。通常为一个UNSPEC_VOLATILE指令模式。
 
-     <p><a name="index-g_t_0040code_007bmemory_005fbarrier_007d-instruction-pattern-3493"></a><br><dt>&lsquo;<samp><span class="samp">memory_barrier</span></samp>&rsquo;<dd>
+     <p><a name="index-g_t_0040code_007bmemory_005fbarrier_007d-instruction-pattern-3492"></a><br><dt>&lsquo;<samp><span class="samp">memory_barrier</span></samp>&rsquo;<dd>
 如果目标机内存模型不完全同步，则该指令模式应该被定义为一条指令，在期望进行加载和存储的指令之前。该指令模式没有操作数。
 
-     <p><a name="index-g_t_0040code_007bsync_005fcompare_005fand_005fswap_0040var_007bmode_007d_007d-instruction-pattern-3494"></a><br><dt>&lsquo;<samp><span class="samp">sync_compare_and_swap</span><var>mode</var></samp>&rsquo;<dd>
+     <p><a name="index-g_t_0040code_007bsync_005fcompare_005fand_005fswap_0040var_007bmode_007d_007d-instruction-pattern-3493"></a><br><dt>&lsquo;<samp><span class="samp">sync_compare_and_swap</span><var>mode</var></samp>&rsquo;<dd>
 该指令模式，如果被定义，产生一个比较并交换的原子操作代码。操作数1为执行原子操作的内存。操作数2为，与当前内存位置的内容进行比较的“旧”值。操作数3为，如果比较成功存放在内存中的“新”值。如果比较成功，其当然为对操作数2的一个复制。
 
      <p>该指令模式必须同时显示出操作数0和1被修改。
 
      <p>该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
 
-     <p><a name="index-g_t_0040code_007bsync_005fcompare_005fand_005fswap_005fcc_0040var_007bmode_007d_007d-instruction-pattern-3495"></a><br><dt>&lsquo;<samp><span class="samp">sync_compare_and_swap_cc</span><var>mode</var></samp>&rsquo;<dd>该指令模式与<code>sync_compare_and_swap</code><var>mode</var>类似，除了其比较和交换的比较部分就好像是通过<code>cmp</code><var>m</var>来发出的。该比较只与<code>EQ</code>和<code>NE</code>分支跳转，以及<code>setcc</code>操作一起使用。
+     <p><a name="index-g_t_0040code_007bsync_005fcompare_005fand_005fswap_005fcc_0040var_007bmode_007d_007d-instruction-pattern-3494"></a><br><dt>&lsquo;<samp><span class="samp">sync_compare_and_swap_cc</span><var>mode</var></samp>&rsquo;<dd>该指令模式与<code>sync_compare_and_swap</code><var>mode</var>类似，除了其比较和交换的比较部分就好像是通过<code>cmp</code><var>m</var>来发出的。该比较只与<code>EQ</code>和<code>NE</code>分支跳转，以及<code>setcc</code>操作一起使用。
 
      <p>一些目标机确实是通过状态标记来暴露比较并交换操作的成功或失败。理想的，我们不需要一个单独的命名指令模式来利用该特性，但是合并过程无法处理具有多个set的指令模式，而这正是定义<code>sync_compare_and_swap</code><var>mode</var>所需要的。
 
-     <p><a name="index-g_t_0040code_007bsync_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3496"></a><a name="index-g_t_0040code_007bsync_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3497"></a><a name="index-g_t_0040code_007bsync_005fior_0040var_007bmode_007d_007d-instruction-pattern-3498"></a><a name="index-g_t_0040code_007bsync_005fand_0040var_007bmode_007d_007d-instruction-pattern-3499"></a><a name="index-g_t_0040code_007bsync_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3500"></a><a name="index-g_t_0040code_007bsync_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3501"></a><br><dt>&lsquo;<samp><span class="samp">sync_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_nand</span><var>mode</var></samp>&rsquo;<dd>该指令模式产生一个在内存上进行原子操作的代码。操作数0为进行原子操作的内存。操作数1为二元操作符的第二个操作数。
+     <p><a name="index-g_t_0040code_007bsync_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3495"></a><a name="index-g_t_0040code_007bsync_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3496"></a><a name="index-g_t_0040code_007bsync_005fior_0040var_007bmode_007d_007d-instruction-pattern-3497"></a><a name="index-g_t_0040code_007bsync_005fand_0040var_007bmode_007d_007d-instruction-pattern-3498"></a><a name="index-g_t_0040code_007bsync_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3499"></a><a name="index-g_t_0040code_007bsync_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3500"></a><br><dt>&lsquo;<samp><span class="samp">sync_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_nand</span><var>mode</var></samp>&rsquo;<dd>该指令模式产生一个在内存上进行原子操作的代码。操作数0为进行原子操作的内存。操作数1为二元操作符的第二个操作数。
 
      <p>&ldquo;nand&rdquo;运算为<code>~op0 &amp; op1</code>。
 
@@ -604,15 +604,15 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>如果这些指令模式没有被定义，则操作将通过一个比较并交换操作，如果定义，来构建。
 
-     <p><a name="index-g_t_0040code_007bsync_005fold_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3502"></a><a name="index-g_t_0040code_007bsync_005fold_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3503"></a><a name="index-g_t_0040code_007bsync_005fold_005fior_0040var_007bmode_007d_007d-instruction-pattern-3504"></a><a name="index-g_t_0040code_007bsync_005fold_005fand_0040var_007bmode_007d_007d-instruction-pattern-3505"></a><a name="index-g_t_0040code_007bsync_005fold_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3506"></a><a name="index-g_t_0040code_007bsync_005fold_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3507"></a><br><dt>&lsquo;<samp><span class="samp">sync_old_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_old_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_old_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_nand</span><var>mode</var></samp>&rsquo;<dd>这些指令模式产生在内存上的原子操作代码，并且返回操作之前内存中的值。操作数0为结果值，操作数1为执行原子操作的内存，操作数2为二元操作的第二个操作数。
+     <p><a name="index-g_t_0040code_007bsync_005fold_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3501"></a><a name="index-g_t_0040code_007bsync_005fold_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3502"></a><a name="index-g_t_0040code_007bsync_005fold_005fior_0040var_007bmode_007d_007d-instruction-pattern-3503"></a><a name="index-g_t_0040code_007bsync_005fold_005fand_0040var_007bmode_007d_007d-instruction-pattern-3504"></a><a name="index-g_t_0040code_007bsync_005fold_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3505"></a><a name="index-g_t_0040code_007bsync_005fold_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3506"></a><br><dt>&lsquo;<samp><span class="samp">sync_old_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_old_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_old_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_nand</span><var>mode</var></samp>&rsquo;<dd>这些指令模式产生在内存上的原子操作代码，并且返回操作之前内存中的值。操作数0为结果值，操作数1为执行原子操作的内存，操作数2为二元操作的第二个操作数。
 
      <p>该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
 
      <p>如果这些指令模式没有被定义，则操作将通过一个比较并交换操作，如果定义，来构建。
 
-     <p><a name="index-g_t_0040code_007bsync_005fnew_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3508"></a><a name="index-g_t_0040code_007bsync_005fnew_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3509"></a><a name="index-g_t_0040code_007bsync_005fnew_005fior_0040var_007bmode_007d_007d-instruction-pattern-3510"></a><a name="index-g_t_0040code_007bsync_005fnew_005fand_0040var_007bmode_007d_007d-instruction-pattern-3511"></a><a name="index-g_t_0040code_007bsync_005fnew_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3512"></a><a name="index-g_t_0040code_007bsync_005fnew_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3513"></a><br><dt>&lsquo;<samp><span class="samp">sync_new_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_new_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_new_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_nand</span><var>mode</var></samp>&rsquo;<dd>这些指令模式类似于<code>sync_old_</code><var>op</var>所对应的指令模式，除了它们返回操作之后内存位置中存在的值，而不是操作之前。
+     <p><a name="index-g_t_0040code_007bsync_005fnew_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3507"></a><a name="index-g_t_0040code_007bsync_005fnew_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3508"></a><a name="index-g_t_0040code_007bsync_005fnew_005fior_0040var_007bmode_007d_007d-instruction-pattern-3509"></a><a name="index-g_t_0040code_007bsync_005fnew_005fand_0040var_007bmode_007d_007d-instruction-pattern-3510"></a><a name="index-g_t_0040code_007bsync_005fnew_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3511"></a><a name="index-g_t_0040code_007bsync_005fnew_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3512"></a><br><dt>&lsquo;<samp><span class="samp">sync_new_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_new_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_new_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_nand</span><var>mode</var></samp>&rsquo;<dd>这些指令模式类似于<code>sync_old_</code><var>op</var>所对应的指令模式，除了它们返回操作之后内存位置中存在的值，而不是操作之前。
 
-     <p><a name="index-g_t_0040code_007bsync_005flock_005ftest_005fand_005fset_0040var_007bmode_007d_007d-instruction-pattern-3514"></a><br><dt>&lsquo;<samp><span class="samp">sync_lock_test_and_set</span><var>mode</var></samp>&rsquo;<dd>该指令模式根据目标机的能力，可以接受两种形式。两种情况下，操作数0为结果操作数，操作数1为执行原子操作的内存，操作数2为在锁中设置的值。
+     <p><a name="index-g_t_0040code_007bsync_005flock_005ftest_005fand_005fset_0040var_007bmode_007d_007d-instruction-pattern-3513"></a><br><dt>&lsquo;<samp><span class="samp">sync_lock_test_and_set</span><var>mode</var></samp>&rsquo;<dd>该指令模式根据目标机的能力，可以接受两种形式。两种情况下，操作数0为结果操作数，操作数1为执行原子操作的内存，操作数2为在锁中设置的值。
 
      <p>理想的情况下，该操作为一个原子交换操作，内存操作数中之前的值被复制到结果操作数中，值操作数被保存在内存操作数中。
 
@@ -622,7 +622,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>如果这些指令模式没有被定义，则操作将通过一个比较并交换操作，如果定义，来构建。
 
-     <p><a name="index-g_t_0040code_007bsync_005flock_005frelease_0040var_007bmode_007d_007d-instruction-pattern-3515"></a><br><dt>&lsquo;<samp><span class="samp">sync_lock_release</span><var>mode</var></samp>&rsquo;<dd>该指令模式，如果被定义，释放由<code>sync_lock_test_and_set</code><var>mode</var>设置的锁。操作数0为包含锁的内存；操作数1为存放在锁中的值。
+     <p><a name="index-g_t_0040code_007bsync_005flock_005frelease_0040var_007bmode_007d_007d-instruction-pattern-3514"></a><br><dt>&lsquo;<samp><span class="samp">sync_lock_release</span><var>mode</var></samp>&rsquo;<dd>该指令模式，如果被定义，释放由<code>sync_lock_test_and_set</code><var>mode</var>设置的锁。操作数0为包含锁的内存；操作数1为存放在锁中的值。
 
      <p>如果目标机没有实现<code>sync_lock_test_and_set</code><var>mode</var>的完整语义，则任何不是常量0的值操作数将使用<code>FAIL</code>来拒绝，内存操作数的真实内容由实现来定义。
 
@@ -630,15 +630,15 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_009c_00ba_00e5_0099_00a8_00e6_008
 
      <p>如果这些指令模式没有被定义，则会产生一个<code>memory_barrier</code>指令模式，紧跟一个将值存储到内存操作数的操作。
 
-     <p><a name="index-g_t_0040code_007bstack_005fprotect_005fset_007d-instruction-pattern-3516"></a><br><dt>&lsquo;<samp><span class="samp">stack_protect_set</span></samp>&rsquo;<dd>该指令模式，如果被定义，将内存操作数1中的<code>Pmode</code>值移送到内存操作数0中，并在之后不将该值留在寄存器中。这避免在某处泄露该值，从而使得攻击者用来重写栈保护槽。
+     <p><a name="index-g_t_0040code_007bstack_005fprotect_005fset_007d-instruction-pattern-3515"></a><br><dt>&lsquo;<samp><span class="samp">stack_protect_set</span></samp>&rsquo;<dd>该指令模式，如果被定义，将内存操作数1中的<code>Pmode</code>值移送到内存操作数0中，并在之后不将该值留在寄存器中。这避免在某处泄露该值，从而使得攻击者用来重写栈保护槽。
 
      <p>如果该指令模式没有被定义，则生成一个普通的move指令模式。
 
-     <p><a name="index-g_t_0040code_007bstack_005fprotect_005ftest_007d-instruction-pattern-3517"></a><br><dt>&lsquo;<samp><span class="samp">stack_protect_test</span></samp>&rsquo;<dd>该指令模式，如果被定义，比较内存操作数1和内存操作数0中的<code>Pmode</code>值，在之后不将该值留在寄存器中，并且如果值不等，则分支跳转到操作数2。
+     <p><a name="index-g_t_0040code_007bstack_005fprotect_005ftest_007d-instruction-pattern-3516"></a><br><dt>&lsquo;<samp><span class="samp">stack_protect_test</span></samp>&rsquo;<dd>该指令模式，如果被定义，比较内存操作数1和内存操作数0中的<code>Pmode</code>值，在之后不将该值留在寄存器中，并且如果值不等，则分支跳转到操作数2。
 
      <p>如果该指令模式没有被定义，则使用一个普通的比较和条件分支指令模式。
 
-     <p><a name="index-g_t_0040code_007bclear_005fcache_007d-instruction-pattern-3518"></a><br><dt>&lsquo;<samp><span class="samp">clear_cache</span></samp>&rsquo;<dd>该指令模式，如果被定义，刷新一个内存区域的缓存。该区域的界限由操作数0（包含）和操作数1（不包含）中的Pmode指针界定。
+     <p><a name="index-g_t_0040code_007bclear_005fcache_007d-instruction-pattern-3517"></a><br><dt>&lsquo;<samp><span class="samp">clear_cache</span></samp>&rsquo;<dd>该指令模式，如果被定义，刷新一个内存区域的缓存。该区域的界限由操作数0（包含）和操作数1（不包含）中的Pmode指针界定。
 
      <p>如果该指令模式没有被定义，则使用对库函数<code>__clear_cache</code>的一个调用。
 

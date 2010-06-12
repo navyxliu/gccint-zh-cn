@@ -51,7 +51,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00a
 
 <h3 class="section">17.12 嵌套函数的蹦床</h3>
 
-<p><a name="index-trampolines-for-nested-functions-4132"></a><a name="index-nested-functions_002c-trampolines-for-4133"></a>
+<p><a name="index-trampolines-for-nested-functions-4131"></a><a name="index-nested-functions_002c-trampolines-for-4132"></a>
 一个蹦床<dfn>trampoline</dfn>为在运行时，当使用嵌套函数的地址时，创建的一小块代码。其通常驻于栈上，在包含函数的栈帧中。这些宏告诉GCC如何生成代码来分配和初始化一个蹦床。
 
  <p>在蹦床中的指令必须做两件事情：将一个常量地址加载到静态链寄存器中，并跳转到嵌套函数的实际地址。在CISC机器，像m68k上，这要求两条指令，一个move立即数和一个jump。然后两个地址存放在蹦床中作为字长的立即操作数。在RISC机器上，其通常需要分成两部分加载每个地址到寄存器中。然后地址的各部分形成独立的立即操作数。
@@ -59,7 +59,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00a
  <p>用来初始化蹦床的代码必须将变量的组成部分——静态链值和函数地址——存储到指令的立即操作数中。在CISC机器上，这是简单的复制每个地址到一个内存引用，在蹦床起始处的合适偏移量上。在RISC机器上，其可能需要拿出部分地址并单独存储它们。
 
 <div class="defun">
-&mdash; Macro: <b>TRAMPOLINE_TEMPLATE</b> (<var>file</var>)<var><a name="index-TRAMPOLINE_005fTEMPLATE-4134"></a></var><br>
+&mdash; Macro: <b>TRAMPOLINE_TEMPLATE</b> (<var>file</var>)<var><a name="index-TRAMPOLINE_005fTEMPLATE-4133"></a></var><br>
 <blockquote><p>一条C语句，来在流<var>file</var>上，为一个包含蹦床常量部分的数据块输出汇编代码。
 该代码应该不包括标号——标号被自动考虑。
 
@@ -68,38 +68,38 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00a
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>TRAMPOLINE_SECTION</b><var><a name="index-TRAMPOLINE_005fSECTION-4135"></a></var><br>
+&mdash; Macro: <b>TRAMPOLINE_SECTION</b><var><a name="index-TRAMPOLINE_005fSECTION-4134"></a></var><br>
 <blockquote><p>返回蹦床模版被放入的section（参见<a href="_00e6_00ae_00b5.html#g_t_00e6_00ae_00b5">段</a>）。
 缺省值为<code>readonly_data_section</code>。
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>TRAMPOLINE_SIZE</b><var><a name="index-TRAMPOLINE_005fSIZE-4136"></a></var><br>
+&mdash; Macro: <b>TRAMPOLINE_SIZE</b><var><a name="index-TRAMPOLINE_005fSIZE-4135"></a></var><br>
 <blockquote><p>一个C表达式，蹦床的字节单位的大小，为整数。
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>TRAMPOLINE_ALIGNMENT</b><var><a name="index-TRAMPOLINE_005fALIGNMENT-4137"></a></var><br>
+&mdash; Macro: <b>TRAMPOLINE_ALIGNMENT</b><var><a name="index-TRAMPOLINE_005fALIGNMENT-4136"></a></var><br>
 <blockquote><p>蹦床需要的对齐，以位为单位。
 
       <p>如果没有定义该宏，则使用<code>BIGGEST_ALIGNMENT</code>的值来对齐蹦床。
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>INITIALIZE_TRAMPOLINE</b> (<var>addr, fnaddr, static_chain</var>)<var><a name="index-INITIALIZE_005fTRAMPOLINE-4138"></a></var><br>
+&mdash; Macro: <b>INITIALIZE_TRAMPOLINE</b> (<var>addr, fnaddr, static_chain</var>)<var><a name="index-INITIALIZE_005fTRAMPOLINE-4137"></a></var><br>
 <blockquote><p>一条C语句用来初始化蹦床的可变部分。<var>addr</var>为一个RTX，蹦床的地址；
 <var>fnaddr</var>为一个RTX，嵌套函数的地址；<var>static_chain</var>为一个RTX，
 当其被调用时，应该传递给函数的静态链值。
 </p></blockquote></div>
 
 <div class="defun">
-&mdash; Macro: <b>TRAMPOLINE_ADJUST_ADDRESS</b> (<var>addr</var>)<var><a name="index-TRAMPOLINE_005fADJUST_005fADDRESS-4139"></a></var><br>
+&mdash; Macro: <b>TRAMPOLINE_ADJUST_ADDRESS</b> (<var>addr</var>)<var><a name="index-TRAMPOLINE_005fADJUST_005fADDRESS-4138"></a></var><br>
 <blockquote><p>一条C语句，应该执行任何机器特定的调整，对蹦床的地址。
 其参数包含传给<code>INITIALIZE_TRAMPOLINE</code>的地址。
 对于用于函数调用的地址应该不同于模版被存储的地址的情况，
 应该赋给<var>addr</var>不同的地址。如果没有定义该宏，则<var>addr</var>将被用于函数调用。
 
-      <p><a name="index-g_t_0040code_007bTARGET_005fASM_005fFUNCTION_005fEPILOGUE_007d-and-trampolines-4140"></a><a name="index-g_t_0040code_007bTARGET_005fASM_005fFUNCTION_005fPROLOGUE_007d-and-trampolines-4141"></a>如果没有定义该宏，缺省的蹦床作为一个栈槽被分配。这对于大多数机器是正确的。
+      <p><a name="index-g_t_0040code_007bTARGET_005fASM_005fFUNCTION_005fEPILOGUE_007d-and-trampolines-4139"></a><a name="index-g_t_0040code_007bTARGET_005fASM_005fFUNCTION_005fPROLOGUE_007d-and-trampolines-4140"></a>如果没有定义该宏，缺省的蹦床作为一个栈槽被分配。这对于大多数机器是正确的。
 例外的是一些机器，其不可能在栈区域中执行指令。在这样的机器上，
 你可能必须实行一个独立的栈，使用该宏，
 并结合<code>TARGET_ASM_FUNCTION_PROLOGUE</code>和<code>TARGET_ASM_FUNCTION_EPILOGUE</code>。
@@ -120,7 +120,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00a
  <p>要在初始化蹦床时清除指令缓存，定义下列宏。
 
 <div class="defun">
-&mdash; Macro: <b>CLEAR_INSN_CACHE</b> (<var>beg, end</var>)<var><a name="index-CLEAR_005fINSN_005fCACHE-4142"></a></var><br>
+&mdash; Macro: <b>CLEAR_INSN_CACHE</b> (<var>beg, end</var>)<var><a name="index-CLEAR_005fINSN_005fCACHE-4141"></a></var><br>
 <blockquote><p>如果被定义，将扩展为一个C表达式，在指定的间隔处来清除指令缓存。
 该宏的定义通常为一系列<code>asm</code>语句。<var>beg</var>和<var>end</var>都为指针表达式。
 </p></blockquote></div>
@@ -128,7 +128,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00a
  <p>操作系统可能还需要栈被设为可执行的，在调用蹦床之前。要实现这种需求，定义下列宏。
 
 <div class="defun">
-&mdash; Macro: <b>ENABLE_EXECUTE_STACK</b><var><a name="index-ENABLE_005fEXECUTE_005fSTACK-4143"></a></var><br>
+&mdash; Macro: <b>ENABLE_EXECUTE_STACK</b><var><a name="index-ENABLE_005fEXECUTE_005fSTACK-4142"></a></var><br>
 <blockquote><p>定义该宏，如果在执行位于栈上的代码之前必须执行特定的操作。
 宏应该扩展为一系列的C文件作用域的结构（例如函数）并提供一个唯一的如何口点名
 为<code>__enable_execute_stack</code>。target负责生成对入口点的调用，
@@ -140,7 +140,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e7_009b_00ae_00e6_00a0_0087_00e5_00a
 或者蹦床代码的起始处总是在缓存行的某点被对齐。查看<samp><span class="file">m68k.h</span></samp>作为参考。
 
 <div class="defun">
-&mdash; Macro: <b>TRANSFER_FROM_TRAMPOLINE</b><var><a name="index-TRANSFER_005fFROM_005fTRAMPOLINE-4144"></a></var><br>
+&mdash; Macro: <b>TRANSFER_FROM_TRAMPOLINE</b><var><a name="index-TRANSFER_005fFROM_005fTRAMPOLINE-4143"></a></var><br>
 <blockquote><p>定义该宏，如果蹦床需要一个特定的子程序来做它们的工作。
 该宏应该扩展为一系列的<code>asm</code>语句，其将由GCC来编译。
 它们放在名为<code>__transfer_from_trampoline</code>的库函数中。

@@ -52,24 +52,24 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_008e_00a7_00e5_0088_00b6_00e6_00b
 
 <h3 class="section">15.3 Profile信息</h3>
 
-<p><a name="index-profile-representation-3122"></a>在许多情况下，编译器必须对是否由一块代码的速度来换取另一块的速度，
+<p><a name="index-profile-representation-3121"></a>在许多情况下，编译器必须对是否由一块代码的速度来换取另一块的速度，
 或者由代码的大小来换取速度，来作出选择。这种情况下，
 知道给定块将会被执行几次这样的信息会很有帮助。
 这就是在流程图中维护profile的目的。
 GCC能够处理通过<dfn>profile feedback</dfn>获得的profile信息，
 但也能够根据统计和启发来估计分支跳转的可能性。
 
- <p><a name="index-profile-feedback-3123"></a>基于反馈的profile是通过编译测量程序来产生的，在训练运行中执行，
+ <p><a name="index-profile-feedback-3122"></a>基于反馈的profile是通过编译测量程序来产生的，在训练运行中执行，
 并且在重新编译程序产生最终可执行程序时，读取基本块和边的执行数目。
 该方法使得程序花费大量的时间在训练运行上，从而提供了非常精确的信息。
 信息是否匹配平均运行取决于选择的训练数据集，
 但是个别研究表现程序的行为通常会由于稍微不同的数据集就会变化。
 
- <p><a name="index-Static-profile-estimation-3124"></a><a name="index-branch-prediction-3125"></a><a name="index-predict_002edef-3126"></a>当profile反馈不可用时，编译器可以被请求尝试使用heuristics集
+ <p><a name="index-Static-profile-estimation-3123"></a><a name="index-branch-prediction-3124"></a><a name="index-predict_002edef-3125"></a>当profile反馈不可用时，编译器可以被请求尝试使用heuristics集
 （详情参见<samp><span class="file">predict.def</span></samp>）来进行预测程序中每个分支的行为，
 并且通过在图中传播可能性来计算每个基本块的评估频率。
 
- <p><a name="index-frequency_002c-count_002c-BB_005fFREQ_005fBASE-3127"></a>每个<code>basic_block</code>包含两个整数域来表示profile信息：
+ <p><a name="index-frequency_002c-count_002c-BB_005fFREQ_005fBASE-3126"></a>每个<code>basic_block</code>包含两个整数域来表示profile信息：
 <code>frequency</code>和<code>count</code>。
 <code>frequency</code>是对函数中的基本块每隔多久被执行的评估。
 其被表示为一个整数标量，范围从0到<code>BB_FREQ_BASE</code>。
@@ -78,7 +78,7 @@ GCC能够处理通过<dfn>profile feedback</dfn>获得的profile信息，
 执行频率最高的基本块的frequency能够减少（例如由循环展开造成的）
 或增加（例如由交叉跳转优化造成的），所以有时需要执行多次度量。
 
- <p><a name="index-gcov_005ftype-3128"></a><code>count</code>包含了硬计数的执行数目，在训练运行中测算出的，
+ <p><a name="index-gcov_005ftype-3127"></a><code>count</code>包含了硬计数的执行数目，在训练运行中测算出的，
 并且只有profile反馈可用时为非0。该值被表示为主机的宽整数
 （一般为64位整数），特定类型<code>gcov_type</code>。
 
@@ -86,7 +86,7 @@ GCC能够处理通过<dfn>profile feedback</dfn>获得的profile信息，
 但是一些过程可能想知道硬执行次数。在度量之后，频率应该总是匹配计数，
 但是在更新profile信息的过程中，数值误差可能会积累到十分大的错误。
 
- <p><a name="index-REG_005fBR_005fPROB_005fBASE_002c-EDGE_005fFREQUENCY-3129"></a>每个边还包含一个分支可能性域：
+ <p><a name="index-REG_005fBR_005fPROB_005fBASE_002c-EDGE_005fFREQUENCY-3128"></a>每个边还包含一个分支可能性域：
 一个范围从0到<code>REG_BR_PROB_BASE</code>的整数。
 其表示将控制从<code>src</code>基本块传递到<code>dest</code>基本块的可能性，
 即控制流向该边的可能性。
@@ -97,10 +97,10 @@ GCC能够处理通过<dfn>profile feedback</dfn>获得的profile信息，
 边频率用来表示条件跳转（通过<code>REG_BR_PROB</code>宏），
 因为它们用在将指令输出到汇编文件中的时候，并且流图不在被维护。
 
- <p><a name="index-reverse-probability-3130"></a>控制流通过给定边到达目的基本块的可能性被称作反向可能性，
+ <p><a name="index-reverse-probability-3129"></a>控制流通过给定边到达目的基本块的可能性被称作反向可能性，
 并且没有直接表示，但是可以容易的从基本块的频率中计算获得。
 
- <p><a name="index-redirect_005fedge_005fand_005fbranch-3131"></a>不幸的是，更新profile信息是一个精致的任务，
+ <p><a name="index-redirect_005fedge_005fand_005fbranch-3130"></a>不幸的是，更新profile信息是一个精致的任务，
 这使得很难集成到CFG操作API中。许多修改CFG的函数和钩子，
 像<code>redirect_edge_and_branch</code>，
 都不具有足够的信息来容易的修改profile，
@@ -109,7 +109,7 @@ GCC能够处理通过<dfn>profile feedback</dfn>获得的profile信息，
 并且检测profile一致性是不可能的，因为数值误差积累。
 因此在每个修改CFG的过程中，应该特别注意这个问题。
 
- <p><a name="index-REG_005fBR_005fPROB_005fBASE_002c-BB_005fFREQ_005fBASE_002c-count-3132"></a>必须指出<code>REG_BR_PROB_BASE</code>和<code>BB_FREQ_BASE</code>被设为足够低，
+ <p><a name="index-REG_005fBR_005fPROB_005fBASE_002c-BB_005fFREQ_005fBASE_002c-count-3131"></a>必须指出<code>REG_BR_PROB_BASE</code>和<code>BB_FREQ_BASE</code>被设为足够低，
 才有可能在流图中计算任何频率或可能性作为指数的2的幂运算。
 
  </body></html>

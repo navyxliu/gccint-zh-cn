@@ -52,7 +52,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_008e_00a7_00e5_0088_00b6_00e6_00b
 
 <h3 class="section">15.4 维护CFG</h3>
 
-<p><a name="index-cfghooks_002eh-3133"></a>
+<p><a name="index-cfghooks_002eh-3132"></a>
 每个编译器过程都具有的一个重要任务是保持控制流图和所有profile信息更新。
 在每个过程之后都重建控制流图是不可能的，因为这样代价会很高，
 而且丢失的profile信息是根本无法重建的。
@@ -75,61 +75,61 @@ Up:&nbsp;<a rel="up" accesskey="u" href="_00e6_008e_00a7_00e5_0088_00b6_00e6_00b
 特别在语句插入和移除时要注意。实际上，如果没有同时对CFG进行恰当的维护，
 整个树表示就很难使用和维护。
 
- <p><a name="index-BLOCK_005fFOR_005fINSN_002c-bb_005ffor_005fstmt-3134"></a>在RTL表示里，每条指令有一个<code>BLOCK_FOR_INSN</code>值用来表示指向包含该指令的基本块。
+ <p><a name="index-BLOCK_005fFOR_005fINSN_002c-bb_005ffor_005fstmt-3133"></a>在RTL表示里，每条指令有一个<code>BLOCK_FOR_INSN</code>值用来表示指向包含该指令的基本块。
 在<code>tree</code>表示里，函数<code>bb_for_stmt</code>返回一个指向包含所查询语句的基本块。
 
- <p><a name="index-block-statement-iterators-3135"></a>在<code>tree</code>表示里，当需要对函数进行改动时，
+ <p><a name="index-block-statement-iterators-3134"></a>在<code>tree</code>表示里，当需要对函数进行改动时，
 应该使用块语句迭代器（<dfn>block statement iterators</dfn>）。
 这些迭代器提供了流程图和指令流的整体抽象。
 块语句迭代器由<code>block_stmt_iterator</code>数据结构和一些修改函数构成，
 包括下面的：
 
      <dl>
-<dt><code>bsi_start</code><a name="index-bsi_005fstart-3136"></a><dd>该函数初始化一个<code>block_stmt_iterator</code>，使其指向基本块中第一条非空语句。
+<dt><code>bsi_start</code><a name="index-bsi_005fstart-3135"></a><dd>该函数初始化一个<code>block_stmt_iterator</code>，使其指向基本块中第一条非空语句。
 
-     <br><dt><code>bsi_last</code><a name="index-bsi_005flast-3137"></a><dd>该函数初始化一个<code>block_stmt_iterator</code>，使其指向基本块中最后一条语句。
+     <br><dt><code>bsi_last</code><a name="index-bsi_005flast-3136"></a><dd>该函数初始化一个<code>block_stmt_iterator</code>，使其指向基本块中最后一条语句。
 
-     <br><dt><code>bsi_end_p</code><a name="index-bsi_005fend_005fp-3138"></a><dd>如果<code>block_stmt_iterator</code>表示基本块的结束，则为<code>true</code>。
+     <br><dt><code>bsi_end_p</code><a name="index-bsi_005fend_005fp-3137"></a><dd>如果<code>block_stmt_iterator</code>表示基本块的结束，则为<code>true</code>。
 
-     <br><dt><code>bsi_next</code><a name="index-bsi_005fnext-3139"></a><dd>该函数接受一个<code>block_stmt_iterator</code>，并使其指向它的后继。
+     <br><dt><code>bsi_next</code><a name="index-bsi_005fnext-3138"></a><dd>该函数接受一个<code>block_stmt_iterator</code>，并使其指向它的后继。
 
-     <br><dt><code>bsi_prev</code><a name="index-bsi_005fprev-3140"></a><dd>该函数接受一个<code>block_stmt_iterator</code>，并使其指向它的前驱。
+     <br><dt><code>bsi_prev</code><a name="index-bsi_005fprev-3139"></a><dd>该函数接受一个<code>block_stmt_iterator</code>，并使其指向它的前驱。
 
-     <br><dt><code>bsi_insert_after</code><a name="index-bsi_005finsert_005fafter-3141"></a><dd>该函数在<code>block_stmt_iterator</code>所在位置之后插入一条语句。
+     <br><dt><code>bsi_insert_after</code><a name="index-bsi_005finsert_005fafter-3140"></a><dd>该函数在<code>block_stmt_iterator</code>所在位置之后插入一条语句。
 最后一个参数决定是否将语句迭代器更新指向新插入的语句，
 还是保留指向原来的语句。
 
-     <br><dt><code>bsi_insert_before</code><a name="index-bsi_005finsert_005fbefore-3142"></a><dd>该函数在<code>block_stmt_iterator</code>所在位置之前插入一条语句。
+     <br><dt><code>bsi_insert_before</code><a name="index-bsi_005finsert_005fbefore-3141"></a><dd>该函数在<code>block_stmt_iterator</code>所在位置之前插入一条语句。
 最后一个参数决定是否将语句迭代器更新指向新插入的语句，
 还是保留指向原来的语句。
 
-     <br><dt><code>bsi_remove</code><a name="index-bsi_005fremove-3143"></a><dd>该函数移除<code>block_stmt_iterator</code>所在位置的语句，
+     <br><dt><code>bsi_remove</code><a name="index-bsi_005fremove-3142"></a><dd>该函数移除<code>block_stmt_iterator</code>所在位置的语句，
 并且如果基本块中还有语句，则将剩余的语句重新链接。
 </dl>
 
- <p><a name="index-BB_005fHEAD_002c-BB_005fEND-3144"></a>在RTL表示里，宏<code>BB_HEAD</code>和<code>BB_END</code>可以用来获得基本块的
+ <p><a name="index-BB_005fHEAD_002c-BB_005fEND-3143"></a>在RTL表示里，宏<code>BB_HEAD</code>和<code>BB_END</code>可以用来获得基本块的
 起始<code>rtx</code>和结束<code>rtx</code>。没有抽象迭代器被定义用来遍历insn链，
 不过可以使用<code>NEXT_INSN</code>和<code>PREV_INSN</code>替代。参见 <a href="Insns.html#Insns">Insns</a>。
 
- <p><a name="index-purge_005fdead_005fedges-3145"></a>通常一个代码操作过程将会简化指令流和控制流，也可能消除一些边。
+ <p><a name="index-purge_005fdead_005fedges-3144"></a>通常一个代码操作过程将会简化指令流和控制流，也可能消除一些边。
 例如当一个条件跳转被替换为非条件跳转，甚至在编译java时，
 将可能的trapping指令简化为non-trapping。边的更新是不透明的，
 每个优化过程都要求手动进行。不过，实际中这种情况很少发生。如果存在的话，
 过程可以针对给定的基本块调用<code>purge_dead_edges</code>来移除多余的边。
 
- <p><a name="index-redirect_005fedge_005fand_005fbranch_002c-redirect_005fjump-3146"></a>另一个常见的情景是分支指令的重定向。
+ <p><a name="index-redirect_005fedge_005fand_005fbranch_002c-redirect_005fjump-3145"></a>另一个常见的情景是分支指令的重定向。
 不过由于可以非常好的建模为控制流图里的边重定向，
 因此应尽量使用<code>redirect_edge_and_branch</code>，而不是其它底层函数，
 例如只是操作RTL链的<code>redirect_jump</code>。
 定义在<samp><span class="file">cfghooks.h</span></samp>中的CFG钩子应该提供了操作和维护CFG所需要的全部API。
 
- <p><a name="index-split_005fblock-3147"></a>有时候，一个过程可能不得不要向基本块的中间插入控制流指令，这样的话，
+ <p><a name="index-split_005fblock-3146"></a>有时候，一个过程可能不得不要向基本块的中间插入控制流指令，这样的话，
 就在基本块中间产生一个入口点。根据定义，这是不可能的，
 因此必须要将块分开以确保只含有一个入口点，也就是基本块的头。
 当基本块中间的指令必须成为跳转或分支指令的目标时，
 可以使用CFG钩子<code>split_block</code>。
 
- <p><a name="index-insert_005finsn_005fon_005fedge-3148"></a><a name="index-commit_005fedge_005finsertions-3149"></a><a name="index-bsi_005finsert_005fon_005fedge-3150"></a><a name="index-bsi_005fcommit_005fedge_005finserts-3151"></a><a name="index-edge-splitting-3152"></a>对一个全局优化，一个常用的操作是在流图中将边拆分，并插入指令。
+ <p><a name="index-insert_005finsn_005fon_005fedge-3147"></a><a name="index-commit_005fedge_005finsertions-3148"></a><a name="index-bsi_005finsert_005fon_005fedge-3149"></a><a name="index-bsi_005fcommit_005fedge_005finserts-3150"></a><a name="index-edge-splitting-3151"></a>对一个全局优化，一个常用的操作是在流图中将边拆分，并插入指令。
 在RTL表示里，可以很容易的实现，
 通过使用<code>insert_insn_on_edge</code>函数来生成一条暂存的“on the edge”指令，
 以便之后的<code>commit_edge_insertions</code>调用来将插入的指令从边上移到基本块的指令流里。
