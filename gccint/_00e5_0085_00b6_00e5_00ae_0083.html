@@ -186,43 +186,17 @@ See <a href="shift-patterns.html#shift-patterns">shift patterns</a>.
 <blockquote><p>一个C表达式，其为非零，如果在该机器上，将<var>inprec</var>个位数的整数转换成<var>outprec</var>个位数（<var>outprec</var>比<var>inprec</var>小），通过简单的认为其只具有<var>outprec</var>个位。
 
       <p>在许多机器上，该表达式可以为1。
-
-     <!-- rearranged this, removed the phrase "it is reported that".  this was -->
-     <!-- to fix an overfull hbox.  -mew 10feb93 -->
-      <p>当<code>TRULY_NOOP_TRUNCATION</code>返回1，
- returns 1 for a pair of sizes for
-modes for which <code>MODES_TIEABLE_P</code> is 0, suboptimal code can result. 
-If this is the case, making <code>TRULY_NOOP_TRUNCATION</code> return 0 in
-such cases may improve things. 
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Target Hook: int <b>TARGET_MODE_REP_EXTENDED</b> (<var>enum machine_mode mode, enum machine_mode rep_mode</var>)<var><a name="index-TARGET_005fMODE_005fREP_005fEXTENDED-4643"></a></var><br>
-<blockquote><p>The representation of an integral mode can be such that the values
-are always extended to a wider integral mode.  Return
-<code>SIGN_EXTEND</code> if values of <var>mode</var> are represented in
-sign-extended form to <var>rep_mode</var>.  Return <code>UNKNOWN</code>
-otherwise.  (Currently, none of the targets use zero-extended
-representation this way so unlike <code>LOAD_EXTEND_OP</code>,
-<code>TARGET_MODE_REP_EXTENDED</code> is expected to return either
-<code>SIGN_EXTEND</code> or <code>UNKNOWN</code>.  Also no target extends
-<var>mode</var> to <var>mode_rep</var> so that <var>mode_rep</var> is not the next
-widest integral mode and currently we take advantage of this fact.)
+<blockquote><p>整型机器模式可以表示为一个值，其总是被扩展为更宽的整型模式。返回<code>SIGN_EXTEND</code>，如果机器模式为<var>mode</var>的值被表示为有符号扩展成<var>rep_mode</var>的形式。否则，返回<code>UNKNOWN</code>。（目前，没有目标机使用零扩展表示，所以不像<code>LOAD_EXTEND_OP</code>，<code>TARGET_MODE_REP_EXTENDED</code>被期望返回<code>SIGN_EXTEND</code>或者<code>UNKNOWN</code>。而且没有目标机将<var>mode</var>扩展为<var>mode_rep</var>，以至于<var>mode_rep</var>不是下一个最宽的整型机器模式，目前，我们利用了这个事实。）
 
-      <p>Similarly to <code>LOAD_EXTEND_OP</code> you may return a non-<code>UNKNOWN</code>
-value even if the extension is not performed on certain hard registers
-as long as for the <code>REGNO_REG_CLASS</code> of these hard registers
-<code>CANNOT_CHANGE_MODE_CLASS</code> returns nonzero.
+      <p>类似于<code>LOAD_EXTEND_OP</code>，你可以返回一个非<code>UNKNOWN</code>的值，即使扩展在特定硬件寄存器上没有被执行，只要对于这些硬件寄存器的<code>REGNO_REG_CLASS</code>，<code>CANNOT_CHANGE_MODE_CLASS</code>返回非零。
 
-      <p>Note that <code>TARGET_MODE_REP_EXTENDED</code> and <code>LOAD_EXTEND_OP</code>
-describe two related properties.  If you define
-<code>TARGET_MODE_REP_EXTENDED (mode, word_mode)</code> you probably also want
-to define <code>LOAD_EXTEND_OP (mode)</code> to return the same type of
-extension.
+      <p>注意，<code>TARGET_MODE_REP_EXTENDED</code>和<code>LOAD_EXTEND_OP</code>描述了两个相关联的属性。如果你定义了<code>TARGET_MODE_REP_EXTENDED (mode, word_mode)</code>，你可能还要定义<code>LOAD_EXTEND_OP (mode)</code>，来返回相同类型的扩展。
 
-      <p>In order to enforce the representation of <code>mode</code>,
-<code>TRULY_NOOP_TRUNCATION</code> should return false when truncating to
-<code>mode</code>. 
+      <p>为了加强<code>mode</code>的表示，当截取成<code>mode</code>时，<code>TRULY_NOOP_TRUNCATION</code>应该返回假。
 </p></blockquote></div>
 
 <div class="defun">
@@ -241,105 +215,49 @@ extension.
 </pre>
       <p class="noindent">其中<var>n</var>为适当的移位计数，用来将被测试的位移送到符号位。
 
-      <p>There is no way to describe a machine that always sets the low-order bit
-for a true value, but does not guarantee the value of any other bits,
-but we do not know of any machine that has such an instruction.  If you
-are trying to port GCC to such a machine, include an instruction to
-perform a logical-and of the result with 1 in the pattern for the
-comparison operators and let us know at <a href="mailto:gcc@gcc.gnu.org">gcc@gcc.gnu.org</a>.
+      <p>没有办法来描述，一个机器对于真值，总是设置低顺序的位，而不保证其它位的值。但是，我们不知道是否有机器具有这样的指令。如果你正在尝试将GCC移植到这样的机器上，那么可以在比较运算的指令模式中，包含一条指令来执行将结果和1进行逻辑与，并且通过<a href="mailto:gcc@gcc.gnu.org">gcc@gcc.gnu.org</a>让我们知道。
 
-      <p>Often, a machine will have multiple instructions that obtain a value
-from a comparison (or the condition codes).  Here are rules to guide the
-choice of value for <code>STORE_FLAG_VALUE</code>, and hence the instructions
-to be used:
+      <p>通常，机器将具有多个指令，从比较（或者条件代码）中获得一个值。这里有一些规则用来指导对<code>STORE_FLAG_VALUE</code>的值的选择，以及要使用的指令：
 
           <ul>
-<li>Use the shortest sequence that yields a valid definition for
-<code>STORE_FLAG_VALUE</code>.  It is more efficient for the compiler to
-&ldquo;normalize&rdquo; the value (convert it to, e.g., 1 or 0) than for the
-comparison operators to do so because there may be opportunities to
-combine the normalization with other operations.
+<li>使用最短的序列，产生<code>STORE_FLAG_VALUE</code>的有效定义。对编译器来说，将值正常化（例如，将其转成1或者0）要比进行比较运算更有效，因为可能会有一些机会来合并其它的正常化运算。
 
-          <li>For equal-length sequences, use a value of 1 or &minus;1, with &minus;1 being
-slightly preferred on machines with expensive jumps and 1 preferred on
-other machines.
+          <li>对于等长的序列，使用值1或者－1。在跳转代价比较高的机器上，一般会倾向于－1，其它一些机器喜欢用1。
 
-          <li>As a second choice, choose a value of &lsquo;<samp><span class="samp">0x80000001</span></samp>&rsquo; if instructions
-exist that set both the sign and low-order bits but do not define the
-others.
+          <li>作为第二种选择，选择值&lsquo;<samp><span class="samp">0x80000001</span></samp>&rsquo;，如果存在指令，同时设置符号位和低顺序位，但是不定义其它位。
 
-          <li>Otherwise, use a value of &lsquo;<samp><span class="samp">0x80000000</span></samp>&rsquo;. 
+          <li>否则，使用值&lsquo;<samp><span class="samp">0x80000000</span></samp>&rsquo;。
 </ul>
 
-      <p>Many machines can produce both the value chosen for
-<code>STORE_FLAG_VALUE</code> and its negation in the same number of
-instructions.  On those machines, you should also define a pattern for
-those cases, e.g., one matching
+      <p>许多机器可以同时产生供<code>STORE_FLAG_VALUE</code>选择的值，以及同样数量指令的取反。在那些机器上，你应该还定义这些情况的指令模式，例如，
 
      <pre class="smallexample">          (set <var>A</var> (neg:<var>m</var> (ne:<var>m</var> <var>B</var> <var>C</var>)))
 </pre>
-      <p>Some machines can also perform <code>and</code> or <code>plus</code> operations on
-condition code values with less instructions than the corresponding
-&lsquo;<samp><span class="samp">s</span><var>cond</var></samp>&rsquo; insn followed by <code>and</code> or <code>plus</code>.  On those
-machines, define the appropriate patterns.  Use the names <code>incscc</code>
-and <code>decscc</code>, respectively, for the patterns which perform
-<code>plus</code> or <code>minus</code> operations on condition code values.  See
-<samp><span class="file">rs6000.md</span></samp> for some examples.  The GNU Superoptizer can be used to
-find such instruction sequences on other machines.
+      <p>一些机器还可以在条件代码值上，执行<code>and</code>或者<code>plus</code>运算，使用少于相应的&lsquo;<samp><span class="samp">s</span><var>cond</var></samp>&rsquo; insn后跟随<code>and</code>或者<code>plus</code>的指令数目。在这些机器上，需要定义适当的指令模式。分别使用名字<code>incscc</code>和<code>decscc</code>，对于在条件代码值上执行<code>plus</code>或者<code>minus</code>运算的指令模式。参见<samp><span class="file">rs6000.md</span></samp>中的一些例子。可以使用GNU Superoptizer来在其它机器上查找这样的指令序列。
 
-      <p>If this macro is not defined, the default value, 1, is used.  You need
-not define <code>STORE_FLAG_VALUE</code> if the machine has no store-flag
-instructions, or if the value generated by these instructions is 1. 
+      <p>如果该宏没有被定义，则使用缺省的值1。你不需要定义<code>STORE_FLAG_VALUE</code>，如果机器没有存储标记的指令，或者如果这些指令生成的值为1。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>FLOAT_STORE_FLAG_VALUE</b> (<var>mode</var>)<var><a name="index-FLOAT_005fSTORE_005fFLAG_005fVALUE-4645"></a></var><br>
-<blockquote><p>A C expression that gives a nonzero <code>REAL_VALUE_TYPE</code> value that is
-returned when comparison operators with floating-point results are true. 
-Define this macro on machines that have comparison operations that return
-floating-point values.  If there are no such operations, do not define
-this macro. 
+<blockquote><p>一个C表达式，给出一个非零的<code>REAL_VALUE_TYPE</code>值，当浮点比较运算的结果为真时返回该值。在一些机器上，具有返回浮点值的比较运算，可以定义该宏。如果没有这样的运算，则不要定义该宏。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>VECTOR_STORE_FLAG_VALUE</b> (<var>mode</var>)<var><a name="index-VECTOR_005fSTORE_005fFLAG_005fVALUE-4646"></a></var><br>
-<blockquote><p>A C expression that gives a rtx representing the nonzero true element
-for vector comparisons.  The returned rtx should be valid for the inner
-mode of <var>mode</var> which is guaranteed to be a vector mode.  Define
-this macro on machines that have vector comparison operations that
-return a vector result.  If there are no such operations, do not define
-this macro.  Typically, this macro is defined as <code>const1_rtx</code> or
-<code>constm1_rtx</code>.  This macro may return <code>NULL_RTX</code> to prevent
-the compiler optimizing such vector comparison operations for the
-given mode. 
+<blockquote><p>一个C表达式，给出一个rtx，表示向量比较中非零的真元素。返回的rtx应该对于<var>mode</var>的内部机器模式是有效的，<var>mode</var>为一个向量机器模式。定义该宏，在一些机器上，具有返回向量结果的向量比较运算。如果没有这样的运算，则不要定义该宏。通常，该宏被定义为<code>const1_rtx</code>或者<code>constm1_rtx</code>。该宏可以返回<code>NULL_RTX</code>，来阻止编译器优化给定的机器模式的向量比较运算。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>CLZ_DEFINED_VALUE_AT_ZERO</b> (<var>mode, value</var>)<var><a name="index-CLZ_005fDEFINED_005fVALUE_005fAT_005fZERO-4647"></a></var><br>
 &mdash; Macro: <b>CTZ_DEFINED_VALUE_AT_ZERO</b> (<var>mode, value</var>)<var><a name="index-CTZ_005fDEFINED_005fVALUE_005fAT_005fZERO-4648"></a></var><br>
-<blockquote><p>A C expression that indicates whether the architecture defines a value
-for <code>clz</code> or <code>ctz</code> with a zero operand. 
-A result of <code>0</code> indicates the value is undefined. 
-If the value is defined for only the RTL expression, the macro should
-evaluate to <code>1</code>; if the value applies also to the corresponding optab
-entry (which is normally the case if it expands directly into
-the corresponding RTL), then the macro should evaluate to <code>2</code>. 
-In the cases where the value is defined, <var>value</var> should be set to
-this value.
+<blockquote><p>一个C表达式，指示体系机构是否为<code>clz</code>或者<code>ctz</code>在操作数为零时，定义了值。结果为<code>0</code>，表示值未被定义。如果值只被定义为RTL表达式，则宏应该求值为<code>1</code>；如果还应用到相应的optab项（其通常情况为直接扩展为相应的RTL），则宏应该求值为<code>2</code>。在值被定义的情况下，<var>value</var>应该被设置为该值。
 
-      <p>If this macro is not defined, the value of <code>clz</code> or
-<code>ctz</code> at zero is assumed to be undefined.
+      <p>如果该宏没有被定义，则<code>clz</code>或者<code>ctz</code>在操作数为零时，被认为未定义。
 
-      <p>This macro must be defined if the target's expansion for <code>ffs</code>
-relies on a particular value to get correct results.  Otherwise it
-is not necessary, though it may be used to optimize some corner cases, and
-to provide a default expansion for the <code>ffs</code> optab.
+      <p>该宏必须被定义，如果目标机对<code>ffs</code>的扩展，依赖于特定的值，以获得正确的结果。否则，没有必要，虽然其可以用于优化一些边角的情况，并且为<code>ffs</code> optab提供缺省的扩展。
 
-      <p>Note that regardless of this macro the &ldquo;definedness&rdquo; of <code>clz</code>
-and <code>ctz</code> at zero do <em>not</em> extend to the builtin functions
-visible to the user.  Thus one may be free to adjust the value at will
-to match the target expansion of these operations without fear of
-breaking the API. 
+      <p>注意，不论该宏是否定义，<code>clz</code>和<code>ctz</code>在操作数为0时的定义，都不会被扩展为用户可见的内建函数。因此，可以任意调整该值，来匹配对这些运算的目标机扩展，而无需担心会破坏API。
 </p></blockquote></div>
 
 <div class="defun">

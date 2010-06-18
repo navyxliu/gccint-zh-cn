@@ -7965,42 +7965,16 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
 一个C表达式，其为非零，如果在该机器上，将@var{inprec}个位数的整数转换成@var{outprec}个位数（@var{outprec}比@var{inprec}小），通过简单的认为其只具有@var{outprec}个位。
 
 在许多机器上，该表达式可以为1。
-
-@c rearranged this, removed the phrase "it is reported that".  this was
-@c to fix an overfull hbox.  --mew 10feb93
-当@code{TRULY_NOOP_TRUNCATION}返回1，
- returns 1 for a pair of sizes for
-modes for which @code{MODES_TIEABLE_P} is 0, suboptimal code can result.
-If this is the case, making @code{TRULY_NOOP_TRUNCATION} return 0 in
-such cases may improve things.
 @end defmac
 
 @deftypefn {Target Hook} int TARGET_MODE_REP_EXTENDED (enum machine_mode @var{mode}, enum machine_mode @var{rep_mode})
-The representation of an integral mode can be such that the values
-are always extended to a wider integral mode.  Return
-@code{SIGN_EXTEND} if values of @var{mode} are represented in
-sign-extended form to @var{rep_mode}.  Return @code{UNKNOWN}
-otherwise.  (Currently, none of the targets use zero-extended
-representation this way so unlike @code{LOAD_EXTEND_OP},
-@code{TARGET_MODE_REP_EXTENDED} is expected to return either
-@code{SIGN_EXTEND} or @code{UNKNOWN}.  Also no target extends
-@var{mode} to @var{mode_rep} so that @var{mode_rep} is not the next
-widest integral mode and currently we take advantage of this fact.)
+整型机器模式可以表示为一个值，其总是被扩展为更宽的整型模式。返回@code{SIGN_EXTEND}，如果机器模式为@var{mode}的值被表示为有符号扩展成@var{rep_mode}的形式。否则，返回@code{UNKNOWN}。（目前，没有目标机使用零扩展表示，所以不像@code{LOAD_EXTEND_OP}，@code{TARGET_MODE_REP_EXTENDED}被期望返回@code{SIGN_EXTEND}或者@code{UNKNOWN}。而且没有目标机将@var{mode}扩展为@var{mode_rep}，以至于@var{mode_rep}不是下一个最宽的整型机器模式，目前，我们利用了这个事实。）
 
-Similarly to @code{LOAD_EXTEND_OP} you may return a non-@code{UNKNOWN}
-value even if the extension is not performed on certain hard registers
-as long as for the @code{REGNO_REG_CLASS} of these hard registers
-@code{CANNOT_CHANGE_MODE_CLASS} returns nonzero.
+类似于@code{LOAD_EXTEND_OP}，你可以返回一个非@code{UNKNOWN}的值，即使扩展在特定硬件寄存器上没有被执行，只要对于这些硬件寄存器的@code{REGNO_REG_CLASS}，@code{CANNOT_CHANGE_MODE_CLASS}返回非零。
 
-Note that @code{TARGET_MODE_REP_EXTENDED} and @code{LOAD_EXTEND_OP}
-describe two related properties.  If you define
-@code{TARGET_MODE_REP_EXTENDED (mode, word_mode)} you probably also want
-to define @code{LOAD_EXTEND_OP (mode)} to return the same type of
-extension.
+注意，@code{TARGET_MODE_REP_EXTENDED}和@code{LOAD_EXTEND_OP}描述了两个相关联的属性。如果你定义了@code{TARGET_MODE_REP_EXTENDED (mode, word_mode)}，你可能还要定义@code{LOAD_EXTEND_OP (mode)}，来返回相同类型的扩展。
 
-In order to enforce the representation of @code{mode},
-@code{TRULY_NOOP_TRUNCATION} should return false when truncating to
-@code{mode}.
+为了加强@code{mode}的表示，当截取成@code{mode}时，@code{TRULY_NOOP_TRUNCATION}应该返回假。
 @end deftypefn
 
 @defmac STORE_FLAG_VALUE
@@ -8024,108 +7998,52 @@ In order to enforce the representation of @code{mode},
 @noindent
 其中@var{n}为适当的移位计数，用来将被测试的位移送到符号位。
 
-There is no way to describe a machine that always sets the low-order bit
-for a true value, but does not guarantee the value of any other bits,
-but we do not know of any machine that has such an instruction.  If you
-are trying to port GCC to such a machine, include an instruction to
-perform a logical-and of the result with 1 in the pattern for the
-comparison operators and let us know at @email{gcc@@gcc.gnu.org}.
+没有办法来描述，一个机器对于真值，总是设置低顺序的位，而不保证其它位的值。但是，我们不知道是否有机器具有这样的指令。如果你正在尝试将GCC移植到这样的机器上，那么可以在比较运算的指令模式中，包含一条指令来执行将结果和1进行逻辑与，并且通过@email{gcc@@gcc.gnu.org}让我们知道。
 
-Often, a machine will have multiple instructions that obtain a value
-from a comparison (or the condition codes).  Here are rules to guide the
-choice of value for @code{STORE_FLAG_VALUE}, and hence the instructions
-to be used:
+通常，机器将具有多个指令，从比较（或者条件代码）中获得一个值。这里有一些规则用来指导对@code{STORE_FLAG_VALUE}的值的选择，以及要使用的指令：
 
 @itemize @bullet
 @item
-Use the shortest sequence that yields a valid definition for
-@code{STORE_FLAG_VALUE}.  It is more efficient for the compiler to
-``normalize'' the value (convert it to, e.g., 1 or 0) than for the
-comparison operators to do so because there may be opportunities to
-combine the normalization with other operations.
+使用最短的序列，产生@code{STORE_FLAG_VALUE}的有效定义。对编译器来说，将值正常化（例如，将其转成1或者0）要比进行比较运算更有效，因为可能会有一些机会来合并其它的正常化运算。
 
 @item
-For equal-length sequences, use a value of 1 or @minus{}1, with @minus{}1 being
-slightly preferred on machines with expensive jumps and 1 preferred on
-other machines.
+对于等长的序列，使用值1或者－1。在跳转代价比较高的机器上，一般会倾向于－1，其它一些机器喜欢用1。
 
 @item
-As a second choice, choose a value of @samp{0x80000001} if instructions
-exist that set both the sign and low-order bits but do not define the
-others.
+作为第二种选择，选择值@samp{0x80000001}，如果存在指令，同时设置符号位和低顺序位，但是不定义其它位。
 
 @item
-Otherwise, use a value of @samp{0x80000000}.
+否则，使用值@samp{0x80000000}。
 @end itemize
 
-Many machines can produce both the value chosen for
-@code{STORE_FLAG_VALUE} and its negation in the same number of
-instructions.  On those machines, you should also define a pattern for
-those cases, e.g., one matching
+许多机器可以同时产生供@code{STORE_FLAG_VALUE}选择的值，以及同样数量指令的取反。在那些机器上，你应该还定义这些情况的指令模式，例如，
 
 @smallexample
 (set @var{A} (neg:@var{m} (ne:@var{m} @var{B} @var{C})))
 @end smallexample
 
-Some machines can also perform @code{and} or @code{plus} operations on
-condition code values with less instructions than the corresponding
-@samp{s@var{cond}} insn followed by @code{and} or @code{plus}.  On those
-machines, define the appropriate patterns.  Use the names @code{incscc}
-and @code{decscc}, respectively, for the patterns which perform
-@code{plus} or @code{minus} operations on condition code values.  See
-@file{rs6000.md} for some examples.  The GNU Superoptizer can be used to
-find such instruction sequences on other machines.
+一些机器还可以在条件代码值上，执行@code{and}或者@code{plus}运算，使用少于相应的@samp{s@var{cond}} insn后跟随@code{and}或者@code{plus}的指令数目。在这些机器上，需要定义适当的指令模式。分别使用名字@code{incscc}和@code{decscc}，对于在条件代码值上执行@code{plus}或者@code{minus}运算的指令模式。参见@file{rs6000.md}中的一些例子。可以使用GNU Superoptizer来在其它机器上查找这样的指令序列。
 
-If this macro is not defined, the default value, 1, is used.  You need
-not define @code{STORE_FLAG_VALUE} if the machine has no store-flag
-instructions, or if the value generated by these instructions is 1.
+如果该宏没有被定义，则使用缺省的值1。你不需要定义@code{STORE_FLAG_VALUE}，如果机器没有存储标记的指令，或者如果这些指令生成的值为1。
 @end defmac
 
 @defmac FLOAT_STORE_FLAG_VALUE (@var{mode})
-A C expression that gives a nonzero @code{REAL_VALUE_TYPE} value that is
-returned when comparison operators with floating-point results are true.
-Define this macro on machines that have comparison operations that return
-floating-point values.  If there are no such operations, do not define
-this macro.
+一个C表达式，给出一个非零的@code{REAL_VALUE_TYPE}值，当浮点比较运算的结果为真时返回该值。在一些机器上，具有返回浮点值的比较运算，可以定义该宏。如果没有这样的运算，则不要定义该宏。
 @end defmac
 
 @defmac VECTOR_STORE_FLAG_VALUE (@var{mode})
-A C expression that gives a rtx representing the nonzero true element
-for vector comparisons.  The returned rtx should be valid for the inner
-mode of @var{mode} which is guaranteed to be a vector mode.  Define
-this macro on machines that have vector comparison operations that
-return a vector result.  If there are no such operations, do not define
-this macro.  Typically, this macro is defined as @code{const1_rtx} or
-@code{constm1_rtx}.  This macro may return @code{NULL_RTX} to prevent
-the compiler optimizing such vector comparison operations for the
-given mode.
+一个C表达式，给出一个rtx，表示向量比较中非零的真元素。返回的rtx应该对于@var{mode}的内部机器模式是有效的，@var{mode}为一个向量机器模式。定义该宏，在一些机器上，具有返回向量结果的向量比较运算。如果没有这样的运算，则不要定义该宏。通常，该宏被定义为@code{const1_rtx}或者@code{constm1_rtx}。该宏可以返回@code{NULL_RTX}，来阻止编译器优化给定的机器模式的向量比较运算。
 @end defmac
 
 @defmac CLZ_DEFINED_VALUE_AT_ZERO (@var{mode}, @var{value})
 @defmacx CTZ_DEFINED_VALUE_AT_ZERO (@var{mode}, @var{value})
-A C expression that indicates whether the architecture defines a value
-for @code{clz} or @code{ctz} with a zero operand.  
-A result of @code{0} indicates the value is undefined.
-If the value is defined for only the RTL expression, the macro should
-evaluate to @code{1}; if the value applies also to the corresponding optab
-entry (which is normally the case if it expands directly into
-the corresponding RTL), then the macro should evaluate to @code{2}.  
-In the cases where the value is defined, @var{value} should be set to
-this value.  
+一个C表达式，指示体系机构是否为@code{clz}或者@code{ctz}在操作数为零时，定义了值。结果为@code{0}，表示值未被定义。如果值只被定义为RTL表达式，则宏应该求值为@code{1}；如果还应用到相应的optab项（其通常情况为直接扩展为相应的RTL），则宏应该求值为@code{2}。在值被定义的情况下，@var{value}应该被设置为该值。
 
-If this macro is not defined, the value of @code{clz} or
-@code{ctz} at zero is assumed to be undefined.
+如果该宏没有被定义，则@code{clz}或者@code{ctz}在操作数为零时，被认为未定义。
 
-This macro must be defined if the target's expansion for @code{ffs}
-relies on a particular value to get correct results.  Otherwise it
-is not necessary, though it may be used to optimize some corner cases, and
-to provide a default expansion for the @code{ffs} optab.
+该宏必须被定义，如果目标机对@code{ffs}的扩展，依赖于特定的值，以获得正确的结果。否则，没有必要，虽然其可以用于优化一些边角的情况，并且为@code{ffs} optab提供缺省的扩展。
 
-Note that regardless of this macro the ``definedness'' of @code{clz}
-and @code{ctz} at zero do @emph{not} extend to the builtin functions
-visible to the user.  Thus one may be free to adjust the value at will
-to match the target expansion of these operations without fear of
-breaking the API@.
+注意，不论该宏是否定义，@code{clz}和@code{ctz}在操作数为0时的定义，都不会被扩展为用户可见的内建函数。因此，可以任意调整该值，来匹配对这些运算的目标机扩展，而无需担心会破坏API。
 @end defmac
 
 @defmac Pmode
