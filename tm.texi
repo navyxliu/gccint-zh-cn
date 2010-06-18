@@ -8053,98 +8053,53 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
 @end defmac
 
 @defmac FUNCTION_MODE
-An alias for the machine mode used for memory references to functions
-being called, in @code{call} RTL expressions.  On most CISC machines,
-where an instruction can begin at any byte address, this should be 
-@code{QImode}.  On most RISC machines, where all instructions have fixed
-size and alignment, this should be a mode with the same size and alignment
-as the machine instruction words - typically @code{SImode} or @code{HImode}.
+机器模式的别名，在@code{call} RTL表达式中，用于被调用函数的内存引用。在大多数CISC机器上，指令可以起始于任意字节地址，这应该为@code{QImode}。在大多RISC机器上，所有的指令都具有固定的大小和对齐方式，这应该为与机器指令字具有相同大小和对齐的机器模式，通常为@code{SImode}或者@code{HImode}。
 @end defmac
 
 @defmac STDC_0_IN_SYSTEM_HEADERS
-In normal operation, the preprocessor expands @code{__STDC__} to the
-constant 1, to signify that GCC conforms to ISO Standard C@.  On some
-hosts, like Solaris, the system compiler uses a different convention,
-where @code{__STDC__} is normally 0, but is 1 if the user specifies
-strict conformance to the C Standard.
+正常的操作中，预处理器会将@code{__STDC__}扩展为常量1，来表明GCC遵循ISO标准C。在一些主机上，例如Solaris，系统编译器使用不同的约定，@code{__STDC__}通常为0，但是如果用户指出要严格遵循C标准时为1。
 
-Defining @code{STDC_0_IN_SYSTEM_HEADERS} makes GNU CPP follows the host
-convention when processing system header files, but when processing user
-files @code{__STDC__} will always expand to 1.
+定义@code{STDC_0_IN_SYSTEM_HEADERS}使得GNU CPP遵循主机的约定，当处理系统头文件时，但是，当处理用户文件时@code{__STDC__}将总是被扩展为1。
 @end defmac
 
 @defmac NO_IMPLICIT_EXTERN_C
-Define this macro if the system header files support C++ as well as C@.
-This macro inhibits the usual method of using system header files in
-C++, which is to pretend that the file's contents are enclosed in
-@samp{extern "C" @{@dots{}@}}.
+定义该宏，如果系统头文件支持C++，也支持C。该宏抑制了通常在C++中使用系统头文件的方法，即假设文件的内容包含在@samp{extern "C" @{@dots{}@}}中。
 @end defmac
 
 @findex #pragma
 @findex pragma
 @defmac REGISTER_TARGET_PRAGMAS ()
-Define this macro if you want to implement any target-specific pragmas.
-If defined, it is a C expression which makes a series of calls to
-@code{c_register_pragma} or @code{c_register_pragma_with_expansion}
-for each pragma.  The macro may also do any
-setup required for the pragmas.
+定义该宏，如果你想实现任何目标机特定的pragma。如果被定义，其为一个C表达式，为每个pragma使用一系列的对@code{c_register_pragma}或者@code{c_register_pragma_with_expansion}调用。该宏还可以做任何pragma所要求的设置。
 
-The primary reason to define this macro is to provide compatibility with
-other compilers for the same target.  In general, we discourage
-definition of target-specific pragmas for GCC@.
+定义该宏的主要原因是提供相同目标机上，与其它编译器的兼容性。大体上，我们不鼓励为GCC定义目标机特定的pragma。
 
-If the pragma can be implemented by attributes then you should consider
-defining the target hook @samp{TARGET_INSERT_ATTRIBUTES} as well.
+如果pragma可以通过attribute属性来实现，则你也应该考虑定义目标机钩子@samp{TARGET_INSERT_ATTRIBUTES}。
 
-Preprocessor macros that appear on pragma lines are not expanded.  All
-@samp{#pragma} directives that do not match any registered pragma are
-silently ignored, unless the user specifies @option{-Wunknown-pragmas}.
+出现在pragma行中的预处理器宏不被扩展。所有不匹配被注册的@samp{#pragma}指令，将被安静的忽略，除非用户指定@option{-Wunknown-pragmas}。
 @end defmac
 
 @deftypefun void c_register_pragma (const char *@var{space}, const char *@var{name}, void (*@var{callback}) (struct cpp_reader *))
 @deftypefunx void c_register_pragma_with_expansion (const char *@var{space}, const char *@var{name}, void (*@var{callback}) (struct cpp_reader *))
 
-Each call to @code{c_register_pragma} or
-@code{c_register_pragma_with_expansion} establishes one pragma.  The
-@var{callback} routine will be called when the preprocessor encounters a
-pragma of the form
+每个对@code{c_register_pragma}或者@code{c_register_pragma_with_expansion}的调用，都建立了一个pragma。当预处理器遇到一个形式为
 
 @smallexample
 #pragma [@var{space}] @var{name} @dots{}
 @end smallexample
 
-@var{space} is the case-sensitive namespace of the pragma, or
-@code{NULL} to put the pragma in the global namespace.  The callback
-routine receives @var{pfile} as its first argument, which can be passed
-on to cpplib's functions if necessary.  You can lex tokens after the
-@var{name} by calling @code{pragma_lex}.  Tokens that are not read by the
-callback will be silently ignored.  The end of the line is indicated by
-a token of type @code{CPP_EOF}.  Macro expansion occurs on the
-arguments of pragmas registered with
-@code{c_register_pragma_with_expansion} but not on the arguments of
-pragmas registered with @code{c_register_pragma}.
+的pragma，则@var{callback}函数将被调用。 
 
-Note that the use of @code{pragma_lex} is specific to the C and C++
-compilers.  It will not work in the Java or Fortran compilers, or any
-other language compilers for that matter.  Thus if @code{pragma_lex} is going
-to be called from target-specific code, it must only be done so when
-building the C and C++ compilers.  This can be done by defining the
-variables @code{c_target_objs} and @code{cxx_target_objs} in the
-target entry in the @file{config.gcc} file.  These variables should name
-the target-specific, language-specific object file which contains the
-code that uses @code{pragma_lex}.  Note it will also be necessary to add a
-rule to the makefile fragment pointed to by @code{tmake_file} that shows
-how to build this object file.
+@var{space}为大小写敏感的pragma命名空间，或者为@code{NULL}，将gragma放在全局命名空间中。回调函数接受@var{pfile}作为第一个参数，如果需要其可以被传递给cpplib的函数。你可以通过调用@code{pragma_lex}，来词法分析@var{name}之后的token。没有被回调函数读入的token将被安静的忽略。行尾由类型为@code{CPP_EOF}的token来指示。宏扩展发生在使用@code{c_register_pragma_with_expansion}注册的pragma的参数上，但不在使用@code{c_register_pragma}注册的pragma的参数上。
+
+注意，使用@code{pragma_lex}是特定于C和C++编译器的。其在Java或者Fortran编译器上，或者其它语言编译器上无法工作。因此，如果@code{pragma_lex}准备从目标机特定代码中被调用，其必须只在构建C和C++编译器的时候执行。这可以通过在@file{config.gcc}文件中的目标机项中，定义变量@code{c_target_objs}和@code{cxx_target_objs}来实现。这些变量应该命名目标机特定的，语言特定的对象文件，其包含了使用@code{pragma_lex}的代码。注意，还有必要增加一个规则到由@code{tmake_file}指定的makefile片断中，来显示如何构建该目标文件。
 @end deftypefun
 
 @findex #pragma
 @findex pragma
 @defmac HANDLE_SYSV_PRAGMA
-Define this macro (to a value of 1) if you want the System V style
-pragmas @samp{#pragma pack(<n>)} and @samp{#pragma weak <name>
-[=<value>]} to be supported by gcc.
+定义该宏（值为1），如果你想gcc支持System V风格的pragma @samp{#pragma pack(<n>)}和@samp{#pragma weak <name> [=<value>]}。
 
-The pack pragma specifies the maximum alignment (in bytes) of fields
+pack pragma描述了 specifies the maximum alignment (in bytes) of fields
 within a structure, in much the same way as the @samp{__aligned__} and
 @samp{__packed__} @code{__attribute__}s do.  A pack value of zero resets
 the behavior to the default.
