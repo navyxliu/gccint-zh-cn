@@ -8212,47 +8212,23 @@ weak pragma只有当@code{SUPPORTS_WEAK}和@code{ASM_WEAKEN_LABEL}被定义时�
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_MACHINE_DEPENDENT_REORG ()
-If non-null, this hook performs a target-specific pass over the
-instruction stream.  The compiler will run it at all optimization levels,
-just before the point at which it normally does delayed-branch scheduling.
+如果非空，则该钩子对指令流执行目标机特定的编译过程。编译器将在所有优化级别上执行该过程，就在其通常执行延迟分支调度之前的地方。
 
-The exact purpose of the hook varies from target to target.  Some use
-it to do transformations that are necessary for correctness, such as
-laying out in-function constant pools or avoiding hardware hazards.
-Others use it as an opportunity to do some machine-dependent optimizations.
+该钩子的确切目的因目标机不同而不同。一些用来为了正确性执行必要的转换，例如布局函数常量池，或者避免硬件冒险。其它用来作为机器相关的优化。
 
-You need not implement the hook if it has nothing to do.  The default
-definition is null.
+如果没有什么可做的，则不需要实现该钩子。缺省定义为空。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_INIT_BUILTINS ()
-Define this hook if you have any machine-specific built-in functions
-that need to be defined.  It should be a function that performs the
-necessary setup.
+定义该钩子，如果你有任何需要被定义的机器特定的内建函数。其应该为一个函数，执行必要的设置。
 
-Machine specific built-in functions can be useful to expand special machine
-instructions that would otherwise not normally be generated because
-they have no equivalent in the source language (for example, SIMD vector
-instructions or prefetch instructions).
+机器特定的内建函数可以用于扩展特定的机器指令，否则其通常不会被生成，因为在源语言中没有等价的对应（例如，SIMD向量指令或者预取指令）。
 
-To create a built-in function, call the function
-@code{lang_hooks.builtin_function}
-which is defined by the language front end.  You can use any type nodes set
-up by @code{build_common_tree_nodes} and @code{build_common_tree_nodes_2};
-only language front ends that use those two functions will call
-@samp{TARGET_INIT_BUILTINS}.
+要创建一个内建函数，调用函数@code{lang_hooks.builtin_function}，其由语言前端定义。你可以使用任何由@code{build_common_tree_nodes}和@code{build_common_tree_nodes_2}建立的类型节点；只有使用这两个函数的语言前端会调用@samp{TARGET_INIT_BUILTINS}。
 @end deftypefn
 
 @deftypefn {Target Hook} rtx TARGET_EXPAND_BUILTIN (tree @var{exp}, rtx @var{target}, rtx @var{subtarget}, enum machine_mode @var{mode}, int @var{ignore})
-
-Expand a call to a machine specific built-in function that was set up by
-@samp{TARGET_INIT_BUILTINS}.  @var{exp} is the expression for the
-function call; the result should go to @var{target} if that is
-convenient, and have mode @var{mode} if that is convenient.
-@var{subtarget} may be used as the target for computing one of
-@var{exp}'s operands.  @var{ignore} is nonzero if the value is to be
-ignored.  This function should return the result of the call to the
-built-in function.
+扩展由@samp{TARGET_INIT_BUILTINS}建立的对一个机器特定的内建函数的调用。@var{exp}为函数调用的表达式；如果方便的话，结果应该放到@var{target}，并且具有机器模式@var{mode}。@var{subtarget}可以用作目标，来计算@var{exp}的操作数。@var{ignore}为非零，如果值将被忽略。该函数应该返回调用内建函数的结果。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_RESOLVE_OVERLOADED_BUILTIN (tree @var{fndecl}, tree @var{arglist})
