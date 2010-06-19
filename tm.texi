@@ -8142,50 +8142,25 @@ weak pragma只有当@code{SUPPORTS_WEAK}和@code{ASM_WEAKEN_LABEL}被定义时�
 @end defmac
 
 @defmac INSN_SETS_ARE_DELAYED (@var{insn})
-Define this macro as a C expression that is nonzero if it is safe for the
-delay slot scheduler to place instructions in the delay slot of @var{insn},
-even if they appear to use a resource set or clobbered in @var{insn}.
-@var{insn} is always a @code{jump_insn} or an @code{insn}; GCC knows that
-every @code{call_insn} has this behavior.  On machines where some @code{insn}
-or @code{jump_insn} is really a function call and hence has this behavior,
-you should define this macro.
+定义该宏为一个C表达式，其为非零，如果对于延迟槽调度器，将指令放在@var{insn}的延迟槽中是安全的，即使它们可能会使用@var{insn}设置或者破坏的一个资源。@var{insn}总是一个@code{jump_insn}或者@code{insn}；GCC知道每个@code{call_insn}具有这种行为。在一些机器上，一些@code{insn}或者@code{jump_insn}确实为一个函数调用，因此也具有这种行为，你应该定义该宏。
 
-You need not define this macro if it would always return zero.
+如果其总是返回零，则不需要定义该宏。
 @end defmac
 
 @defmac INSN_REFERENCES_ARE_DELAYED (@var{insn})
-Define this macro as a C expression that is nonzero if it is safe for the
-delay slot scheduler to place instructions in the delay slot of @var{insn},
-even if they appear to set or clobber a resource referenced in @var{insn}.
-@var{insn} is always a @code{jump_insn} or an @code{insn}.  On machines where
-some @code{insn} or @code{jump_insn} is really a function call and its operands
-are registers whose use is actually in the subroutine it calls, you should
-define this macro.  Doing so allows the delay slot scheduler to move
-instructions which copy arguments into the argument registers into the delay
-slot of @var{insn}.
+定义该宏为一个C表达式，其为非零，如果对于延迟槽调度器，将指令放在@var{insn}的延迟槽中是安全的，即使它们可能会设置或者破坏@var{insn}使用的一个资源。@var{insn}总是一个@code{jump_insn}或者@code{insn}。在一些机器上，一些@code{insn}或者@code{jump_insn}确实为一个函数调用，并且其操作数为寄存器，实际是在其调用的子函数中使用，你应该定义该宏。这使得延迟槽调度器将复制参数到参数寄存器的指令移送到@var{insn}的延迟槽中。
 
-You need not define this macro if it would always return zero.
+如果其总是返回零，则不需要定义该宏。
 @end defmac
 
 @defmac MULTIPLE_SYMBOL_SPACES
-Define this macro as a C expression that is nonzero if, in some cases,
-global symbols from one translation unit may not be bound to undefined
-symbols in another translation unit without user intervention.  For
-instance, under Microsoft Windows symbols must be explicitly imported
-from shared libraries (DLLs).
+定义该宏为一个C表达式，其为非零，如果对于一些情况，没有用户的介入，一个转换单元中的全局符号可能不会被发现为另一个转换单元中的未定义的符号。例如，在Microsoft Windows下，符号必须被从共享库（DLL）中显式的导入。
 
-You need not define this macro if it would always evaluate to zero.
+如果其总是为零，则不需要定义该宏。
 @end defmac
 
 @deftypefn {Target Hook} tree TARGET_MD_ASM_CLOBBERS (tree @var{outputs}, tree @var{inputs}, tree @var{clobbers})
-This target hook should add to @var{clobbers} @code{STRING_CST} trees for
-any hard regs the port wishes to automatically clobber for an asm.
-It should return the result of the last @code{tree_cons} used to add a
-clobber.  The @var{outputs}, @var{inputs} and @var{clobber} lists are the
-corresponding parameters to the asm and may be inspected to avoid
-clobbering a register that is an input or output of the asm.  You can use
-@code{tree_overlaps_hard_reg_set}, declared in @file{tree.h}, to test
-for overlap with regards to asm-declared registers.
+该目标钩子将移植平台希望一个asm可以自动破坏的硬件寄存器增加到@var{clobbers} @code{STRING_CST} tree中。其应该返回最后一个用于增加一个破坏者的@code{tree_cons}。@var{outputs}, @var{inputs} 和 @var{clobber}为asm的相应的参数，可以用来检查以避免破坏asm的输入或者输出寄存器。你可以使用@file{tree.h}中声明的@code{tree_overlaps_hard_reg_set}来测试是否与asm声明的寄存器有重叠。
 @end deftypefn
 
 @defmac MATH_LIBRARY
@@ -8202,69 +8177,38 @@ for overlap with regards to asm-declared registers.
 
 @defmac TARGET_POSIX_IO
 定义该宏，如果目标机支持下列POSIX文件函数，access, mkdir和使用fcntl / F_SETLKW的文件加锁。其还在运行时为交叉profiling创建目录。
-Define this macro if the target supports the following POSIX@ file
-functions, access, mkdir and  file locking with fcntl / F_SETLKW@.
-Defining @code{TARGET_POSIX_IO} will enable the test coverage code
-to use file locking when exiting a program, which avoids race conditions
-if the program has forked. It will also create directories at run-time
-for cross-profiling.
 @end defmac
 
 @defmac MAX_CONDITIONAL_EXECUTE
-
-A C expression for the maximum number of instructions to execute via
-conditional execution instructions instead of a branch.  A value of
-@code{BRANCH_COST}+1 is the default if the machine does not use cc0, and
-1 if it does use cc0.
+一个C表达式，为通过条件执行指令来替代分支的最大指令数。值@code{BRANCH_COST}+1为缺省值，如果机器没有使用cc0，如果使用了cc0，则为1。
 @end defmac
 
 @defmac IFCVT_MODIFY_TESTS (@var{ce_info}, @var{true_expr}, @var{false_expr})
-Used if the target needs to perform machine-dependent modifications on the
-conditionals used for turning basic blocks into conditionally executed code.
-@var{ce_info} points to a data structure, @code{struct ce_if_block}, which
-contains information about the currently processed blocks.  @var{true_expr}
-and @var{false_expr} are the tests that are used for converting the
-then-block and the else-block, respectively.  Set either @var{true_expr} or
-@var{false_expr} to a null pointer if the tests cannot be converted.
+使用该宏，如果目标机需要在将基本块转为条件执行代码时，对条件进行机器相关的修改。@var{ce_info}指向一个数据结构，@code{struct ce_if_block}，其包含了关于当前被处理的块的信息。@var{true_expr}和@var{false_expr}为测试，分别用于转换then-block和else-block。如果测试不能被转换，则将@var{true_expr}或者@var{false_expr}设置为空指针。
 @end defmac
 
 @defmac IFCVT_MODIFY_MULTIPLE_TESTS (@var{ce_info}, @var{bb}, @var{true_expr}, @var{false_expr})
-Like @code{IFCVT_MODIFY_TESTS}, but used when converting more complicated
-if-statements into conditions combined by @code{and} and @code{or} operations.
-@var{bb} contains the basic block that contains the test that is currently
-being processed and about to be turned into a condition.
+类似于@code{IFCVT_MODIFY_TESTS}，不过用于将更加复杂的if语句转换为由@code{and}和@code{or}运算组合的条件。@var{bb}包含的基本块，包含了当前被处理的测试，并将被转换为一个条件。
 @end defmac
 
 @defmac IFCVT_MODIFY_INSN (@var{ce_info}, @var{pattern}, @var{insn})
-A C expression to modify the @var{PATTERN} of an @var{INSN} that is to
-be converted to conditional execution format.  @var{ce_info} points to
-a data structure, @code{struct ce_if_block}, which contains information
-about the currently processed blocks.
+一个C表达式，来修改@var{INSN}的@var{PATTERN}，其将被转换为一个条件执行的格式。@var{ce_info}指向一个数据结构，@code{struct ce_if_block}，其包含了关于当前被处理的块的信息。
 @end defmac
 
 @defmac IFCVT_MODIFY_FINAL (@var{ce_info})
-A C expression to perform any final machine dependent modifications in
-converting code to conditional execution.  The involved basic blocks
-can be found in the @code{struct ce_if_block} structure that is pointed
-to by @var{ce_info}.
+一个C表达式，用来执行在将代码转换为条件执行时，任何最终机器相关的修改。涉及到的基本块可以在由@var{ce_info}指向的@code{struct ce_if_block}结构体中找到。
 @end defmac
 
 @defmac IFCVT_MODIFY_CANCEL (@var{ce_info})
-A C expression to cancel any machine dependent modifications in
-converting code to conditional execution.  The involved basic blocks
-can be found in the @code{struct ce_if_block} structure that is pointed
-to by @var{ce_info}.
+一个C表达式，用来取消在将代码转换为条件执行时，任何机器相关的修改。涉及到的基本块可以在由@var{ce_info}指向的@code{struct ce_if_block}结构体中找到。
 @end defmac
 
 @defmac IFCVT_INIT_EXTRA_FIELDS (@var{ce_info})
-A C expression to initialize any extra fields in a @code{struct ce_if_block}
-structure, which are defined by the @code{IFCVT_EXTRA_FIELDS} macro.
+一个C表达式，来初始化任何@code{struct ce_if_block}结构体中额外的域，其通过@code{IFCVT_EXTRA_FIELDS}宏来定义。
 @end defmac
 
 @defmac IFCVT_EXTRA_FIELDS
-If defined, it should expand to a set of field declarations that will be
-added to the @code{struct ce_if_block} structure.  These should be initialized
-by the @code{IFCVT_INIT_EXTRA_FIELDS} macro.
+如果被定义，其应该扩展为一个域声明集合，其将被增加到@code{struct ce_if_block}结构体中。这些应该通过@code{IFCVT_INIT_EXTRA_FIELDS}宏来初始化。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_MACHINE_DEPENDENT_REORG ()
