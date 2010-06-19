@@ -8099,29 +8099,13 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
 @defmac HANDLE_SYSV_PRAGMA
 定义该宏（值为1），如果你想gcc支持System V风格的pragma @samp{#pragma pack(<n>)}和@samp{#pragma weak <name> [=<value>]}。
 
-pack pragma描述了 specifies the maximum alignment (in bytes) of fields
-within a structure, in much the same way as the @samp{__aligned__} and
-@samp{__packed__} @code{__attribute__}s do.  A pack value of zero resets
-the behavior to the default.
+pack pragma描述了结构体中域的最大对齐方式（以字节为单位），很大程度上等同于使用@samp{__aligned__}和@samp{__packed__} @code{__attribute__}。pack值为零，会将行为重置为缺省。
 
-A subtlety for Microsoft Visual C/C++ style bit-field packing
-(e.g.@: -mms-bitfields) for targets that support it:
-When a bit-field is inserted into a packed record, the whole size
-of the underlying type is used by one or more same-size adjacent
-bit-fields (that is, if its long:3, 32 bits is used in the record,
-and any additional adjacent long bit-fields are packed into the same
-chunk of 32 bits.  However, if the size changes, a new field of that
-size is allocated).
+对于目标机支持的微软Visual C/C++风格的位域打包（例如-mms-bitfields），其微妙之处在于：当位域被插入到一个打包了的记录中时，则底层类型的整个大小会被一个或多个相同大小临近的位域使用（也就是说，如果为long:3，则记录会使用32位，任何额外的临近的long位域将被打包到32位块中。然而，如果大小改变了，则会分配一个新的同样大小的域）。
 
-If both MS bit-fields and @samp{__attribute__((packed))} are used,
-the latter will take precedence.  If @samp{__attribute__((packed))} is
-used on a single field when MS bit-fields are in use, it will take
-precedence for that field, but the alignment of the rest of the structure
-may affect its placement.
+如果MS位域和@samp{__attribute__((packed))}都被使用，则后者优先。如果当在使用MS位域的时候，@samp{__attribute__((packed))}被用于一个单独的域，则对于该域是优先的，但是结构体的其它部分的对齐方式会影响它的放置。
 
-The weak pragma only works if @code{SUPPORTS_WEAK} and
-@code{ASM_WEAKEN_LABEL} are defined.  If enabled it allows the creation
-of specifically named weak labels, optionally with a value.
+weak pragma只有当@code{SUPPORTS_WEAK}和@code{ASM_WEAKEN_LABEL}被定义时，才工作。如果可用，其允许创建特殊命名的弱标号，以及可选的值。
 @end defmac
 
 @findex #pragma
@@ -8135,10 +8119,7 @@ of specifically named weak labels, optionally with a value.
 @end defmac
 
 @defmac TARGET_DEFAULT_PACK_STRUCT
-If your target requires a structure packing default other than 0 (meaning
-the machine default), define this macro to the necessary value (in bytes).
-This must be a value that would also be valid to use with
-@samp{#pragma pack()} (that is, a small power of two).
+如果你的目标机要求结构体缺省的打包方式不是0（意味着机器缺省方式），则定义该宏为必要的值（以字节为单位）。该值必须还对于@samp{#pragma pack()}有效（也就是说，2的小的幂数）。
 @end defmac
 
 @findex #pragma
