@@ -8232,48 +8232,23 @@ weak pragma只有当@code{SUPPORTS_WEAK}和@code{ASM_WEAKEN_LABEL}被定义时�
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_RESOLVE_OVERLOADED_BUILTIN (tree @var{fndecl}, tree @var{arglist})
-
-Select a replacement for a machine specific built-in function that
-was set up by @samp{TARGET_INIT_BUILTINS}.  This is done
-@emph{before} regular type checking, and so allows the target to
-implement a crude form of function overloading.  @var{fndecl} is the
-declaration of the built-in function.  @var{arglist} is the list of
-arguments passed to the built-in function.  The result is a
-complete expression that implements the operation, usually
-another @code{CALL_EXPR}.
+为@samp{TARGET_INIT_BUILTINS}建立的机器特定内建函数选择一个替身。这发生在常规的类型检查之前，因此允许目标机来实现函数重载的粗糙形式。@var{fndecl}为内建函数的声明。@var{arglist}为传递给内建函数的参数列表。结果为一个完全表达式，实现了该运算，通常为另一个@code{CALL_EXPR}。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_FOLD_BUILTIN (tree @var{fndecl}, tree @var{arglist}, bool @var{ignore})
-
-Fold a call to a machine specific built-in function that was set up by
-@samp{TARGET_INIT_BUILTINS}.  @var{fndecl} is the declaration of the
-built-in function.  @var{arglist} is the list of arguments passed to
-the built-in function.  The result is another tree containing a
-simplified expression for the call's result.  If @var{ignore} is true
-the value will be ignored.
+将@samp{TARGET_INIT_BUILTINS}建立的机器特定的内建函数的调用进行折叠。@var{fndecl}为内建函数的声明。@var{arglist}为传递给内建函数的参数列表。结果为另一个tree，包含了一个简化的表达式，为调用的结果。如果@var{ignore}为真，则值将被忽略。
 @end deftypefn
 
 @deftypefn {Target Hook} const char * TARGET_INVALID_WITHIN_DOLOOP (rtx @var{insn})
+接受一个指令@var{insn}，如果其在一个低开销循环中有效，则返回NULL，否则返回一个字符串说明为什么不能应用doloop。
 
-Take an instruction in @var{insn} and return NULL if it is valid within a
-low-overhead loop, otherwise return a string why doloop could not be applied.
-
-Many targets use special registers for low-overhead looping. For any
-instruction that clobbers these this function should return a string indicating
-the reason why the doloop could not be applied.
-By default, the RTL loop optimizer does not use a present doloop pattern for
-loops containing function calls or branch on table instructions.
+许多目标机使用特定的寄存器，用于低开销循环。对于任何破坏这些的指令，该函数应该返回一个字符串，指出不能应用doloop的原因。缺省的，RTL循环优化不对包含函数调用或者表指令分支的循环，使用现有的doloop指令模式。
 @end deftypefn
 
 @defmac MD_CAN_REDIRECT_BRANCH (@var{branch1}, @var{branch2})
+接受一个分支insn @var{branch1}和另一个@var{branch2}。返回真，如果将@var{branch1}重定向到@var{branch2}的目的地是可能的。
 
-Take a branch insn in @var{branch1} and another in @var{branch2}.
-Return true if redirecting @var{branch1} to the destination of
-@var{branch2} is possible.
-
-On some targets, branches may have a limited range.  Optimizing the
-filling of delay slots can result in branches being redirected, and this
-may in turn cause a branch offset to overflow.
+在一些目标机上，分支可能具有有限的范围。优化延迟槽的填充，可以导致分支可以被重定向，反过来也可能会造成一个分支的偏移量溢出。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_COMMUTATIVE_P (rtx @var{x}, @var{outer_code})
@@ -8281,51 +8256,17 @@ may in turn cause a branch offset to overflow.
 @end deftypefn
 
 @deftypefn {Target Hook} rtx TARGET_ALLOCATE_INITIAL_VALUE (rtx @var{hard_reg})
-
-When the initial value of a hard register has been copied in a pseudo
-register, it is often not necessary to actually allocate another register
-to this pseudo register, because the original hard register or a stack slot
-it has been saved into can be used.  @code{TARGET_ALLOCATE_INITIAL_VALUE}
-is called at the start of register allocation once for each hard register
-that had its initial value copied by using
-@code{get_func_hard_reg_initial_val} or @code{get_hard_reg_initial_val}.
-Possible values are @code{NULL_RTX}, if you don't want
-to do any special allocation, a @code{REG} rtx---that would typically be
-the hard register itself, if it is known not to be clobbered---or a
-@code{MEM}.
-If you are returning a @code{MEM}, this is only a hint for the allocator;
-it might decide to use another register anyways.
-You may use @code{current_function_leaf_function} in the hook, functions
-that use @code{REG_N_SETS}, to determine if the hard
-register in question will not be clobbered.
-The default value of this hook is @code{NULL}, which disables any special
-allocation.
+当硬件寄存器的初始值已经被复制到伪寄存器中，通常没有必要为该伪寄存器分配另一个寄存器，因为可以使用原始的硬件寄存器或者被保存到的栈槽。在寄存器分配的起始处，@code{TARGET_ALLOCATE_INITIAL_VALUE}针对每个其初始值使用@code{get_func_hard_reg_initial_val}或者@code{get_hard_reg_initial_val}复制过的，硬件寄存器被调用一次。可能的值为，@code{NULL_RTX}如果你不想做任何特殊的分配，一个@code{REG} rtx——其通常为硬件寄存器本身，如果知道其不会被破坏——或者一个@code{MEM}。如果返回一个@code{MEM}，这只是一个给分配器的提示；其仍然有可能会决定用另一个寄存器。你可以在钩子中使用@code{current_function_leaf_function}，用来确定被询问的硬件寄存器是否会被破坏。该钩子的缺省值为@code{NULL}，其禁止了任何特殊的分配。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_UNSPEC_MAY_TRAP_P (const_rtx @var{x}, unsigned @var{flags})
-This target hook returns nonzero if @var{x}, an @code{unspec} or
-@code{unspec_volatile} operation, might cause a trap.  Targets can use
-this hook to enhance precision of analysis for @code{unspec} and
-@code{unspec_volatile} operations.  You may call @code{may_trap_p_1}
-to analyze inner elements of @var{x} in which case @var{flags} should be
-passed along.
+该目标钩子返回非零，如果@var{x}，一个@code{unspec}或者@code{unspec_volatile}运算，可能会造成一个陷阱。目标机可以使用该钩子来加强对@code{unspec}和@code{unspec_volatile}运算的分析的精确性。你可以调用@code{may_trap_p_1}来分析@var{x}的内部元素，这种情况下，也应该传递@var{flags}。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SET_CURRENT_FUNCTION (tree @var{decl})
-The compiler invokes this hook whenever it changes its current function 
-context (@code{cfun}).  You can define this function if
-the back end needs to perform any initialization or reset actions on a
-per-function basis.  For example, it may be used to implement function
-attributes that affect register usage or code generation patterns.
-The argument @var{decl} is the declaration for the new function context,
-and may be null to indicate that the compiler has left a function context
-and is returning to processing at the top level.
-The default hook function does nothing.
+编译器每当改变当前函数上下文(@code{cfun})时，便会调用该钩子。你可以定义该函数，如果后端需要基于每个函数执行任何初始化或者重置行为。例如，其可以用来实现函数属性，影响寄存器的使用或者代码生成指令模式。参数@var{decl}为新的函数上下文的声明，可以为空，表示编译器已经离开函数上下文，要返回顶层去处理。缺省钩子函数不做任何事情。
 
-GCC sets @code{cfun} to a dummy function context during initialization of
-some parts of the back end.  The hook function is not invoked in this
-situation; you need not worry about the hook being invoked recursively,
-or when the back end is in a partially-initialized state.
+GCC将@code{cfun}设置为一个哑的函数上下文，在初始化后端一些部分的时候。钩子函数在这种情况下不会被调用；你不需要担心钩子函数被递归调用，或者当后端处于部分初始化的状态。
 @end deftypefn
 
 @defmac TARGET_OBJECT_SUFFIX
@@ -8352,11 +8293,7 @@ build_type_attribute_variant (@var{mdecl},
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_CANNOT_MODIFY_JUMPS_P (void)
-该目标钩子返回@code{true}
-This target hook returns @code{true} past the point in which new jump
-instructions could be created.  On machines that require a register for
-every jump such as the SHmedia ISA of SH5, this point would typically be
-reload, so this target hook should be defined to a function such as:
+该目标钩子在一个点之后返回@code{true}，该处应该创建新的跳转指令。在一些机器上，对每个跳转都要求使用寄存器，例如SH5的SHmedia ISA，该点通常为重载，所以该目标钩子应该被定义为这样的函数：
 
 @smallexample
 static bool
@@ -8372,30 +8309,11 @@ cannot_modify_jumps_past_reload_p ()
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_BRANCH_TARGET_REGISTER_CALLEE_SAVED (bool @var{after_prologue_epilogue_gen})
-分支目标寄存器优化，缺省的会将，被调用者保存的寄存器排除在外，其在当前函数中已经是
-
-Branch target register optimization will by default exclude callee-saved
-registers
-that are not already live during the current function; if this target hook
-returns true, they will be included.  The target code must than make sure
-that all target registers in the class returned by
-@samp{TARGET_BRANCH_TARGET_REGISTER_CLASS} that might need saving are
-saved.  @var{after_prologue_epilogue_gen} indicates if prologues and
-epilogues have already been generated.  Note, even if you only return
-true when @var{after_prologue_epilogue_gen} is false, you still are likely
-to have to make special provisions in @code{INITIAL_ELIMINATION_OFFSET}
-to reserve space for caller-saved target registers.
+分支目标寄存器优化，缺省的会将，被调用者保存的寄存器排除在外，其在当前函数中已经是不活跃的。如果目标钩子返回真，它们将被包含进来。目标代码必须确保在由@samp{TARGET_BRANCH_TARGET_REGISTER_CLASS}返回的类别中的所有寄存器，如果需要保存的，会被保存。@var{after_prologue_epilogue_gen}指出是否序言和尾声已经被生成。注意，即使你只当@var{after_prologue_epilogue_gen}为假时返回真，你还可能要在@code{INITIAL_ELIMINATION_OFFSET}做出特定的预防，来为调用者保存的目标寄存器保留空间。
 @end deftypefn
 
 @defmac POWI_MAX_MULTS
-如果被定义，该宏被解析为一个有符号整型C表达式，描述了浮点乘法的最大数。当该值被定义时，需要大于该数值的乘法
-If defined, this macro is interpreted as a signed integer C expression
-that specifies the maximum number of floating point multiplications
-that should be emitted when expanding exponentiation by an integer
-constant inline.  When this value is defined, exponentiation requiring
-more than this number of multiplications is implemented by calling the
-system library's @code{pow}, @code{powf} or @code{powl} routines.
-The default value places no upper bound on the multiplication count.
+如果被定义，该宏被解析为一个有符号整型C表达式，描述了浮点乘法的最大数。
 @end defmac
 
 @deftypefn Macro void TARGET_EXTRA_INCLUDES (const char *@var{sysroot}, const char *@var{iprefix}, int @var{stdinc})
