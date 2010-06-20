@@ -318,29 +318,13 @@ See <a href="shift-patterns.html#shift-patterns">shift patterns</a>.
 &mdash; Macro: <b>HANDLE_SYSV_PRAGMA</b><var><a name="index-HANDLE_005fSYSV_005fPRAGMA-4660"></a></var><br>
 <blockquote><p>定义该宏（值为1），如果你想gcc支持System V风格的pragma &lsquo;<samp><span class="samp">#pragma pack(&lt;n&gt;)</span></samp>&rsquo;和&lsquo;<samp><span class="samp">#pragma weak &lt;name&gt; [=&lt;value&gt;]</span></samp>&rsquo;。
 
-      <p>pack pragma描述了 specifies the maximum alignment (in bytes) of fields
-within a structure, in much the same way as the &lsquo;<samp><span class="samp">__aligned__</span></samp>&rsquo; and
-&lsquo;<samp><span class="samp">__packed__</span></samp>&rsquo; <code>__attribute__</code>s do.  A pack value of zero resets
-the behavior to the default.
+      <p>pack pragma描述了结构体中域的最大对齐方式（以字节为单位），很大程度上等同于使用&lsquo;<samp><span class="samp">__aligned__</span></samp>&rsquo;和&lsquo;<samp><span class="samp">__packed__</span></samp>&rsquo; <code>__attribute__</code>。pack值为零，会将行为重置为缺省。
 
-      <p>A subtlety for Microsoft Visual C/C++ style bit-field packing
-(e.g. -mms-bitfields) for targets that support it:
-When a bit-field is inserted into a packed record, the whole size
-of the underlying type is used by one or more same-size adjacent
-bit-fields (that is, if its long:3, 32 bits is used in the record,
-and any additional adjacent long bit-fields are packed into the same
-chunk of 32 bits.  However, if the size changes, a new field of that
-size is allocated).
+      <p>对于目标机支持的微软Visual C/C++风格的位域打包（例如-mms-bitfields），其微妙之处在于：当位域被插入到一个打包了的记录中时，则底层类型的整个大小会被一个或多个相同大小临近的位域使用（也就是说，如果为long:3，则记录会使用32位，任何额外的临近的long位域将被打包到32位块中。然而，如果大小改变了，则会分配一个新的同样大小的域）。
 
-      <p>If both MS bit-fields and &lsquo;<samp><span class="samp">__attribute__((packed))</span></samp>&rsquo; are used,
-the latter will take precedence.  If &lsquo;<samp><span class="samp">__attribute__((packed))</span></samp>&rsquo; is
-used on a single field when MS bit-fields are in use, it will take
-precedence for that field, but the alignment of the rest of the structure
-may affect its placement.
+      <p>如果MS位域和&lsquo;<samp><span class="samp">__attribute__((packed))</span></samp>&rsquo;都被使用，则后者优先。如果当在使用MS位域的时候，&lsquo;<samp><span class="samp">__attribute__((packed))</span></samp>&rsquo;被用于一个单独的域，则对于该域是优先的，但是结构体的其它部分的对齐方式会影响它的放置。
 
-      <p>The weak pragma only works if <code>SUPPORTS_WEAK</code> and
-<code>ASM_WEAKEN_LABEL</code> are defined.  If enabled it allows the creation
-of specifically named weak labels, optionally with a value. 
+      <p>weak pragma只有当<code>SUPPORTS_WEAK</code>和<code>ASM_WEAKEN_LABEL</code>被定义时，才工作。如果可用，其允许创建特殊命名的弱标号，以及可选的值。
 </p></blockquote></div>
 
  <p><a name="index-g_t_0023pragma-4661"></a><a name="index-pragma-4662"></a>
@@ -357,10 +341,7 @@ of specifically named weak labels, optionally with a value.
 
 <div class="defun">
 &mdash; Macro: <b>TARGET_DEFAULT_PACK_STRUCT</b><var><a name="index-TARGET_005fDEFAULT_005fPACK_005fSTRUCT-4665"></a></var><br>
-<blockquote><p>If your target requires a structure packing default other than 0 (meaning
-the machine default), define this macro to the necessary value (in bytes). 
-This must be a value that would also be valid to use with
-&lsquo;<samp><span class="samp">#pragma pack()</span></samp>&rsquo; (that is, a small power of two). 
+<blockquote><p>如果你的目标机要求结构体缺省的打包方式不是0（意味着机器缺省方式），则定义该宏为必要的值（以字节为单位）。该值必须还对于&lsquo;<samp><span class="samp">#pragma pack()</span></samp>&rsquo;有效（也就是说，2的小的幂数）。
 </p></blockquote></div>
 
  <p><a name="index-g_t_0023pragma-4666"></a><a name="index-pragma-4667"></a>
@@ -387,53 +368,28 @@ This must be a value that would also be valid to use with
 
 <div class="defun">
 &mdash; Macro: <b>INSN_SETS_ARE_DELAYED</b> (<var>insn</var>)<var><a name="index-INSN_005fSETS_005fARE_005fDELAYED-4672"></a></var><br>
-<blockquote><p>Define this macro as a C expression that is nonzero if it is safe for the
-delay slot scheduler to place instructions in the delay slot of <var>insn</var>,
-even if they appear to use a resource set or clobbered in <var>insn</var>. 
-<var>insn</var> is always a <code>jump_insn</code> or an <code>insn</code>; GCC knows that
-every <code>call_insn</code> has this behavior.  On machines where some <code>insn</code>
-or <code>jump_insn</code> is really a function call and hence has this behavior,
-you should define this macro.
+<blockquote><p>定义该宏为一个C表达式，其为非零，如果对于延迟槽调度器，将指令放在<var>insn</var>的延迟槽中是安全的，即使它们可能会使用<var>insn</var>设置或者破坏的一个资源。<var>insn</var>总是一个<code>jump_insn</code>或者<code>insn</code>；GCC知道每个<code>call_insn</code>具有这种行为。在一些机器上，一些<code>insn</code>或者<code>jump_insn</code>确实为一个函数调用，因此也具有这种行为，你应该定义该宏。
 
-      <p>You need not define this macro if it would always return zero. 
+      <p>如果其总是返回零，则不需要定义该宏。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>INSN_REFERENCES_ARE_DELAYED</b> (<var>insn</var>)<var><a name="index-INSN_005fREFERENCES_005fARE_005fDELAYED-4673"></a></var><br>
-<blockquote><p>Define this macro as a C expression that is nonzero if it is safe for the
-delay slot scheduler to place instructions in the delay slot of <var>insn</var>,
-even if they appear to set or clobber a resource referenced in <var>insn</var>. 
-<var>insn</var> is always a <code>jump_insn</code> or an <code>insn</code>.  On machines where
-some <code>insn</code> or <code>jump_insn</code> is really a function call and its operands
-are registers whose use is actually in the subroutine it calls, you should
-define this macro.  Doing so allows the delay slot scheduler to move
-instructions which copy arguments into the argument registers into the delay
-slot of <var>insn</var>.
+<blockquote><p>定义该宏为一个C表达式，其为非零，如果对于延迟槽调度器，将指令放在<var>insn</var>的延迟槽中是安全的，即使它们可能会设置或者破坏<var>insn</var>使用的一个资源。<var>insn</var>总是一个<code>jump_insn</code>或者<code>insn</code>。在一些机器上，一些<code>insn</code>或者<code>jump_insn</code>确实为一个函数调用，并且其操作数为寄存器，实际是在其调用的子函数中使用，你应该定义该宏。这使得延迟槽调度器将复制参数到参数寄存器的指令移送到<var>insn</var>的延迟槽中。
 
-      <p>You need not define this macro if it would always return zero. 
+      <p>如果其总是返回零，则不需要定义该宏。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>MULTIPLE_SYMBOL_SPACES</b><var><a name="index-MULTIPLE_005fSYMBOL_005fSPACES-4674"></a></var><br>
-<blockquote><p>Define this macro as a C expression that is nonzero if, in some cases,
-global symbols from one translation unit may not be bound to undefined
-symbols in another translation unit without user intervention.  For
-instance, under Microsoft Windows symbols must be explicitly imported
-from shared libraries (DLLs).
+<blockquote><p>定义该宏为一个C表达式，其为非零，如果对于一些情况，没有用户的介入，一个转换单元中的全局符号可能不会被发现为另一个转换单元中的未定义的符号。例如，在Microsoft Windows下，符号必须被从共享库（DLL）中显式的导入。
 
-      <p>You need not define this macro if it would always evaluate to zero. 
+      <p>如果其总是为零，则不需要定义该宏。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Target Hook: tree <b>TARGET_MD_ASM_CLOBBERS</b> (<var>tree outputs, tree inputs, tree clobbers</var>)<var><a name="index-TARGET_005fMD_005fASM_005fCLOBBERS-4675"></a></var><br>
-<blockquote><p>This target hook should add to <var>clobbers</var> <code>STRING_CST</code> trees for
-any hard regs the port wishes to automatically clobber for an asm. 
-It should return the result of the last <code>tree_cons</code> used to add a
-clobber.  The <var>outputs</var>, <var>inputs</var> and <var>clobber</var> lists are the
-corresponding parameters to the asm and may be inspected to avoid
-clobbering a register that is an input or output of the asm.  You can use
-<code>tree_overlaps_hard_reg_set</code>, declared in <samp><span class="file">tree.h</span></samp>, to test
-for overlap with regards to asm-declared registers. 
+<blockquote><p>该目标钩子将移植平台希望一个asm可以自动破坏的硬件寄存器增加到<var>clobbers</var> <code>STRING_CST</code> tree中。其应该返回最后一个用于增加一个破坏者的<code>tree_cons</code>。<var>outputs</var>, <var>inputs</var> 和 <var>clobber</var>为asm的相应的参数，可以用来检查以避免破坏asm的输入或者输出寄存器。你可以使用<samp><span class="file">tree.h</span></samp>中声明的<code>tree_overlaps_hard_reg_set</code>来测试是否与asm声明的寄存器有重叠。
 </p></blockquote></div>
 
 <div class="defun">
@@ -453,173 +409,93 @@ for overlap with regards to asm-declared registers.
 <div class="defun">
 &mdash; Macro: <b>TARGET_POSIX_IO</b><var><a name="index-TARGET_005fPOSIX_005fIO-4678"></a></var><br>
 <blockquote><p>定义该宏，如果目标机支持下列POSIX文件函数，access, mkdir和使用fcntl / F_SETLKW的文件加锁。其还在运行时为交叉profiling创建目录。
-Define this macro if the target supports the following POSIX file
-functions, access, mkdir and  file locking with fcntl / F_SETLKW. 
-Defining <code>TARGET_POSIX_IO</code> will enable the test coverage code
-to use file locking when exiting a program, which avoids race conditions
-if the program has forked. It will also create directories at run-time
-for cross-profiling. 
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>MAX_CONDITIONAL_EXECUTE</b><var><a name="index-MAX_005fCONDITIONAL_005fEXECUTE-4679"></a></var><br>
-<blockquote>
-      <p>A C expression for the maximum number of instructions to execute via
-conditional execution instructions instead of a branch.  A value of
-<code>BRANCH_COST</code>+1 is the default if the machine does not use cc0, and
-1 if it does use cc0. 
+<blockquote><p>一个C表达式，为通过条件执行指令来替代分支的最大指令数。值<code>BRANCH_COST</code>+1为缺省值，如果机器没有使用cc0，如果使用了cc0，则为1。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>IFCVT_MODIFY_TESTS</b> (<var>ce_info, true_expr, false_expr</var>)<var><a name="index-IFCVT_005fMODIFY_005fTESTS-4680"></a></var><br>
-<blockquote><p>Used if the target needs to perform machine-dependent modifications on the
-conditionals used for turning basic blocks into conditionally executed code. 
-<var>ce_info</var> points to a data structure, <code>struct ce_if_block</code>, which
-contains information about the currently processed blocks.  <var>true_expr</var>
-and <var>false_expr</var> are the tests that are used for converting the
-then-block and the else-block, respectively.  Set either <var>true_expr</var> or
-<var>false_expr</var> to a null pointer if the tests cannot be converted. 
+<blockquote><p>使用该宏，如果目标机需要在将基本块转为条件执行代码时，对条件进行机器相关的修改。<var>ce_info</var>指向一个数据结构，<code>struct ce_if_block</code>，其包含了关于当前被处理的块的信息。<var>true_expr</var>和<var>false_expr</var>为测试，分别用于转换then-block和else-block。如果测试不能被转换，则将<var>true_expr</var>或者<var>false_expr</var>设置为空指针。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>IFCVT_MODIFY_MULTIPLE_TESTS</b> (<var>ce_info, bb, true_expr, false_expr</var>)<var><a name="index-IFCVT_005fMODIFY_005fMULTIPLE_005fTESTS-4681"></a></var><br>
-<blockquote><p>Like <code>IFCVT_MODIFY_TESTS</code>, but used when converting more complicated
-if-statements into conditions combined by <code>and</code> and <code>or</code> operations. 
-<var>bb</var> contains the basic block that contains the test that is currently
-being processed and about to be turned into a condition. 
+<blockquote><p>类似于<code>IFCVT_MODIFY_TESTS</code>，不过用于将更加复杂的if语句转换为由<code>and</code>和<code>or</code>运算组合的条件。<var>bb</var>包含的基本块，包含了当前被处理的测试，并将被转换为一个条件。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>IFCVT_MODIFY_INSN</b> (<var>ce_info, pattern, insn</var>)<var><a name="index-IFCVT_005fMODIFY_005fINSN-4682"></a></var><br>
-<blockquote><p>A C expression to modify the <var>PATTERN</var> of an <var>INSN</var> that is to
-be converted to conditional execution format.  <var>ce_info</var> points to
-a data structure, <code>struct ce_if_block</code>, which contains information
-about the currently processed blocks. 
+<blockquote><p>一个C表达式，来修改<var>INSN</var>的<var>PATTERN</var>，其将被转换为一个条件执行的格式。<var>ce_info</var>指向一个数据结构，<code>struct ce_if_block</code>，其包含了关于当前被处理的块的信息。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>IFCVT_MODIFY_FINAL</b> (<var>ce_info</var>)<var><a name="index-IFCVT_005fMODIFY_005fFINAL-4683"></a></var><br>
-<blockquote><p>A C expression to perform any final machine dependent modifications in
-converting code to conditional execution.  The involved basic blocks
-can be found in the <code>struct ce_if_block</code> structure that is pointed
-to by <var>ce_info</var>. 
+<blockquote><p>一个C表达式，用来执行在将代码转换为条件执行时，任何最终机器相关的修改。涉及到的基本块可以在由<var>ce_info</var>指向的<code>struct ce_if_block</code>结构体中找到。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>IFCVT_MODIFY_CANCEL</b> (<var>ce_info</var>)<var><a name="index-IFCVT_005fMODIFY_005fCANCEL-4684"></a></var><br>
-<blockquote><p>A C expression to cancel any machine dependent modifications in
-converting code to conditional execution.  The involved basic blocks
-can be found in the <code>struct ce_if_block</code> structure that is pointed
-to by <var>ce_info</var>. 
+<blockquote><p>一个C表达式，用来取消在将代码转换为条件执行时，任何机器相关的修改。涉及到的基本块可以在由<var>ce_info</var>指向的<code>struct ce_if_block</code>结构体中找到。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>IFCVT_INIT_EXTRA_FIELDS</b> (<var>ce_info</var>)<var><a name="index-IFCVT_005fINIT_005fEXTRA_005fFIELDS-4685"></a></var><br>
-<blockquote><p>A C expression to initialize any extra fields in a <code>struct ce_if_block</code>
-structure, which are defined by the <code>IFCVT_EXTRA_FIELDS</code> macro. 
+<blockquote><p>一个C表达式，来初始化任何<code>struct ce_if_block</code>结构体中额外的域，其通过<code>IFCVT_EXTRA_FIELDS</code>宏来定义。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>IFCVT_EXTRA_FIELDS</b><var><a name="index-IFCVT_005fEXTRA_005fFIELDS-4686"></a></var><br>
-<blockquote><p>If defined, it should expand to a set of field declarations that will be
-added to the <code>struct ce_if_block</code> structure.  These should be initialized
-by the <code>IFCVT_INIT_EXTRA_FIELDS</code> macro. 
+<blockquote><p>如果被定义，其应该扩展为一个域声明集合，其将被增加到<code>struct ce_if_block</code>结构体中。这些应该通过<code>IFCVT_INIT_EXTRA_FIELDS</code>宏来初始化。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Target Hook: void <b>TARGET_MACHINE_DEPENDENT_REORG</b> ()<var><a name="index-TARGET_005fMACHINE_005fDEPENDENT_005fREORG-4687"></a></var><br>
-<blockquote><p>If non-null, this hook performs a target-specific pass over the
-instruction stream.  The compiler will run it at all optimization levels,
-just before the point at which it normally does delayed-branch scheduling.
+<blockquote><p>如果非空，则该钩子对指令流执行目标机特定的编译过程。编译器将在所有优化级别上执行该过程，就在其通常执行延迟分支调度之前的地方。
 
-      <p>The exact purpose of the hook varies from target to target.  Some use
-it to do transformations that are necessary for correctness, such as
-laying out in-function constant pools or avoiding hardware hazards. 
-Others use it as an opportunity to do some machine-dependent optimizations.
+      <p>该钩子的确切目的因目标机不同而不同。一些用来为了正确性执行必要的转换，例如布局函数常量池，或者避免硬件冒险。其它用来作为机器相关的优化。
 
-      <p>You need not implement the hook if it has nothing to do.  The default
-definition is null. 
+      <p>如果没有什么可做的，则不需要实现该钩子。缺省定义为空。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Target Hook: void <b>TARGET_INIT_BUILTINS</b> ()<var><a name="index-TARGET_005fINIT_005fBUILTINS-4688"></a></var><br>
-<blockquote><p>Define this hook if you have any machine-specific built-in functions
-that need to be defined.  It should be a function that performs the
-necessary setup.
+<blockquote><p>定义该钩子，如果你有任何需要被定义的机器特定的内建函数。其应该为一个函数，执行必要的设置。
 
-      <p>Machine specific built-in functions can be useful to expand special machine
-instructions that would otherwise not normally be generated because
-they have no equivalent in the source language (for example, SIMD vector
-instructions or prefetch instructions).
+      <p>机器特定的内建函数可以用于扩展特定的机器指令，否则其通常不会被生成，因为在源语言中没有等价的对应（例如，SIMD向量指令或者预取指令）。
 
-      <p>To create a built-in function, call the function
-<code>lang_hooks.builtin_function</code>
-which is defined by the language front end.  You can use any type nodes set
-up by <code>build_common_tree_nodes</code> and <code>build_common_tree_nodes_2</code>;
-only language front ends that use those two functions will call
-&lsquo;<samp><span class="samp">TARGET_INIT_BUILTINS</span></samp>&rsquo;. 
+      <p>要创建一个内建函数，调用函数<code>lang_hooks.builtin_function</code>，其由语言前端定义。你可以使用任何由<code>build_common_tree_nodes</code>和<code>build_common_tree_nodes_2</code>建立的类型节点；只有使用这两个函数的语言前端会调用&lsquo;<samp><span class="samp">TARGET_INIT_BUILTINS</span></samp>&rsquo;。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Target Hook: rtx <b>TARGET_EXPAND_BUILTIN</b> (<var>tree exp, rtx target, rtx subtarget, enum machine_mode mode, int ignore</var>)<var><a name="index-TARGET_005fEXPAND_005fBUILTIN-4689"></a></var><br>
-<blockquote>
-      <p>Expand a call to a machine specific built-in function that was set up by
-&lsquo;<samp><span class="samp">TARGET_INIT_BUILTINS</span></samp>&rsquo;.  <var>exp</var> is the expression for the
-function call; the result should go to <var>target</var> if that is
-convenient, and have mode <var>mode</var> if that is convenient. 
-<var>subtarget</var> may be used as the target for computing one of
-<var>exp</var>'s operands.  <var>ignore</var> is nonzero if the value is to be
-ignored.  This function should return the result of the call to the
-built-in function. 
+<blockquote><p>扩展由&lsquo;<samp><span class="samp">TARGET_INIT_BUILTINS</span></samp>&rsquo;建立的对一个机器特定的内建函数的调用。<var>exp</var>为函数调用的表达式；如果方便的话，结果应该放到<var>target</var>，并且具有机器模式<var>mode</var>。<var>subtarget</var>可以用作目标，来计算<var>exp</var>的操作数。<var>ignore</var>为非零，如果值将被忽略。该函数应该返回调用内建函数的结果。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Target Hook: tree <b>TARGET_RESOLVE_OVERLOADED_BUILTIN</b> (<var>tree fndecl, tree arglist</var>)<var><a name="index-TARGET_005fRESOLVE_005fOVERLOADED_005fBUILTIN-4690"></a></var><br>
-<blockquote>
-      <p>Select a replacement for a machine specific built-in function that
-was set up by &lsquo;<samp><span class="samp">TARGET_INIT_BUILTINS</span></samp>&rsquo;.  This is done
-<em>before</em> regular type checking, and so allows the target to
-implement a crude form of function overloading.  <var>fndecl</var> is the
-declaration of the built-in function.  <var>arglist</var> is the list of
-arguments passed to the built-in function.  The result is a
-complete expression that implements the operation, usually
-another <code>CALL_EXPR</code>. 
+<blockquote><p>为&lsquo;<samp><span class="samp">TARGET_INIT_BUILTINS</span></samp>&rsquo;建立的机器特定内建函数选择一个替身。这发生在常规的类型检查之前，因此允许目标机来实现函数重载的粗糙形式。<var>fndecl</var>为内建函数的声明。<var>arglist</var>为传递给内建函数的参数列表。结果为一个完全表达式，实现了该运算，通常为另一个<code>CALL_EXPR</code>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Target Hook: tree <b>TARGET_FOLD_BUILTIN</b> (<var>tree fndecl, tree arglist, bool ignore</var>)<var><a name="index-TARGET_005fFOLD_005fBUILTIN-4691"></a></var><br>
-<blockquote>
-      <p>Fold a call to a machine specific built-in function that was set up by
-&lsquo;<samp><span class="samp">TARGET_INIT_BUILTINS</span></samp>&rsquo;.  <var>fndecl</var> is the declaration of the
-built-in function.  <var>arglist</var> is the list of arguments passed to
-the built-in function.  The result is another tree containing a
-simplified expression for the call's result.  If <var>ignore</var> is true
-the value will be ignored. 
+<blockquote><p>将&lsquo;<samp><span class="samp">TARGET_INIT_BUILTINS</span></samp>&rsquo;建立的机器特定的内建函数的调用进行折叠。<var>fndecl</var>为内建函数的声明。<var>arglist</var>为传递给内建函数的参数列表。结果为另一个tree，包含了一个简化的表达式，为调用的结果。如果<var>ignore</var>为真，则值将被忽略。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Target Hook: const <b>char</b><var> * TARGET_INVALID_WITHIN_DOLOOP </var>(<var>rtx insn</var>)<var><a name="index-char-4692"></a></var><br>
-<blockquote>
-      <p>Take an instruction in <var>insn</var> and return NULL if it is valid within a
-low-overhead loop, otherwise return a string why doloop could not be applied.
+<blockquote><p>接受一个指令<var>insn</var>，如果其在一个低开销循环中有效，则返回NULL，否则返回一个字符串说明为什么不能应用doloop。
 
-      <p>Many targets use special registers for low-overhead looping. For any
-instruction that clobbers these this function should return a string indicating
-the reason why the doloop could not be applied. 
-By default, the RTL loop optimizer does not use a present doloop pattern for
-loops containing function calls or branch on table instructions. 
+      <p>许多目标机使用特定的寄存器，用于低开销循环。对于任何破坏这些的指令，该函数应该返回一个字符串，指出不能应用doloop的原因。缺省的，RTL循环优化不对包含函数调用或者表指令分支的循环，使用现有的doloop指令模式。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>MD_CAN_REDIRECT_BRANCH</b> (<var>branch1, branch2</var>)<var><a name="index-MD_005fCAN_005fREDIRECT_005fBRANCH-4693"></a></var><br>
-<blockquote>
-      <p>Take a branch insn in <var>branch1</var> and another in <var>branch2</var>. 
-Return true if redirecting <var>branch1</var> to the destination of
-<var>branch2</var> is possible.
+<blockquote><p>接受一个分支insn <var>branch1</var>和另一个<var>branch2</var>。返回真，如果将<var>branch1</var>重定向到<var>branch2</var>的目的地是可能的。
 
-      <p>On some targets, branches may have a limited range.  Optimizing the
-filling of delay slots can result in branches being redirected, and this
-may in turn cause a branch offset to overflow. 
+      <p>在一些目标机上，分支可能具有有限的范围。优化延迟槽的填充，可以导致分支可以被重定向，反过来也可能会造成一个分支的偏移量溢出。
 </p></blockquote></div>
 
 <div class="defun">
@@ -629,53 +505,19 @@ may in turn cause a branch offset to overflow.
 
 <div class="defun">
 &mdash; Target Hook: rtx <b>TARGET_ALLOCATE_INITIAL_VALUE</b> (<var>rtx hard_reg</var>)<var><a name="index-TARGET_005fALLOCATE_005fINITIAL_005fVALUE-4695"></a></var><br>
-<blockquote>
-      <p>When the initial value of a hard register has been copied in a pseudo
-register, it is often not necessary to actually allocate another register
-to this pseudo register, because the original hard register or a stack slot
-it has been saved into can be used.  <code>TARGET_ALLOCATE_INITIAL_VALUE</code>
-is called at the start of register allocation once for each hard register
-that had its initial value copied by using
-<code>get_func_hard_reg_initial_val</code> or <code>get_hard_reg_initial_val</code>. 
-Possible values are <code>NULL_RTX</code>, if you don't want
-to do any special allocation, a <code>REG</code> rtx&mdash;that would typically be
-the hard register itself, if it is known not to be clobbered&mdash;or a
-<code>MEM</code>. 
-If you are returning a <code>MEM</code>, this is only a hint for the allocator;
-it might decide to use another register anyways. 
-You may use <code>current_function_leaf_function</code> in the hook, functions
-that use <code>REG_N_SETS</code>, to determine if the hard
-register in question will not be clobbered. 
-The default value of this hook is <code>NULL</code>, which disables any special
-allocation. 
+<blockquote><p>当硬件寄存器的初始值已经被复制到伪寄存器中，通常没有必要为该伪寄存器分配另一个寄存器，因为可以使用原始的硬件寄存器或者被保存到的栈槽。在寄存器分配的起始处，<code>TARGET_ALLOCATE_INITIAL_VALUE</code>针对每个其初始值使用<code>get_func_hard_reg_initial_val</code>或者<code>get_hard_reg_initial_val</code>复制过的，硬件寄存器被调用一次。可能的值为，<code>NULL_RTX</code>如果你不想做任何特殊的分配，一个<code>REG</code> rtx——其通常为硬件寄存器本身，如果知道其不会被破坏——或者一个<code>MEM</code>。如果返回一个<code>MEM</code>，这只是一个给分配器的提示；其仍然有可能会决定用另一个寄存器。你可以在钩子中使用<code>current_function_leaf_function</code>，用来确定被询问的硬件寄存器是否会被破坏。该钩子的缺省值为<code>NULL</code>，其禁止了任何特殊的分配。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Target Hook: int <b>TARGET_UNSPEC_MAY_TRAP_P</b> (<var>const_rtx x, unsigned flags</var>)<var><a name="index-TARGET_005fUNSPEC_005fMAY_005fTRAP_005fP-4696"></a></var><br>
-<blockquote><p>This target hook returns nonzero if <var>x</var>, an <code>unspec</code> or
-<code>unspec_volatile</code> operation, might cause a trap.  Targets can use
-this hook to enhance precision of analysis for <code>unspec</code> and
-<code>unspec_volatile</code> operations.  You may call <code>may_trap_p_1</code>
-to analyze inner elements of <var>x</var> in which case <var>flags</var> should be
-passed along. 
+<blockquote><p>该目标钩子返回非零，如果<var>x</var>，一个<code>unspec</code>或者<code>unspec_volatile</code>运算，可能会造成一个陷阱。目标机可以使用该钩子来加强对<code>unspec</code>和<code>unspec_volatile</code>运算的分析的精确性。你可以调用<code>may_trap_p_1</code>来分析<var>x</var>的内部元素，这种情况下，也应该传递<var>flags</var>。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Target Hook: void <b>TARGET_SET_CURRENT_FUNCTION</b> (<var>tree decl</var>)<var><a name="index-TARGET_005fSET_005fCURRENT_005fFUNCTION-4697"></a></var><br>
-<blockquote><p>The compiler invokes this hook whenever it changes its current function
-context (<code>cfun</code>).  You can define this function if
-the back end needs to perform any initialization or reset actions on a
-per-function basis.  For example, it may be used to implement function
-attributes that affect register usage or code generation patterns. 
-The argument <var>decl</var> is the declaration for the new function context,
-and may be null to indicate that the compiler has left a function context
-and is returning to processing at the top level. 
-The default hook function does nothing.
+<blockquote><p>编译器每当改变当前函数上下文(<code>cfun</code>)时，便会调用该钩子。你可以定义该函数，如果后端需要基于每个函数执行任何初始化或者重置行为。例如，其可以用来实现函数属性，影响寄存器的使用或者代码生成指令模式。参数<var>decl</var>为新的函数上下文的声明，可以为空，表示编译器已经离开函数上下文，要返回顶层去处理。缺省钩子函数不做任何事情。
 
-      <p>GCC sets <code>cfun</code> to a dummy function context during initialization of
-some parts of the back end.  The hook function is not invoked in this
-situation; you need not worry about the hook being invoked recursively,
-or when the back end is in a partially-initialized state. 
+      <p>GCC将<code>cfun</code>设置为一个哑的函数上下文，在初始化后端一些部分的时候。钩子函数在这种情况下不会被调用；你不需要担心钩子函数被递归调用，或者当后端处于部分初始化的状态。
 </p></blockquote></div>
 
 <div class="defun">
@@ -706,11 +548,7 @@ or when the back end is in a partially-initialized state.
 
 <div class="defun">
 &mdash; Target Hook: bool <b>TARGET_CANNOT_MODIFY_JUMPS_P</b> (<var>void</var>)<var><a name="index-TARGET_005fCANNOT_005fMODIFY_005fJUMPS_005fP-4702"></a></var><br>
-<blockquote><p>该目标钩子返回<code>true</code>
-This target hook returns <code>true</code> past the point in which new jump
-instructions could be created.  On machines that require a register for
-every jump such as the SHmedia ISA of SH5, this point would typically be
-reload, so this target hook should be defined to a function such as:
+<blockquote><p>该目标钩子在一个点之后返回<code>true</code>，该处应该创建新的跳转指令。在一些机器上，对每个跳转都要求使用寄存器，例如SH5的SHmedia ISA，该点通常为重载，所以该目标钩子应该被定义为这样的函数：
 
      <pre class="smallexample">          static bool
           cannot_modify_jumps_past_reload_p ()
@@ -727,31 +565,12 @@ reload, so this target hook should be defined to a function such as:
 
 <div class="defun">
 &mdash; Target Hook: bool <b>TARGET_BRANCH_TARGET_REGISTER_CALLEE_SAVED</b> (<var>bool after_prologue_epilogue_gen</var>)<var><a name="index-TARGET_005fBRANCH_005fTARGET_005fREGISTER_005fCALLEE_005fSAVED-4704"></a></var><br>
-<blockquote><p>分支目标寄存器优化，缺省的会将，被调用者保存的寄存器排除在外，其在当前函数中已经是
-
-      <p>Branch target register optimization will by default exclude callee-saved
-registers
-that are not already live during the current function; if this target hook
-returns true, they will be included.  The target code must than make sure
-that all target registers in the class returned by
-&lsquo;<samp><span class="samp">TARGET_BRANCH_TARGET_REGISTER_CLASS</span></samp>&rsquo; that might need saving are
-saved.  <var>after_prologue_epilogue_gen</var> indicates if prologues and
-epilogues have already been generated.  Note, even if you only return
-true when <var>after_prologue_epilogue_gen</var> is false, you still are likely
-to have to make special provisions in <code>INITIAL_ELIMINATION_OFFSET</code>
-to reserve space for caller-saved target registers. 
+<blockquote><p>分支目标寄存器优化，缺省的会将，被调用者保存的寄存器排除在外，其在当前函数中已经是不活跃的。如果目标钩子返回真，它们将被包含进来。目标代码必须确保在由&lsquo;<samp><span class="samp">TARGET_BRANCH_TARGET_REGISTER_CLASS</span></samp>&rsquo;返回的类别中的所有寄存器，如果需要保存的，会被保存。<var>after_prologue_epilogue_gen</var>指出是否序言和尾声已经被生成。注意，即使你只当<var>after_prologue_epilogue_gen</var>为假时返回真，你还可能要在<code>INITIAL_ELIMINATION_OFFSET</code>做出特定的预防，来为调用者保存的目标寄存器保留空间。
 </p></blockquote></div>
 
 <div class="defun">
 &mdash; Macro: <b>POWI_MAX_MULTS</b><var><a name="index-POWI_005fMAX_005fMULTS-4705"></a></var><br>
-<blockquote><p>如果被定义，该宏被解析为一个有符号整型C表达式，描述了浮点乘法的最大数。当该值被定义时，需要大于该数值的乘法
-If defined, this macro is interpreted as a signed integer C expression
-that specifies the maximum number of floating point multiplications
-that should be emitted when expanding exponentiation by an integer
-constant inline.  When this value is defined, exponentiation requiring
-more than this number of multiplications is implemented by calling the
-system library's <code>pow</code>, <code>powf</code> or <code>powl</code> routines. 
-The default value places no upper bound on the multiplication count. 
+<blockquote><p>如果被定义，该宏被解析为一个有符号整型C表达式，描述了浮点乘法的最大数。
 </p></blockquote></div>
 
 <div class="defun">
