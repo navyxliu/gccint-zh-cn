@@ -12,11 +12,11 @@
 @cindex Tree SSA
 @cindex Optimization infrastructure for GIMPLE
 
-在编译过程中，GCC使用了三种主要的中间语言来表示程序：GENERIC，GIMPLE和RTL。GENERIC是一种由每个前端生成的语言无关的表示。它用来作为解析器和优化器之间的接口。GENERIC是一种通用表示，能够表示GCC支持的所有语言程序。
+在编译过程中，GCC使用了三种主要的中间语言来表示程序：GENERIC，GIMPLE和RTL。GENERIC是一种由每个前端生成的语言无关的表示。它用来作为语法分析器和优化器之间的接口。GENERIC是一种通用表示，能够表示使用GCC支持的所有语言编写的程序。
 
 GIMPLE和RTL用于优化程序。GIMPLE用于目标和语言无关的优化（例如，内联，常数传播，尾调用消除，冗余消除等）。与GENERIC比较相似，GIMPLE是一种语言无关的树型表示。不过，与GENERIC不同的是GIMPLE的语法有更多的限制：表达式不包含3个以上的操作数（函数调用除外），它没有控制流程结构，并且具有副作用的表达式只允许出现在赋值语句的右端。详情参见描述GENERIC和GIMPLE的章节。
 
-这章描述在GIMPLE优化器（也被称为“树优化器”或者“中端”）中使用的数据结构和函数。特别是侧重于所有的宏，数据结构，函数和实现GIMPLE优化过程所需要的编程架构。
+本章描述在GIMPLE优化器（也称为“树优化器”或者“中端”）中使用的数据结构和函数。特别是侧重于所有的宏，数据结构，函数和实现GIMPLE优化过程所需要的编程架构。
 
 @menu
 * Annotations::    变量的属性。
@@ -29,9 +29,9 @@ GIMPLE和RTL用于优化程序。GIMPLE用于目标和语言无关的优化（�
 @section Annotations
 @cindex annotations
 
-优化器需要在优化过程中将属性与语句和变量关联起来。例如，我们需要知道一条语句属于哪个基本块，或者一个变量是否具有别名。所有这些属性被存储在叫做注解（annotation）的数据结构中，并被连接到 @code{struct tree_common} 的 @code{ann} 域中。
+优化器需要在优化过程中将属性和变量关联起来。例如，我们需要知道一条语句属于哪个基本块，或者一个变量是否具有别名。所有这些属性被存储在叫做注解（annotation）的数据结构中，并被连接到 @code{struct tree_common} 的 @code{ann} 域中。
 
-目前，我们定义了变量 (@code{var_ann_t}) 的注解。注解在 @file{tree-flow.h} 中有定义和文档描述。
+目前，我们定义了变量的注解 (@code{var_ann_t}) 。注解在 @file{tree-flow.h} 中有定义和文档描述。
 
 @node SSA操作数
 @section SSA操作数
@@ -41,23 +41,23 @@ GIMPLE和RTL用于优化程序。GIMPLE用于目标和语言无关的优化（�
 @findex update_stmt
 
 几乎每条GIMPLE语句都会包含对变量或者内存地址的引用。由于语句的形状和大小不同，
-它们的操作数也将会位于语句树中的不同点。为了便于访问语句的操作数，
+它们的操作数也将会位于语句树中的不同位置。为了便于访问语句的操作数，
 它们被组织到与语句的注解（annotation）相关联的一个列表中。
 操作数列表中的每个元素都是一个指向@code{VAR_DECL}, @code{PARM_DECL}
 或@code{SSA_NAME}树结点的指针。这就为检查和替换操作数提供了一种非常方便的方法。
 
 数据流分析和优化是在所有表示变量的树结点上完成的。扫描语句操作数时，
-将会考虑任何@code{SSA_VAR_P}返回非零的节点。但是，
+将会考虑所有@code{SSA_VAR_P}返回非零的节点。但是，
 并不是所有的@code{SSA_VAR_P}变量都使用同一种方式来处理。出于优化的目的，
-我们需要区分对局部标量的引用和对全局，静态，结构体，数组，别名变量的引用，等等。
-原因很简单，一方面是因为编译器能够为局部标量搜集完整的数据流信息；而另一方面，
-是因为全局变量可能会被函数调用所修改，
-并且也可能无法追踪数组或结构体的所有元素或域的信息，等等。
+我们需要区分对局部标量的引用和对全局变量，静态变量，结构体，数组，别名变量的引用，等等。
+原因很简单，一方面，编译器能够为局部标量收集完整的数据流信息；另一方面，
+全局变量可能会被函数调用所修改，
+另外，可能无法追踪数组所有的元素或结构体所有的域的信息，等等。
 
 操作数扫描器搜集两类操作数：实的（@dfn{real}）和虚的（@dfn{virtual}）。
 @code{is_gimple_reg}返回真的操作数被认为是实操作数，否则为一个虚操作数。
-我们还区分了它们的使用和定义。如果操作数的值被语句加载（例如，在赋值的右边），
-则为使用。如果语句给操作数赋于了一个新的值（例如，在赋值的左边），则为定义。
+我们还区分了它们的使用和定义。如果操作数的值被语句加载（例如，操作数在赋值的右边），
+则为使用。如果语句给操作数赋于了一个新的值（例如，操作数在赋值语句的左边），则为定义。
 
 虚操作数和实操作数还具有不同的数据流属性。
 实操作数是对它们表示的完整对象的明确引用。例如，给定
@@ -75,9 +75,9 @@ GIMPLE和RTL用于优化程序。GIMPLE用于目标和语言无关的优化（�
 实定义还被称作为@dfn{killing definition}（杀死定义）。
 类似的，对@code{b}的使用是读取了它的所有位。
 
-与此相反，虚操作数用于部分或者不明确的引用。这包括结构体，数组，全局和别名变量。
+与此相反，虚操作数用于具有部分或者不明确引用的变量。这包括结构体，数组，全局变量和别名变量。
 这些情况下，我们具有两种类型的定义。对于全局变量，结构体和数组，
-我们能够从语句中确定这些类型的变量是否具有一个killing definition。如果变量具有，
+我们能够从语句中确定这些类型的变量是否具有一个killing definition（杀死定义）。如果具有，
 则语句被标记为具有那个变量的必然定义（@dfn{must definition}）。但是，
 如果语句只是定义了变量的一部分（即，结构体中的一个域），
 或者如果我们知道语句可能会定义变量，但是不确定，
@@ -122,17 +122,17 @@ GIMPLE和RTL用于优化程序。GIMPLE用于目标和语言无关的优化（�
 @end smallexample
 
 注意@code{VDEF}操作数具有被引用变量的两个副本。
-这表明不是一个那个变量的killing definition。在这种情况下，
+这表明不是一个那个变量的killing definition（杀死定义）。在这种情况下，
 我们称它为一个可能定义（@dfn{may definition}）或者
 别名存储（@dfn{aliased store}）。
 当函数被转换为SSA形式的时候，@code{VDEF}操作数的第二个变量副本将会变得很重要。
-其将用于链接所有的non-killing definition，用来防止优化对它们做错误的假设。
+其将用于链接所有的非killing definition（杀死定义），用来防止优化对它们做错误的假设。
 
 当语句完成时，便会立刻通过调用@code{update_stmt}来更新操作数。
 如果语句元素通过@code{SET_USE}或@code{SET_DEF}被改变，
 则不需要进一步的动作（即，那些宏会处理好语句更新）。
 如果改变是通过直接操作语句的树，则必须在完成时调用@code{update_stmt}。
-调用@code{bsi_insert}程序中的任何一个，或者@code{bsi_replace}，
+调用@code{bsi_insert}例程中的任何一个，或者@code{bsi_replace}，
 都会隐式的调用@code{update_stmt}。
 
 @subsection 操作数迭代器和访问例程
@@ -140,14 +140,14 @@ GIMPLE和RTL用于优化程序。GIMPLE用于目标和语言无关的优化（�
 @cindex Operand Access Routines
 
 与操作数相关的代码都在@file{tree-ssa-operands.c}中。
-操作数被存储在每条语句的注解中并且可以通过操作数迭代器或者访问程序来访问。
+操作数被存储在每条语句的注解中并且可以通过操作数迭代器或者访问例程来访问。
 
-下列访问程序可以用来检查操作数：
+下列访问例程可以用来检查操作数：
 
 @enumerate
 @item @code{SINGLE_SSA_@{USE,DEF,TREE@}_OPERAND}: 
-这些访问程序将会返回NULL，除非确实有一个操作数匹配指定的标记。
-如果确实存在一个操作数，则操作数被作为@code{tree},@code{def_operand_p}或者
+这些访问例程将会返回NULL，除非恰好有一个操作数匹配指定的标志。
+如果恰好存在一个操作数，则操作数被作为@code{tree},@code{def_operand_p}或者
 @code{use_operand_p}返回。 
 
 @smallexample
@@ -156,7 +156,7 @@ use_operand_p u = SINGLE_SSA_USE_OPERAND (stmt, SSA_ALL_VIRTUAL_USES);
 def_operand_p d = SINGLE_SSA_DEF_OPERAND (stmt, SSA_OP_ALL_DEFS);
 @end smallexample
 
-@item @code{ZERO_SSA_OPERANDS}: 该宏返回真，如果没有操作数匹配指定的标记。 
+@item @code{ZERO_SSA_OPERANDS}: 该宏返回真，如果没有操作数匹配指定的标志。 
 
 @smallexample
 if (ZERO_SSA_OPERANDS (stmt, SSA_OP_ALL_VIRTUALS))
@@ -205,8 +205,8 @@ tree            FOR_EACH_SSA_TREE_OPERAND
 你需要声明一个你感兴趣的类型的变量，和一个用作循环控制变量的ssa_op_iter结构体
 
 @item 
-确定你想使用哪些操作数，并指定你所感兴趣的那些操作书的标记。
-它们在@file{tree-ssa-operands.h}中有所记载：
+确定你想使用哪些操作数，并指定你所感兴趣的那些操作数的标志。
+这些标志在@file{tree-ssa-operands.h}中声明：
 
 @smallexample
 #define SSA_OP_USE              0x01    /* @r{Real USE operands.}  */
@@ -239,7 +239,7 @@ tree            FOR_EACH_SSA_TREE_OPERAND
 
 宏@code{TREE}基本上与宏@code{USE}和@code{DEF}相同，
 除了通过@code{USE_FROM_PTR (use_p)}和@code{DEF_FROM_PTR (def_p)}进行的
-use或def dereference。因为我们不会使用操作数指针，所以可以混合use和def标记。
+use或def的解引用。因为我们不会使用操作数指针，所以可以混合use和def标志。
 
 @smallexample
   tree var;
@@ -268,9 +268,9 @@ use或def dereference。因为我们不会使用操作数指针，所以可以�
     @}
 @end smallexample
 
-代码中也有很多例子，同时在@file{tree-ssa-operands.h}中也有记载。
+代码中也有很多例子，同时在@file{tree-ssa-operands.h}中也有文档。
 
-还有一些stmt迭代器是用于关注PHI节点的。
+还有一些stmt迭代器是用于处理PHI节点的。
 
 @code{FOR_EACH_PHI_ARG}跟@code{FOR_EACH_SSA_USE_OPERAND}非常类似，
 只不过它是工作于@code{PHI}参数，而不是语句操作数。
@@ -294,8 +294,8 @@ FOR_EACH_PHI_ARG (use_p, phi_stmt, iter, SSA_OP_ALL_USES)
 @code{FOR_EACH_PHI_OR_STMT_@{USE,DEF@}}与
 @code{FOR_EACH_SSA_@{USE,DEF@}_OPERAND}非常类似，
 只不过它是作用于语句或者@code{PHI}节点。
-这些应该在使用单独的@code{FOR_EACH_PHI}和
-@code{FOR_EACH_SSA}程序效率低的时候再使用。
+这些宏可以在合适的时候使用，但是它们比单独使用@code{FOR_EACH_PHI}和
+@code{FOR_EACH_SSA}例程的效率要低。
 
 @smallexample
 FOR_EACH_PHI_OR_STMT_USE (use_operand_p, stmt, iter, flags)
@@ -313,8 +313,8 @@ FOR_EACH_PHI_OR_STMT_DEF (def_operand_p, phi, iter, flags)
 @cindex Immediate Uses
 
 现在immediate use（这个短语咋翻译？）信息总是可以被获得。
-使用immediate use迭代器，你可以检查任意@code{SSA_NAME}的每个使用。
-例如，要将@code{ssa_var}的每个使用改为@code{ssa_var2}的，
+使用immediate use迭代器，你可以检查任意@code{SSA_NAME}的所有使用。
+例如，要将@code{ssa_var}的所有使用改为@code{ssa_var2}，
 并且之后在每个stmt上调用fold_stmt：
 
 @smallexample
@@ -337,8 +337,8 @@ FOR_EACH_PHI_OR_STMT_DEF (def_operand_p, phi, iter, flags)
 
 如果确实要做改变，则必须要考虑到迭代器下没有被改变的事物，这时，
 可以使用@code{FOR_EACH_IMM_USE_STMT}和@code{FOR_EACH_IMM_USE_ON_STMT}迭代器。
-它们试图通过将语句的所有使用移动到一个被控制的位置并对它们进行迭代的方式，
-来保存使用列表的健全。然后优化就能够在所有的使用被处理完后来操作stmt。
+它们试图通过将语句的所有use移动到一个被控制的位置并对它们进行迭代的方式，
+来保证use列表的完整性。然后优化就能够在所有的use被处理完后来操作stmt。
 这比FAST版本的有点慢，因为它增加了一个占位元素并且必须对每条语句的列表进行排序。
 如果循环被提前终止，则该占位元素还必须被移除。
 宏@code{BREAK_FROM_IMM_USE_SAFE}用于做这个：

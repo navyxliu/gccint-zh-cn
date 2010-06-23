@@ -54,23 +54,23 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Tree-SSA.html#Tree-SSA">Tree SSA</a>
 
 <p><a name="index-operands-3045"></a><a name="index-virtual-operands-3046"></a><a name="index-real-operands-3047"></a><a name="index-update_005fstmt-3048"></a>
 几乎每条GIMPLE语句都会包含对变量或者内存地址的引用。由于语句的形状和大小不同，
-它们的操作数也将会位于语句树中的不同点。为了便于访问语句的操作数，
+它们的操作数也将会位于语句树中的不同位置。为了便于访问语句的操作数，
 它们被组织到与语句的注解（annotation）相关联的一个列表中。
 操作数列表中的每个元素都是一个指向<code>VAR_DECL</code>, <code>PARM_DECL</code>
 或<code>SSA_NAME</code>树结点的指针。这就为检查和替换操作数提供了一种非常方便的方法。
 
  <p>数据流分析和优化是在所有表示变量的树结点上完成的。扫描语句操作数时，
-将会考虑任何<code>SSA_VAR_P</code>返回非零的节点。但是，
+将会考虑所有<code>SSA_VAR_P</code>返回非零的节点。但是，
 并不是所有的<code>SSA_VAR_P</code>变量都使用同一种方式来处理。出于优化的目的，
-我们需要区分对局部标量的引用和对全局，静态，结构体，数组，别名变量的引用，等等。
-原因很简单，一方面是因为编译器能够为局部标量搜集完整的数据流信息；而另一方面，
-是因为全局变量可能会被函数调用所修改，
-并且也可能无法追踪数组或结构体的所有元素或域的信息，等等。
+我们需要区分对局部标量的引用和对全局变量，静态变量，结构体，数组，别名变量的引用，等等。
+原因很简单，一方面，编译器能够为局部标量收集完整的数据流信息；另一方面，
+全局变量可能会被函数调用所修改，
+另外，可能无法追踪数组所有的元素或结构体所有的域的信息，等等。
 
  <p>操作数扫描器搜集两类操作数：实的（<dfn>real</dfn>）和虚的（<dfn>virtual</dfn>）。
 <code>is_gimple_reg</code>返回真的操作数被认为是实操作数，否则为一个虚操作数。
-我们还区分了它们的使用和定义。如果操作数的值被语句加载（例如，在赋值的右边），
-则为使用。如果语句给操作数赋于了一个新的值（例如，在赋值的左边），则为定义。
+我们还区分了它们的使用和定义。如果操作数的值被语句加载（例如，操作数在赋值的右边），
+则为使用。如果语句给操作数赋于了一个新的值（例如，操作数在赋值语句的左边），则为定义。
 
  <p>虚操作数和实操作数还具有不同的数据流属性。
 实操作数是对它们表示的完整对象的明确引用。例如，给定
@@ -86,9 +86,9 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Tree-SSA.html#Tree-SSA">Tree SSA</a>
 实定义还被称作为<dfn>killing definition</dfn>（杀死定义）。
 类似的，对<code>b</code>的使用是读取了它的所有位。
 
- <p>与此相反，虚操作数用于部分或者不明确的引用。这包括结构体，数组，全局和别名变量。
+ <p>与此相反，虚操作数用于具有部分或者不明确引用的变量。这包括结构体，数组，全局变量和别名变量。
 这些情况下，我们具有两种类型的定义。对于全局变量，结构体和数组，
-我们能够从语句中确定这些类型的变量是否具有一个killing definition。如果变量具有，
+我们能够从语句中确定这些类型的变量是否具有一个killing definition（杀死定义）。如果具有，
 则语句被标记为具有那个变量的必然定义（<dfn>must definition</dfn>）。但是，
 如果语句只是定义了变量的一部分（即，结构体中的一个域），
 或者如果我们知道语句可能会定义变量，但是不确定，
@@ -129,38 +129,38 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Tree-SSA.html#Tree-SSA">Tree SSA</a>
      }
 </pre>
  <p>注意<code>VDEF</code>操作数具有被引用变量的两个副本。
-这表明不是一个那个变量的killing definition。在这种情况下，
+这表明不是一个那个变量的killing definition（杀死定义）。在这种情况下，
 我们称它为一个可能定义（<dfn>may definition</dfn>）或者
 别名存储（<dfn>aliased store</dfn>）。
 当函数被转换为SSA形式的时候，<code>VDEF</code>操作数的第二个变量副本将会变得很重要。
-其将用于链接所有的non-killing definition，用来防止优化对它们做错误的假设。
+其将用于链接所有的非killing definition（杀死定义），用来防止优化对它们做错误的假设。
 
  <p>当语句完成时，便会立刻通过调用<code>update_stmt</code>来更新操作数。
 如果语句元素通过<code>SET_USE</code>或<code>SET_DEF</code>被改变，
 则不需要进一步的动作（即，那些宏会处理好语句更新）。
 如果改变是通过直接操作语句的树，则必须在完成时调用<code>update_stmt</code>。
-调用<code>bsi_insert</code>程序中的任何一个，或者<code>bsi_replace</code>，
+调用<code>bsi_insert</code>例程中的任何一个，或者<code>bsi_replace</code>，
 都会隐式的调用<code>update_stmt</code>。
 
 <h4 class="subsection">13.2.1 操作数迭代器和访问例程</h4>
 
 <p><a name="index-Operand-Iterators-3049"></a><a name="index-Operand-Access-Routines-3050"></a>
 与操作数相关的代码都在<samp><span class="file">tree-ssa-operands.c</span></samp>中。
-操作数被存储在每条语句的注解中并且可以通过操作数迭代器或者访问程序来访问。
+操作数被存储在每条语句的注解中并且可以通过操作数迭代器或者访问例程来访问。
 
- <p>下列访问程序可以用来检查操作数：
+ <p>下列访问例程可以用来检查操作数：
 
      <ol type=1 start=1>
 <li><code>SINGLE_SSA_{USE,DEF,TREE}_OPERAND</code>:
-这些访问程序将会返回NULL，除非确实有一个操作数匹配指定的标记。
-如果确实存在一个操作数，则操作数被作为<code>tree</code>,<code>def_operand_p</code>或者
+这些访问例程将会返回NULL，除非恰好有一个操作数匹配指定的标志。
+如果恰好存在一个操作数，则操作数被作为<code>tree</code>,<code>def_operand_p</code>或者
 <code>use_operand_p</code>返回。
 
      <pre class="smallexample">          tree t = SINGLE_SSA_TREE_OPERAND (stmt, flags);
           use_operand_p u = SINGLE_SSA_USE_OPERAND (stmt, SSA_ALL_VIRTUAL_USES);
           def_operand_p d = SINGLE_SSA_DEF_OPERAND (stmt, SSA_OP_ALL_DEFS);
 </pre>
-     <li><code>ZERO_SSA_OPERANDS</code>: 该宏返回真，如果没有操作数匹配指定的标记。
+     <li><code>ZERO_SSA_OPERANDS</code>: 该宏返回真，如果没有操作数匹配指定的标志。
 
      <pre class="smallexample">          if (ZERO_SSA_OPERANDS (stmt, SSA_OP_ALL_VIRTUALS))
             return;
@@ -200,8 +200,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Tree-SSA.html#Tree-SSA">Tree SSA</a>
 </pre>
      <li>你需要声明一个你感兴趣的类型的变量，和一个用作循环控制变量的ssa_op_iter结构体
 
-     <li>确定你想使用哪些操作数，并指定你所感兴趣的那些操作书的标记。
-它们在<samp><span class="file">tree-ssa-operands.h</span></samp>中有所记载：
+     <li>确定你想使用哪些操作数，并指定你所感兴趣的那些操作数的标志。
+这些标志在<samp><span class="file">tree-ssa-operands.h</span></samp>中声明：
 
      <pre class="smallexample">          #define SSA_OP_USE              0x01    /* <span class="roman">Real USE operands.</span>  */
           #define SSA_OP_DEF              0x02    /* <span class="roman">Real DEF operands.</span>  */
@@ -231,7 +231,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Tree-SSA.html#Tree-SSA">Tree SSA</a>
 </pre>
  <p>宏<code>TREE</code>基本上与宏<code>USE</code>和<code>DEF</code>相同，
 除了通过<code>USE_FROM_PTR (use_p)</code>和<code>DEF_FROM_PTR (def_p)</code>进行的
-use或def dereference。因为我们不会使用操作数指针，所以可以混合use和def标记。
+use或def的解引用。因为我们不会使用操作数指针，所以可以混合use和def标志。
 
 <pre class="smallexample">       tree var;
        ssa_op_iter iter;
@@ -256,9 +256,9 @@ use或def dereference。因为我们不会使用操作数指针，所以可以�
            my_code;
          }
 </pre>
- <p>代码中也有很多例子，同时在<samp><span class="file">tree-ssa-operands.h</span></samp>中也有记载。
+ <p>代码中也有很多例子，同时在<samp><span class="file">tree-ssa-operands.h</span></samp>中也有文档。
 
- <p>还有一些stmt迭代器是用于关注PHI节点的。
+ <p>还有一些stmt迭代器是用于处理PHI节点的。
 
  <p><code>FOR_EACH_PHI_ARG</code>跟<code>FOR_EACH_SSA_USE_OPERAND</code>非常类似，
 只不过它是工作于<code>PHI</code>参数，而不是语句操作数。
@@ -280,8 +280,8 @@ use或def dereference。因为我们不会使用操作数指针，所以可以�
  <p><code>FOR_EACH_PHI_OR_STMT_{USE,DEF}</code>与
 <code>FOR_EACH_SSA_{USE,DEF}_OPERAND</code>非常类似，
 只不过它是作用于语句或者<code>PHI</code>节点。
-这些应该在使用单独的<code>FOR_EACH_PHI</code>和
-<code>FOR_EACH_SSA</code>程序效率低的时候再使用。
+这些宏可以在合适的时候使用，但是它们比单独使用<code>FOR_EACH_PHI</code>和
+<code>FOR_EACH_SSA</code>例程的效率要低。
 
 <pre class="smallexample">     FOR_EACH_PHI_OR_STMT_USE (use_operand_p, stmt, iter, flags)
        {
@@ -297,8 +297,8 @@ use或def dereference。因为我们不会使用操作数指针，所以可以�
 
 <p><a name="index-Immediate-Uses-3051"></a>
 现在immediate use（这个短语咋翻译？）信息总是可以被获得。
-使用immediate use迭代器，你可以检查任意<code>SSA_NAME</code>的每个使用。
-例如，要将<code>ssa_var</code>的每个使用改为<code>ssa_var2</code>的，
+使用immediate use迭代器，你可以检查任意<code>SSA_NAME</code>的所有使用。
+例如，要将<code>ssa_var</code>的所有使用改为<code>ssa_var2</code>，
 并且之后在每个stmt上调用fold_stmt：
 
 <pre class="smallexample">       use_operand_p imm_use_p;
@@ -319,8 +319,8 @@ use或def dereference。因为我们不会使用操作数指针，所以可以�
 
  <p>如果确实要做改变，则必须要考虑到迭代器下没有被改变的事物，这时，
 可以使用<code>FOR_EACH_IMM_USE_STMT</code>和<code>FOR_EACH_IMM_USE_ON_STMT</code>迭代器。
-它们试图通过将语句的所有使用移动到一个被控制的位置并对它们进行迭代的方式，
-来保存使用列表的健全。然后优化就能够在所有的使用被处理完后来操作stmt。
+它们试图通过将语句的所有use移动到一个被控制的位置并对它们进行迭代的方式，
+来保证use列表的完整性。然后优化就能够在所有的use被处理完后来操作stmt。
 这比FAST版本的有点慢，因为它增加了一个占位元素并且必须对每条语句的列表进行排序。
 如果循环被提前终止，则该占位元素还必须被移除。
 宏<code>BREAK_FROM_IMM_USE_SAFE</code>用于做这个：
