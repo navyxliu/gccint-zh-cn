@@ -4,68 +4,52 @@
 @c For copying conditions, see the file gcc.texi.
 
 @node Interface
-@chapter Interfacing to GCC Output
+@chapter GCC的输出接口（output interface）
 @cindex interfacing to GCC output
 @cindex run-time conventions
 @cindex function call conventions
 @cindex conventions, run-time
 
-GCC is normally configured to use the same function calling convention
-normally in use on the target system.  This is done with the
-machine-description macros described (@pxref{Target Macros}).
+GCC通常被配置为使用目标平台系统默认的函数调用规范（function calling convention）。
+这通过机器描述相应的宏（machine-description macros）来描述(@pxref{Target Macros})。
 
 @cindex unions, returning
 @cindex structures, returning
 @cindex returning structures and unions
-However, returning of structure and union values is done differently on
-some target machines.  As a result, functions compiled with PCC
-returning such types cannot be called from code compiled with GCC,
-and vice versa.  This does not cause trouble often because few Unix
-library routines return structures or unions.
+ 
+然而，在一些目标平台上，使用了不同的方法来处理结构体（struct）和联合体（union）的返回问题。
+由此带来的一个结果是PCC和GCC编译的返回这类类型的函数无法相互调用。
+这个问题不大，因为极少有Unix函数库例程（routine）返回这类类型。
 
-GCC code returns structures and unions that are 1, 2, 4 or 8 bytes
-long in the same registers used for @code{int} or @code{double} return
-values.  (GCC typically allocates variables of such types in
-registers also.)  Structures and unions of other sizes are returned by
-storing them into an address passed by the caller (usually in a
-register).  The target hook @code{TARGET_STRUCT_VALUE_RTX}
-tells GCC where to pass this address.
+对于长度为1、2、4、8字节的结构体/联合体，GCC通过跟 @code{int} 或 @code{double} 
+一样的寄存器返回。对于别的大小的结构体/联合体，GCC会把它存储在一个调用函数传递过来的（内存）地址中
+（这个地址一般都是存在寄存器中），目标机使用钩子（hook） @code{TARGET_STRUCT_VALUE_RTX}
+来告诉GCC如何传递这个内存地址。
 
-By contrast, PCC on most target machines returns structures and unions
-of any size by copying the data into an area of static storage, and then
-returning the address of that storage as if it were a pointer value.
-The caller must copy the data from that memory area to the place where
-the value is wanted.  This is slower than the method used by GCC, and
-fails to be reentrant.
+相反，绝大多数平台上的PCC是这么做的：为结构体/联合体类型的函数返回值开辟一个静态存储区，
+然后被调用函数（callee）把结果复制到静态存储区中，调用函数（caller）从静态区复制过来。
+这样做一来比GCC的方法效率低，二来不能重入。
 
-On some target machines, such as RISC machines and the 80386, the
-standard system convention is to pass to the subroutine the address of
-where to return the value.  On these machines, GCC has been
-configured to be compatible with the standard compiler, when this method
-is used.  It may not be compatible for structures of 1, 2, 4 or 8 bytes.
+在RISC、80386等一些目标机上，标准的调用规范是传递返回值的地址。
+当（平台默认）使用这种方法时，GCC被设置成和这些平台上标准编译器（standard compiler）一致。
+这可能和前面说的长度为1、2、4、8字节的结构体/联合体返回方式不兼容。
 
 @cindex argument passing
 @cindex passing arguments
-GCC uses the system's standard convention for passing arguments.  On
-some machines, the first few arguments are passed in registers; in
-others, all are passed on the stack.  It would be possible to use
-registers for argument passing on any machine, and this would probably
-result in a significant speedup.  But the result would be complete
-incompatibility with code that follows the standard convention.  So this
-change is practical only if you are switching to GCC as the sole C
-compiler for the system.  We may implement register argument passing on
-certain machines once we have a complete GNU system so that we can
-compile the libraries with GCC@.
+GCC使用系统的标准规范（standard convention）传递参数。
+在一些平台上，前几个参数是放在寄存器里面的，其余放在栈上。
+在所有平台上都使用寄存传递所有的参数是可能的，而且会带来速度提升。
+但这样就可能无法保证和使用标准规范的程序兼容了。
+所以只有当你把GCC当成这个系统唯一的C编译器的时候才可行。
+我们可能会在那些已经支持了全套GNU系统的平台上使用（全）寄存器参数传递，
+因为这个时候我们可以用GCC来编译系统库。
 
-On some machines (particularly the SPARC), certain types of arguments
-are passed ``by invisible reference''.  This means that the value is
-stored in memory, and the address of the memory location is passed to
-the subroutine.
+另外一些平台（特别是SPARC），特定类型的参数通过``invisible reference''传递。
+这意味着参数值存在内存中，地址传递给被调用函数（subroutine）。
 
 @cindex @code{longjmp} and automatic variables
-If you use @code{longjmp}, beware of automatic variables.  ISO C says that
-automatic variables that are not declared @code{volatile} have undefined
-values after a @code{longjmp}.  And this is all GCC promises to do,
-because it is very difficult to restore register variables correctly, and
-one of GCC's features is that it can put variables in registers without
-your asking it to.
+如果你要使用 @code{longjmp}, 小心自动变量（automatic variables）。
+ISO C 中定义没有声明为 @code{volatile} 的自动变量在 @code{longjmp} 之后的值
+是未定义（undefine）的。这也是GCC承诺的做法，因为正确的存储寄存器变量难度太大。
+而且GCC的一个特性（feature）就是自动把变量放到寄存器中，即使你（被编译的代码）没有指定。
+

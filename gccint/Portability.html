@@ -21,15 +21,13 @@ Texts being (a) (see below), and with the Back-Cover Texts being (b)
 (see below).  A copy of the license is included in the section entitled
 ``GNU Free Documentation License''.
 
-(a) The FSF's Front-Cover Text is:
+(a) The FSF's 封面文字为:
 
-     A GNU Manual
+     GNU手册
 
 (b) The FSF's Back-Cover Text is:
 
-     You have freedom to copy and modify this GNU Manual, like GNU
-     software.  Copies published by the Free Software Foundation raise
-     funds for GNU development.-->
+     你有复制和修改本GNU手册的自由，如同你拥有的GNU软件的自由一样。FSF出版此拷贝的收入用于资助GNU发展。-->
 <meta http-equiv="Content-Style-Type" content="text/css">
 <style type="text/css"><!--
   pre.display { font-family:inherit }
@@ -53,36 +51,28 @@ Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
 <hr>
 </div>
 
-<h2 class="chapter">2 GCC and Portability</h2>
+<h2 class="chapter">2 GCC的可移植性</h2>
 
 <p><a name="index-portability-2"></a><a name="index-GCC-and-portability-3"></a>
-GCC itself aims to be portable to any machine where <code>int</code> is at least
-a 32-bit type.  It aims to target machines with a flat (non-segmented) byte
-addressed data address space (the code address space can be separate). 
-Target ABIs may have 8, 16, 32 or 64-bit <code>int</code> type.  <code>char</code>
-can be wider than 8 bits.
+GCC自身移植的目标是任何 <code>int</code> 长度不小于32位的机器。
+GCC要求的数据内存地址空间是以字节为单位的线性（flat）非分段的地址空间，代码地址空间没有这个限制。
+目标机的ABI可以是8、16、32或64-bit <code>int</code> 类型。 <code>char</code> 类型可以大于8bit。
 
- <p>GCC gets most of the information about the target machine from a machine
-description which gives an algebraic formula for each of the machine's
-instructions.  This is a very clean way to describe the target.  But when
-the compiler needs information that is difficult to express in this
-fashion, ad-hoc parameters have been defined for machine descriptions. 
-The purpose of portability is to reduce the total work needed on the
-compiler; it was not of interest for its own sake.
+ <p>GCC从机器描述文件（Machine Description，MD）中获取目标机的信息。
+MD文件里包含目标机支持的指令的代数规则（algebraic formula）。
+这种描述目标机的方法很清晰，但是有时候不足以描述目标机的所有信息。
+这个时候就定义一些拼凑的（ad-hoc）参数来填补。
+可移植性的目的是为了减少编译器的开发负担，而不是为了可移植而可移植。
 
- <p><a name="index-endianness-4"></a><a name="index-autoincrement-addressing_002c-availability-5"></a><a name="index-abort-6"></a>GCC does not contain machine dependent code, but it does contain code
-that depends on machine parameters such as endianness (whether the most
-significant byte has the highest or lowest address of the bytes in a word)
-and the availability of autoincrement addressing.  In the RTL-generation
-pass, it is often necessary to have multiple strategies for generating code
-for a particular kind of syntax tree, strategies that are usable for different
-combinations of parameters.  Often, not all possible cases have been
-addressed, but only the common ones or only the ones that have been
-encountered.  As a result, a new target may require additional
-strategies.  You will know
-if this happens because the compiler will call <code>abort</code>.  Fortunately,
-the new strategies can be added in a machine-independent fashion, and will
-affect only the target machines that need them.
+ <p><a name="index-endianness-4"></a><a name="index-autoincrement-addressing_002c-availability-5"></a><a name="index-abort-6"></a>
+GCC本身没有任何特定平台相关的代码，但是它确实有一些代码依赖于机器的参数特性（parameters），
+例如大头格式还是小头格式、是否支持递增寻址。
+在RTL生成（RTL-generation）的pass中，
+往往需要多个策略（strategies）来为一个特定的语法树（syntax tree）生成代码。
+目前普遍的和一些特定的参数组合能被正确处理，不是所有可能的参数组合都被考虑到了。
+一个新的目标平台（target）可能需要额外的处理策略。
+你可以通过GCC是否异常退出（<code>abort</code>）来判断这一点。
+幸运的是新的策略可以以一种机器无关的方式加入，而且仅仅影响使用这个策略的目标平台。
 
 <!-- Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, -->
 <!-- 1999, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc. -->

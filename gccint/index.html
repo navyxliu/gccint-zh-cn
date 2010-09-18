@@ -19,15 +19,13 @@ Texts being (a) (see below), and with the Back-Cover Texts being (b)
 (see below).  A copy of the license is included in the section entitled
 "GNU Free Documentation License".
 
-(a) The FSF's Front-Cover Text is:
+(a) The FSF's 封面文字为:
 
-     A GNU Manual
+     GNU手册
 
 (b) The FSF's Back-Cover Text is:
 
-     You have freedom to copy and modify this GNU Manual, like GNU
-     software.  Copies published by the Free Software Foundation raise
-     funds for GNU development.-->
+     你有复制和修改本GNU手册的自由，如同你拥有的GNU软件的自由一样。FSF出版此拷贝的收入用于资助GNU发展。-->
 <meta http-equiv="Content-Style-Type" content="text/css">
 <style type="text/css"><!--
   pre.display { font-family:inherit }
@@ -42,7 +40,8 @@ Texts being (a) (see below), and with the Back-Cover Texts being (b)
 --></style>
 </head>
 <body>
-This file documents the internals of the GNU compilers.
+本文档记录GNU编译器的内部实现细节。
+<!-- This file documents the internals of the GNU compilers. -->
  <pre class="sp">
 
 </pre>
@@ -58,15 +57,13 @@ Texts being (a) (see below), and with the Back-Cover Texts being (b)
 (see below).  A copy of the license is included in the section entitled
 &ldquo;GNU Free Documentation License&rdquo;.
 
- <p>(a) The FSF's Front-Cover Text is:
+ <p>(a) The FSF's 封面文字为:
 
- <p>A GNU Manual
+ <p>GNU手册
 
  <p>(b) The FSF's Back-Cover Text is:
 
- <p>You have freedom to copy and modify this GNU Manual, like GNU
-     software.  Copies published by the Free Software Foundation raise
-     funds for GNU development.
+ <p>你有复制和修改本GNU手册的自由，如同你拥有的GNU软件的自由一样。FSF出版此拷贝的收入用于资助GNU发展。
  <pre class="sp">
 
 </pre>
@@ -76,8 +73,8 @@ Texts being (a) (see below), and with the Back-Cover Texts being (b)
 <ul>
 <li><a href="index.html#toc_Top">Introduction</a></li>
 <li><a href="index.html#toc_Contributing">1 Contributing to GCC Development</a></li>
-<li><a href="index.html#toc_Portability">2 GCC and Portability</a></li>
-<li><a href="index.html#toc_Interface">3 Interfacing to GCC Output</a></li>
+<li><a href="index.html#toc_Portability">2 GCC的可移植性</a></li>
+<li><a href="index.html#toc_Interface">3 GCC的输出接口（output interface）</a></li>
 <li><a href="index.html#toc_Libgcc">4 The GCC low-level runtime library</a></li>
 <li><a href="index.html#toc_Languages">5 Language Front Ends in GCC</a></li>
 <li><a href="index.html#toc_Source-Tree">6 Source Tree Structure and Build System</a></li>
@@ -115,8 +112,8 @@ Texts being (a) (see below), and with the Back-Cover Texts being (b)
 <ul>
 <li><a name="toc_Top" href="index.html#Top">Introduction</a>
 <li><a name="toc_Contributing" href="Contributing.html#Contributing">1 Contributing to GCC Development</a>
-<li><a name="toc_Portability" href="Portability.html#Portability">2 GCC and Portability</a>
-<li><a name="toc_Interface" href="Interface.html#Interface">3 Interfacing to GCC Output</a>
+<li><a name="toc_Portability" href="Portability.html#Portability">2 GCC的可移植性</a>
+<li><a name="toc_Interface" href="Interface.html#Interface">3 GCC的输出接口（output interface）</a>
 <li><a name="toc_Libgcc" href="Libgcc.html#Libgcc">4 The GCC low-level runtime library</a>
 <ul>
 <li><a href="Integer-library-routines.html#Integer-library-routines">4.1 Routines for integer arithmetic</a>
@@ -651,60 +648,60 @@ Up:&nbsp;<a rel="up" accesskey="u" href="../index.html#DIR">(DIR)</a>
 <h2 class="unnumbered">Introduction</h2>
 
 <p><a name="index-introduction-1"></a>
-This manual documents the internals of the GNU compilers, including
-how to port them to new targets and some information about how to
-write front ends for new languages.  It corresponds to the compilers
-version {No value for `version-GCC'}.  The use of the GNU compilers is documented in a
-separate manual.  See <a href="../gcc/index.html#Top">Introduction</a>.
+本手册描述GNU编译器的内部实现细节，包括如何将GNU编译器移植到新的目标机（target）
+以及如何为新语言编写前端（front end）。本手册针对GCC 4.5.x版本。
+<!-- @ifset VERSION_PACKAGE -->
+<!-- @value{VERSION_PACKAGE} -->
+<!-- @end ifset -->
+<!-- version @value{version-GCC}. -->
+GNU编译器的使用说明参见《GCC手册》
+See <a href="../gcc/index.html#Top">Introduction</a>.
 
- <p>This manual is mainly a reference manual rather than a tutorial.  It
-discusses how to contribute to GCC (see <a href="Contributing.html#Contributing">Contributing</a>), the
-characteristics of the machines supported by GCC as hosts and targets
-(see <a href="Portability.html#Portability">Portability</a>), how GCC relates to the ABIs on such systems
-(see <a href="Interface.html#Interface">Interface</a>), and the characteristics of the languages for
-which GCC front ends are written (see <a href="Languages.html#Languages">Languages</a>).  It then
-describes the GCC source tree structure and build system, some of the
-interfaces to GCC front ends, and how support for a target system is
-implemented in GCC.
+ <p>本手册适合作为参考书而不是学习教程。本书讨论的内容有：如何贡献自己的力量(see <a href="Contributing.html#Contributing">Contributing</a>),
+GCC支持的宿主机和目标机的特点(see <a href="Portability.html#Portability">Portability</a>),
+GCC如何与宿主机、目标机上的操作系统的ABI交互(see <a href="Interface.html#Interface">Interface</a>),
+以及GCC支持的语言前端的特点。(see <a href="Languages.html#Languages">Languages</a>). 
+之后描述了GCC的源代码树组织和构建系统（build system），
+GCC前端的一些接口，以及GCC如何对目标机（后端）进行支持。
 
- <p>Additional tutorial information is linked to from
+ <p>更多教程，请参考链接
 <a href="http://gcc.gnu.org/readings.html">http://gcc.gnu.org/readings.html</a>.
 
 <ul class="menu">
-<li><a accesskey="1" href="Contributing.html#Contributing">Contributing</a>:     How to contribute to testing and developing GCC. 
-<li><a accesskey="2" href="Portability.html#Portability">Portability</a>:      Goals of GCC's portability features. 
-<li><a accesskey="3" href="Interface.html#Interface">Interface</a>:        Function-call interface of GCC output. 
-<li><a accesskey="4" href="Libgcc.html#Libgcc">Libgcc</a>:           Low-level runtime library used by GCC. 
-<li><a accesskey="5" href="Languages.html#Languages">Languages</a>:        Languages for which GCC front ends are written. 
-<li><a accesskey="6" href="Source-Tree.html#Source-Tree">Source Tree</a>:      GCC source tree structure and build system. 
-<li><a accesskey="7" href="Testsuites.html#Testsuites">Testsuites</a>:       GCC testsuites. 
-<li><a accesskey="8" href="Options.html#Options">Options</a>:          Option specification files. 
-<li><a accesskey="9" href="Passes.html#Passes">Passes</a>:           Order of passes, what they do, and what each file is for. 
-<li><a href="GENERIC.html#GENERIC">GENERIC</a>:          Language-independent representation generated by Front Ends
-<li><a href="GIMPLE.html#GIMPLE">GIMPLE</a>:           Tuple representation used by Tree SSA optimizers
-<li><a href="Tree-SSA.html#Tree-SSA">Tree SSA</a>:         Analysis and optimization of GIMPLE
-<li><a href="RTL.html#RTL">RTL</a>:              Machine-dependent low-level intermediate representation. 
-<li><a href="Control-Flow.html#Control-Flow">Control Flow</a>:     Maintaining and manipulating the control flow graph. 
-<li><a href="Loop-Analysis-and-Representation.html#Loop-Analysis-and-Representation">Loop Analysis and Representation</a>:  Analysis and representation of loops
-<li><a href="Machine-Desc.html#Machine-Desc">Machine Desc</a>:     How to write machine description instruction patterns. 
-<li><a href="Target-Macros.html#Target-Macros">Target Macros</a>:    How to write the machine description C macros and functions. 
-<li><a href="Host-Config.html#Host-Config">Host Config</a>:      Writing the <samp><span class="file">xm-</span><var>machine</var><span class="file">.h</span></samp> file. 
-<li><a href="Fragments.html#Fragments">Fragments</a>:        Writing the <samp><span class="file">t-</span><var>target</var></samp> and <samp><span class="file">x-</span><var>host</var></samp> files. 
-<li><a href="Collect2.html#Collect2">Collect2</a>:         How <code>collect2</code> works; how it finds <code>ld</code>. 
-<li><a href="Header-Dirs.html#Header-Dirs">Header Dirs</a>:      Understanding the standard header file directories. 
-<li><a href="Type-Information.html#Type-Information">Type Information</a>:  GCC's memory management; generating type information. 
-<li><a href="Plugins.html#Plugins">Plugins</a>:          Extending the compiler with plugins.
+<li><a accesskey="1" href="Contributing.html#Contributing">Contributing</a>:     如何在GCC的开发和测试过程中贡献自己的力量。
+<li><a accesskey="2" href="Portability.html#Portability">Portability</a>:      GCC可移植性的目标。
+<li><a accesskey="3" href="Interface.html#Interface">Interface</a>:        GCC输出（支持）的函数调用界面。 <!-- Function-call interface of GCC output. -->
+<li><a accesskey="4" href="Libgcc.html#Libgcc">Libgcc</a>:           GCC使用的低级运行时库。<!-- Low-level runtime library used by GCC. -->
+<li><a accesskey="5" href="Languages.html#Languages">Languages</a>:        GCC支持的语言前端。
+<li><a accesskey="6" href="Source-Tree.html#Source-Tree">Source Tree</a>:      GCC的源代码组织和构建系统介绍。
+<li><a accesskey="7" href="Testsuites.html#Testsuites">Testsuites</a>:       GCC测试套件。
+<li><a accesskey="8" href="Options.html#Options">Options</a>:          选项定义文件。
+<li><a accesskey="9" href="Passes.html#Passes">Passes</a>:           各个pass的次序，功能，对应的源代码文件。
+<li><a href="GENERIC.html#GENERIC">GENERIC</a>:          前端生成的语言无关的IR。
+<li><a href="GIMPLE.html#GIMPLE">GIMPLE</a>:           Tree SSA优化器使用的IR。
+<li><a href="Tree-SSA.html#Tree-SSA">Tree SSA</a>:         GIMPLE上的分析和优化。
+<li><a href="RTL.html#RTL">RTL</a>:              平台相关的低级IR。
+<li><a href="Control-Flow.html#Control-Flow">Control Flow</a>:     维护、操作CFG（控制流图）。
+<li><a href="Loop-Analysis-and-Representation.html#Loop-Analysis-and-Representation">Loop Analysis and Representation</a>:  循环分析和优化
+<li><a href="Machine-Desc.html#Machine-Desc">Machine Desc</a>:     介绍怎样编写机器描述的指令模式（Instruction Pattern）。
+<li><a href="Target-Macros.html#Target-Macros">Target Macros</a>:    介绍怎样编写机器描述相关的（C语言的）宏和函数。
+<li><a href="Host-Config.html#Host-Config">Host Config</a>:      怎样写 <samp><span class="file">xm-</span><var>machine</var><span class="file">.h</span></samp> 文件. 
+<li><a href="Fragments.html#Fragments">Fragments</a>:        怎样写 <samp><span class="file">t-</span><var>target</var></samp> 和 <samp><span class="file">x-</span><var>host</var></samp> 文件. 
+<li><a href="Collect2.html#Collect2">Collect2</a>:         <code>collect2</code> 工作原理；如何查找 <code>ld</code>. 
+<li><a href="Header-Dirs.html#Header-Dirs">Header Dirs</a>:      标准头文件目录介绍。
+<li><a href="Type-Information.html#Type-Information">Type Information</a>:  GCC的内存管理；生成类型信息（Type Information）。
+<li><a href="Plugins.html#Plugins">Plugins</a>:          通过插件（Plugin）来扩展GCC。
 
-<li><a href="Funding.html#Funding">Funding</a>:          How to help assure funding for free software. 
-<li><a href="GNU-Project.html#GNU-Project">GNU Project</a>:      The GNU Project and GNU/Linux.
+<li><a href="Funding.html#Funding">Funding</a>:          如何资助自由软件。
+<li><a href="GNU-Project.html#GNU-Project">GNU Project</a>:      GNU项目和GNU/Linux.
 
-<li><a href="Copying.html#Copying">Copying</a>:          GNU General Public License says
-                    how you can copy and share GCC. 
-<li><a href="GNU-Free-Documentation-License.html#GNU-Free-Documentation-License">GNU Free Documentation License</a>:  How you can copy and share this manual. 
-<li><a href="Contributors.html#Contributors">Contributors</a>:     People who have contributed to GCC.
+<li><a href="Copying.html#Copying">Copying</a>:          GNU的GPL，规定了你复制和分享GCC的权力和义务。
 
-<li><a href="Option-Index.html#Option-Index">Option Index</a>:     Index to command line options. 
-<li><a href="Concept-Index.html#Concept-Index">Concept Index</a>:    Index of concepts and symbol names. 
+<li><a href="GNU-Free-Documentation-License.html#GNU-Free-Documentation-License">GNU Free Documentation License</a>:  如何复制和分享此文档。
+<li><a href="Contributors.html#Contributors">Contributors</a>:     GCC贡献者名单。
+
+<li><a href="Option-Index.html#Option-Index">Option Index</a>:     命令行选项的索引。
+<li><a href="Concept-Index.html#Concept-Index">Concept Index</a>:    概念和符号名字的索引。
 </ul>
 
 <!-- Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, -->
