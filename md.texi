@@ -22,15 +22,15 @@
 * RTL模板::             RTL模板定义了什么样的insn与一个模式匹配。
 * 输出模板::            输出模板说明了如何从这样一个insn来生成汇编代码。
 * 输出语句::            更一般的情况, 编写C代码来输出汇编代码。
-* Predicates::          控制一个insn可以使用什么类型的操作数。
-* Constraints::         对操作数的选择进行微调。
+* 断言::          	控制一个insn可以使用什么类型的操作数。
+* 约束::         	对操作数的选择进行微调。
 * 标准名字::            代码生成时使用的模式名字。
 * 指令模式顺序::        不同模式顺序所产生的作用。
 * 依赖指令模式::        拥有一个指令模式，可能还会需要另一个。
 * 跳转指令模式::        针对跳转insn的指令模式的特殊考虑。
 * 循环指令模式::        如何为特定的循环insn定义模式。
 * Insn规范化::          指令的规范化。
-* 扩展定义::            为一个标准操作生成一个RTL insn序列。
+* 定义扩展::            为一个标准操作生成一个RTL insn序列。
 * Insn拆分::            拆分指令为多条指令。
 * 包含指令模式::        在机器描述中包含模式。
 * 窥孔定义::            定义机器特定的窥孔优化。
@@ -58,24 +58,13 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 
 @end enumerate
 
-生成过程，只与insn的名字有关系，包括命名的 @code{define_insn} 或者 
-@code{define_expand}。编译器会选择恰当名字的模式，并且根据这章后面的文档来使用
-操作数，而不需要关心RTL模板或者操作数constraint。注意，编译器所寻找的名字是被硬编码
-进编译器中的——它将忽略未命名的模式和名字无法识别的模式，但是，如果你没有提供所
-需要的命名模式，它将异常中断（abort）。
+生成过程，只与insn的名字有关系，包括命名的 @code{define_insn} 或者 @code{define_expand}。编译器会选择恰当名字的模式，并且根据这章后面的文档来使用 操作数，而不需要关心RTL模板或者操作数constraint。注意，编译器所寻找的名字是被硬编码 进编译器中的——它将忽略未命名的模式和名字无法识别的模式，但是，如果你没有提供所 需要的命名模式，它将异常中断（abort）。
 
-如果使用了 @code{define_insn} ，所给出的模版将会被插入到insn列表中。如果使用了
-@code{define_expand} ，将会发生三种情况之一，取决于条件逻辑。条件逻辑可以手动为
-insn列表创建一个新的insn，并且调用 @code{DONE}。对于某些命名模式，它可以调用
- @code{FAIL} 来告诉编译器使用一种备用方式完成任务。如果既没有调用DONE也没有调用
- @code{FAIL}，在模式中所给出的模版将会被插入，就像 @code{define_insn}一样。
+如果使用了 @code{define_insn} ，所给出的模版将会被插入到insn列表中。如果使用了 @code{define_expand} ，将会发生三种情况之一，取决于条件逻辑。条件逻辑可以手动为 insn列表创建一个新的insn，并且调用 @code{DONE}。对于某些命名模式，它可以调用 @code{FAIL} 来告诉编译器使用一种备用方式完成任务。如果既没有调用DONE也没有调用 @code{FAIL}，在模式中所给出的模版将会被插入，就像 @code{define_insn}一样。
 
-一旦生成insn列表，各种优化过程便在insn列表中转换，替代和重排insn。例如，
-@code{define_split} 和 @code{define_peephole} 模式便在这里被使用。
+一旦生成insn列表，各种优化过程便在insn列表中转换，替代和重排insn。例如， @code{define_split} 和 @code{define_peephole} 模式便在这里被使用。
 
-最后，insn列表的RTL被用来匹配 @code{define_insn} 模式中的RTL模版，并且那些模式
-被用来生成最终的汇编代码。这时，由于不需要关心名字，所以每个命名的 
-@code{define_insn}跟没有命名没有区别。
+最后，insn列表的RTL被用来匹配 @code{define_insn} 模式中的RTL模版，并且那些模式 被用来生成最终的汇编代码。这时，由于不需要关心名字，所以每个命名的 @code{define_insn}跟没有命名没有区别。
 
 @node 指令模式
 @section 指令模式的方方面面
@@ -187,11 +176,9 @@ insn列表创建一个新的insn，并且调用 @code{DONE}。对于某些命名
 @cindex recognizing insns
 @cindex insns, recognizing
 
-RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们的操作数。对于命名的模
-式，RTL模板还说明了如何根据特定的操作数来构建一个insn。
+RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们的操作数。对于命名的模 式，RTL模板还说明了如何根据特定的操作数来构建一个insn。
 
-构建insn涉及到替换指定操作数到模板。匹配insn涉及到测定被匹配insn的操作数值。这
-些匹配和替换操作数的行为都是由专门的表达式类型来控制。
+构建insn涉及到替换指定操作数到模板。匹配insn涉及到测定被匹配insn的操作数值。这 些匹配和替换操作数的行为都是由专门的表达式类型来控制。
 
 @table @code
 @findex match_operand
@@ -206,19 +193,11 @@ RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们�
 使用的操作数编号，只有在 @code{match_dup} 表达式中才会具有比其它操作数编号更高
 的值。
 
-@var{predicate} 为一个字符串，为一个函数的名字，其接受两个参数，一个表达式和一个
-机器模式。@pxref{Predicates}。在匹配过程中，函数将会被调用，使用假定的操作数作为
-表达式并且 @var{m} 作为机器模式参数（如果 @var{m} 没有被指定，则使用 
-@code{VOIDmode}，这通常会使得 @var{predicate} 可以接受任何机器模式）。如果其返
-回0，则该指令模式匹配失败。@var{predicate} 可以为一个空字符串；这意味着不对操作
-数作测试，这样出现在该位置的任何都是有效的。
+@var{predicate} 为一个字符串，为一个函数的名字，其接受两个参数，一个表达式和一个 机器模式。@pxref{断言}。在匹配过程中，函数将会被调用，使用假定的操作数作为 表达式并且 @var{m} 作为机器模式参数（如果 @var{m} 没有被指定，则使用 @code{VOIDmode}，这通常会使得 @var{predicate} 可以接受任何机器模式）。如果其返 回0，则该指令模式匹配失败。@var{predicate} 可以为一个空字符串；这意味着不对操作 数作测试，这样出现在该位置的任何都是有效的。
 
-大多时候，@var{predicate} 将会拒绝 @var{m} 之外的机器模式——但并不总是这样。例
-如，predicate @code{address_operand} 使用 @var{m} 作为内存引用的机器模式。许多predicate
-接受 @code{const_int} 节点，即使它们的机器模式为 @code{VOIDmode}。
+大多时候，@var{predicate} 将会拒绝 @var{m} 之外的机器模式——但并不总是这样。例 如，predicate @code{address_operand} 使用 @var{m} 作为内存引用的机器模式。许多predicate 接受 @code{const_int} 节点，即使它们的机器模式为 @code{VOIDmode}。
 
-@var{constraint} 控制重载以及针对一个值选择最好的寄存器类别来使用，将在后面解释
-（@pxref{约束条件}）。如果constraint为空字符串，则可以忽略掉。
+@var{constraint} 控制重载以及针对一个值选择最好的寄存器类别来使用，将在后面解释 （@pxref{约束条件}）。如果constraint为空字符串，则可以忽略掉。
 
 人们经常弄不清楚constraint和predicate的区别。predicate帮助决定一个给定的insn是否匹配指令模式。constraint在该决定中不发挥作用；替代的，其控制已经匹配的insn的各种决定。
 
@@ -251,7 +230,7 @@ RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们�
 
 注意 @code{match_dup} 不要用来告诉编译器特定寄存器被用于两个操作数（例如：
 @code{add} 将一个寄存器加到另一个之上；第二个寄存器即为输入操作数，同样也为输
-出操作数）。可以为此使用匹配constraint（@pxref{简单constraint}）。@code{match_dup}
+出操作数）。可以为此使用匹配constraint（@pxref{简单约束}）。@code{match_dup}
 是用于一个操作数在模板中的两个地方被使用的情况，例如一条指令同时计算商和余数，
 其中操作码接受两个输入操作数，但是RTL模板不得不引用它们两次；一次用于求商指令
 模式，一次用于求余数指令模式。
@@ -513,31 +492,17 @@ constraint选择的序号（0为第一个，1位第二个选择，以此类推�
 @end group
 @end smallexample
 
-@node Predicates
-@section Predicates
-@cindex predicates
-@cindex operand predicates
-@cindex operator predicates
+@node 断言
+@section 断言
+@cindex 断言
+@cindex 操作数断言
+@cindex 操作符断言
 
-predicate用于确定一个@code{match_operand}或者
-@code{match_operator}表达式是否匹配，
-以及周围的指令模式是否会被用于那些操作数的组合。
-GCC有许多机器无关的predicate，并且你可以根据需要来定义机器特定的predicate。
-按照惯例，与@code{match_operand}一起使用的predicate的名字以@samp{_operand}结尾，
-与@code{match_operator}一起使用的predicate的名字以@samp{_operator}结尾。
+断言用于确定一个@code{match_operand}或者 @code{match_operator}表达式是否匹配， 以及周围的指令模式是否会被用于那些操作数的组合。 GCC有许多机器无关的predicate，并且你可以根据需要来定义机器特定的断言。 按照惯例，与@code{match_operand}一起使用的predicate的名字以@samp{_operand}结尾， 与@code{match_operator}一起使用的predicate的名字以@samp{_operator}结尾。
 
-所有predicate（从数学意义上）都是具有两个参数的布尔函数：
-指令模式中在那个位置上被考虑的RTL表达式，
-以及@code{match_operand}或@code{match_operator}所指定的机器模式。
-在这一节里，第一个参数被称为@var{op}，第二个参数被称为@var{mode}。
-predicate可以作为普通的具有两个参数的函数，从C中调用；
-这在输出模板或者其它机器特定的代码中，很有用处。
+所有断言（从数学意义上）都是具有两个参数的布尔函数： 指令模式中在那个位置上被考虑的RTL表达式， 以及@code{match_operand}或@code{match_operator}所指定的机器模式。 在这一节里，第一个参数被称为@var{op}，第二个参数被称为@var{mode}。 predicate可以作为普通的具有两个参数的函数，从C中调用； 这在输出模板或者其它机器特定的代码中，很有用处。
 
-操作数predicate可以允许硬件实际上无法接受的操作数，
-只要constraint能够为reload提供能力，来修复它们（参见@ref{Constraints}）。
-然而，只要predicate指定的机器指令需求尽可能的严密，
-GCC通常便会生成更好的代码。reload不能修复必须为常量的操作数（立即数）；
-你必须使用只允许常量的predicate，或者使用额外的条件来加强必要条件。
+操作数断言可以允许硬件实际上无法接受的操作数， 只要约束能够为reload提供能力，来修复它们（@pxref{约束}）。 然而，只要断言指定的机器指令需求尽可能的严密， GCC通常便会生成更好的代码。reload不能修复必须为常量的操作数（立即数）； 你必须使用只允许常量的断言，或者使用额外的条件来加强必要条件。
 
 @cindex predicates and machine modes
 @cindex normal predicates
@@ -810,63 +775,60 @@ RTL表达式被首先求值，不要重复检查代码块中的在RTL表达式�
 @c when the INTERNALS flag is clear.  Passages that require the internals
 @c manual's context are conditionalized to appear only in the internals manual.
 @ifset INTERNALS
-@node Constraints
-@section 操作数的constraint
-@cindex operand constraints
-@cindex constraints
+@node 约束
+@section 操作数的约束
+@cindex 操作数的约束
+@cindex 约束
 
-在指令模式中的每个@code{match_operand}都可以指定操作数所允许的constraint。
-constraint允许你在由predicate所允许的操作数集里进行微调匹配。
+在指令模式中的每个@code{match_operand}都可以指定操作数所允许的约束。 约束允许你在由断言所允许的操作数集里进行微调匹配。
 
 
 @end ifset
 @ifclear INTERNALS
-@node Constraints
+@node 约束
 @section @code{asm}操作数的constraint条件
-@cindex operand constraints, @code{asm}
-@cindex constraints, @code{asm}
-@cindex @code{asm} constraints
+@cindex 操作数的约束, @code{asm}
+@cindex 约束, @code{asm}
+@cindex @code{asm} 约束
 
 Here are specific details on what constraint letters you can use with
 @code{asm} operands.
 @end ifclear
-constraint可以告诉一个操作数是否可以在寄存器中，以及哪种寄存器；
+约束可以告诉一个操作数是否可以在寄存器中，以及哪种寄存器；
 操作数是否可以为内存引用，以及哪种寻址方式；操作数是否可以为立即数，
-以及可以具有什么值。constraint还可以要求两个操作数要匹配。
+以及可以具有什么值。约束还可以要求两个操作数要匹配。
 
 @ifset INTERNALS
 @menu
-* 简单的constraint::     constraint的基本用法
-* 多个可选项::           当insn具有两个可选的constraint模式
-* 类别优先选择::         constraint可以指导用哪个硬件寄存器来存放事物
-* 修饰符::               对constraint效果更精确的控制
-* 禁止Insn可选项::       使用@code{enabled}属性来禁止insn可选项
-* 机器constraint::       一些特定机器现有的constraint
-* 定义constraint::       如何定义机器特定的constraint
-* C constraint接口::     如何测试C代码的constraint
+* 简单约束::       约束的基本用法
+* 多个可选项::     当insn具有两个可选的约束模式
+* 类别优先选择::   约束可以指导用哪个硬件寄存器来存放事物
+* 修饰符::         对约束效果更精确的控制
+* 禁止Insn可选项:: 使用@code{enabled}属性来禁止insn可选项
+* 机器约束::       一些特定机器现有的约束
+* 定义约束::       如何定义机器特定的约束
+* C 约束接口::     如何测试C代码的约束
 @end menu
 @end ifset
 
 @ifclear INTERNALS
 @menu
-* 简单的constraint::   constraint的基本用法
-* 多个可选项::         当insn具有两个可选的constraint模式
-* 修饰符::             对constraint效果更精确的控制
-* 机器constraint::     一些特定机器现有的constraint
+* 简单约束::     约束的基本用法
+* 多个可选项::   当insn具有两个可选的约束模式
+* 修饰符::       对约束效果更精确的控制
+* 机器约束::     一些特定机器现有的
 @end menu
 @end ifclear
 
-@node 简单的constraint
-@subsection 简单的constraint
-@cindex simple constraints
+@node 简单约束
+@subsection 简单约束
+@cindex 简单约束
 
-最简单的constraint种类是一个由字母组成的字符串，
-每个字母描述一种所允许的操作数。这里是所允许的字母：
+最简单的约束种类是一个由字母组成的字符串， 每个字母描述一种所允许的操作数。这里是所允许的字母：
 
 @table @asis
 @item whitespace
-空格字符将被忽略，并且可以插到除了起始处的任何地方。这使得机器描述中，
-不同操作数的每个可选项可以被可视化的对齐，即使它们具有不同数目的约束和修饰符。 
+空格字符将被忽略，并且可以插到除了起始处的任何地方。这使得机器描述中， 不同操作数的每个可选项可以被可视化的对齐，即使它们具有不同数目的约束和修饰符。 
 
 @cindex @samp{m} in constraint
 @cindex memory references in constraints
@@ -876,19 +838,14 @@ constraint可以告诉一个操作数是否可以在寄存器中，以及哪种�
 @cindex offsettable address
 @cindex @samp{o} in constraint
 @item @samp{o}
-内存操作数将被允许，但只有当地址为偏移表的时候。
-这意味着可以对地址加上一个小的整数(实际上,是为操作数的数个字节宽度,
-这由它的机器模式决定),其结果也为一个有效的内存地址。
+内存操作数将被允许，但只有当地址为偏移表的时候。 这意味着可以对地址加上一个小的整数(实际上,是为操作数的数个字节宽度, 这由它的机器模式决定),其结果也为一个有效的内存地址。
 
 @cindex autoincrement/decrement addressing
-例如，地址为常数的为一个偏移表；所以地址为一个寄存器和常数（只要常数在机器所支持
-的地址偏移范围）的和；但是递增或者递减地址不是偏移表。更加复杂的间接/索引地址可
-能是或者可能不是偏移表，这取决于机器支持的其它寻址模式。
+例如，地址为常数的为一个偏移表；所以地址为一个寄存器和常数（只要常数在机器所支持 的地址偏移范围）的和；但是递增或者递减地址不是偏移表。更加复杂的间接/索引地址可 能是或者可能不是偏移表，这取决于机器支持的其它寻址模式。
 
 @cindex @samp{V} in constraint
 @item @samp{V}
-一个不是offsettable的内存操作数。换句话说，
-任何适合@samp{m}约束但不是@samp{o}约束的。 
+一个不是offsettable的内存操作数。换句话说， 任何适合@samp{m}约束但不是@samp{o}约束的。 
 
 @cindex @samp{<} in constraint
 @item @samp{<}
@@ -906,25 +863,19 @@ constraint可以告诉一个操作数是否可以在寄存器中，以及哪种�
 @cindex constants in constraints
 @cindex @samp{i} in constraint
 @item @samp{i}
-立即数（具有常数值）将被允许。这包括符号常量，
-其值将在汇编时候或者更晚的时候才被知道。 
+立即数（具有常数值）将被允许。这包括符号常量， 其值将在汇编时候或者更晚的时候才被知道。 
 
 @cindex @samp{n} in constraint
 @item @samp{n}
-立即数，其具有已知的数值。
-许多系统不支持汇编时间常量作为小于一个字的宽度的操作数。
-这些操作数的约束应该为@samp{n}而不是@samp{i}。 
+立即数，其具有已知的数值。 许多系统不支持汇编时间常量作为小于一个字的宽度的操作数。 这些操作数的约束应该为@samp{n}而不是@samp{i}。 
 
 @cindex @samp{I} in constraint
 @item @samp{I}, @samp{J}, @samp{K}, @dots{} @samp{P}
-从@samp{I}到@samp{P}的其它字母可以被定义为机器特定的，
-用来运行立即数具有显示指定范围的整数值。例如，在68000上，
-@samp{I}被定义为代表1到8的值。这是在移位指令中被允许作为移位数的范围。 
+从@samp{I}到@samp{P}的其它字母可以被定义为机器特定的， 用来运行立即数具有显示指定范围的整数值。例如，在68000上， @samp{I}被定义为代表1到8的值。这是在移位指令中被允许作为移位数的范围。 
 
 @cindex @samp{E} in constraint
 @item @samp{E}
-浮点立即数（表达式代码为@code{const_double}），
-但是必须target浮点格式与host机器（编译器运行的机器）的相同才行。 
+浮点立即数（表达式代码为@code{const_double}）， 但是必须target浮点格式与host机器（编译器运行的机器）的相同才行。 
 
 @cindex @samp{F} in constraint
 @item @samp{F}
@@ -939,15 +890,9 @@ constraint可以告诉一个操作数是否可以在寄存器中，以及哪种�
 @item @samp{s}
 整数立即数，其值不是一个显式的整数。
 
-这可能有点奇怪；如果insn允许常量操作数具有在编译时不可知的值，
-它当然必须允许任何可知的值。所以为什么用@samp{s}，而不是@samp{i}能？有时候，
-它会允许生成更好的代码。
+这可能有点奇怪；如果insn允许常量操作数具有在编译时不可知的值， 它当然必须允许任何可知的值。所以为什么用@samp{s}，而不是@samp{i}能？有时候， 它会允许生成更好的代码。
 
-例如，在68000上的全字指令，有可能使用一个立即数操作数；
-但是如果立即数的值是处于-128和127之间，更好的代码是将值加载到寄存器中，
-使用寄存器。这是因为加载到寄存器中可以由@samp{moveq}指令来完成。
-我们对此通过定义字母@samp{K}来表示任意范围超出-128和127的整数，
-然后在操作数约束中指定@samp{Ks}。
+例如，在68000上的全字指令，有可能使用一个立即数操作数； 但是如果立即数的值是处于-128和127之间，更好的代码是将值加载到寄存器中， 使用寄存器。这是因为加载到寄存器中可以由@samp{moveq}指令来完成。 我们对此通过定义字母@samp{K}来表示任意范围超出-128和127的整数， 然后在操作数约束中指定@samp{Ks}。
 
 @cindex @samp{g} in constraint
 @item @samp{g}
@@ -956,9 +901,7 @@ constraint可以告诉一个操作数是否可以在寄存器中，以及哪种�
 @cindex @samp{X} in constraint
 @item @samp{X}
 @ifset INTERNALS
-任何操作数都被允许，即使其不满足@code{general_operand}。
-这通常用于@code{match_scratch}的约束中，
-当一些的可选项实际上不需要scratch寄存器的时候。 
+任何操作数都被允许，即使其不满足@code{general_operand}。 这通常用于@code{match_scratch}的约束中，当一些的可选项实际上不需要scratch寄存器的时候。 
 @end ifset
 @ifclear INTERNALS
 Any operand whatsoever is allowed.
@@ -969,24 +912,18 @@ Any operand whatsoever is allowed.
 @item @samp{0}, @samp{1}, @samp{2}, @dots{} @samp{9}
 匹配指定操作数编号的操作数。如果数字与字母一起使用，则数字应该放在最后。
 
-该编号允许多于单个数字。如果多个数字连续的在一起，
-则它们被解析为一个单独的十进制整数。很少会因此产生不明确，因为到目前为止，
-还没有想要将@samp{10}解析为匹配操作数1或者0的。如果有这样的需要，
-则可以使用多个可选项来替代。
+该编号允许多于单个数字。如果多个数字连续的在一起， 则它们被解析为一个单独的十进制整数。很少会因此产生不明确，因为到目前为止， 还没有想要将@samp{10}解析为匹配操作数1或者0的。如果有这样的需要， 则可以使用多个可选项来替代。
 
 @cindex matching constraint
 @cindex constraint, matching
-这被称为匹配约束，其实际上是指汇编器只有一个单独的操作数，
-却在RTL insn中扮演两个角色。例如，
-add insn在RTL中具有两个输入操作数和一个输出操作数，
+这被称为匹配约束，其实际上是指汇编器只有一个单独的操作数， 却在RTL insn中扮演两个角色。例如，add insn在RTL中具有两个输入操作数和一个输出操作数，
 但是多数CISC机器上，add指令实际上只有两个操作数，其中一个为输入输出操作数：
 
 @smallexample
 addl #35,r12
 @end smallexample
 
-匹配约束被用于这些情况。更确切的说，
-匹配的两个操作数必须包括一个只作输入的操作数和一个只作输出的操作数。
+匹配约束被用于这些情况。更确切的说， 匹配的两个操作数必须包括一个只作输入的操作数和一个只作输出的操作数。
 
 @cindex load address instruction
 @cindex push address instruction
@@ -1088,8 +1025,8 @@ addl #35,r12
 @end ifset
 
 @node 多个可选项
-@subsection 多个可选的constraint
-@cindex multiple alternative constraints
+@subsection 多个可选的约束
+@cindex 多个可选的约束
 
 有时单个指令具有多个可选的操作数集。例如，在68000上，
 一个逻辑或指令可以将寄存器或者立即数的值组合到内存中，
@@ -1112,11 +1049,7 @@ Here is how it is done for fullword logical-or on the 68000:
   @dots{})
 @end smallexample
 
-第一个可选项具有操作数0的@samp{m} (memory)，操作数1的@samp{0}（意味着其必须匹配
-操作数0）和操作数2的@samp{dKs}。第二个可选项具有操作数0的@samp{d}
-(data register)，操作数1的@samp{0}和操作数2的@samp{dmKs}。
-约束中的@samp{=}和@samp{%}应用于所有的可选项；
-它们的含义在下一节介绍（参见@ref{类别优先选择}）。
+第一个可选项具有操作数0的@samp{m} (memory)，操作数1的@samp{0}（意味着其必须匹配 操作数0）和操作数2的@samp{dKs}。第二个可选项具有操作数0的@samp{d} (data register)，操作数1的@samp{0}和操作数2的@samp{dmKs}。 约束中的@samp{=}和@samp{%}应用于所有的可选项； 它们的含义在下一节介绍（@pxref{类别优先选择}）。
 @end ifset
 
 @c FIXME Is this ? and ! stuff of use in asm()?  If not, hide unless INTERNAL
@@ -1135,16 +1068,11 @@ Here is how it is done for fullword logical-or on the 68000:
 @cindex @samp{!} in constraint
 @cindex exclamation point
 @item !
-严格降低@samp{!}出现的可选项，当该选项没有reloading的时候还可以被使用，
-但是如果需要reloading，则将使用其它可选项。 
+严格降低@samp{!}出现的可选项，当该选项没有reloading的时候还可以被使用， 但是如果需要reloading，则将使用其它可选项。 
 @end table
 
 @ifset INTERNALS
-当insn指令模式在其约束中具有多个可选项时，
-经常会出现通过哪个可选项被匹配而决定使用使用什么汇编代码的情况。这时，
-输写汇编代码的C代码可以使用变量@code{which_alternative}，
-其为实际被满足的可选项的顺序编号（0对应第一个，1对应第二个，等等）。
-参见@ref{输出语句}。
+当insn指令模式在其约束中具有多个可选项时， 经常会出现通过哪个可选项被匹配而决定使用使用什么汇编代码的情况。这时， 输写汇编代码的C代码可以使用变量@code{which_alternative}， 其为实际被满足的可选项的顺序编号（0对应第一个，1对应第二个，等等）。@xref{输出语句}。
 @end ifset
 
 @ifset INTERNALS
@@ -1253,23 +1181,14 @@ GCC只能处理在asm中的一个可交换对；如果你有更多的，编译�
 @end ifset
 @end table
 
-@node 机器constraint
-@subsection 机器特定的constraint
-@cindex machine specific constraints
+@node 机器约束
+@subsection 机器特定的约束
+@cindex 机器特定的约束
 @cindex constraints, machine specific
 
-只要可能，就应该在@code{asm}参数中使用通用目的的约束字母，
-因为它们可以向阅读你的代码的人们传达更加可读的意思。如果无法做到，
-则使用在不同体系结构中通常具有非常相似的意思的约束字母。
-最通用的约束为@samp{m}和@samp{r}（分别用于内存和通用寄存器；
-参见@pxref{简单constraint}“），
-以及@samp{I}，通常用于指示最常见的立即数常量格式。
+只要可能，就应该在@code{asm}参数中使用通用目的的约束字母， 因为它们可以向阅读你的代码的人们传达更加可读的意思。如果无法做到， 则使用在不同体系结构中通常具有非常相似的意思的约束字母。 最通用的约束为@samp{m}和@samp{r}（分别用于内存和通用寄存器； @pxref{简单约束}“）， 以及@samp{I}，通常用于指示最常见的立即数常量格式。
 
-每个体系结构定义了额外的约束。这些约束被编译器本身使用，用于指令生成，
-同时也用于@code{asm}语句；因此，一些约束对于@code{asm}并不是很有用处。
-这里有一个总结，关于在一些特定机器上使用的机器相关的约束；
-包括对@code{asm}有用处的和没有用处的。
-在表中提到的针对每个体系结构的编译器原文件，是该体系结构的约束的定义参考。
+每个体系结构定义了额外的约束。这些约束被编译器本身使用，用于指令生成， 同时也用于@code{asm}语句；因此，一些约束对于@code{asm}并不是很有用处。 这里有一个总结，关于在一些特定机器上使用的机器相关的约束； 包括对@code{asm}有用处的和没有用处的。 在表中提到的针对每个体系结构的编译器原文件，是该体系结构的约束的定义参考。
 
 @table @emph
 @item ARM family---@file{config/arm/arm.h}
@@ -2764,34 +2683,21 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @end ifset
 
 @ifset INTERNALS
-@node 定义constraint
-@subsection 定义机器特定的constraint
-@cindex defining constraints
+@node 定义约束
+@subsection 定义机器特定的约束
+@cindex 定义约束
 @cindex constraints, defining
 
-机器特定的约束分为两类：寄存器约束和非寄存器约束。在后者中，
-如果约束允许所有可能的内存或地址操作数，则应该被专门标记出来，
-以便给@code{reload}更多信息。
+机器特定的约束分为两类：寄存器约束和非寄存器约束。在后者中， 如果约束允许所有可能的内存或地址操作数，则应该被专门标记出来， 以便给@code{reload}更多信息。
 
-机器特定的约束可以给定任意长度的名字，但是它们全部由字母，数字，
-下划线（@samp{_}）和三角括号（@samp{< >}）组成。跟C标识符类似，
-它们必须起始于字母或者下划线。
+机器特定的约束可以给定任意长度的名字，但是它们全部由字母，数字， 下划线（@samp{_}）和三角括号（@samp{< >}）组成。跟C标识符类似， 它们必须起始于字母或者下划线。
 
-为了避免操作数约束字符串的混淆，约束的名字不能起始于任何其它约束的名字。
-例如，如果@code{x}被定义为一个约束名，则不可以定义@code{xy}，反之依然。
-按照这个规则，所有约束都不能起始于通用约束字母：@samp{E F V X g i m n o p r s}。
+为了避免操作数约束字符串的混淆，约束的名字不能起始于任何其它约束的名字。 例如，如果@code{x}被定义为一个约束名，则不可以定义@code{xy}，反之依然。 按照这个规则，所有约束都不能起始于通用约束字母：@samp{E F V X g i m n o p r s}。
 
-寄存器约束直接对应于寄存器类别。参见@ref{寄存器类别}。
-因此它们的定义没有太多的灵活性。
+寄存器约束直接对应于寄存器类别。参见@ref{寄存器类别}。 因此它们的定义没有太多的灵活性。
 
 @deffn {MD Expression} define_register_constraint name regclass docstring
-这三个参数都是字符串常量。@var{name}为约束的名字，
-将在@code{match_operand}表达式中出现。如果@var{name}为多个字母的约束，
-则它的长度应该与所有起始与同一字母的约束相同。
-@var{regclass}可以为相应的寄存器类别的名字（参见@ref{寄存器类别}），
-或者一个C表达式，其值为合适的寄存器类别。如果为表达式，其必须不具有副作用，
-并且不能查看操作数。通常使用表达式是为了当寄存器类别对于给定的子体系结构无效时，
-将一些寄存器约束映射为@code{NO_REGS}。
+这三个参数都是字符串常量。@var{name}为约束的名字， 将在@code{match_operand}表达式中出现。如果@var{name}为多个字母的约束， 则它的长度应该与所有起始与同一字母的约束相同。 @var{regclass}可以为相应的寄存器类别的名字（参见@ref{寄存器类别}）， 或者一个C表达式，其值为合适的寄存器类别。如果为表达式，其必须不具有副作用， 并且不能查看操作数。通常使用表达式是为了当寄存器类别对于给定的子体系结构无效时， 将一些寄存器约束映射为@code{NO_REGS}。
 
 @var{docstring}为一条语句，介绍了约束的含义。这将在下面做进一步的解释。
 @end deffn
@@ -2799,11 +2705,7 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 非寄存器的约束更加像断言：约束定义给出一个布尔表达式，其指示是否约束匹配。
 
 @deffn {MD Expression} define_constraint name docstring exp
-@var{name}和@var{docstring}参数与@code{define_register_constraint}的相同，
-但是注意docstring直接跟随name之后。@var{exp}为一个RTL表达式，
-遵循在断言定义中相同的规则。详情参见@ref{定义predicate}。如果求得为真，
-则约束匹配；如果求得为假，则不匹配。约束表达式应该指示出它们可能匹配的RTL，
-就像断言表达式一样。
+@var{name}和@var{docstring}参数与@code{define_register_constraint}的相同， 但是注意docstring直接跟随name之后。@var{exp}为一个RTL表达式， 遵循在断言定义中相同的规则。详情参见@ref{定义predicate}。如果求得为真， 则约束匹配；如果求得为假，则不匹配。约束表达式应该指示出它们可能匹配的RTL， 就像断言表达式一样。
 
 C表达式@code{match_test}，可以访问下列变量：
 
@@ -2823,25 +2725,15 @@ C表达式@code{match_test}，可以访问下列变量：
 如果@var{op}为浮点@code{const_double}。 
 @end table
 
-变量@var{*val}应该只在表达式的其它部分已经验证了@var{op}为合适类型的RTL对象时，
-才被使用。
+变量@var{*val}应该只在表达式的其它部分已经验证了@var{op}为合适类型的RTL对象时， 才被使用。
 @end deffn
 
-大多数非寄存器约束应该使用@code{define_constraint}来定义。
-其余的两个定义表达式只适合当约束匹配失败时，应该由@code{reload}单独处理的约束。
+大多数非寄存器约束应该使用@code{define_constraint}来定义。 其余的两个定义表达式只适合当约束匹配失败时，应该由@code{reload}单独处理的约束。
 
 @deffn {MD Expression} define_memory_constraint name docstring exp
-使用该表达式来定义匹配所有内存操作数的子集的约束：也就是，
-@code{reload}能够通过将操作数转换为@samp{@w{(mem (reg @var{X}))}}的形式使得它们
-匹配。其中@var{X}为基址寄存器（通过@code{BASE_REG_CLASS}指定的寄存器类别，
-参见@ref{寄存器类别}）。
+使用该表达式来定义匹配所有内存操作数的子集的约束：也就是， @code{reload}能够通过将操作数转换为@samp{@w{(mem (reg @var{X}))}}的形式使得它们 匹配。其中@var{X}为基址寄存器（通过@code{BASE_REG_CLASS}指定的寄存器类别，@pxref{寄存器类别}）。
 
-例如，在S/390上，一些指令不接受任意的内存引用，只接受那些不使用索引寄存器的。
-约束字母@samp{Q}被定义用来表示这个类型的内存地址。
-如果@samp{Q}使用@code{define_memory_constraint}定义，
-则@samp{Q}约束可以处理任意内存操作数，因为@code{reload}知道在需要的时候，
-它可以简单的将内存地址复制到基址寄存器中。
-这与@samp{o}约束可以处理任意内存操作数的方式类似。
+例如，在S/390上，一些指令不接受任意的内存引用，只接受那些不使用索引寄存器的。 约束字母@samp{Q}被定义用来表示这个类型的内存地址。 如果@samp{Q}使用@code{define_memory_constraint}定义， 则@samp{Q}约束可以处理任意内存操作数，因为@code{reload}知道在需要的时候， 它可以简单的将内存地址复制到基址寄存器中。 这与@samp{o}约束可以处理任意内存操作数的方式类似。
 
 语法和语义在其它方面都与@code{define_constraint}相同。
 @end deffn
@@ -2884,24 +2776,16 @@ C表达式@code{match_test}，可以访问下列变量：
 则（在将来）其将只出现在internals手册版本的机器特定约束表中。
 这可以用于不应该出现在@code{asm}语句中的约束。
 
-@node C constraint接口
-@subsection 从C中测试constraint
+@node C 约束接口
+@subsection 从C中测试约束
 @cindex testing constraints
 @cindex constraints, testing
 
-有时从C代码中测试约束要比隐式的通过@code{match_operand}中的约束字符串有用处。
-生成文件@file{tm_p.h}声明了一些接口，用于机器特定的约束。
-这些接口都没有用于在@ref{简单constraint}中描述的通用约束。
-这在将来可能会有所改变。
+有时从C代码中测试约束要比隐式的通过@code{match_operand}中的约束字符串有用处。 生成文件@file{tm_p.h}声明了一些接口，用于机器特定的约束。 这些接口都没有用于在@ref{简单约束}中描述的通用约束。 这在将来可能会有所改变。
 
-警告：@file{tm_p.h}可能声明了其它操作约束的函数，除了在这里列的以外。
-不要在机器独立的代码中使用那些函数。它们只是为了实现旧的约束接口。
-它们在将来将会有变动或者消失。
+警告：@file{tm_p.h}可能声明了其它操作约束的函数，除了在这里列的以外。 不要在机器独立的代码中使用那些函数。它们只是为了实现旧的约束接口。 它们在将来将会有变动或者消失。
 
-一些有效的约束名字不是有效的C标志符，
-所以这里有一个mangling框架用于从C中引用它们。
-不包含三角括号或者下划线的约束名保持不变。下划线改写成两次，
-每个@samp{<}被@samp{_l}替换，每个@samp{>}被@samp{_g}替换。这里有些例子：
+一些有效的约束名字不是有效的C标志符， 所以这里有一个mangling框架用于从C中引用它们。 不包含三角括号或者下划线的约束名保持不变。下划线改写成两次， 每个@samp{<}被@samp{_l}替换，每个@samp{>}被@samp{_g}替换。这里有些例子：
 
 @c the @c's prevent double blank lines in the printed manual.
 @example
@@ -2916,9 +2800,7 @@ C表达式@code{match_test}，可以访问下列变量：
 @end multitable
 @end example
 
-在该章节中，变量@var{c}或者为一个抽象的约束，
-或者为来自@code{enum constraint_num}的常量；
-变量@var{m}为一个mangled约束名字（通常作为一个大标志符的一部分）。
+在该章节中，变量@var{c}或者为一个抽象的约束， 或者为来自@code{enum constraint_num}的常量； 变量@var{m}为一个mangled约束名字（通常作为一个大标志符的一部分）。
 
 @deftp Enum constraint_num
 对于每个机器特定的约束，有一个对应的枚举常量：
@@ -2929,25 +2811,18 @@ C表达式@code{match_test}，可以访问下列变量：
 @end deftp
 
 @deftypefun {inline bool} satisfies_constraint_@var{m} (rtx @var{exp})
-对于每个机器特定的，非寄存器约束@var{m}，有一个这样函数；其返回@code{true}，
-如果@var{exp}满足约束。
-这些函数只有当@file{rtl.h}被包含在@file{tm_p.h}之前时才可见。
+对于每个机器特定的，非寄存器约束@var{m}，有一个这样函数；其返回@code{true}， 如果@var{exp}满足约束。 这些函数只有当@file{rtl.h}被包含在@file{tm_p.h}之前时才可见。
 @end deftypefun
 
 @deftypefun bool constraint_satisfied_p (rtx @var{exp}, enum constraint_num @var{c})
-类似@code{satisfies_constraint_@var{m}}函数，只是被测试的约束作为参数给出，
-@var{c}。如果@var{c}指定一个寄存器约束，该函数将总是返回@code{false}。
+类似@code{satisfies_constraint_@var{m}}函数，只是被测试的约束作为参数给出， @var{c}。如果@var{c}指定一个寄存器约束，该函数将总是返回@code{false}。
 @end deftypefun
 
 @deftypefun {enum reg_class} regclass_for_constraint (enum constraint_num @var{c})
-返回与@var{c}关联的寄存器类别。如果@var{c}不是寄存器约束，
-或者那些寄存器对于当前选择的子target无效，则返回@code{NO_REGS}。
+返回与@var{c}关联的寄存器类别。如果@var{c}不是寄存器约束， 或者那些寄存器对于当前选择的子target无效，则返回@code{NO_REGS}。
 @end deftypefun
 
-这里有一个使用@code{satisfies_constraint_@var{m}}的例子。
-在窥孔优化（参见@ref{窥孔定义}）中，操作数约束字符串将被忽略，
-所以如果有相应的约束，它们必须在C条件中被测试。在例子中，优化将被采用，
-如果操作数2不满足@samp{K}约束。（这是从 i386机器描述中的窥孔定义简化的版本。）
+这里有一个使用@code{satisfies_constraint_@var{m}}的例子。 在窥孔优化（参见@ref{窥孔定义}）中，操作数约束字符串将被忽略， 所以如果有相应的约束，它们必须在C条件中被测试。在例子中，优化将被采用， 如果操作数2不满足@samp{K}约束。（这是从 i386机器描述中的窥孔定义简化的版本。）
 
 @smallexample
 (define_peephole2
@@ -3035,7 +2910,7 @@ C表达式@code{match_test}，可以访问下列变量：
 
 只有当目标机器确实具有这样指令的时候才定义该指令模式；如果将内存加载到连续寄存器的最有效的方式，是每次加载一个，则 不用定义该指令模式。
 
-在一些机器上，对于哪些连续寄存器可以存储到内存中，会有一些限制，例如特定的起始寄存器或者结尾寄存器的编号，或者一个有效范围。对于那些机器，使用@code{define_expand} (@pxref{扩展定义})，并当不符合限制的时候，将指令模式变成失败。
+在一些机器上，对于哪些连续寄存器可以存储到内存中，会有一些限制，例如特定的起始寄存器或者结尾寄存器的编号，或者一个有效范围。对于那些机器，使用@code{define_expand} (@pxref{定义扩展})，并当不符合限制的时候，将指令模式变成失败。
 
 将生成的insn写成一个@code{parallel}，其元素为一个从适当内存位置到寄存器的@code{set}（可能还需要@code{use}或元素@code{clobber}）。使用@code{match_parallel} (@pxref{RTL模板})来识别insn。关于使用该insn模式的例子，可以参见@file{rs6000.md}。
 
@@ -3423,11 +3298,11 @@ C表达式@code{match_test}，可以访问下列变量：
 
 @cindex @code{clz@var{m}2} instruction pattern
 @item @samp{clz@var{m}2}
-将@var{x}中，从最高有效位开始，起始处置0的位的数目，存放在操作数0中。如果@var{x}为0，则@code{CLZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc})宏定义了结果是否为未定义或者一个有用的值。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+将@var{x}中，从最高有效位开始，起始处置0的位的数目，存放在操作数0中。如果@var{x}为0，则@code{CLZ_DEFINED_VALUE_AT_ZERO} (@pxref{其它})宏定义了结果是否为未定义或者一个有用的值。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
 
 @cindex @code{ctz@var{m}2} instruction pattern
 @item @samp{ctz@var{m}2}
-将@var{x}中，从最小有效位开始，结尾处置0的位的数目，存放在操作数0中。如果@var{x}为0，则@code{CTZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc})宏定义了结果是否为未定义或者一个有用的值。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+将@var{x}中，从最小有效位开始，结尾处置0的位的数目，存放在操作数0中。如果@var{x}为0，则@code{CTZ_DEFINED_VALUE_AT_ZERO} (@pxref{其它})宏定义了结果是否为未定义或者一个有用的值。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
 
 @cindex @code{popcount@var{m}2} instruction pattern
 @item @samp{popcount@var{m}2}
@@ -3602,7 +3477,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 
 当书写@code{match_operand}表达式的时候，你来指定操作数必须具有的机器模式。编译器自动的查看你使用的机器模式，并提供那个机器模式的操作数。
 
-对于条件为真时所存储的值，其低位必须为1，不然必须为负。否则，指令就不适合，你应该从机器描述中将其去掉。你可以通过定义宏@code{STORE_FLAG_VALUE} (@pxref{Misc})，来描述哪个值被存放。如果不能找到一个用于所有@samp{s@var{cond}}指令模式的描述，则你应该从机器描述中去掉这些操作。
+对于条件为真时所存储的值，其低位必须为1，不然必须为负。否则，指令就不适合，你应该从机器描述中将其去掉。你可以通过定义宏@code{STORE_FLAG_VALUE} (@pxref{其它})，来描述哪个值被存放。如果不能找到一个用于所有@samp{s@var{cond}}指令模式的描述，则你应该从机器描述中去掉这些操作。
 
 这些操作可以失败，但应该只在相对不常见的情况下这样做；如果它们对于常见的情况，包括整数比较，会失败，则最好去掉这些指令模式。
 
@@ -3612,9 +3487,9 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @item @samp{b@var{cond}}
 条件分支指令。操作数0为一个@code{label_ref}指出要跳转到的标号。如果条件码符合条件@var{cond}则跳转。
 
-一些机器不遵循这里假设的模型，即一个比较指令，跟随一个条件跳转指令。那种情况下，@samp{cmp@var{m}} (和 @samp{tst@var{m}})指令模式，应该简单的将操作数存放开，并在@code{define_expand} (@pxref{Expander Definitions})中为条件分支操作，生成所有需要的insn。所有对扩展@samp{b@var{cond}}指令模式的调用，都会立即优先执行对扩展@samp{cmp@var{m}}或者@samp{tst@var{m}}的调用。
+一些机器不遵循这里假设的模型，即一个比较指令，跟随一个条件跳转指令。那种情况下，@samp{cmp@var{m}} (和 @samp{tst@var{m}})指令模式，应该简单的将操作数存放开，并在@code{define_expand} (@pxref{定义扩展})中为条件分支操作，生成所有需要的insn。所有对扩展@samp{b@var{cond}}指令模式的调用，都会立即优先执行对扩展@samp{cmp@var{m}}或者@samp{tst@var{m}}的调用。
 
-对条件代码值使用伪寄存器的，或者用于比较的机器模式取决于被测试的条件的机器，也应该使用上面的机制。@xref{Jump Patterns}.
+对条件代码值使用伪寄存器的，或者用于比较的机器模式取决于被测试的条件的机器，也应该使用上面的机制。@xref{跳转指令模式}.
 
 上面的讨论也应用在@samp{mov@var{mode}cc}和@samp{s@var{cond}}指令模式上。
 
@@ -3632,7 +3507,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 
 在大多机器上，操作数2没有被实际存放在RTL模式中。提供它是出于安全考虑，一些RISC机器需要将该信息放到汇编代码中；它们可以将其放在RTL中，而不是操作数1中。
 
-操作数0应该为一个@code{mem} RTX，其地址为函数的地址。然而注意，该地址可以为一个@code{symbol_ref}表达式，即使其在目标机器上可能不是一个合法的内存地址。如果其也不是调用指令的有效参数，则该操作的指令模式应该为一个@code{define_expand} (@pxref{Expander Definitions})，其将地址放入寄存器中，并在调用指令中使用寄存器。
+操作数0应该为一个@code{mem} RTX，其地址为函数的地址。然而注意，该地址可以为一个@code{symbol_ref}表达式，即使其在目标机器上可能不是一个合法的内存地址。如果其也不是调用指令的有效参数，则该操作的指令模式应该为一个@code{define_expand} (@pxref{定义扩展})，其将地址放入寄存器中，并在调用指令中使用寄存器。
 
 @cindex @code{call_value} instruction pattern
 @item @samp{call_value}
@@ -3726,21 +3601,21 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 
 @cindex @code{decrement_and_branch_until_zero} instruction pattern
 @item @samp{decrement_and_branch_until_zero}
-条件分支指令，递减一个寄存器并且如果寄存器非零则跳转。操作数0为递减并测试的寄存器；操作数1为如果寄存器非零，则跳转的标号。@xref{Looping Patterns}.
+条件分支指令，递减一个寄存器并且如果寄存器非零则跳转。操作数0为递减并测试的寄存器；操作数1为如果寄存器非零，则跳转的标号。@xref{循环指令模式}.
 
 该可选的指令模式只用于合并器，通常被循环优化器使用，当启动强度消减的时候。
 
 @cindex @code{doloop_end} instruction pattern
 @item @samp{doloop_end}
-条件分支指令，递减一个寄存器，并且如果寄存器非零则跳转。该指令接受五个操作数：操作数0是用来递减和测试的寄存器；操作数1是循环迭代的次数，为一个@code{const_int}，或者如果直到运行时才能确定，则为@code{const0_rtx}；操作数2为实际的或者估算的最大迭代数，为一个@code{const_int}；操作数3为被包含的循环数，为一个@code{const_int}（最内层循环的值为1）；操作数4为如果寄存器非零，要跳转的标号。@xref{Looping Patterns}.
+条件分支指令，递减一个寄存器，并且如果寄存器非零则跳转。该指令接受五个操作数：操作数0是用来递减和测试的寄存器；操作数1是循环迭代的次数，为一个@code{const_int}，或者如果直到运行时才能确定，则为@code{const0_rtx}；操作数2为实际的或者估算的最大迭代数，为一个@code{const_int}；操作数3为被包含的循环数，为一个@code{const_int}（最内层循环的值为1）；操作数4为如果寄存器非零，要跳转的标号。@xref{循环指令模式}.
 
 
-该可选的指令模式应该为，具有低开销循环指令的机器定义，循环优化器会尝试修改合适的循环来利用它。如果不支持嵌套的低开销循环，则使用@code{define_expand} (@pxref{Expander Definitions})，并如果操作数3不为@code{const1_rtx}，则使得指令模式失败。类似的，如果实际的或者估算的最大迭代数目对于该指令来说太大，则使其失败。
+该可选的指令模式应该为，具有低开销循环指令的机器定义，循环优化器会尝试修改合适的循环来利用它。如果不支持嵌套的低开销循环，则使用@code{define_expand} (@pxref{定义扩展})，并如果操作数3不为@code{const1_rtx}，则使得指令模式失败。类似的，如果实际的或者估算的最大迭代数目对于该指令来说太大，则使其失败。
 
 @cindex @code{doloop_begin} instruction pattern
 @item @samp{doloop_begin}
 与@code{doloop_end}成套的指令，被用于需要执行一些初始化的机器，例如加载用于低开销循环指令中的特定寄存器。如果初始化insn不总是需要被生成，则使用@code{define_expand}
-(@pxref{Expander Definitions})，并使其失败。
+(@pxref{定义扩展})，并使其失败。
 
 @cindex @code{canonicalize_funcptr_for_compare} instruction pattern
 @item @samp{canonicalize_funcptr_for_compare}
@@ -3766,7 +3641,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @itemx @samp{restore_stack_nonlocal}
 大多数机器用来保存和恢复栈指针的方式，是通过将其复制到一个机器模式为@code{Pmode}的对象。不要在这样的机器上定义这些指令模式。
 
-一些机器要求对栈指针的保存和恢复，进行特殊的处理。在那些机器上，根据非标准的情况来定义指令模式，使用@code{define_expand} (@pxref{Expander Definitions})来产生要求的insn。三种保存和恢复类型：
+一些机器要求对栈指针的保存和恢复，进行特殊的处理。在那些机器上，根据非标准的情况来定义指令模式，使用@code{define_expand} (@pxref{定义扩展})来产生要求的insn。三种保存和恢复类型：
 
 @enumerate
 @item
@@ -3779,7 +3654,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @samp{save_stack_nonlocal}用在包含嵌套函数分支跳转标号的函数中。其保存栈指针的方式为，最内层函数可以使用@samp{restore_stack_nonlocal}来恢复栈指针。编译器生成代码，用来恢复帧寄存器和参数指针寄存器，但是一些机器要求保存和恢复额外的数据，例如寄存器窗口信息或者栈后退链。在这些指令模式中放置保存和恢复这些要求的数据的insn。
 @end enumerate
 
-当保存栈指针时，操作数0是保存区域，操作数1是栈指针。用于分配保存区域的机器模式缺省为@code{Pmode}，不过你可以通过定义@code{STACK_SAVEAREA_MODE}宏(@pxref{Storage Layout})来覆盖该选择。你必须指定一个整数机器模式，或者@code{VOIDmode}，如果对于特定的类型不需要保存区域（或者因为没有需要保存的，或者因为可以使用机器特定的保存区域）。操作数0为栈指针，操作数1为用于恢复操作的保存区域。如果@samp{save_stack_block}被定义，则操作数0一定不能为@code{VOIDmode}，因为这些保存操作数可以被任意的嵌套。
+当保存栈指针时，操作数0是保存区域，操作数1是栈指针。用于分配保存区域的机器模式缺省为@code{Pmode}，不过你可以通过定义@code{STACK_SAVEAREA_MODE}宏(@pxref{存储布局})来覆盖该选择。你必须指定一个整数机器模式，或者@code{VOIDmode}，如果对于特定的类型不需要保存区域（或者因为没有需要保存的，或者因为可以使用机器特定的保存区域）。操作数0为栈指针，操作数1为用于恢复操作的保存区域。如果@samp{save_stack_block}被定义，则操作数0一定不能为@code{VOIDmode}，因为这些保存操作数可以被任意的嵌套。
 
 当栈指针被保存，是用于非局部goto，则保存区域为一个@code{mem}，为一个相对于@code{virtual_stack_vars_rtx}的常量偏移，其它两种情况下，保存区域为一个@code{reg}。
 
@@ -3791,7 +3666,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 
 @cindex @code{check_stack} instruction pattern
 @item @samp{check_stack}
-如果在你的系统上，不能通过使用加载或者存储指令(@pxref{Stack Checking})探测栈，从而进行栈检查，则定义该指令模式来执行所需要的检查，并且如果栈已经溢出则产生一个错误信号。有单个操作数，为栈中从当前栈指针开始，最远的栈位置。通常，在需要该指令模式的机器上，你将从一个全局的或者线程特定的变量或者寄存器中获得栈的限制。
+如果在你的系统上，不能通过使用加载或者存储指令(@pxref{栈检查})探测栈，从而进行栈检查，则定义该指令模式来执行所需要的检查，并且如果栈已经溢出则产生一个错误信号。有单个操作数，为栈中从当前栈指针开始，最远的栈位置。通常，在需要该指令模式的机器上，你将从一个全局的或者线程特定的变量或者寄存器中获得栈的限制。
 
 @cindex @code{nonlocal_goto} instruction pattern
 @item @samp{nonlocal_goto}
@@ -4381,7 +4256,7 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 
 @end ifset
 @ifset INTERNALS
-@node 扩展定义
+@node 定义扩展
 @section 为代码生成定义RTL序列
 @cindex expander definitions
 @cindex code generation RTL sequences
@@ -4608,7 +4483,7 @@ insn组合器阶段还拆分putative insns。
 并且满足条件@var{condition}，则它由insn列表@var{new-insn-pattern-1},
 @var{new-insn-pattern-2}等来替换。
 
-@var{preparation-statements}与那些为@code{define_expand}（参见@ref{扩展定义}）
+@var{preparation-statements}与那些为@code{define_expand}（参见@ref{定义扩展}）
 指定的语句类似，并且在生成新RTL之前被执行。
 与@code{define_expand}中的不同之处为，这些语句不能生成任何新的伪寄存器。
 一旦完成重载，它们则不能在栈帧中分配任何空间。
@@ -5163,8 +5038,8 @@ assembler code as appropriate.
 
 @var{default} 为一个属性表达式，给出了匹配指令模式，但指令模式定义中
 没有显式包含该属性值的insns，所应具有的属性值。关于更多处理缺省值的
-信息，@pxref{Attr Example}。关于不依赖于任何特定insn的属性，
-@pxref{Constant Attributes}。
+信息，@pxref{属性例子}。关于不依赖于任何特定insn的属性，
+@pxref{常量属性}。
 
 @findex insn-attr.h
 对于每个定义的属性，都有许多定义被写入 @file{insn-attr.h} 文件。对于
@@ -5206,10 +5081,10 @@ extern enum attr_type get_attr_type ();
 
 @table @code
 @item length
-@code{length}属性用于计算每输出的代码块的长度。这尤其在验证分支距离的时候特别重要。@xref{Insn Lengths}.
+@code{length}属性用于计算每输出的代码块的长度。这尤其在验证分支距离的时候特别重要。@xref{Insn长度}.
 
 @item enabled
-@code{enabled}属性可以被定义，用来在代码生成过程中，阻止insn定义中的特定的可选项。@xref{Disable Insn Alternatives}.
+@code{enabled}属性可以被定义，用来在代码生成过程中，阻止insn定义中的特定的可选项。@xref{禁止Insn可选项}.
 
 @end table
 
@@ -5230,7 +5105,7 @@ extern enum attr_type get_attr_type ();
 数字属性的值可以被指定为一个 @code{const_int}，或者一个在
 @code{const_string}, @code{eq_attr} (参见下面), @code{attr}, 
 @code{symbol_ref}, 简单算术表达式, 和特定指令上的 @code{set_attr} 
-(@pxref{Tagging Insns})中，作为字符串来表示的整数，
+(@pxref{给Insns打标签})中，作为字符串来表示的整数，
 
 @cindex @code{const_string} and attributes
 @item (const_string @var{value})
@@ -5311,7 +5186,7 @@ extern enum attr_type get_attr_type ();
 @code{ashift}, @code{lshiftrt}和@code{ashiftrt}表达式。
 
 @findex get_attr
-@code{const_int}和@code{symbol_ref}总为有效（其它的形式，@pxref{Insn Lengths}）。@code{symbol_ref}为一个字符串，表示当使用@samp{get_attr_@dots{}}程序求解时，可以生成一个@code{int}的C表达式。其通常应该为一个全局变量。
+@code{const_int}和@code{symbol_ref}总为有效（其它的形式，@pxref{Insn长度}）。@code{symbol_ref}为一个字符串，表示当使用@samp{get_attr_@dots{}}程序求解时，可以生成一个@code{int}的C表达式。其通常应该为一个全局变量。
 
 @findex eq_attr
 @item (eq_attr @var{name} @var{value})
@@ -5333,7 +5208,7 @@ extern enum attr_type get_attr_type ();
 (ior (eq_attr "type" "load") (eq_attr "type" "store"))
 @end smallexample
 
-如果@var{name}指定了属性@samp{alternative}，则它是指的编译器变量@code{which_alternative}的值（@pxref{Output Statement}），并且值必须为小整数。例如，
+如果@var{name}指定了属性@samp{alternative}，则它是指的编译器变量@code{which_alternative}的值（@pxref{输出语句}），并且值必须为小整数。例如，
 
 @smallexample
 (eq_attr "alternative" "2,3")
@@ -6105,13 +5980,13 @@ GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟�
 
 @findex current_insn_predicate
 @var{output-template} 为一个类似于 @code{define_insn} 输出模板
-（@pxref{Output Template}）的字符串，除了不应用 @samp{*} 和 @samp{@@}
+（@pxref{输出模板}）的字符串，除了不应用 @samp{*} 和 @samp{@@}
 的特殊情况。这只在针对predicate的汇编文本为一个主insn的简单前缀时有用。为了
 处理通用的情况，有一个全局变量 @code{current_insn_predicate}，在当前
 insn被predicate时其将包含整个predicate，否则将为 @code{NULL}。
 
 当使用 @code{define_cond_exec} 时，将会创建一个对 @code{predicable} 指
-令属性的隐式引用。@pxref{Insn Attributes}。该属性并须为布尔的（即在它的
+令属性的隐式引用。@pxref{Insn属性}。该属性并须为布尔的（即在它的
 @var{list-of-values} 中具有确切的两个元素）。甚至，其必须不能使用复杂
 表达式。也就是，insn中的缺省的和所有的使用都必须为一个简单常量，不能依
 赖于可选项或其它。
@@ -6274,7 +6149,7 @@ GCC提供了一些简单的迭代机制使得该处理变的很容易。
 扩展却没有这样的限制。
 
 迭代器按照它们定义的顺序被应用。这在当两个迭代器用于一个结构中需要替换时
-会变的很重要。@pxref{Substitutions}。
+会变的很重要。@xref{替换}。
 
 @node 替换
 @subsubsection 机器模式迭代器中的替换
@@ -6285,7 +6160,7 @@ GCC提供了一些简单的迭代机制使得该处理变的很容易。
 @itemize @bullet
 @item
 当一个 @code{define_expand} 定义了多个 @code{add@var{m}3} 指令模式时
-（@pxref{Standard Names}），每个扩展将需要针对 @var{m} 的适当的机器模式。
+（@pxref{标准名字}），每个扩展将需要针对 @var{m} 的适当的机器模式。
 
 @item
 当一个 @code{define_insn} 定义了多个指令模式时，每条指令将通常需要一个不
@@ -6386,7 +6261,7 @@ GCC通过“机器模式属性”系统来支持这样的变种。有两种标�
 @findex define_code_iterator
 @findex define_code_attr
 
-代码迭代器使用与机器模式迭代器类似的方法来操作。@pxref{Mode Iterators}。
+代码迭代器使用与机器模式迭代器类似的方法来操作。@pxref{机器模式迭代器}。
 
 结构：
 
@@ -6400,7 +6275,7 @@ GCC通过“机器模式属性”系统来支持这样的变种。有两种标�
 
 跟机器模式迭代器一样，每个使用 @var{name} 的指令模式将被扩展 @var{n} 次，
 一次使用 @var{code1} 来替换，一次使用 @var{code2}，等等。
-@xref{Defining Mode Iterators}.
+@xref{定义机器模式迭代器}.
 
 跟机器模式一样可以为代码定义属性。有两种标准代码属性：@code{code}，代码
 的小写形式名字，以及 @code{CODE}，代码的大写形式名字。其它属性使用下列
