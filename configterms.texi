@@ -3,7 +3,7 @@
 @c For copying conditions, see the file gcc.texi.
 
 @node Configure Terms
-@section Configure Terms and History
+@section 配置术语及其历史
 @cindex configure terms
 @cindex canadian
 
@@ -13,15 +13,25 @@ While there are other documents which describe the configuration process
 in detail, here are a few things that everyone working on GCC should
 know.
 
+GCC的配置和构建过程有一个丰富多彩的历史，以至于不了解的人可能会为目前使用的方法所迷惑。
+尽管有专门的文档描述了配置过程的细节，这里还是要说一些和GCC打交道的人必知必会的知识。
+
 There are three system names that the build knows about: the machine you
 are building on (@dfn{build}), the machine that you are building for
 (@dfn{host}), and the machine that GCC will produce code for
 (@dfn{target}).  When you configure GCC, you specify these with
 @option{--build=}, @option{--host=}, and @option{--target=}.
 
+构建过程涉及三个系统的名字：(@dfn{build})是指你构建GCC的系统；(@dfn{host})
+是指你安装GCC的系统；而(@dfn{target})是构建出来的GCC生成的代码运行的系统。
+用选项@option{--build=}、@option{--host=}、@option{--target=}来配置GCC。
+
 Specifying the host without specifying the build should be avoided, as
 @command{configure} may (and once did) assume that the host you specify
 is also the build, which may not be true.
+
+应该避免指定 host 而不指定 build 的情况，@command{configure} 可能会假定 host 的值
+和 build 一样，这可能导致错误，而且以前也确实出现过。
 
 If build, host, and target are all the same, this is called a
 @dfn{native}.  If build and host are the same but target is different,
@@ -37,12 +47,28 @@ build a cross compiler that produces code for the machine you're
 building on.  This is rare, so there is no common way of describing it.
 There is a proposal to call this a @dfn{crossback}.
 
+如果 build、host、target 是一样的，这样的编译器称为本地编译器（@dfn{native}）。
+如果 build 和 host 是一样的，target 不一样，这样的编译器称为交叉编译器（@dfn{cross}）。
+如果 build、host、target 都不一样，这样的编译器称为@dfn{canadian}。
+(for obscure reasons dealing with Canada's political party and 
+the background of the person working on the build at that time)。
+如果 host 和 target 是相同的，而 build 不同，你就是在用一个交叉编译器为另一个系统编译一个本地编译器。
+有人称之为@dfn{host-x-host},@dfn{crossed native}, 或@dfn{cross-built native}。
+如果 build 和 target 相同，但是 host 不同，你就是在用一个交叉编译器
+编译另一个交叉编译器，这个交叉编译器为你正在构建GCC使用的系统生成代码。
+这种情况很少见，没有统一的方法描述，或许你可以称它为@dfn{crossback}。
+
 If build and host are the same, the GCC you are building will also be
 used to build the target libraries (like @code{libstdc++}).  If build and host
 are different, you must have already built and installed a cross
 compiler that will be used to build the target libraries (if you
 configured with @option{--target=foo-bar}, this compiler will be called
 @command{foo-bar-gcc}).
+
+如果 build 和 host 相同，构建出来的GCC会被用来编译目标库（target libraries），
+例如@code{libstdc++}.如果 build 和 host 不同，则需要预先准备一个交叉编译器
+来构建目标库。（如果你指定了选项@option{--target=foo-bar}，那么编译器会调用
+@command{foo-bar-gcc}来构建。）
 
 In the case of target libraries, the machine you're building for is the
 machine you specified with @option{--target}.  So, build is the machine
@@ -54,8 +80,18 @@ process will adjust these variables as needed.  It also sets
 @code{$with_cross_host} to the original @option{--host} value in case you
 need it.
 
+构造目标库的时候，你是在为@option{--target}指定的机器构建系统。所以 build 指的是
+你正在构建的系统（跟构建GCC一样），host 是你构建的目标系统（目标库是为了 target 构建的，
+所以这里的 host 就是你指定的 target），而 target 没有用到（因为现在是在构建库
+而不是构建编译器）。configure/make过程会根据需要调整这些变量，并在必要的时候设置
+@code{$with_cross_host}为初始的@option{--host}值，以备不时之需。
+
 The @code{libiberty} support library is built up to three times: once
 for the host, once for the target (even if they are the same), and once
 for the build if build and host are different.  This allows it to be
 used by all programs which are generated in the course of the build
 process.
+
+@code{libiberty}支持库会被构建三次：host 一次，target 一次（即使 host 和
+ target 是一样的），如果 build 和 host 不同，那么在 build 上还要构建一次。
+这使得在构建过程中的每一个程序都可以使用这个库。
