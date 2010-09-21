@@ -4,12 +4,15 @@
 @c Contributed by Aldy Hernandez <aldy@quesejoda.com>
 
 @node Libgcc
-@chapter The GCC low-level runtime library
+@chapter GCC低级运行时库
 
 GCC provides a low-level runtime library, @file{libgcc.a} or
 @file{libgcc_s.so.1} on some platforms.  GCC generates calls to
 routines in this library automatically, whenever it needs to perform
 some operation that is too complicated to emit inline code for.
+
+GCC提供了一个低级运行时库 @file{libgcc.a} ，在某些平台上是@file{libgcc_s.so.1} 。
+每当GCC需要执行一些复杂的操作，不适合直接生成代码时，就自动生成对这个库的例程的调用指令。
 
 Most of the routines in @code{libgcc} handle arithmetic operations
 that the target processor cannot perform directly.  This includes
@@ -17,14 +20,24 @@ integer multiply and divide on some machines, and all floating-point
 and fixed-point operations on other machines.  @code{libgcc} also includes
 routines for exception handling, and a handful of miscellaneous operations.
 
+@code{libgcc}库里面的绝大多数例程实现的都是目标机处理器无法直接处理的算术操作，
+包括一些机器无法处理的整数乘除，和另一些机器无法处理的定点运算。
+@code{libgcc}也包含一些异常处理（exception handling）的例程，以及一些不好分类的其它例程。
+
 Some of these routines can be defined in mostly machine-independent C@.
 Others must be hand-written in assembly language for each processor
 that needs them.
+
+其中一些例程可以用（目标）机器无关的C代码来写，另一些就必须根据每一个处理器的需要手工写汇编代码实现。
 
 GCC will also generate calls to C library routines, such as
 @code{memcpy} and @code{memset}, in some cases.  The set of routines
 that GCC may possibly use is documented in @ref{Other
 Builtins,,,gcc, Using the GNU Compiler Collection (GCC)}.
+
+某些场合，GCC也会生成对C库的函数调用指令，像是@code{memcpy}或@code{memset}.
+GCC可能调用的例程参见文档@ref{Other Builtins,,,gcc, 
+Using the GNU Compiler Collection (GCC)}.
 
 These routines take arguments and return values of a specific machine
 mode, not a specific C type.  @xref{Machine Modes}, for an explanation
@@ -36,20 +49,29 @@ and @code{@w{unsigned int}} correspond to @code{SImode}; @code{long} and
 @code{@w{unsigned long}} to @code{DImode}; and @code{@w{long long}} and
 @code{@w{unsigned long long}} to @code{TImode}.
 
+这些例程用特定的机器模式（machine mode）而不是C类型来处理参数和返回值。
+机器模式的概念参见@xref{Machine Modes}.本章为了讲解的需要，假设浮点类型@code{float}
+对应@code{SFmode};@code{double}对应@code{DFmode};@code{@w{long double}}
+对应@code{TFmode}和@code{XFmode}.类似的，整数类型@code{int}和@code{@w{unsigned int}}
+对应与@code{DImode};@code{@w{long long}}和@code{@w{unsigned long long}}
+对应于@code{TImode}.
+
 @menu
-* Integer library routines::
-* Soft float library routines::
-* Decimal float library routines::
-* Fixed-point fractional library routines::
-* Exception handling routines::
-* Miscellaneous routines::
+* 整数库例程::
+* 软件浮点库例程::
+* 十进制浮点库例程::
+* 定点小数库例程::
+* 异常处理例程::
+* 其它例程::
 @end menu
 
-@node Integer library routines
-@section Routines for integer arithmetic
+@node 整数库例程
+@section 整型算术例程
 
 The integer arithmetic routines are used on platforms that don't provide
 hardware support for arithmetic operations on some modes.
+
+整型算术例程用于那些在某些模式（mode）下没有提供算术操作的硬件支持的平台。
 
 @subsection Arithmetic functions
 
@@ -218,7 +240,7 @@ These functions return the number of bits set in @var{a}.
 These functions return the @var{a} byteswapped.
 @end deftypefn
 
-@node Soft float library routines
+@node 软件浮点库例程
 @section Routines for floating point emulation
 @cindex soft float library
 @cindex arithmetic library
@@ -230,12 +252,20 @@ have hardware support for floating point.  It is also used whenever
 @option{-msoft-float} is used to disable generation of floating point
 instructions.  (Not all targets support this switch.)
 
+软件浮点库用于那些没有对浮点操作提供硬件支持的机器，以及当@option{-msoft-float}
+选项被设置时的情况（不是所有的目标机都支持这个选项）。
+
 For compatibility with other compilers, the floating point emulation
 routines can be renamed with the @code{DECLARE_LIBRARY_RENAMES} macro
 (@pxref{Library Calls}).  In this section, the default names are used.
 
+浮点模拟例程可以用@code{DECLARE_LIBRARY_RENAMES}宏重命名，用于兼容别的编译器。
+(@pxref{Library Calls}).本节使用默认的名字。
+
 Presently the library does not support @code{XFmode}, which is used
 for @code{long double} on some architectures.
+
+目前这个库不支持@code{XFmode}机器模式，这个模式在一些架构上用于@code{long double}类型。
 
 @subsection Arithmetic functions
 
@@ -492,7 +522,7 @@ These functions return the quotient of @math{@var{a} + i@var{b}} and
 + i@var{d})}), following the rules of C99 Annex G@.
 @end deftypefn
 
-@node Decimal float library routines
+@node 十进制浮点库例程
 @section Routines for decimal floating point emulation
 @cindex decimal float library
 @cindex IEEE 754-2008
@@ -501,10 +531,14 @@ The software decimal floating point library implements IEEE 754-2008
 decimal floating point arithmetic and is only activated on selected
 targets.
 
+软件十进制浮点库实现了IEEE 754-2008标准，只在某些目标机上激活。
+
 The software decimal floating point library supports either DPD 
 (Densely Packed Decimal) or BID (Binary Integer Decimal) encoding 
 as selected at configure time.
 
+软件十进制浮点库支持DPD(Densely Packed Decimal)和BID (Binary Integer Decimal)
+编码格式。这个格式可以在configure时指定。
 
 @subsection Arithmetic functions
 
@@ -797,7 +831,7 @@ These functions return a value greater than zero if neither argument
 is NaN, and @var{a} is strictly greater than @var{b}.
 @end deftypefn
 
-@node Fixed-point fractional library routines
+@node 定点小数库例程
 @section Routines for fixed-point fractional emulation
 @cindex fixed-point fractional library
 @cindex fractional types
@@ -806,9 +840,10 @@ is NaN, and @var{a} is strictly greater than @var{b}.
 The software fixed-point library implements fixed-point fractional
 arithmetic, and is only activated on selected targets.
 
-For ease of comprehension @code{fract} is an alias for the
-@code{_Fract} type, @code{accum} an alias for @code{_Accum}, and
-@code{sat} an alias for @code{_Sat}.
+软件定点库实现了定点小数算术，只在特定选择的目标机上激活。
+
+为理解方便，用@code{fract}作为@code{_Fract}类型的别名,用@code{accum}作为
+@code{_Accum}的别名,用@code{sat}作为@code{_Sat}的别名。
 
 For illustrative purposes, in this section the fixed-point fractional type
 @code{@w{short fract}} is assumed to correspond to machine mode @code{QQmode};
@@ -2219,7 +2254,7 @@ These functions convert from unsigned non-fractionals to fractionals,
 with saturation.
 @end deftypefn
 
-@node Exception handling routines
+@node 异常处理例程
 @section Language-independent routines for exception handling
 
 document me!
@@ -2255,7 +2290,7 @@ document me!
   __register_frame_table
 @end smallexample
 
-@node Miscellaneous routines
+@node 其它例程
 @section Miscellaneous runtime library routines
 
 @subsection Cache control functions
