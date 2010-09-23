@@ -6,11 +6,6 @@
 @node Source Tree
 @chapter 源代码树结构和构建系统（Build System）
 
-This chapter describes the structure of the GCC source tree, and how
-GCC is built.  The user documentation for building and installing GCC
-is in a separate manual (@uref{http://gcc.gnu.org/install/}), with
-which it is presumed that you are familiar.
-
 本章介绍GCC源代码树的结构，以及GCC的构建过程。有关GCC构建和安装的文档位于一个单独的手册中
 (@uref{http://gcc.gnu.org/install/})，在此假设你了解其中的内容。
 
@@ -25,30 +20,17 @@ which it is presumed that you are familiar.
 @node Top Level
 @section 顶级源代码目录
 
-The top level source directory in a GCC distribution contains several
-files and directories that are shared with other software
-distributions such as that of GNU Binutils.  It also contains several
-subdirectories that contain parts of GCC and its runtime libraries:
-
 GCC发行版的顶级源代码目录中包含一些文件和目录，是别的软件发行版如GNU Binutils共享的。
 还有一些是GCC及其运行时库的子目录：
 
 @table @file
 @item boehm-gc
-The Boehm conservative garbage collector, used as part of the Java
-runtime library.
 
 Boehm保守垃圾收集器（GC），Java运行时库的一部分。
 
 @item config
-Autoconf macros and Makefile fragments used throughout the tree.
-
 用于整个代码树的Autoconf宏及Makefile fragments。
 @item contrib
-Contributed scripts that may be found useful in conjunction with GCC@.
-One of these, @file{contrib/texi2pod.pl}, is used to generate man
-pages from Texinfo manuals as part of the GCC build process.
-
 贡献的和GCC相关的一些脚本。其中的@file{contrib/texi2pod.pl}用于在GCC构建过程中从
 Texinfo手册生成Man手册页。
 
@@ -59,87 +41,81 @@ this mechanism are installed in @file{@var{libsubdir}/include-fixed}.
 Along with those headers, @file{README-fixinc} is also installed, as
 @file{@var{libsubdir}/include-fixed/README}.
 
-
+@c TODO
 
 @item gcc
-The main sources of GCC itself (except for runtime libraries),
-including optimizers, support for different target architectures,
-language front ends, and testsuites.  @xref{gcc Directory, , The
-@file{gcc} Subdirectory}, for details.
+GCC除了运行时库的源代码，包括优化器，后端支持，前端支持和测试用例集。
+进一步信息参见@xref{gcc Directory, , @file{gcc} 子目录}.
 
 @item gnattools
-Support tools for GNAT.
+GNAT支持工具。
 
 @item include
-Headers for the @code{libiberty} library.
+@code{libiberty}库的头文件。
 
 @item intl
-GNU @code{libintl}, from GNU @code{gettext}, for systems which do not
-include it in @code{libc}.
+从GNU @code{gettext}衍生出来的GNU @code{libintl}，
+用于没有把这个功能包含进@code{libc}的系统中。
 
 @item libada
-The Ada runtime library.
+Ada运行时库。
 
 @item libcpp
-The C preprocessor library.
+C预处理库。
 
 @item libdecnumber
-The Decimal Float support library.
+十进制浮点支持库。
 
 @item libffi
-The @code{libffi} library, used as part of the Java runtime library.
+@code{libffi}库，Java运行时库的一部分。
 
 @item libgcc
-The GCC runtime library.
+GCC运行时库。
 
 @item libgfortran
-The Fortran runtime library.
+Fortran运行时库。
 
 @item libgomp
-The GNU OpenMP runtime library.
+GNU OpenMP运行时库。
 
 @item libiberty
-The @code{libiberty} library, used for portability and for some
-generally useful data structures and algorithms.  @xref{Top, ,
-Introduction, libiberty, @sc{gnu} libiberty}, for more information
-about this library.
+可移植的@code{libiberty}库，提供常用的数据结构和算法。
+更多信息可参考@xref{Top, ,Introduction, libiberty, @sc{gnu} libiberty}.
 
 @item libjava
-The Java runtime library.
+Java运行时库。
 
 @item libmudflap
-The @code{libmudflap} library, used for instrumenting pointer and array
-dereferencing operations.
+用于对指针和数组解引用（dereferencing)插桩检查（instrumenting）的@code{libmudflap}库。
 
 @item libobjc
-The Objective-C and Objective-C++ runtime library.
+Objective-C和Objective-C++的运行时库。
 
 @item libssp
-The Stack protector runtime library.
+Stack protector的运行时库。
 
 @item libstdc++-v3
-The C++ runtime library.
+C++运行时库。
 
 @item lto-plugin
 Plugin used by @command{gold} if link-time optimizations are enabled.
+@command{gold}使用的插件。设置link-time优化的时候用到。
 
 @item maintainer-scripts
-Scripts used by the @code{gccadmin} account on @code{gcc.gnu.org}.
+@code{gcc.gnu.org}上@code{gccadmin}帐号用到的一些脚本。
 
 @item zlib
-The @code{zlib} compression library, used by the Java front end, as
-part of the Java runtime library, and for compressing and uncompressing
-GCC's intermediate language in LTO object files.
+@code{zlib}压缩库，作为Java运行时库的一部分，Java前端会使用这个库。
+同时在GCC IR和LTO的object文件转换过程中提供压缩/解压支持。
+
 @end table
 
-The build system in the top level directory, including how recursion
-into subdirectories works and how building runtime libraries for
-multilibs is handled, is documented in a separate manual, included
-with GNU Binutils.  @xref{Top, , GNU configure and build system,
-configure, The GNU configure and build system}, for details.
+顶级目录的构建系统负责递归调用子目录的构建过程，multilibs所需的运行时库如何处理等。
+相关文档问与GNU Binutils的一个单独的手册中。具体可参考@xref{Top, , GNU configure and 
+build system,configure, The GNU configure and build system}.
 
 @node gcc Directory
-@section The @file{gcc} Subdirectory
+@section @file{gcc}子目录
 
 The @file{gcc} directory contains many files that are part of the C
 sources of GCC, other files used as part of the configuration and
@@ -147,22 +123,28 @@ build process, and subdirectories including documentation and a
 testsuite.  The files that are sources of GCC are documented in a
 separate chapter.  @xref{Passes, , Passes and Files of the Compiler}.
 
+@file{gcc}目录中包含了很多GCC的C源代码文件，还包括了用于配置和构建的一些文件，
+一个文档子目录，一个测试用例集目录。源代码文件在后面的一章中介绍。
+@xref{Passes, , Passes and Files of the Compiler}.
+
 @menu
-* Subdirectories:: Subdirectories of @file{gcc}.
-* Configuration::  The configuration process, and the files it uses.
-* Build::          The build system in the @file{gcc} directory.
-* Makefile::       Targets in @file{gcc/Makefile}.
-* Library Files::  Library source files and headers under @file{gcc/}.
-* Headers::        Headers installed by GCC.
-* Documentation::  Building documentation in GCC.
-* Front End::      Anatomy of a language front end.
-* Back End::       Anatomy of a target back end.
+* Subdirectories:: @file{gcc}目录下的子目录。
+* Configuration::  config过程及相关文件。
+* Build::          @file{gcc}目录下的构建系统。
+* Makefile::       @file{gcc/Makefile}中的构建目标。
+* Library Files::  @file{gcc/}目录下的库头文件和源代码文件。
+* Headers::        GCC安装的头文件。
+* Documentation::  GCC构建文档。
+* Front End::      前端剖析。
+* Back End::       后端剖析。
 @end menu
 
 @node Subdirectories
-@subsection Subdirectories of @file{gcc}
+@subsection @file{gcc}目录下的子目录
 
 The @file{gcc} directory contains the following subdirectories:
+
+@file{gcc}目录包含以下子目录：
 
 @table @file
 @item @var{language}
@@ -175,21 +157,36 @@ Compiler}); those for other languages are not.  @xref{Front End, ,
 Anatomy of a Language Front End}, for details of the files in these
 directories.
 
+众多语言的子目录，这些子目录下都包含了一个@file{config-lang.in}文件。
+@file{cp}（C++）、@file{lto}（LTO）、@file{objc}（Ojective-C）、
+@file{objcp}（Objective-C++）在本手册中描述(@pxref{Passes, ,
+Passes and Files of the Compiler})；另外的语言本手册不涉及。
+这些子目录中的细节参见@xref{Front End, ,Anatomy of a Language Front End}.
+
 @item config
 Configuration files for supported architectures and operating
 systems.  @xref{Back End, , Anatomy of a Target Back End}, for
 details of the files in this directory.
+
+与支持的架构、操作系统相关的一些配置文件。细节参见
+@xref{Back End, , Anatomy of a Target Back End}.
 
 @item doc
 Texinfo documentation for GCC, together with automatically generated
 man pages and support for converting the installation manual to
 HTML@.  @xref{Documentation}.
 
+GCC文档，Texinfo格式。可自动生成Man手册页或是HTML格式。@xref{Documentation}.
+
 @item ginclude
 System headers installed by GCC, mainly those required by the C
 standard of freestanding implementations.  @xref{Headers, , Headers
 Installed by GCC}, for details of when these and other headers are
 installed.
+
+@c FIXME：这里的翻译对么？
+GCC安装的系统头文件，主要是独立实现C标准需要的头文件。关于何时安装这些和其它头文件的细节，
+可参考@xref{Headers, , Headers Installed by GCC}.
 
 @item po
 Message catalogs with translations of messages produced by GCC into
@@ -200,13 +197,19 @@ messages from the GCC sources and create @file{gcc.pot}, which is run
 by @samp{make gcc.pot}, and @file{EXCLUDES}, a list of files from
 which messages should not be extracted.
 
+本目录包含的@file{@var{language}.po}文件是一个一个消息表（Message Catalog），
+用于把GCC输出的消息转换成不同的语言；还包含这些消息表的模板文件@file{gcc.pot}；
+包装（wrapper）@command{gettext}的@file{exgettext}，
+运行方法是@samp{make gcc.pot}，可以从GCC源代码提取消息并生成@file{gcc.pot}；
+以及一个规定了不应转换的消息列表文件@file{EXCLUDES}。
+
 @item testsuite
-The GCC testsuites (except for those for runtime libraries).
+GCC（不包含运行时库）的测试用例集。
 @xref{Testsuites}.
 @end table
 
 @node Configuration
-@subsection Configuration in the @file{gcc} Directory
+@subsection @file{gcc}目录下的配置过程
 
 The @file{gcc} directory is configured with an Autoconf-generated
 script @file{configure}.  The @file{configure} script is generated
@@ -215,21 +218,24 @@ from @file{configure.ac} and @file{aclocal.m4}.  From the files
 file @file{config.in}.  The file @file{cstamp-h.in} is used as a
 timestamp.
 
+@file{gcc}目录用一个autoconf生成的脚本文件@file{configure}进行配置。
+@file{configure}由@file{configure.ac}和@file{aclocal.m4}生成。
+autoheader程序根据@file{configure.ac}和@file{acconfig.h}生成
+@file{config.in}。@file{cstamp-h.in}用作时间戳（timestamp）。
+
 @menu
-* Config Fragments::     Scripts used by @file{configure}.
-* System Config::        The @file{config.build}, @file{config.host}, and
-                         @file{config.gcc} files.
-* Configuration Files::  Files created by running @file{configure}.
+* Config Fragments::     @file{configure}用到的脚本文件。
+* System Config::        @file{config.build}、@file{config.host}和@file{config.gcc}文件。
+* Configuration Files::  运行@file{configure}后生成的文件。
 @end menu
 
 @node Config Fragments
-@subsubsection Scripts Used by @file{configure}
+@subsubsection @file{configure}用到的脚本文件
 
-@file{configure} uses some other scripts to help in its work:
+@file{configure}使用了一些脚本来完成这个工作:
 
 @itemize @bullet
-@item The standard GNU @file{config.sub} and @file{config.guess}
-files, kept in the top level directory, are used.
+@item 位于顶级目录下的标准GNU @file{config.sub}和@file{config.guess}文件。
 
 @item The file @file{config.gcc} is used to handle configuration
 specific to the particular target machine.  The file
@@ -241,31 +247,54 @@ Autoconf feature tests.)
 @xref{System Config, , The @file{config.build}; @file{config.host};
 and @file{config.gcc} Files}, for details of the contents of these files.
 
+@item @file{config.gcc}处理特定 target 的配置。
+@file{config.build}处理特定 build 的配置。
+@file{config.host}处理特定 host 的配置。
+（一般的，只有autoconf无法处理的特性才应该用这些文件来处理。）
+这些文件的细节，@xref{System Config, ,
+@file{config.build}、@file{config.host}和@file{config.gcc}}.
+
 @item Each language subdirectory has a file
 @file{@var{language}/config-lang.in} that is used for
 front-end-specific configuration.  @xref{Front End Config, , The Front
 End @file{config-lang.in} File}, for details of this file.
 
+@item 每个语言的子目录下都有一个文件@file{@var{language}/config-lang.in}用于特定前端的配置。
+这个文件的细节，@xref{Front End Config, ,The Front End @file{config-lang.in}}.
+
 @item A helper script @file{configure.frag} is used as part of
 creating the output of @file{configure}.
+
+@item 一个生成@file{configure}的辅助脚本@file{configure.frag}.
+
 @end itemize
 
 @node System Config
-@subsubsection The @file{config.build}; @file{config.host}; and @file{config.gcc} Files
+@subsubsection @file{config.build}、@file{config.host}和@file{config.gcc}
 
 The @file{config.build} file contains specific rules for particular systems
 which GCC is built on.  This should be used as rarely as possible, as the
 behavior of the build system can always be detected by autoconf.
 
+@file{config.build}包含了用于 build 的特定规则。这个应该尽量少用，因为 build
+平台上的行为总是可以被autoconf识别。
+
 The @file{config.host} file contains specific rules for particular systems
 which GCC will run on.  This is rarely needed.
+
+@file{config.host}包含了用于 host 的特定规则。很少使用。
 
 The @file{config.gcc} file contains specific rules for particular systems
 which GCC will generate code for.  This is usually needed.
 
+@file{config.gcc}包含了用于 target 的一些特定规则，这个很常用。
+
 Each file has a list of the shell variables it sets, with descriptions, at the
 top of the file.
 
+每一个文件都在文件的开始设置了一些shell变量，并附带注释。
+
+@c TODO：跟进doc的更新
 FIXME: document the contents of these files, and what variables should
 be set to control build, host and target configuration.
 
