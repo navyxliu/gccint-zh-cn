@@ -9344,7 +9344,9 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c The RTL template.  This is a vector of RTL expressions representing
 @c a sequence of separate instructions.  Unlike @code{define_insn}, there
 @c is no implicit surrounding @code{PARALLEL}.
-@c 
+@item
+RTL模板。这是一个RTL表达式向量，表示一个指令序列。
+
 @c @item
 @c The condition, a string containing a C expression.  This expression is
 @c used to express how the availability of this pattern depends on
@@ -9355,7 +9357,14 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c target-machine-type flags.  The compiler needs to test these conditions
 @c during initialization in order to learn exactly which named instructions
 @c are available in a particular run.
-@c 
+@item
+条件，一个字符串包含了一个C表达式。
+该表达式用于表示该指令模式对于GCC运行时命令行选项所选择的什么样的target机器
+子类别有效。这跟具有标准名字的@code{define_insn}的条件类似。因此，
+条件（如果存在）可以不依赖于所匹配的insn的数据，而只是依赖于target机器类型标号。
+编译器需要在初始化时测试这些条件，以便确切的知道在一次特定的运行时，
+哪些命名指令有效。
+
 @c @item
 @c The preparation statements, a string containing zero or more C
 @c statements which are to be executed before RTL code is generated from
@@ -9366,7 +9375,10 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c insns directly by calling routines such as @code{emit_insn}, etc.
 @c Any such insns precede the ones that come from the RTL template.
 @c @end itemize
-@c 
+@item
+准备语句，一个字符串，包含了0个或多个C语句，其将在RTL模板生成RTL代码前被执行。
+@end itemize
+
 @c Every RTL insn emitted by a @code{define_expand} must match some
 @c @code{define_insn} in the machine description.  Otherwise, the compiler
 @c will crash when trying to generate code for the insn or trying to optimize
@@ -9397,7 +9409,29 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c There are two special macros defined for use in the preparation statements:
 @c @code{DONE} and @code{FAIL}.  Use them with a following semicolon,
 @c as a statement.
-@c 
+每个由@code{define_expand}生成的RTL insn必须匹配机器描述中的某个
+@code{define_insn}。否则，编译器在尝试为insn生成代码或者试图对其进行优化的时候，
+将会崩溃。
+
+RTL模板，除了控制RTL insn的生成，还描述了当使用该指令模式时，
+所需要指定的操作数。特别是，它为每个操作数给出了断言。
+
+需要被指定的由指令模式生成RTL的，真正的操作数，
+在RTL模板中它第一次出现的位置使用@code{match_operand}来描述。
+这将把对于操作数的断言信息放入记录该事情的表中。
+如果操作数被引用多次，则后续的引用应该使用@code{match_dup}。
+
+RTL模板还可以引用内部操作数，
+其为只在由@code{define_expand}生成的序列中使用的临时寄存器或者标号。
+内部操作数使用@code{match_dup}来替换到RTL模板中，而不是@code{match_operand}。
+内部操作数的值在编译器需要使用该指令模式时，不作为参数传入。替代的，
+它们在指令模式中计算，在准备语句中。
+这些语句计算值并将它们存入到合适的@code{operands}元素中，
+以便@code{match_dup}可以找到它们。
+
+有两个特定的宏，用于准备语句中：@code{DONE}和@code{FAIL}。
+在其后面跟随一个分号，以作为一条语句来使用。
+
 @c @table @code
 @c 
 @c @findex DONE
@@ -9406,7 +9440,14 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c only RTL insns resulting from the pattern on this occasion will be
 @c those already emitted by explicit calls to @code{emit_insn} within the
 @c preparation statements; the RTL template will not be generated.
-@c 
+@table @code
+
+@findex DONE
+@item DONE
+使用@code{DONE}宏来结束该指令模式的RTL生成。这种情况下，
+由该指令模式生成的唯一的RTL insn将为在准备语句中显示调用@code{emit_insn}生成
+的insn；RTL模板将不被生成。 
+
 @c @findex FAIL
 @c @item FAIL
 @c Make the pattern fail on this occasion.  When a pattern fails, it means
@@ -9427,7 +9468,22 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c initial insn list.  If the preparation statement always invokes
 @c @code{DONE} or @code{FAIL}, the RTL template may be reduced to a simple
 @c list of operands, such as this example:
-@c 
+@findex FAIL
+@item FAIL
+
+使指令模式对于这种情况失败。当指令模式失败时，这意味着指令模式实际上无效。编译器中的调用程序将会尝试其它策略，使用其它指令模式来进行代码生成。
+
+目前，FAIL操作只支持二元（加法，乘法，移位等）和
+位域（@code{extv}, @code{extzv}和@code{insv}）操作。 
+@end table
+
+如果准备语句即没有调用@code{DONE}，也没有调用@code{FAIL}，
+则@code{define_expand}的行为便跟@code{define_insn}一样，即RTL模板用于生成insn
+
+RTL模板不用于匹配，只是用于生成最初的insn列表。
+如果准备语句总是调用@code{DONE}或者@code{FAIL}，
+则RTL模板可以简化为一个简单的操作数列表，例如：
+
 @c @smallexample
 @c @group
 @c (define_expand "addsi3"
@@ -9470,8 +9526,50 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c @}")
 @c @end group
 @c @end smallexample
-@c 
-@c @noindent
+@smallexample
+@group
+(define_expand "addsi3"
+  [(match_operand:SI 0 "register_operand" "")
+   (match_operand:SI 1 "register_operand" "")
+   (match_operand:SI 2 "register_operand" "")]
+@end group
+@group
+  ""
+  "
+@{
+  handle_add (operands[0], operands[1], operands[2]);
+  DONE;
+@}")
+@end group
+@end smallexample
+
+这里有一个例子，是为SPUR芯片定义的左移位：
+
+@smallexample
+@group
+(define_expand "ashlsi3"
+  [(set (match_operand:SI 0 "register_operand" "")
+        (ashift:SI
+@end group
+@group
+          (match_operand:SI 1 "register_operand" "")
+          (match_operand:SI 2 "nonmemory_operand" "")))]
+  ""
+  "
+@end group
+@end smallexample
+
+@smallexample
+@group
+@{
+  if (GET_CODE (operands[2]) != CONST_INT
+      || (unsigned) INTVAL (operands[2]) > 3)
+    FAIL;
+@}")
+@end group
+@end smallexample
+
+@noindent
 @c This example uses @code{define_expand} so that it can generate an RTL insn
 @c for shifting when the shift-count is in the supported range of 0 to 3 but
 @c fail in other cases where machine insns aren't available.  When it fails,
@@ -9482,7 +9580,14 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c patterns with names, then it would be possible to use a
 @c @code{define_insn} in that case.  Here is another case (zero-extension
 @c on the 68000) which makes more use of the power of @code{define_expand}:
-@c 
+这个例子使用了@code{define_expand}，使得当移位数在支持的0到3的范围内时，
+便会生成移位RTL insn，而对于其它情况，则会失败。当其失败时，
+编译器便会使用不同的指令模式（比如一个库调用）来尝试其它策略。
+
+如果编译器能够处理具有名字的指令模式中的非平凡的条件字符串，
+则对于这样情况也可以使用@code{define_insn}。这里有另一种情况（68000上的零扩展），
+其使用了@code{define_expand}的更强大的功能：
+
 @c @smallexample
 @c (define_expand "zero_extendhisi2"
 @c   [(set (match_operand:SI 0 "general_operand" "")
@@ -9495,8 +9600,20 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c   ""
 @c   "operands[1] = make_safe_from (operands[1], operands[0]);")
 @c @end smallexample
-@c 
-@c @noindent
+@smallexample
+(define_expand "zero_extendhisi2"
+  [(set (match_operand:SI 0 "general_operand" "")
+        (const_int 0))
+   (set (strict_low_part
+          (subreg:HI
+            (match_dup 0)
+            0))
+        (match_operand:HI 1 "general_operand" ""))]
+  ""
+  "operands[1] = make_safe_from (operands[1], operands[0]);")
+@end smallexample
+
+@noindent
 @c @findex make_safe_from
 @c Here two RTL insns are generated, one to clear the entire output operand
 @c and the other to copy the input operand into its low half.  This sequence
@@ -9512,19 +9629,32 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c @code{const_int} because the constant value is too large to be legitimate
 @c on this machine.  So it must be copied into a register with
 @c @code{force_reg} and then the register used in the @code{and}.
-@c 
-@c @smallexample
-@c (define_expand "zero_extendhisi2"
-@c   [(set (match_operand:SI 0 "register_operand" "")
-@c         (and:SI (subreg:SI
-@c                   (match_operand:HI 1 "register_operand" "")
-@c                   0)
-@c                 (match_dup 2)))]
-@c   ""
-@c   "operands[2]
-@c      = force_reg (SImode, GEN_INT (65535)); ")
-@c @end smallexample
-@c 
+@findex make_safe_from
+这里将会生成两个RTL insn，一个用于清除整个输出操作数，
+另一个用于将输入操作数复制到其低半部份。
+该指令序列在输入操作数指向输出操作数（的旧值）时，是不正确的。
+所以，准备语句用来确保不是这样。当其指向@code{operands[0]}时，
+函数@code{make_safe_from}用来将@code{operands[1]}复制到临时寄存器中。
+其通过生成另一个RTL insn来完成这件事。
+
+最后，第三个例子显示了内部操作数的使用。
+在SPUR芯片上的零扩展是通过将结果与上半字mask来完成的。
+但是该mask不能通过一个@code{const_int}来表示，因为常量值太大，
+无法在该机器上被合法化。所以其必须使用@code{force_reg}复制到寄存器中，
+然后在@code{and}中使用该寄存器。
+
+@smallexample
+(define_expand "zero_extendhisi2"
+  [(set (match_operand:SI 0 "register_operand" "")
+        (and:SI (subreg:SI
+                  (match_operand:HI 1 "register_operand" "")
+                  0)
+                (match_dup 2)))]
+  ""
+  "operands[2]
+     = force_reg (SImode, GEN_INT (65535)); ")
+@end smallexample
+
 @c @emph{Note:} If the @code{define_expand} is used to serve a
 @c standard binary or unary arithmetic operation or a bit-field operation,
 @c then the last insn it generates must not be a @code{code_label},
@@ -9533,7 +9663,13 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c at the end, emit an insn to copy the result of the operation into
 @c itself.  Such an insn will generate no code, but it can avoid problems
 @c in the compiler.
-@c 
+注意：如果@code{define_expand}被用于一个标准的二元或者一元算数运算，
+或者一个位域运算，则其生成的最后的insn一定不能为一个@code{code_label},
+@code{barrier}或@code{note}。其必须为一个@code{insn},
+@code{jump_insn}或@code{call_insn}。如果你在结尾处不需要实际的insn，
+则可以生成一条将操作数的结果复制到其本身的insn。这样的insn将不会生成代码，
+但可以避免编译器中的问题。
+
 @c @end ifset
 @c @ifset INTERNALS
 @c @node Insn Splitting
@@ -9541,7 +9677,14 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c @cindex insn splitting
 @c @cindex instruction splitting
 @c @cindex splitting instructions
-@c 
+@end ifset
+@ifset INTERNALS
+@node Insn拆分
+@section 定义如何拆分指令
+@cindex insn splitting
+@cindex instruction splitting
+@cindex splitting instructions
+
 @c There are two cases where you should specify how to split a pattern
 @c into multiple insns.  On machines that have instructions requiring
 @c delay slots (@pxref{Delay Slots}) or that have instructions whose
@@ -9567,7 +9710,24 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c subexpression.  However, in some other cases, such as performing an
 @c addition of a large constant in two insns on a RISC machine, the way to
 @c split the addition into two insns is machine-dependent.
-@c 
+有两种情况，你应该指定如何将一个指令模式拆分为多个insn。在一些机器上，
+指令需要延迟槽（参见@ref{延迟槽}）或者指令的输出对于多周期
+（参见@ref{处理器流水线描述}）不可用，
+则优化这些情况的编译器过程需要能够将insn移入延迟槽中。但是，
+一些insn可能会生成不止一条机器指令。这些insn则不能被放入延迟槽。
+
+通常你可以重写单个insn为单独的insn列表，每个对应于一条机器指令。
+这样做的缺点是它将造成编译变慢并且需要更多的空间。如果结果insn太复杂，
+则还会抑制一些优化。当编译器有理由相信可以改进指令或者延迟槽调度的时候，
+则会拆分insn。
+
+insn组合器阶段还拆分putative insns。
+如果三个insn被合并到一个使用复杂表达式的insn，
+其不能被某个@code{define_insn}模式匹配，
+则组合器阶段尝试将复杂指令模式拆分为两个被识别的insn。通常，
+它能够将复杂指令模式通过拆分某个子表达式来断开。但是，有些情况下，
+像在一个RISC机器上执行一个大常量的加法，则拆分加法为两个insn的方式是机器相关的。
+
 @c @findex define_split
 @c The @code{define_split} definition tells the compiler how to split a
 @c complex insn into several simpler insns.  It looks like this:
@@ -9581,7 +9741,20 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c    @dots{}]
 @c   "@var{preparation-statements}")
 @c @end smallexample
-@c 
+@findex define_split
+@code{define_split}定义告诉了编译器如何将一个复杂的insn拆分为多个简单的insn。
+它的形式为：
+
+@smallexample
+(define_split
+  [@var{insn-pattern}]
+  "@var{condition}"
+  [@var{new-insn-pattern-1}
+   @var{new-insn-pattern-2}
+   @dots{}]
+  "@var{preparation-statements}")
+@end smallexample
+
 @c @var{insn-pattern} is a pattern that needs to be split and
 @c @var{condition} is the final condition to be tested, as in a
 @c @code{define_insn}.  When an insn matching @var{insn-pattern} and
@@ -9610,22 +9783,41 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c As an example of this usage of @code{define_split}, consider the following
 @c example from @file{a29k.md}, which splits a @code{sign_extend} from
 @c @code{HImode} to @code{SImode} into a pair of shift insns:
-@c 
-@c @smallexample
-@c (define_split
-@c   [(set (match_operand:SI 0 "gen_reg_operand" "")
-@c         (sign_extend:SI (match_operand:HI 1 "gen_reg_operand" "")))]
-@c   ""
-@c   [(set (match_dup 0)
-@c         (ashift:SI (match_dup 1)
-@c                    (const_int 16)))
-@c    (set (match_dup 0)
-@c         (ashiftrt:SI (match_dup 0)
-@c                      (const_int 16)))]
-@c   "
-@c @{ operands[1] = gen_lowpart (SImode, operands[1]); @}")
-@c @end smallexample
-@c 
+@var{insn-pattern}为需要被拆分的指令模式，@var{condition}为要被测试的最终条件，
+跟@code{define_insn}中的一样。当一个insn匹配@var{insn-pattern}，
+并且满足条件@var{condition}，则它由insn列表@var{new-insn-pattern-1},
+@var{new-insn-pattern-2}等来替换。
+
+@var{preparation-statements}与那些为@code{define_expand}（参见@ref{定义扩展}）
+指定的语句类似，并且在生成新RTL之前被执行。
+与@code{define_expand}中的不同之处为，这些语句不能生成任何新的伪寄存器。
+一旦完成重载，它们则不能在栈帧中分配任何空间。
+
+指令模式根据两种不同的环境来匹配@var{insn-pattern}。
+如果需要为延迟槽调度或者insn调度来拆分insn，则insn已经是有效的，
+这意味着它已经被一些@code{define_insn}匹配过，
+并且如果@code{reload_completed}为非0，则已经满足那个@code{define_insn}的约束。
+在那种情况下，新的insn模式必须也是匹配某个@code{define_insn}的insn，
+并且如果@code{reload_completed}为非0，则也必须满足那些定义的约束。
+
+对于这种@code{define_split}用法的例子，考虑下面来自@file{a29k.md}的例子，
+其将从@code{HImode}到@code{SImode}的@code{sign_extend}拆分为一对shift insn：
+
+@smallexample
+(define_split
+  [(set (match_operand:SI 0 "gen_reg_operand" "")
+        (sign_extend:SI (match_operand:HI 1 "gen_reg_operand" "")))]
+  ""
+  [(set (match_dup 0)
+        (ashift:SI (match_dup 1)
+                   (const_int 16)))
+   (set (match_dup 0)
+        (ashiftrt:SI (match_dup 0)
+                     (const_int 16)))]
+  "
+@{ operands[1] = gen_lowpart (SImode, operands[1]); @}")
+@end smallexample
+
 @c When the combiner phase tries to split an insn pattern, it is always the
 @c case that the pattern is @emph{not} matched by any @code{define_insn}.
 @c The combiner pass first tries to split a single @code{set} expression
@@ -9639,28 +9831,36 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c 
 @c Here is an example of this use of @code{define_split}, taken from
 @c @file{rs6000.md}:
-@c 
-@c @smallexample
-@c (define_split
-@c   [(set (match_operand:SI 0 "gen_reg_operand" "")
-@c         (plus:SI (match_operand:SI 1 "gen_reg_operand" "")
-@c                  (match_operand:SI 2 "non_add_cint_operand" "")))]
-@c   ""
-@c   [(set (match_dup 0) (plus:SI (match_dup 1) (match_dup 3)))
-@c    (set (match_dup 0) (plus:SI (match_dup 0) (match_dup 4)))]
-@c "
-@c @{
-@c   int low = INTVAL (operands[2]) & 0xffff;
-@c   int high = (unsigned) INTVAL (operands[2]) >> 16;
-@c 
-@c   if (low & 0x8000)
-@c     high++, low |= 0xffff0000;
-@c 
-@c   operands[3] = GEN_INT (high << 16);
-@c   operands[4] = GEN_INT (low);
-@c @}")
-@c @end smallexample
-@c 
+当组合器阶段尝试拆分一个insn模式时，则情况总是为，
+指令模式没有被任何@code{define_insn}匹配。
+组合器过程首先尝试将单个@code{set}表达式拆分，
+然后是在@code{parallel}中的相同的@code{set}表达式，
+不过跟随一个伪寄存器的@code{clobber}，以作为scratch寄存器来使用。
+这这些情况下，组合器期望能够生成两个新的insn。
+它将验证这些指令模式匹配某个@code{define_insn}定义，
+所以你不需要在@code{define_split}中做这些测试（当然，there is no point in writing a @code{define_split} that will never produce insns that match).
+
+@smallexample
+(define_split
+  [(set (match_operand:SI 0 "gen_reg_operand" "")
+        (plus:SI (match_operand:SI 1 "gen_reg_operand" "")
+                 (match_operand:SI 2 "non_add_cint_operand" "")))]
+  ""
+  [(set (match_dup 0) (plus:SI (match_dup 1) (match_dup 3)))
+   (set (match_dup 0) (plus:SI (match_dup 0) (match_dup 4)))]
+"
+@{
+  int low = INTVAL (operands[2]) & 0xffff;
+  int high = (unsigned) INTVAL (operands[2]) >> 16;
+
+  if (low & 0x8000)
+    high++, low |= 0xffff0000;
+
+  operands[3] = GEN_INT (high << 16);
+  operands[4] = GEN_INT (low);
+@}")
+@end smallexample
+
 @c Here the predicate @code{non_add_cint_operand} matches any
 @c @code{const_int} that is @emph{not} a valid operand of a single add
 @c insn.  The add with the smaller displacement is written so that it
@@ -9668,33 +9868,38 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c 
 @c An example that uses a scratch register, from the same file, generates
 @c an equality comparison of a register and a large constant:
-@c 
-@c @smallexample
-@c (define_split
-@c   [(set (match_operand:CC 0 "cc_reg_operand" "")
-@c         (compare:CC (match_operand:SI 1 "gen_reg_operand" "")
-@c                     (match_operand:SI 2 "non_short_cint_operand" "")))
-@c    (clobber (match_operand:SI 3 "gen_reg_operand" ""))]
-@c   "find_single_use (operands[0], insn, 0)
-@c    && (GET_CODE (*find_single_use (operands[0], insn, 0)) == EQ
-@c        || GET_CODE (*find_single_use (operands[0], insn, 0)) == NE)"
-@c   [(set (match_dup 3) (xor:SI (match_dup 1) (match_dup 4)))
-@c    (set (match_dup 0) (compare:CC (match_dup 3) (match_dup 5)))]
-@c   "
-@c @{
-@c   /* @r{Get the constant we are comparing against, C, and see what it
-@c      looks like sign-extended to 16 bits.  Then see what constant
-@c      could be XOR'ed with C to get the sign-extended value.}  */
-@c 
-@c   int c = INTVAL (operands[2]);
-@c   int sextc = (c << 16) >> 16;
-@c   int xorv = c ^ sextc;
-@c 
-@c   operands[4] = GEN_INT (xorv);
-@c   operands[5] = GEN_INT (sextc);
-@c @}")
-@c @end smallexample
-@c 
+这里断言@code{non_add_cint_operand}匹配任何不是单个add insn的有效操作数的
+@code{const_int}。
+
+使用scratch寄存器的例子，来自同一个文件，
+用来生成等价的寄存器和大常量的比较运算：
+
+@smallexample
+(define_split
+  [(set (match_operand:CC 0 "cc_reg_operand" "")
+        (compare:CC (match_operand:SI 1 "gen_reg_operand" "")
+                    (match_operand:SI 2 "non_short_cint_operand" "")))
+   (clobber (match_operand:SI 3 "gen_reg_operand" ""))]
+  "find_single_use (operands[0], insn, 0)
+   && (GET_CODE (*find_single_use (operands[0], insn, 0)) == EQ
+       || GET_CODE (*find_single_use (operands[0], insn, 0)) == NE)"
+  [(set (match_dup 3) (xor:SI (match_dup 1) (match_dup 4)))
+   (set (match_dup 0) (compare:CC (match_dup 3) (match_dup 5)))]
+  "
+@{
+  /* @r{Get the constant we are comparing against, C, and see what it
+     looks like sign-extended to 16 bits.  Then see what constant
+     could be XOR'ed with C to get the sign-extended value.}  */
+
+  int c = INTVAL (operands[2]);
+  int sextc = (c << 16) >> 16;
+  int xorv = c ^ sextc;
+
+  operands[4] = GEN_INT (xorv);
+  operands[5] = GEN_INT (sextc);
+@}")
+@end smallexample
+
 @c To avoid confusion, don't write a single @code{define_split} that
 @c accepts some insns that match some @code{define_insn} as well as some
 @c insns that don't.  Instead, write two separate @code{define_split}
@@ -9716,26 +9921,43 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c it was a simple conditional jump, @minus{}1 otherwise.  To simplify
 @c recomputing of edge frequencies, the new sequence is required to have only
 @c forward jumps to the newly created labels.
-@c 
+为了避免混淆，不要写这样的@code{define_split}，
+其接受匹配某个@code{define_insn}的一些insn，同时也接受不匹配的insn。替代的，
+可以写两个分别的@code{define_split}定义，一个针对有效的insn，
+一个针对无效的insn。
+
+允许将跳转指令拆分为一个跳转序列或者在拆分非跳转指令时创建新的跳转。
+由于控制流图和分支预测信息需要更新，所以会有一些限制。
+
+将跳转指令拆分为由另一个跳转指令覆盖的指令序列，总是有效的，
+因为编译器期望新的跳转具有相同的行为。当新的序列包含多个跳转指令或新的标号时，
+则需要更多的辅助。只允许创建无条件跳转，或者简单的条件跳转指令。另外，
+其必须为每个条件跳转附加一个@code{REG_BR_PROB}注解。
+全局变量@code{split_branch_probability}保存了原始分支的可能性。
+为了简化边频率的重新计算，新的序列要求只具有向前跳转。
+
 @c @findex define_insn_and_split
 @c For the common case where the pattern of a define_split exactly matches the
 @c pattern of a define_insn, use @code{define_insn_and_split}.  It looks like
 @c this:
-@c 
-@c @smallexample
-@c (define_insn_and_split
-@c   [@var{insn-pattern}]
-@c   "@var{condition}"
-@c   "@var{output-template}"
-@c   "@var{split-condition}"
-@c   [@var{new-insn-pattern-1}
-@c    @var{new-insn-pattern-2}
-@c    @dots{}]
-@c   "@var{preparation-statements}"
-@c   [@var{insn-attributes}])
-@c 
-@c @end smallexample
-@c 
+@findex define_insn_and_split
+对于通常的情况，define_split的模式完全匹配define_insn的模式，
+则可以使用@code{define_insn_and_split}。其形式为：
+
+@smallexample
+(define_insn_and_split
+  [@var{insn-pattern}]
+  "@var{condition}"
+  "@var{output-template}"
+  "@var{split-condition}"
+  [@var{new-insn-pattern-1}
+   @var{new-insn-pattern-2}
+   @dots{}]
+  "@var{preparation-statements}"
+  [@var{insn-attributes}])
+
+@end smallexample
+
 @c @var{insn-pattern}, @var{condition}, @var{output-template}, and
 @c @var{insn-attributes} are used as in @code{define_insn}.  The
 @c @var{new-insn-pattern} vector and the @var{preparation-statements} are used as
@@ -9744,23 +9966,31 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c with @samp{&&}, the condition used for the split will be the constructed as a
 @c logical ``and'' of the split condition with the insn condition.  For example,
 @c from i386.md:
-@c 
-@c @smallexample
-@c (define_insn_and_split "zero_extendhisi2_and"
-@c   [(set (match_operand:SI 0 "register_operand" "=r")
-@c      (zero_extend:SI (match_operand:HI 1 "register_operand" "0")))
-@c    (clobber (reg:CC 17))]
-@c   "TARGET_ZERO_EXTEND_WITH_AND && !optimize_size"
-@c   "#"
-@c   "&& reload_completed"
-@c   [(parallel [(set (match_dup 0)
-@c                    (and:SI (match_dup 0) (const_int 65535)))
-@c               (clobber (reg:CC 17))])]
-@c   ""
-@c   [(set_attr "type" "alu1")])
-@c 
-@c @end smallexample
-@c 
+@var{insn-pattern}, @var{condition}, @var{output-template}和
+@var{insn-attributes}跟在@code{define_insn}中的用法一样. 
+@var{new-insn-pattern}向量和@var{preparation-statements}跟在
+@code{define_split}中的用法一样。
+@var{split-condition}也跟在@code{define_split}中的用法一样, 
+不同之处是如果condition开始于@samp{&&}, 
+则用于拆分的条件将被构造为split condition和insn condition的逻辑“and”运算。
+例如，在i386.md中:
+
+@smallexample
+(define_insn_and_split "zero_extendhisi2_and"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+     (zero_extend:SI (match_operand:HI 1 "register_operand" "0")))
+   (clobber (reg:CC 17))]
+  "TARGET_ZERO_EXTEND_WITH_AND && !optimize_size"
+  "#"
+  "&& reload_completed"
+  [(parallel [(set (match_dup 0)
+                   (and:SI (match_dup 0) (const_int 65535)))
+              (clobber (reg:CC 17))])]
+  ""
+  [(set_attr "type" "alu1")])
+
+@end smallexample
+
 @c In this case, the actual split condition will be
 @c @samp{TARGET_ZERO_EXTEND_WITH_AND && !optimize_size && reload_completed}.
 @c 
@@ -9768,7 +9998,10 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c functionality as two separate @code{define_insn} and @code{define_split}
 @c patterns.  It exists for compactness, and as a maintenance tool to prevent
 @c having to ensure the two patterns' templates match.
-@c 
+在这种情况下，实际的split condition将为@samp{TARGET_ZERO_EXTEND_WITH_AND && !optimize_size && reload_completed}。
+
+@code{define_insn_and_split}结构提供了与两个单独的@code{define_insn}和@code{define_split}指令模式相同的功能. 其形式紧凑。
+
 @c @end ifset
 @c @ifset INTERNALS
 @c @node Including Patterns
@@ -9781,21 +10014,34 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c @file{.md}.  This is used only at build time and there is no preprocessing allowed.
 @c 
 @c It looks like:
-@c 
-@c @smallexample
-@c 
-@c (include
-@c   @var{pathname})
-@c @end smallexample
-@c 
+@end ifset
+@ifset INTERNALS
+@node 包含指令模式
+@section 在机器描述中包含指令模式
+@cindex insn includes
+
+@findex include
+模板@code{include}告诉编译器工具，
+从哪里寻找在其它文件中而不是文件@file{.md}中的模板。
+这只在构建时候使用，并且不允许进行预处理操作。
+
+其形如：
+
+@smallexample
+
+(include
+  @var{pathname})
+@end smallexample
+
 @c For example:
-@c 
-@c @smallexample
-@c 
-@c (include "filestuff")
-@c 
-@c @end smallexample
-@c 
+例如：
+
+@smallexample
+
+(include "filestuff")
+
+@end smallexample
+
 @c Where @var{pathname} is a string that specifies the location of the file,
 @c specifies the include file to be in @file{gcc/config/target/filestuff}.  The
 @c directory @file{gcc/config/target} is regarded as the default directory.
@@ -9805,37 +10051,56 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c and placed into subdirectories.
 @c 
 @c By specifying:
-@c 
-@c @smallexample
-@c 
-@c (include "BOGUS/filestuff")
-@c 
-@c @end smallexample
-@c 
+其中@var{pathname}为一个指定文件位置的字符串，
+指定了包含文件为@file{gcc/config/target/filestuff}。
+目录@file{gcc/config/target}被当作缺省目录。
+
+机器描述可以被分割成容易管理的小章节并放在子目录下。
+
+通过指定：
+
+@smallexample
+
+(include "BOGUS/filestuff")
+
+@end smallexample
+
 @c the include file is specified to be in @file{gcc/config/@var{target}/BOGUS/filestuff}.
 @c 
 @c Specifying an absolute path for the include file such as;
 @c @smallexample
-@c 
-@c (include "/u2/BOGUS/filestuff")
-@c 
-@c @end smallexample
+包含文件被指定为@file{gcc/config/@var{target}/BOGUS/filestuff}。
+
+为包含文件指定一个绝对路径，像：
+
+@smallexample
+
+(include "/u2/BOGUS/filestuff")
+
+@end smallexample
+
 @c is permitted but is not encouraged.
-@c 
+是被允许的，但不鼓励这么做。
+
 @c @subsection RTL Generation Tool Options for Directory Search
 @c @cindex directory options .md
 @c @cindex options, directory search
 @c @cindex search options
-@c 
+@subsection 用于目录搜索的RTL生成工具选项
+@cindex directory options .md
+@cindex options, directory search
+@cindex search options
+
 @c The @option{-I@var{dir}} option specifies directories to search for machine descriptions.
 @c For example:
-@c 
-@c @smallexample
-@c 
-@c genrecog -I/p1/abc/proc1 -I/p2/abcd/pro2 target.md
-@c 
-@c @end smallexample
-@c 
+选项@option{-I@var{dir}}指定了搜索机器描述的目录。例如：
+
+@smallexample
+
+genrecog -I/p1/abc/proc1 -I/p2/abcd/pro2 target.md
+
+@end smallexample
+
 @c 
 @c Add the directory @var{dir} to the head of the list of directories to be
 @c searched for header files.  This can be used to override a system machine definition
@@ -9843,7 +10108,12 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c searched before the default machine description file directories.  If you use more than
 @c one @option{-I} option, the directories are scanned in left-to-right
 @c order; the standard default directory come after.
-@c 
+目录@var{dir}将被增加到搜索头文件的目录列表的头部。
+这可以用来覆盖系统的机器定义文件，而替换为你自己的版本，
+因为这些目录将在缺省机器描述文件目录之前被搜索。
+如果你使用了多个@option{-I}选项，则目录按照从左到右的顺序被扫描；
+之后为标准的缺省目录。
+
 @c 
 @c @end ifset
 @c @ifset INTERNALS
@@ -9851,7 +10121,13 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c @section Machine-Specific Peephole Optimizers
 @c @cindex peephole optimizer definitions
 @c @cindex defining peephole optimizers
-@c 
+@end ifset
+@ifset INTERNALS
+@node 窥孔定义
+@section 机器特定的窥孔优化
+@cindex peephole optimizer definitions
+@cindex defining peephole optimizers
+
 @c In addition to instruction patterns the @file{md} file may contain
 @c definitions of machine-specific peephole optimizations.
 @c 
@@ -9871,18 +10147,42 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c insns.  The @code{peephole2} pass is run after register allocation
 @c but before scheduling, which may result in much better code for
 @c targets that do scheduling.
-@c 
+除了指令模式，@file{md}文件还可以包含关于机器特定的窥孔优化的定义。
+
+当程序中的数据流没有建议进行尝试的时候，
+组合器便不会注意某些可能存在的窥孔优化。
+例如，有时两个连续的insn是可以被组合的，
+虽然第二个没有显示出要使用在第一个中所计算的寄存器。
+机器特定的窥孔优化器可以检测出这样的机会。
+
+有两种窥孔定义形式可以使用。
+最初的@code{define_peephole}运行于汇编输出时，
+用于匹配insn和替换汇编文本。不赞成使用@code{define_peephole}。
+
+较新的@code{define_peephole2}用来匹配insn和替换新的insn。
+@code{peephole2}过程运行于寄存器分配之后，调度之前，
+其使进行调度的target获得更好的代码。
+
 @c @menu
 @c * define_peephole::     RTL to Text Peephole Optimizers
 @c * define_peephole2::    RTL to RTL Peephole Optimizers
 @c @end menu
-@c 
+@menu
+* define_peephole::     RTL到文本的窥孔优化器
+* define_peephole2::    RTL到RTL的窥孔优化器
+@end menu
+
 @c @end ifset
 @c @ifset INTERNALS
 @c @node define_peephole
 @c @subsection RTL to Text Peephole Optimizers
 @c @findex define_peephole
-@c 
+@end ifset
+@ifset INTERNALS
+@node define_peephole
+@subsection RTL到文本的窥孔优化器
+@findex define_peephole
+
 @c @need 1000
 @c A definition looks like this:
 @c 
@@ -9895,7 +10195,19 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c   "@var{template}"
 @c   "@var{optional-insn-attributes}")
 @c @end smallexample
-@c 
+@need 1000
+定义的形式如下：
+
+@smallexample
+(define_peephole
+  [@var{insn-pattern-1}
+   @var{insn-pattern-2}
+   @dots{}]
+  "@var{condition}"
+  "@var{template}"
+  "@var{optional-insn-attributes}")
+@end smallexample
+
 @c @noindent
 @c The last string operand may be omitted if you are not using any
 @c machine-specific information in this machine description.  If present,
@@ -9905,7 +10217,16 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c consecutive insns.  The optimization applies to a sequence of insns when
 @c @var{insn-pattern-1} matches the first one, @var{insn-pattern-2} matches
 @c the next, and so on.
-@c 
+@noindent
+如果没有在该机器描述中使用任何机器特定的信息，
+则可以省略掉最后的字符串操作数。
+如果有，则其必须遵守在@code{define_insn}中相同的规则。
+
+该结构中，@var{insn-pattern-1}等为匹配连续insn的指令模式。
+当@var{insn-pattern-1}匹配第一个insn，
+@var{insn-pattern-2}匹配下一个，等等依次类推的情况时，
+则会将优化应用到该insn序列。
+
 @c Each of the insns matched by a peephole must also match a
 @c @code{define_insn}.  Peepholes are checked only at the last stage just
 @c before code generation, and only optionally.  Therefore, any insn which
@@ -9919,7 +10240,17 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c definition.  So, you can check for identical operands in two insns by
 @c using @code{match_operand} in one insn and @code{match_dup} in the
 @c other.
-@c 
+每个由窥孔匹配的insn也必须匹配一个@code{define_insn}。
+窥孔只在代码生成前的最后阶段被检查，并且只是可选的。
+因此，在一个未优化的编译中，或者不同的优化阶段中，
+任何匹配窥孔但是不匹配@code{define_insn}的将会在代码生成时造成崩溃。
+
+和通常一样，insn的操作数使用@code{match_operands},
+@code{match_operator}和@code{match_dup}来匹配。
+不同的是，操作数编号应用在定义的所有insn指令模式中。所以，
+你可以通过一个insn中的@code{match_operand}和另一个insn中的@code{match_dup}，
+来在两个insn中检查相同的操作数。
+
 @c The operand constraints used in @code{match_operand} patterns do not have
 @c any direct effect on the applicability of the peephole, but they will
 @c be validated afterward, so make sure your constraints are general enough
@@ -9941,14 +10272,34 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c is complete.  Therefore, the peephole definition can check which
 @c operands have ended up in which kinds of registers, just by looking at
 @c the operands.
-@c 
+用于@code{match_operand}指令模式的操作数constraint对窥孔的适用性没有任何直接的影响，
+不过它们将会在后面被验证，所以要确信当窥孔匹配时，你的constraint要足够通用。
+如果窥孔匹配，但constraint却不满足，则编译器将崩溃。
+
+将窥孔中的所有操作数的constraint省略掉是安全的；
+或者你可以编写constraint作为之前测试过的标准的二次检查。
+
+一旦insn序列匹配指令模式，则@code{condition}将被检查。
+这是一个C表达式，用于对是否执行优化来做最后的决定
+（如果表达式非0时，我们这样做）。
+如果@code{condition}被省略掉（换句话说，字符串为空）
+则优化会被应用到每个匹配指令模式的insn序列。
+
+定义的窥孔优化在寄存器分配完成之后应用。
+因此，窥孔定义可以只是查看操作数，便能检查哪些操作数结束于哪种寄存器。
+
 @c @findex prev_active_insn
 @c The way to refer to the operands in @var{condition} is to write
 @c @code{operands[@var{i}]} for operand number @var{i} (as matched by
 @c @code{(match_operand @var{i} @dots{})}).  Use the variable @code{insn}
 @c to refer to the last of the insns being matched; use
 @c @code{prev_active_insn} to find the preceding insns.
-@c 
+@findex prev_active_insn
+在条件中引用操作数的方式为对操作数编号@var{i}编写@code{operands[@var{i}]}
+（匹配于@code{(match_operand @var{i} @dots{})}）。
+使用变量@code{insn}来引用正在被匹配的insns的最后一个insn；
+使用@code{prev_active_insn}来找到先前的insns。
+
 @c @findex dead_or_set_p
 @c When optimizing computations with intermediate results, you can use
 @c @var{condition} to match only when the intermediate results are not used
@@ -9973,31 +10324,53 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c so the insns they produce are never combined or rearranged in any way.
 @c 
 @c Here is an example, taken from the 68000 machine description:
-@c 
-@c @smallexample
-@c (define_peephole
-@c   [(set (reg:SI 15) (plus:SI (reg:SI 15) (const_int 4)))
-@c    (set (match_operand:DF 0 "register_operand" "=f")
-@c         (match_operand:DF 1 "register_operand" "ad"))]
-@c   "FP_REG_P (operands[0]) && ! FP_REG_P (operands[1])"
-@c @{
-@c   rtx xoperands[2];
-@c   xoperands[1] = gen_rtx_REG (SImode, REGNO (operands[1]) + 1);
-@c #ifdef MOTOROLA
-@c   output_asm_insn ("move.l %1,(sp)", xoperands);
-@c   output_asm_insn ("move.l %1,-(sp)", operands);
-@c   return "fmove.d (sp)+,%0";
-@c #else
-@c   output_asm_insn ("movel %1,sp@@", xoperands);
-@c   output_asm_insn ("movel %1,sp@@-", operands);
-@c   return "fmoved sp@@+,%0";
-@c #endif
-@c @})
-@c @end smallexample
-@c 
+@findex dead_or_set_p
+当正在优化中间结果计算时，
+你可以使用条件来匹配只有当中间结果不在其它地方被使用的情况。
+使用C表达式@code{dead_or_set_p (@var{insn}, @var{op})}，
+其中@var{insn}为你所期望其值为最后一次被使用的insn，
+以及@var{op}为中间值（来自@code{operands[@var{i}]}）。
+
+应用优化，意味着将insn序列替换为新的insn。
+@var{template}控制了针对该组合insn的最终汇编代码输出。
+就像@code{define_insn}模板所做的一样。
+该模板中的操作数编号与用于要匹配的原始insn序列中的相同。
+
+被定义的窥孔优化器的结果不需要匹配机器描述中的任何insn模式；
+它甚至没有机会来匹配它们。窥孔优化器定义本身是作为insn模式，
+用来控制insn如何输出。
+
+被定义的窥孔优化器被作为汇编代码运行输出，
+所以它们产生的insns不再被组合或重排。
+
+这里有一个例子，来自68000机器描述：
+
+@smallexample
+(define_peephole
+  [(set (reg:SI 15) (plus:SI (reg:SI 15) (const_int 4)))
+   (set (match_operand:DF 0 "register_operand" "=f")
+        (match_operand:DF 1 "register_operand" "ad"))]
+  "FP_REG_P (operands[0]) && ! FP_REG_P (operands[1])"
+@{
+  rtx xoperands[2];
+  xoperands[1] = gen_rtx_REG (SImode, REGNO (operands[1]) + 1);
+#ifdef MOTOROLA
+  output_asm_insn ("move.l %1,(sp)", xoperands);
+  output_asm_insn ("move.l %1,-(sp)", operands);
+  return "fmove.d (sp)+,%0";
+#else
+  output_asm_insn ("movel %1,sp@@", xoperands);
+  output_asm_insn ("movel %1,sp@@-", operands);
+  return "fmoved sp@@+,%0";
+#endif
+@})
+@end smallexample
+
 @c @need 1000
 @c The effect of this optimization is to change
-@c 
+@need 1000
+该优化的效果是将
+
 @c @smallexample
 @c @group
 @c jbsr _foobar
@@ -10019,7 +10392,28 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c fmoved sp@@+,fp0
 @c @end group
 @c @end smallexample
-@c 
+@smallexample
+@group
+jbsr _foobar
+addql #4,sp
+movel d1,sp@@-
+movel d0,sp@@-
+fmoved sp@@+,fp0
+@end group
+@end smallexample
+
+@noindent
+转换为
+
+@smallexample
+@group
+jbsr _foobar
+movel d1,sp@@
+movel d0,sp@@-
+fmoved sp@@+,fp0
+@end group
+@end smallexample
+
 @c @ignore
 @c @findex CC_REVERSED
 @c If a peephole matches a sequence including one or more jump insns, you must
@@ -10042,57 +10436,73 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c implicitly enclosed in a @code{parallel}.  Then you must explicitly
 @c write the @code{parallel}, and the square brackets within it, in the
 @c @code{define_peephole}.  Thus, if an insn pattern looks like this,
-@c 
-@c @smallexample
-@c (define_insn "divmodsi4"
-@c   [(set (match_operand:SI 0 "general_operand" "=d")
-@c         (div:SI (match_operand:SI 1 "general_operand" "0")
-@c                 (match_operand:SI 2 "general_operand" "dmsK")))
-@c    (set (match_operand:SI 3 "general_operand" "=d")
-@c         (mod:SI (match_dup 1) (match_dup 2)))]
-@c   "TARGET_68020"
-@c   "divsl%.l %2,%3:%0")
-@c @end smallexample
-@c 
-@c @noindent
+@var{insn-pattern-1}等看起来与@code{define_insn}的第二个操作数非常相似。
+不过有一个重要的不同：@code{define_insn}的第二个操作数包含了一个或多个RTX，
+使用方括号包裹。通常，只有一个：
+那么相同的动作则可以写成@code{define_peephole}的一个元素。
+但是，当在@code{define_insn}中有多个动作时，它们被隐式的由@code{parallel}包裹。
+则你必须在@code{define_peephole}中，显式的写出@code{parallel}，以及里面的方括号。
+因此，如果一个insn的指令模式如下，
+
+@smallexample
+(define_insn "divmodsi4"
+  [(set (match_operand:SI 0 "general_operand" "=d")
+        (div:SI (match_operand:SI 1 "general_operand" "0")
+                (match_operand:SI 2 "general_operand" "dmsK")))
+   (set (match_operand:SI 3 "general_operand" "=d")
+        (mod:SI (match_dup 1) (match_dup 2)))]
+  "TARGET_68020"
+  "divsl%.l %2,%3:%0")
+@end smallexample
+
+@noindent
 @c then the way to mention this insn in a peephole is as follows:
-@c 
-@c @smallexample
-@c (define_peephole
-@c   [@dots{}
-@c    (parallel
-@c     [(set (match_operand:SI 0 "general_operand" "=d")
-@c           (div:SI (match_operand:SI 1 "general_operand" "0")
-@c                   (match_operand:SI 2 "general_operand" "dmsK")))
-@c      (set (match_operand:SI 3 "general_operand" "=d")
-@c           (mod:SI (match_dup 1) (match_dup 2)))])
-@c    @dots{}]
-@c   @dots{})
-@c @end smallexample
+则在窥孔中提及该insn的方法为：
+
+@smallexample
+(define_peephole
+  [@dots{}
+   (parallel
+    [(set (match_operand:SI 0 "general_operand" "=d")
+          (div:SI (match_operand:SI 1 "general_operand" "0")
+                  (match_operand:SI 2 "general_operand" "dmsK")))
+     (set (match_operand:SI 3 "general_operand" "=d")
+          (mod:SI (match_dup 1) (match_dup 2)))])
+   @dots{}]
+  @dots{})
+@end smallexample
+
 @c 
 @c @end ifset
 @c @ifset INTERNALS
 @c @node define_peephole2
 @c @subsection RTL to RTL Peephole Optimizers
 @c @findex define_peephole2
-@c 
+@end ifset
+@ifset INTERNALS
+@node define_peephole2
+@subsection RTL到RTL的窥孔优化器
+@findex define_peephole2
+
 @c The @code{define_peephole2} definition tells the compiler how to
 @c substitute one sequence of instructions for another sequence,
 @c what additional scratch registers may be needed and what their
 @c lifetimes must be.
-@c 
-@c @smallexample
-@c (define_peephole2
-@c   [@var{insn-pattern-1}
-@c    @var{insn-pattern-2}
-@c    @dots{}]
-@c   "@var{condition}"
-@c   [@var{new-insn-pattern-1}
-@c    @var{new-insn-pattern-2}
-@c    @dots{}]
-@c   "@var{preparation-statements}")
-@c @end smallexample
-@c 
+@code{define_peephole2}定义告诉了编译器如何将一个指令序列用来替换另一个序列，
+可能需要那些额外的scratch寄存器，以及它们的生命期必须为什么。
+
+@smallexample
+(define_peephole2
+  [@var{insn-pattern-1}
+   @var{insn-pattern-2}
+   @dots{}]
+  "@var{condition}"
+  [@var{new-insn-pattern-1}
+   @var{new-insn-pattern-2}
+   @dots{}]
+  "@var{preparation-statements}")
+@end smallexample
+
 @c The definition is almost identical to @code{define_split}
 @c (@pxref{Insn Splitting}) except that the pattern to match is not a
 @c single instruction, but a sequence of instructions.
@@ -10100,7 +10510,12 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @c It is possible to request additional scratch registers for use in the
 @c output template.  If appropriate registers are not free, the pattern
 @c will simply not match.
-@c 
+定义几乎与@code{define_split}（参见 @ref{Insn拆分}）相同，
+除了要匹配的指令模式不是一个单个指令，而是一个指令序列。
+
+在输出模板中有可能需要用到额外的scratch寄存器。
+如果没有合适的寄存器，则指令模式将简单的作为不匹配处理。
+
 @c @findex match_scratch
 @c @findex match_dup
 @c Scratch registers are requested with a @code{match_scratch} pattern at
