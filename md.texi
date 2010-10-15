@@ -1323,11 +1323,16 @@ predicate的名字，
 @c @item MATCH_CODE
 @c This expression evaluates to true if @var{op} or a specified
 @c subexpression of @var{op} has one of a given list of RTX codes.
-@c 
+@item MATCH_CODE
+该表达式为真，
+如果@var{op}或一个指定的@var{op}的子表达式具有给定RTX代码列表中的一个RTX代码。
+
 @c The first operand of this expression is a string constant containing a
 @c comma-separated list of RTX code names (in lower case).  These are the
 @c codes for which the @code{MATCH_CODE} will be true.
-@c 
+该表达式的第一个操作数为一个字符串常量，
+包含了逗号分割的RTX代码名字（小写形式）列表。这些是@code{MATCH_CODE}为真的代码。
+
 @c The second operand is a string constant which indicates what
 @c subexpression of @var{op} to examine.  If it is absent or the empty
 @c string, @var{op} itself is examined.  Otherwise, the string constant
@@ -1342,14 +1347,28 @@ predicate的名字，
 @c extracted by the complete string.  It is not possible to extract
 @c components of an @code{rtvec} that is not at position 0 within its RTX
 @c object.
-@c 
+第二个操作数为一个字符串常量，其指示@var{op}的什么子表达式需要被检查。
+如果没有或者为空字符串，则检查@var{op}本身。
+否则，字符串常量必须为一个数字和/或小写字母的序列。
+每个字符指示从当前表达式中抽取的子表达式；
+第一个字符为@var{op}，第二个和后续字符，其为先前字符的结果。
+数字@var{n}用于抽取@samp{@w{XEXP (@var{e}, @var{n})}}；
+字母@var{l}抽取@samp{@w{XVECEXP (@var{e}, 0, @var{n})}}，
+其中@var{n}为@var{l}的字母顺序（0为`a'，1为'b'，等等）。
+@code{MATCH_CODE}然后检查完整字符串所抽取的子表达式的RTX代码。
+
 @c @item MATCH_TEST
 @c This expression has one operand, a string constant containing a C
 @c expression.  The predicate's arguments, @var{op} and @var{mode}, are
 @c available with those names in the C expression.  The @code{MATCH_TEST}
 @c evaluates to true if the C expression evaluates to a nonzero value.
 @c @code{MATCH_TEST} expressions must not have side effects.
-@c 
+@item MATCH_TEST
+该表达式具有一个操作数，一个包含了一个C表达式的字符串常量。
+在C表达式中可以使用predicate的参数，@var{op}和@var{mode}。
+当C表达式为非0值时，@code{MATCH_TEST}为真。
+@code{MATCH_TEST}表达式必须不具有副作用。
+
 @c @item  AND
 @c @itemx IOR
 @c @itemx NOT
@@ -1361,58 +1380,81 @@ predicate的名字，
 @c arbitrary number of arguments; this has exactly the same effect as
 @c writing a chain of two-argument @code{AND} or @code{IOR} expressions.
 @c @end table
-@c 
+@item  AND
+@itemx IOR
+@itemx NOT
+@itemx IF_THEN_ELSE
+基本的@samp{MATCH_}表达式可以使用这些逻辑操作符组合，
+其分别具有C操作符@samp{&&}, @samp{||}, @samp{!}和@samp{@w{? :}}的语义。
+正如在Common Lisp中，可以给@code{AND}或@code{IOR}表达式任意数目的参数；
+这跟写成两个参数的@code{AND}或@code{IOR}表达式链具有相同的效果。
+@end table
+
 @c @item
 @c An optional block of C code, which should execute
 @c @samp{@w{return true}} if the predicate is found to match and
 @c @samp{@w{return false}} if it does not.  It must not have any side
 @c effects.  The predicate arguments, @var{op} and @var{mode}, are
 @c available with those names.
-@c 
+@item
+一个可选的C代码块，其应该在发现predicate匹配时执行@samp{@w{return true}}，
+不匹配时执行@samp{@w{return false}}。其一定不要具有副作用。
+predicate参数，@var{op}和@var{mode}，是有效的。
+
 @c If a code block is present in a predicate definition, then the RTL
 @c expression must evaluate to true @emph{and} the code block must
 @c execute @samp{@w{return true}} for the predicate to allow the operand.
 @c The RTL expression is evaluated first; do not re-check anything in the
 @c code block that was checked in the RTL expression.
 @c @end itemize
-@c 
+如果代码块存在于predicate定义中，则对于predicate允许的操作数，
+RTL表达式必须求值为true并且代码块必须执行@samp{@w{return true}}。
+RTL表达式被首先求值，不要重复检查代码块中的在RTL表达式中曾经被检查过的任何事情。
+@end itemize
+
 @c The program @command{genrecog} scans @code{define_predicate} and
 @c @code{define_special_predicate} expressions to determine which RTX
 @c codes are possibly allowed.  You should always make this explicit in
 @c the RTL predicate expression, using @code{MATCH_OPERAND} and
 @c @code{MATCH_CODE}.
-@c 
+程序@command{genrecog}扫描@code{define_predicate}和
+@code{define_special_predicate}表达式来决定什么RTX代码可能被允许。
+你应该使其在RTL predicate表达式中总是显式的，
+使用@code{MATCH_OPERAND}和@code{MATCH_CODE}。
+
 @c Here is an example of a simple predicate definition, from the IA64
 @c machine description:
-@c 
-@c @smallexample
-@c @group
-@c ;; @r{True if @var{op} is a @code{SYMBOL_REF} which refers to the sdata section.}
-@c (define_predicate "small_addr_symbolic_operand"
-@c   (and (match_code "symbol_ref")
-@c        (match_test "SYMBOL_REF_SMALL_ADDR_P (op)")))
-@c @end group
-@c @end smallexample
-@c 
-@c @noindent
+这里有一个简单的定义predicate的例子，来自IA64机器描述：
+
+@smallexample
+@group
+;; @r{True if @var{op} is a @code{SYMBOL_REF} which refers to the sdata section.}
+(define_predicate "small_addr_symbolic_operand"
+  (and (match_code "symbol_ref")
+       (match_test "SYMBOL_REF_SMALL_ADDR_P (op)")))
+@end group
+@end smallexample
+
+@noindent
 @c And here is another, showing the use of the C block.
-@c 
-@c @smallexample
-@c @group
-@c ;; @r{True if @var{op} is a register operand that is (or could be) a GR reg.}
-@c (define_predicate "gr_register_operand"
-@c   (match_operand 0 "register_operand")
-@c @{
-@c   unsigned int regno;
-@c   if (GET_CODE (op) == SUBREG)
-@c     op = SUBREG_REG (op);
-@c 
-@c   regno = REGNO (op);
-@c   return (regno >= FIRST_PSEUDO_REGISTER || GENERAL_REGNO_P (regno));
-@c @})
-@c @end group
-@c @end smallexample
-@c 
+另一个例子，展示了C块的使用。
+
+@smallexample
+@group
+;; @r{True if @var{op} is a register operand that is (or could be) a GR reg.}
+(define_predicate "gr_register_operand"
+  (match_operand 0 "register_operand")
+@{
+  unsigned int regno;
+  if (GET_CODE (op) == SUBREG)
+    op = SUBREG_REG (op);
+
+  regno = REGNO (op);
+  return (regno >= FIRST_PSEUDO_REGISTER || GENERAL_REGNO_P (regno));
+@})
+@end group
+@end smallexample
+
 @c Predicates written with @code{define_predicate} automatically include
 @c a test that @var{mode} is @code{VOIDmode}, or @var{op} has the same
 @c mode as @var{mode}, or @var{op} is a @code{CONST_INT} or
@@ -1425,17 +1467,34 @@ predicate的名字，
 @c provide, use a @code{MATCH_OPERAND} subexpression to call
 @c @code{const_int_operand}, @code{const_double_operand}, or
 @c @code{immediate_operand}.
-@c 
+使用@code{define_predicate}编写的predicate会自动包含一个测试，
+用来测试@var{mode}为@code{VOIDmode}，
+或者@var{op}具有与@var{mode}相同的机器模式，
+或者@var{op}为@code{CONST_INT}或@code{CONST_DOUBLE}。
+它们@emph{不}专门检查整数@code{CONST_DOUBLE}，
+也不测试每种常量的值是否适合所需求的机器模式。
+这是因为接受常量的目标机特定的predicate，通常必须做更严厉的值检查。
+如果你需要确切的通用predicate提供的对@code{CONST_INT}或
+@code{CONST_DOUBLE}的对待，
+则可以使用@code{MATCH_OPERAND}子表达式来调用@code{const_int_operand}, 
+@code{const_double_operand}或者@code{immediate_operand}。
+
 @c Predicates written with @code{define_special_predicate} do not get any
 @c automatic mode checks, and are treated as having special mode handling
 @c by @command{genrecog}.
-@c 
+使用@code{define_special_predicate}编写的predicate不做任何自动的机器模式检查，
+并且@command{genrecog}将其作为具有特定的机器模式处理来对待。
+
 @c The program @command{genpreds} is responsible for generating code to
 @c test predicates.  It also writes a header file containing function
 @c declarations for all machine-specific predicates.  It is not necessary
 @c to declare these predicates in @file{@var{cpu}-protos.h}.
 @c @end ifset
-@c 
+程序@command{genpreds}负责生成代码来测试predicate。
+其还编写了一个包含所有机器特定predicate的函数声明的头文件。
+所以不需要在cpu-protos.h中声明这些predicate。
+@end ifset
+
 @c @c Most of this node appears by itself (in a different place) even
 @c @c when the INTERNALS flag is clear.  Passages that require the internals
 @c @c manual's context are conditionalized to appear only in the internals manual.
@@ -1444,12 +1503,17 @@ predicate的名字，
 @c @section Operand Constraints
 @c @cindex operand constraints
 @c @cindex constraints
-@c 
+@node 约束
+@section 操作数的约束
+@cindex 操作数的约束
+@cindex 约束
+
 @c Each @code{match_operand} in an instruction pattern can specify
 @c constraints for the operands allowed.  The constraints allow you to
 @c fine-tune matching within the set of operands allowed by the
 @c predicate.
-@c 
+在指令模式中的每个@code{match_operand}都可以指定操作数所允许的约束。 约束允许你在由断言所允许的操作数集里进行微调匹配。
+
 @c @end ifset
 @c @ifclear INTERNALS
 @c @node Constraints
@@ -1457,7 +1521,14 @@ predicate的名字，
 @c @cindex operand constraints, @code{asm}
 @c @cindex constraints, @code{asm}
 @c @cindex @code{asm} constraints
-@c 
+@end ifset
+@ifclear INTERNALS
+@node 约束
+@section @code{asm}操作数的constraint条件
+@cindex 操作数的约束, @code{asm}
+@cindex 约束, @code{asm}
+@cindex @code{asm} 约束
+
 @c Here are specific details on what constraint letters you can use with
 @c @code{asm} operands.
 @c @end ifclear
@@ -1470,7 +1541,13 @@ predicate的名字，
 @c @samp{<} or @samp{>} constraints are used, because there is no guarantee
 @c that the side-effects will happen exactly once in an instruction that can update
 @c the addressing register.
-@c 
+Here are specific details on what constraint letters you can use with
+@code{asm} operands.
+@end ifclear
+约束可以告诉一个操作数是否可以在寄存器中，以及哪种寄存器；
+操作数是否可以为内存引用，以及哪种寻址方式；操作数是否可以为立即数，
+以及可以具有什么值。约束还可以要求两个操作数要匹配。
+
 @c @ifset INTERNALS
 @c @menu
 @c * Simple Constraints::  Basic use of constraints.
@@ -1483,7 +1560,19 @@ predicate的名字，
 @c * C Constraint Interface:: How to test constraints from C code.
 @c @end menu
 @c @end ifset
-@c 
+@ifset INTERNALS
+@menu
+* 简单约束::       约束的基本用法
+* 多个可选项::     当insn具有两个可选的约束模式
+* 类别优先选择::   约束可以指导用哪个硬件寄存器来存放事物
+* 修饰符::         对约束效果更精确的控制
+* 禁止Insn可选项:: 使用@code{enabled}属性来禁止insn可选项
+* 机器约束::       一些特定机器现有的约束
+* 定义约束::       如何定义机器特定的约束
+* C 约束接口::     如何测试C代码的约束
+@end menu
+@end ifset
+
 @c @ifclear INTERNALS
 @c @menu
 @c * Simple Constraints::  Basic use of constraints.
@@ -1492,22 +1581,37 @@ predicate的名字，
 @c * Machine Constraints:: Special constraints for some particular machines.
 @c @end menu
 @c @end ifclear
-@c 
+@ifclear INTERNALS
+@menu
+* 简单约束::     约束的基本用法
+* 多个可选项::   当insn具有两个可选的约束模式
+* 修饰符::       对约束效果更精确的控制
+* 机器约束::     一些特定机器现有的
+@end menu
+@end ifclear
+
 @c @node Simple Constraints
 @c @subsection Simple Constraints
 @c @cindex simple constraints
-@c 
+@node 简单约束
+@subsection 简单约束
+@cindex 简单约束
+
 @c The simplest kind of constraint is a string full of letters, each of
 @c which describes one kind of operand that is permitted.  Here are
 @c the letters that are allowed:
-@c 
+最简单的约束种类是一个由字母组成的字符串， 每个字母描述一种所允许的操作数。这里是所允许的字母：
+
 @c @table @asis
 @c @item whitespace
 @c Whitespace characters are ignored and can be inserted at any position
 @c except the first.  This enables each alternative for different operands to
 @c be visually aligned in the machine description even if they have different
 @c number of constraints and modifiers.
-@c 
+@table @asis
+@item whitespace
+空格字符将被忽略，并且可以插到除了起始处的任何地方。这使得机器描述中， 不同操作数的每个可选项可以被可视化的对齐，即使它们具有不同数目的约束和修饰符。 
+
 @c @cindex @samp{m} in constraint
 @c @cindex memory references in constraints
 @c @item @samp{m}
@@ -1515,7 +1619,11 @@ predicate的名字，
 @c supports in general.
 @c Note that the letter used for the general memory constraint can be
 @c re-defined by a back end using the @code{TARGET_MEM_CONSTRAINT} macro.
-@c 
+@cindex @samp{m} in constraint
+@cindex memory references in constraints
+@item @samp{m}
+内存操作数将被允许，包括机器支持的任何寻址方式。
+
 @c @cindex offsettable address
 @c @cindex @samp{o} in constraint
 @c @item @samp{o}
@@ -1524,7 +1632,11 @@ predicate的名字，
 @c the width in bytes of the operand, as determined by its machine mode)
 @c may be added to the address and the result is also a valid memory
 @c address.
-@c 
+@cindex offsettable address
+@cindex @samp{o} in constraint
+@item @samp{o}
+内存操作数将被允许，但只有当地址为偏移表的时候。 这意味着可以对地址加上一个小的整数(实际上,是为操作数的数个字节宽度, 这由它的机器模式决定),其结果也为一个有效的内存地址。
+
 @c @cindex autoincrement/decrement addressing
 @c For example, an address which is constant is offsettable; so is an
 @c address that is the sum of a register and a constant (as long as a
@@ -1533,17 +1645,22 @@ predicate的名字，
 @c address is not offsettable.  More complicated indirect/indexed
 @c addresses may or may not be offsettable depending on the other
 @c addressing modes that the machine supports.
-@c 
+@cindex autoincrement/decrement addressing
+例如，地址为常数的为一个偏移表；所以地址为一个寄存器和常数（只要常数在机器所支持 的地址偏移范围）的和；但是递增或者递减地址不是偏移表。更加复杂的间接/索引地址可 能是或者可能不是偏移表，这取决于机器支持的其它寻址模式。
+
 @c Note that in an output operand which can be matched by another
 @c operand, the constraint letter @samp{o} is valid only when accompanied
 @c by both @samp{<} (if the target machine has predecrement addressing)
 @c and @samp{>} (if the target machine has preincrement addressing).
-@c 
+
 @c @cindex @samp{V} in constraint
 @c @item @samp{V}
 @c A memory operand that is not offsettable.  In other words, anything that
 @c would fit the @samp{m} constraint but not the @samp{o} constraint.
-@c 
+@cindex @samp{V} in constraint
+@item @samp{V}
+一个不是offsettable的内存操作数。换句话说， 任何适合@samp{m}约束但不是@samp{o}约束的。 
+
 @c @cindex @samp{<} in constraint
 @c @item @samp{<}
 @c A memory operand with autodecrement addressing (either predecrement or
@@ -1556,33 +1673,50 @@ predicate的名字，
 @c the operand with @samp{<} in constraint string must be accompanied by
 @c special instruction suffixes like @code{%U0} instruction suffix on PowerPC
 @c or @code{%P0} on IA-64.
-@c 
+@cindex @samp{<} in constraint
+@item @samp{<}
+允许具有自动减量寻址（先减或者后减）的内存操作数。 
+
 @c @cindex @samp{>} in constraint
 @c @item @samp{>}
 @c A memory operand with autoincrement addressing (either preincrement or
 @c postincrement) is allowed.  In inline @code{asm} the same restrictions
 @c as for @samp{<} apply.
-@c 
+@cindex @samp{>} in constraint
+@item @samp{>}
+允许具有自动增量寻址（先增或者后增）的内存操作数。
+
 @c @cindex @samp{r} in constraint
 @c @cindex registers in constraints
 @c @item @samp{r}
 @c A register operand is allowed provided that it is in a general
 @c register.
-@c 
+@cindex @samp{r} in constraint
+@cindex registers in constraints
+@item @samp{r}
+允许为通用寄存器的寄存器操作数。 
+
 @c @cindex constants in constraints
 @c @cindex @samp{i} in constraint
 @c @item @samp{i}
 @c An immediate integer operand (one with constant value) is allowed.
 @c This includes symbolic constants whose values will be known only at
 @c assembly time or later.
-@c 
+@cindex constants in constraints
+@cindex @samp{i} in constraint
+@item @samp{i}
+立即数（具有常数值）将被允许。这包括符号常量， 其值将在汇编时候或者更晚的时候才被知道。 
+
 @c @cindex @samp{n} in constraint
 @c @item @samp{n}
 @c An immediate integer operand with a known numeric value is allowed.
 @c Many systems cannot support assembly-time constants for operands less
 @c than a word wide.  Constraints for these operands should use @samp{n}
 @c rather than @samp{i}.
-@c 
+@cindex @samp{n} in constraint
+@item @samp{n}
+立即数，其具有已知的数值。 许多系统不支持汇编时间常量作为小于一个字的宽度的操作数。 这些操作数的约束应该为@samp{n}而不是@samp{i}。 
+
 @c @cindex @samp{I} in constraint
 @c @item @samp{I}, @samp{J}, @samp{K}, @dots{} @samp{P}
 @c Other letters in the range @samp{I} through @samp{P} may be defined in
@@ -1591,34 +1725,51 @@ predicate的名字，
 @c 68000, @samp{I} is defined to stand for the range of values 1 to 8.
 @c This is the range permitted as a shift count in the shift
 @c instructions.
-@c 
+@cindex @samp{I} in constraint
+@item @samp{I}, @samp{J}, @samp{K}, @dots{} @samp{P}
+从@samp{I}到@samp{P}的其它字母可以被定义为机器特定的， 用来运行立即数具有显示指定范围的整数值。例如，在68000上， @samp{I}被定义为代表1到8的值。这是在移位指令中被允许作为移位数的范围。 
+
 @c @cindex @samp{E} in constraint
 @c @item @samp{E}
 @c An immediate floating operand (expression code @code{const_double}) is
 @c allowed, but only if the target floating point format is the same as
 @c that of the host machine (on which the compiler is running).
-@c 
+@cindex @samp{E} in constraint
+@item @samp{E}
+浮点立即数（表达式代码为@code{const_double}）， 但是必须target浮点格式与host机器（编译器运行的机器）的相同才行。 
+
 @c @cindex @samp{F} in constraint
 @c @item @samp{F}
 @c An immediate floating operand (expression code @code{const_double} or
 @c @code{const_vector}) is allowed.
-@c 
+@cindex @samp{F} in constraint
+@item @samp{F}
+浮点立即数（表达式代码为@code{const_double}或者@code{const_vector}）。 
+
 @c @cindex @samp{G} in constraint
 @c @cindex @samp{H} in constraint
 @c @item @samp{G}, @samp{H}
 @c @samp{G} and @samp{H} may be defined in a machine-dependent fashion to
 @c permit immediate floating operands in particular ranges of values.
-@c 
+@cindex @samp{G} in constraint
+@cindex @samp{H} in constraint
+@item @samp{G}, @samp{H}
+@samp{G}和@samp{H}可以被定义为机器特定的方式来允许浮点立即数具有特定范围的值。 
+
 @c @cindex @samp{s} in constraint
 @c @item @samp{s}
 @c An immediate integer operand whose value is not an explicit integer is
 @c allowed.
-@c 
+@cindex @samp{s} in constraint
+@item @samp{s}
+整数立即数，其值不是一个显式的整数。
+
 @c This might appear strange; if an insn allows a constant operand with a
 @c value not known at compile time, it certainly must allow any known
 @c value.  So why use @samp{s} instead of @samp{i}?  Sometimes it allows
 @c better code to be generated.
-@c 
+这可能有点奇怪；如果insn允许常量操作数具有在编译时不可知的值， 它当然必须允许任何可知的值。所以为什么用@samp{s}，而不是@samp{i}能？有时候， 它会允许生成更好的代码。
+
 @c For example, on the 68000 in a fullword instruction it is possible to
 @c use an immediate operand; but if the immediate value is between @minus{}128
 @c and 127, better code results from loading the value into a register and
@@ -1627,12 +1778,16 @@ predicate的名字，
 @c by defining the letter @samp{K} to mean ``any integer outside the
 @c range @minus{}128 to 127'', and then specifying @samp{Ks} in the operand
 @c constraints.
-@c 
+例如，在68000上的全字指令，有可能使用一个立即数操作数； 但是如果立即数的值是处于-128和127之间，更好的代码是将值加载到寄存器中， 使用寄存器。这是因为加载到寄存器中可以由@samp{moveq}指令来完成。 我们对此通过定义字母@samp{K}来表示任意范围超出-128和127的整数， 然后在操作数约束中指定@samp{Ks}。
+
 @c @cindex @samp{g} in constraint
 @c @item @samp{g}
 @c Any register, memory or immediate integer operand is allowed, except for
 @c registers that are not general registers.
-@c 
+@cindex @samp{g} in constraint
+@item @samp{g}
+任何寄存器，内存或整数立即数，除了不是通用寄存器的寄存器。 
+
 @c @cindex @samp{X} in constraint
 @c @item @samp{X}
 @c @ifset INTERNALS
@@ -1644,21 +1799,34 @@ predicate的名字，
 @c @ifclear INTERNALS
 @c Any operand whatsoever is allowed.
 @c @end ifclear
-@c 
+@cindex @samp{X} in constraint
+@item @samp{X}
+@ifset INTERNALS
+任何操作数都被允许，即使其不满足@code{general_operand}。 这通常用于@code{match_scratch}的约束中，当一些的可选项实际上不需要scratch寄存器的时候。 
+@end ifset
+@ifclear INTERNALS
+Any operand whatsoever is allowed.
+@end ifclear
+
 @c @cindex @samp{0} in constraint
 @c @cindex digits in constraint
 @c @item @samp{0}, @samp{1}, @samp{2}, @dots{} @samp{9}
 @c An operand that matches the specified operand number is allowed.  If a
 @c digit is used together with letters within the same alternative, the
 @c digit should come last.
-@c 
+@cindex @samp{0} in constraint
+@cindex digits in constraint
+@item @samp{0}, @samp{1}, @samp{2}, @dots{} @samp{9}
+匹配指定操作数编号的操作数。如果数字与字母一起使用，则数字应该放在最后。
+
 @c This number is allowed to be more than a single digit.  If multiple
 @c digits are encountered consecutively, they are interpreted as a single
 @c decimal integer.  There is scant chance for ambiguity, since to-date
 @c it has never been desirable that @samp{10} be interpreted as matching
 @c either operand 1 @emph{or} operand 0.  Should this be desired, one
 @c can use multiple alternatives instead.
-@c 
+该编号允许多于单个数字。如果多个数字连续的在一起， 则它们被解析为一个单独的十进制整数。很少会因此产生不明确，因为到目前为止， 还没有想要将@samp{10}解析为匹配操作数1或者0的。如果有这样的需要， 则可以使用多个可选项来替代。
+
 @c @cindex matching constraint
 @c @cindex constraint, matching
 @c This is called a @dfn{matching constraint} and what it really means is
@@ -1673,17 +1841,22 @@ predicate的名字，
 @c @end ifclear
 @c machines an add instruction really has only two operands, one of them an
 @c input-output operand:
-@c 
-@c @smallexample
-@c addl #35,r12
-@c @end smallexample
-@c 
+@cindex matching constraint
+@cindex constraint, matching
+这被称为匹配约束，其实际上是指汇编器只有一个单独的操作数， 却在RTL insn中扮演两个角色。例如，add insn在RTL中具有两个输入操作数和一个输出操作数，
+但是多数CISC机器上，add指令实际上只有两个操作数，其中一个为输入输出操作数：
+
+@smallexample
+addl #35,r12
+@end smallexample
+
 @c Matching constraints are used in these circumstances.
 @c More precisely, the two operands that match must include one input-only
 @c operand and one output-only operand.  Moreover, the digit must be a
 @c smaller number than the number of the operand that uses it in the
 @c constraint.
-@c 
+匹配约束被用于这些情况。更确切的说， 匹配的两个操作数必须包括一个只作输入的操作数和一个只作输出的操作数。
+
 @c @ifset INTERNALS
 @c For operands to match in a particular case usually means that they
 @c are identical-looking RTL expressions.  But in a few special cases
@@ -1700,13 +1873,21 @@ predicate的名字，
 @c @item @samp{p}
 @c An operand that is a valid memory address is allowed.  This is
 @c for ``load address'' and ``push address'' instructions.
-@c 
+@cindex load address instruction
+@cindex push address instruction
+@cindex address constraints
+@cindex @samp{p} in constraint
+@item @samp{p}
+允许一个为有效内存地址的操作数。这用于“加载地址”和“地址压栈”指令。
+
 @c @findex address_operand
 @c @samp{p} in the constraint must be accompanied by @code{address_operand}
 @c as the predicate in the @code{match_operand}.  This predicate interprets
 @c the mode specified in the @code{match_operand} as the mode of the memory
 @c reference for which the address would be valid.
-@c 
+@findex address_operand
+约束中的@samp{p}必须由@code{match_operand}中的作为断言的@code{address_operand}协同工作。该断言将@code{match_operand}中指定的机器模式解析为地址有效的内存引用的机器模式。
+
 @c @cindex other register constraints
 @c @cindex extensible constraints
 @c @item @var{other-letters}
@@ -1715,7 +1896,12 @@ predicate的名字，
 @c @samp{d}, @samp{a} and @samp{f} are defined on the 68000/68020 to stand
 @c for data, address and floating point registers.
 @c @end table
-@c 
+@cindex other register constraints
+@cindex extensible constraints
+@item @var{other-letters}
+其它字母可以采用机器相关的方式被定义，用于代表寄存器的特定类别或者其它任意的操作数类型。@samp{d}, @samp{a}和@samp{f}在68000/68020被定义用来代表数据，地址和浮点寄存器。
+@end table
+
 @c @ifset INTERNALS
 @c In order to have valid assembler code, each operand must satisfy
 @c its constraint.  But a failure to do so does not prevent the pattern
@@ -1724,40 +1910,45 @@ predicate的名字，
 @c done by copying an operand into a register.
 @c 
 @c Contrast, therefore, the two instruction patterns that follow:
-@c 
-@c @smallexample
-@c (define_insn ""
-@c   [(set (match_operand:SI 0 "general_operand" "=r")
-@c         (plus:SI (match_dup 0)
-@c                  (match_operand:SI 1 "general_operand" "r")))]
-@c   ""
-@c   "@dots{}")
-@c @end smallexample
-@c 
-@c @noindent
+@ifset INTERNALS
+为了具有有效的汇编代码，每个操作数必须满足它的约束。但是如果不满足的话，也不会阻止将该指令模式应用到insn上。替代的，它会指示编译器去修改代码以至于约束将被满足。通常，这是通过将一个操作数复制到寄存器中来完成的。
+
+因此，对比下面的两条指令模式：
+
+@smallexample
+(define_insn ""
+  [(set (match_operand:SI 0 "general_operand" "=r")
+        (plus:SI (match_dup 0)
+                 (match_operand:SI 1 "general_operand" "r")))]
+  ""
+  "@dots{}")
+@end smallexample
+
+@noindent
 @c which has two operands, one of which must appear in two places, and
-@c 
-@c @smallexample
-@c (define_insn ""
-@c   [(set (match_operand:SI 0 "general_operand" "=r")
-@c         (plus:SI (match_operand:SI 1 "general_operand" "0")
-@c                  (match_operand:SI 2 "general_operand" "r")))]
-@c   ""
-@c   "@dots{}")
-@c @end smallexample
-@c 
-@c @noindent
+其具有两个操作数，其中一个必须出现在两个位置，
+
+@smallexample
+(define_insn ""
+  [(set (match_operand:SI 0 "general_operand" "=r")
+        (plus:SI (match_operand:SI 1 "general_operand" "0")
+                 (match_operand:SI 2 "general_operand" "r")))]
+  ""
+  "@dots{}")
+@end smallexample
+
 @c which has three operands, two of which are required by a constraint to be
 @c identical.  If we are considering an insn of the form
-@c 
-@c @smallexample
-@c (insn @var{n} @var{prev} @var{next}
-@c   (set (reg:SI 3)
-@c        (plus:SI (reg:SI 6) (reg:SI 109)))
-@c   @dots{})
-@c @end smallexample
-@c 
-@c @noindent
+其具有三个操作数，其中两个通过约束被要求为是相同的。如果我们考虑如下形式的一条insn 
+
+@smallexample
+(insn @var{n} @var{prev} @var{next}
+  (set (reg:SI 3)
+       (plus:SI (reg:SI 6) (reg:SI 109)))
+  @dots{})
+@end smallexample
+@noindent
+
 @c the first pattern would not apply at all, because this insn does not
 @c contain two identical subexpressions in the right place.  The pattern would
 @c say, ``That does not look like an add instruction; try other patterns''.
@@ -1765,18 +1956,19 @@ predicate的名字，
 @c is something wrong with it''.  It would direct the reload pass of the
 @c compiler to generate additional insns to make the constraint true.  The
 @c results might look like this:
-@c 
-@c @smallexample
-@c (insn @var{n2} @var{prev} @var{n}
-@c   (set (reg:SI 3) (reg:SI 6))
-@c   @dots{})
-@c 
-@c (insn @var{n} @var{n2} @var{next}
-@c   (set (reg:SI 3)
-@c        (plus:SI (reg:SI 3) (reg:SI 109)))
-@c   @dots{})
-@c @end smallexample
-@c 
+第一个指令模式将根本不会被应用，因为该insn不在合适的地方包含两个相同的子表达式。指令模式会说“这看起来不像是一条加法指令；试一下其它模式”。第二个指令模式将会说，“是的，这是一条加法指令，但是有些问题”。它将指使编译器的重载过程生成额外的insn，使得约束为真。结果可能看起来像：
+
+@smallexample
+(insn @var{n2} @var{prev} @var{n}
+  (set (reg:SI 3) (reg:SI 6))
+  @dots{})
+
+(insn @var{n} @var{n2} @var{next}
+  (set (reg:SI 3)
+       (plus:SI (reg:SI 3) (reg:SI 109)))
+  @dots{})
+@end smallexample
+
 @c It is up to you to make sure that each operand, in each pattern, has
 @c constraints that can handle any RTL expression that could be present for
 @c that operand.  (When multiple alternatives are in use, each pattern must,
@@ -1785,7 +1977,8 @@ predicate的名字，
 @c constraints don't need to @emph{allow} any possible operand---when this is
 @c the case, they do not constrain---but they must at least point the way to
 @c reloading any possible operand so that it will fit.
-@c 
+你必须确保每个操作数，在每个指令模式中，具有能够处理可能会出现的任何RTL表达式的约束。（当使用多个可选项时，每个指令模式，对于每个可能的操作数表达式组合，必须至少具有一个可选项可以处理该操作数的组合。）约束不需要允许任何可能的操作数——如果是这种情况，它们就不做约束了——但是它们必须至少指出可以加载任何可能操作数，使得适合约束的方法。
+
 @c @itemize @bullet
 @c @item
 @c If the constraint accepts whatever operands the predicate permits,
@@ -1799,27 +1992,42 @@ predicate的名字，
 @c constant value is accepted, then nothing less than @samp{i} will do;
 @c if the predicate is more selective, then the constraints may also be
 @c more selective.
-@c 
+@itemize @bullet
+@item
+如果约束接受断言允许的任何操作数，则没有问题：重载对于该操作数将没有必要。
+
+例如，操作数对于它的约束允许除了寄存器以外的任何事物，如果它的断言不接受寄存器的话，这样是安全的。
+
+操作数对于断言只接受常量时，如果它的约束包含字母@samp{i}，则是安全的。如果任何可能的常量都被接受，则可以使用@samp{i}；如果断言具有更多的选择性，则约束也可以具有更多的选择性。
+
 @c @item
 @c Any operand expression can be reloaded by copying it into a register.
 @c So if an operand's constraints allow some kind of register, it is
 @c certain to be safe.  It need not permit all classes of registers; the
 @c compiler knows how to copy a register into another register of the
 @c proper class in order to make an instruction valid.
-@c 
+@item
+任何操作数表达式可以通过复制到寄存器中来进行重载。所以如果一个操作数的约束允许某种寄存器，其当然是安全的。它不需要允许所有类型的寄存器；编译器知道为了使指令有效，如何将一个寄存器复制到另一个合适类别的寄存器中。 
+
 @c @cindex nonoffsettable memory reference
 @c @cindex memory reference, nonoffsettable
 @c @item
 @c A nonoffsettable memory reference can be reloaded by copying the
 @c address into a register.  So if the constraint uses the letter
 @c @samp{o}, all memory references are taken care of.
-@c 
+@cindex nonoffsettable memory reference
+@cindex memory reference, nonoffsettable
+@item
+非偏移表的内存引用可以通过将地址复制到寄存器中来重载。所以如果约束使用字母@samp{o}，则所有内存引用将被照顾到。
+
 @c @item
 @c A constant operand can be reloaded by allocating space in memory to
 @c hold it as preinitialized data.  Then the memory reference can be used
 @c in place of the constant.  So if the constraint uses the letters
 @c @samp{o} or @samp{m}, constant operands are not a problem.
-@c 
+@item
+常量操作数可以通过在内存中分配空间作为预先被初始化的数据来重载。然后可以使用内存引用。所以如果约束使用字母@samp{o}或者@samp{m}，则常量操作数不是问题。
+
 @c @item
 @c If the constraint permits a constant and a pseudo register used in an insn
 @c was not allocated to a hard register and is equivalent to a constant,
@@ -1828,7 +2036,10 @@ predicate的名字，
 @c compiler will crash.  Thus the predicate must always recognize any
 @c objects allowed by the constraint.
 @c @end itemize
-@c 
+@item
+如果约束允许的常量和伪寄存器没有被分配到硬件寄存器中，并且等价于一个常量，则寄存器将被常量替换。如果断言不允许常量并且insn出于某种原因被识别了，则编译器将会崩溃。因此断言必须总是能够识别任何被约束允许的对象。
+@end itemize
+
 @c If the operand's predicate can recognize registers, but the constraint does
 @c not permit them, it can make the compiler crash.  When this operand happens
 @c to be a register, the reload pass will be stymied, because it does not know
@@ -1843,11 +2054,18 @@ predicate的名字，
 @c to indicate the type of register that is required for the operand of the
 @c @code{sign_extend}.
 @c @end ifset
-@c 
+如果操作数的断言能够识别寄存器，但是约束不允许它们，则能够使编译器崩溃。当该操作数正好是寄存器时，重载过程将被打乱，因为它不知道如何将寄存器临时复制到内存中。
+
+如果断言接受一元操作符，约束将被应用到操作数上。例如，MIPS处理器在ISA3级时，支持一条指令，其将两个@code{SImode}的寄存器相加产生一个 @code{DImode}的结果，但是必须寄存器能够被正确的符号扩展。该断言对于输入操作数接受一个@code{SImode}寄存器的@code{sign_extend}。将约束写成指示寄存器的类型需要为@code{sign_extend}的操作数。
+
+@end ifset
 @c @node Multi-Alternative
 @c @subsection Multiple Alternative Constraints
 @c @cindex multiple alternative constraints
-@c 
+@node 多个可选项
+@subsection 多个可选的约束
+@cindex 多个可选的约束
+
 @c Sometimes a single instruction has multiple alternative sets of possible
 @c operands.  For example, on the 68000, a logical-or instruction can combine
 @c register or an immediate value into memory, or it can combine any kind of
@@ -1861,15 +2079,24 @@ predicate的名字，
 @c the second alternative, a comma, and so on until the last alternative.
 @c @ifset INTERNALS
 @c Here is how it is done for fullword logical-or on the 68000:
-@c 
-@c @smallexample
-@c (define_insn "iorsi3"
-@c   [(set (match_operand:SI 0 "general_operand" "=m,d")
-@c         (ior:SI (match_operand:SI 1 "general_operand" "%0,0")
-@c                 (match_operand:SI 2 "general_operand" "dKs,dmKs")))]
-@c   @dots{})
-@c @end smallexample
-@c 
+有时单个指令具有多个可选的操作数集。例如，在68000上，
+一个逻辑或指令可以将寄存器或者立即数的值组合到内存中，
+或者可以组合任何类型的操作数到寄存器中；但是不能将一个内存位置组合到另一个中。
+
+这些约束作为多个可选项来表示。
+一个可选项可以通过针对每个操作数的一系列字母来描述。
+一个操作数的总的约束由该操作数第一个可选项的字母，逗号，
+该操作数的第二个可选项，逗号，等等直到最后一个可选项组成。
+这里有一个在68000上全字逻辑或的表示：
+
+@smallexample
+(define_insn "iorsi3"
+  [(set (match_operand:SI 0 "general_operand" "=m,d")
+        (ior:SI (match_operand:SI 1 "general_operand" "%0,0")
+                (match_operand:SI 2 "general_operand" "dKs,dmKs")))]
+  @dots{})
+@end smallexample
+
 @c The first alternative has @samp{m} (memory) for operand 0, @samp{0} for
 @c operand 1 (meaning it must match operand 0), and @samp{dKs} for operand
 @c 2.  The second alternative has @samp{d} (data register) for operand 0,
@@ -1877,7 +2104,9 @@ predicate的名字，
 @c @samp{%} in the constraints apply to all the alternatives; their
 @c meaning is explained in the next section (@pxref{Class Preferences}).
 @c @end ifset
-@c 
+第一个可选项具有操作数0的@samp{m} (memory)，操作数1的@samp{0}（意味着其必须匹配 操作数0）和操作数2的@samp{dKs}。第二个可选项具有操作数0的@samp{d} (data register)，操作数1的@samp{0}和操作数2的@samp{dmKs}。 约束中的@samp{=}和@samp{%}应用于所有的可选项； 它们的含义在下一节介绍（@pxref{类别优先选择}）。
+@end ifset
+
 @c @c FIXME Is this ? and ! stuff of use in asm()?  If not, hide unless INTERNAL
 @c If all the operands fit any one alternative, the instruction is valid.
 @c Otherwise, for each alternative, the compiler counts how many instructions
@@ -1885,7 +2114,11 @@ predicate的名字，
 @c The alternative requiring the least copying is chosen.  If two alternatives
 @c need the same amount of copying, the one that comes first is chosen.
 @c These choices can be altered with the @samp{?} and @samp{!} characters:
-@c 
+如果所有操作数适合任意一个可选项，则指令为有效的。否则，对于每个可选项，
+编译器计算要复制操作数使得可选项可以使用所需要增加的指令个数。
+需要的复制最少的可选项将被选中。如果两个可选项需要相同数目的复制，
+则选择前面的。这些选择可以通过字符@samp{?}和@samp{!}来改变：
+
 @c @table @code
 @c @cindex @samp{?} in constraint
 @c @cindex question mark
@@ -1894,7 +2127,13 @@ predicate的名字，
 @c as a choice when no alternative applies exactly.  The compiler regards
 @c this alternative as one unit more costly for each @samp{?} that appears
 @c in it.
-@c 
+@table @code
+@cindex @samp{?} in constraint
+@cindex question mark
+@item ?
+轻微降低@samp{?}出现的可选项，当没有可选项被确切应用时，才将其作为选择。
+编译器将该可选项的花销认为高出一个单元。 
+
 @c @cindex @samp{!} in constraint
 @c @cindex exclamation point
 @c @item !
@@ -1902,7 +2141,12 @@ predicate的名字，
 @c This alternative can still be used if it fits without reloading,
 @c but if reloading is needed, some other alternative will be used.
 @c @end table
-@c 
+@cindex @samp{!} in constraint
+@cindex exclamation point
+@item !
+严格降低@samp{!}出现的可选项，当该选项没有reloading的时候还可以被使用， 但是如果需要reloading，则将使用其它可选项。 
+@end table
+
 @c @ifset INTERNALS
 @c When an insn pattern has multiple alternatives in its constraints, often
 @c the appearance of the assembler code is determined mostly by which
@@ -1911,13 +2155,21 @@ predicate的名字，
 @c the ordinal number of the alternative that was actually satisfied (0 for
 @c the first, 1 for the second alternative, etc.).  @xref{Output Statement}.
 @c @end ifset
-@c 
+@ifset INTERNALS
+当insn指令模式在其约束中具有多个可选项时， 经常会出现通过哪个可选项被匹配而决定使用使用什么汇编代码的情况。这时， 输写汇编代码的C代码可以使用变量@code{which_alternative}， 其为实际被满足的可选项的顺序编号（0对应第一个，1对应第二个，等等）。@xref{输出语句}。
+@end ifset
+
 @c @ifset INTERNALS
 @c @node Class Preferences
 @c @subsection Register Class Preferences
 @c @cindex class preference constraints
 @c @cindex register class preference constraints
-@c 
+@ifset INTERNALS
+@node 类别优先选择
+@subsection 寄存器类别优先选择
+@cindex class preference constraints
+@cindex register class preference constraints
+
 @c @cindex voting between constraint alternatives
 @c The operand constraints have another function: they enable the compiler
 @c to decide which kind of hardware register a pseudo register is best
@@ -1928,29 +2180,48 @@ predicate的名字，
 @c The constraint letters @samp{g} and @samp{r} also vote: they vote in
 @c favor of a general register.  The machine description says which registers
 @c are considered general.
-@c 
+@cindex voting between constraint alternatives
+操作数约束还具有另一个功能：它们使编译器可以决定为伪寄存器分配哪种硬件寄存器。
+编译器检查应用到使用伪寄存器的insn的约束，
+查看机器相关的指定寄存器类别的字母像@samp{d}和@samp{a}。
+伪寄存器被放在获得最多“票数”的类别中。约束字母@samp{g}和@samp{r}也要投票：
+它们在通用寄存器方面进行投票。机器描述告诉哪种寄存器被认为是通用的。
+
 @c Of course, on some machines all registers are equivalent, and no register
 @c classes are defined.  Then none of this complexity is relevant.
 @c @end ifset
-@c 
+当然，在一些机器上所有寄存器都是等价的，并且没有定义寄存器类别。
+那么就相应的没有这么复杂了。
+@end ifset
+
 @c @node Modifiers
 @c @subsection Constraint Modifier Characters
 @c @cindex modifiers in constraints
 @c @cindex constraint modifier characters
-@c 
+node 修饰符
+@subsection constraint修饰符
+@cindex modifiers in constraints
+@cindex constraint modifier characters
+
 @c @c prevent bad page break with this line
 @c Here are constraint modifier characters.
-@c 
+@c prevent bad page break with this line
+这里是约束修饰符。
+
 @c @table @samp
 @c @cindex @samp{=} in constraint
 @c @item =
 @c Means that this operand is write-only for this instruction: the previous
 @c value is discarded and replaced by output data.
-@c 
-@c @cindex @samp{+} in constraint
-@c @item +
-@c Means that this operand is both read and written by the instruction.
-@c 
+@table @samp
+@cindex @samp{=} in constraint
+@item =
+意味着该指令的该操作数为只写的：先前的值将被丢弃并且由输出数据替换。 
+
+@cindex @samp{+} in constraint
+@item +
+意味着该操作数可以由指令读和写。
+
 @c When the compiler fixes up the operands to satisfy the constraints,
 @c it needs to know which operands are inputs to the instruction and
 @c which are outputs from it.  @samp{=} identifies an output; @samp{+}
@@ -1959,7 +2230,12 @@ predicate的名字，
 @c 
 @c If you specify @samp{=} or @samp{+} in a constraint, you put it in the
 @c first character of the constraint string.
-@c 
+当编译器修订操作数来满足约束时，
+它需要知道哪些操作数为指令的输入以及哪些为它的输出。@samp{=}表示一个输出；
+@samp{+}表示一个操作数同时为输入和输出；所有其它操作数将被认为只是输入。
+
+如果你指定了@samp{=}或者@samp{+}，你要将它作为约束字符串的第一个字符。
+
 @c @cindex @samp{&} in constraint
 @c @cindex earlyclobber operand
 @c @item &
@@ -1981,7 +2257,23 @@ predicate的名字，
 @c See, for example, the @samp{mulsi3} insn of the ARM@.
 @c 
 @c @samp{&} does not obviate the need to write @samp{=}.
-@c 
+@cindex @samp{&} in constraint
+@cindex earlyclobber operand
+@item &
+意味着（在一个特别的可选项中）该操作数为一个@dfn{earlyclobber}操作数，
+其在指令完成使用输入操作数之前就被修改了。
+因此该操作数可能不在被用作输入操作数或者用作任何内存地址的一部分的寄存器中。
+
+@samp{&}只应用于其所在的可选项。在具有多个可选项的约束中，
+有时一个可选项需要@samp{&}，而其它的不需要。例如，参见68000的@samp{movdf} insn。
+
+一个输入操作数可以被限定为一个earlyclobber操作数，
+如果它唯一的作为输入的使用发生在早期结果被写出之前。
+增加这种形式的可选项经常可以允许GCC来产生更好的代码，
+当只有一些输出可以被earlyclobber影响时。例如，参见ARM的@samp{mulsi3} insn。
+
+@samp{&}不排除对@samp{=}的需要。
+
 @c @cindex @samp{%} in constraint
 @c @item %
 @c Declares the instruction to be commutative for this operand and the
@@ -2009,19 +2301,47 @@ predicate的名字，
 @c register allocation, so the result of @code{define_peephole2}
 @c and @code{define_split}s performed after reload cannot rely on
 @c @samp{%} to make the intended insn match.
-@c 
+@cindex @samp{%} in constraint
+@item %
+声明指令对于该操作数和随后的操作数是可交换的。这意味着编译器可以交换两操作数，
+如果有更廉价的方式来使得所有操作数都适合约束。
+@ifset INTERNALS
+这经常被用于实际上只有两个操作数的加法指令中：结果必须放在一个参数中。
+这里有个例子，是68000半字加指令如何被定义的： 
+
+@smallexample
+(define_insn "addhi3"
+  [(set (match_operand:HI 0 "general_operand" "=m,r")
+     (plus:HI (match_operand:HI 1 "general_operand" "%0,0")
+              (match_operand:HI 2 "general_operand" "di,g")))]
+  @dots{})
+@end smallexample
+@end ifset
+GCC只能处理在asm中的一个可交换对；如果你有更多的，编译器将会失败。
+注意如果两个可选项严格相同，则不需要使用该修饰符；这只会在重载过程浪费时间。
+该修饰符在寄存器分配之后，是不可操作的，
+所以在重载之后执行的@code{define_peephole2}和@code{define_split}的结果不能依赖
+@samp{%}来进行insn匹配。
+
 @c @cindex @samp{#} in constraint
 @c @item #
 @c Says that all following characters, up to the next comma, are to be
 @c ignored as a constraint.  They are significant only for choosing
 @c register preferences.
-@c 
+@cindex @samp{#} in constraint
+@item #
+表示所有后续的字符，直到下一个逗号，作为约束都被忽略掉。
+它们只对选择寄存器优先时有意义。 
+
 @c @cindex @samp{*} in constraint
 @c @item *
 @c Says that the following character should be ignored when choosing
 @c register preferences.  @samp{*} has no effect on the meaning of the
 @c constraint as a constraint, and no effect on reloading.
-@c 
+@cindex @samp{*} in constraint
+@item *
+表示后续字符在选择寄存器优先时应该被忽略掉。@samp{*}对于重载没有影响。
+
 @c @ifset INTERNALS
 @c Here is an example: the 68000 has an instruction to sign-extend a
 @c halfword in a data register, and can also sign-extend a value by
@@ -2041,12 +2361,33 @@ predicate的名字，
 @c @end smallexample
 @c @end ifset
 @c @end table
-@c 
+@ifset INTERNALS
+这里有一个例子：68000有一条指令，用于在数据寄存器中符号扩展一个半字，
+并且还可以通过将其复制到一个地址寄存器中来符号扩展一个值。
+当每种寄存器都可以被接受时，对于地址寄存器的约束相对不是很严格，
+所以最好是寄存器分配将地址寄存器作为其目标。
+因此，@samp{*}被使用，以至于@samp{d}约束字母（数据寄存器）被忽略，
+当计算寄存器优先时。
+
+@smallexample
+(define_insn "extendhisi2"
+  [(set (match_operand:SI 0 "general_operand" "=*d,a")
+        (sign_extend:SI
+         (match_operand:HI 1 "general_operand" "0,g")))]
+  @dots{})
+@end smallexample
+@end ifset
+@end table
+
 @c @node Machine Constraints
 @c @subsection Constraints for Particular Machines
 @c @cindex machine specific constraints
 @c @cindex constraints, machine specific
-@c 
+@node 机器约束
+@subsection 机器特定的约束
+@cindex 机器特定的约束
+@cindex constraints, machine specific
+
 @c Whenever possible, you should use the general-purpose constraint letters
 @c in @code{asm} arguments, since they will convey meaning more readily to
 @c people reading your code.  Failing that, use the constraint letters
@@ -2065,7 +2406,10 @@ predicate的名字，
 @c constraints that aren't.  The compiler source file mentioned in the
 @c table heading for each architecture is the definitive reference for
 @c the meanings of that architecture's constraints.
-@c 
+只要可能，就应该在@code{asm}参数中使用通用目的的约束字母， 因为它们可以向阅读你的代码的人们传达更加可读的意思。如果无法做到， 则使用在不同体系结构中通常具有非常相似的意思的约束字母。 最通用的约束为@samp{m}和@samp{r}（分别用于内存和通用寄存器； @pxref{简单约束}“）， 以及@samp{I}，通常用于指示最常见的立即数常量格式。
+
+每个体系结构定义了额外的约束。这些约束被编译器本身使用，用于指令生成， 同时也用于@code{asm}语句；因此，一些约束对于@code{asm}并不是很有用处。 这里有一个总结，关于在一些特定机器上使用的机器相关的约束； 包括对@code{asm}有用处的和没有用处的。 在表中提到的针对每个体系结构的编译器原文件，是该体系结构的约束的定义参考。
+
 @c @table @emph
 @c @item ARM family---@file{config/arm/arm.h}
 @c @table @code
@@ -2119,7 +2463,55 @@ predicate的名字，
 @c @item Uq
 @c A memory reference suitable for the ARMv4 ldrsb instruction.
 @c @end table
-@c 
+@table @emph
+@item ARM family---@file{config/arm/arm.h}
+@table @code
+@item f
+浮点寄存器
+
+@item w
+VFP浮点寄存器
+
+@item F
+浮点常量0.0, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0或者10.0
+
+@item G
+浮点常量，其负数满足约束@samp{F}
+
+@item I
+可以在数据处理指令中作为立即数的整数。即，0到255范围的整数，被2的倍数进行旋转
+
+@item J
+范围在@minus{}4095到4095的整数
+
+@item K
+当倒置后，满足约束@samp{I}的整数
+
+@item L
+当求负后，满足约束@samp{I}的整数
+
+@item M
+范围在0到32的整数
+
+@item Q
+一个内存引用，其确切的地址在单个寄存器中（`@samp{m}'可以用于@code{asm}语句）
+
+@item R
+在常量池中的项
+
+@item S
+在当前文件中text段中的符号
+
+@item Uv
+适于VFP加载/存储insn（寄存器+常量 偏移量）的内存引用
+
+@item Uy
+适于iWMMXt加载/存储指令的内存引用
+
+@item Uq
+适于ARMv4 ldrsb指令的内存引用
+@end table
+
 @c @item AVR family---@file{config/avr/constraints.md}
 @c @table @code
 @c @item l
@@ -2188,7 +2580,75 @@ predicate的名字，
 @c @item Q
 @c A memory address based on Y or Z pointer with displacement.
 @c @end table
-@c 
+@item AVR family---@file{config/avr/constraints.md}
+@table @code
+@item l
+寄存器r0到r15
+
+@item a
+寄存器r16到r23
+
+@item d
+寄存器r16到r31
+
+@item w
+寄存器r24到r31。这些寄存器可以用于@samp{adiw}命令
+
+@item e
+指针寄存器(r26--r31)
+
+@item b
+基指针寄存器(r28--r31)
+
+@item q
+栈指针寄存器(SPH:SPL)
+
+@item t
+临时寄存器r0
+
+@item x
+寄存器对X (r27:r26)
+
+@item y
+寄存器对Y (r29:r28)
+
+@item z
+寄存器对Z (r31:r30)
+
+@item I
+常量，大于@minus{}1，小于64
+
+@item J
+常量，大于@minus{}64，小于1
+
+@item K
+常量整数2
+
+@item L
+常量整数0
+
+@item M
+8位的常量
+
+@item N
+常量整数@minus{}1
+
+@item O
+常量整数8，16或24
+
+@item P
+常量整数1
+
+@item G
+浮点常量0.0
+
+@item R
+整数常量，范围在-6 @dots{} 5
+
+@item Q
+一个内存地址，基于Y或者Z指针，加上一个位移
+@end table
+
 @c @item CRX Architecture---@file{config/crx/crx.h}
 @c @table @code
 @c 
@@ -2219,7 +2679,37 @@ predicate的名字，
 @c @item G
 @c Floating point constant that is legal for store immediate
 @c @end table
-@c 
+@item CRX Architecture---@file{config/crx/crx.h}
+@table @code
+
+@item b
+寄存器从r0到r14（不含栈指针）
+
+@item l
+寄存器r16（64位累加器lo寄存器）
+
+@item h
+寄存器r17（64位累加器hi寄存器）
+
+@item k
+寄存器对r16-r17（64位累加器lo-hi寄存器对）
+
+@item I
+3位的常量
+
+@item J
+4位的常量
+
+@item K
+5位的常量
+
+@item L
+常量-1, 4, -4, 7, 8, 12, 16, 20, 32, 48
+
+@item G
+浮点常量，合法的可以用于存储的立即数。
+@end table
+
 @c @item Hewlett-Packard PA-RISC---@file{config/pa/pa.h}
 @c @table @code
 @c @item a
@@ -2290,7 +2780,75 @@ predicate的名字，
 @c @item W
 @c A register indirect memory operand
 @c @end table
-@c 
+@item Hewlett-Packard PA-RISC---@file{config/pa/pa.h}
+@table @code
+@item a
+通用寄存器1
+
+@item f
+浮点寄存器
+
+@item q
+移位数量寄存器
+
+@item x
+浮点寄存器(不推荐的)
+
+@item y
+高位部分浮点寄存器（32位），浮点寄存器（64位）
+
+@item Z
+任何寄存器
+
+@item I
+有符号的11位整数常量
+
+@item J
+有符号的14位整数常量
+
+@item K
+可以使用指令@code{zdepi}存放的整数常量
+
+@item L
+有符号的5位整数常量
+
+@item M
+整数常量0
+
+@item N
+可以使用@code{ldil}指令加载的整数常量
+
+@item O
+整数常量，其值加上1便为2的幂
+
+@item P
+可以用于在@code{depi}和@code{extru}指令中@code{and}运算的整数常量
+
+@item S
+整数常量31
+
+@item U
+整数常量63
+
+@item G
+浮点常量0.0
+
+@item A
+一个@code{lo_sum} data-linkage-table内存操作数
+
+@item Q
+可以用作整数存储指令的目的操作数的内存操作数
+
+@item R
+缩放或者未缩放的索引内存操作数
+
+@item T
+浮点加载和存储的内存操作数
+
+@item W
+寄存器间接内存操作数
+@end table
+
 @c @item picoChip family---@file{picochip.h}
 @c @table @code
 @c @item k
@@ -2330,7 +2888,40 @@ predicate的名字，
 @c 16-bit signed integer.
 @c 
 @c @end table
-@c 
+@item picoChip family---@file{picochip.h}
+@table @code
+@item k
+栈寄存器
+
+@item f
+指针寄存器。可以用于访问内存，无需提供偏移量。任何其它寄存器可以用于访问内存，但需要一个常量偏移量。当偏移量为零的时候，使用指针寄存器会更有效，因为这将减少代码大小。
+
+@item t
+成对寄存器。相邻的两个寄存器，用来创建一个32位寄存器。
+
+@item a
+任何绝对内存地址（例如，符号常量，符号常量+偏移量）
+
+@item I
+4位有符号整数
+
+@item J
+4位无符号整数
+
+@item K
+8位有符号整数
+
+@item M
+任何绝对值不大于4位的常量
+
+@item N
+10位有符号整数
+
+@item O
+16位有符号整数
+
+@end table
+
 @c @item PowerPC and IBM RS6000---@file{config/rs6000/rs6000.h}
 @c @table @code
 @c @item b
@@ -2474,7 +3065,96 @@ predicate的名字，
 @c Vector constant that is all zeros.
 @c 
 @c @end table
-@c 
+@item PowerPC and IBM RS6000---@file{config/rs6000/rs6000.h}
+@table @code
+@item b
+基址寄存器
+
+@item f
+浮点寄存器
+
+@item v
+向量寄存器
+
+@item h
+@samp{MQ}, @samp{CTR}或者@samp{LINK}寄存器
+
+@item q
+@samp{MQ}寄存器
+
+@item c
+@samp{CTR}寄存器
+
+@item l
+@samp{LINK}寄存器
+
+@item x
+@samp{CR}寄存器(条件寄存器)编号0
+
+@item y
+@samp{CR}寄存器(条件寄存器)
+
+@item z
+@samp{FPMEM}栈内存，用于FPR-GPR传送
+
+@item I
+有符号16位常量
+
+@item J
+无符号16位常量，向左移16位（使用@samp{L}来替代常量）
+
+@item K
+无符号16位常量
+
+@item L
+有符号16位常量，向左移16位
+
+@item M
+大于31的常量
+
+@item N
+2的幂
+
+@item O
+零
+
+@item P
+常量，其负数为有符号的16位常量
+
+@item G
+浮点常量，可以使用一个字的指令将其加载到寄存器中
+
+@item H
+整数/浮点常量，可以使用三条指令将其加载到寄存器中
+
+@item Q
+内存操作数，相对于寄存器的偏移量(@samp{m}适用于@code{asm}语句)
+
+@item Z
+内存操作数，来自寄存器的一个索引或者间接访问(@samp{m}适用于@code{asm}语句)
+
+@item R
+AIX TOC项
+
+@item a
+地址操作数，来自寄存器的一个索引或者间接访问(@samp{p}适用于@code{asm}语句)
+
+@item S
+适于作64位掩码操作数的常量
+
+@item T
+适于作32位掩码操作数的常量
+
+@item U
+System V Release 4对小数据区域的引用
+
+@item t
+AND掩码，可以通过两条rldic@{l, r@}指令执行
+
+@item W
+不需要内存的向量常量
+@end table
+
 @c @item Intel 386---@file{config/i386/constraints.md}
 @c @table @code
 @c @item R
@@ -2588,7 +3268,109 @@ predicate的名字，
 @c instructions).
 @c 
 @c @end table
-@c 
+@item Intel 386---@file{config/i386/constraints.md}
+@table @code
+@item R
+遗留的寄存---八个在所有i386处理上都可用的寄存器(@code{a}, @code{b}, @code{c}, @code{d},
+@code{si}, @code{di}, @code{bp}, @code{sp})。
+
+@item q
+任何可以作为@code{@var{r}l}访问的寄存器。在32位机器模式中，为@code{a}, @code{b}, @code{c}和@code{d}; 在64位机器模式中，为任何整数寄存器。
+
+@item Q
+任何可以作为@code{@var{r}h}来访问的寄存器：@code{a}, @code{b}, @code{c}和@code{d}。
+
+@ifset INTERNALS
+@item l
+任何在基址+索引的内存访问中，可以作为索引的寄存器：即除了栈指针以外的任何通用寄存器。
+@end ifset
+
+@item a
+寄存器@code{a}
+
+@item b
+寄存器@code{b}
+
+@item c
+寄存器@code{c}
+
+@item d
+寄存器@code{d}
+
+@item S
+寄存器@code{si}
+
+@item D
+寄存器@code{di}
+
+@item A
+寄存器@code{a}和@code{d}，作为一对（用于在一个寄存器中返回结果的一半，另一个寄存器中返回另一半的指令）
+
+@item f
+任何80387浮点（栈）寄存器
+
+@item t
+80387浮点栈顶（@code{%st(0)}）
+
+@item u
+从80387浮点栈顶起始的第二项(@code{%st(1)})
+
+@item y
+任何MMX寄存器
+
+@item x
+任何SSE寄存器
+
+@item Yz
+第一个SSE寄存器(@code{%xmm0})
+
+@ifset INTERNALS
+@item Y2
+任何SSE寄存器，当SSE2被启用
+
+@item Yi
+任何SSE寄存器，当SSE2和inter-unit move被启用
+
+@item Ym
+任何MMX寄存器，当inter-unit move被启用
+@end ifset
+
+@item I
+整数常量，范围在0 @dots{} 31，用于32位移位
+
+@item J
+整数常量，范围在0 @dots{} 63，用于64位移位
+
+@item K
+有符号8位整数常量
+
+@item L
+@code{0xFF}或者@code{0xFFFF}，用于andsi，作为零扩展move
+
+@item M
+0, 1, 2, 或者 3 (用于@code{lea}指令的移位)
+
+@item N
+无符号8位整数常量（用于@code{in}和@code{out}指令）
+
+@ifset INTERNALS
+@item O
+整数常量，范围在0 @dots{} 127，用于64位移位
+@end ifset
+
+@item G
+标准的80387浮点常量
+
+@item C
+标准的SSE浮点常量
+
+@item e
+32位有符号整数常量，或者已知适合该范围的符号引用（用于有符号扩展x86-64指令的立即数）
+
+@item Z
+32位无符号整数常量，或者已知适合该范围的符号引用（用于零扩展x86-64指令的立即数）
+@end table
+ 
 @c @item Intel IA-64---@file{config/ia64/ia64.h}
 @c @table @code
 @c @item a
@@ -2652,7 +3434,66 @@ predicate的名字，
 @c now roughly the same as @samp{m} when not used together with @samp{<}
 @c or @samp{>}.
 @c @end table
-@c 
+@item Intel IA-64---@file{config/ia64/ia64.h}
+@table @code
+@item a
+通用寄存器@code{r0}到@code{r3}，用于@code{addl}指令
+
+@item b
+分支寄存器
+
+@item c
+断言寄存器(@samp{c} as in ``conditional'')
+
+@item d
+在M-unit中的应用寄存器
+
+@item e
+在I-unit中的应用寄存器
+
+@item f
+浮点寄存器
+
+@item m
+内存操作数，记住在IA-64上，@samp{m}允许使用@samp{%Pn}打印的后增和后减方式。使用@samp{S}来禁止后增和后减。
+
+@item G
+浮点常量0.0或者1.0
+
+@item I
+14位有符号整数常量
+
+@item J
+22位有符号整数常量
+
+@item K
+8位有符号整数常量，用于逻辑指令
+
+@item L
+8位被调整的有符号整数常量，用于比较伪操作
+
+@item M
+6位无符号整数常量，用于移位计数
+
+@item N
+9位有符号整数常量，用于后增方式的加载和存储
+
+@item O
+常量零
+
+@item P
+0 或者 @minus{}1，用于@code{dep}指令
+
+@item Q
+非volatile内存，用于浮点加载和存储
+
+@item R
+整数常量范围在1到4，用于@code{shladd}指令
+
+@item S
+除了后增和后减以外的内存操作数
+@end table
+
 @c @item FRV---@file{config/frv/frv.h}
 @c @table @code
 @c @item a
@@ -2745,7 +3586,87 @@ predicate的名字，
 @c range of 1 to 2047.
 @c 
 @c @end table
-@c 
+@item FRV---@file{config/frv/frv.h}
+@table @code
+@item a
+类别@code{ACC_REGS}中的寄存器(@code{acc0} 到 @code{acc7}).
+
+@item b
+类别@code{EVEN_ACC_REGS}中的寄存器(@code{acc0} 到 @code{acc7}).
+
+@item c
+类别@code{CC_REGS}中的寄存器(@code{fcc0} 到 @code{fcc3} 以及 @code{icc0} 到 @code{icc3}).
+
+@item d
+类别@code{GPR_REGS}中的寄存器(@code{gr0} 到 @code{gr63}).
+
+@item e
+类别@code{EVEN_REGS}中的寄存器(@code{gr0} 到 @code{gr63})。奇数寄存器不在该类中，但是可以使用大于4个字节的机器模式来使用。
+
+@item f
+类别@code{FPR_REGS}中的寄存器(@code{fr0} 到 @code{fr63}).
+
+@item h
+类别@code{FEVEN_REGS}中的寄存器(@code{fr0} 到 @code{fr63})。奇数寄存器不在该类中，但是可以使用大于4个字节的机器模式来使用。
+
+@item l
+类比@code{LR_REG}中的寄存器(@code{lr}寄存器)。
+
+@item q
+类别@code{QUAD_REGS}中的寄存器(@code{gr2} 到 @code{gr63})。无法被4整除的寄存器编号不在该类中，但是可以使用大于8个字节的机器模式来使用。
+
+@item t
+类别@code{ICC_REGS}中的寄存器(@code{icc0} 到 @code{icc3}).
+
+@item u
+类别@code{FCC_REGS}中的寄存器(@code{fcc0} 到 @code{fcc3}).
+
+@item v
+类别@code{ICR_REGS}中的寄存器(@code{cc4} 到 @code{cc7}).
+
+@item w
+类别@code{FCR_REGS}中的寄存器(@code{cc0} 到 @code{cc3}).
+
+@item x
+类别@code{QUAD_FPR_REGS}中的寄存器(@code{fr0} 到 @code{fr63})。无法被4整除的寄存器编号不在该类中，但是可以使用大于8个字节的机器模式来使用。
+
+@item z
+类别@code{SPR_REGS}中的寄存器(@code{lcr} 和 @code{lr}).
+
+@item A
+类别@code{QUAD_ACC_REGS}中的寄存器(@code{acc0} 到 @code{acc7}).
+
+@item B
+类别@code{ACCG_REGS}中的寄存器(@code{accg0} 到 @code{accg7}).
+
+@item C
+类别@code{CR_REGS}中的寄存器(@code{cc0} 到 @code{cc7}).
+
+@item G
+浮点常量零
+
+@item I
+6位有符号整数常量
+
+@item J
+10位有符号整数常量
+
+@item L
+16位有符号整数常量
+
+@item M
+16位无符号整数常量
+
+@item N
+12位有符号整数常量，且为负---即，范围在@minus{}2048 到 @minus{}1
+
+@item O
+常量零
+
+@item P
+12有符号整数常量，且大于零---即，范围在1到2047
+@end table
+
 @c @item Blackfin family---@file{config/bfin/constraints.md}
 @c @table @code
 @c @item a
@@ -2862,7 +3783,119 @@ predicate的名字，
 @c @item Q
 @c Any SYMBOL_REF.
 @c @end table
-@c 
+@item Blackfin family---@file{config/bfin/constraints.md}
+@table @code
+@item a
+P寄存器
+
+@item d
+D寄存器
+
+@item z
+被函数调用破坏的P寄存器
+
+@item q@var{n}
+单个寄存器。如果@var{n}在范围0到7中，则对应D寄存器。如果为@code{A}，则是寄存器P0。
+
+@item D
+偶数编号的D寄存器
+
+@item W
+奇数编号的D寄存器
+
+@item e
+累加寄存器
+
+@item A
+偶数编号的累加寄存器
+
+@item B
+奇数编号的累加寄存器
+
+@item b
+I寄存器
+
+@item v
+B寄存器
+
+@item f
+M寄存器
+
+@item c
+用于循环缓冲的寄存器，即I, B或者L寄存器。
+
+@item C
+CC寄存器
+
+@item t
+LT0或者LT1.
+
+@item k
+LC0或者LC1.
+
+@item u
+LB0或者LB1.
+
+@item x
+任何D, P, B, M, I 或者L寄存器。
+
+@item y
+通常只用于函数序言和尾声的额外寄存器：RETS, RETN, RETI, RETX, RETE, ASTAT, SEQSTAT 和 USP。
+
+@item w
+除了累加器和CC以外的任何寄存器。
+
+@item Ksh
+有符号16位整数（范围在-32768到32767）
+
+@item Kuh
+无符号16位整数(范围在0到65535)
+
+@item Ks7
+有符号7位整数(范围在-64 到 63)
+
+@item Ku7
+无符号7位整数(范围在0到127)
+
+@item Ku5
+无符号5位整数(范围在0到31)
+
+@item Ks4
+有符号4位整数(范围在-8到7)
+
+@item Ks3
+有符号3位整数(范围在-3到4)
+
+@item Ku3
+无符号3位整数(范围在0到7)
+
+@item P@var{n}
+常量@var{n}，为一单个数字的常量，范围在0到4。
+
+@item PA
+一个整数，等于MACFLAG_XXX常量中的一个，适合用于每个累加器。
+
+@item PB
+一个整数，等于MACFLAG_XXX常量中的一个，只适合用于累加器A1。
+
+@item M1
+常量255
+
+@item M2
+常量65535
+
+@item J
+整数常量，只有一个位被设置。
+
+@item L
+整数常量，只有一个位没有被设置。
+
+@item H
+
+@item Q
+任何SYMBOL_REF
+@end table
+
 @c @item M32C---@file{config/m32c/m32c.c}
 @c @table @code
 @c @item Rsp
@@ -3094,7 +4127,8 @@ predicate的名字，
 @c 
 @c 
 @c @end table
-@c 
+
+ 
 @c @item MIPS---@file{config/mips/constraints.md}
 @c @table @code
 @c @item d
@@ -3161,7 +4195,66 @@ predicate的名字，
 @c @item R
 @c An address that can be used in a non-macro load or store.
 @c @end table
-@c 
+@item MIPS---@file{config/mips/constraints.md}
+@table @code
+@item d
+地址寄存器。与@code{r}等价，只不过是生成MIPS16代码
+
+@item f
+浮点寄存器（如果可用）
+
+@item h
+之前为@code{hi}寄存器。该约束不再被支持。
+
+@item l
+@code{lo}寄存器。使用该寄存器来存放不大于一个字的值。
+
+@item x
+@code{hi} 和 @code{lo}寄存器的结合。使用该寄存器来存放双字的值。
+
+@item c
+适用于间接跳转的寄存器。对于@option{-mabicalls}，其将总是为@code{$25}。
+
+@item v
+寄存器@code{$3}。不要在新的代码中使用该约束；保留它只是为了与glibc兼容。
+
+@item y
+等价于@code{r}; 保留它是为了向后兼容。
+
+@item z
+浮点条件代码寄存器
+
+@item I
+有符号16位常量(用于算术指令)
+
+@item J
+整数零
+
+@item K
+无符号16位常量(用于逻辑指令)
+
+@item L
+有符号32位常量，其中低16位为零。这样的常量可以使用@code{lui}来加载。
+
+@item M
+不可以使用@code{lui}, @code{addiu}或@code{ori}加载的常量。
+
+@item N
+常量，范围在-65535 到 -1 (含)。
+
+@item O
+有符号15位常量
+
+@item P
+常量，范围在1到65535 (含)
+
+@item G
+浮点零
+
+@item R
+可以用于非宏的加载和存储中的地址。
+@end table
+
 @c @item Motorola 680x0---@file{config/m68k/constraints.md}
 @c @table @code
 @c @item a
@@ -3249,7 +4342,93 @@ predicate的名字，
 @c Non-register operands allowed in clr
 @c 
 @c @end table
-@c 
+@item Motorola 680x0---@file{config/m68k/constraints.md}
+@table @code
+@item a
+地址寄存器
+
+@item d
+数据寄存器
+
+@item f
+68881浮点寄存器，如果可用
+
+@item I
+整数，范围在1到8
+
+@item J
+16位有符号数字
+
+@item K
+有符号数字，大于0x80
+
+@item L
+整数，范围在@minus{}8 到 @minus{}1
+
+@item M
+有符号数字，大于0x100
+
+@item N
+范围在24到31，rotatert:SI 8 到 1，表示为rotate
+
+@item O
+16 (使用swap的rotate)
+
+@item P
+范围在8到15，rotatert:HI 8 到 1，表示为rotate
+
+@item R
+mov3q可以处理的数字
+
+@item G
+浮点常量，且不是68881常量
+
+@item S
+操作数，当-mpcrel有效时，满足'm'
+
+@item T
+操作数，当-mpcrel无效时，满足's'
+
+@item Q
+地址寄存器，简介寻址模式
+
+@item U
+寄存器偏移寻址
+
+@item W
+const_call_operand
+
+@item Cs
+symbol_ref 或 const
+
+@item Ci
+const_int
+
+@item C0
+const_int 0
+
+@item Cj
+不适合16位的有符号数的范围不适合16位
+
+@item Cmvq
+用于mvq的整数
+
+@item Capsw
+整数，用于moveq后面跟一个swap
+
+@item Cmvz
+用于mvz的整数
+
+@item Cmvs
+用于mvs的整数
+
+@item Ap
+push_operand
+
+@item Ac
+允许在clr中使用的非寄存器操作数
+@end table
+
 @c @item Motorola 68HC11 & 68HC12 families---@file{config/m68hc11/m68hc11.h}
 @c @table @code
 @c @item a
@@ -3307,7 +4486,63 @@ predicate的名字，
 @c Constants in the range @minus{}8 to 2
 @c 
 @c @end table
-@c 
+@item Motorola 68HC11 & 68HC12 families---@file{config/m68hc11/m68hc11.h}
+@table @code
+@item a
+寄存器`a'
+
+@item b
+寄存器`b'
+
+@item d
+寄存器`d'
+
+@item q
+8位寄存器
+
+@item t
+临时软寄存器_.tmp
+
+@item u
+软寄存器_.d1 到 _.d31
+
+@item w
+栈指针寄存器
+
+@item x
+寄存器`x'
+
+@item y
+寄存器`y'
+
+@item z
+伪寄存器`z' (在后来被`x' 或 `y'替换)
+
+@item A
+地址寄存器：x, y 或 z
+
+@item B
+地址寄存器：x 或 y
+
+@item D
+寄存器(x:d)，形成一个32位的值
+
+@item L
+常量，范围在@minus{}65536 到 65535
+
+@item M
+常量，低16位为零
+
+@item N
+常整数1 或 @minus{}1
+
+@item O
+常整数16
+
+@item P
+常量，范围在@minus{}8 到 2
+@end table
+
 @c @item Moxie---@file{config/moxie/constraints.md}
 @c @table @code
 @c @item A
@@ -3352,7 +4587,7 @@ predicate的名字，
 @c A constant in the range 0 to 15, inclusive.
 @c 
 @c @end table
-@c 
+
 @c @need 1000
 @c @item SPARC---@file{config/sparc/sparc.h}
 @c @table @code
@@ -3440,7 +4675,79 @@ predicate的名字，
 @c Vector zero
 @c 
 @c @end table
-@c 
+@need 1000
+@item SPARC---@file{config/sparc/sparc.h}
+@table @code
+@item f
+SPARC-V8体系结构上的浮点寄存器，以及SPARC-V9体系结构上的低浮点寄存器。
+
+@item e
+浮点寄存器。在SPARC-V8体系结构上等价于@samp{f}，在SPARC-V9体系结构上包含低位和高位的浮点寄存器。
+
+@item c
+浮点条件代码寄存器。
+
+@item d
+低位浮点寄存器。只用于SPARC-V9体系结构上，当虚拟指令集可用的时候。
+
+@item b
+浮点寄存器。只用于SPARC-V9体系结构上，当虚拟指令集可用的时候。
+
+@item h
+64位global或out寄存器，用于SPARC-V8+体系结构。
+
+@item D
+向量常量
+
+@item I
+有符号13位常量
+
+@item J
+零
+
+@item K
+32位常量，低12位被清零（可以使用@code{sethi}指令加载的常量）
+
+@item L
+@code{movcc}指令所支持的范围内的常量
+
+@item M
+@code{movrcc}指令所支持的范围内的常量
+
+@item N
+与@samp{K}相同，只不过，其会验证不在低32位范围的位全是零。对于机器模式宽于@code{SImode}的，比需使用其，而不是@samp{K}
+
+@item O
+常量4096
+
+@item G
+浮点零
+
+@item H
+有符号13位常量，符号扩展到32或64位
+
+@item Q
+浮点常量，其整数表示可以使用单个sethi指令，被移送到整数寄存器中。
+
+@item R
+浮点常量，其整数表示可以使用单个mov指令，被移送到整数寄存器中。
+
+@item S
+浮点常量，其整数表示可以使用一个high/lo_sum指令序列，被移送到整数寄存器中。
+
+@item T
+内存地址，对齐到8字节的边界
+
+@item U
+偶数寄存器
+
+@item W
+内存地址，用于@samp{e}约束寄存器
+
+@item Y
+向量零
+@end table
+
 @c @item SPU---@file{config/spu/spu.h}
 @c @table @code
 @c @item a
@@ -3510,7 +4817,75 @@ predicate的名字，
 @c An immediate for the @code{iohl} instruction.  const_int is sign extended to 128 bit.  
 @c 
 @c @end table
-@c 
+@item SPU---@file{config/spu/spu.h}
+@table @code
+@item a
+立即数，可以使用il/ila/ilh/ilhu指令加载。const_int被当作64位值。
+
+@item c
+立即数，用于and/xor/or指令。const_int被当作64位值。
+
+@item d
+立即数，用于@code{iohl}指令。const_int被当作64位值。
+
+@item f
+立即数，可以使用@code{fsmbi}指令加载。  
+
+@item A
+立即数，可以使用il/ila/ilh/ilhu指令加载。const_int被当作32位值。 
+
+@item B
+立即数，用于大多算术指令。const_int被当作32位值。  
+
+@item C
+立即数，用于and/xor/or指令。const_int被当作32位值。 
+
+@item D
+立即数，用于@code{iohl}指令。const_int被当作32位值。  
+
+@item I
+常量，范围为[-64, 63]，用于shift/rotate指令。  
+
+@item J
+无符号7位常量，用于conversion/nop/channel指令。  
+
+@item K
+有符号10位常量，用于大多算术指令。  
+
+@item M
+有符号16位立即数，用于@code{stop}。 
+
+@item N
+无符号16位常量，用于@code{iohl}和@code{fsmbi}。  
+
+@item O
+无符号7位常量，其3个最小有效位是0。  
+
+@item P
+无符号3位常量，用于16字节的rotate和shift。
+
+@item R
+调用操作数，寄存器，用于间接调用。
+
+@item S
+调用操作数，符号，用于相关调用。  
+
+@item T
+调用操作数，const_int，用于绝对调用。  
+
+@item U
+立即数，可以使用il/ila/ilh/ilhu指令加载。const_int被扩展为128位。  
+
+@item W
+立即数，用于shift和rotate指令。const_int被当作32位值。  
+
+@item Y
+立即数，用于and/xor/or指令。const_int被有符号扩展为128位。  
+
+@item Z
+立即数，用于@code{iohl}指令。const_int被有符号扩展为128位。  
+@end table
+
 @c @item S/390 and zSeries---@file{config/s390/s390.h}
 @c @table @code
 @c @item a
@@ -3583,7 +4958,77 @@ predicate的名字，
 @c Shift count operand.
 @c 
 @c @end table
-@c 
+@item S/390 and zSeries---@file{config/s390/s390.h}
+@table @code
+@item a
+地址寄存器(通用目的寄存器，除了r0)
+
+@item c
+条件代码寄存器
+
+@item d
+数据寄存器（任意通用寄存器）
+
+@item f
+浮点寄存器
+
+@item I
+无符号8位常量(0--255)
+
+@item J
+无符号12位常量(0--4095)
+
+@item K
+有符号16位常量(@minus{}32768--32767)
+
+@item L
+适合作偏移量的值
+@table @code
+@item (0..4095)
+短偏移
+@item (-524288..524287)
+长偏移
+@end table
+
+@item M
+常量整数，值为0x7fffffff
+
+@item N
+多个字母约束，跟随4个参数字母
+@table @code
+@item 0..9:
+部分的编号，从最大有效到最小有效计数
+@item H,Q:
+部分的机器模式
+@item D,S,H:
+包含的操作数的机器模式
+@item 0,F:
+其它部分的值(F---所有位都被设置)
+@end table
+如果常量所指定的部分具有与其它部分不同的值，则约束匹配
+
+@item Q
+没有索引寄存器，但是有短偏移的内存引用
+
+@item R
+具有索引寄存器和短偏移的内存引用
+
+@item S
+没有索引寄存器，但是有长偏移的内存引用
+
+@item T
+具有索引寄存器和长偏移的内存引用
+
+@item U
+具有短偏移的指针
+
+@item W
+具有长偏移的指针
+
+@item Y
+移位计数操作数
+@end table
+
 @c @item Score family---@file{config/score/score.h}
 @c @table @code
 @c @item d
@@ -3652,7 +5097,75 @@ predicate的名字，
 @c @item Z
 @c Any SYMBOL_REF.
 @c @end table
-@c 
+@item Score family---@file{config/score/score.h}
+@table @code
+@item d
+寄存器r0到r32
+
+@item e
+寄存器r0到r16
+
+@item t
+r8---r11 或 r22---r27 寄存器
+
+@item h
+hi寄存器
+
+@item l
+lo寄存器
+
+@item x
+hi + lo 寄存器
+
+@item q
+cnt寄存器
+
+@item y
+lcb寄存器
+
+@item z
+scb寄存器
+
+@item a
+cnt + lcb + scb寄存器
+
+@item c
+cr0---cr15寄存器
+
+@item b
+cp1寄存器
+
+@item f
+cp2寄存器
+
+@item i
+cp3寄存器
+
+@item j
+cp1 + cp2 + cp3寄存器
+
+@item I
+高16位常量(32位常量，16位最小有效位为零)
+
+@item J
+无符号5位整数(范围从0到31)
+
+@item K
+无符号16位整数(范围从0到65535)
+
+@item L
+有符号16位整数(范围从@minus{}32768到32767)
+
+@item M
+无符号14位整数(范围从0到16383)
+
+@item N
+有符号14位整数(范围从@minus{}8192到8191)
+
+@item Z
+任何SYMBOL_REF
+@end table
+
 @c @item Xstormy16---@file{config/stormy16/stormy16.h}
 @c @table @code
 @c @item a
@@ -3722,7 +5235,76 @@ predicate的名字，
 @c The constant 0.
 @c 
 @c @end table
-@c 
+@item Xstormy16---@file{config/stormy16/stormy16.h}
+@table @code
+@item a
+寄存器r0
+
+@item b
+寄存器r1
+
+@item c
+寄存器r2
+
+@item d
+寄存器r8
+
+@item e
+寄存器r0到r7
+
+@item t
+寄存器r0和r1
+
+@item y
+进位寄存器
+
+@item z
+寄存器r8和r9
+
+@item I
+常量，在0和3之间
+
+@item J
+常量，只有一位被设置
+
+@item K
+常量，只有一位被清零
+
+@item L
+常量，在0和255之间
+
+@item M
+常量，在@minus{}255和0之间
+
+@item N
+常量，在@minus{}3和0之间
+
+@item O
+常量，在1和4之间
+
+@item P
+常量，在@minus{}4和@minus{}1之间
+
+@item Q
+内存引用，为一个栈压入
+
+@item R
+内存引用，为一个栈弹出
+
+@item S
+内存引用，表示一个已知的常量地址
+
+@item T
+通过Rx指示的寄存器（还没实现）
+
+@item U
+不在2和15之间的常量
+
+@item Z
+常量0
+
+@end table
+
 @c @item Xtensa---@file{config/xtensa/constraints.md}
 @c @table @code
 @c @item a
@@ -3749,7 +5331,33 @@ predicate的名字，
 @c @end table
 @c 
 @c @end table
-@c 
+@item Xtensa---@file{config/xtensa/constraints.md}
+@table @code
+@item a
+通用32位寄存器
+
+@item b
+一位布尔寄存器
+
+@item A
+MAC16 40位累加器
+
+@item I
+有符号12位整数常量，用在MOVI指令中
+
+@item J
+有符号8位整数常量，用在ADDI指令中
+
+@item K
+整数常量，用于BccI指令
+
+@item L
+无符号常量，用于BccUI指令
+
+@end table
+
+@end table
+
 @c @ifset INTERNALS
 @c @node Disable Insn Alternatives
 @c @subsection Disable insn alternatives using the @code{enabled} attribute
@@ -3767,7 +5375,17 @@ predicate的名字，
 @c 
 @c In order to make use of the @code{enabled} attribute a back end has to add
 @c in the machine description files:
-@c 
+@ifset INTERNALS
+@node 禁止Insn可选项
+@subsection 使用@code{enabled}属性来禁止insn可选项
+@cindex enabled
+
+insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特定的insn的可选项。这用于，当为现有的指令模式，增加新的指令，且其只用于使用@code{-march=}选项指定的特定cpu体系结构级别。
+
+如果insn的可选项被禁止，则其将不被使用。编译器将被禁止的可选项的约束视为不被满足。
+
+为了能够使用@code{enabled}属性，后端必须在机器描述文件中增加：
+
 @c @enumerate
 @c @item
 @c A definition of the @code{enabled} insn attribute.  The attribute is
@@ -3787,7 +5405,18 @@ predicate的名字，
 @c with more than one alternative.  Otherwise the insn pattern should be
 @c disabled or enabled using the insn condition.)
 @c @end enumerate
-@c 
+@enumerate
+@item
+对@code{enabled} insn属性的定义。该属性通常使用@code{define_attr}命令来定义。该定义应该基于其它insn属性以及/或者目标机标记。@code{enabled}属性为数字属性，并且对于被启用的可选项应该求值为@code{(const_int 1)}，否则为@code{(const_int 0)}。
+
+@item
+另一个insn属性的定义，用于描述为什么一个insn可选项可用或不可用。例如，下面例子中的@code{cpu_facility}。
+
+@item
+对每个insn定义，赋予第二个属性。（注意：显然只是针对那些具有多个可选项的定义。其它insn模式应该使用insn条件来禁止或开启。）
+
+@end enumerate
+
 @c E.g. the following two patterns could easily be merged using the @code{enabled}
 @c attribute:
 @c 
@@ -3842,7 +5471,45 @@ predicate的名字，
 @c @end smallexample
 @c 
 @c @end ifset
-@c 
+例如，下面两个指令模式可以容易的使用@code{enabled}属性合并在一起：
+
+@smallexample
+
+(define_insn "*movdi_old"
+  [(set (match_operand:DI 0 "register_operand" "=d")
+        (match_operand:DI 1 "register_operand" " d"))]
+  "!TARGET_NEW"
+  "lgr %0,%1")
+
+(define_insn "*movdi_new"
+  [(set (match_operand:DI 0 "register_operand" "=d,f,d")
+        (match_operand:DI 1 "register_operand" " d,d,f"))]
+  "TARGET_NEW"
+  "@@
+   lgr  %0,%1
+   ldgr %0,%1
+   lgdr %0,%1")
+
+@end smallexample
+
+合并成:
+
+@smallexample
+
+(define_insn "*movdi_combined"
+  [(set (match_operand:DI 0 "register_operand" "=d,f,d")
+        (match_operand:DI 1 "register_operand" " d,d,f"))]
+  ""
+  "@@
+   lgr  %0,%1
+   ldgr %0,%1
+   lgdr %0,%1"
+  [(set_attr "cpu_facility" "*,new,new")])
+
+@end smallexample
+
+@end ifset
+
 @c @ifset INTERNALS
 @c @node Define Constraints
 @c @subsection Defining Machine-Specific Constraints
