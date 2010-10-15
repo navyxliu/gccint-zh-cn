@@ -5515,7 +5515,12 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @subsection Defining Machine-Specific Constraints
 @c @cindex defining constraints
 @c @cindex constraints, defining
-@c 
+@ifset INTERNALS
+@node 定义约束
+@subsection 定义机器特定的约束
+@cindex 定义约束
+@cindex constraints, defining
+
 @c Machine-specific constraints fall into two categories: register and
 @c non-register constraints.  Within the latter category, constraints
 @c which allow subsets of all possible memory or address operands should
@@ -5536,7 +5541,14 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c Register constraints correspond directly to register classes.
 @c @xref{Register Classes}.  There is thus not much flexibility in their
 @c definitions.
-@c 
+机器特定的约束分为两类：寄存器约束和非寄存器约束。在后者中， 如果约束允许所有可能的内存或地址操作数，则应该被专门标记出来， 以便给@code{reload}更多信息。
+
+机器特定的约束可以给定任意长度的名字，但是它们全部由字母，数字， 下划线（@samp{_}）和三角括号（@samp{< >}）组成。跟C标识符类似， 它们必须起始于字母或者下划线。
+
+为了避免操作数约束字符串的混淆，约束的名字不能起始于任何其它约束的名字。 例如，如果@code{x}被定义为一个约束名，则不可以定义@code{xy}，反之依然。 按照这个规则，所有约束都不能起始于通用约束字母：@samp{E F V X g i m n o p r s}。
+
+寄存器约束直接对应于寄存器类别。参见@ref{寄存器类别}。 因此它们的定义没有太多的灵活性。
+
 @c @deffn {MD Expression} define_register_constraint name regclass docstring
 @c All three arguments are string constants.
 @c @var{name} is the name of the constraint, as it will appear in
@@ -5553,11 +5565,17 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @var{docstring} is a sentence documenting the meaning of the
 @c constraint.  Docstrings are explained further below.
 @c @end deffn
-@c 
+@deffn {MD Expression} define_register_constraint name regclass docstring
+这三个参数都是字符串常量。@var{name}为约束的名字， 将在@code{match_operand}表达式中出现。如果@var{name}为多个字母的约束， 则它的长度应该与所有起始与同一字母的约束相同。 @var{regclass}可以为相应的寄存器类别的名字（参见@ref{寄存器类别}）， 或者一个C表达式，其值为合适的寄存器类别。如果为表达式，其必须不具有副作用， 并且不能查看操作数。通常使用表达式是为了当寄存器类别对于给定的子体系结构无效时， 将一些寄存器约束映射为@code{NO_REGS}。
+
+@var{docstring}为一条语句，介绍了约束的含义。这将在下面做进一步的解释。
+@end deffn
+
 @c Non-register constraints are more like predicates: the constraint
 @c definition gives a Boolean expression which indicates whether the
 @c constraint matches.
-@c 
+非寄存器的约束更加像断言：约束定义给出一个布尔表达式，其指示是否约束匹配。
+
 @c @deffn {MD Expression} define_constraint name docstring exp
 @c The @var{name} and @var{docstring} arguments are the same as for
 @c @code{define_register_constraint}, but note that the docstring comes
@@ -5593,12 +5611,36 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c expression has verified that @var{op} is the appropriate kind of RTL
 @c object.
 @c @end deffn
-@c 
+@deffn {MD Expression} define_constraint name docstring exp
+@var{name}和@var{docstring}参数与@code{define_register_constraint}的相同， 但是注意docstring直接跟随name之后。@var{exp}为一个RTL表达式， 遵循在断言定义中相同的规则。详情参见@ref{定义predicate}。如果求得为真， 则约束匹配；如果求得为假，则不匹配。约束表达式应该指示出它们可能匹配的RTL， 就像断言表达式一样。
+
+C表达式@code{match_test}，可以访问下列变量：
+
+@table @var
+@item op
+定义操作数的RTL对象。 
+@item mode
+@var{op}的机器模式。
+@item ival
+@samp{INTVAL (@var{op})}, 如果@var{op}为@code{const_int}。
+@item hval
+@samp{CONST_DOUBLE_HIGH (@var{op})}, 如果@var{op}为整数@code{const_double}。
+@item lval
+@samp{CONST_DOUBLE_LOW (@var{op})}, 如果@var{op}为整数@code{const_double}。 
+@item rval
+@samp{CONST_DOUBLE_REAL_VALUE (@var{op})}, 
+如果@var{op}为浮点@code{const_double}。 
+@end table
+
+变量@var{*val}应该只在表达式的其它部分已经验证了@var{op}为合适类型的RTL对象时， 才被使用。
+@end deffn
+
 @c Most non-register constraints should be defined with
 @c @code{define_constraint}.  The remaining two definition expressions
 @c are only appropriate for constraints that should be handled specially
 @c by @code{reload} if they fail to match.
-@c 
+大多数非寄存器约束应该使用@code{define_constraint}来定义。 其余的两个定义表达式只适合当约束匹配失败时，应该由@code{reload}单独处理的约束。
+
 @c @deffn {MD Expression} define_memory_constraint name docstring exp
 @c Use this expression for constraints that match a subset of all memory
 @c operands: that is, @code{reload} can make them match by converting the
@@ -5618,7 +5660,14 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c The syntax and semantics are otherwise identical to
 @c @code{define_constraint}.
 @c @end deffn
-@c 
+@deffn {MD Expression} define_memory_constraint name docstring exp
+使用该表达式来定义匹配所有内存操作数的子集的约束：也就是， @code{reload}能够通过将操作数转换为@samp{@w{(mem (reg @var{X}))}}的形式使得它们 匹配。其中@var{X}为基址寄存器（通过@code{BASE_REG_CLASS}指定的寄存器类别，@pxref{寄存器类别}）。
+
+例如，在S/390上，一些指令不接受任意的内存引用，只接受那些不使用索引寄存器的。 约束字母@samp{Q}被定义用来表示这个类型的内存地址。 如果@samp{Q}使用@code{define_memory_constraint}定义， 则@samp{Q}约束可以处理任意内存操作数，因为@code{reload}知道在需要的时候， 它可以简单的将内存地址复制到基址寄存器中。 这与@samp{o}约束可以处理任意内存操作数的方式类似。
+
+语法和语义在其它方面都与@code{define_constraint}相同。
+@end deffn
+
 @c @deffn {MD Expression} define_address_constraint name docstring exp
 @c Use this expression for constraints that match a subset of all address
 @c operands: that is, @code{reload} can make the constraint match by
@@ -5633,7 +5682,17 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c The syntax and semantics are otherwise identical to
 @c @code{define_constraint}.
 @c @end deffn
-@c 
+@deffn {MD Expression} define_address_constraint name docstring exp
+使用该表达式来定义匹配所有地址操作数的子集的约束：也就是，
+@code{reload}能够通过将操作数转换为@samp{@w{(reg @var{X})}}的形式使得它们匹配。
+同样@var{X}为基址寄存器。
+
+使用@code{define_address_constraint}定义的约束只能用于@code{address_operand}断言
+，或者机器特定的同样方式的断言。它们与通用的@samp{p}约束类似。
+
+语法和语义在其它方面都与@code{define_constraint}相同。
+@end deffn
+
 @c For historical reasons, names beginning with the letters @samp{G H}
 @c are reserved for constraints that match only @code{const_double}s, and
 @c names beginning with the letters @samp{I J K L M N O P} are reserved
@@ -5667,12 +5726,42 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c beginning of a docstring, then (in the future) it will appear only in
 @c the internals manual's version of the machine-specific constraint tables.
 @c Use this for constraints that should not appear in @code{asm} statements.
-@c 
+由于历史的原因，
+起始于字母@samp{G H}的名字被保留为只匹配@code{const_double}的约束，
+起始与字母@samp{I J K L M N O P}被保留为只匹配@code{const_int}的约束。
+这在将来可能会改变。暂时的，这些名字的约束必须使用固定形式来书写，
+以便@code{genpreds}能够辨别出你在做正确的事情：
+
+@smallexample
+@group
+(define_constraint "[@var{GHIJKLMNOP}]@dots{}"
+  "@var{doc}@dots{}"
+  (and (match_code "const_int")  ; @r{@code{const_double} for G/H}
+       @var{condition}@dots{}))            ; @r{usually a @code{match_test}}
+@end group
+@end smallexample
+@c the semicolons line up in the formatted manual
+
+可以使用起始于其它字母的名字来定义匹配@code{const_double}或@code{const_int}的约束。
+
+在约束定义中的每个docstring应该是一条或多条完整的语句，使用Texinfo格式来标记。
+它们目前没有被使用。在将来，它们将被复制到 GCC手册中，在机器约束这一章节，
+用来替换手工维护的表格。而且，将来编译器可以使用其来给出更多有帮助的诊断信息，
+当过少的@code{asm}约束选择造成重载失败时。
+
+如果你在docstring的起始出放入伪Texinfo指令@samp{@@internal}，
+则（在将来）其将只出现在internals手册版本的机器特定约束表中。
+这可以用于不应该出现在@code{asm}语句中的约束。
+
 @c @node C Constraint Interface
 @c @subsection Testing constraints from C
 @c @cindex testing constraints
 @c @cindex constraints, testing
-@c 
+@node C 约束接口
+@subsection 从C中测试约束
+@cindex testing constraints
+@cindex constraints, testing
+
 @c It is occasionally useful to test a constraint from C code rather than
 @c implicitly via the constraint string in a @code{match_operand}.  The
 @c generated file @file{tm_p.h} declares a few interfaces for working
@@ -5692,7 +5781,12 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c do not contain angle brackets or underscores are left unchanged.
 @c Underscores are doubled, each @samp{<} is replaced with @samp{_l}, and
 @c each @samp{>} with @samp{_g}.  Here are some examples:
-@c 
+有时从C代码中测试约束要比隐式的通过@code{match_operand}中的约束字符串有用处。 生成文件@file{tm_p.h}声明了一些接口，用于机器特定的约束。 这些接口都没有用于在@ref{简单约束}中描述的通用约束。 这在将来可能会有所改变。
+
+警告：@file{tm_p.h}可能声明了其它操作约束的函数，除了在这里列的以外。 不要在机器独立的代码中使用那些函数。它们只是为了实现旧的约束接口。 它们在将来将会有变动或者消失。
+
+一些有效的约束名字不是有效的C标志符， 所以这里有一个mangling框架用于从C中引用它们。 不包含三角括号或者下划线的约束名保持不变。下划线改写成两次， 每个@samp{<}被@samp{_l}替换，每个@samp{>}被@samp{_g}替换。这里有些例子：
+
 @c @c the @c's prevent double blank lines in the printed manual.
 @c @example
 @c @multitable {Original} {Mangled}
@@ -5705,12 +5799,25 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @item @code{P4_g>} @tab @code{P4__g_g} @c
 @c @end multitable
 @c @end example
-@c 
+@c the @c's prevent double blank lines in the printed manual.
+@example
+@multitable {Original} {Mangled}
+@item @strong{Original} @tab @strong{Mangled}  @c
+@item @code{x}     @tab @code{x}       @c
+@item @code{P42x}  @tab @code{P42x}    @c
+@item @code{P4_x}  @tab @code{P4__x}   @c
+@item @code{P4>x}  @tab @code{P4_gx}   @c
+@item @code{P4>>}  @tab @code{P4_g_g}  @c
+@item @code{P4_g>} @tab @code{P4__g_g} @c
+@end multitable
+@end example
+
 @c Throughout this section, the variable @var{c} is either a constraint
 @c in the abstract sense, or a constant from @code{enum constraint_num};
 @c the variable @var{m} is a mangled constraint name (usually as part of
 @c a larger identifier).
-@c 
+在该章节中，变量@var{c}或者为一个抽象的约束， 或者为来自@code{enum constraint_num}的常量； 变量@var{m}为一个mangled约束名字（通常作为一个大标志符的一部分）。
+
 @c @deftp Enum constraint_num
 @c For each machine-specific constraint, there is a corresponding
 @c enumeration constant: @samp{CONSTRAINT_} plus the mangled name of the
@@ -5720,27 +5827,43 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c Machine-independent constraints do not have associated constants.
 @c This may change in the future.
 @c @end deftp
-@c 
+@deftp Enum constraint_num
+对于每个机器特定的约束，有一个对应的枚举常量：
+@samp{CONSTRAINT_}加上约束的mangled名字。
+函数接受一个@code{enum constraint_num}作为参数。
+
+机器独立的约束不具有相关的常量。这在将来可能会有改变。
+@end deftp
+
 @c @deftypefun {inline bool} satisfies_constraint_@var{m} (rtx @var{exp})
 @c For each machine-specific, non-register constraint @var{m}, there is
 @c one of these functions; it returns @code{true} if @var{exp} satisfies the
 @c constraint.  These functions are only visible if @file{rtl.h} was included
 @c before @file{tm_p.h}.
 @c @end deftypefun
-@c 
+@deftypefun {inline bool} satisfies_constraint_@var{m} (rtx @var{exp})
+对于每个机器特定的，非寄存器约束@var{m}，有一个这样函数；其返回@code{true}， 如果@var{exp}满足约束。 这些函数只有当@file{rtl.h}被包含在@file{tm_p.h}之前时才可见。
+@end deftypefun
+
 @c @deftypefun bool constraint_satisfied_p (rtx @var{exp}, enum constraint_num @var{c})
 @c Like the @code{satisfies_constraint_@var{m}} functions, but the
 @c constraint to test is given as an argument, @var{c}.  If @var{c}
 @c specifies a register constraint, this function will always return
 @c @code{false}.
 @c @end deftypefun
-@c 
+@deftypefun bool constraint_satisfied_p (rtx @var{exp}, enum constraint_num @var{c})
+类似@code{satisfies_constraint_@var{m}}函数，只是被测试的约束作为参数给出， @var{c}。如果@var{c}指定一个寄存器约束，该函数将总是返回@code{false}。
+@end deftypefun
+
 @c @deftypefun {enum reg_class} regclass_for_constraint (enum constraint_num @var{c})
 @c Returns the register class associated with @var{c}.  If @var{c} is not
 @c a register constraint, or those registers are not available for the
 @c currently selected subtarget, returns @code{NO_REGS}.
 @c @end deftypefun
-@c 
+@deftypefun {enum reg_class} regclass_for_constraint (enum constraint_num @var{c})
+返回与@var{c}关联的寄存器类别。如果@var{c}不是寄存器约束， 或者那些寄存器对于当前选择的子target无效，则返回@code{NO_REGS}。
+@end deftypefun
+
 @c Here is an example use of @code{satisfies_constraint_@var{m}}.  In
 @c peephole optimizations (@pxref{Peephole Definitions}), operand
 @c constraint strings are ignored, so if there are relevant constraints,
@@ -5763,18 +5886,40 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c 
 @c   "")
 @c @end smallexample
-@c 
+这里有一个使用@code{satisfies_constraint_@var{m}}的例子。 在窥孔优化（参见@ref{窥孔定义}）中，操作数约束字符串将被忽略， 所以如果有相应的约束，它们必须在C条件中被测试。在例子中，如果操作数2不满足@samp{K}约束，优化将被采用。 （这是从 i386机器描述中的窥孔定义简化的版本。）
+
+@smallexample
+(define_peephole2
+  [(match_scratch:SI 3 "r")
+   (set (match_operand:SI 0 "register_operand" "")
+        (mult:SI (match_operand:SI 1 "memory_operand" "")
+                 (match_operand:SI 2 "immediate_operand" "")))]
+
+  "!satisfies_constraint_K (operands[2])"
+
+  [(set (match_dup 3) (match_dup 1))
+   (set (match_dup 0) (mult:SI (match_dup 3) (match_dup 2)))]
+
+  "")
+@end smallexample
+
 @c @node Standard Names
 @c @section Standard Pattern Names For Generation
 @c @cindex standard pattern names
 @c @cindex pattern names
 @c @cindex names, pattern
-@c 
+@node 标准名字
+@section 用于生成的标准指令模式名
+@cindex standard pattern names
+@cindex pattern names
+@cindex names, pattern
+
 @c Here is a table of the instruction names that are meaningful in the RTL
 @c generation pass of the compiler.  Giving one of these names to an
 @c instruction pattern tells the RTL generation pass that it can use the
 @c pattern to accomplish a certain task.
-@c 
+这里有一个在编译器的RTL生成过程中有意义的指令名称表，在指令模式中给定这些名字中的一个，则告诉RTL生成过程，其可以使用该指令模式来完成一个特定的任务。
+
 @c @table @asis
 @c @cindex @code{mov@var{m}} instruction pattern
 @c @item @samp{mov@var{m}}
@@ -5800,7 +5945,17 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c slots into temporary registers.  When it does so, one of the operands is
 @c a hard register and the other is an operand that can need to be reloaded
 @c into a register.
-@c 
+@table @asis
+@cindex @code{mov@var{m}} instruction pattern
+@item @samp{mov@var{m}}
+这里@var{m}表示一个两字母的机器模式名字，小写。该指令模式将那种机器模式的数据从操作数1移送到操作数0。例如@samp{movsi}移送整字数据。
+
+如果操作数0为一个寄存器的@code{subreg}，机器模式为@var{m}，寄存器自己的机器模式比@var{m}更宽，则该指令的效果是将指定的值存储在寄存器的对应于机器模式@var{m}的部分。@var{m}之外，且与@code{subreg}在同一个目标字中的位，为未定义。目标字以外的位保持不变。
+
+这类指令模式有几处特别的地方。首先，每个这些直到整字大小的名字，包括整字大小的，必须被定义，因为没有其它方式来从一个地方将数据复制到另一个地方。如果有接受更大机器模式的操作数的指令模式，则必须为那些大小的整数机器模式定义@samp{mov@var{m}}。
+
+第二，这些指令模式不仅用在RTL生成过程。甚至重载过程可以生成move insn将值从栈槽复制到临时寄存器中。当这样的时候，其中一个操作数为硬件寄存器，另一个为需要被重载到寄存器中的操作数。
+
 @c @findex force_reg
 @c Therefore, when given such a pair of operands, the pattern must generate
 @c RTL which needs no reloading and needs no temporary registers---no
@@ -5812,7 +5967,11 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c This requirement exists even for subword modes on a RISC machine where
 @c fetching those modes from memory normally requires several insns and
 @c some temporary registers.
-@c 
+@findex force_reg
+因此，当给定这样一对操作数时，指令模式必须生成不需要重载，并且不需要临时寄存器的RTL。例如，如果你使用一个@code{define_expand}来支持该指令模式，则这种情况下，@code{define_expand}一定不能调用@code{force_reg}或者任何其它可能生成新的伪寄存器的函数。
+
+甚至对于在RISC机器上的子字机器模式，从内存中获取这些机器模式通常需要多个insn和一些临时变量，该要求也存在。
+
 @c @findex change_address
 @c During reload a memory reference with an invalid address may be passed
 @c as an operand.  Such an address will be replaced with a valid address
@@ -5822,12 +5981,14 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c an address into a valid address and no routine (such as
 @c @code{change_address}) that will do so may be called.  Note that
 @c @code{general_operand} will fail when applied to such an address.
-@c 
+@findex change_address
+重载过程中，具有无效地址的内存引用可以被作为操作数。这样的地址将在重载过程的后面被替换成有效地址。这种情况下，可能对地址没有做任何事情，而只是使用它。如果其被复制，则将无法使用有效的地址进行替换。不要尝试将这样的地址变成有效的地址。注意，@code{general_operand}当应用到这样的地址的时候将会失败。
+
 @c @findex reload_in_progress
 @c The global variable @code{reload_in_progress} (which must be explicitly
 @c declared if required) can be used to determine whether such special
 @c handling is required.
-@c 
+
 @c The variety of operands that have reloads depends on the rest of the
 @c machine description, but typically on a RISC machine these can only be
 @c pseudo registers that did not get hard registers, while on other
@@ -5838,7 +5999,15 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c 
 @c If there are cases which need scratch registers during or after reload,
 @c you must provide an appropriate secondary_reload target hook.
-@c 
+@findex reload_in_progress
+全局变量@code{reload_in_progress}（其必须被显式的声明）可以用来确定是否需要这样的特殊的处理。
+
+需要进行重载的操作数的种类取决于机器描述的其余部分，不过通常在RISC机器上，只有那些没有获得硬件寄存器的伪寄存器，而在其它机器上，显式的内存引用也有可能需要进行重载。
+
+如果一个scratch寄存器，被需要用来将一个对象与内存之间进行移送，则其可以活跃分析之前，使用@code{gen_reg_rtx}来进行分配。
+
+如果在重载过程中，或者之后，有需要scratch寄存器的情况，则你必须提供一个适当的secondary_reload目标钩子。
+
 @c @findex can_create_pseudo_p
 @c The macro @code{can_create_pseudo_p} can be used to determine if it
 @c is unsafe to create new pseudo registers.  If this variable is nonzero, then
@@ -5863,7 +6032,15 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c floating point registers, then the constraints of the fixed point
 @c @samp{mov@var{m}} instructions must be designed to avoid ever trying to
 @c reload into a floating point register.
-@c 
+@findex can_create_pseudo_p
+宏@code{can_create_pseudo_p}可以用来确定创建一个新的伪寄存器是否不安全。如果该变量为非零，则调用@code{gen_reg_rtx}来分配一个新的伪寄存器是不安全的。
+
+@samp{mov@var{m}}上的约束必须允许将任何硬件寄存器移送到任何其它硬件寄存器上，假设@code{HARD_REGNO_MODE_OK}在两个寄存器上都允许机器模式@var{m}，并且@code{REGISTER_MOVE_COST}应用到它们的类别上返回值2。
+
+必须提供浮点@samp{mov@var{m}}指令，用于任何可以存放定点值的寄存器，因为联合体和结构体（具有机器模式@code{SImode}或@code{DImode}）可以在那些寄存器中，并且它们可以具有浮点成员。
+
+还需要支持定点@samp{mov@var{m}}指令，用于浮点寄存器。不幸的是，我忘了为什么要这样，并且不知道这是否还是真的。如果@code{HARD_REGNO_MODE_OK}排斥在浮点寄存器中的定点值，则定点@samp{mov@var{m}}指令的约束必须被设计成，避免尝试重载到一个浮点寄存器。
+
 @c @cindex @code{reload_in} instruction pattern
 @c @cindex @code{reload_out} instruction pattern
 @c @item @samp{reload_in@var{m}}
@@ -5886,14 +6063,26 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c matches the @code{ALL_REGS} register class.  This may relieve ports
 @c of the burden of defining an @code{ALL_REGS} constraint letter just
 @c for these patterns.
-@c 
+@cindex @code{reload_in} instruction pattern
+@cindex @code{reload_out} instruction pattern
+@item @samp{reload_in@var{m}}
+@itemx @samp{reload_out@var{m}}
+这些命名指令模式已经被目标钩子@code{secondary_reload}废弃。
+
+类似@samp{mov@var{m}}，不过用于当需要使用scratch寄存器在操作数0和操作数1之间移送的时候。操作数2描述scratch寄存器。参见在@pxref{寄存器类别}中对@code{SECONDARY_RELOAD_CLASS}宏的讨论。
+
+这些指令模式中的@code{match_operand}的形式，有一些特殊的限制。首先，只有重载操作数的断言才被检查，即@code{reload_in}检查操作数1，而不检查操作数0和2。第二，在约束中只能有一个可选项。第三，约束只能使用单个寄存器类别字母；后续的约束字母都被忽略。一个例外是，空的约束字符串匹配@code{ALL_REGS}寄存器类别。这可以减轻后端为这些指令模式定义@code{ALL_REGS}约束字母的负担。
+
 @c @cindex @code{movstrict@var{m}} instruction pattern
 @c @item @samp{movstrict@var{m}}
 @c Like @samp{mov@var{m}} except that if operand 0 is a @code{subreg}
 @c with mode @var{m} of a register whose natural mode is wider,
 @c the @samp{movstrict@var{m}} instruction is guaranteed not to alter
 @c any of the register except the part which belongs to mode @var{m}.
-@c 
+@cindex @code{movstrict@var{m}} instruction pattern
+@item @samp{movstrict@var{m}}
+类似@samp{mov@var{m}}，只不过，如果操作数0为一个寄存器的机器模式为@var{m}的@code{subreg}，且寄存器的自然机器模式是较宽的，则@samp{movstrict@var{m}}指令保证不会修改属于机器模式@var{m}之外的寄存器的任何部分。
+
 @c @cindex @code{movmisalign@var{m}} instruction pattern
 @c @item @samp{movmisalign@var{m}}
 @c This variant of a move pattern is designed to load or store a value
@@ -5904,7 +6093,12 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c 
 @c This pattern is used by the autovectorizer, and when expanding a
 @c @code{MISALIGNED_INDIRECT_REF} expression.
-@c 
+@cindex @code{movmisalign@var{m}} instruction pattern
+@item @samp{movmisalign@var{m}}
+该move指令模式的变体，被设计为从没有与其机器模式自然对齐的内存地址中加载和存储值。对于存储，内存将在操作数0中；对于加载，内存将在操作数1中。其它操作数保证不为内存，所以容易判别是加载还是存储。
+
+该指令模式用于向量化，当展开@code{MISALIGNED_INDIRECT_REF}表达式的时候。
+
 @c @cindex @code{load_multiple} instruction pattern
 @c @item @samp{load_multiple}
 @c Load several consecutive memory locations into consecutive registers.
@@ -5927,19 +6121,34 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c also need @code{use} or @code{clobber} elements).  Use a
 @c @code{match_parallel} (@pxref{RTL Template}) to recognize the insn.  See
 @c @file{rs6000.md} for examples of the use of this insn pattern.
-@c 
+@cindex @code{load_multiple} instruction pattern
+@item @samp{load_multiple}
+将多个连续的内存位置加载到连续的寄存器中。操作数0为连续寄存器中的第一个，操作数1为第一个内存位置，操作数2为一个常量：连续寄存器的数目。
+
+只有当目标机器确实具有这样指令的时候才定义该指令模式；如果将内存加载到连续寄存器的最有效的方式，是每次加载一个，则 不用定义该指令模式。
+
+在一些机器上，对于哪些连续寄存器可以存储到内存中，会有一些限制，例如特定的起始寄存器或者结尾寄存器的编号，或者一个有效范围。对于那些机器，使用@code{define_expand} (@pxref{定义扩展})，并当不符合限制的时候，将指令模式变成失败。
+
+将生成的insn写成一个@code{parallel}，其元素为一个从适当内存位置到寄存器的@code{set}（可能还需要@code{use}或元素@code{clobber}）。使用@code{match_parallel} (@pxref{RTL模板})来识别insn。关于使用该insn模式的例子，可以参见@file{rs6000.md}。
+
 @c @cindex @samp{store_multiple} instruction pattern
 @c @item @samp{store_multiple}
 @c Similar to @samp{load_multiple}, but store several consecutive registers
 @c into consecutive memory locations.  Operand 0 is the first of the
 @c consecutive memory locations, operand 1 is the first register, and
 @c operand 2 is a constant: the number of consecutive registers.
-@c 
+@cindex @samp{store_multiple} instruction pattern
+@item @samp{store_multiple}
+类似于@samp{load_multiple}，不过是将多个连续的寄存器存储到连续的内存位置。操作数0为连续内存位置的第一个，操作数1为第一个寄存器，操作数2为常量：连续寄存器的数目。 
+
 @c @cindex @code{vec_set@var{m}} instruction pattern
 @c @item @samp{vec_set@var{m}}
 @c Set given field in the vector value.  Operand 0 is the vector to modify,
 @c operand 1 is new value of field and operand 2 specify the field index.
-@c 
+@cindex @code{vec_set@var{m}} instruction pattern
+@item @samp{vec_set@var{m}}
+设置向量中给定的域。操作数0为要修改的向量，操作数1为域的新值，操作数2指定了域的索引。
+
 @c @cindex @code{vec_extract@var{m}} instruction pattern
 @c @item @samp{vec_extract@var{m}}
 @c Extract given field from the vector value.  Operand 1 is the vector, operand 2
@@ -5991,7 +6200,38 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c Add operand 2 and operand 1, storing the result in operand 0.  All operands
 @c must have mode @var{m}.  This can be used even on two-address machines, by
 @c means of constraints requiring operands 1 and 0 to be the same location.
-@c 
+@cindex @code{vec_extract@var{m}} instruction pattern
+@item @samp{vec_extract@var{m}}
+从向量中抽取给定的域。操作数1为向量，操作数2指定了域索引，操作数0为存放值的地方。
+
+@cindex @code{vec_extract_even@var{m}} instruction pattern
+@item @samp{vec_extract_even@var{m}}
+从输入向量（操作数1和2）中，抽取偶数元素。操作数2的偶数元素按照它们原来的顺序，连结到操作数1的偶数元素后面。结果存储在操作数0中。输出和输入向量应该具有相同的模式。
+
+@cindex @code{vec_extract_odd@var{m}} instruction pattern
+@item @samp{vec_extract_odd@var{m}}
+从输入向量（操作数1和2）中，抽取奇数元素。操作数2的奇数元素按照它们原来的顺序，连结到操作数1的奇数元素后面。结果存储在操作数0中。输出和输入向量应该具有相同的模式。
+
+@cindex @code{vec_interleave_high@var{m}} instruction pattern
+@item @samp{vec_interleave_high@var{m}}
+将两个输入向量的高部分元素合并到输入向量中。输出和输入向量应该具有相同的模式(@code{N}个元素)。第一个输入向量的高@code{N/2}个元素被第二个输入向量的高@code{N/2}个元素交错的插入。
+
+@cindex @code{vec_interleave_low@var{m}} instruction pattern
+@item @samp{vec_interleave_low@var{m}}
+将两个输入向量的低部分元素合并到输入向量中。输出和输入向量应该具有相同的模式(@code{N}个元素)。第一个输入向量的低@code{N/2}个元素被第二个输入向量的低@code{N/2}个元素交错的插入。
+
+@cindex @code{vec_init@var{m}} instruction pattern
+@item @samp{vec_init@var{m}}
+将向量初始化为给定的值。操作数0为要初始化的向量，操作数1并行的包含每个域的值。
+
+@cindex @code{push@var{m}1} instruction pattern
+@item @samp{push@var{m}1}
+输出一个push指令。操作数0是压栈的值。只有当@code{PUSH_ROUNDING}被定义时，才被使用。出于历史原因，该指令模式可以缺失，这种情况下使用@code{mov}扩展来替代，并用@code{MEM}表达式来形成压栈运算。@code{mov}扩展方法不被推荐。
+
+@cindex @code{add@var{m}3} instruction pattern
+@item @samp{add@var{m}3}
+操作数2加上操作数1，将结果存储在操作数0中。所有操作数必须具有机器模式@var{m}。这也可以用于两地址机器上，通过约束来要求操作数1和0为相同的位置。
+
 @c @cindex @code{ssadd@var{m}3} instruction pattern
 @c @cindex @code{usadd@var{m}3} instruction pattern
 @c @cindex @code{sub@var{m}3} instruction pattern
@@ -6020,14 +6260,46 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @itemx @samp{umin@var{m}3}, @samp{umax@var{m}3}
 @c @itemx @samp{and@var{m}3}, @samp{ior@var{m}3}, @samp{xor@var{m}3}
 @c Similar, for other arithmetic operations.
-@c 
+@cindex @code{ssadd@var{m}3} instruction pattern
+@cindex @code{usadd@var{m}3} instruction pattern
+@cindex @code{sub@var{m}3} instruction pattern
+@cindex @code{sssub@var{m}3} instruction pattern
+@cindex @code{ussub@var{m}3} instruction pattern
+@cindex @code{mul@var{m}3} instruction pattern
+@cindex @code{ssmul@var{m}3} instruction pattern
+@cindex @code{usmul@var{m}3} instruction pattern
+@cindex @code{div@var{m}3} instruction pattern
+@cindex @code{ssdiv@var{m}3} instruction pattern
+@cindex @code{udiv@var{m}3} instruction pattern
+@cindex @code{usdiv@var{m}3} instruction pattern
+@cindex @code{mod@var{m}3} instruction pattern
+@cindex @code{umod@var{m}3} instruction pattern
+@cindex @code{umin@var{m}3} instruction pattern
+@cindex @code{umax@var{m}3} instruction pattern
+@cindex @code{and@var{m}3} instruction pattern
+@cindex @code{ior@var{m}3} instruction pattern
+@cindex @code{xor@var{m}3} instruction pattern
+@item @samp{ssadd@var{m}3}, @samp{usadd@var{m}3}
+@item @samp{sub@var{m}3}, @samp{sssub@var{m}3}, @samp{ussub@var{m}3}
+@item @samp{mul@var{m}3}, @samp{ssmul@var{m}3}, @samp{usmul@var{m}3}
+@itemx @samp{div@var{m}3}, @samp{ssdiv@var{m}3}
+@itemx @samp{udiv@var{m}3}, @samp{usdiv@var{m}3}
+@itemx @samp{mod@var{m}3}, @samp{umod@var{m}3}
+@itemx @samp{umin@var{m}3}, @samp{umax@var{m}3}
+@itemx @samp{and@var{m}3}, @samp{ior@var{m}3}, @samp{xor@var{m}3}
+类似的，用于其它算术运算。
+
 @c @cindex @code{min@var{m}3} instruction pattern
 @c @cindex @code{max@var{m}3} instruction pattern
 @c @item @samp{smin@var{m}3}, @samp{smax@var{m}3}
 @c Signed minimum and maximum operations.  When used with floating point,
 @c if both operands are zeros, or if either operand is @code{NaN}, then
 @c it is unspecified which of the two operands is returned as the result.
-@c 
+@cindex @code{min@var{m}3} instruction pattern
+@cindex @code{max@var{m}3} instruction pattern
+@item @samp{smin@var{m}3}, @samp{smax@var{m}3}
+有符号的最小值和最大值运算。当用于浮点，如果两个操作数都为零，或者有一个为@code{NaN}，则没有明确指定哪个操作数作为结果返回。
+
 @c @cindex @code{reduc_smin_@var{m}} instruction pattern
 @c @cindex @code{reduc_smax_@var{m}} instruction pattern
 @c @item @samp{reduc_smin_@var{m}}, @samp{reduc_smax_@var{m}}
@@ -6055,7 +6327,24 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c Compute the sum of the unsigned elements of a vector. The vector is operand 1,
 @c and the scalar result is stored in the least significant bits of operand 0
 @c (also a vector). The output and input vector should have the same modes.
-@c 
+@cindex @code{reduc_smin_@var{m}} instruction pattern
+@cindex @code{reduc_smax_@var{m}} instruction pattern
+@item @samp{reduc_smin_@var{m}}, @samp{reduc_smax_@var{m}}
+查找向量的有符号最小/最大元素。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
+
+@cindex @code{reduc_umin_@var{m}} instruction pattern
+@cindex @code{reduc_umax_@var{m}} instruction pattern
+@item @samp{reduc_umin_@var{m}}, @samp{reduc_umax_@var{m}}
+查找向量的无符号最小/最大元素。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
+
+@cindex @code{reduc_splus_@var{m}} instruction pattern
+@item @samp{reduc_splus_@var{m}}
+计算向量的有符号元素的和。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
+
+@cindex @code{reduc_uplus_@var{m}} instruction pattern
+@item @samp{reduc_uplus_@var{m}}
+计算向量的无符号元素的和。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
+
 @c @cindex @code{sdot_prod@var{m}} instruction pattern
 @c @item @samp{sdot_prod@var{m}}
 @c @cindex @code{udot_prod@var{m}} instruction pattern
@@ -6074,7 +6363,18 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c operand 1. Add operand 1 to operand 2 and place the widened result in
 @c operand 0. (This is used express accumulation of elements into an accumulator
 @c of a wider mode.)
-@c 
+@cindex @code{sdot_prod@var{m}} instruction pattern
+@item @samp{sdot_prod@var{m}}
+@cindex @code{udot_prod@var{m}} instruction pattern
+@item @samp{udot_prod@var{m}}
+计算两个有符号/无符号元素乘积的和。操作数1和2为相同的模式。它们的乘积，为一个宽的模式，被计算并增加到操作数3上。操作数3的机器模式等于或宽于乘积的机器模式。结果被放在操作数0上，其与操作数3具有相同的机器模式。
+
+@cindex @code{ssum_widen@var{m3}} instruction pattern
+@item @samp{ssum_widen@var{m3}}
+@cindex @code{usum_widen@var{m3}} instruction pattern
+@item @samp{usum_widen@var{m3}}
+操作数0和2具有相同的机器模式，其比操作数1的宽。将操作数1加上操作数2，并将加宽的结果放在操作数0中。（这用于表示元素累加到一个更宽模式的累加器中）
+
 @c @cindex @code{vec_shl_@var{m}} instruction pattern
 @c @cindex @code{vec_shr_@var{m}} instruction pattern
 @c @item @samp{vec_shl_@var{m}}, @samp{vec_shr_@var{m}}
@@ -6107,7 +6407,25 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c of two vectors.  Operands 1 and 2 are vectors of the same mode having N
 @c floating point elements of size S@.  Operand 0 is the resulting vector
 @c in which 2*N elements of size N/2 are concatenated.
-@c 
+@cindex @code{vec_shl_@var{m}} instruction pattern
+@cindex @code{vec_shr_@var{m}} instruction pattern
+@item @samp{vec_shl_@var{m}}, @samp{vec_shr_@var{m}}
+整个向量向左/向右移位。操作数1为被移位的向量。操作数2为移位的位数。操作数0为移位后的结果向量被存储的地方。输出和输入向量应该具有相同的模式。
+
+@cindex @code{vec_pack_trunc_@var{m}} instruction pattern
+@item @samp{vec_pack_trunc_@var{m}}
+变窄（降级）并合并两个向量的元素。操作数1和2为具有相同机器模式，N个，大小为S的整数或者浮点元素的向量。操作数0为结果向量，通过使用截取的方式，将它们变窄并连接成，2×N个大小为N/2的元素。
+
+@cindex @code{vec_pack_ssat_@var{m}} instruction pattern
+@cindex @code{vec_pack_usat_@var{m}} instruction pattern
+@item @samp{vec_pack_ssat_@var{m}}, @samp{vec_pack_usat_@var{m}}
+变窄（降级）并合并两个向量的元素。操作数1和2为具有相同机器模式，N个，大小为S的整数元素的向量。操作数0为结果向量，通过使用有符号/无符号饱和算术的方式，将它们变窄并连接成。
+
+@cindex @code{vec_pack_sfix_trunc_@var{m}} instruction pattern
+@cindex @code{vec_pack_ufix_trunc_@var{m}} instruction pattern
+@item @samp{vec_pack_sfix_trunc_@var{m}}, @samp{vec_pack_ufix_trunc_@var{m}}
+将两个向量的元素变窄，转成有符号/无符号整数类型并合并。操作数1和2为具有相同机器模式，N个，大小为S的浮点元素的向量。操作数0为结果向量，由2×N个大小为N/2的元素连接而成。
+
 @c @cindex @code{vec_unpacks_hi_@var{m}} instruction pattern
 @c @cindex @code{vec_unpacks_lo_@var{m}} instruction pattern
 @c @item @samp{vec_unpacks_hi_@var{m}}, @samp{vec_unpacks_lo_@var{m}}
@@ -6136,7 +6454,24 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c has N elements of size S@.  Convert the high/low elements of the vector using
 @c floating point conversion and place the resulting N/2 values of size 2*S in
 @c the output vector (operand 0).
-@c 
+@cindex @code{vec_unpacks_hi_@var{m}} instruction pattern
+@cindex @code{vec_unpacks_lo_@var{m}} instruction pattern
+@item @samp{vec_unpacks_hi_@var{m}}, @samp{vec_unpacks_lo_@var{m}}
+抽取并变宽（提升），具有有符号整数或浮点元素的，向量的高/低部分。输入向量（操作数1）具有N个大小为S的元素。使用有符号或者浮点扩展，将向量的高/低元素进行变宽（提升），并将结果，N/2个大小为2*S的值，放在输出向量（操作数0）中。
+
+@cindex @code{vec_unpacku_hi_@var{m}} instruction pattern
+@cindex @code{vec_unpacku_lo_@var{m}} instruction pattern
+@item @samp{vec_unpacku_hi_@var{m}}, @samp{vec_unpacku_lo_@var{m}}
+抽取并变宽（提升），具有无符号整数元素的，向量的高/低部分。输入向量（操作数1）具有N个大小为S的元素。使用零扩展，将向量的高/低元素进行变宽（提升），并将结果，N/2个大小为2*S的值，放在输出向量（操作数0）中。
+
+@cindex @code{vec_unpacks_float_hi_@var{m}} instruction pattern
+@cindex @code{vec_unpacks_float_lo_@var{m}} instruction pattern
+@cindex @code{vec_unpacku_float_hi_@var{m}} instruction pattern
+@cindex @code{vec_unpacku_float_lo_@var{m}} instruction pattern
+@item @samp{vec_unpacks_float_hi_@var{m}}, @samp{vec_unpacks_float_lo_@var{m}}
+@itemx @samp{vec_unpacku_float_hi_@var{m}}, @samp{vec_unpacku_float_lo_@var{m}}
+抽取具有有符号/无符号整数元素的，向量的高/低部分，并转换成浮点类型。输入向量（操作数1）具有N个大小为S的元素。使用浮点转换，将向量的高/低元素进行转换，并将结果，N/2个大小为2*S的值，放在输出向量（操作数0）中。
+
 @c @cindex @code{vec_widen_umult_hi_@var{m}} instruction pattern
 @c @cindex @code{vec_widen_umult_lo__@var{m}} instruction pattern
 @c @cindex @code{vec_widen_smult_hi_@var{m}} instruction pattern
@@ -6147,7 +6482,14 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c are vectors with N signed/unsigned elements of size S@.  Multiply the high/low
 @c elements of the two vectors, and put the N/2 products of size 2*S in the
 @c output vector (operand 0).
-@c 
+@cindex @code{vec_widen_umult_hi_@var{m}} instruction pattern
+@cindex @code{vec_widen_umult_lo__@var{m}} instruction pattern
+@cindex @code{vec_widen_smult_hi_@var{m}} instruction pattern
+@cindex @code{vec_widen_smult_lo_@var{m}} instruction pattern
+@item @samp{vec_widen_umult_hi_@var{m}}, @samp{vec_widen_umult_lo_@var{m}}
+@itemx @samp{vec_widen_smult_hi_@var{m}}, @samp{vec_widen_smult_lo_@var{m}}
+有符号/无符号加宽乘法。两个输入（操作数1和2）为，N个大小为S的有符号/无符号元素的向量。将两个向量的高/低元素相乘，并将N/2个大小为2×S的乘积放在输出向量（操作数0）中。
+
 @c @cindex @code{mulhisi3} instruction pattern
 @c @item @samp{mulhisi3}
 @c Multiply operands 1 and 2, which have mode @code{HImode}, and store
@@ -6182,7 +6524,36 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @cindex @code{umul@var{m}3_highpart} instruction pattern
 @c @item @samp{umul@var{m}3_highpart}
 @c Similar, but the multiplication is unsigned.
-@c 
+@cindex @code{mulhisi3} instruction pattern
+@item @samp{mulhisi3}
+机器模式为@code{HImode}的操作数1和2相乘，并将@code{SImode}乘积放在操作数0中。
+
+@cindex @code{mulqihi3} instruction pattern
+@cindex @code{mulsidi3} instruction pattern
+@item @samp{mulqihi3}, @samp{mulsidi3}
+类似的其它宽度的加宽乘法指令。
+
+@cindex @code{umulqihi3} instruction pattern
+@cindex @code{umulhisi3} instruction pattern
+@cindex @code{umulsidi3} instruction pattern
+@item @samp{umulqihi3}, @samp{umulhisi3}, @samp{umulsidi3}
+类似的加宽乘法指令，进行无符号乘法。
+
+
+@cindex @code{usmulqihi3} instruction pattern
+@cindex @code{usmulhisi3} instruction pattern
+@cindex @code{usmulsidi3} instruction pattern
+@item @samp{usmulqihi3}, @samp{usmulhisi3}, @samp{usmulsidi3}
+类似的加宽乘法指令，将第一个操作数解析为无符号的，第二个为有符号的，然后进行有符号乘法。
+
+@cindex @code{smul@var{m}3_highpart} instruction pattern
+@item @samp{smul@var{m}3_highpart}
+对机器模式为@var{m}的操作数1和2进行有符号乘法，并将乘积的最高有效的一半放在操作数0中。乘积的最低有效的一半被丢弃。
+
+@cindex @code{umul@var{m}3_highpart} instruction pattern
+@item @samp{umul@var{m}3_highpart}
+类似的，只不过乘法是无符号的。
+
 @c @cindex @code{madd@var{m}@var{n}4} instruction pattern
 @c @item @samp{madd@var{m}@var{n}4}
 @c Multiply operands 1 and 2, sign-extend them to mode @var{n}, add
@@ -6210,7 +6581,27 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @item @samp{usmadd@var{m}@var{n}4}
 @c Like @code{umadd@var{m}@var{n}4}, but all involved operations must be
 @c unsigned-saturating.
-@c 
+@cindex @code{madd@var{m}@var{n}4} instruction pattern
+@item @samp{madd@var{m}@var{n}4}
+将操作数1和2进行相乘，有符号扩展成机器模式@var{n}，加上操作数3，并将结果存放在操作数0中。操作数1和2具有机器模式@var{m}，操作数0和3具有机器模式@var{n}。两种机器模式必须都为整数或者浮点模式，并且@var{n}必须为@var{m}的两倍大小。
+
+换句话说，@code{madd@var{m}@var{n}4}类似于@code{mul@var{m}@var{n}3}，只不过其还加上操作数3。
+
+这些指令不允许执行@code{FAIL}。
+
+@cindex @code{umadd@var{m}@var{n}4} instruction pattern
+@item @samp{umadd@var{m}@var{n}4}
+类似@code{madd@var{m}@var{n}4}，只不过零扩展乘法操作数，而不是有符号扩展它们。
+
+
+@cindex @code{ssmadd@var{m}@var{n}4} instruction pattern
+@item @samp{ssmadd@var{m}@var{n}4}
+类似@code{madd@var{m}@var{n}4}，不过所有的运算都必须是有符号饱和的。
+
+@cindex @code{usmadd@var{m}@var{n}4} instruction pattern
+@item @samp{usmadd@var{m}@var{n}4}
+类似@code{umadd@var{m}@var{n}4}，不过所有的运算都必须是无符号饱和的。
+
 @c @cindex @code{msub@var{m}@var{n}4} instruction pattern
 @c @item @samp{msub@var{m}@var{n}4}
 @c Multiply operands 1 and 2, sign-extend them to mode @var{n}, subtract the
@@ -6239,7 +6630,26 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @item @samp{usmsub@var{m}@var{n}4}
 @c Like @code{umsub@var{m}@var{n}4}, but all involved operations must be
 @c unsigned-saturating.
-@c 
+@cindex @code{msub@var{m}@var{n}4} instruction pattern
+@item @samp{msub@var{m}@var{n}4}
+将操作数1和2相乘，有符号扩展为机器模式@var{n}，减去操作数3，并将结果存放在操作数0中。操作数1和2具有机器模式@var{m}，操作数0和3具有机器模式@var{n}。两种机器模式必须都为整数或者浮点模式，并且@var{n}必须为@var{m}的两倍大小。
+
+换句话说，@code{msub@var{m}@var{n}4}类似于@code{mul@var{m}@var{n}3}，只不过其还减去操作数3。
+
+这些指令不允许执行@code{FAIL}。
+
+@cindex @code{umsub@var{m}@var{n}4} instruction pattern
+@item @samp{umsub@var{m}@var{n}4}
+类似@code{msub@var{m}@var{n}4}，不过零扩展乘法操作数，而不是有符号扩展它们。
+
+@cindex @code{ssmsub@var{m}@var{n}4} instruction pattern
+@item @samp{ssmsub@var{m}@var{n}4}
+类似@code{msub@var{m}@var{n}4}，不过所有的运算都必须是有符号饱和的。
+
+@cindex @code{usmsub@var{m}@var{n}4} instruction pattern
+@item @samp{usmsub@var{m}@var{n}4}
+类似@code{umsub@var{m}@var{n}4}，不过所有的运算都必须是无符号饱和的。
+
 @c @cindex @code{divmod@var{m}4} instruction pattern
 @c @item @samp{divmod@var{m}4}
 @c Signed division that produces both a quotient and a remainder.
@@ -6261,7 +6671,18 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @cindex @code{udivmod@var{m}4} instruction pattern
 @c @item @samp{udivmod@var{m}4}
 @c Similar, but does unsigned division.
-@c 
+@cindex @code{divmod@var{m}4} instruction pattern
+@item @samp{divmod@var{m}4}
+有符号除法，同时产生商和余数。操作数1被操作数2除，产生商存储在操作数0中，余数存储在操作数3中。
+
+对于具有同时产生商和余数的指令的机器，提供@samp{divmod@var{m}4}指令模式，但不要提供@samp{div@var{m}3} 和 @samp{mod@var{m}3}。这使得当商和余数都被计算的时候，可以优化成相对常见的情况。
+
+如果存在只产生商或者余数的指令，并且比都产生的指令更有效，则将@samp{divmod@var{m}4}的输出例程写成调用@code{find_reg_note}，查看商或者余数的@code{REG_UNUSED}注解，来产生适当的指令。
+
+@cindex @code{udivmod@var{m}4} instruction pattern
+@item @samp{udivmod@var{m}4}
+类似的，不过进行无符号除法。
+
 @c @anchor{shift patterns}
 @c @cindex @code{ashl@var{m}3} instruction pattern
 @c @cindex @code{ssashl@var{m}3} instruction pattern
@@ -6291,7 +6712,28 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @item @samp{vashl@var{m}3}, @samp{vashr@var{m}3}, @samp{vlshr@var{m}3}, @samp{vrotl@var{m}3}, @samp{vrotr@var{m}3}
 @c Vector shift and rotate instructions that take vectors as operand 2
 @c instead of a scalar type.
-@c 
+@anchor{shift patterns}
+@cindex @code{ashl@var{m}3} instruction pattern
+@cindex @code{ssashl@var{m}3} instruction pattern
+@cindex @code{usashl@var{m}3} instruction pattern
+@item @samp{ashl@var{m}3}, @samp{ssashl@var{m}3}, @samp{usashl@var{m}3}
+将操作数1向左算术移位，左移位数由操作数2指定，将结果存储在操作数0中。这里@var{m}为操作数0和1的机器模式；操作数2的机器模式通过指令模式来指定，编译器会在生成指令之前，将操作数转换成该模式。超出范围的移位数目的含义，可以通过@code{TARGET_SHIFT_TRUNCATION_MASK}来指定。@xref{TARGET_SHIFT_TRUNCATION_MASK}. 操作数2总是一个标量类型。
+
+@cindex @code{ashr@var{m}3} instruction pattern
+@cindex @code{lshr@var{m}3} instruction pattern
+@cindex @code{rotl@var{m}3} instruction pattern
+@cindex @code{rotr@var{m}3} instruction pattern
+@item @samp{ashr@var{m}3}, @samp{lshr@var{m}3}, @samp{rotl@var{m}3}, @samp{rotr@var{m}3}
+其它移位或者旋转指令，类似于@code{ashl@var{m}3}指令。操作数2总是一个标量类型。
+
+@cindex @code{vashl@var{m}3} instruction pattern
+@cindex @code{vashr@var{m}3} instruction pattern
+@cindex @code{vlshr@var{m}3} instruction pattern
+@cindex @code{vrotl@var{m}3} instruction pattern
+@cindex @code{vrotr@var{m}3} instruction pattern
+@item @samp{vashl@var{m}3}, @samp{vashr@var{m}3}, @samp{vlshr@var{m}3}, @samp{vrotl@var{m}3}, @samp{vrotr@var{m}3}
+向量移位和旋转指令，操作数2为向量，而不是标量类型。
+
 @c @cindex @code{neg@var{m}2} instruction pattern
 @c @cindex @code{ssneg@var{m}2} instruction pattern
 @c @cindex @code{usneg@var{m}2} instruction pattern
@@ -6310,7 +6752,22 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c corresponds to the C data type @code{double} and the @code{sqrtf}
 @c built-in function uses the mode which corresponds to the C data
 @c type @code{float}.
-@c 
+@cindex @code{neg@var{m}2} instruction pattern
+@cindex @code{ssneg@var{m}2} instruction pattern
+@cindex @code{usneg@var{m}2} instruction pattern
+@item @samp{neg@var{m}2}, @samp{ssneg@var{m}2}, @samp{usneg@var{m}2}
+对操作数1求负，并将结果存放在操作数0中。
+
+@cindex @code{abs@var{m}2} instruction pattern
+@item @samp{abs@var{m}2}
+将操作数1的绝对值存放在操作数0中。
+
+@cindex @code{sqrt@var{m}2} instruction pattern
+@item @samp{sqrt@var{m}2}
+将操作数1的平方根存储在操作数0中。
+
+@code{sqrt}内建C函数，总是使用对应于C数据类型@code{double}的机器模式，@code{sqrtf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
 @c @cindex @code{fmod@var{m}3} instruction pattern
 @c @item @samp{fmod@var{m}3}
 @c Store the remainder of dividing operand 1 by operand 2 into
@@ -6330,7 +6787,18 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c which corresponds to the C data type @code{double} and the
 @c @code{remainderf} built-in function uses the mode which corresponds
 @c to the C data type @code{float}.
-@c 
+@cindex @code{fmod@var{m}3} instruction pattern
+@item @samp{fmod@var{m}3}
+将操作数1除以操作数2的余数，存储在操作数0中，并向零方向舍入为整数。
+
+@code{fmod}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{fmodf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
+@cindex @code{remainder@var{m}3} instruction pattern
+@item @samp{remainder@var{m}3}
+将操作数1除以操作数2的余数，存储在操作数0中，并舍入为最接近的整数。
+
+@code{remainder}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{remainderf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
 @c @cindex @code{cos@var{m}2} instruction pattern
 @c @item @samp{cos@var{m}2}
 @c Store the cosine of operand 1 into operand 0.
@@ -6348,7 +6816,18 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c corresponds to the C data type @code{double} and the @code{sinf}
 @c built-in function uses the mode which corresponds to the C data
 @c type @code{float}.
-@c 
+@cindex @code{cos@var{m}2} instruction pattern
+@item @samp{cos@var{m}2}
+将操作数1的余弦存放在操作数0中。
+
+@code{cos}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{cosf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
+@cindex @code{sin@var{m}2} instruction pattern
+@item @samp{sin@var{m}2}
+将操作数1的正弦存放在操作数0中。
+
+@code{sin}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{sinf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
 @c @cindex @code{exp@var{m}2} instruction pattern
 @c @item @samp{exp@var{m}2}
 @c Store the exponential of operand 1 into operand 0.
@@ -6376,7 +6855,24 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c corresponds to the C data type @code{double} and the @code{powf}
 @c built-in function uses the mode which corresponds to the C data
 @c type @code{float}.
-@c 
+@cindex @code{exp@var{m}2} instruction pattern
+@item @samp{exp@var{m}2}
+将操作数1的幂存放在操作数0中。
+
+@code{exp}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{expf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
+@cindex @code{log@var{m}2} instruction pattern
+@item @samp{log@var{m}2}
+将操作数1的自然对数存放在操作数0中。
+
+@code{log}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{logf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
+@cindex @code{pow@var{m}3} instruction pattern
+@item @samp{pow@var{m}3}
+将操作数1的，指数为操作数2的幂值存放在操作数0中
+
+@code{pow}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{powf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
 @c @cindex @code{atan2@var{m}3} instruction pattern
 @c @item @samp{atan2@var{m}3}
 @c Store the arc tangent (inverse tangent) of operand 1 divided by
@@ -6405,7 +6901,24 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c corresponds to the C data type @code{double} and the @code{truncf}
 @c built-in function uses the mode which corresponds to the C data
 @c type @code{float}.
-@c 
+@cindex @code{atan2@var{m}3} instruction pattern
+@item @samp{atan2@var{m}3}
+将操作数1除以操作数2的反正切，存放在操作数0中，使用两个参数的正负符号来确定结果的商。
+
+@code{atan2}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{atan2f}内建函数使用对应于C数据类型@code{float}的机器模式。
+
+@cindex @code{floor@var{m}2} instruction pattern
+@item @samp{floor@var{m}2}
+存储不大于参数的最大整数值。
+
+@code{floor}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{floorf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
+@cindex @code{btrunc@var{m}2} instruction pattern
+@item @samp{btrunc@var{m}2}
+存储将参数向零方向舍入的整数。
+
+@code{trunc}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{truncf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
 @c @cindex @code{round@var{m}2} instruction pattern
 @c @item @samp{round@var{m}2}
 @c Store the argument rounded to integer away from zero.
@@ -6423,7 +6936,18 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c corresponds to the C data type @code{double} and the @code{ceilf}
 @c built-in function uses the mode which corresponds to the C data
 @c type @code{float}.
-@c 
+@cindex @code{round@var{m}2} instruction pattern
+@item @samp{round@var{m}2}
+存储将参数向远离零的方向舍入的整数。
+
+@code{round}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{roundf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
+@cindex @code{ceil@var{m}2} instruction pattern
+@item @samp{ceil@var{m}2}
+存储将参数向远离零的方向舍入的整数。
+
+@code{ceil}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{ceilf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
 @c @cindex @code{nearbyint@var{m}2} instruction pattern
 @c @item @samp{nearbyint@var{m}2}
 @c Store the argument rounded according to the default rounding mode
@@ -6432,7 +6956,12 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c corresponds to the C data type @code{double} and the @code{nearbyintf}
 @c built-in function uses the mode which corresponds to the C data
 @c type @code{float}.
-@c 
+@cindex @code{nearbyint@var{m}2} instruction pattern
+@item @samp{nearbyint@var{m}2}
+将参数根据缺省的舍入模式，舍入为整数。
+
+@code{nearbyint}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{nearbyintf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
 @c @cindex @code{rint@var{m}2} instruction pattern
 @c @item @samp{rint@var{m}2}
 @c Store the argument rounded according to the default rounding mode and
@@ -6467,7 +6996,28 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c Convert operand 1 (valid for floating point mode @var{m}) to fixed
 @c point mode @var{n} as a signed number rounding up and store in
 @c operand 0 (which has mode @var{n}).
-@c 
+@cindex @code{rint@var{m}2} instruction pattern
+@item @samp{rint@var{m}2}
+将参数根据缺省的舍入模式，舍入为整数，并且当结果与参数的值不同的时候，抛出不精确异常。
+
+@code{rint}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{rintf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
+@cindex @code{lrint@var{m}@var{n}2}
+@item @samp{lrint@var{m}@var{n}2}
+将操作数1（对于浮点模式@var{m}有效）转换成定点机器模式@var{n}，作为有符号数，根据当前的舍入模式，并存储在操作数0（具有机器模式@var{n}）中。
+
+@cindex @code{lround@var{m}@var{n}2}
+@item @samp{lround@var{m}2}
+将操作数1（对于浮点模式@var{m}有效）转换成定点机器模式@var{n}，舍入到最近的，远离零方向的有符号数，并存储在操作数0（具有机器模式@var{n}）中。
+
+@cindex @code{lfloor@var{m}@var{n}2}
+@item @samp{lfloor@var{m}2}
+将操作数1（对于浮点模式@var{m}有效）转换成定点机器模式@var{n}，向下舍入成有符号数，并存储在操作数0（具有机器模式@var{n}）中。
+
+@cindex @code{lceil@var{m}@var{n}2}
+@item @samp{lceil@var{m}2}
+将操作数1（对于浮点模式@var{m}有效）转换成定点机器模式@var{n}，向上舍入成有符号数，并存储在操作数0（具有机器模式@var{n}）中。
+
 @c @cindex @code{copysign@var{m}3} instruction pattern
 @c @item @samp{copysign@var{m}3}
 @c Store a value with the magnitude of operand 1 and the sign of operand
@@ -6488,7 +7038,18 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c 
 @c The @code{ffs} built-in function of C always uses the mode which
 @c corresponds to the C data type @code{int}.
-@c 
+@cindex @code{copysign@var{m}3} instruction pattern
+@item @samp{copysign@var{m}3}
+将操作数1的数量级和操作数的符号组成的值，存放在操作数0中。
+
+@code{copysign}内建C函数总是使用对应于C数据类型@code{double}的机器模式，@code{copysignf}内建函数使用对应于C数据类型@code{float}的机器模式。
+
+@cindex @code{ffs@var{m}2} instruction pattern
+@item @samp{ffs@var{m}2}
+将操作数1的最小有效，置1的位的索引，加上1，存放在操作数0中。如果操作数1为零，则存储零。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+
+@code{ffs}内建C函数总是使用对应于C数据类型@code{int}的机器模式。
+
 @c @cindex @code{clz@var{m}2} instruction pattern
 @c @item @samp{clz@var{m}2}
 @c Store into operand 0 the number of leading 0-bits in @var{x}, starting
@@ -6508,7 +7069,14 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @var{m} is the mode of operand 0; operand 1's mode is
 @c specified by the instruction pattern, and the compiler will convert the
 @c operand to that mode before generating the instruction.
-@c 
+@cindex @code{clz@var{m}2} instruction pattern
+@item @samp{clz@var{m}2}
+将@var{x}中，从最高有效位开始，起始处置0的位的数目，存放在操作数0中。如果@var{x}为0，则@code{CLZ_DEFINED_VALUE_AT_ZERO} (@pxref{其它})宏定义了结果是否为未定义或者一个有用的值。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+
+@cindex @code{ctz@var{m}2} instruction pattern
+@item @samp{ctz@var{m}2}
+将@var{x}中，从最小有效位开始，结尾处置0的位的数目，存放在操作数0中。如果@var{x}为0，则@code{CTZ_DEFINED_VALUE_AT_ZERO} (@pxref{其它})宏定义了结果是否为未定义或者一个有用的值。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+
 @c @cindex @code{popcount@var{m}2} instruction pattern
 @c @item @samp{popcount@var{m}2}
 @c Store into operand 0 the number of 1-bits in @var{x}.  @var{m} is the
@@ -6522,11 +7090,40 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c in @var{x} modulo 2.  @var{m} is the mode of operand 0; operand 1's mode
 @c is specified by the instruction pattern, and the compiler will convert
 @c the operand to that mode before generating the instruction.
-@c 
+@cindex @code{popcount@var{m}2} instruction pattern
+@item @samp{popcount@var{m}2}
+将@var{x}中置1的位的数目，存放在操作数0中。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+
+@cindex @code{parity@var{m}2} instruction pattern
+@item @samp{parity@var{m}2}
+将@var{x}的奇偶校验存放在操作数0中，即：@var{x}中置1的位数对2求模。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+
 @c @cindex @code{one_cmpl@var{m}2} instruction pattern
 @c @item @samp{one_cmpl@var{m}2}
 @c Store the bitwise-complement of operand 1 into operand 0.
-@c 
+@cindex @code{one_cmpl@var{m}2} instruction pattern
+@item @samp{one_cmpl@var{m}2}
+对操作数1进行按位求补，并存放在操作数0中。
+
+@cindex @code{cmp@var{m}} instruction pattern
+@item @samp{cmp@var{m}}
+比较操作数0和1，并设置条件代码。RTL指令模式应该像这样：
+
+@smallexample
+(set (cc0) (compare (match_operand:@var{m} 0 @dots{})
+                    (match_operand:@var{m} 1 @dots{})))
+@end smallexample
+
+@cindex @code{tst@var{m}} instruction pattern
+@item @samp{tst@var{m}}
+将操作数0与零进行比较，并设置条件码。RTL指令模式应该像这样：
+
+@smallexample
+(set (cc0) (match_operand:@var{m} 0 @dots{}))
+@end smallexample
+
+@samp{tst@var{m}}指令模式不应该为不使用@code{(cc0)}的机器定义。这样做会使得编译器变得迷惑，因为其将会不清楚哪一个@code{set}操作为比较。应该使用@samp{cmp@var{m}}。
+
 @c @cindex @code{movmem@var{m}} instruction pattern
 @c @item @samp{movmem@var{m}}
 @c Block move instruction.  The destination and source blocks of memory
@@ -6560,7 +7157,20 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c 
 @c These patterns need not give special consideration to the possibility
 @c that the source and destination strings might overlap.
-@c 
+@cindex @code{movmem@var{m}} instruction pattern
+@item @samp{movmem@var{m}}
+块移动指令。内存的目的块和源块为前两个操作数，都为地址是@code{Pmode}的@code{mem:BLK}。
+
+要移动的字节数为第三个操作数，机器模式为@var{m}。通常，你会将@var{m}指定为@code{word_mode}。然而，如果你可以生成更好的代码，知道有效长度的范围比一整个字要小，则你应该提供一个指令模式，其机器模式对应于你可以更有效的处理的值的范围（例如，@code{QImode}对于范围0--127；注意我们回避了负数），并且一个使用@code{word_mode}的指令模式。
+
+第四个操作数为已知的源和目的的共享对齐，形式为一个@code{const_int} rtx。因此，如果编译器知道源和目的都是字对齐的，则其可以为该操作数提供值4。
+
+可选的操作数5和6，分别指定了期望的对齐方式和块的大小。期望的对齐方式不同于操作数4中的对齐方式，块并不要求所有的情况下都按照这样对齐。期望的对齐方式也是以字节为单位，类似于操作数4。期望的大小，当不知道的时候，被设置为@code{(const_int -1)}。
+
+描述多个@code{movmem@var{m}}指令模式，只有当对于更小的机器模式的指令模式，对操作数1，2，4具有更少限制的时候，才会获利。注意@code{movmem@var{m}}中的机器模式@var{m}不对块中单独的被移动的数据单元的机器模式做任何限制。
+
+这些指令模式不需要对源和目的可能重叠的情况，进行特殊的考虑。
+
 @c @cindex @code{movstr} instruction pattern
 @c @item @samp{movstr}
 @c String copy instruction, with @code{stpcpy} semantics.  Operand 0 is
@@ -6569,7 +7179,10 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @code{mem:BLK}s with addresses in mode @code{Pmode}.  The execution of
 @c the expansion of this pattern should store in operand 0 the address in
 @c which the @code{NUL} terminator was stored in the destination string.
-@c 
+@cindex @code{movstr} instruction pattern
+@item @samp{movstr}
+字符串复制指令，具有@code{stpcpy}的语义。操作数0为输出操作数，机器模式为@code{Pmode}。目的字符串和源字符串的地址为操作数1和2，都是地址为@code{Pmode}的@code{mem:BLK}。对该指令模式的执行，应该将地址存放在操作数0中，其中@code{NUL}终结符存放在目标字符串中。
+
 @c @cindex @code{setmem@var{m}} instruction pattern
 @c @item @samp{setmem@var{m}}
 @c Block set instruction.  The destination string is the first operand,
@@ -6591,7 +7204,16 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c Expected size, when unknown, is set to @code{(const_int -1)}.
 @c 
 @c The use for multiple @code{setmem@var{m}} is as for @code{movmem@var{m}}.
-@c 
+@cindex @code{setmem@var{m}} instruction pattern
+@item @samp{setmem@var{m}}
+块设置指令。目的字符串为第一个操作数，作为一个@code{mem:BLK}，其地址的机器模式为@code{Pmode}。被设置的字节的数目是第二个操作数，机器模式为@var{m}。用于初始化内存的值为第三个操作数。只支持清空内存的目标机应该拒绝任何不为常数0的值。关于对机器模式选择的讨论，参见@samp{movmem@var{m}}。
+
+第四个操作数为目标的已知对齐方式，形式为@code{const_int} rtx。因此，如果编译器知道目的操作数是字对齐的，则其可以为该操作数提供值4。
+
+可选的操作数5和6，分别指定了期望的对齐方式和块的大小。期望的对齐方式不同于操作数4中的对齐方式，块并不要求所有的情况下都按照这样对齐。期望的对齐方式也是以字节为单位，类似于操作数4。期望的大小，当不知道的时候，被设置为@code{(const_int -1)}。
+
+对多个@code{setmem@var{m}}的使用，类似于@code{movmem@var{m}}
+
 @c @cindex @code{cmpstrn@var{m}} instruction pattern
 @c @item @samp{cmpstrn@var{m}}
 @c String compare instruction, with five operands.  Operand 0 is the output;
@@ -6632,7 +7254,22 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c any bytes in the two memory blocks.  The effect of the instruction is
 @c to store a value in operand 0 whose sign indicates the result of the
 @c comparison.
-@c 
+@cindex @code{cmpstrn@var{m}} instruction pattern
+@item @samp{cmpstrn@var{m}}
+字符串比较指令，有5个操作数。操作数0为输出，机器模式为@var{m}。剩下的4个操作数类似于@samp{movmem@var{m}}的操作数。两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。指令不允许一次取多个字节，因为每个字符串都可能在第一个字节中终止，读取后面的字节可能会访问一个无效的页或者段，并产生一个缺失。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
+
+@cindex @code{cmpstr@var{m}} instruction pattern
+@item @samp{cmpstr@var{m}}
+字符串比较指令，不知道最大的长度。操作数0为输出，机器模式为@var{m}。第二个和第三个操作数为被比较的内存块；都是机器模式为@code{Pmode}的@code{mem:BLK}。
+
+第四个操作数为源和目的的已知共享的对齐方式，形式为@code{const_int} rtx。因此，如果编译器知道源和目的都是字对齐的，则其可以为该操作数提供值4。
+
+两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。指令不允许一次取多个字节，因为每个字符串都可能在第一个字节中终止，读取后面的字节可能会访问一个无效的页或者段，并产生一个缺失。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
+
+@cindex @code{cmpmem@var{m}} instruction pattern
+@item @samp{cmpmem@var{m}}
+块比较指令，这5个操作数类似于@samp{cmpstr@var{m}}。两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。不像@samp{cmpstr@var{m}}，该指令可以在两个内存块中取任意个字节。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
+
 @c @cindex @code{strlen@var{m}} instruction pattern
 @c @item @samp{strlen@var{m}}
 @c Compute the length of a string, with three operands.
@@ -6641,7 +7278,10 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c operand 2 is the character to search for (normally zero),
 @c and operand 3 is a constant describing the known alignment
 @c of the beginning of the string.
-@c 
+@cindex @code{strlen@var{m}} instruction pattern
+@item @samp{strlen@var{m}}
+计算字符串的长度，有3个操作数。操作数0为结果（机器模式为@var{m}），操作数1为一个@code{mem}，指出字符串的第一个字符，操作数2为要查找的字符（通常为零），操作数3为一个常量，描述了字符串起始处的已知对齐方式。
+
 @c @cindex @code{float@var{mn}2} instruction pattern
 @c @item @samp{float@var{m}@var{n}2}
 @c Convert signed integer operand 1 (valid for fixed point mode @var{m}) to
@@ -6686,13 +7326,45 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @item @samp{fixuns_trunc@var{m}@var{n}2}
 @c Like @samp{fixuns@var{m}@var{n}2} but works for any floating point
 @c value of mode @var{m} by converting the value to an integer.
-@c 
+@cindex @code{float@var{mn}2} instruction pattern
+@item @samp{float@var{m}@var{n}2}
+将有符号整数，操作数1（对于定点机器模式@var{m}有效），转换成浮点机器模式@var{n}，并存放在操作数0（机器模式为@var{n}）中。
+
+@cindex @code{floatuns@var{mn}2} instruction pattern
+@item @samp{floatuns@var{m}@var{n}2}
+将无符号整数，操作数1（对于定点机器模式@var{m}有效），转换成浮点机器模式@var{n}，并存放在操作数0（机器模式为@var{n}）中。
+
+@cindex @code{fix@var{mn}2} instruction pattern
+@item @samp{fix@var{m}@var{n}2}
+将操作数1（对于浮点机器模式@var{m}有效），转换成定点机器模式@var{n}，作为一个有符号数并存放在操作数0（机器模式为@var{n}）中。该指令的结果，只有当操作数1的值为整数时，才被定义。
+
+如果机器描述定义了该指令模式，则其还需要定义@code{ftrunc}指令模式。
+
+@cindex @code{fixuns@var{mn}2} instruction pattern
+@item @samp{fixuns@var{m}@var{n}2}
+将操作数1（对于浮点机器模式@var{m}有效），转换成定点机器模式@var{n}，作为一个无符号数并存放在操作数0（机器模式为@var{n}）中。该指令的结果，只有当操作数1的值为整数时，才被定义。
+
+@cindex @code{ftrunc@var{m}2} instruction pattern
+@item @samp{ftrunc@var{m}2}
+将操作数1（对于浮点机器模式@var{m}有效），转换成整数值，仍按照浮点机器模式@var{m}来表示，并存放在操作数0（对于浮点机器模式@var{m}有效）中。
+
+@cindex @code{fix_trunc@var{mn}2} instruction pattern
+@item @samp{fix_trunc@var{m}@var{n}2}
+类似于@samp{fix@var{m}@var{n}2}，不过工作于，将任意机器模式为@var{m}的浮点值，转换成整数。
+
+@cindex @code{fixuns_trunc@var{mn}2} instruction pattern
+@item @samp{fixuns_trunc@var{m}@var{n}2}
+类似@samp{fixuns@var{m}@var{n}2}，不过工作于，将任意机器模式为@var{m}的浮点值，转换成整数。
+
 @c @cindex @code{trunc@var{mn}2} instruction pattern
 @c @item @samp{trunc@var{m}@var{n}2}
 @c Truncate operand 1 (valid for mode @var{m}) to mode @var{n} and
 @c store in operand 0 (which has mode @var{n}).  Both modes must be fixed
 @c point or both floating point.
-@c 
+@cindex @code{trunc@var{mn}2} instruction pattern
+@item @samp{trunc@var{m}@var{n}2}
+将操作数1（对机器模式@var{m}有效），截取为机器模式@var{n}，并存放在操作数0（机器模式为@var{n}）中。两个机器模式都必须同为定点的或者浮点的。
+
 @c @cindex @code{extend@var{mn}2} instruction pattern
 @c @item @samp{extend@var{m}@var{n}2}
 @c Sign-extend operand 1 (valid for mode @var{m}) to mode @var{n} and
@@ -6704,7 +7376,14 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c Zero-extend operand 1 (valid for mode @var{m}) to mode @var{n} and
 @c store in operand 0 (which has mode @var{n}).  Both modes must be fixed
 @c point.
-@c 
+@cindex @code{extend@var{mn}2} instruction pattern
+@item @samp{extend@var{m}@var{n}2}
+将操作数1（对机器模式@var{m}有效）符号扩展成机器模式@var{n}，并存放在操作数0（机器模式为@var{n}）中。两个机器模式都必须同为定点的或者浮点的。
+
+@cindex @code{zero_extend@var{mn}2} instruction pattern
+@item @samp{zero_extend@var{m}@var{n}2}
+将操作数1（对机器模式@var{m}有效）零扩展成机器模式@var{n}，并存放在操作数0（机器模式为@var{n}）中。两个机器模式都必须同为定点的或者浮点的。
+
 @c @cindex @code{fract@var{mn}2} instruction pattern
 @c @item @samp{fract@var{m}@var{n}2}
 @c Convert operand 1 of mode @var{m} to mode @var{n} and store in
@@ -6737,7 +7416,22 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @var{n} and store in operand 0 (which has mode @var{n}).
 @c When overflows or underflows happen, the instruction saturates the
 @c results to the maximum or the minimum.
-@c 
+@cindex @code{fract@var{mn}2} instruction pattern
+@item @samp{fract@var{m}@var{n}2}
+将机器模式为@var{m}的操作数1，转换成机器模式@var{n}，并存放在操作数0（机器模式为@var{n}）中。机器模式@var{m}和@var{n}可以为定点到定点，有符号整数到定点，定点到有符号整数，浮点到浮点，或者定点到浮点。当发生溢出时，结果未定义。
+
+@cindex @code{satfract@var{mn}2} instruction pattern
+@item @samp{satfract@var{m}@var{n}2}
+将机器模式为@var{m}的操作数1，转换成机器模式@var{n}，并存放在操作数0（机器模式为@var{n}）中。机器模式@var{m}和@var{n}可以为定点到定点，有符号整数到定点，或者浮点到定点。当发生溢出时，指令将结果饱和为最大或最小值。
+
+@cindex @code{fractuns@var{mn}2} instruction pattern
+@item @samp{fractuns@var{m}@var{n}2}
+将机器模式为@var{m}的操作数1，转换成机器模式@var{n}，并存放在操作数0（机器模式为@var{n}）中。机器模式@var{m}和@var{n}可以为无符号整数到定点，或者定点到无符号整数。当发生溢出时，结果未定义。
+
+@cindex @code{satfractuns@var{mn}2} instruction pattern
+@item @samp{satfractuns@var{m}@var{n}2}
+将机器模式为@var{m}的，无符号整数，操作数1，转换成定点机器模式@var{n}，并存放在操作数0（机器模式为@var{n}）中。当发生溢出时，指令将结果饱和为最大或最小值。
+
 @c @cindex @code{extv} instruction pattern
 @c @item @samp{extv}
 @c Extract a bit-field from operand 1 (a register or memory operand), where
@@ -6767,7 +7461,24 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c 
 @c The RTL generation pass generates this instruction only with constants
 @c for operands 1 and 2 and the constant is never zero for operand 1.
-@c 
+@cindex @code{extv} instruction pattern
+@item @samp{extv}
+从操作数1（寄存器或者内存操作数）中抽取一个位域，其中操作数2指定了宽度，按位为单位，操作数3为起始位，并将结果存放在操作数0中。操作数0必须具有机器模式@code{word_mode}。操作数1可以具有机器模式@code{byte_mode} 或 @code{word_mode}；通常@code{word_mode}只允许用于寄存器。操作数2和3必须对@code{word_mode}有效。
+
+RTL生成过程，生成的该指令，操作数2和3为常量，并且对于操作数2，常量不为零。
+
+位域的值，在存放到操作数0之前，被有符号扩展为一整个字的整数。
+
+@cindex @code{extzv} instruction pattern
+@item @samp{extzv}
+类似@samp{extv}，只不过位域的值被零扩展。
+
+@cindex @code{insv} instruction pattern
+@item @samp{insv}
+将操作数3（必须对@code{word_mode}有效）存储到操作数0中的位域，其中操作数1指定了位宽，操作数2指定了起始位。操作数0可以具有机器模式@code{byte_mode} 或 @code{word_mode}；通常@code{word_mode}只允许用于寄存器。操作数1和2必须对@code{word_mode}有效。
+
+RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操作数1，常量不为零。
+
 @c @cindex @code{mov@var{mode}cc} instruction pattern
 @c @item @samp{mov@var{mode}cc}
 @c Conditionally move operand 2 or operand 3 into operand 0 according to the
@@ -6781,14 +7492,46 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c 
 @c If the machine does not have conditional move instructions, do not
 @c define these patterns.
-@c 
+@cindex @code{mov@var{mode}cc} instruction pattern
+@item @samp{mov@var{mode}cc}
+根据对操作数1的比较，有条件的将操作数2或者3移送到操作数0中。如果比较为真，则操作数2被移送到操作数0中，否则操作数3被移送。
+
+操作数的机器模式不需要与被移送的操作数的相同。一些机器，例如sparc64，具有可以根据浮点条件码，条件移送整数值的指令，以及相反的指令。
+
+如果机器没有条件移送指令，则不要定义这些指令模式。
+
 @c @cindex @code{add@var{mode}cc} instruction pattern
 @c @item @samp{add@var{mode}cc}
 @c Similar to @samp{mov@var{mode}cc} but for conditional addition.  Conditionally
 @c move operand 2 or (operands 2 + operand 3) into operand 0 according to the
 @c comparison in operand 1.  If the comparison is true, operand 2 is moved into
 @c operand 0, otherwise (operand 2 + operand 3) is moved.
-@c 
+@cindex @code{add@var{mode}cc} instruction pattern
+@item @samp{add@var{mode}cc}
+类似于@samp{mov@var{mode}cc}，不过是条件加法。根据在操作数1中的比较，条件性的将操作数2或者(操作数2 + 操作数3)，移送到操作数0中。如果比较为真，则操作数2被移送到操作数0中，否则(操作数2 + 操作数3)被移送。
+
+@cindex @code{s@var{cond}} instruction pattern
+@item @samp{s@var{cond}}
+根据条件码将零或者非零存放在操作数中。当且仅当条件@var{cond}为真时，存储的值才为非零。@var{cond}为一个比较运算表达式代码的名字，例如@code{eq}, @code{lt}或@code{leu}。
+
+当书写@code{match_operand}表达式的时候，你来指定操作数必须具有的机器模式。编译器自动的查看你使用的机器模式，并提供那个机器模式的操作数。
+
+对于条件为真时所存储的值，其低位必须为1，不然必须为负。否则，指令就不适合，你应该从机器描述中将其去掉。你可以通过定义宏@code{STORE_FLAG_VALUE} (@pxref{其它})，来描述哪个值被存放。如果不能找到一个用于所有@samp{s@var{cond}}指令模式的描述，则你应该从机器描述中去掉这些操作。
+
+这些操作可以失败，但应该只在相对不常见的情况下这样做；如果它们对于常见的情况，包括整数比较，会失败，则最好去掉这些指令模式。
+
+如果这些操作被去掉，则编译器通常会生成，将常量复制到目标，并在将零赋值给目标的语句附近进行分支跳转。如果这样的代码比用于@samp{s@var{cond}}模式的指令，后面跟着需要将结果转成@code{SImode}的1或者零的的指令，更有效，则你应该从机器描述中去掉@samp{s@var{cond}}操作。
+
+@cindex @code{b@var{cond}} instruction pattern
+@item @samp{b@var{cond}}
+条件分支指令。操作数0为一个@code{label_ref}指出要跳转到的标号。如果条件码符合条件@var{cond}则跳转。
+
+一些机器不遵循这里假设的模型，即一个比较指令，跟随一个条件跳转指令。那种情况下，@samp{cmp@var{m}} (和 @samp{tst@var{m}})指令模式，应该简单的将操作数存放开，并在@code{define_expand} (@pxref{定义扩展})中为条件分支操作，生成所有需要的insn。所有对扩展@samp{b@var{cond}}指令模式的调用，都会立即优先执行对扩展@samp{cmp@var{m}}或者@samp{tst@var{m}}的调用。
+
+对条件代码值使用伪寄存器的，或者用于比较的机器模式取决于被测试的条件的机器，也应该使用上面的机制。@xref{跳转指令模式}.
+
+上面的讨论也应用在@samp{mov@var{mode}cc}和@samp{s@var{cond}}指令模式上。
+
 @c @cindex @code{cstore@var{mode}4} instruction pattern
 @c @item @samp{cstore@var{mode}4}
 @c Store zero or nonzero in operand 0 according to whether a comparison
@@ -6838,7 +7581,14 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c A jump inside a function; an unconditional branch.  Operand 0 is the
 @c @code{label_ref} of the label to jump to.  This pattern name is mandatory
 @c on all machines.
-@c 
+@cindex @code{cbranch@var{mode}4} instruction pattern
+@item @samp{cbranch@var{mode}4}
+条件分支指令，结合一个比较指令。操作数0为比较运算符。操作数1和2分别为比较运算的第一个和第二个操作数。操作数3为一个@code{label_ref}，指出了跳转的标号。
+
+@cindex @code{jump} instruction pattern
+@item @samp{jump}
+函数内部跳转；无条件分支。操作数0为一个@code{label_ref}，指出了跳转的标号。该指令模式名在所有机器上都是强制必须的。
+
 @c @cindex @code{call} instruction pattern
 @c @item @samp{call}
 @c Subroutine call instruction returning no value.  Operand 0 is the
@@ -6858,7 +7608,14 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c instruction, the pattern for this operation should be a
 @c @code{define_expand} (@pxref{Expander Definitions}) that places the
 @c address into a register and uses that register in the call instruction.
-@c 
+@cindex @code{call} instruction pattern
+@item @samp{call}
+没有返回值的子程序调用指令。操作数0为调用的函数；操作数1为压栈的参数的字节数，为一个@code{const_int}；操作数2为用作操作数的寄存器数目。
+
+在大多机器上，操作数2没有被实际存放在RTL模式中。提供它是出于安全考虑，一些RISC机器需要将该信息放到汇编代码中；它们可以将其放在RTL中，而不是操作数1中。
+
+操作数0应该为一个@code{mem} RTX，其地址为函数的地址。然而注意，该地址可以为一个@code{symbol_ref}表达式，即使其在目标机器上可能不是一个合法的内存地址。如果其也不是调用指令的有效参数，则该操作的指令模式应该为一个@code{define_expand} (@pxref{定义扩展})，其将地址放入寄存器中，并在调用指令中使用寄存器。
+
 @c @cindex @code{call_value} instruction pattern
 @c @item @samp{call_value}
 @c Subroutine call instruction returning a value.  Operand 0 is the hard
@@ -6880,7 +7637,19 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c For machines where @code{RETURN_POPS_ARGS} can be nonzero, the use of these
 @c patterns increases the number of functions for which the frame pointer
 @c can be eliminated, if desired.
-@c 
+@cindex @code{call_value} instruction pattern
+@item @samp{call_value}
+有返回值的子程序调用指令。操作数0为硬件寄存器，存放返回值。还有三个操作数，与@samp{call}指令相同（只不过将编号加一）。
+
+返回 @code{BLKmode}对象的子程序，使用@samp{call} insn。
+
+@cindex @code{call_pop} instruction pattern
+@cindex @code{call_value_pop} instruction pattern
+@item @samp{call_pop}, @samp{call_value_pop}
+类似于@samp{call} 和 @samp{call_value}，只不过用于其被定义，并且@code{RETURN_POPS_ARGS}为非零的时候。它们应该生成一个 @code{parallel}，包含函数调用和一个@code{set}，来指示对帧指针的调整。
+
+对于@code{RETURN_POPS_ARGS}可以为非零的机器，使用这些指令模式可以增加帧指针被消除掉的函数的数目。
+
 @c @cindex @code{untyped_call} instruction pattern
 @c @item @samp{untyped_call}
 @c Subroutine call instruction returning a value of any type.  Operand 0 is
@@ -6908,7 +7677,18 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c some class of functions only requires one instruction to implement a
 @c return.  Normally, the applicable functions are those which do not need
 @c to save any registers or allocate stack space.
-@c 
+@cindex @code{untyped_call} instruction pattern
+@item @samp{untyped_call}
+返回一个任意类型的值的子函数调用指令。操作数0为调用的函数；操作数1为内存位置，存放调用函数后的结果；操作数2为一个@code{parallel}表达式，其中每个元素都为一个@code{set}表达式，用来指示将函数返回值保存到结果块中。
+
+该指令模式应该被定义，来支持@code{__builtin_apply}，在一些机器上，需要特殊的指令来调用一个具有任意参数的子程序，或者将返回值保存。在具有多个寄存器，可以存放一个返回值（即@code{FUNCTION_VALUE_REGNO_P}对多个寄存器都为真）的机器上，需要该指令模式。
+
+@cindex @code{return} instruction pattern
+@item @samp{return}
+子程序返回指令。该指令模式名应该只有当，单个指令可以做从函数中返回时的所有工作的时候，才被定义。
+
+类似@samp{mov@var{m}}指令模式，该指令模式也在RTL生成阶段之后被使用。这种情况下，其用来支持一些机器，从函数中返回通常需要多个指令，但是某些类别的函数只需要一条指令来实现返回。通常，可以适用的函数为那些不需要保存任何寄存器或者分配栈空间的函数。
+
 @c @findex reload_completed
 @c @findex leaf_function_p
 @c For such machines, the condition specified in this pattern should only
@@ -6934,7 +7714,26 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c 
 @c where @var{condition} would normally be the same condition specified on the
 @c named @samp{return} pattern.
-@c 
+@findex reload_completed
+@findex leaf_function_p
+对于这样的机器，该指令模式中指定的条件，应该只有当@code{reload_completed}为非零的时候才为真，并且函数的尾声应该只为一单个指令。对于有寄存器窗口的机器，例程@code{leaf_function_p}可以用来确定是否需要对寄存器窗口压栈。
+
+具有条件性返回指令的机器，应该将指令模式定义成
+
+@smallexample
+(define_insn ""
+  [(set (pc)
+        (if_then_else (match_operator
+                         0 "comparison_operator"
+                         [(cc0) (const_int 0)])
+                      (return)
+                      (pc)))]
+  "@var{condition}"
+  "@dots{}")
+@end smallexample
+
+其中@var{condition}通常为，在@samp{return}指令模式中指定的相同的条件。 
+
 @c @cindex @code{untyped_return} instruction pattern
 @c @item @samp{untyped_return}
 @c Untyped subroutine return instruction.  This instruction pattern should
@@ -6945,7 +7744,12 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c with @code{__builtin_apply} is stored; operand 1 is a @code{parallel}
 @c expression where each element is a @code{set} expression that indicates
 @c the restoring of a function return value from the result block.
-@c 
+@cindex @code{untyped_return} instruction pattern
+@item @samp{untyped_return}
+未定义类型的子程序返回指令。该指令模式应该被定义，来支持@code{__builtin_return}，在一些机器上，需要特殊的指令来返回一个任意类型的值。
+
+操作数0为一个内存位置，存放使用@code{__builtin_apply}调用函数的结果；操作数1为一个@code{parallel}表达式，每个元素都是一个@code{set}表达式，指示了从结果块中恢复函数的返回值。
+
 @c @cindex @code{nop} instruction pattern
 @c @item @samp{nop}
 @c No-op instruction.  This instruction pattern name should always be defined
@@ -6956,7 +7760,14 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @item @samp{indirect_jump}
 @c An instruction to jump to an address which is operand zero.
 @c This pattern name is mandatory on all machines.
-@c 
+@cindex @code{nop} instruction pattern
+@item @samp{nop}
+空操作指令。该指令模式名应该总是被定义，用来在汇编代码中输出一个no-op。@code{(const_int 0)}将作为一个RTL指令模式。
+
+@cindex @code{indirect_jump} instruction pattern
+@item @samp{indirect_jump}
+一个指令，跳转到操作数0表示的地址。该指令模式名在所有机器上都必须存在。
+
 @c @cindex @code{casesi} instruction pattern
 @c @item @samp{casesi}
 @c Instruction to jump through a dispatch table, including bounds checking.
@@ -6983,7 +7794,29 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c The table is an @code{addr_vec} or @code{addr_diff_vec} inside of a
 @c @code{jump_insn}.  The number of elements in the table is one plus the
 @c difference between the upper bound and the lower bound.
-@c 
+@cindex @code{casesi} instruction pattern
+@item @samp{casesi}
+通过派遣表进行跳转的指令，包括边界检查。该指令接受五个操作数：
+
+@enumerate
+@item
+派遣的索引，具有机器模式@code{SImode}。
+
+@item
+表中索引的较低边界，一个整数常量。
+
+@item
+表中索引的整个范围---最大索引减去最小的。
+
+@item
+位于表之前的标号。
+
+@item
+一个标号，如果索引值超出边界，则跳转到该地方。
+@end enumerate
+
+表为@code{jump_insn}中的一个@code{addr_vec} 或 @code{addr_diff_vec}。表中的元素个数为一加上上界和下界的差。
+
 @c @cindex @code{tablejump} instruction pattern
 @c @item @samp{tablejump}
 @c Instruction to jump to a variable address.  This is a low-level
@@ -7002,7 +7835,14 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c second operand, but you should incorporate it in the RTL pattern so
 @c that the jump optimizer will not delete the table as unreachable code.
 @c 
-@c 
+@cindex @code{tablejump} instruction pattern
+@item @samp{tablejump}
+跳转到一个可变地址的指令。这是一个低级别的能力，可以用来实现一个派遣表，当没有@samp{casesi}指令模式的时候。
+
+该指令模式需要两个操作数：地址或偏移量，以及一个标号，其直接位于跳转表的前面。如果宏@code{CASE_VECTOR_PC_RELATIVE}求值为一个非零值，则第一个操作数为一个偏移量，其从表的地址开始计算；否则，其为一个跳转的绝对地址。这两种情况下，第一个操作数都为@code{Pmode}。
+
+@samp{tablejump} insn总是其使用的跳转表之前的最后一个insn。其汇编代码通常不需要用到第二个操作数，但是你应该在RTL指令模式中包含它，使得跳转优化不会将表作为不可到达代码删除。
+
 @c @cindex @code{decrement_and_branch_until_zero} instruction pattern
 @c @item @samp{decrement_and_branch_until_zero}
 @c Conditional branch instruction that decrements a register and
@@ -7013,7 +7853,12 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c This optional instruction pattern is only used by the combiner,
 @c typically for loops reversed by the loop optimizer when strength
 @c reduction is enabled.
-@c 
+@cindex @code{decrement_and_branch_until_zero} instruction pattern
+@item @samp{decrement_and_branch_until_zero}
+条件分支指令，递减一个寄存器并且如果寄存器非零则跳转。操作数0为递减并测试的寄存器；操作数1为如果寄存器非零，则跳转的标号。@xref{循环指令模式}.
+
+该可选的指令模式只用于合并器，通常被循环优化器使用，当启动强度消减的时候。
+
 @c @cindex @code{doloop_end} instruction pattern
 @c @item @samp{doloop_end}
 @c Conditional branch instruction that decrements a register and jumps if
@@ -7042,7 +7887,18 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c not always need to be emitted, use a @code{define_expand}
 @c (@pxref{Expander Definitions}) and make it fail.
 @c 
-@c 
+@cindex @code{doloop_end} instruction pattern
+@item @samp{doloop_end}
+条件分支指令，递减一个寄存器，并且如果寄存器非零则跳转。该指令接受五个操作数：操作数0是用来递减和测试的寄存器；操作数1是循环迭代的次数，为一个@code{const_int}，或者如果直到运行时才能确定，则为@code{const0_rtx}；操作数2为实际的或者估算的最大迭代数，为一个@code{const_int}；操作数3为被包含的循环数，为一个@code{const_int}（最内层循环的值为1）；操作数4为如果寄存器非零，要跳转的标号。@xref{循环指令模式}.
+
+
+该可选的指令模式应该为，具有低开销循环指令的机器定义，循环优化器会尝试修改合适的循环来利用它。如果不支持嵌套的低开销循环，则使用@code{define_expand} (@pxref{定义扩展})，并如果操作数3不为@code{const1_rtx}，则使得指令模式失败。类似的，如果实际的或者估算的最大迭代数目对于该指令来说太大，则使其失败。
+
+@cindex @code{doloop_begin} instruction pattern
+@item @samp{doloop_begin}
+与@code{doloop_end}成套的指令，被用于需要执行一些初始化的机器，例如加载用于低开销循环指令中的特定寄存器。如果初始化insn不总是需要被生成，则使用@code{define_expand}
+(@pxref{定义扩展})，并使其失败。
+
 @c @cindex @code{canonicalize_funcptr_for_compare} instruction pattern
 @c @item @samp{canonicalize_funcptr_for_compare}
 @c Canonicalize the function pointer in operand 1 and store the result
@@ -7059,7 +7915,16 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c Only define this pattern if function pointers on the target machine
 @c can have different values but still call the same function when
 @c used in an indirect call.
-@c 
+@cindex @code{canonicalize_funcptr_for_compare} instruction pattern
+@item @samp{canonicalize_funcptr_for_compare}
+正规化操作数1中的函数指针，并将结果存放在操作数0中。
+
+操作数0总是一个@code{reg}，并具有机器模式@code{Pmode}；操作数1可以为一个@code{reg}, @code{mem}, @code{symbol_ref}, @code{const_int}等等，也具有机器模式@code{Pmode}。
+
+正规化一个函数指针，通常涉及到计算函数的地址，该函数指针用在间接调用中。
+
+只有当目标机器上，对于函数指针可以有不同的值，但是当在间接调用的时候，其还是调用相同的函数的时候，才定义该指令模式。
+
 @c @cindex @code{save_stack_block} instruction pattern
 @c @cindex @code{save_stack_function} instruction pattern
 @c @cindex @code{save_stack_nonlocal} instruction pattern
@@ -7081,7 +7946,22 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c non-standard cases by using a @code{define_expand} (@pxref{Expander
 @c Definitions}) that produces the required insns.  The three types of
 @c saves and restores are:
-@c 
+@cindex @code{save_stack_block} instruction pattern
+@cindex @code{save_stack_function} instruction pattern
+@cindex @code{save_stack_nonlocal} instruction pattern
+@cindex @code{restore_stack_block} instruction pattern
+@cindex @code{restore_stack_function} instruction pattern
+@cindex @code{restore_stack_nonlocal} instruction pattern
+@item @samp{save_stack_block}
+@itemx @samp{save_stack_function}
+@itemx @samp{save_stack_nonlocal}
+@itemx @samp{restore_stack_block}
+@itemx @samp{restore_stack_function}
+@itemx @samp{restore_stack_nonlocal}
+大多数机器用来保存和恢复栈指针的方式，是通过将其复制到一个机器模式为@code{Pmode}的对象。不要在这样的机器上定义这些指令模式。
+
+一些机器要求对栈指针的保存和恢复，进行特殊的处理。在那些机器上，根据非标准的情况来定义指令模式，使用@code{define_expand} (@pxref{定义扩展})来产生要求的insn。三种保存和恢复类型：
+
 @c @enumerate
 @c @item
 @c @samp{save_stack_block} saves the stack pointer at the start of a block
@@ -7105,7 +7985,17 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c stack backchains.  Place insns in these patterns to save and restore any
 @c such required data.
 @c @end enumerate
-@c 
+@enumerate
+@item
+@samp{save_stack_block}将栈指针存放在用来分配可变大小的对象块的起始处，@samp{restore_stack_block}当退出块的时候恢复栈指针。
+
+@item
+@samp{save_stack_function} 和 @samp{restore_stack_function}为函数最外层的快做类似的工作，并用于当函数分配可变大小的对象或者调用@code{alloca}的时候。只有尾声使用被恢复的栈指针，这使得在一些机器上，可以有更简单的保存或恢复序列。
+
+@item
+@samp{save_stack_nonlocal}用在包含嵌套函数分支跳转标号的函数中。其保存栈指针的方式为，最内层函数可以使用@samp{restore_stack_nonlocal}来恢复栈指针。编译器生成代码，用来恢复帧寄存器和参数指针寄存器，但是一些机器要求保存和恢复额外的数据，例如寄存器窗口信息或者栈后退链。在这些指令模式中放置保存和恢复这些要求的数据的insn。
+@end enumerate
+
 @c When saving the stack pointer, operand 0 is the save area and operand 1
 @c is the stack pointer.  The mode used to allocate the save area defaults
 @c to @code{Pmode} but you can override that choice by defining the
@@ -7120,7 +8010,10 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c A save area is a @code{mem} that is at a constant offset from
 @c @code{virtual_stack_vars_rtx} when the stack pointer is saved for use by
 @c nonlocal gotos and a @code{reg} in the other two cases.
-@c 
+当保存栈指针时，操作数0是保存区域，操作数1是栈指针。用于分配保存区域的机器模式缺省为@code{Pmode}，不过你可以通过定义@code{STACK_SAVEAREA_MODE}宏(@pxref{存储布局})来覆盖该选择。你必须指定一个整数机器模式，或者@code{VOIDmode}，如果对于特定的类型不需要保存区域（或者因为没有需要保存的，或者因为可以使用机器特定的保存区域）。操作数0为栈指针，操作数1为用于恢复操作的保存区域。如果@samp{save_stack_block}被定义，则操作数0一定不能为@code{VOIDmode}，因为这些保存操作数可以被任意的嵌套。
+
+当栈指针被保存，是用于非局部goto，则保存区域为一个@code{mem}，为一个相对于@code{virtual_stack_vars_rtx}的常量偏移，其它两种情况下，保存区域为一个@code{reg}。
+
 @c @cindex @code{allocate_stack} instruction pattern
 @c @item @samp{allocate_stack}
 @c Subtract (or add if @code{STACK_GROWS_DOWNWARD} is undefined) operand 1 from
@@ -7155,7 +8048,16 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c or optimal, define this pattern to do the probing differently and signal an
 @c error if the stack has overflowed.  The single operand is the memory reference
 @c in the stack that needs to be probed.
-@c 
+@cindex @code{allocate_stack} instruction pattern
+@item @samp{allocate_stack}
+从栈指针中减去（或者增加，如果@code{STACK_GROWS_DOWNWARD}未定义）操作数1，来为动态分配的数据创建空间。将由此产生的指向该空间的指针存放在操作数0中。如果你是从主栈中分配空间，则可以通过生成一个insn，将@code{virtual_stack_dynamic_rtx}复制到操作数0中。如果你是从其它地方分配空间，则可以生成将该空间的位置复制到操作数0中的代码。对于后者情况，你必须确保该空间当主栈中对应的空间被释放的时候，其也被释放。
+
+如果所有需要做的事情只是减法操作，则不用定义该指令模式。一些机器还要求其它的操作，例如栈探测，或者维护后向链。定义该指令模式除了更新栈指针之外的，来生成那些操作。
+
+@cindex @code{check_stack} instruction pattern
+@item @samp{check_stack}
+如果在你的系统上，不能通过使用加载或者存储指令(@pxref{栈检查})探测栈，从而进行栈检查，则定义该指令模式来执行所需要的检查，并且如果栈已经溢出则产生一个错误信号。有单个操作数，为栈中从当前栈指针开始，最远的栈位置。通常，在需要该指令模式的机器上，你将从一个全局的或者线程特定的变量或者寄存器中获得栈的限制。
+
 @c @cindex @code{nonlocal_goto} instruction pattern
 @c @item @samp{nonlocal_goto}
 @c Emit code to generate a non-local goto, e.g., a jump from one function
@@ -7184,7 +8086,16 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c goto only occurs within a unit-of-translation, so a global table pointer
 @c that is shared by all functions of a given module need not be restored.
 @c There are no arguments.
-@c 
+@cindex @code{nonlocal_goto} instruction pattern
+@item @samp{nonlocal_goto}
+生成产生一个非局部goto的代码，例如，从一个函数跳转到一个外部函数的标号。该指令模式有四个参数，每个参数表示一个在跳转中用到的值。第一个参数被加载到帧指针中，第二个为分支跳转的地址，第三个为栈被保存的地址，最后一个为标号的地址，放在静态链中。
+
+在大多上机器上，你不需要定义该指令模式，因为GCC会产生正确的代码，用来加载帧指针和静态链，恢复栈（使用@samp{restore_stack_nonlocal}指令模式，如果定义），并间接跳转。你只有当该代码在你的机器上不工作的情况下，才需定义该指令模式。
+
+@cindex @code{nonlocal_goto_receiver} instruction pattern
+@item @samp{nonlocal_goto_receiver}
+该指令模式，如果定义，包含了非局部goto的目标处所需要的代码。通常不需要定义该指令模式。通常需要该指令模式的原因是，如果一些值，例如全局表的指针，必须在帧指针被恢复的时候，其也被恢复。注意，非局部goto，只出现在一个转换单元中，所以被给定模块的所有函数共享的全局表指针，不需要被恢复。该指令模式没有参数。
+
 @c @cindex @code{exception_receiver} instruction pattern
 @c @item @samp{exception_receiver}
 @c This pattern, if defined, contains code needed at the site of an
@@ -7193,7 +8104,10 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c might need this pattern is if some value, such as a pointer to a global
 @c table, must be restored after control flow is branched to the handler of
 @c an exception.  There are no arguments.
-@c 
+@cindex @code{exception_receiver} instruction pattern
+@item @samp{exception_receiver}
+该指令模式，如果被定义，包含了在一个异常处理的地方所需要的代码，其在非局部goto的地方不需要。通常你不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须在控制流分支跳转到异常处理之后，被恢复。该指令模式没有参数。
+
 @c @cindex @code{builtin_setjmp_setup} instruction pattern
 @c @item @samp{builtin_setjmp_setup}
 @c This pattern, if defined, contains additional code needed to initialize
@@ -7221,7 +8135,18 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c You will not normally need to define this pattern unless you also define
 @c @code{builtin_setjmp_setup}.  The single argument is a pointer to the
 @c @code{jmp_buf}.
-@c 
+@cindex @code{builtin_setjmp_setup} instruction pattern
+@item @samp{builtin_setjmp_setup}
+该指令模式，如果被定义，则包含了需要初始化@code{jmp_buf}的代码。你通常不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须被恢复。尽管如此，还是推荐指针值如果可能（例如，给定一个标号的地址），则应被重新计算。有一单个操作数，
+
+@cindex @code{builtin_setjmp_receiver} instruction pattern
+@item @samp{builtin_setjmp_receiver}
+该指令模式，如果被定义，包含了在内建setjmp的地方，并且在非局部goto的地方不需要的代码。你通常不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须被恢复。其接受一个参数，为builtin_longjmp将控制转出的标号；该指令模式可以被生成为对于标号的一个小的偏移。
+
+@cindex @code{builtin_longjmp} instruction pattern
+@item @samp{builtin_longjmp}
+该指令模式，如果被定义，则执行整个longjmp动作。你通常不需要定义该指令模式，除非你还定义了@code{builtin_setjmp_setup}。单个操作数为指向@code{jmp_buf}的指针。
+
 @c @cindex @code{eh_return} instruction pattern
 @c @item @samp{eh_return}
 @c This pattern, if defined, affects the way @code{__builtin_eh_return},
@@ -7240,7 +8165,14 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c copy the return address to @code{EH_RETURN_HANDLER_RTX}.  Either
 @c that macro or this pattern needs to be defined if call frame exception
 @c handling is to be used.
-@c 
+@cindex @code{eh_return} instruction pattern
+@item @samp{eh_return}
+该指令模式，如果被定义，则影响@code{__builtin_eh_return}的方式，并且调用帧异常处理库函数会被建立。其用于处理异常返回路径所需要的非平凡的动作。
+
+函数应该返回的异常处理的地址，被作为操作数传给该指令模式。其通常需要被指令模式复制到某个特定的寄存器或者内存位置。如果该指令模式需要确定目标调用帧的位置，则可以使用@code{EH_RETURN_STACKADJ_RTX}。
+
+如果该指令模式没有被定义，缺省的动作为简单的将返回地址复制给@code{EH_RETURN_HANDLER_RTX}。或者宏，或者该指令模式，应该被定义，如果使用了调用帧异常处理。
+
 @c @cindex @code{prologue} instruction pattern
 @c @anchor{prologue instruction pattern}
 @c @item @samp{prologue}
@@ -7266,7 +8198,24 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c 
 @c The @code{epilogue} pattern is particularly useful for targets which perform
 @c instruction scheduling or which have delay slots for their return instruction.
-@c 
+@cindex @code{prologue} instruction pattern
+@anchor{prologue instruction pattern}
+@item @samp{prologue}
+该指令模式，如果被定义，用来产生函数的入口RTL。函数入口负责设置栈帧，初始化帧指针寄存器，保存被调用者需要保存的寄存器，等等。
+
+使用一个序言指令模式，通常的方式为定义@code{TARGET_ASM_FUNCTION_PROLOGUE}来产生序言的汇编代码。
+
+@code{prologue}指令模式对于执行指令调度的目标机尤其有用。
+
+@cindex @code{epilogue} instruction pattern
+@anchor{epilogue instruction pattern}
+@item @samp{epilogue}
+该指令模式为函数的出口生成RTL。函数出口负责撤销栈帧的分配，恢复被调用者所保存的寄存器，并产生返回指令。
+
+使用尾声指令模式，通常的方式为定义@code{TARGET_ASM_FUNCTION_EPILOGUE}，来产生尾声的汇编代码。
+
+@code{prologue}指令模式对于执行指令调度的，或者它们的返回指令具有延迟槽的目标机，尤其有用。
+
 @c @cindex @code{sibcall_epilogue} instruction pattern
 @c @item @samp{sibcall_epilogue}
 @c This pattern, if defined, emits RTL for exit from a function without the final
@@ -7276,7 +8225,12 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c The @code{sibcall_epilogue} pattern must not clobber any arguments used for
 @c parameter passing or any stack slots for arguments passed to the current
 @c function.
-@c 
+@cindex @code{sibcall_epilogue} instruction pattern
+@item @samp{sibcall_epilogue}
+该指令模式，如果被定义，产生一个函数的出口RTL，并且最终不分支跳转会到调用函数。该指令模式将在任何兄弟调用（即尾调用）地点之前被产生。
+
+@code{sibcall_epilogue}指令模式一定不能破坏任何用于传递的参数，或者用于传给当前函数的参数的栈槽。
+
 @c @cindex @code{trap} instruction pattern
 @c @item @samp{trap}
 @c This pattern, if defined, signals an error, typically by causing some
@@ -7300,7 +8254,25 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c   ""
 @c   "@dots{}")
 @c @end smallexample
-@c 
+@cindex @code{trap} instruction pattern
+@item @samp{trap}
+该指令模式，如果被定义，则会发射一个错误信号。在其它地方，其被Java前端使用，来发射“无效的数组索引”异常信号。
+
+@cindex @code{conditional_trap} instruction pattern
+@item @samp{conditional_trap}
+条件陷阱指令。操作数0为执行比较的RTL。操作数1为陷阱代码，为一个整数。
+
+典型的@code{conditional_trap}指令模式型如：
+
+@smallexample
+(define_insn "conditional_trap"
+  [(trap_if (match_operator 0 "trap_operator"
+             [(cc0) (const_int 0)])
+            (match_operand 1 "const_int_operand" "i"))]
+  ""
+  "@dots{}")
+@end smallexample
+
 @c @cindex @code{prefetch} instruction pattern
 @c @item @samp{prefetch}
 @c 
@@ -7316,7 +8288,13 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c 
 @c Targets that do not support write prefetches or locality hints can ignore
 @c the values of operands 1 and 2.
-@c 
+@cindex @code{prefetch} instruction pattern
+@item @samp{prefetch}
+
+该指令模式，如果被定义，则产生无故障的数据预取指令代码。操作数0为预取的内存地址。操作数1为常量1，如果预取打算去写一个内存地址，否则为常量0。操作数2为数据的时间局部性的等级，值在0和3之间。0意味着数据没有时间局部性，所以在访问之后不需要留在缓存中；3意味着数据具有高等级的时间局部性，应该尽可能的留在所有级别的缓存中；1和2分别意味着，低等级和中等级的时间局部性。
+
+不支持写预取或者局部性暗示的目标机，可以忽略操作数1和2的值。
+
 @c @cindex @code{blockage} instruction pattern
 @c @item @samp{blockage}
 @c 
@@ -7331,7 +8309,16 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c should be defined to an instruction that orders both loads and stores
 @c before the instruction with respect to loads and stores after the instruction.
 @c This pattern has no operands.
-@c 
+@cindex @code{blockage} instruction pattern
+@item @samp{blockage}
+
+该指令模式定义了一个伪insn，用来阻止指令调度器将指令跨越所定义的insn块边界进行移动。通常为一个UNSPEC_VOLATILE指令模式。
+
+@cindex @code{memory_barrier} instruction pattern
+@item @samp{memory_barrier}
+
+如果目标机内存模型不完全同步，则该指令模式应该被定义为一条指令，在期望进行加载和存储的指令之前。该指令模式没有操作数。
+
 @c @cindex @code{sync_compare_and_swap@var{mode}} instruction pattern
 @c @item @samp{sync_compare_and_swap@var{mode}}
 @c 
@@ -7362,7 +8349,21 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c be able to take the destination of the @code{MODE_CC} set and pass it
 @c to the @code{cbranchcc4} or @code{cstorecc4} pattern as the first
 @c operand of the comparison (the second will be @code{(const_int 0)}).
-@c 
+@cindex @code{sync_compare_and_swap@var{mode}} instruction pattern
+@item @samp{sync_compare_and_swap@var{mode}}
+
+该指令模式，如果被定义，产生一个比较并交换的原子操作代码。操作数1为执行原子操作的内存。操作数2为，与当前内存位置的内容进行比较的“旧”值。操作数3为，如果比较成功存放在内存中的“新”值。如果比较成功，其当然为对操作数2的一个复制。
+
+该指令模式必须同时显示出操作数0和1被修改。
+
+该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
+
+@cindex @code{sync_compare_and_swap_cc@var{mode}} instruction pattern
+@item @samp{sync_compare_and_swap_cc@var{mode}}
+该指令模式与@code{sync_compare_and_swap@var{mode}}类似，除了其比较和交换的比较部分就好像是通过@code{cmp@var{m}}来发出的。该比较只与@code{EQ}和@code{NE}分支跳转，以及@code{setcc}操作一起使用。
+
+一些目标机确实是通过状态标记来暴露比较并交换操作的成功或失败。理想的，我们不需要一个单独的命名指令模式来利用该特性，但是合并过程无法处理具有多个set的指令模式，而这正是定义@code{sync_compare_and_swap@var{mode}}所需要的。
+
 @c @cindex @code{sync_add@var{mode}} instruction pattern
 @c @cindex @code{sync_sub@var{mode}} instruction pattern
 @c @cindex @code{sync_ior@var{mode}} instruction pattern
@@ -7384,7 +8385,23 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c 
 @c If these patterns are not defined, the operation will be constructed
 @c from a compare-and-swap operation, if defined.
-@c 
+@cindex @code{sync_add@var{mode}} instruction pattern
+@cindex @code{sync_sub@var{mode}} instruction pattern
+@cindex @code{sync_ior@var{mode}} instruction pattern
+@cindex @code{sync_and@var{mode}} instruction pattern
+@cindex @code{sync_xor@var{mode}} instruction pattern
+@cindex @code{sync_nand@var{mode}} instruction pattern
+@item @samp{sync_add@var{mode}}, @samp{sync_sub@var{mode}}
+@itemx @samp{sync_ior@var{mode}}, @samp{sync_and@var{mode}}
+@itemx @samp{sync_xor@var{mode}}, @samp{sync_nand@var{mode}}
+该指令模式产生一个在内存上进行原子操作的代码。操作数0为进行原子操作的内存。操作数1为二元操作符的第二个操作数。
+
+``nand''运算为@code{~op0 & op1}。
+
+该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
+
+如果这些指令模式没有被定义，则操作将通过一个比较并交换操作，如果定义，来构建。
+
 @c @cindex @code{sync_old_add@var{mode}} instruction pattern
 @c @cindex @code{sync_old_sub@var{mode}} instruction pattern
 @c @cindex @code{sync_old_ior@var{mode}} instruction pattern
@@ -7408,7 +8425,21 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c 
 @c If these patterns are not defined, the operation will be constructed
 @c from a compare-and-swap operation, if defined.
-@c 
+@cindex @code{sync_old_add@var{mode}} instruction pattern
+@cindex @code{sync_old_sub@var{mode}} instruction pattern
+@cindex @code{sync_old_ior@var{mode}} instruction pattern
+@cindex @code{sync_old_and@var{mode}} instruction pattern
+@cindex @code{sync_old_xor@var{mode}} instruction pattern
+@cindex @code{sync_old_nand@var{mode}} instruction pattern
+@item @samp{sync_old_add@var{mode}}, @samp{sync_old_sub@var{mode}}
+@itemx @samp{sync_old_ior@var{mode}}, @samp{sync_old_and@var{mode}}
+@itemx @samp{sync_old_xor@var{mode}}, @samp{sync_old_nand@var{mode}}
+这些指令模式产生在内存上的原子操作代码，并且返回操作之前内存中的值。操作数0为结果值，操作数1为执行原子操作的内存，操作数2为二元操作的第二个操作数。
+
+该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
+
+如果这些指令模式没有被定义，则操作将通过一个比较并交换操作，如果定义，来构建。
+
 @c @cindex @code{sync_new_add@var{mode}} instruction pattern
 @c @cindex @code{sync_new_sub@var{mode}} instruction pattern
 @c @cindex @code{sync_new_ior@var{mode}} instruction pattern
@@ -7447,7 +8478,29 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c 
 @c If this pattern is not defined, the operation will be constructed from
 @c a compare-and-swap operation, if defined.
-@c 
+@cindex @code{sync_new_add@var{mode}} instruction pattern
+@cindex @code{sync_new_sub@var{mode}} instruction pattern
+@cindex @code{sync_new_ior@var{mode}} instruction pattern
+@cindex @code{sync_new_and@var{mode}} instruction pattern
+@cindex @code{sync_new_xor@var{mode}} instruction pattern
+@cindex @code{sync_new_nand@var{mode}} instruction pattern
+@item @samp{sync_new_add@var{mode}}, @samp{sync_new_sub@var{mode}}
+@itemx @samp{sync_new_ior@var{mode}}, @samp{sync_new_and@var{mode}}
+@itemx @samp{sync_new_xor@var{mode}}, @samp{sync_new_nand@var{mode}}
+这些指令模式类似于@code{sync_old_@var{op}}所对应的指令模式，除了它们返回操作之后内存位置中存在的值，而不是操作之前。
+
+@cindex @code{sync_lock_test_and_set@var{mode}} instruction pattern
+@item @samp{sync_lock_test_and_set@var{mode}}
+该指令模式根据目标机的能力，可以接受两种形式。两种情况下，操作数0为结果操作数，操作数1为执行原子操作的内存，操作数2为在锁中设置的值。
+
+理想的情况下，该操作为一个原子交换操作，内存操作数中之前的值被复制到结果操作数中，值操作数被保存在内存操作数中。
+
+对于能力差些的目标机，任何不为常量1的值操作数，将使用@code{FAIL}进行拒绝。这种情况下，目标机可以使用一个原子的测试并置位操作。结果操作数应该包含1，如果该位在之前被设置，或者为0，如果该位在之前被清空。内存操作数的真实内容由实现来定义。
+
+该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
+
+如果这些指令模式没有被定义，则操作将通过一个比较并交换操作，如果定义，来构建。
+
 @c @cindex @code{sync_lock_release@var{mode}} instruction pattern
 @c @item @samp{sync_lock_release@var{mode}}
 @c 
@@ -7477,7 +8530,16 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c having clobbered it.
 @c 
 @c If this pattern is not defined, then a plain move pattern is generated.
-@c 
+@cindex @code{sync_lock_release@var{mode}} instruction pattern
+@item @samp{sync_lock_release@var{mode}}
+该指令模式，如果被定义，释放由@code{sync_lock_test_and_set@var{mode}}设置的锁。操作数0为包含锁的内存；操作数1为存放在锁中的值。
+
+如果目标机没有实现@code{sync_lock_test_and_set@var{mode}}的完整语义，则任何不是常量0的值操作数将使用@code{FAIL}来拒绝，内存操作数的真实内容由实现来定义。
+
+该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
+
+如果这些指令模式没有被定义，则会产生一个@code{memory_barrier}指令模式，紧跟一个将值存储到内存操作数的操作。
+
 @c @cindex @code{stack_protect_test} instruction pattern
 @c @item @samp{stack_protect_test}
 @c 
@@ -7488,7 +8550,18 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c 
 @c If this pattern is not defined, then a plain compare pattern and
 @c conditional branch pattern is used.
-@c 
+@cindex @code{stack_protect_set} instruction pattern
+@item @samp{stack_protect_set}
+该指令模式，如果被定义，将内存操作数1中的@code{Pmode}值移送到内存操作数0中，并在之后不将该值留在寄存器中。这避免在某处泄露该值，从而使得攻击者用来重写栈保护槽。
+
+如果该指令模式没有被定义，则生成一个普通的move指令模式。
+
+@cindex @code{stack_protect_test} instruction pattern
+@item @samp{stack_protect_test}
+该指令模式，如果被定义，比较内存操作数1和内存操作数0中的@code{Pmode}值，在之后不将该值留在寄存器中，并且如果值不等，则分支跳转到操作数2。
+
+如果该指令模式没有被定义，则使用一个普通的比较和条件分支指令模式。
+
 @c @cindex @code{clear_cache} instruction pattern
 @c @item @samp{clear_cache}
 @c 
@@ -7502,6 +8575,16 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @end table
 @c 
 @c @end ifset
+@cindex @code{clear_cache} instruction pattern
+@item @samp{clear_cache}
+该指令模式，如果被定义，刷新一个内存区域的缓存。该区域的界限由操作数0（包含）和操作数1（不包含）中的Pmode指针界定。
+
+如果该指令模式没有被定义，则使用对库函数@code{__clear_cache}的一个调用。
+
+@end table
+
+@end ifset
+
 @c @c Each of the following nodes are wrapped in separate
 @c @c "@ifset INTERNALS" to work around memory limits for the default
 @c @c configuration in older tetex distributions.  Known to not work:
@@ -7511,7 +8594,16 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @section When the Order of Patterns Matters
 @c @cindex Pattern Ordering
 @c @cindex Ordering of Patterns
-@c 
+@c Each of the following nodes are wrapped in separate
+@c "@ifset INTERNALS" to work around memory limits for the default
+@c configuration in older tetex distributions.  Known to not work:
+@c tetex-1.0.7, known to work: tetex-2.0.2.
+@ifset INTERNALS
+@node 指令模式顺序
+@section 指令模式的顺序问题
+@cindex Pattern Ordering
+@cindex Ordering of Patterns
+
 @c Sometimes an insn can match more than one instruction pattern.  Then the
 @c pattern that appears first in the machine description is the one used.
 @c Therefore, more specific patterns (patterns that will match fewer things)
@@ -7529,14 +8621,32 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c Instead of using this pattern ordering it would be possible to make the
 @c pattern for convert-a-byte smart enough to deal properly with any
 @c constant value.
-@c 
+有时一条insn可以匹配不止一个指令模式。
+则在机器描述中首先出现的指令模式将被使用。因此，
+更加详细的指令模式（匹配更少事物的）和更快的指令
+（在匹配时将会产生更好的代码）将通常放在描述中的前面。
+
+有些情况下，指令模式的顺序效果可以用于隐藏无效的指令模式。
+例如，68000有一条将全字转换为浮点的指令，和一条将字节转换为浮点的指令。
+则将整数转换为浮点的指令将两者都可以匹配。
+我们将转换全字的指令模式放在前面，从而确保使用前一种方式。
+（否则将可能产生一个大的整数，以作为单个字节的立即数，这样可能无法工作）。
+除了使用该指令模式顺序，还可能将转换字节的指令模式作的更加巧妙些，
+以能够合适的处理任何常数值。
+
 @c @end ifset
 @c @ifset INTERNALS
 @c @node Dependent Patterns
 @c @section Interdependence of Patterns
 @c @cindex Dependent Patterns
 @c @cindex Interdependence of Patterns
-@c 
+@end ifset
+@ifset INTERNALS
+@node 依赖指令模式
+@section 指令模式的相互依赖性
+@cindex Dependent Patterns
+@cindex Interdependence of Patterns
+
 @c In some cases machines support instructions identical except for the
 @c machine mode of one or more operands.  For example, there may be
 @c ``sign-extend halfword'' and ``sign-extend byte'' instructions whose
@@ -7551,6 +8661,18 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c @end smallexample
 @c 
 @c @noindent
+
+每个机器描述必须针对每个名为@samp{b@var{cond}}的条件分支，
+具有一个命名的指令模式。识别模板必须总是具有如下形式
+
+@smallexample
+(set (pc)
+     (if_then_else (@var{cond} (cc0) (const_int 0))
+                   (label_ref (match_operand 0 "" ""))
+                   (pc)))
+@end smallexample
+
+@noindent
 @c Constant integers do not specify a machine mode, so an instruction to
 @c extend a constant value could match either pattern.  The pattern it
 @c actually will match is the one that appears first in the file.  For correct
@@ -7569,14 +8691,72 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c instructions.  Instead, they should be generated from the same pattern
 @c that supports register-register add insns by examining the operands and
 @c generating the appropriate machine instruction.
-@c 
+另外，每个机器描述必须针对每个可能的逆转条件分支具有一个匿名的指令模式。
+它们的模板的形式为
+
+@smallexample
+(set (pc)
+     (if_then_else (@var{cond} (cc0) (const_int 0))
+                   (pc)
+                   (label_ref (match_operand 0 "" ""))))
+@end smallexample
+
+@noindent
+之所以需要这些，是因为jump优化会将直接条件（direct-conditional）分支，
+转换为逆转条件（reverse-conditional）分支。
+
+使用@code{match_operator}结构来减少必须为分支指定的指令模式的编号
+通常是很方便的。例如，
+
+@smallexample
+(define_insn ""
+  [(set (pc)
+        (if_then_else (match_operator 0 "comparison_operator"
+                                      [(cc0) (const_int 0)])
+                      (pc)
+                      (label_ref (match_operand 1 "" ""))))]
+  "@var{condition}"
+  "@dots{}")
+@end smallexample
+
+有些情况，机器支持除了一个或多个操作数的机器模式不同的相同指令。
+例如，可以有指令“sign-extend halfword” 和“sign-extend byte”，其指令模式为
+
+@smallexample
+(set (match_operand:SI 0 @dots{})
+     (extend:SI (match_operand:HI 1 @dots{})))
+
+(set (match_operand:SI 0 @dots{})
+     (extend:SI (match_operand:QI 1 @dots{})))
+@end smallexample
+
+@noindent
+常整数不指定机器模式，所以扩展常量值的指令可以两个指令模式都匹配。
+实际匹配的指令模式将为文件中首先出现的指令模式。为了获得正确的结果，
+其必须为尽可能宽的模式（这里为@code{HImode}）。
+如果指令模式匹配@code{QImode}，则当常量值实际不适合该模式时，结果将不正确。
+
+像这样扩展常数的指令很少被生成，因为它们会被优化掉，
+不过在不优化的编译中确实偶尔会出现。
+
+如果在指令模式中constraint允许为一个常量，reload过程可以用constraint允许的常量来替换寄存器。
+类似的对于内存引用。由于存在这种替换，
+所以不要为递增和递减指令提供单独的指令模式。
+替换的，它们应该由同一个指令模式生成。
+
 @c @end ifset
 @c @ifset INTERNALS
 @c @node Jump Patterns
 @c @section Defining Jump Instruction Patterns
 @c @cindex jump instruction patterns
 @c @cindex defining jump instruction patterns
-@c 
+@end ifset
+@ifset INTERNALS
+@node 跳转指令模式
+@section 定义跳转指令模式
+@cindex jump instruction patterns
+@cindex defining jump instruction patterns
+
 @c GCC does not assume anything about how the machine realizes jumps.
 @c The machine description should define a single pattern, usually
 @c a @code{define_expand}, which expands to all the required insns.
@@ -7609,7 +8789,73 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c signed and unsigned flavors) as in the x86 or SPARC, and the case where
 @c there are distinct signed and unsigned compare instructions and only
 @c one set of conditional branch instructions as in the PowerPC.
-@c 
+对于大多数机器，GCC假设该机器具有一个条件码。
+比较insn根据给定操作数的有符号和无符号比较的结果来设定条件码。
+单独的分支insn测试条件代码，并根据它的值进行分支跳转。
+分支insn分为不同的有符号和无符号的。
+许多通用机器，像VAX，68000和32000都按这种方式工作。
+
+一些机器具有截然不同的有符号和无符号比较指令，并且只有一套条件分支指令。
+处理这些机器最容易的方法为保持它们不变，直到最后写汇编代码的阶段。
+这时，当输出比较指令的代码时，查看一下使用@code{next_cc0_user (insn)}的分支。
+（）如果RTL得出其为一个无符号分支，则输出一个无符号比较；
+否则输出一个有符号比较。当分支本身被输出时，你可以将有符号和无符号分支视为等同的。
+
+之所以可以这样做，是因为GCC总是生成一对连续的RTL insn，
+可能由@code{note} insn分隔，一个用于设置条件代码，一个用于测试，
+并保持这对insn不被改变，直到最后。
+
+要使用该技术，你必须定义机器描述宏@code{NOTICE_UPDATE_CC}，
+来做@code{CC_STATUS_INIT}；换句话说，没有多余的比较指令。
+
+一些机器具有比较分支指令，并且没有条件码。对它们可以使用类似的技术。
+当该要“输出”一个比较指令时，将它的操作数记录在两个静态变量中。
+当输出随后的条件码分支指令时，实际上输出了一个使用已记录的操作数的比较分支指令。
+
+它还用于定义比较分支指令的指令模式。在优化编译中，
+比较和分支指令对将根据这些指令模式被组合。但是如果优化不要求的时候，
+这是不会发生的。所以你必须针对你定义的任何特定指令模式额外使用上面的一种解决方式。
+
+在许多RISC机器上，大多数指令不影响条件码，并且甚至会没有一个单独的条件码寄存器。
+在这些机器上，限制条件码的定义和使用为邻近的insn是不必要的，
+并且还会阻止一些重要的优化。例如，在IBM RS/6000上，对于分支将会有一个延迟，
+除非条件码寄存器在条件分支的三条指令前被设置。
+如果不允许将条件码寄存器的定义和使用分开，则指令调度器将无法执行该优化。
+
+在这些机器上，不要使用@code{(cc0)}，而是使用寄存器来表示条件代码。
+如果该机器有一个特定的条件代码寄存器，则使用硬件寄存器。
+如果条件代码或者比较结果可以被放在任意的通用寄存器中，
+或者有多个条件寄存器，则使用伪寄存器。
+
+@findex prev_cc0_setter
+@findex next_cc0_user
+在一些机器上，所生成的分支指令类型可以依赖于条件代码所产生的方式；
+例如，在68k和SPARC上，直接从加法或减法指令来设置条件代码，
+这并不像测试指令那样，不会清除溢出位，
+所以不同的分支指令必须用于某些条件分支。对于使用@code{(cc0)}的机器，
+对条件代码的设置和使用必须是邻近的（只有@code{note} insn分隔），
+以允许在@code{cc_status}中的标记被使用。（参见条件码）并且，
+比较分支insn可以互相定位，通过使用函数@code{prev_cc0_setter}和@code{next_cc0_user}。
+
+但是，这在不使用@code{(cc0)}的机器上是不一样的。
+在这些机器上，并不会假设比较分支指令是邻近的，上面的方法不可用。
+替换的，我们使用条件码寄存器的机器模式来记录条件码寄存器的不同格式。
+
+用于存储条件码值的寄存器应该具有@code{MODE_CC}类别的一个机器模式。
+通常，其为@code{CCmode}。如果需要额外的机器模式
+（正如上面提到的SPARC中加法例子），
+则在@file{@var{machine}-modes.def}中定义它们（参见条件码）。
+还要定义@code{SELECT_CC_MODE}来选择给定比较操作数的机器模式。
+
+如果知道在RTL生成过程中，将需要不同的机器模式
+（例如，如果机器具有单独的比较指令，针对有符号和无符号），
+则它们可以在那个时候被指定。
+
+如果是在指令合成时需要不同的机器模式，
+则宏@code{SELECT_CC_MODE}用来确定哪个机器模式作为比较结果。
+指令模式应该使用该模式来书写。要支持上面讨论的SPARC的加法，
+我们具有指令模式
+
 @c @end ifset
 @c @ifset INTERNALS
 @c @node Looping Patterns
@@ -7641,7 +8887,32 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c positive.  This is needed if the target performs a signed loop
 @c termination test.  For example, the 68000 uses a pattern similar to the
 @c following for its @code{dbra} instruction:
-@c 
+@end ifset
+@ifset INTERNALS
+@node 循环指令模式
+@section 定义循环指令模式
+@cindex looping instruction patterns
+@cindex defining looping instruction patterns
+
+一些机器具有特定的跳转指令，可以使循环更为有效。
+常见的例子为68000的@samp{dbra}指令，其执行一个寄存器的递减，
+并且如果结果大于0，则进行一个分支。其它机器，特别是数字信号处理器（DSP），
+具有特定的块重复指令，以提供低成本的循环支持。
+例如TI TMS320C3x/C4x DSP具有一个块重复指令，
+其加载特定的寄存器来标记一个循环的顶部和底部，并计算循环迭代的次数。
+这就避免了对@samp{dbra}这样的指令的取指和执行的需要，
+并避免了和跳转相关的流水线阻塞。
+
+GCC具有三个特定的命名指令模式，来支持低开销循环。
+它们为@samp{decrement_and_branch_until_zero}, @samp{doloop_begin}和@samp{doloop_end}。
+第一个指令模式@samp{decrement_and_branch_until_zero}，在RTL生成过程中没有被产生，
+但可以在指令合并阶段被产生。这需要循环优化器的帮助，
+使用在strength reduction过程中所搜集的信息，来将一个循环转换为向下计数到0。
+一些target还要求循环优化器增加一个@code{REG_NONNEG}注解，来指示迭代计数总是为正的。
+这在target执行一个有符号循环终止测试的时候被需要。例如，
+68000为它的@code{dbra}指令使用了下面类似的指令模式：
+
+
 @c @smallexample
 @c @group
 @c (define_insn "decrement_and_branch_until_zero"
@@ -7659,7 +8930,24 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c   "@dots{}")
 @c @end group
 @c @end smallexample
-@c 
+@smallexample
+@group
+(define_insn "decrement_and_branch_until_zero"
+  [(set (pc)
+        (if_then_else
+          (ge (plus:SI (match_operand:SI 0 "general_operand" "+d*am")
+                       (const_int -1))
+              (const_int 0))
+          (label_ref (match_operand 1 "" ""))
+          (pc)))
+   (set (match_dup 0)
+        (plus:SI (match_dup 0)
+                 (const_int -1)))]
+  "find_reg_note (insn, REG_NONNEG, 0)"
+  "@dots{}")
+@end group
+@end smallexample
+
 @c Note that since the insn is both a jump insn and has an output, it must
 @c deal with its own reloads, hence the `m' constraints.  Also note that
 @c since this insn is generated by the instruction combination phase
@@ -7684,7 +8972,28 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c   "@dots{}")
 @c @end group
 @c @end smallexample
-@c 
+注意，由于该insn为jump insn并且具有一个输出，所以其必须处理自己的重载，
+因此要使用`m' constraint。还要注意，由于该insn是在指令组合过程中，
+通过将两个连序insn组合成一个隐式并行的insn而生成的，所以迭代计数器需要。
+注意下面类似的指令模式将不会被编译器匹配。
+
+@smallexample
+@group
+(define_insn "decrement_and_branch_until_zero"
+  [(set (pc)
+        (if_then_else
+          (ge (match_operand:SI 0 "general_operand" "+d*am")
+              (const_int 1))
+          (label_ref (match_operand 1 "" ""))
+          (pc)))
+   (set (match_dup 0)
+        (plus:SI (match_dup 0)
+                 (const_int -1)))]
+  "find_reg_note (insn, REG_NONNEG, 0)"
+  "@dots{}")
+@end group
+@end smallexample
+
 @c The other two special looping patterns, @samp{doloop_begin} and
 @c @samp{doloop_end}, are emitted by the loop optimizer for certain
 @c well-behaved loops with a finite number of loop iterations using
@@ -7716,7 +9025,28 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @c be derived from it), however, in many cases the loop induction variable
 @c may become redundant and removed by the flow pass.
 @c 
-@c 
+另外两个特定的循环指令模式@samp{doloop_begin}和@samp{doloop_end}，
+由循环优化器为一些具有有限循环迭代，
+使用强度消减所搜集的信息的良好行为的循环所生成的。
+
+@samp{doloop_end}指令模式描述了实际的循环指令（或者隐式的循环操作），
+@samp{doloop_begin}指令模式为一个可选的配套指令模式，
+可以用于一些低开销循环指令的初始化需要。
+
+注意有些机器需要在循环顶部生成实际的循环指令（例如TMS320C3x/C4x DSP）。
+在循环顶部生成真正的RTL循环指令，会对流分析造成问题。所以，替换的，
+一个假@samp{doloop} insn在循环的结尾处被生成。
+机器相关的reorg过程会检查该@samp{doloop} insn的存在，
+然后向后搜寻插入了真正循环insn（假设在循环中没有会造成问题的指令）的循环顶部。
+任何额外的标号都可以在该点被生成。另外，
+如果所需要的特定迭代技术器寄存器没有被分配，
+则该机器相关的reorg过程能够生成一个传统的比较跳转指令对。
+
+指令模式@samp{decrement_and_branch_until_zero}和@samp{doloop_end}的本质区别为，
+循环优化器会为后者分配一个额外的伪寄存器作为迭代计数器。
+该伪寄存器不能用在循环中（即，通用的规约变量不能由此生成），但是，
+许多情况下循环规约变量可能变成冗余的并且被后续的过程移除掉。
+
 @c @end ifset
 @c @ifset INTERNALS
 @c @node Insn Canonicalizations
