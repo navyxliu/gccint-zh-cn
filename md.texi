@@ -329,13 +329,15 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c The RTL template is used to define which insns match the particular pattern
 @c and how to find their operands.  For named patterns, the RTL template also
 @c says how to construct an insn from specified operands.
-@c 
+RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们的操作数。对于命名的模 式，RTL模板还说明了如何根据特定的操作数来构建一个insn。
+
 @c Construction involves substituting specified operands into a copy of the
 @c template.  Matching involves determining the values that serve as the
 @c operands in the insn being matched.  Both of these activities are
 @c controlled by special expression types that direct matching and
 @c substitution of the operands.
-@c 
+构建insn涉及到替换指定操作数到模板。匹配insn涉及到测定被匹配insn的操作数值。这 些匹配和替换操作数的行为都是由专门的表达式类型来控制。
+
 @c @table @code
 @c @findex match_operand
 @c @item (match_operand:@var{m} @var{n} @var{predicate} @var{constraint})
@@ -345,7 +347,13 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c appears at this position in the insn will be taken as operand
 @c number @var{n}; but it must satisfy @var{predicate} or this instruction
 @c pattern will not match at all.
-@c 
+@table @code
+@findex match_operand
+@item (match_operand:@var{m} @var{n} @var{predicate} @var{constraint})
+该表达式用来代表insn中的第 @var{n} 个操作数。当构建insn时，操作数编号 @var{n} 将
+在此处被替换。当匹配insn时，凡是在insn中该位置出现的将被当作操作数编号 @var{n}；
+但是其必须满足 @var{predicate}，否则该指令模式将根本不匹配
+
 @c Operand numbers must be chosen consecutively counting from zero in
 @c each instruction pattern.  There may be only one @code{match_operand}
 @c expression in the pattern for each operand number.  Usually operands
@@ -353,7 +361,12 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c expressions.  In the case of a @code{define_expand}, any operand numbers
 @c used only in @code{match_dup} expressions have higher values than all
 @c other operand numbers.
-@c 
+每个指令模式中的操作数编号必须从0开始连续的选择。在指令模式中，可以对每个操作数
+编号只是用一个 @code{match_operand} 表达式。 通常操作数按照在 
+@code{match_operand} 表达式中出现的顺序被编号。对于 @code{define_expand}，任何
+使用的操作数编号，只有在 @code{match_dup} 表达式中才会具有比其它操作数编号更高
+的值。
+
 @c @var{predicate} is a string that is the name of a function that
 @c accepts two arguments, an expression and a machine mode.
 @c @xref{Predicates}.  During matching, the function will be called with
@@ -364,55 +377,76 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c @var{predicate} may be an empty string; then it means no test is to be
 @c done on the operand, so anything which occurs in this position is
 @c valid.
-@c 
+@var{predicate} 为一个字符串，为一个函数的名字，其接受两个参数，一个表达式和一个 机器模式。@pxref{断言}。在匹配过程中，函数将会被调用，使用假定的操作数作为 表达式并且 @var{m} 作为机器模式参数（如果 @var{m} 没有被指定，则使用 @code{VOIDmode}，这通常会使得 @var{predicate} 可以接受任何机器模式）。如果其返 回0，则该指令模式匹配失败。@var{predicate} 可以为一个空字符串；这意味着不对操作 数作测试，这样出现在该位置的任何都是有效的。
+
 @c Most of the time, @var{predicate} will reject modes other than @var{m}---but
 @c not always.  For example, the predicate @code{address_operand} uses
 @c @var{m} as the mode of memory ref that the address should be valid for.
 @c Many predicates accept @code{const_int} nodes even though their mode is
 @c @code{VOIDmode}.
-@c 
+大多时候，@var{predicate} 将会拒绝 @var{m} 之外的机器模式——但并不总是这样。例 如，predicate @code{address_operand} 使用 @var{m} 作为内存引用的机器模式。许多predicate 接受 @code{const_int} 节点，即使它们的机器模式为 @code{VOIDmode}。
+
 @c @var{constraint} controls reloading and the choice of the best register
 @c class to use for a value, as explained later (@pxref{Constraints}).
 @c If the constraint would be an empty string, it can be omitted.
-@c 
+@var{constraint} 控制重载以及针对一个值选择最好的寄存器类别来使用，将在后面解释 （@pxref{约束}）。如果constraint为空字符串，则可以忽略掉。
+
 @c People are often unclear on the difference between the constraint and the
 @c predicate.  The predicate helps decide whether a given insn matches the
 @c pattern.  The constraint plays no role in this decision; instead, it
 @c controls various decisions in the case of an insn which does match.
-@c 
+人们经常弄不清楚constraint和predicate的区别。predicate帮助决定一个给定的insn是否匹配指令模式。constraint在该决定中不发挥作用；替代的，其控制已经匹配的insn的各种决定。
+
 @c @findex match_scratch
 @c @item (match_scratch:@var{m} @var{n} @var{constraint})
 @c This expression is also a placeholder for operand number @var{n}
 @c and indicates that operand must be a @code{scratch} or @code{reg}
 @c expression.
-@c 
+@findex match_scratch
+@item (match_scratch:@var{m} @var{n} @var{constraint})
+该表达式也是操作数编号 @var{n} 的占位符，并且指示操作数必须为一个 @code{scratch}
+或者 @code{reg} 表达式。
+
 @c When matching patterns, this is equivalent to
-@c 
-@c @smallexample
-@c (match_operand:@var{m} @var{n} "scratch_operand" @var{pred})
-@c @end smallexample
-@c 
+当在匹配指令模式时，其相当于
+
+@smallexample
+(match_operand:@var{m} @var{n} "scratch_operand" @var{pred})
+@end smallexample
+
 @c but, when generating RTL, it produces a (@code{scratch}:@var{m})
 @c expression.
-@c 
+但是，当在生成RTL时，其产生一个(@code{scratch}:@var{m})表达式。
+
 @c If the last few expressions in a @code{parallel} are @code{clobber}
 @c expressions whose operands are either a hard register or
 @c @code{match_scratch}, the combiner can add or delete them when
 @c necessary.  @xref{Side Effects}.
-@c 
+如果在一个 @code{parallel} 中的最后几个表达式为 @code{clobber} 表达式，其操作数
+为一个硬寄存器或者 @code{match_scratch}，则组合器可以在需要的时候增加或删除它
+们。@pxref{副作用}。
+
 @c @findex match_dup
 @c @item (match_dup @var{n})
 @c This expression is also a placeholder for operand number @var{n}.
 @c It is used when the operand needs to appear more than once in the
 @c insn.
-@c 
+@findex match_dup
+@item (match_dup @var{n})
+该表达式也为操作数编号 @var{n} 的占位符。其用于当操作数需要在insn中出现多次的
+情况。 
+
 @c In construction, @code{match_dup} acts just like @code{match_operand}:
 @c the operand is substituted into the insn being constructed.  But in
 @c matching, @code{match_dup} behaves differently.  It assumes that operand
 @c number @var{n} has already been determined by a @code{match_operand}
 @c appearing earlier in the recognition template, and it matches only an
 @c identical-looking expression.
-@c 
+在构建过程中，@code{match_dup} 的作用就跟 @code{match_operand} 一样。操作数被
+替换到正在被构建的insn中。但是在匹配时，@code{match_dup} 的行为就有所不同了。
+其假设操作数编号 @var{n} 已经由在识别模板中之前出现的 @code{match_operand} 确
+定了，其只匹配相同的表达式。
+
 @c Note that @code{match_dup} should not be used to tell the compiler that
 @c a particular register is being used for two operands (example:
 @c @code{add} that adds one register to another; the second register is
@@ -422,81 +456,117 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c that computes both a quotient and a remainder, where the opcode takes
 @c two input operands but the RTL template has to refer to each of those
 @c twice; once for the quotient pattern and once for the remainder pattern.
-@c 
+注意 @code{match_dup} 不要用来告诉编译器特定寄存器被用于两个操作数（例如：
+@code{add} 将一个寄存器加到另一个之上；第二个寄存器即为输入操作数，同样也为输
+出操作数）。可以为此使用匹配constraint（@pxref{简单约束}）。@code{match_dup}
+是用于一个操作数在模板中的两个地方被使用的情况，例如一条指令同时计算商和余数，
+其中操作码接受两个输入操作数，但是RTL模板不得不引用它们两次；一次用于求商指令
+模式，一次用于求余数指令模式。
+
 @c @findex match_operator
 @c @item (match_operator:@var{m} @var{n} @var{predicate} [@var{operands}@dots{}])
 @c This pattern is a kind of placeholder for a variable RTL expression
 @c code.
-@c 
+@findex match_operator
+@item (match_operator:@var{m} @var{n} @var{predicate} [@var{operands}@dots{}])
+该指令模式为一个可变RTL表达式代码的一种占位符。
+
 @c When constructing an insn, it stands for an RTL expression whose
 @c expression code is taken from that of operand @var{n}, and whose
 @c operands are constructed from the patterns @var{operands}.
-@c 
+当构造一个insn时，其代表RTL表达式，其表达式代码取自操作数 @var{n}，并且其操作
+数从指令模式 @var{operands} 中构造。
+
 @c When matching an expression, it matches an expression if the function
 @c @var{predicate} returns nonzero on that expression @emph{and} the
 @c patterns @var{operands} match the operands of the expression.
-@c 
+当匹配一个表达式时，其匹配一个表达式，如果函数 @var{predicate} 对于该表达式返
+回非零，@emph{并且} 指令模式 @var{operands} 匹配表达式的操作数。
+
 @c Suppose that the function @code{commutative_operator} is defined as
 @c follows, to match any expression whose operator is one of the
 @c commutative arithmetic operators of RTL and whose mode is @var{mode}:
-@c 
-@c @smallexample
-@c int
-@c commutative_integer_operator (x, mode)
-@c      rtx x;
-@c      enum machine_mode mode;
-@c @{
-@c   enum rtx_code code = GET_CODE (x);
-@c   if (GET_MODE (x) != mode)
-@c     return 0;
-@c   return (GET_RTX_CLASS (code) == RTX_COMM_ARITH
-@c           || code == EQ || code == NE);
-@c @}
-@c @end smallexample
-@c 
+假设函数 @code{commutative_operator} 被如下定义，来匹配任何表达式，其操作符为
+RTL中可交换的算术操作符，并且其机器模式为 @var{mode}：
+
+@smallexample
+int
+commutative_integer_operator (x, mode)
+     rtx x;
+     enum machine_mode mode;
+@{
+  enum rtx_code code = GET_CODE (x);
+  if (GET_MODE (x) != mode)
+    return 0;
+  return (GET_RTX_CLASS (code) == RTX_COMM_ARITH
+          || code == EQ || code == NE);
+@}
+@end smallexample
+
 @c Then the following pattern will match any RTL expression consisting
 @c of a commutative operator applied to two general operands:
-@c 
-@c @smallexample
-@c (match_operator:SI 3 "commutative_operator"
-@c   [(match_operand:SI 1 "general_operand" "g")
-@c    (match_operand:SI 2 "general_operand" "g")])
-@c @end smallexample
-@c 
+那么下列指令模式将匹配任何RTL表达式，其由一个可交换操作符和两个通用操作数组成：
+
+@smallexample
+(match_operator:SI 3 "commutative_operator"
+  [(match_operand:SI 1 "general_operand" "g")
+   (match_operand:SI 2 "general_operand" "g")])
+@end smallexample
+
 @c Here the vector @code{[@var{operands}@dots{}]} contains two patterns
 @c because the expressions to be matched all contain two operands.
-@c 
+这里的向量 @code{[@var{operands}@dots{}]} 包含了两个指令模式，因为要匹配的表达
+式都是包含两个操作数。
+
 @c When this pattern does match, the two operands of the commutative
 @c operator are recorded as operands 1 and 2 of the insn.  (This is done
 @c by the two instances of @code{match_operand}.)  Operand 3 of the insn
 @c will be the entire commutative expression: use @code{GET_CODE
 @c (operands[3])} to see which commutative operator was used.
-@c 
+当该指令模式确实匹配时，可交换操作符的两个操作数被记录为insn的操作数1和2。（这
+由 @code{match_operand} 的两个实例完成）。insn的操作数3将为整个可交换表达式：使
+用 @code{GET_CODE (operands[3])} 来查看使用了哪个可交换操作符。
+
 @c The machine mode @var{m} of @code{match_operator} works like that of
 @c @code{match_operand}: it is passed as the second argument to the
 @c predicate function, and that function is solely responsible for
 @c deciding whether the expression to be matched ``has'' that mode.
-@c 
+@code{match_operator} 的机器模式 @var{m} 的作用与 @code{match_operand} 的类似：
+其被作为第二个参数传递给predicate函数，并且函数专门负责决定被匹配的表达式是否具有那
+个机器模式。
+
 @c When constructing an insn, argument 3 of the gen-function will specify
 @c the operation (i.e.@: the expression code) for the expression to be
 @c made.  It should be an RTL expression, whose expression code is copied
 @c into a new expression whose operands are arguments 1 and 2 of the
 @c gen-function.  The subexpressions of argument 3 are not used;
 @c only its expression code matters.
-@c 
+当构造insn时，gen-function 的参数3将会指定要构造的表达式的操作（即，表达式代
+码）。其应该为一个RTL表达式，其表达式代码被复制到一个新的表达式中，新表达式的
+操作数为 gen-function的参数1和2。参数3的子表达式不被使用；只与它的表达式代码
+有关。
+
 @c When @code{match_operator} is used in a pattern for matching an insn,
 @c it usually best if the operand number of the @code{match_operator}
 @c is higher than that of the actual operands of the insn.  This improves
 @c register allocation because the register allocator often looks at
 @c operands 1 and 2 of insns to see if it can do register tying.
-@c 
+当 @code{match_operator} 被用于指令模式中来匹配insn时，通常最好让
+@code{match_operator} 的操作数编号高于insn的实际操作数。这将提高寄存器分配，
+因为寄存器分配者通常查看insn的操作数1和2，来看是否它可以做寄存器绑定
+（register tying）。
+
 @c There is no way to specify constraints in @code{match_operator}.  The
 @c operand of the insn which corresponds to the @code{match_operator}
 @c never has any constraints because it is never reloaded as a whole.
 @c However, if parts of its @var{operands} are matched by
 @c @code{match_operand} patterns, those parts may have constraints of
 @c their own.
-@c 
+无法指定在 @code{match_operator} 中的constraint。对应于 @code{match_operator} 的
+insn的操作数，不具有任何constraint，因为它从来不作为一个整体被重载。但是，如果它
+的 @var{operands} 的一部分被 @code{match_operand} 指令模式匹配，那些部分可
+以具有它们自己的constraint。
+
 @c @findex match_op_dup
 @c @item (match_op_dup:@var{m} @var{n}[@var{operands}@dots{}])
 @c Like @code{match_dup}, except that it applies to operators instead of
@@ -506,13 +576,23 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c determined by a @code{match_operator} appearing earlier in the
 @c recognition template, and it matches only an identical-looking
 @c expression.
-@c 
+@findex match_op_dup
+@item (match_op_dup:@var{m} @var{n}[@var{operands}@dots{}])
+类似 @code{match_dup}，除了其应用于操作符而不是操作数。当构造insn时，操作数
+编号 @var{n} 将在这一点被替代。但是在匹配时，@code{match_op_dup} 的行为有所
+不同。其假设操作数编号 @var{n} 已经被在识别模板中先前出现的 
+@code{match_operator} 所确定，并且其只匹配identical-looking的表达式。
+
 @c @findex match_parallel
 @c @item (match_parallel @var{n} @var{predicate} [@var{subpat}@dots{}])
 @c This pattern is a placeholder for an insn that consists of a
 @c @code{parallel} expression with a variable number of elements.  This
 @c expression should only appear at the top level of an insn pattern.
-@c 
+@findex match_parallel
+@item (match_parallel @var{n} @var{predicate} [@var{subpat}@dots{}])
+该指令模式为一个insn的占位符，该insn由一个具有可变数目元素的 @code{parallel} 
+表达式组成。该表达式应该只在insn指令模式的顶层出现。
+
 @c When constructing an insn, operand number @var{n} will be substituted at
 @c this point.  When matching an insn, it matches if the body of the insn
 @c is a @code{parallel} expression with at least as many elements as the
@@ -522,55 +602,72 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c @code{parallel} that is the body of the insn.  It is the responsibility
 @c of the predicate to validate elements of the @code{parallel} beyond
 @c those listed in the @code{match_parallel}.
-@c 
+当构造insn时，操作数编号 @var{n} 将在该处被替换。当匹配一个insn时，其当insn
+的主体为一个 @code{parallel} 表达式，其具有至少跟向量 @var{subpat} 表达式同
+样多数目元素，并且函数 @var{predicate} 返回非零时才匹配。predicate负责判定在
+@code{match_parallel} 中的 @code{parallel} 的元素是否有效。
+
 @c A typical use of @code{match_parallel} is to match load and store
 @c multiple expressions, which can contain a variable number of elements
 @c in a @code{parallel}.  For example,
-@c 
-@c @smallexample
-@c (define_insn ""
-@c   [(match_parallel 0 "load_multiple_operation"
-@c      [(set (match_operand:SI 1 "gpc_reg_operand" "=r")
-@c            (match_operand:SI 2 "memory_operand" "m"))
-@c       (use (reg:SI 179))
-@c       (clobber (reg:SI 179))])]
-@c   ""
-@c   "loadm 0,0,%1,%2")
-@c @end smallexample
-@c 
+@code{match_parallel} 的一个典型用法是，匹配加载和存储多个表达式，其可以在
+@code{parallel} 中包含一个可变数目的元素。例如，
+
+@smallexample
+(define_insn ""
+  [(match_parallel 0 "load_multiple_operation"
+     [(set (match_operand:SI 1 "gpc_reg_operand" "=r")
+           (match_operand:SI 2 "memory_operand" "m"))
+      (use (reg:SI 179))
+      (clobber (reg:SI 179))])]
+  ""
+  "loadm 0,0,%1,%2")
+@end smallexample
+
 @c This example comes from @file{a29k.md}.  The function
 @c @code{load_multiple_operation} is defined in @file{a29k.c} and checks
 @c that subsequent elements in the @code{parallel} are the same as the
 @c @code{set} in the pattern, except that they are referencing subsequent
 @c registers and memory locations.
-@c 
+这个例子来自 @file{a29k.md}。函数 @code{load_multiple_operation} 在 
+@file{a29k.c} 中定义，其检查在 @code{parallel} 中的序列元素，是否与在
+指令模式中的 @code{set} 相同，除非它们在引用后续的寄存器和内存位置。
+
 @c An insn that matches this pattern might look like:
-@c 
-@c @smallexample
-@c (parallel
-@c  [(set (reg:SI 20) (mem:SI (reg:SI 100)))
-@c   (use (reg:SI 179))
-@c   (clobber (reg:SI 179))
-@c   (set (reg:SI 21)
-@c        (mem:SI (plus:SI (reg:SI 100)
-@c                         (const_int 4))))
-@c   (set (reg:SI 22)
-@c        (mem:SI (plus:SI (reg:SI 100)
-@c                         (const_int 8))))])
-@c @end smallexample
-@c 
+匹配该指令模式的insn可能看起来像：
+
+@smallexample
+(parallel
+ [(set (reg:SI 20) (mem:SI (reg:SI 100)))
+  (use (reg:SI 179))
+  (clobber (reg:SI 179))
+  (set (reg:SI 21)
+       (mem:SI (plus:SI (reg:SI 100)
+                        (const_int 4))))
+  (set (reg:SI 22)
+       (mem:SI (plus:SI (reg:SI 100)
+                        (const_int 8))))])
+@end smallexample
+ 
 @c @findex match_par_dup
 @c @item (match_par_dup @var{n} [@var{subpat}@dots{}])
 @c Like @code{match_op_dup}, but for @code{match_parallel} instead of
 @c @code{match_operator}.
-@c 
-@c @end table
-@c 
+@findex match_par_dup
+@item (match_par_dup @var{n} [@var{subpat}@dots{}])
+与 @code{match_op_dup} 类似，但是针对于 @code{match_parallel}，而不是
+@code{match_operator}。
+@end table
+
 @c @node Output Template
 @c @section Output Templates and Operand Substitution
 @c @cindex output templates
 @c @cindex operand substitution
-@c 
+@node 输出模板
+@section 输出模板和操作数替换
+@cindex output templates
+@cindex operand substitution
+
 @c @cindex @samp{%} in template
 @c @cindex percent sign
 @c The @dfn{output template} is a string which specifies how to output the
@@ -579,55 +676,83 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c to specify where to substitute an operand; it can also be used to
 @c identify places where different variants of the assembler require
 @c different syntax.
-@c 
+@cindex @samp{%} in template
+@cindex percent sign
+@dfn{output template}是一个字符串，其指定了如何为一个指令模式输出汇编代码。
+大多数模板都是一个固定的字符串，可以按照字面直接输出。符号 @samp{%} 用来指
+定替换操作数；
+
 @c In the simplest case, a @samp{%} followed by a digit @var{n} says to output
 @c operand @var{n} at that point in the string.
-@c 
+最简单的情况下，一个 @samp{%} 后面跟一个数字 @var{n} 表示在字符串中的这个
+位置输出操作数 @var{n}。
+
 @c @samp{%} followed by a letter and a digit says to output an operand in an
 @c alternate fashion.  Four letters have standard, built-in meanings described
 @c below.  The machine description macro @code{PRINT_OPERAND} can define
 @c additional letters with nonstandard meanings.
-@c 
+@samp{%} 后面跟一个字母和一个数字表示用备用方式来输出操作数。有四个字母具
+有标准内嵌的含义，将在下面描述。机器描述宏 @code{PRINT_OPERAND} 能够定义
+其它的非标准含义的字母。
+
 @c @samp{%c@var{digit}} can be used to substitute an operand that is a
 @c constant value without the syntax that normally indicates an immediate
 @c operand.
-@c 
+@samp{%c@var{digit}} 可以用来替换一个常数值的操作数。
+
 @c @samp{%n@var{digit}} is like @samp{%c@var{digit}} except that the value of
 @c the constant is negated before printing.
-@c 
+@samp{%n@var{digit}} 类似于 @samp{%c@var{digit}}，只不过是对要打印的常数
+值进行取反操作（negated）。
+
 @c @samp{%a@var{digit}} can be used to substitute an operand as if it were a
 @c memory reference, with the actual operand treated as the address.  This may
 @c be useful when outputting a ``load address'' instruction, because often the
 @c assembler syntax for such an instruction requires you to write the operand
 @c as if it were a memory reference.
-@c 
+@samp{%a@var{digit}} 可以用来替换一个操作数，并把它当作一个内存引用，实际
+的操作数则被视为地址。这在输出一个加载地址的指令时很有帮助，因为对于这样
+的指令，汇编器语法经常需要你将操作数写成一个内存引用的形式。
+
 @c @samp{%l@var{digit}} is used to substitute a @code{label_ref} into a jump
 @c instruction.
-@c 
+@samp{%l@var{digit}} 用来将一个 @code{label_ref} 替换到跳转指令中。
+
 @c @samp{%=} outputs a number which is unique to each instruction in the
 @c entire compilation.  This is useful for making local labels to be
 @c referred to more than once in a single template that generates multiple
 @c assembler instructions.
-@c 
+@samp{%=} 输出一个在整个编译过程中，对每一条指令都是唯一的编号。这可以用来
+在一个生成多个汇编指令的单一模板中， 使得局部标号能够被多次引用。
+
 @c @samp{%} followed by a punctuation character specifies a substitution that
 @c does not use an operand.  Only one case is standard: @samp{%%} outputs a
 @c @samp{%} into the assembler code.  Other nonstandard cases can be
 @c defined in the @code{PRINT_OPERAND} macro.  You must also define
 @c which punctuation characters are valid with the
 @c @code{PRINT_OPERAND_PUNCT_VALID_P} macro.
-@c 
+@samp{%} 后面跟一个标点符号指定了一个不使用操作数的替换。只用一种情况是标
+准的：@samp{%%} 用来输出一个 @samp{%} 到汇编代码中。其它非标准的情况可以被
+定义在 @code{PRINT_OPERAND} 宏中。你必须还要通过宏 
+@code{PRINT_OPERAND_PUNCT_VALID_P} 来定义哪些标点符号是有效的。
+
 @c @cindex \
 @c @cindex backslash
 @c The template may generate multiple assembler instructions.  Write the text
 @c for the instructions, with @samp{\;} between them.
-@c 
+@cindex \
+@cindex backslash
+模板可以生成多条汇编指令。这些指令文本之间使用 @samp{\;} 隔开。
+
 @c @cindex matching operands
 @c When the RTL contains two operands which are required by constraint to match
 @c each other, the output template must refer only to the lower-numbered operand.
 @c Matching operands are not always identical, and the rest of the compiler
 @c arranges to put the proper RTL expression for printing into the lower-numbered
 @c operand.
-@c 
+@cindex matching operands
+‘%’之后跟非标准字母或者标点符号的一种用途是区分同一机器的不同汇编语言；例如，68000的Motorola语法和MIT语法。 Motorola语法要求大多数的操作名都含有句点，而MIT语法中没有。比如，MIT语法中的操作码‘movel’在Motorola语法中为 ‘move.l’。两种输出法语使用了同一个模式文件，只不过在Motorola语法需要句点的地方使用了字符序列‘%.’。Motorola语法的宏 PRINT_OPERAND定义了这个序列用于输出一个句点；MIT语法的宏将其定义为不做任何事情。
+
 @c One use of nonstandard letters or punctuation following @samp{%} is to
 @c distinguish between different assembler languages for the same machine; for
 @c example, Motorola syntax versus MIT syntax for the 68000.  Motorola syntax
@@ -638,7 +763,8 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c syntax wants a period.  The @code{PRINT_OPERAND} macro for Motorola syntax
 @c defines the sequence to output a period; the macro for MIT syntax defines
 @c it to do nothing.
-@c 
+紧随@samp{%}之后的非标准字母或者标点符号的一种用法是，为同一机器区别不同的汇编语言；例如，68000的Motorola语法与MIT语法。Motorola语法要求大多操作码的名字中带有句号，而MIT语法不是这样。例如，在MIT语法中的操作码@samp{movel}，在Motorola语法中为@samp{move.l}。这两种输出语法都在同一个文件中的指令模式中实现，只不过字符序列@samp{%.}用在需要句号的Motorola语法中。Motorola语法的@code{PRINT_OPERAND}宏，将该序列定义成输出一个句号；而MIT语法则将其定义为不做任何事情。
+
 @c @cindex @code{#} in template
 @c As a special case, a template consisting of the single character @code{#}
 @c instructs the compiler to first split the insn, and then output the
@@ -648,12 +774,15 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c already defined, then you can simply use @code{#} as the output template
 @c instead of writing an output template that emits the multiple assembler
 @c instructions.
-@c 
+@cindex @code{#} in template
+作为一种特殊情况，只包含一个单独的字符#的模板会指示编译器首先拆分insn，然后分别输出所得的指令。这样有助于减少输出模板的重复内容。如果你有一个define_insn，其需要输出多个汇编指令，并且有一个匹配的define_split已经被定义，则你可以简单的使用#作为输出模板，而不用将模板写成输出多个汇编指令的样子。
+
 @c If the macro @code{ASSEMBLER_DIALECT} is defined, you can use construct
 @c of the form @samp{@{option0|option1|option2@}} in the templates.  These
 @c describe multiple variants of assembler language syntax.
 @c @xref{Instruction Output}.
-@c 
+如果宏@code{ASSEMBLER_DIALECT}被定义，你可以在模板中使用形如@samp{@{option0|option1|option2@}}的结构。这些描述了多个汇编语言语法的变体。@xref{指令输出}.
+
 @c @node Output Statement
 @c @section C Statements for Assembler Output
 @c @cindex output statements
@@ -665,7 +794,16 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c instruction pattern.  For example, the opcodes may depend on the kinds of
 @c operands; or some unfortunate combinations of operands may require extra
 @c machine instructions.
-@c 
+@node 输出语句
+@section 用于汇编输出的C语句
+@cindex output statements
+@cindex C statements for assembler output
+@cindex generating assembler output
+
+经常，单个固定的模板字符串，不能够为单个指令模式所识别的所有情况都能产生正确，
+有效的汇编代码。例如，操作码可以依赖于操作数类别；或者一些不适宜的操作数组合
+可能需要额外的机器指令。
+
 @c If the output control string starts with a @samp{@@}, then it is actually
 @c a series of templates, each on a separate line.  (Blank lines and
 @c leading spaces and tabs are ignored.)  The templates correspond to the
@@ -673,18 +811,23 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c if a target machine has a two-address add instruction @samp{addr} to add
 @c into a register and another @samp{addm} to add a register to memory, you
 @c might write this pattern:
-@c 
-@c @smallexample
-@c (define_insn "addsi3"
-@c   [(set (match_operand:SI 0 "general_operand" "=r,m")
-@c         (plus:SI (match_operand:SI 1 "general_operand" "0,0")
-@c                  (match_operand:SI 2 "general_operand" "g,r")))]
-@c   ""
-@c   "@@
-@c    addr %2,%0
-@c    addm %2,%0")
-@c @end smallexample
-@c 
+如果输出控制字符串起始于 @samp{@@}，则其实际为一系列模板，每一个单独一行。
+（空行，以及开头的空格和tab被忽略掉。）这些模板对应于模式的各个constraint
+（@pxref{多个可选项}）。例如，如果一个目标机有一个二址（two-address）
+加法指令 @samp{addr}相加到寄存器中，另外还有一个 @samp{addm} 将寄存器的值相加
+到内存中，你可能会这样写模式：
+
+@smallexample
+(define_insn "addsi3"
+  [(set (match_operand:SI 0 "general_operand" "=r,m")
+        (plus:SI (match_operand:SI 1 "general_operand" "0,0")
+                 (match_operand:SI 2 "general_operand" "g,r")))]
+  ""
+  "@@
+   addr %2,%0
+   addm %2,%0")
+@end smallexample
+
 @c @cindex @code{*} in template
 @c @cindex asterisk in template
 @c If the output control string starts with a @samp{*}, then it is not an
@@ -693,15 +836,24 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c template-string you want.  Most such templates use C string literals, which
 @c require doublequote characters to delimit them.  To include these
 @c doublequote characters in the string, prefix each one with @samp{\}.
-@c 
+@cindex @code{*} in template
+@cindex asterisk in template
+如果输出控制字符串起始于 @samp{*}，则其不是一个输出模板，而是一个C程序片段并且
+能够计算出一个模板。其应该执行一个 @code{return} 语句来返回你想要的模板字符串。
+大多数这样的模板使用C字符串文字，需要用双引号包含起来。如果要在字符串中包含这
+些双引号，可以在前面加上 @samp{\}。
+
 @c If the output control string is written as a brace block instead of a
 @c double-quoted string, it is automatically assumed to be C code.  In that
 @c case, it is not necessary to put in a leading asterisk, or to escape the
 @c doublequotes surrounding C string literals.
-@c 
+如果输出控制串写成一个花括号块，而不是双引号的字符串，则其被自动认为是C代码。
+这种情况下，则不必要有的起始的星号，以及转义C字符串文字中的双引号。
+
 @c The operands may be found in the array @code{operands}, whose C data type
 @c is @code{rtx []}.
-@c 
+操作数可以为数组 @code{operands}，其C数据类型为 @code{rtx []}。
+
 @c It is very common to select different ways of generating assembler code
 @c based on whether an immediate operand is within a certain range.  Be
 @c careful when doing this, because the result of @code{INTVAL} is an
@@ -710,14 +862,22 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c will be used, then some of the bits you get from @code{INTVAL} will be
 @c superfluous.  For proper results, you must carefully disregard the
 @c values of those bits.
-@c 
+一种常见的情况是，根据立即数是否在一个特定范围内来选择生成汇编代码的方式。在做
+这种事情的时候要仔细，因为 @code{INTVAL} 的结果是一个主机上的整形。如果主机的
+@code{int} 比目标机上的具有更多的位，则从 @code{INTVAL} 中的得到的一些位将会是
+多余的。要得到正确的结果，必须仔细的忽视掉那些位的值。
+
 @c @findex output_asm_insn
 @c It is possible to output an assembler instruction and then go on to output
 @c or compute more of them, using the subroutine @code{output_asm_insn}.  This
 @c receives two arguments: a template-string and a vector of operands.  The
 @c vector may be @code{operands}, or it may be another array of @code{rtx}
 @c that you declare locally and initialize yourself.
-@c 
+@findex output_asm_insn
+有可能输出一个汇编指令，然后使用子程序 @code{output_asm_insn} 来继续输出或者计
+算更多的。其接收两个参数：一个模板字符串和一个操作数向量。向量可以是 
+@code{operands}，或者是另一个声明为局部的并且自己初始化的 @code{rtx} 数组。
+
 @c @findex which_alternative
 @c When an insn pattern has multiple alternatives in its constraints, often
 @c the appearance of the assembler code is determined mostly by which alternative
@@ -725,44 +885,57 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c @code{which_alternative}, which is the ordinal number of the alternative
 @c that was actually satisfied (0 for the first, 1 for the second alternative,
 @c etc.).
-@c 
+@findex which_alternative
+当一个insn模式有多个可选择的constraint时，则汇编代码经常主要是由所匹配的constraint选择来决
+定。如果是这样，C代码可以测试变量 @code{which_alternative}，其为实际满足条件的
+constraint选择的序号（0为第一个，1位第二个选择，以此类推）。
+
 @c For example, suppose there are two opcodes for storing zero, @samp{clrreg}
 @c for registers and @samp{clrmem} for memory locations.  Here is how
 @c a pattern could use @code{which_alternative} to choose between them:
-@c 
-@c @smallexample
-@c (define_insn ""
-@c   [(set (match_operand:SI 0 "general_operand" "=r,m")
-@c         (const_int 0))]
-@c   ""
-@c   @{
-@c   return (which_alternative == 0
-@c           ? "clrreg %0" : "clrmem %0");
-@c   @})
-@c @end smallexample
-@c 
+例如，假设有两个操作码来存储0，@samp{clrreg} 用于寄存器，@samp{clrmem} 用于内存
+地址。这个模式实现了如何能够使用 @samp{which_alternative} 来选择它们：
+
+@smallexample
+(define_insn ""
+  [(set (match_operand:SI 0 "general_operand" "=r,m")
+        (const_int 0))]
+  ""
+  @{
+  return (which_alternative == 0
+          ? "clrreg %0" : "clrmem %0");
+  @})
+@end smallexample
+
 @c The example above, where the assembler code to generate was
 @c @emph{solely} determined by the alternative, could also have been specified
 @c as follows, having the output control string start with a @samp{@@}:
-@c 
-@c @smallexample
-@c @group
-@c (define_insn ""
-@c   [(set (match_operand:SI 0 "general_operand" "=r,m")
-@c         (const_int 0))]
-@c   ""
-@c   "@@
-@c    clrreg %0
-@c    clrmem %0")
-@c @end group
-@c @end smallexample
-@c 
+对于上面的例子，要生成的汇编代码 @emph{只是} 由alternative来决定，则还可以写成
+如下形式，使用起始于 @samp{@@} 的输出控制串：
+
+@smallexample
+@group
+(define_insn ""
+  [(set (match_operand:SI 0 "general_operand" "=r,m")
+        (const_int 0))]
+  ""
+  "@@
+   clrreg %0
+   clrmem %0")
+@end group
+@end smallexample
+
 @c @node Predicates
 @c @section Predicates
 @c @cindex predicates
 @c @cindex operand predicates
 @c @cindex operator predicates
-@c 
+@node 断言
+@section 断言
+@cindex 断言
+@cindex 操作数断言
+@cindex 操作符断言
+
 @c A predicate determines whether a @code{match_operand} or
 @c @code{match_operator} expression matches, and therefore whether the
 @c surrounding instruction pattern will be used for that combination of
@@ -771,7 +944,8 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c predicates used with @code{match_operand} have names that end in
 @c @samp{_operand}, and those used with @code{match_operator} have names
 @c that end in @samp{_operator}.
-@c 
+断言用于确定一个@code{match_operand}或者 @code{match_operator}表达式是否匹配， 以及周围的指令模式是否会被用于那些操作数的组合。 GCC有许多机器无关的predicate，并且你可以根据需要来定义机器特定的断言。 按照惯例，与@code{match_operand}一起使用的predicate的名字以@samp{_operand}结尾， 与@code{match_operator}一起使用的predicate的名字以@samp{_operator}结尾。
+
 @c All predicates are Boolean functions (in the mathematical sense) of
 @c two arguments: the RTL expression that is being considered at that
 @c position in the instruction pattern, and the machine mode that the
@@ -780,7 +954,8 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c @var{mode}.  Predicates can be called from C as ordinary two-argument
 @c functions; this can be useful in output templates or other
 @c machine-specific code.
-@c 
+所有断言（从数学意义上）都是具有两个参数的布尔函数： 指令模式中在那个位置上被考虑的RTL表达式， 以及@code{match_operand}或@code{match_operator}所指定的机器模式。 在这一节里，第一个参数被称为@var{op}，第二个参数被称为@var{mode}。 predicate可以作为普通的具有两个参数的函数，从C中调用； 这在输出模板或者其它机器特定的代码中，很有用处。
+
 @c Operand predicates can allow operands that are not actually acceptable
 @c to the hardware, as long as the constraints give reload the ability to
 @c fix them up (@pxref{Constraints}).  However, GCC will usually generate
@@ -789,7 +964,8 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c that must be constants (``immediate operands''); you must use a
 @c predicate that allows only constants, or else enforce the requirement
 @c in the extra condition.
-@c 
+操作数断言可以允许硬件实际上无法接受的操作数， 只要约束能够为reload提供能力，来修复它们（@pxref{约束}）。 然而，只要断言指定的机器指令需求尽可能的严密， GCC通常便会生成更好的代码。reload不能修复必须为常量的操作数（立即数）； 你必须使用只允许常量的断言，或者使用额外的条件来加强必要条件。
+
 @c @cindex predicates and machine modes
 @c @cindex normal predicates
 @c @cindex special predicates
@@ -802,101 +978,177 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c mode matches.  Instead, predicates that accept @code{CONST_INT} and/or
 @c integer @code{CONST_DOUBLE} check that the value stored in the
 @c constant will fit in the requested mode.
-@c 
+@cindex predicates and machine modes
+@cindex normal predicates
+@cindex special predicates
+大多数predicate使用统一的方式来处理它们的@var{mode}参数。
+如果@var{mode}为@code{VOIDmode}（未加指明的），则@var{op}可以具有任意的模式。
+如果@var{mode}为其它情况，则@var{op}必须具有相同的机器模式，
+除非@var{op}是一个@code{CONST_INT}或整数@code{CONST_DOUBLE}。
+这些RTL表达式总是具有@code{VOIDmode}，所以检测它们的模式匹配反而会适得其反。
+替代的，接受@code{CONST_INT}和/或整数@code{CONST_DOUBLE}的predicate，
+可以检测存储在常量中的值是否适合所要求的机器模式。
+
 @c Predicates with this behavior are called @dfn{normal}.
 @c @command{genrecog} can optimize the instruction recognizer based on
 @c knowledge of how normal predicates treat modes.  It can also diagnose
 @c certain kinds of common errors in the use of normal predicates; for
 @c instance, it is almost always an error to use a normal predicate
 @c without specifying a mode.
-@c 
+具有这种行为的predicate被称为常规的。
+@command{genrecog}能够根据常规predicate如何处理机器模式的知识来优化指令识别器。
+它还能够诊断使用常规predicate所出现的一些常见错误。例如，
+使用常规predicate而没有指定机器模式几乎总是错误的。
+
 @c Predicates that do something different with their @var{mode} argument
 @c are called @dfn{special}.  The generic predicates
 @c @code{address_operand} and @code{pmode_register_operand} are special
 @c predicates.  @command{genrecog} does not do any optimizations or
 @c diagnosis when special predicates are used.
-@c 
+对@var{mode}参数进行不同方式处理的predicate被称为特殊的。
+通用predicate @code{address_operand}和@code{pmode_register_operand}
+是特殊predicate。当使用特殊predicate的时候，
+@command{genrecog}不做任何的优化或诊断。
+
 @c @menu
 @c * Machine-Independent Predicates::  Predicates available to all back ends.
 @c * Defining Predicates::             How to write machine-specific predicate
 @c                                     functions.
 @c @end menu
-@c 
+@menu
+* 机器无关的predicate:: 所有后端都可用的predicate。 
+* 定义predicate::       如何写机器特定的predicate函数。
+@end menu
+
 @c @node Machine-Independent Predicates
 @c @subsection Machine-Independent Predicates
 @c @cindex machine-independent predicates
 @c @cindex generic predicates
-@c 
+@node 机器无关的predicate
+@subsection 机器无关的predicate
+@cindex machine-independent predicates
+@cindex generic predicates
+
 @c These are the generic predicates available to all back ends.  They are
 @c defined in @file{recog.c}.  The first category of predicates allow
 @c only constant, or @dfn{immediate}, operands.
-@c 
+这些是通用predicate，适用于所有后端。它们定义在@file{recog.c}中。
+第一类predicate只允许常量或立即数。
+
 @c @defun immediate_operand
 @c This predicate allows any sort of constant that fits in @var{mode}.
 @c It is an appropriate choice for instructions that take operands that
 @c must be constant.
 @c @end defun
-@c 
+@defun immediate_operand
+该predicate允许适合相应@var{mode}的任何类别的常量。
+适合用于操作数必须为常量的指令。
+@end defun
+
 @c @defun const_int_operand
 @c This predicate allows any @code{CONST_INT} expression that fits in
 @c @var{mode}.  It is an appropriate choice for an immediate operand that
 @c does not allow a symbol or label.
 @c @end defun
-@c 
+@defun const_int_operand
+该predicate允许适合相应@var{mode}的任何@code{CONST_INT}表达式。
+适合用于不是符号（symbol）或标号（label）的立即数。
+@end defun
+
 @c @defun const_double_operand
 @c This predicate accepts any @code{CONST_DOUBLE} expression that has
 @c exactly @var{mode}.  If @var{mode} is @code{VOIDmode}, it will also
 @c accept @code{CONST_INT}.  It is intended for immediate floating point
 @c constants.
 @c @end defun
-@c 
+@defun const_double_operand
+该predicate接受任何确实为@var{mode}的@code{CONST_DOUBLE}表达式。
+如果@var{mode}为@code{VOIDmode}，则其还接受@code{CONST_INT}。
+它是用于浮点立即数的。
+@end defun
+
 @c @noindent
 @c The second category of predicates allow only some kind of machine
 @c register.
-@c 
+@noindent
+第二类predicate只允许某种类别的机器寄存器。
+
 @c @defun register_operand
 @c This predicate allows any @code{REG} or @code{SUBREG} expression that
 @c is valid for @var{mode}.  It is often suitable for arithmetic
 @c instruction operands on a RISC machine.
 @c @end defun
-@c 
+@defun register_operand
+该predicate允许适合相应@var{mode}的任何@code{REG}或@code{SUBREG}表达式。
+通常适合于RISC机器上的算术指令操作数。
+@end defun
+
 @c @defun pmode_register_operand
 @c This is a slight variant on @code{register_operand} which works around
 @c a limitation in the machine-description reader.
-@c 
+@defun pmode_register_operand
+这与@code{register_operand}略为不同，其对机器描述的读入器有些限制。
+
 @c @smallexample
 @c (match_operand @var{n} "pmode_register_operand" @var{constraint})
 @c @end smallexample
-@c 
+
 @c @noindent
 @c means exactly what
-@c 
+
 @c @smallexample
 @c (match_operand:P @var{n} "register_operand" @var{constraint})
 @c @end smallexample
-@c 
+
 @c @noindent
 @c would mean, if the machine-description reader accepted @samp{:P}
 @c mode suffixes.  Unfortunately, it cannot, because @code{Pmode} is an
 @c alias for some other mode, and might vary with machine-specific
 @c options.  @xref{Misc}.
 @c @end defun
-@c 
+当机器描述读入器接受@samp{:P}机器模式后缀时，
+
+@smallexample
+(match_operand @var{n} "pmode_register_operand" @var{constraint})
+@end smallexample
+
+@noindent
+与
+
+@smallexample
+(match_operand:P @var{n} "register_operand" @var{constraint})
+@end smallexample
+
+@noindent
+将具有完全相同的含义。不幸的是，这样不行，应为Pmode是其它机器模式的别名，
+并且可能随着机器特定选项的不同而改变。参见@ref{其它}。
+@end defun
+
 @c @defun scratch_operand
 @c This predicate allows hard registers and @code{SCRATCH} expressions,
 @c but not pseudo-registers.  It is used internally by @code{match_scratch};
 @c it should not be used directly.
 @c @end defun
-@c 
+@defun scratch_operand
+该predicate允许硬件寄存器和@code{SCRATCH}表达式，但不允许伪寄存器。
+其由@code{match_scratch}在内部使用；而不应该被直接使用。
+@end defun
+
 @c @noindent
 @c The third category of predicates allow only some kind of memory reference.
-@c 
+@noindent
+第三类predicate只允许某种内存引用。
+
 @c @defun memory_operand
 @c This predicate allows any valid reference to a quantity of mode
 @c @var{mode} in memory, as determined by the weak form of
 @c @code{GO_IF_LEGITIMATE_ADDRESS} (@pxref{Addressing Modes}).
 @c @end defun
-@c 
+@defun memory_operand
+该predicate允许任何对内存中机器模式@var{mode}的一定数量的有效引用，
+并通过@code{GO_IF_LEGITIMATE_ADDRESS}的弱形式来确定（参见@ref{寻址模式}）。
+@end defun
+
 @c @defun address_operand
 @c This predicate is a little unusual; it allows any operand that is a
 @c valid expression for the @emph{address} of a quantity of mode
@@ -907,7 +1159,15 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c @code{address_operand}.  Note that @var{exp} does not necessarily have
 @c the mode @var{mode}.
 @c @end defun
-@c 
+@defun address_operand
+该predicate有些不常用；
+其允许任何为机器模式@var{mode}的一定数量的地址有效表达式操作数，
+同样通过@code{GO_IF_LEGITIMATE_ADDRESS}的弱形式来确定。
+首先，如果@samp{@w{(mem:@var{mode} (@var{exp}))}}被@code{memory_operand}接受，
+则@var{exp}被@code{address_operand}接受。
+注意@var{exp}不必具有机器模式@var{mode}。
+@end defun
+
 @c @defun indirect_operand
 @c This is a stricter form of @code{memory_operand} which allows only
 @c memory references with a @code{general_operand} as the address
@@ -918,7 +1178,15 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c it is better to define target-specific predicates which enforce the
 @c hardware's requirements explicitly.
 @c @end defun
-@c 
+@defun indirect_operand
+这是一个@code{memory_operand}的更严格形式，
+其只允许将@code{general_operand}作为地址表达式的内存引用。
+不鼓励对该predicate的新的使用，因为@code{general_operand}的条件非常宽，
+所以很难说清对于@code{indirect_operand}什么是被允许的，什么是不被允许的。
+如果目标机对不同指令的内存操作数具有不同的要求，
+则最好定义目标机特定的predicate，以显式的加强硬件的要求。
+@end defun
+
 @c @defun push_operand
 @c This predicate allows a memory reference suitable for pushing a value
 @c onto the stack.  This will be a @code{MEM} which refers to
@@ -926,40 +1194,67 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c (@pxref{Incdec}); which one is determined by the
 @c @code{STACK_PUSH_CODE} macro (@pxref{Frame Layout}).
 @c @end defun
-@c 
+@defun push_operand
+该predicate允许适合将值压入栈中的内存引用。这将为一个@code{MEM}，
+其引用@code{stack_pointer_rtx}，且在其地址表达式中具有一个副作用
+（参见@ref{Incdec}）；其由宏@code{STACK_PUSH_CODE}来确定（参见@ref{帧布局}）。
+@end defun
+
 @c @defun pop_operand
 @c This predicate allows a memory reference suitable for popping a value
 @c off the stack.  Again, this will be a @code{MEM} referring to
 @c @code{stack_pointer_rtx}, with a side-effect in its address
 @c expression.  However, this time @code{STACK_POP_CODE} is expected.
 @c @end defun
-@c 
+@defun pop_operand
+该predicate允许适合将值弹出栈中的内存引用。同样，这将为一个@code{MEM} ，
+其引用@code{stack_pointer_rtx}，且在其地址表达式中具有一个副作用；
+不过，这次是@code{STACK_POP_CODE} 。
+@end defun
+
 @c @noindent
 @c The fourth category of predicates allow some combination of the above
 @c operands.
-@c 
+@noindent
+第四类predicate允许上面的操作数的某种组合。
+
 @c @defun nonmemory_operand
 @c This predicate allows any immediate or register operand valid for @var{mode}.
 @c @end defun
-@c 
+@defun nonmemory_operand
+该predicate允许任何对于@var{mode}有效的立即数，或寄存器操作数。
+@end defun
+
 @c @defun nonimmediate_operand
 @c This predicate allows any register or memory operand valid for @var{mode}.
 @c @end defun
-@c 
+@defun nonimmediate_operand
+该predicate允许任何对于@var{mode}有效的寄存器，或内存操作数。
+@end defun
+
 @c @defun general_operand
 @c This predicate allows any immediate, register, or memory operand
 @c valid for @var{mode}.
 @c @end defun
-@c 
+@defun general_operand
+该predicate允许任何对于@var{mode}有效的立即数，寄存器，或内存操作数。
+@end defun
+
 @c @noindent
 @c Finally, there are two generic operator predicates.
-@c 
+@noindent
+最后，有两个通用操作符断言。
+
 @c @defun comparison_operator
 @c This predicate matches any expression which performs an arithmetic
 @c comparison in @var{mode}; that is, @code{COMPARISON_P} is true for the
 @c expression code.
 @c @end defun
-@c 
+@defun comparison_operator
+该predicate匹配任何执行一个基于@var{mode}的算术比较表达式；
+即，@code{COMPARISON_P}对于表达式代码为真。
+@end defun
+
 @c @defun ordered_comparison_operator
 @c This predicate matches any expression which performs an arithmetic
 @c comparison in @var{mode} and whose expression code is valid for integer
@@ -967,29 +1262,50 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c @code{lt}, @code{ltu}, @code{le}, @code{leu}, @code{gt}, @code{gtu},
 @c @code{ge}, @code{geu}.
 @c @end defun
-@c 
+@defun ordered_comparison_operator
+This predicate matches any expression which performs an arithmetic
+comparison in @var{mode} and whose expression code is valid for integer
+modes; that is, the expression code will be one of @code{eq}, @code{ne},
+@code{lt}, @code{ltu}, @code{le}, @code{leu}, @code{gt}, @code{gtu},
+@code{ge}, @code{geu}.
+@end defun
+
 @c @node Defining Predicates
 @c @subsection Defining Machine-Specific Predicates
 @c @cindex defining predicates
 @c @findex define_predicate
 @c @findex define_special_predicate
-@c 
+@node 定义predicate
+@subsection 定义机器特定的predicate
+@cindex defining predicates
+@findex define_predicate
+@findex define_special_predicate
+
 @c Many machines have requirements for their operands that cannot be
 @c expressed precisely using the generic predicates.  You can define
 @c additional predicates using @code{define_predicate} and
 @c @code{define_special_predicate} expressions.  These expressions have
 @c three operands:
-@c 
+许多机器对操作数的要求无法使用通用的predicate来精确表达。
+你可以使用表达式@code{define_predicate}和@code{define_special_predicate}来定义 额外的predicate。这些表达式具有三个操作数： 
+
 @c @itemize @bullet
 @c @item
 @c The name of the predicate, as it will be referred to in
 @c @code{match_operand} or @code{match_operator} expressions.
-@c 
+@itemize @bullet
+@item
+predicate的名字，
+其将在@code{match_operand}或@code{match_operator}表达式中被引用。
+
 @c @item
 @c An RTL expression which evaluates to true if the predicate allows the
 @c operand @var{op}, false if it does not.  This expression can only use
 @c the following RTL codes:
-@c 
+@item
+一个RTL表达式，如果predicate允许@var{op}操作数，则值为真，否则为假。
+该表达式只能使用下列RTL代码： 
+
 @c @table @code
 @c @item MATCH_OPERAND
 @c When written inside a predicate expression, a @code{MATCH_OPERAND}
@@ -997,7 +1313,13 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @c @var{op}.  The operand number and constraint are ignored.  Due to
 @c limitations in @command{genrecog}, you can only refer to generic
 @c predicates and predicates that have already been defined.
-@c 
+@table @code
+@item MATCH_OPERAND
+当用于predicate表达式中时，
+表达式@code{MATCH_OPERAND}在predicate允许@var{op}时为真。
+操作数编号和constraint被忽略。由于@command{genrecog}中的限制，
+你只能用于引用通用的predicate和已经被定义的predicate。
+
 @c @item MATCH_CODE
 @c This expression evaluates to true if @var{op} or a specified
 @c subexpression of @var{op} has one of a given list of RTX codes.
