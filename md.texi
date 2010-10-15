@@ -10526,24 +10526,34 @@ fmoved sp@@+,fp0
 @c at which the register must be available.
 @c 
 @c Here is an example from the IA-32 machine description:
-@c 
-@c @smallexample
-@c (define_peephole2
-@c   [(match_scratch:SI 2 "r")
-@c    (parallel [(set (match_operand:SI 0 "register_operand" "")
-@c                    (match_operator:SI 3 "arith_or_logical_operator"
-@c                      [(match_dup 0)
-@c                       (match_operand:SI 1 "memory_operand" "")]))
-@c               (clobber (reg:CC 17))])]
-@c   "! optimize_size && ! TARGET_READ_MODIFY"
-@c   [(set (match_dup 2) (match_dup 1))
-@c    (parallel [(set (match_dup 0)
-@c                    (match_op_dup 3 [(match_dup 0) (match_dup 2)]))
-@c               (clobber (reg:CC 17))])]
-@c   "")
-@c @end smallexample
-@c 
-@c @noindent
+@findex match_scratch
+@findex match_dup
+使用@code{match_scratch}描述所需要的scratch寄存器，
+并放在输入指令模式的顶层。被分配的寄存器（最初的）
+将会在原始指令序列中需要使用的位置死掉。
+如果scratch被用于多个位置，
+则位于输入指令模式顶层的@code{match_dup}
+指令模式用来标记在输入序列中寄存器必须为活跃的最后位置。
+
+这里有一个来自IA-32机器描述的例子：
+
+@smallexample
+(define_peephole2
+  [(match_scratch:SI 2 "r")
+   (parallel [(set (match_operand:SI 0 "register_operand" "")
+                   (match_operator:SI 3 "arith_or_logical_operator"
+                     [(match_dup 0)
+                      (match_operand:SI 1 "memory_operand" "")]))
+              (clobber (reg:CC 17))])]
+  "! optimize_size && ! TARGET_READ_MODIFY"
+  [(set (match_dup 2) (match_dup 1))
+   (parallel [(set (match_dup 0)
+                   (match_op_dup 3 [(match_dup 0) (match_dup 2)]))
+              (clobber (reg:CC 17))])]
+  "")
+@end smallexample
+
+@noindent
 @c This pattern tries to split a load from its use in the hopes that we'll be
 @c able to schedule around the memory load latency.  It allocates a single
 @c @code{SImode} register of class @code{GENERAL_REGS} (@code{"r"}) that needs
@@ -10551,27 +10561,34 @@ fmoved sp@@+,fp0
 @c 
 @c A real example requiring extended scratch lifetimes is harder to come by,
 @c so here's a silly made-up example:
-@c 
-@c @smallexample
-@c (define_peephole2
-@c   [(match_scratch:SI 4 "r")
-@c    (set (match_operand:SI 0 "" "") (match_operand:SI 1 "" ""))
-@c    (set (match_operand:SI 2 "" "") (match_dup 1))
-@c    (match_dup 4)
-@c    (set (match_operand:SI 3 "" "") (match_dup 1))]
-@c   "/* @r{determine 1 does not overlap 0 and 2} */"
-@c   [(set (match_dup 4) (match_dup 1))
-@c    (set (match_dup 0) (match_dup 4))
-@c    (set (match_dup 2) (match_dup 4))]
-@c    (set (match_dup 3) (match_dup 4))]
-@c   "")
-@c @end smallexample
-@c 
-@c @noindent
+该指令模式尝试拆分加载的使用，以希望我们能够调度内存加载延迟。
+它分配了一个@code{GENERAL_REGS}(@code{"r"})类别的单个的@code{SImode}寄存器，
+其只需在算术运算之前的位置为活跃的。
+
+很难找到需要延长scratch生命期的真实例子，所以这里只是一个制造的例子： 
+
+@smallexample
+(define_peephole2
+  [(match_scratch:SI 4 "r")
+   (set (match_operand:SI 0 "" "") (match_operand:SI 1 "" ""))
+   (set (match_operand:SI 2 "" "") (match_dup 1))
+   (match_dup 4)
+   (set (match_operand:SI 3 "" "") (match_dup 1))]
+  "/* @r{determine 1 does not overlap 0 and 2} */"
+  [(set (match_dup 4) (match_dup 1))
+   (set (match_dup 0) (match_dup 4))
+   (set (match_dup 2) (match_dup 4))]
+   (set (match_dup 3) (match_dup 4))]
+  "")
+@end smallexample
+
+@noindent
 @c If we had not added the @code{(match_dup 4)} in the middle of the input
 @c sequence, it might have been the case that the register we chose at the
 @c beginning of the sequence is killed by the first or second @code{set}.
-@c 
+如果我们没有在输入序列的中间增加@code{(match_dup 4)}，
+则可能的情况是我们选择的寄存器会在序列的起始处被第一个或第二个@code{set}杀死。
+
 @c @end ifset
 @c @ifset INTERNALS
 @c @node Insn Attributes
@@ -10585,7 +10602,18 @@ fmoved sp@@+,fp0
 @c One possible attribute would be the effect that the insn has on the machine's
 @c condition code.  This attribute can then be used by @code{NOTICE_UPDATE_CC}
 @c to track the condition codes.
-@c 
+@end ifset
+@ifset INTERNALS
+@node Insn属性
+@section 指令属性
+@cindex insn attributes
+@cindex instruction attributes
+
+除了描述target机器所支持的指令以外，@file{md} 文件还定义了一组 
+@dfn{attributes} 以及每个属性的取值集合。每条生成的insn都为每个属性赋予一
+个值。一种可能的属性是insn对于机器的条件代码所产生的影响。该属性然后可以
+被 @code{NOTICE_UPDATE_CC} 使用，来跟踪条件代码。
+
 @c @menu
 @c * Defining Attributes:: Specifying attributes and their values.
 @c * Expressions::         Valid expressions for attribute values.
@@ -10596,7 +10624,17 @@ fmoved sp@@+,fp0
 @c * Delay Slots::         Defining delay slots required for a machine.
 @c * Processor pipeline description:: Specifying information for insn scheduling.
 @c @end menu
-@c 
+@menu
+* 定义属性::         指定属性以及它们的值。
+* 表达式::           属性值的有效表达式。
+* 给Insns打标签::    为insns赋予属性值。
+* 属性例子::       一个设置属性的例子。
+* Insn长度::         计算insns的长度。
+* 常量属性::         定义值为常量的属性。
+* 延迟槽::           定义机器所需要的延迟槽。
+* 处理器流水线描述:: 为insn调度指定信息。
+@end menu
+
 @c @end ifset
 @c @ifset INTERNALS
 @c @node Defining Attributes
@@ -10607,11 +10645,20 @@ fmoved sp@@+,fp0
 @c @findex define_attr
 @c The @code{define_attr} expression is used to define each attribute required
 @c by the target machine.  It looks like:
-@c 
-@c @smallexample
-@c (define_attr @var{name} @var{list-of-values} @var{default})
-@c @end smallexample
-@c 
+@end ifset
+@ifset INTERNALS
+@node 定义属性
+@subsection 定义属性以及它们的值
+@cindex defining attributes and their values
+@cindex attributes, defining
+
+@findex define_attr
+表达式 @code{define_attr} 用于定义目标机所需要的每个属性。其形式为：
+
+@smallexample
+(define_attr @var{name} @var{list-of-values} @var{default})
+@end smallexample
+
 @c @var{name} is a string specifying the name of the attribute being defined.
 @c 
 @c @var{list-of-values} is either a string that specifies a comma-separated
@@ -10623,12 +10670,24 @@ fmoved sp@@+,fp0
 @c an explicit value for this attribute.  @xref{Attr Example}, for more
 @c information on the handling of defaults.  @xref{Constant Attributes},
 @c for information on attributes that do not depend on any particular insn.
-@c 
+@var{name} 为一个字符串，指定了被定义的属性名。
+
+@var{list-of-values} 或者为一个字符串，指定了可以赋予属性的逗号分隔
+的值的列表，或者为一个空字符串，表示属性接受一个数字值。
+
+@var{default} 为一个属性表达式，给出了匹配指令模式，但指令模式定义中
+没有显式包含该属性值的insns，所应具有的属性值。关于更多处理缺省值的
+信息，@pxref{属性例子}。关于不依赖于任何特定insn的属性，
+@pxref{常量属性}。
+
 @c @findex insn-attr.h
 @c For each defined attribute, a number of definitions are written to the
 @c @file{insn-attr.h} file.  For cases where an explicit set of values is
 @c specified for an attribute, the following are defined:
-@c 
+@findex insn-attr.h
+对于每个定义的属性，都有许多定义被写入 @file{insn-attr.h} 文件。对于
+显式指定了属性取值集合的情况，下列将被定义：
+
 @c @itemize @bullet
 @c @item
 @c A @samp{#define} is written for the symbol @samp{HAVE_ATTR_@var{name}}.
@@ -10644,28 +10703,47 @@ fmoved sp@@+,fp0
 @c @end itemize
 @c 
 @c For example, if the following is present in the @file{md} file:
-@c 
-@c @smallexample
-@c (define_attr "type" "branch,fp,load,store,arith" @dots{})
-@c @end smallexample
-@c 
-@c @noindent
+@itemize @bullet
+@item
+一个针对符号 @samp{HAVE_ATTR_@var{name}} 的 @samp{#define} 被写入。
+
+@item
+一个枚举类别被定义，元素的形式为 @samp{@var{upper-name}_@var{upper-value}}，
+其中属性名和值首先被转换为大写的。
+
+@item
+一个函数 @samp{get_attr_@var{name}} 被定义，其传入一个insn并返回该insn
+的属性值。
+@end itemize
+
+例如，如果在 @file{md} 文件中存在下列定义：
+
+@smallexample
+(define_attr "type" "branch,fp,load,store,arith" @dots{})
+@end smallexample
+
+@noindent
 @c the following lines will be written to the file @file{insn-attr.h}.
-@c 
-@c @smallexample
-@c #define HAVE_ATTR_type
-@c enum attr_type @{TYPE_BRANCH, TYPE_FP, TYPE_LOAD,
-@c                  TYPE_STORE, TYPE_ARITH@};
-@c extern enum attr_type get_attr_type ();
-@c @end smallexample
-@c 
+则下面的行将被写入文件 @file{insn-attr.h} 中。
+
+@smallexample
+#define HAVE_ATTR_type
+enum attr_type @{TYPE_BRANCH, TYPE_FP, TYPE_LOAD,
+                 TYPE_STORE, TYPE_ARITH@};
+extern enum attr_type get_attr_type ();
+@end smallexample
+
 @c If the attribute takes numeric values, no @code{enum} type will be
 @c defined and the function to obtain the attribute's value will return
 @c @code{int}.
 @c 
 @c There are attributes which are tied to a specific meaning.  These
 @c attributes are not free to use for other purposes:
-@c 
+如果属性接受数字值，则不会定义@code{enum} 类型，并且获得属性值的函数将
+返回@code{int}。
+
+有些属性被赋予特定的含义。这些属性不能随便用于其它目的：
+
 @c @table @code
 @c @item length
 @c The @code{length} attribute is used to calculate the length of emitted
@@ -10677,7 +10755,15 @@ fmoved sp@@+,fp0
 @c alternatives of an insn definition from being used during code
 @c generation. @xref{Disable Insn Alternatives}.
 @c @end table
-@c 
+@table @code
+@item length
+@code{length}属性用于计算每输出的代码块的长度。这尤其在验证分支距离的时候特别重要。@xref{Insn长度}.
+
+@item enabled
+@code{enabled}属性可以被定义，用来在代码生成过程中，阻止insn定义中的特定的可选项。@xref{禁止Insn可选项}.
+
+@end table
+
 @c @findex define_enum_attr
 @c @anchor{define_enum_attr}
 @c Another way of defining an attribute is to use:
@@ -10721,11 +10807,18 @@ fmoved sp@@+,fp0
 @c @node Expressions
 @c @subsection Attribute Expressions
 @c @cindex attribute expressions
-@c 
+@end ifset
+@ifset INTERNALS
+@node 表达式
+@subsection 属性表达式
+@cindex attribute expressions
+
 @c RTL expressions used to define attributes use the codes described above
 @c plus a few specific to attribute definitions, to be discussed below.
 @c Attribute value expressions must have one of the following forms:
-@c 
+用于定义属性的RTL表达式，除了使用上面描述的代码外，还使用了下面要
+讨论的一些细节。属性值表达式必须为下列形式之一：
+
 @c @table @code
 @c @cindex @code{const_int} and attributes
 @c @item (const_int @var{i})
@@ -10737,7 +10830,16 @@ fmoved sp@@+,fp0
 @c @code{const_string}, @code{eq_attr} (see below), @code{attr},
 @c @code{symbol_ref}, simple arithmetic expressions, and @code{set_attr}
 @c overrides on specific instructions (@pxref{Tagging Insns}).
-@c 
+@table @code
+@cindex @code{const_int} and attributes
+@item (const_int @var{i})
+整数 @var{i} 指定了一个数字属性的值。 @var{i} 必须为非负的。 
+
+数字属性的值可以被指定为一个 @code{const_int}，或者一个在
+@code{const_string}, @code{eq_attr} (参见下面), @code{attr}, 
+@code{symbol_ref}, 简单算术表达式, 和特定指令上的 @code{set_attr} 
+(@pxref{给Insns打标签})中，作为字符串来表示的整数，
+
 @c @cindex @code{const_string} and attributes
 @c @item (const_string @var{value})
 @c The string @var{value} specifies a constant attribute value.
@@ -10750,7 +10852,16 @@ fmoved sp@@+,fp0
 @c must be a string containing a non-negative integer (normally
 @c @code{const_int} would be used in this case).  Otherwise, it must
 @c contain one of the valid values for the attribute.
-@c 
+@cindex @code{const_string} and attributes
+@item (const_string @var{value})
+字符串指定了一个常量属性值。如果 @var{value} 使用 @samp{"*"} 指定，
+则表示包含该表达式的insn将使用属性的缺省值。显然 @samp{"*"} 不能用
+于 @code{define_attr} 的 @var{default} 表达式。
+
+如果属性值被指定为数值的，@var{value} 必须为一个字符串，包含了一个
+非负整数（通常这种情况下会使用 @code{const_int}）。否则，其必须包含
+一个有效的属性值。 
+
 @c @cindex @code{if_then_else} and attributes
 @c @item (if_then_else @var{test} @var{true-value} @var{false-value})
 @c @var{test} specifies an attribute test, whose format is defined below.
@@ -10766,14 +10877,31 @@ fmoved sp@@+,fp0
 @c none of the @var{test} expressions are true, the value of the @code{cond}
 @c expression is that of the @var{default} expression.
 @c @end table
-@c 
+@cindex @code{if_then_else} and attributes
+@item (if_then_else @var{test} @var{true-value} @var{false-value})
+@var{test} 指定了一个属性测试，其格式在下面定义。如果 @var{test} 为
+真时，该表达式的值为 @var{true-value}，否则为 @var{false-value}。
+
+@cindex @code{cond} and attributes
+@item (cond [@var{test1} @var{value1} @dots{}] @var{default})
+该表达式的第一个操作数为一个向量，包含了偶数个表达式并且由 @var{test} 
+和 @var{value} 表达式对组成。表达式 @code{cond} 的值为对应于第一个为
+真的 @var{test} 表达式的 @var{value}。如果没有 @var{test} 表达式为真，
+则 @code{cond} 表达式的值为 @var{default} 表达式。 
+@end table
+
 @c @var{test} expressions can have one of the following forms:
-@c 
+@var{test}表达式可以具有下列形式：
+
 @c @table @code
 @c @cindex @code{const_int} and attribute tests
 @c @item (const_int @var{i})
 @c This test is true if @var{i} is nonzero and false otherwise.
-@c 
+@table @code
+@cindex @code{const_int} and attribute tests
+@item (const_int @var{i})
+该测试为真，如果@var{i}非零，否则为假。
+
 @c @cindex @code{not} and attributes
 @c @cindex @code{ior} and attributes
 @c @cindex @code{and} and attributes
@@ -10781,7 +10909,14 @@ fmoved sp@@+,fp0
 @c @itemx (ior @var{test1} @var{test2})
 @c @itemx (and @var{test1} @var{test2})
 @c These tests are true if the indicated logical function is true.
-@c 
+@cindex @code{not} and attributes
+@cindex @code{ior} and attributes
+@cindex @code{and} and attributes
+@item (not @var{test})
+@itemx (ior @var{test1} @var{test2})
+@itemx (and @var{test1} @var{test2})
+这些测试为真，如果所表示的逻辑函数为真。
+
 @c @cindex @code{match_operand} and attributes
 @c @item (match_operand:@var{m} @var{n} @var{pred} @var{constraints})
 @c This test is true if operand @var{n} of the insn whose attribute value
@@ -10792,7 +10927,12 @@ fmoved sp@@+,fp0
 @c string).
 @c 
 @c The @var{constraints} operand is ignored and should be the null string.
-@c 
+@cindex @code{match_operand} and attributes
+@item (match_operand:@var{m} @var{n} @var{pred} @var{constraints})
+该测试为真，如果insn的操作数@var{n}，其属性值被确定具有机器模式@var{m}（如果@var{m}为@code{VOIDmode}，则这部分测试被忽略），并且被字符串@var{pred}指定的函数，当传递操作数@var{n}和机器模式@var{m}时，返回一个非零值（如果@var{pred}为空字符串，则这部分测试被忽略）。
+
+@var{constraints}操作数被忽略并且应该为空字符串。
+
 @c @cindex @code{le} and attributes
 @c @cindex @code{leu} and attributes
 @c @cindex @code{lt} and attributes
@@ -10827,7 +10967,40 @@ fmoved sp@@+,fp0
 @c @code{plus}, @code{minus}, @code{mult}, @code{div}, @code{mod},
 @c @code{abs}, @code{neg}, @code{and}, @code{ior}, @code{xor}, @code{not},
 @c @code{ashift}, @code{lshiftrt}, and @code{ashiftrt} expressions.
-@c 
+@cindex @code{le} and attributes
+@cindex @code{leu} and attributes
+@cindex @code{lt} and attributes
+@cindex @code{gt} and attributes
+@cindex @code{gtu} and attributes
+@cindex @code{ge} and attributes
+@cindex @code{geu} and attributes
+@cindex @code{ne} and attributes
+@cindex @code{eq} and attributes
+@cindex @code{plus} and attributes
+@cindex @code{minus} and attributes
+@cindex @code{mult} and attributes
+@cindex @code{div} and attributes
+@cindex @code{mod} and attributes
+@cindex @code{abs} and attributes
+@cindex @code{neg} and attributes
+@cindex @code{ashift} and attributes
+@cindex @code{lshiftrt} and attributes
+@cindex @code{ashiftrt} and attributes
+@item (le @var{arith1} @var{arith2})
+@itemx (leu @var{arith1} @var{arith2})
+@itemx (lt @var{arith1} @var{arith2})
+@itemx (ltu @var{arith1} @var{arith2})
+@itemx (gt @var{arith1} @var{arith2})
+@itemx (gtu @var{arith1} @var{arith2})
+@itemx (ge @var{arith1} @var{arith2})
+@itemx (geu @var{arith1} @var{arith2})
+@itemx (ne @var{arith1} @var{arith2})
+@itemx (eq @var{arith1} @var{arith2})
+这些测试为真，如果所表示的对两个算术表达式的比较为真。算术表达式的形式为
+@code{plus}, @code{minus}, @code{mult}, @code{div}, @code{mod},
+@code{abs}, @code{neg}, @code{and}, @code{ior}, @code{xor}, @code{not},
+@code{ashift}, @code{lshiftrt}和@code{ashiftrt}表达式。
+
 @c @findex get_attr
 @c @code{const_int} and @code{symbol_ref} are always valid terms (@pxref{Insn
 @c Lengths},for additional forms).  @code{symbol_ref} is a string
@@ -10848,7 +11021,17 @@ fmoved sp@@+,fp0
 @c @emph{not} in the specified list.
 @c 
 @c For example,
-@c 
+@findex get_attr
+@code{const_int}和@code{symbol_ref}总为有效（其它的形式，@pxref{Insn长度}）。@code{symbol_ref}为一个字符串，表示当使用@samp{get_attr_@dots{}}程序求解时，可以生成一个@code{int}的C表达式。其通常应该为一个全局变量。
+
+@findex eq_attr
+@item (eq_attr @var{name} @var{value})
+@var{name}为一个字符串，指定了属性的名字。
+
+@var{value}为一个字符串，或者为一个该属性@var{name}的有效值，由逗号分隔的值列表，或者为@samp{!}，后面跟随一个值或者列表。如果@var{value}不是起始于@samp{!}，则该测试为真，如果当前insn的@var{name}属性的值在值列表中。如果@var{value}起始于@samp{!}，则该测试为真，如果属性值不在指定的列表中。
+
+例如，
+
 @c @smallexample
 @c (eq_attr "type" "load,store")
 @c @end smallexample
@@ -10859,12 +11042,24 @@ fmoved sp@@+,fp0
 @c @smallexample
 @c (ior (eq_attr "type" "load") (eq_attr "type" "store"))
 @c @end smallexample
-@c 
+@smallexample
+(eq_attr "type" "load,store")
+@end smallexample
+
+@noindent
+
+等价于
+
+@smallexample
+(ior (eq_attr "type" "load") (eq_attr "type" "store"))
+@end smallexample
+
 @c If @var{name} specifies an attribute of @samp{alternative}, it refers to the
 @c value of the compiler variable @code{which_alternative}
 @c (@pxref{Output Statement}) and the values must be small integers.  For
 @c example,
-@c 
+如果@var{name}指定了属性@samp{alternative}，则它是指的编译器变量@code{which_alternative}的值（@pxref{输出语句}），并且值必须为小整数。例如，
+
 @c @smallexample
 @c (eq_attr "alternative" "2,3")
 @c @end smallexample
@@ -10876,7 +11071,19 @@ fmoved sp@@+,fp0
 @c (ior (eq (symbol_ref "which_alternative") (const_int 2))
 @c      (eq (symbol_ref "which_alternative") (const_int 3)))
 @c @end smallexample
-@c 
+@smallexample
+(eq_attr "alternative" "2,3")
+@end smallexample
+
+@noindent
+
+等价于
+
+@smallexample
+(ior (eq (symbol_ref "which_alternative") (const_int 2))
+     (eq (symbol_ref "which_alternative") (const_int 3)))
+@end smallexample
+
 @c Note that, for most attributes, an @code{eq_attr} test is simplified in cases
 @c where the value of the attribute being tested is known for all insns matching
 @c a particular pattern.  This is by far the most common case.
@@ -10899,15 +11106,27 @@ fmoved sp@@+,fp0
 @c This example describes a conditional branch delay slot which
 @c can be nullified for forward branches that are taken (annul-true) or
 @c for backward branches which are not taken (annul-false).
-@c 
-@c @smallexample
-@c (define_delay (eq_attr "type" "cbranch")
-@c   [(eq_attr "in_branch_delay" "true")
-@c    (and (eq_attr "in_branch_delay" "true")
-@c         (attr_flag "forward"))
-@c    (and (eq_attr "in_branch_delay" "true")
-@c         (attr_flag "backward"))])
-@c @end smallexample
+注意，对于大多数属性，当被测试的属性的值已知为匹配特定模式的所有insn时，@code{eq_attr}测试将被简化。这是迄今为止最常见的情况。
+
+@findex attr_flag
+@item (attr_flag @var{name})
+表达式@code{attr_flag}的值为真，如果由@var{name}指定的标记对于当前被调度的@code{insn}为真。
+
+@var{name}为一个字符串，指定了要测试的标记集合。测试标记@code{forward}和@code{backward}可以确定条件分支的方向。测试标记@code{very_likely}, @code{likely}, @code{very_unlikely}和@code{unlikely}可以确定条件分支是否被接受。
+
+如果@code{very_likely}为真，则@code{likely}标记也为真。同样对于@code{very_unlikely}和@code{unlikely}也是这样。
+
+该例子描述了一个条件分支延迟槽，其对于被接受的（annul-true）forward分支或者没有被接受的（annul-false）的backward分支，可以置空（nullified），
+
+@smallexample
+(define_delay (eq_attr "type" "cbranch")
+  [(eq_attr "in_branch_delay" "true")
+   (and (eq_attr "in_branch_delay" "true")
+        (attr_flag "forward"))
+   (and (eq_attr "in_branch_delay" "true")
+        (attr_flag "backward"))])
+@end smallexample
+
 @c 
 @c The @code{forward} and @code{backward} flags are false if the current
 @c @code{insn} being scheduled is not a conditional branch.
@@ -10919,21 +11138,37 @@ fmoved sp@@+,fp0
 @c 
 @c @code{attr_flag} is only used during delay slot scheduling and has no
 @c meaning to other passes of the compiler.
-@c 
+标记@code{forward}和@code{backward}为假，如果当前被调度的@code{insn}不是条件分支。
+
+标记@code{very_likely}和@code{likely}为真，如果被调度的@code{insn}不是条件分支。标记@code{very_unlikely}和@code{unlikely}为假，如果被调度的@code{attr_flag}不是条件分支。
+
+@code{attr_flag}只用于延迟槽调度阶段，并且跟编译器的其它过程没有关系。
+
 @c @findex attr
 @c @item (attr @var{name})
 @c The value of another attribute is returned.  This is most useful
 @c for numeric attributes, as @code{eq_attr} and @code{attr_flag}
 @c produce more efficient code for non-numeric attributes.
 @c @end table
-@c 
+@findex attr
+@item (attr @var{name})
+返回另一个属性的值。这对于数值属性非常有用，因为@code{eq_attr}和@code{attr_flag}可以产生比非数值属性更加有效的代码。
+
+@end table
+
 @c @end ifset
 @c @ifset INTERNALS
 @c @node Tagging Insns
 @c @subsection Assigning Attribute Values to Insns
 @c @cindex tagging insns
 @c @cindex assigning attribute values to insns
-@c 
+@end ifset
+@ifset INTERNALS
+@node 给Insns打标签
+@subsection 给Insns赋予属性值
+@cindex tagging insns
+@cindex assigning attribute values to insns
+
 @c The value assigned to an attribute of an insn is primarily determined by
 @c which pattern is matched by that insn (or which @code{define_peephole}
 @c generated it).  Every @code{define_insn} and @code{define_peephole} can
@@ -10958,7 +11193,21 @@ fmoved sp@@+,fp0
 @c insn), the @code{set_attr_alternative} expression can be used.  It
 @c allows the specification of a vector of attribute expressions, one for
 @c each alternative.
-@c 
+给insn的属性赋予的值，主要由该insn所匹配的模式决定
+（或者什么@code{define_peephole}生成的它）。
+每个@code{define_insn}和@code{define_peephole}可以具有可选的最后的参数，
+用来指定匹配insn的属性值。在特定insn中没有指定的任何属性的值，
+将被设为在@code{define_attr}中指定的缺省值。
+
+可选的@code{define_insn}和@code{define_peephole}最后的参数，为一个表达式向量，
+每个元素定义了单个属性的值。赋属性值的最通用方式是使用@code{set}表达式，
+其第一个操作数为一个@code{attr}表达式，给出了要设置的属性名。
+第二个操作数为一个属性表达式（参见@ref{表达式}），给出了属性值。
+
+当属性值依赖于可选（@samp{alternative}）属性，
+则可以使用@code{set_attr_alternative}表达式。其允许指定属性表达式向量，
+每个元素对应一个可选属性。
+
 @c @findex set_attr
 @c When the generality of arbitrary attribute expressions is not required,
 @c the simpler @code{set_attr} expression can be used, which allows
@@ -10967,7 +11216,14 @@ fmoved sp@@+,fp0
 @c 
 @c The form of each of the above specifications is shown below.  In each case,
 @c @var{name} is a string specifying the attribute to be set.
-@c 
+@findex set_attr
+当不需要一般性的任意属性表达式，则可以使用简单的@code{set_attr}表达式，
+其允许指定一个字符串，给出单个属性值或者属性值列表，
+其中每个元素对应于一个可选属性。
+
+以上的属性指定形式将在下面展示出。在每种情况中，@var{name}为一个字符串，
+指定了要被设置的属性。
+
 @c @table @code
 @c @item (set_attr @var{name} @var{value-string})
 @c @var{value-string} is either a string giving the desired attribute value,
@@ -10978,7 +11234,14 @@ fmoved sp@@+,fp0
 @c Note that it may be useful to specify @samp{*} for some alternative, in
 @c which case the attribute will assume its default value for insns matching
 @c that alternative.
-@c 
+@table @code
+@item (set_attr @var{name} @var{value-string})
+@var{value-string}或者为一个字符串，给出了期望的属性值，
+或者为一个包含了逗号分隔的列表的字符串，给出了后续可选项的值。
+元素的个数必须匹配在insn指令模式的约束中的可选项的个数。
+
+注意可以为一些可选项指定@samp{*}，这样属性将被假设它的缺省值匹配那个可选项。 
+
 @c @findex set_attr_alternative
 @c @item (set_attr_alternative @var{name} [@var{value1} @var{value2} @dots{}])
 @c Depending on the alternative of the insn, the value will be one of the
@@ -10994,31 +11257,48 @@ fmoved sp@@+,fp0
 @c 
 @c The following shows three different ways of representing the same
 @c attribute value specification:
-@c 
-@c @smallexample
-@c (set_attr "type" "load,store,arith")
-@c 
-@c (set_attr_alternative "type"
-@c                       [(const_string "load") (const_string "store")
-@c                        (const_string "arith")])
-@c 
-@c (set (attr "type")
-@c      (cond [(eq_attr "alternative" "1") (const_string "load")
-@c             (eq_attr "alternative" "2") (const_string "store")]
-@c            (const_string "arith")))
-@c @end smallexample
+@findex set_attr_alternative
+@item (set_attr_alternative @var{name} [@var{value1} @var{value2} @dots{}])
+取决于insn的可选项，值将为被指定值的其中之一。
+这是对@samp{alternative}属性使用@code{cond}的简化形式。
+
+@findex attr
+@item (set (attr @var{name}) @var{value})
+第一个操作数必须为特定RTL表达式@code{attr}，其唯一的操作数是一个字符串，
+给出了被设置的属性名。@var{value}为属性值。
+@end table
+
+下面展示了三种表示相同的属性指定的不同的方式：
+
+@smallexample
+(set_attr "type" "load,store,arith")
+
+(set_attr_alternative "type"
+                      [(const_string "load") (const_string "store")
+                       (const_string "arith")])
+
+(set (attr "type")
+     (cond [(eq_attr "alternative" "1") (const_string "load")
+            (eq_attr "alternative" "2") (const_string "store")]
+           (const_string "arith")))
+@end smallexample
+
 @c 
 @c @need 1000
 @c @findex define_asm_attributes
 @c The @code{define_asm_attributes} expression provides a mechanism to
 @c specify the attributes assigned to insns produced from an @code{asm}
 @c statement.  It has the form:
-@c 
-@c @smallexample
-@c (define_asm_attributes [@var{attr-sets}])
-@c @end smallexample
-@c 
-@c @noindent
+@need 1000
+@findex define_asm_attributes
+表达式@code{define_asm_attributes}提供了一种机制，
+用来指定赋予insn的属性是由@code{asm}语句产生的。其形式为：
+
+@smallexample
+(define_asm_attributes [@var{attr-sets}])
+@end smallexample
+
+@noindent
 @c where @var{attr-sets} is specified the same as for both the
 @c @code{define_insn} and the @code{define_peephole} expressions.
 @c 
@@ -11033,14 +11313,30 @@ fmoved sp@@+,fp0
 @c string.  Therefore, the value of the @code{length} attribute specified
 @c in a @code{define_asm_attributes} should be the maximum possible length
 @c of a single machine instruction.
-@c 
+其中@var{attr-sets}为与@code{define_insn}和@code{define_peephole}中的相同。
+
+这些值通常为“最坏情况”属性值。例如，它们可能指示条件码将被破坏（clobbered）。
+
+为@code{length}属性赋值，将被特殊处理。
+计算@code{asm} insn长度的方式是将表达式@code{define_asm_attributes}中指定的长度
+乘以在@code{asm}语句中指定的机器指令个数。
+指令个数通过计算字符串中分号和换行符的个数来决定。因此，
+在@code{define_asm_attributes}中指定的@code{length}属性值应该为单个机器指令的
+最大可能长度。
+
 @c @end ifset
 @c @ifset INTERNALS
 @c @node Attr Example
 @c @subsection Example of Attribute Specifications
 @c @cindex attribute specifications example
 @c @cindex attribute specifications
-@c 
+@end ifset
+@ifset INTERNALS
+@node 属性例子
+@subsection 关于属性说明的例子
+@cindex attribute specifications example
+@cindex attribute specifications
+
 @c The judicious use of defaulting is important in the efficient use of
 @c insn attributes.  Typically, insns are divided into @dfn{types} and an
 @c attribute, customarily called @code{type}, is used to represent this
@@ -11060,44 +11356,64 @@ fmoved sp@@+,fp0
 @c modified.
 @c 
 @c Here is part of a sample @file{md} file for such a machine:
-@c 
-@c @smallexample
-@c (define_attr "type" "load,store,arith,fp,branch" (const_string "arith"))
-@c 
-@c (define_attr "cc" "clobber,unchanged,set,change0"
-@c              (cond [(eq_attr "type" "load")
-@c                         (const_string "change0")
-@c                     (eq_attr "type" "store,branch")
-@c                         (const_string "unchanged")
-@c                     (eq_attr "type" "arith")
-@c                         (if_then_else (match_operand:SI 0 "" "")
-@c                                       (const_string "set")
-@c                                       (const_string "clobber"))]
-@c                    (const_string "clobber")))
-@c 
-@c (define_insn ""
-@c   [(set (match_operand:SI 0 "general_operand" "=r,r,m")
-@c         (match_operand:SI 1 "general_operand" "r,m,r"))]
-@c   ""
-@c   "@@
-@c    move %0,%1
-@c    load %0,%1
-@c    store %0,%1"
-@c   [(set_attr "type" "arith,load,store")])
-@c @end smallexample
+要想有效的使用insn属性，巧妙的使用缺省值是很重要的。通常，insn被分为不同类别，
+并使用称作@code{type}的属性来表示该值。该属性通常只用于定义其它属性的缺省值。
+可以举一个例子来阐明它的用法。
+
+假设我们有一个RISC机器，其具有一个条件码并且在寄存器中只进行全字操作。
+让我们假设可以将所有的insn分为加载，存储，（整数）算术运算，浮点运算和分支。
+
+在这里我们将关注条件码对于insn的影响，并局限在下列可能的影响：
+条件码可以被不可预期的设置（clobbered），没有改变，被设为符合运算结果的值，
+或者只在先前被设置的条件码已经被修改。
+
+下面是该机器的一个样本@file{md}文件：
+
+@smallexample
+(define_attr "type" "load,store,arith,fp,branch" (const_string "arith"))
+
+(define_attr "cc" "clobber,unchanged,set,change0"
+             (cond [(eq_attr "type" "load")
+                        (const_string "change0")
+                    (eq_attr "type" "store,branch")
+                        (const_string "unchanged")
+                    (eq_attr "type" "arith")
+                        (if_then_else (match_operand:SI 0 "" "")
+                                      (const_string "set")
+                                      (const_string "clobber"))]
+                   (const_string "clobber")))
+
+(define_insn ""
+  [(set (match_operand:SI 0 "general_operand" "=r,r,m")
+        (match_operand:SI 1 "general_operand" "r,m,r"))]
+  ""
+  "@@
+   move %0,%1
+   load %0,%1
+   store %0,%1"
+  [(set_attr "type" "arith,load,store")])
+@end smallexample
 @c 
 @c Note that we assume in the above example that arithmetic operations
 @c performed on quantities smaller than a machine word clobber the condition
 @c code since they will set the condition code to a value corresponding to the
 @c full-word result.
-@c 
+注意我们假设在上面的例子中，比机器字小的算术运算将会clobber条件码，
+因为它们将会根据全字的结果来设置条件码。
+
 @c @end ifset
 @c @ifset INTERNALS
 @c @node Insn Lengths
 @c @subsection Computing the Length of an Insn
 @c @cindex insn lengths, computing
 @c @cindex computing the length of an insn
-@c 
+@end ifset
+@ifset INTERNALS
+@node Insn长度
+@subsection 计算一个Insn的长度
+@cindex insn lengths, computing
+@cindex computing the length of an insn
+
 @c For many machines, multiple types of branch instructions are provided, each
 @c for different length branch displacements.  In most cases, the assembler
 @c will choose the correct instruction to use.  However, when the assembler
@@ -11107,7 +11423,14 @@ fmoved sp@@+,fp0
 @c 
 @c In the case of the @code{length} attribute, two additional forms of
 @c arithmetic terms are allowed in test expressions:
-@c 
+许多机器提供了多种类型的分支指令，针对于不同长度的分支位移。多数情况下，
+汇编器会选择使用正确的指令。但是，当汇编器无法做到的时候，如果一个特殊的属性，
+@code{length}属性，被定义，则可以由GCC来完成。
+该属性必须通过在它的@code{define_attr}中指定一个空字符串，
+从而被定义成具有数字值。
+
+对于@code{length}属性，在test表达式中允许两个额外形式的算术术语：
+
 @c @table @code
 @c @cindex @code{match_dup} and attributes
 @c @item (match_dup @var{n})
@@ -11121,7 +11444,17 @@ fmoved sp@@+,fp0
 @c @emph{next} insn but this would be confusing because the length of the
 @c current insn is to be computed.
 @c @end table
-@c 
+@table @code
+@cindex @code{match_dup} and attributes
+@item (match_dup @var{n})
+这是指当前insn的操作数@var{n}的地址，其必须为一个@code{label_ref}。 
+
+@cindex @code{pc} and attributes
+@item (pc)
+这是指当前insn的地址。或许可以将其设为下一个insn的地址，
+从而跟其它地方的用法一致，但是这样容易引起混淆，因为还要计算当前insn的长度。 
+@end table
+
 @c @cindex @code{addr_vec}, length of
 @c @cindex @code{addr_diff_vec}, length of
 @c For normal insns, the length will be determined by value of the
@@ -11132,7 +11465,16 @@ fmoved sp@@+,fp0
 @c Lengths are measured in addressable storage units (bytes).
 @c 
 @c The following macros can be used to refine the length computation:
-@c 
+@cindex @code{addr_vec}, length of
+@cindex @code{addr_diff_vec}, length of
+对于通常的insn，长度将由@code{length}属性的值来确定。
+对于@code{addr_vec}和@code{addr_diff_vec}的insn模式，
+长度通过向量数乘于每个向量的大小来计算获得。
+
+长度按照可寻址的存储单元（字节）来度量。
+
+下列宏可以用于改进长度计算：
+
 @c @table @code
 @c @findex ADJUST_INSN_LENGTH
 @c @item ADJUST_INSN_LENGTH (@var{insn}, @var{length})
@@ -11146,7 +11488,16 @@ fmoved sp@@+,fp0
 @c insn must be increased by two to compensate for the fact that alignment
 @c may be required.
 @c @end table
-@c 
+@table @code
+@findex ADJUST_INSN_LENGTH
+@item ADJUST_INSN_LENGTH (@var{insn}, @var{length})
+如果定义，则在上下文中作为函数来使用，用于修改赋予指令@var{insn}的长度。
+@var{length}为一个lvalue（左值）包含了最初计算的insn长度并将使用insn的正确长度来更新。
+
+该宏通常并不需要。一种使用它的情况为ROMP。在这个机器上，
+一个@code{addr_vec} insn的大小必须被加2用于补偿可能需要的指令对齐。
+@end table
+
 @c @findex get_attr_length
 @c The routine that returns @code{get_attr_length} (the value of the
 @c @code{length} attribute) can be used by the output routine to
@@ -11161,53 +11512,74 @@ fmoved sp@@+,fp0
 @c 
 @c On such a machine, a pattern for a branch instruction might be specified
 @c as follows:
-@c 
-@c @smallexample
-@c (define_insn "jump"
-@c   [(set (pc)
-@c         (label_ref (match_operand 0 "" "")))]
-@c   ""
-@c @{
-@c    return (get_attr_length (insn) == 4
-@c            ? "b %l0" : "l r15,=a(%l0); br r15");
-@c @}
-@c   [(set (attr "length")
-@c         (if_then_else (lt (match_dup 0) (const_int 4096))
-@c                       (const_int 4)
-@c                       (const_int 6)))])
-@c @end smallexample
-@c 
+@findex get_attr_length
+返回@code{get_attr_length}（@code{length}属性的值）的程序，
+可以被输出程序用来确定将要写入的分支指令的形式，正如下面的例子。
+
+作为一个指定可变长度分支的例子，可以考虑一下IBM360。
+如果我们采用寄存器将被设为函数起始地址这样的约定，
+我们则可以使用一个4字节的指令来跳转到4K范围的标号。
+否则，我们需要一个6字节的序列来从内存加载地址并然后分支到那里。
+
+对于这样的机器，可以按照如下的方式来指定一个分支指令模式：
+
+@smallexample
+(define_insn "jump"
+  [(set (pc)
+        (label_ref (match_operand 0 "" "")))]
+  ""
+@{
+   return (get_attr_length (insn) == 4
+           ? "b %l0" : "l r15,=a(%l0); br r15");
+@}
+  [(set (attr "length")
+        (if_then_else (lt (match_dup 0) (const_int 4096))
+                      (const_int 4)
+                      (const_int 6)))])
+@end smallexample
+
 @c @end ifset
 @c @ifset INTERNALS
 @c @node Constant Attributes
 @c @subsection Constant Attributes
 @c @cindex constant attributes
-@c 
+@end ifset
+@ifset INTERNALS
+@node 常量属性
+@subsection 常量属性
+@cindex constant attributes
+
 @c A special form of @code{define_attr}, where the expression for the
 @c default value is a @code{const} expression, indicates an attribute that
 @c is constant for a given run of the compiler.  Constant attributes may be
 @c used to specify which variety of processor is used.  For example,
-@c 
-@c @smallexample
-@c (define_attr "cpu" "m88100,m88110,m88000"
-@c  (const
-@c   (cond [(symbol_ref "TARGET_88100") (const_string "m88100")
-@c          (symbol_ref "TARGET_88110") (const_string "m88110")]
-@c         (const_string "m88000"))))
-@c 
-@c (define_attr "memory" "fast,slow"
-@c  (const
-@c   (if_then_else (symbol_ref "TARGET_FAST_MEM")
-@c                 (const_string "fast")
-@c                 (const_string "slow"))))
-@c @end smallexample
+一个@code{define_attr}的特殊形式，是其缺省值的表达式为一个@code{const}表达式，
+这表示了对于一个给定的运行编译器的一个属性为常量。
+常量熟性可以用于指定使用了哪个处理器的变种。例如，
+
+@smallexample
+(define_attr "cpu" "m88100,m88110,m88000"
+ (const
+  (cond [(symbol_ref "TARGET_88100") (const_string "m88100")
+         (symbol_ref "TARGET_88110") (const_string "m88110")]
+        (const_string "m88000"))))
+
+(define_attr "memory" "fast,slow"
+ (const
+  (if_then_else (symbol_ref "TARGET_FAST_MEM")
+                (const_string "fast")
+                (const_string "slow"))))
+@end smallexample
 @c 
 @c The routine generated for constant attributes has no parameters as it
 @c does not depend on any particular insn.  RTL expressions used to define
 @c the value of a constant attribute may use the @code{symbol_ref} form,
 @c but may not use either the @code{match_operand} form or @code{eq_attr}
 @c forms involving insn attributes.
-@c 
+针对常量属性生成的程序不具有任何参数，因为它不依赖于任何特定的insn。
+用于定义常量属性的RTL表达式可以使用@code{symbol_ref}形式，
+但是不可以使用包括insn属性的@code{match_operand}形式或者@code{eq_attr}形式。
+
 @c @end ifset
 @c @ifset INTERNALS
 @c @node Delay Slots
