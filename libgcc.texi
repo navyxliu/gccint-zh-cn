@@ -3,35 +3,54 @@
 @c For copying conditions, see the file gcc.texi.
 @c Contributed by Aldy Hernandez <aldy@quesejoda.com>
 
+@en @node Libgcc
+@en @chapter The GCC low-level runtime library
 @node Libgcc
 @chapter GCC低级运行时库
 
-GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者 
-@file{libgcc_s.so.1}。每当需要执行某些过于复杂而无法通过生成
-内嵌代码来实现的操作时，GCC便会自动生成对该库中的例程的调用。
+@en GCC provides a low-level runtime library, @file{libgcc.a} or
+@en @file{libgcc_s.so.1} on some platforms.  GCC generates calls to
+@en routines in this library automatically, whenever it needs to perform
+@en some operation that is too complicated to emit inline code for.
+GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者@file{libgcc_s.so.1}。每当需要执行某些过于复杂而无法通过生成内嵌代码来实现的操作时，GCC便会自动生成对该库中的例程的调用。
 
-大多数 @code{libgcc} 中的例程用来处理目标处理器不能直接执行的
-算术运算。这包括一些机器上的整数乘除，以及其它一些机器上的所
-有浮点和定点运算。@code{libgcc} 还包括异常处理，以及少数其它
-操作。
+@en Most of the routines in @code{libgcc} handle arithmetic operations
+@en that the target processor cannot perform directly.  This includes
+@en integer multiply and divide on some machines, and all floating-point
+@en and fixed-point operations on other machines.  @code{libgcc} also includes
+@en routines for exception handling, and a handful of miscellaneous operations.
+大多数@code{libgcc}中的例程用来处理目标处理器不能直接执行的算术运算。这包括一些机器上的整数乘除，以及其它一些机器上的所有浮点和定点运算。@code{libgcc} 还包括异常处理，以及少数其它操作。
 
-这些例程中有一些能够用机器独立的C来定义。其它的必须为需要它们
-的处理器使用汇编语言手写。
+@en Some of these routines can be defined in mostly machine-independent C@.
+@en Others must be hand-written in assembly language for each processor
+@en that needs them.
+这些例程中有一些能够用机器独立的C来定义。其它的必须为需要它们的处理器使用汇编语言手写。
 
-在一些情况下，GCC还会生成对C库例程的调用，像 @code{memcpy} 和 
-@code{memset}。GCC可能使用的例程集在 
-@ref{Other Builtins,,,gcc, Using the GNU Compiler Collection (GCC)}
-中有介绍。
+@en GCC will also generate calls to C library routines, such as
+@en @code{memcpy} and @code{memset}, in some cases.  The set of routines
+@en that GCC may possibly use is documented in @ref{Other
+@en Builtins,,,gcc, Using the GNU Compiler Collection (GCC)}.
+在一些情况下，GCC还会生成对C库例程的调用，像@code{memcpy}和@code{memset}。GCC可能使用的例程集在@ref{Other Builtins,,,gcc, Using the GNU Compiler Collection (GCC)}中有介绍。
 
-这些例程接受参数并且返回特定机器模式的值，而不是特定的C类型。
-关于这方面的概念解释，参见@ref{机器模式}。为了便于说明，在
-这章中浮点类型 @code{float} 被假设为对应于 @code{SFmode}；
-@code{double} 对应于 @code{DFmode}；以及 @code{@w{long double}} 
-对应于 @code{TFmode} 和 @code{XFmode}。类似的，整数类型 @code{int} 
-和 @code{@w{unsigned int}} 对应于 @code{SImode}；@code{long} 和 
-@code{@w{unsigned long}} 对应于DImode；以及 @code{@w{long long}} 
-和 @code{@w{unsigned long long}} 对应于 @code{TImode}。
+@en These routines take arguments and return values of a specific machine
+@en mode, not a specific C type.  @xref{Machine Modes}, for an explanation
+@en of this concept.  For illustrative purposes, in this chapter the
+@en floating point type @code{float} is assumed to correspond to @code{SFmode};
+@en @code{double} to @code{DFmode}; and @code{@w{long double}} to both
+@en @code{TFmode} and @code{XFmode}.  Similarly, the integer types @code{int}
+@en and @code{@w{unsigned int}} correspond to @code{SImode}; @code{long} and
+@en @code{@w{unsigned long}} to @code{DImode}; and @code{@w{long long}} and
+@en @code{@w{unsigned long long}} to @code{TImode}.
+这些例程接受参数并且返回特定机器模式的值，而不是特定的C类型。关于这方面的概念解释，参见@ref{机器模式}。为了便于说明，在这章中浮点类型@code{float}被假设为对应于@code{SFmode}；@code{double}对应于@code{DFmode}；以及@code{@w{long double}}对应于@code{TFmode}和@code{XFmode}。类似的，整数类型@code{int}和@code{@w{unsigned int}}对应于@code{SImode}；@code{long}和@code{@w{unsigned long}}对应于DImode；以及@code{@w{long long}}和@code{@w{unsigned long long}}对应于@code{TImode}。
 
+@en @menu
+@en * Integer library routines::
+@en * Soft float library routines::
+@en * Decimal float library routines::
+@en * Fixed-point fractional library routines::
+@en * Exception handling routines::
+@en * Miscellaneous routines::
+@en @end menu
 @menu
 * 整数库例程::
 * 软浮点库例程::
@@ -41,161 +60,213 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 * 其它例程::
 @end menu
 
+@en @node Integer library routines
+@en @section Routines for integer arithmetic
 @node 整数库例程
 @section 整数算术例程
 
+@en The integer arithmetic routines are used on platforms that don't provide
+@en hardware support for arithmetic operations on some modes.
 整数算术例程用于那些对一些机器模式的算术运算不提供硬件支持的平台上。
 
+@en @subsection Arithmetic functions
 @subsection 算术函数
 
 @deftypefn {Runtime Function} int __ashlsi3 (int @var{a}, int @var{b})
 @deftypefnx {Runtime Function} long __ashldi3 (long @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {long long} __ashlti3 (long long @var{a}, int @var{b})
-这些函数返回 @var{a} 左移 @var{b} 位后的结果。
+@en These functions return the result of shifting @var{a} left by @var{b} bits.
+这些函数返回@var{a}左移@var{b}位后的结果。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __ashrsi3 (int @var{a}, int @var{b})
 @deftypefnx {Runtime Function} long __ashrdi3 (long @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {long long} __ashrti3 (long long @var{a}, int @var{b})
-这些函数返回 @var{a} 算术右移 @var{b} 位后的结果。
+@en These functions return the result of arithmetically shifting @var{a} right
+@en by @var{b} bits.
+这些函数返回@var{a}算术右移@var{b}位后的结果。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __divsi3 (int @var{a}, int @var{b})
 @deftypefnx {Runtime Function} long __divdi3 (long @var{a}, long @var{b})
 @deftypefnx {Runtime Function} {long long} __divti3 (long long @var{a}, long long @var{b})
-这些函数返回 @var{a} 和 @var{b} 的有符号除法的商。
+@en These functions return the quotient of the signed division of @var{a} and
+@en @var{b}.
+这些函数返回@var{a}和@var{b}的有符号除法的商。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __lshrsi3 (int @var{a}, int @var{b})
 @deftypefnx {Runtime Function} long __lshrdi3 (long @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {long long} __lshrti3 (long long @var{a}, int @var{b})
-这些函数返回将 @var{a} 逻辑右移 @var{b} 位后的结果。
+@en These functions return the result of logically shifting @var{a} right by
+@en @var{b} bits.
+这些函数返回将@var{a}逻辑右移@var{b}位后的结果。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __modsi3 (int @var{a}, int @var{b})
 @deftypefnx {Runtime Function} long __moddi3 (long @var{a}, long @var{b})
 @deftypefnx {Runtime Function} {long long} __modti3 (long long @var{a}, long long @var{b})
-这些函数返回 @var{a} 和 @var{b} 的有符号除法的余数。
+@en These functions return the remainder of the signed division of @var{a}
+@en and @var{b}.
+这些函数返回@var{a}和@var{b}的有符号除法的余数。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __mulsi3 (int @var{a}, int @var{b})
 @deftypefnx {Runtime Function} long __muldi3 (long @var{a}, long @var{b})
 @deftypefnx {Runtime Function} {long long} __multi3 (long long @var{a}, long long @var{b})
-这些函数返回 @var{a} 和 @var{b} 的乘积。
+@en These functions return the product of @var{a} and @var{b}.
+这些函数返回@var{a}和@var{b}的乘积。
 @end deftypefn
 
 @deftypefn {Runtime Function} long __negdi2 (long @var{a})
 @deftypefnx {Runtime Function} {long long} __negti2 (long long @var{a})
-这些函数返回 @var{a} 的负数。
+@en These functions return the negation of @var{a}.
+这些函数返回@var{a}的负数。
 @end deftypefn
 
 @deftypefn {Runtime Function} {unsigned int} __udivsi3 (unsigned int @var{a}, unsigned int @var{b})
 @deftypefnx {Runtime Function} {unsigned long} __udivdi3 (unsigned long @var{a}, unsigned long @var{b})
 @deftypefnx {Runtime Function} {unsigned long long} __udivti3 (unsigned long long @var{a}, unsigned long long @var{b})
-这些函数返回 @var{a} 和 @var{b} 的无符号除法的商。
+@en These functions return the quotient of the unsigned division of @var{a}
+@en and @var{b}.
+这些函数返回@var{a}和@var{b}的无符号除法的商。
 @end deftypefn
 
 @deftypefn {Runtime Function} {unsigned long} __udivmoddi3 (unsigned long @var{a}, unsigned long @var{b}, unsigned long *@var{c})
 @deftypefnx {Runtime Function} {unsigned long long} __udivti3 (unsigned long long @var{a}, unsigned long long @var{b}, unsigned long long *@var{c})
-这些函数计算 @var{a} 和 @var{b} 的无符号除法的商和余数。返回值为商，
-并且余数放在 @var{c} 所指向的变量中。
+@en These functions calculate both the quotient and remainder of the unsigned
+@en division of @var{a} and @var{b}.  The return value is the quotient, and
+@en the remainder is placed in variable pointed to by @var{c}.
+这些函数计算@var{a}和@var{b}的无符号除法的商和余数。返回值为商，并且余数放在@var{c}所指向的变量中。
 @end deftypefn
 
 @deftypefn {Runtime Function} {unsigned int} __umodsi3 (unsigned int @var{a}, unsigned int @var{b})
 @deftypefnx {Runtime Function} {unsigned long} __umoddi3 (unsigned long @var{a}, unsigned long @var{b})
 @deftypefnx {Runtime Function} {unsigned long long} __umodti3 (unsigned long long @var{a}, unsigned long long @var{b})
-这些函数返回 @var{a} 和 @var{b} 的无符号除法的余数。
+@en These functions return the remainder of the unsigned division of @var{a}
+@en and @var{b}.
+这些函数返回@var{a}和@var{b}的无符号除法的余数。
 @end deftypefn
 
+@en @subsection Comparison functions
 @subsection 比较函数
 
-以下函数实现了整数比较。这些函数实现了低层次的比较，在这之上可以构建
-更高级别的比较运算符（像小于，大于，或者等于）。返回值位于0到2的范围，
-使得高级别的比较运算符可以通过测试有符号比较或者无符号比较的返回值来
-实现。
+@en The following functions implement integral comparisons.  These functions
+@en implement a low-level compare, upon which the higher level comparison
+@en operators (such as less than and greater than or equal to) can be
+@en constructed.  The returned values lie in the range zero to two, to allow
+@en the high-level operators to be implemented by testing the returned
+@en result using either signed or unsigned comparison.
+以下函数实现了整数比较。这些函数实现了低层次的比较，在这之上可以构建更高级别的比较运算符（像小于，大于，或者等于）。返回值位于0到2的范围，使得高级别的比较运算符可以通过测试有符号比较或者无符号比较的返回值来实现。
 
 @deftypefn {Runtime Function} int __cmpdi2 (long @var{a}, long @var{b})
 @deftypefnx {Runtime Function} int __cmpti2 (long long @var{a}, long long @var{b})
-这些函数执行一个 @var{a} 和 @var{b} 的有符号比较。如果 @var{a} 小于 
-@var{b}，则返回0；如果 @var{a} 大于 @var{b}，则返回2；如果 @var{a} 和 
-@var{b} 相等则返回1。
+@en These functions perform a signed comparison of @var{a} and @var{b}.  If
+@en @var{a} is less than @var{b}, they return 0; if @var{a} is greater than
+@en @var{b}, they return 2; and if @var{a} and @var{b} are equal they return 1.
+这些函数执行一个@var{a}和@var{b}的有符号比较。如果@var{a}小于@var{b}，则返回0；如果@var{a}大于@var{b}，则返回2；如果@var{a}和@var{b} 相等则返回1。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __ucmpdi2 (unsigned long @var{a}, unsigned long @var{b})
 @deftypefnx {Runtime Function} int __ucmpti2 (unsigned long long @var{a}, unsigned long long @var{b})
-这些函数执行一个a和b的无符号比较。如果 @var{a} 小于 @var{b}，则返回0；
-如果 @var{a} 大于 @var{b}，则返回2；如果 @var{a} 和 @var{b} 相等则返回1。
+@en These functions perform an unsigned comparison of @var{a} and @var{b}.
+@en If @var{a} is less than @var{b}, they return 0; if @var{a} is greater than
+@en @var{b}, they return 2; and if @var{a} and @var{b} are equal they return 1.
+这些函数执行一个a和b的无符号比较。如果@var{a}小于@var{b}，则返回0；如果@var{a}大于@var{b}，则返回2；如果@var{a}和@var{b}相等则返回1。
 @end deftypefn
 
+@en @subsection Trapping arithmetic functions
 @subsection 可产生异常的算术函数
 
-以下函数实现了可产生异常的算术运算。这些函数在出现有符号算术溢出时，
-会调用libc函数 @code{abort}。
+@en The following functions implement trapping arithmetic.  These functions
+@en call the libc function @code{abort} upon signed arithmetic overflow.
+以下函数实现了可产生异常的算术运算。这些函数在出现有符号算术溢出时，会调用libc函数@code{abort}。
 
 @deftypefn {Runtime Function} int __absvsi2 (int @var{a})
 @deftypefnx {Runtime Function} long __absvdi2 (long @var{a})
-这些函数返回 @var{a} 的绝对值。
+@en These functions return the absolute value of @var{a}.
+这些函数返回@var{a}的绝对值。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __addvsi3 (int @var{a}, int @var{b})
 @deftypefnx {Runtime Function} long __addvdi3 (long @var{a}, long @var{b})
-这些函数返回 @var{a} 和 @var{b} 的和；也就是 @code{@var{a} + @var{b}}。
+@en These functions return the sum of @var{a} and @var{b}; that is
+@en @code{@var{a} + @var{b}}.
+这些函数返回@var{a}和@var{b}的和；也就是@code{@var{a} + @var{b}}。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __mulvsi3 (int @var{a}, int @var{b})
 @deftypefnx {Runtime Function} long __mulvdi3 (long @var{a}, long @var{b})
-这些函数返回 @var{a} 和 @var{b} 的积；也就是@code{@var{a} * @var{b}}。
+@en The functions return the product of @var{a} and @var{b}; that is
+@en @code{@var{a} * @var{b}}.
+这些函数返回@var{a}和@var{b}的积；也就是@code{@var{a} * @var{b}}。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __negvsi2 (int @var{a})
 @deftypefnx {Runtime Function} long __negvdi2 (long @var{a})
-这些函数返回 @var{a} 的负数；也就是 @code{-@var{a}}。
+@en These functions return the negation of @var{a}; that is @code{-@var{a}}.
+这些函数返回@var{a}的负数；也就是@code{-@var{a}}。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __subvsi3 (int @var{a}, int @var{b})
 @deftypefnx {Runtime Function} long __subvdi3 (long @var{a}, long @var{b})
-这些函数返回 @var{a} 和 @var{b} 的差；也就是 @code{@var{a} - @var{b}}。
+@en These functions return the difference between @var{b} and @var{a};
+@en that is @code{@var{a} - @var{b}}.
+这些函数返回@var{a}和@var{b}的差；也就是@code{@var{a} - @var{b}}。
 @end deftypefn
 
+@en @subsection Bit operations
 @subsection 位运算
 
 @deftypefn {Runtime Function} int __clzsi2 (int @var{a})
 @deftypefnx {Runtime Function} int __clzdi2 (long @var{a})
 @deftypefnx {Runtime Function} int __clzti2 (long long @var{a})
-这些函数返回 @var{a} 中从最高有效位开始的前导0位的数目。
-如果 @var{a} 为0，则结果未定义。
+@en These functions return the number of leading 0-bits in @var{a}, starting
+@en at the most significant bit position.  If @var{a} is zero, the result is
+@en undefined.
+这些函数返回@var{a}中从最高有效位开始的前导0位的数目。如果@var{a}为0，则结果未定义。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __ctzsi2 (int @var{a})
 @deftypefnx {Runtime Function} int __ctzdi2 (long @var{a})
 @deftypefnx {Runtime Function} int __ctzti2 (long long @var{a})
-这些函数返回 @var{a} 中从最低有效位开始的尾部0位的数目。
-如果 @var{a} 为0，则结果未定义。
+@en These functions return the number of trailing 0-bits in @var{a}, starting
+@en at the least significant bit position.  If @var{a} is zero, the result is
+@en undefined.
+这些函数返回@var{a}中从最低有效位开始的尾部0位的数目。如果@var{a}为0，则结果未定义。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __ffsdi2 (long @var{a})
 @deftypefnx {Runtime Function} int __ffsti2 (long long @var{a})
-这些函数返回 @var{a} 中最低有效1位的索引，或者 @var{a} 
-为0时返回0。最低有效位的索引为1。
+@en These functions return the index of the least significant 1-bit in @var{a},
+@en or the value zero if @var{a} is zero.  The least significant bit is index
+@en one.
+这些函数返回@var{a}中最低有效1位的索引，或者@var{a}为0时返回0。最低有效位的索引为1。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __paritysi2 (int @var{a})
 @deftypefnx {Runtime Function} int __paritydi2 (long @var{a})
 @deftypefnx {Runtime Function} int __parityti2 (long long @var{a})
-如果 @var{a} 中置位的数目是偶数，则这些函数返回0，否则返回1。
+@en These functions return the value zero if the number of bits set in
+@en @var{a} is even, and the value one otherwise.
+如果@var{a}中置位的数目是偶数，则这些函数返回0，否则返回1。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __popcountsi2 (int @var{a})
 @deftypefnx {Runtime Function} int __popcountdi2 (long @var{a})
 @deftypefnx {Runtime Function} int __popcountti2 (long long @var{a})
-这些函数返回在 @var{a} 中置位的数目。
+@en These functions return the number of bits set in @var{a}.
+这些函数返回在@var{a}中置位的数目。
 @end deftypefn
 
 @deftypefn {Runtime Function} int32_t __bswapsi2 (int32_t @var{a})
 @deftypefnx {Runtime Function} int64_t __bswapdi2 (int64_t @var{a})
-这些函数返回 @var{a} 的字节交换。
+@en These functions return the @var{a} byteswapped.
+这些函数返回@var{a}的字节交换。
 @end deftypefn
 
+@en @node Soft float library routines
+@en @section Routines for floating point emulation
 @node 软浮点库例程
 @section 浮点模拟例程
 @cindex soft float library
@@ -203,52 +274,68 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @cindex math library
 @opindex msoft-float
 
-软件浮点库用于不支持硬件浮点计算的机器上。也用于通过 @option{-msoft-float}
-禁止生成浮点指令的场合。（并不是琐有的目标机都支持该开关选项。）
+@en The software floating point library is used on machines which do not
+@en have hardware support for floating point.  It is also used whenever
+@en @option{-msoft-float} is used to disable generation of floating point
+@en instructions.  (Not all targets support this switch.)
+软件浮点库用于不支持硬件浮点计算的机器上。也用于通过@option{-msoft-float}禁止生成浮点指令的场合。（并不是琐有的目标机都支持该开关选项。）
 
-为了和其它编译器兼容，可以使用 @code{DECLARE_LIBRARY_RENAMES} 来
-重命名浮点模拟例程（@pxref{库调用}）。在这一章，使用了缺省
-的名字。
+@en For compatibility with other compilers, the floating point emulation
+@en routines can be renamed with the @code{DECLARE_LIBRARY_RENAMES} macro
+@en (@pxref{Library Calls}).  In this section, the default names are used.
+为了和其它编译器兼容，可以使用@code{DECLARE_LIBRARY_RENAMES}来重命名浮点模拟例程（@pxref{库调用}）。在这一章，使用了缺省的名字。
 
-目前库不支持在一些机器上用于 @code{long double} 的 @code{XFmode}。
+@en Presently the library does not support @code{XFmode}, which is used
+@en for @code{long double} on some architectures.
+目前库不支持在一些机器上用于@code{long double}的@code{XFmode}。
 
+@en @subsection Arithmetic functions
 @subsection 算术函数
 
 @deftypefn {Runtime Function} float __addsf3 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} double __adddf3 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} {long double} __addtf3 (long double @var{a}, long double @var{b})
 @deftypefnx {Runtime Function} {long double} __addxf3 (long double @var{a}, long double @var{b})
-这些函数返回 @var{a} 和 @var{b} 的和。
+@en These functions return the sum of @var{a} and @var{b}.
+这些函数返回@var{a}和@var{b}的和。
 @end deftypefn
 
 @deftypefn {Runtime Function} float __subsf3 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} double __subdf3 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} {long double} __subtf3 (long double @var{a}, long double @var{b})
 @deftypefnx {Runtime Function} {long double} __subxf3 (long double @var{a}, long double @var{b})
-这些函数返回 @var{b} 和 @var{a} 的差，也就是 @w{@math{@var{a} - @var{b}}}。
+@en These functions return the difference between @var{b} and @var{a};
+@en that is, @w{@math{@var{a} - @var{b}}}.
+这些函数返回@var{b}和@var{a}的差，也就是@w{@math{@var{a} - @var{b}}}。
 @end deftypefn
 
 @deftypefn {Runtime Function} float __mulsf3 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} double __muldf3 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} {long double} __multf3 (long double @var{a}, long double @var{b})
 @deftypefnx {Runtime Function} {long double} __mulxf3 (long double @var{a}, long double @var{b})
-这些函数返回 @var{a} 和 @var{b} 的积。
+@en These functions return the product of @var{a} and @var{b}.
+这些函数返回@var{a}和@var{b}的积。
 @end deftypefn
 
 @deftypefn {Runtime Function} float __divsf3 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} double __divdf3 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} {long double} __divtf3 (long double @var{a}, long double @var{b})
 @deftypefnx {Runtime Function} {long double} __divxf3 (long double @var{a}, long double @var{b})
-这些函数返回 @var{a} 和 @var{b} 的商，也就是@w{@math{@var{a} / @var{b}}}。
+@en These functions return the quotient of @var{a} and @var{b}; that is,
+@en @w{@math{@var{a} / @var{b}}}.
+这些函数返回@var{a}和@var{b}的商，也就是@w{@math{@var{a} / @var{b}}}。
 @end deftypefn
 
 @deftypefn {Runtime Function} float __negsf2 (float @var{a})
 @deftypefnx {Runtime Function} double __negdf2 (double @var{a})
 @deftypefnx {Runtime Function} {long double} __negtf2 (long double @var{a})
 @deftypefnx {Runtime Function} {long double} __negxf2 (long double @var{a})
-这些函数返回 @var{a} 的负数。它们只是简单的反转符号位，因此能够产生负0和负NaN。
+@en These functions return the negation of @var{a}.  They simply flip the
+@en sign bit, so they can produce negative zero and negative NaN@.
+这些函数返回@var{a}的负数。它们只是简单的反转符号位，因此能够产生负0和负NaN。
 @end deftypefn
 
+@en @subsection Conversion functions
 @subsection 转换函数
 
 @deftypefn {Runtime Function} double __extendsfdf2 (float @var{a})
@@ -256,6 +343,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {long double} __extendsfxf2 (float @var{a})
 @deftypefnx {Runtime Function} {long double} __extenddftf2 (double @var{a})
 @deftypefnx {Runtime Function} {long double} __extenddfxf2 (double @var{a})
+@en These functions extend @var{a} to the wider mode of their return
+@en type.
 这些函数将@var{a}扩展为它们返回类型的模式。
 @end deftypefn
 
@@ -264,6 +353,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} float __truncxfsf2 (long double @var{a})
 @deftypefnx {Runtime Function} float __trunctfsf2 (long double @var{a})
 @deftypefnx {Runtime Function} float __truncdfsf2 (double @var{a})
+@en These functions truncate @var{a} to the narrower mode of their return
+@en type, rounding toward zero.
 这些函数将@var{a}截短为它们返回类型的模式，并向0方向舍入。
 @end deftypefn
 
@@ -271,6 +362,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} int __fixdfsi (double @var{a})
 @deftypefnx {Runtime Function} int __fixtfsi (long double @var{a})
 @deftypefnx {Runtime Function} int __fixxfsi (long double @var{a})
+@en These functions convert @var{a} to a signed integer, rounding toward zero.
 这些函数将@var{a}转换为有符号整数，并向0方向舍入。
 @end deftypefn
 
@@ -278,6 +370,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} long __fixdfdi (double @var{a})
 @deftypefnx {Runtime Function} long __fixtfdi (long double @var{a})
 @deftypefnx {Runtime Function} long __fixxfdi (long double @var{a})
+@en These functions convert @var{a} to a signed long, rounding toward zero.
 这些函数将@var{a}转换为有符号长整数，并向0方向舍入。
 @end deftypefn
 
@@ -285,6 +378,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {long long} __fixdfti (double @var{a})
 @deftypefnx {Runtime Function} {long long} __fixtfti (long double @var{a})
 @deftypefnx {Runtime Function} {long long} __fixxfti (long double @var{a})
+@en These functions convert @var{a} to a signed long long, rounding toward zero.
 这些函数将@var{a}转换为有符号long long整数，并向0方向舍入。
 @end deftypefn
 
@@ -292,6 +386,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned int} __fixunsdfsi (double @var{a})
 @deftypefnx {Runtime Function} {unsigned int} __fixunstfsi (long double @var{a})
 @deftypefnx {Runtime Function} {unsigned int} __fixunsxfsi (long double @var{a})
+@en These functions convert @var{a} to an unsigned integer, rounding
+@en toward zero.  Negative values all become zero.
 这些函数将@var{a}转换为无符号整数，并向0方向舍入。将负值都变为0。
 @end deftypefn
 
@@ -299,6 +395,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned long} __fixunsdfdi (double @var{a})
 @deftypefnx {Runtime Function} {unsigned long} __fixunstfdi (long double @var{a})
 @deftypefnx {Runtime Function} {unsigned long} __fixunsxfdi (long double @var{a})
+@en These functions convert @var{a} to an unsigned long, rounding
+@en toward zero.  Negative values all become zero.
 这些函数将@var{a}转换为无符号长整数，并向0方向舍入。将负值都变为0。
 @end deftypefn
 
@@ -306,6 +404,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned long long} __fixunsdfti (double @var{a})
 @deftypefnx {Runtime Function} {unsigned long long} __fixunstfti (long double @var{a})
 @deftypefnx {Runtime Function} {unsigned long long} __fixunsxfti (long double @var{a})
+@en These functions convert @var{a} to an unsigned long long, rounding
+@en toward zero.  Negative values all become zero.
 这些函数将@var{a}转换为无符号long long整数，并向0方向舍入。将负值都变为0。
 @end deftypefn
 
@@ -313,6 +413,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} double __floatsidf (int @var{i})
 @deftypefnx {Runtime Function} {long double} __floatsitf (int @var{i})
 @deftypefnx {Runtime Function} {long double} __floatsixf (int @var{i})
+@en These functions convert @var{i}, a signed integer, to floating point.
 这些函数将有符号整数@var{i}转换为浮点数。
 @end deftypefn
 
@@ -320,6 +421,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} double __floatdidf (long @var{i})
 @deftypefnx {Runtime Function} {long double} __floatditf (long @var{i})
 @deftypefnx {Runtime Function} {long double} __floatdixf (long @var{i})
+@en These functions convert @var{i}, a signed long, to floating point.
 这些函数将有符号长整数@var{i}转换为浮点数。
 @end deftypefn
 
@@ -327,6 +429,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} double __floattidf (long long @var{i})
 @deftypefnx {Runtime Function} {long double} __floattitf (long long @var{i})
 @deftypefnx {Runtime Function} {long double} __floattixf (long long @var{i})
+@en These functions convert @var{i}, a signed long long, to floating point.
 这些函数将有符号long long整数@var{i}转换为浮点数。
 @end deftypefn
 
@@ -334,6 +437,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} double __floatunsidf (unsigned int @var{i})
 @deftypefnx {Runtime Function} {long double} __floatunsitf (unsigned int @var{i})
 @deftypefnx {Runtime Function} {long double} __floatunsixf (unsigned int @var{i})
+@en These functions convert @var{i}, an unsigned integer, to floating point.
 这些函数将无符号整数@var{i}转换为浮点数。
 @end deftypefn
 
@@ -341,6 +445,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} double __floatundidf (unsigned long @var{i})
 @deftypefnx {Runtime Function} {long double} __floatunditf (unsigned long @var{i})
 @deftypefnx {Runtime Function} {long double} __floatundixf (unsigned long @var{i})
+@en These functions convert @var{i}, an unsigned long, to floating point.
 这些函数将无符号长整数@var{i}转换为浮点数。
 @end deftypefn
 
@@ -348,31 +453,41 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} double __floatuntidf (unsigned long long @var{i})
 @deftypefnx {Runtime Function} {long double} __floatuntitf (unsigned long long @var{i})
 @deftypefnx {Runtime Function} {long double} __floatuntixf (unsigned long long @var{i})
+@en These functions convert @var{i}, an unsigned long long, to floating point.
 这些函数将无符号long long整数@var{i}转换为浮点数。
 @end deftypefn
 
+@en @subsection Comparison functions
 @subsection 比较函数
 
+@en There are two sets of basic comparison functions.
 有两组基本的比较函数。
 
 @deftypefn {Runtime Function} int __cmpsf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __cmpdf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __cmptf2 (long double @var{a}, long double @var{b})
-这些函数计算 @math{a <=> b}。也就是，如果 @var{a} 小于 @var{b}，则返回-1；
-如果 @var{a} 大于 @var{b}，则返回1；如果 @var{a} 与 @var{b} 相等，则返回0。
-如果有任一参数为NaN，则返回1，但你不要依赖于这点；如果可以出现NaN，则使用
-高级的比较函数。
+@en These functions calculate @math{a <=> b}.  That is, if @var{a} is less
+@en than @var{b}, they return @minus{}1; if @var{a} is greater than @var{b}, they
+@en return 1; and if @var{a} and @var{b} are equal they return 0.  If
+@en either argument is NaN they return 1, but you should not rely on this;
+@en if NaN is a possibility, use one of the higher-level comparison
+@en functions.
+这些函数计算@math{a <=> b}。也就是，如果@var{a}小于@var{b}，则返回-1；如果@var{a}大于@var{b}，则返回1；如果@var{a}与@var{b}相等，则返回0。如果有任一参数为NaN，则返回1，但你不要依赖于这点；如果可以出现NaN，则使用高级的比较函数。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __unordsf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __unorddf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __unordtf2 (long double @var{a}, long double @var{b})
+@en These functions return a nonzero value if either argument is NaN, otherwise 0.
 这些函数返回一个非0值，如果任一参数为NaN，否则返回0。
 @end deftypefn
 
-还有一个直接对应于比较运算符的高级别函数的完备群。它们实现了浮点运算
-的ISO C语义，将NaN考虑了进来。要仔细注意每组的返回值定义。
-（Under the hood），所有这些函数都被实现为：
+@en There is also a complete group of higher level functions which
+@en correspond directly to comparison operators.  They implement the ISO C
+@en semantics for floating-point comparisons, taking NaN into account.
+@en Pay careful attention to the return values defined for each set.
+@en Under the hood, all of these routines are implemented as
+还有一个直接对应于比较运算符的高级别函数的完备群。它们实现了浮点运算的ISO C语义，将NaN考虑了进来。要仔细注意每组的返回值定义。（Under the hood），所有这些函数都被实现为：
 
 @smallexample
   if (__unord@var{X}f2 (a, b))
@@ -381,82 +496,109 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @end smallexample
 
 @noindent
-其中 @var{E} 是一个常数，被选来给出对于NaN的合适行为。因此，
-返回值的意义对于每组都不同。不要依赖于这些实现；只有在下面
-被说明的语义才有担保。
+@en where @var{E} is a constant chosen to give the proper behavior for
+@en NaN@.  Thus, the meaning of the return value is different for each set.
+@en Do not rely on this implementation; only the semantics documented
+@en below are guaranteed.
+其中@var{E}是一个常数，被选来给出对于NaN的合适行为。因此，返回值的意义对于每组都不同。不要依赖于这些实现；只有在下面被说明的语义才有担保。
 
 @deftypefn {Runtime Function} int __eqsf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __eqdf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __eqtf2 (long double @var{a}, long double @var{b})
-如果参数都不为NaN，并且 @var{a} 和 @var{b} 相等，则这些函数返回0。
+@en These functions return zero if neither argument is NaN, and @var{a} and
+@en @var{b} are equal.
+如果参数都不为NaN，并且@var{a}和@var{b}相等，则这些函数返回0。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __nesf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __nedf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __netf2 (long double @var{a}, long double @var{b})
-如果有任一参数为NaN，或者 @var{a} 和 @var{b} 不相等，则这些函数返回非0。
+@en These functions return a nonzero value if either argument is NaN, or
+@en if @var{a} and @var{b} are unequal.
+如果有任一参数为NaN，或者@var{a}和@var{b}不相等，则这些函数返回非0。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __gesf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __gedf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __getf2 (long double @var{a}, long double @var{b})
-如果参数都不为NaN，并且 @var{a} 大于或等于 @var{b}，则这些函数返回一个大于或等于0的值。
+@en These functions return a value greater than or equal to zero if
+@en neither argument is NaN, and @var{a} is greater than or equal to
+@en @var{b}.
+如果参数都不为NaN，并且@var{a}大于或等于@var{b}，则这些函数返回一个大于或等于0的值。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __ltsf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __ltdf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __lttf2 (long double @var{a}, long double @var{b})
-如果参数都不为NaN，并且 @var{a} 严格小于 @var{b}，则这些函数返回一个小于0的值。
+@en These functions return a value less than zero if neither argument is
+@en NaN, and @var{a} is strictly less than @var{b}.
+如果参数都不为NaN，并且@var{a}严格小于@var{b}，则这些函数返回一个小于0的值。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __lesf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __ledf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __letf2 (long double @var{a}, long double @var{b})
-如果参数都不为NaN，并且 @var{a} 小于或等于 @var{b}，则这些函数返回一个小于或等于0的值。
+@en These functions return a value less than or equal to zero if neither
+@en argument is NaN, and @var{a} is less than or equal to @var{b}.
+如果参数都不为NaN，并且@var{a}小于或等于@var{b}，则这些函数返回一个小于或等于0的值。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __gtsf2 (float @var{a}, float @var{b})
 @deftypefnx {Runtime Function} int __gtdf2 (double @var{a}, double @var{b})
 @deftypefnx {Runtime Function} int __gttf2 (long double @var{a}, long double @var{b})
-如果参数都不为NaN，并且 @var{a} 严格大于 @var{b}，则这些函数返回一个大于0的值。
+@en These functions return a value greater than zero if neither argument
+@en is NaN, and @var{a} is strictly greater than @var{b}.
+如果参数都不为NaN，并且@var{a}严格大于@var{b}，则这些函数返回一个大于0的值。
 @end deftypefn
 
+@en @subsection Other floating-point functions
 @subsection 其它浮点函数
 
 @deftypefn {Runtime Function} float __powisf2 (float @var{a}, int @var{b})
 @deftypefnx {Runtime Function} double __powidf2 (double @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {long double} __powitf2 (long double @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {long double} __powixf2 (long double @var{a}, int @var{b})
-这些函数求得 @var{a} 的 @var{b} 次幂。
+@en These functions convert raise @var{a} to the power @var{b}.
+这些函数求得@var{a}的@var{b}次幂。
 @end deftypefn
 
 @deftypefn {Runtime Function} {complex float} __mulsc3 (float @var{a}, float @var{b}, float @var{c}, float @var{d})
 @deftypefnx {Runtime Function} {complex double} __muldc3 (double @var{a}, double @var{b}, double @var{c}, double @var{d})
 @deftypefnx {Runtime Function} {complex long double} __multc3 (long double @var{a}, long double @var{b}, long double @var{c}, long double @var{d})
 @deftypefnx {Runtime Function} {complex long double} __mulxc3 (long double @var{a}, long double @var{b}, long double @var{c}, long double @var{d})
-这些函数返回 @math{@var{a} + i@var{b}} 和 @math{@var{c} + i@var{d}} 的乘积，遵从C99附录G的规则。
+@en These functions return the product of @math{@var{a} + i@var{b}} and
+@en @math{@var{c} + i@var{d}}, following the rules of C99 Annex G@.
+这些函数返回@math{@var{a} + i@var{b}}和@math{@var{c} + i@var{d}}的乘积，遵从C99附录G的规则。
 @end deftypefn
 
 @deftypefn {Runtime Function} {complex float} __divsc3 (float @var{a}, float @var{b}, float @var{c}, float @var{d})
 @deftypefnx {Runtime Function} {complex double} __divdc3 (double @var{a}, double @var{b}, double @var{c}, double @var{d})
 @deftypefnx {Runtime Function} {complex long double} __divtc3 (long double @var{a}, long double @var{b}, long double @var{c}, long double @var{d})
 @deftypefnx {Runtime Function} {complex long double} __divxc3 (long double @var{a}, long double @var{b}, long double @var{c}, long double @var{d})
-这些函数返回 @math{@var{a} + i@var{b}} 和 @math{@var{c} + i@var{d}} 的商
-（即 @math{(@var{a} + i@var{b}) / (@var{c} + i@var{d})}），遵从C99附录G的规则。
+@en These functions return the quotient of @math{@var{a} + i@var{b}} and
+@en @math{@var{c} + i@var{d}} (i.e., @math{(@var{a} + i@var{b}) / (@var{c}
+@en + i@var{d})}), following the rules of C99 Annex G@.
+这些函数返回@math{@var{a} + i@var{b}}和@math{@var{c} + i@var{d}}的商（即 @math{(@var{a} + i@var{b}) / (@var{c} + i@var{d})}），遵从C99附录G的规则。
 @end deftypefn
 
+@en @node Decimal float library routines
+@en @section Routines for decimal floating point emulation
 @node 十进制浮点库例程
 @section 十进制浮点模拟例程
 @cindex decimal float library
 @cindex IEEE 754-2008
 
-软件十进制浮点库实现了IEEE 754-2008十进制浮点算术运算，
-并且只在选定的目标机上起作用。
+@en The software decimal floating point library implements IEEE 754-2008
+@en decimal floating point arithmetic and is only activated on selected
+@en targets.
+软件十进制浮点库实现了IEEE 754-2008十进制浮点算术运算，并且只在选定的目标机上起作用。
 
-软件十进制浮点库支持DPD 编码(Densely Packed Decimal，密集十进制数) 
-或 BID编码 (Binary Integer Decimal，用二进制整数表示的十进制数)，
-可以在配置时进行选择。
+@en The software decimal floating point library supports either DPD 
+@en (Densely Packed Decimal) or BID (Binary Integer Decimal) encoding 
+@en as selected at configure time.
+软件十进制浮点库支持DPD 编码(Densely Packed Decimal，密集十进制数) 或BID编码(Binary Integer Decimal，用二进制整数表示的十进制数)，可以在配置时进行选择。
 
+@en @subsection Arithmetic functions
 @subsection 算术函数
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_addsd3 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -465,7 +607,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} _Decimal64 __bid_adddd3 (_Decimal64 @var{a}, _Decimal64 @var{b})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_addtd3 (_Decimal128 @var{a}, _Decimal128 @var{b})
 @deftypefnx {Runtime Function} _Decimal128 __bid_addtd3 (_Decimal128 @var{a}, _Decimal128 @var{b})
-这些函数返回 @var{a} 和 @var{b} 的和。
+@en These functions return the sum of @var{a} and @var{b}.
+这些函数返回@var{a}和@var{b}的和。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_subsd3 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -474,7 +617,9 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} _Decimal64 __bid_subdd3 (_Decimal64 @var{a}, _Decimal64 @var{b})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_subtd3 (_Decimal128 @var{a}, _Decimal128 @var{b})
 @deftypefnx {Runtime Function} _Decimal128 __bid_subtd3 (_Decimal128 @var{a}, _Decimal128 @var{b})
-这些函数返回 @var{a} 和 @var{b} 的差，也就是 @w{@math{@var{a} - @var{b}}}。
+@en These functions return the difference between @var{b} and @var{a};
+@en that is, @w{@math{@var{a} - @var{b}}}.
+这些函数返回@var{a}和@var{b}的差，也就是@w{@math{@var{a} - @var{b}}}。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_mulsd3 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -483,7 +628,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} _Decimal64 __bid_muldd3 (_Decimal64 @var{a}, _Decimal64 @var{b})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_multd3 (_Decimal128 @var{a}, _Decimal128 @var{b})
 @deftypefnx {Runtime Function} _Decimal128 __bid_multd3 (_Decimal128 @var{a}, _Decimal128 @var{b})
-这些函数返回 @var{a} 和 @var{b} 的积。
+@en These functions return the product of @var{a} and @var{b}.
+这些函数返回@var{a}和@var{b}的积。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_divsd3 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -492,7 +638,9 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} _Decimal64 __bid_divdd3 (_Decimal64 @var{a}, _Decimal64 @var{b})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_divtd3 (_Decimal128 @var{a}, _Decimal128 @var{b})
 @deftypefnx {Runtime Function} _Decimal128 __bid_divtd3 (_Decimal128 @var{a}, _Decimal128 @var{b})
-这些函数返回 @var{a} 和 @var{b} 的商，也就是 @w{@math{@var{a} / @var{b}}}。
+@en These functions return the quotient of @var{a} and @var{b}; that is,
+@en @w{@math{@var{a} / @var{b}}}.
+这些函数返回@var{a}和@var{b}的商，也就是@w{@math{@var{a} / @var{b}}}。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_negsd2 (_Decimal32 @var{a})
@@ -501,9 +649,12 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} _Decimal64 __bid_negdd2 (_Decimal64 @var{a})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_negtd2 (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} _Decimal128 __bid_negtd2 (_Decimal128 @var{a})
-这些函数返回 @var{a} 的负数。它们只是简单的反转符号位，因此能够产生负0和负NaN。
+@en These functions return the negation of @var{a}.  They simply flip the
+@en sign bit, so they can produce negative zero and negative NaN@.
+这些函数返回@var{a}的负数。它们只是简单的反转符号位，因此能够产生负0和负NaN。
 @end deftypefn
 
+@en @subsection Conversion functions
 @subsection 转换函数
 
 @deftypefn {Runtime Function} _Decimal64 __dpd_extendsddd2 (_Decimal32 @var{a})
@@ -518,6 +669,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} _Decimal32 __bid_trunctdsd2 (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} _Decimal64 __dpd_trunctddd2 (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} _Decimal64 __bid_trunctddd2 (_Decimal128 @var{a})
+@en These functions convert the value @var{a} from one decimal floating type
+@en to another.
 这些函数将@var{a}的值从十进制浮点类型转换为其它类型。
 @end deftypefn
 
@@ -539,6 +692,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} _Decimal64 __bid_truncxfdd ({long double} @var{a})
 @deftypefnx {Runtime Function} _Decimal64 __dpd_trunctfdd ({long double} @var{a})
 @deftypefnx {Runtime Function} _Decimal64 __bid_trunctfdd ({long double} @var{a})
+@en These functions convert the value of @var{a} from a binary floating type
+@en to a decimal floating type of a different size.
 这些函数将的值从@var{a}二进制浮点类型转换为不同大小（size）的十进制浮点类型。
 @end deftypefn
 
@@ -560,6 +715,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {long double} __bid_extendsdtf (_Decimal32 @var{a})
 @deftypefnx {Runtime Function} {long double} __dpd_extendddtf (_Decimal64 @var{a})
 @deftypefnx {Runtime Function} {long double} __bid_extendddtf (_Decimal64 @var{a})
+@en These functions convert the value of @var{a} from a decimal floating type
+@en to a binary floating type of a different size.
 这些函数将@var{a}的值从十进制浮点类型转换为不同大小的二进制浮点类型。
 @end deftypefn
 
@@ -575,6 +732,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} double __bid_truncdddf (_Decimal64 @var{a})
 @deftypefnx {Runtime Function} {long double} __dpd_trunctdtf (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} {long double} __bid_trunctdtf (_Decimal128 @var{a})
+@en These functions convert the value of @var{a} between decimal and
+@en binary floating types of the same size.
 这些函数将@var{a}的值在相同大小的十进制浮点类型和二进制浮点类型之间转换。
 @end deftypefn
 
@@ -584,7 +743,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} int __bid_fixddsi (_Decimal64 @var{a})
 @deftypefnx {Runtime Function} int __dpd_fixtdsi (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} int __bid_fixtdsi (_Decimal128 @var{a})
-这些函数将 @var{a} 转换为有符号整数。
+@en These functions convert @var{a} to a signed integer.
+这些函数将@var{a}转换为有符号整数。
 @end deftypefn
 
 @deftypefn {Runtime Function} long __dpd_fixsddi (_Decimal32 @var{a})
@@ -593,7 +753,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} long __bid_fixdddi (_Decimal64 @var{a})
 @deftypefnx {Runtime Function} long __dpd_fixtddi (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} long __bid_fixtddi (_Decimal128 @var{a})
-这些函数将 @var{a} 转换为有符号长整数。
+@en These functions convert @var{a} to a signed long.
+这些函数将@var{a}转换为有符号长整数。
 @end deftypefn
 
 @deftypefn {Runtime Function} {unsigned int} __dpd_fixunssdsi (_Decimal32 @var{a})
@@ -602,7 +763,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned int} __bid_fixunsddsi (_Decimal64 @var{a})
 @deftypefnx {Runtime Function} {unsigned int} __dpd_fixunstdsi (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} {unsigned int} __bid_fixunstdsi (_Decimal128 @var{a})
-这些函数将 @var{a} 转换为无符号整数。将负值都变为0。
+@en These functions convert @var{a} to an unsigned integer.  Negative values all become zero.
+这些函数将@var{a}转换为无符号整数。将负值都变为0。
 @end deftypefn
 
 @deftypefn {Runtime Function} {unsigned long} __dpd_fixunssddi (_Decimal32 @var{a})
@@ -611,7 +773,9 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned long} __bid_fixunsdddi (_Decimal64 @var{a})
 @deftypefnx {Runtime Function} {unsigned long} __dpd_fixunstddi (_Decimal128 @var{a})
 @deftypefnx {Runtime Function} {unsigned long} __bid_fixunstddi (_Decimal128 @var{a})
-这些函数将 @var{a} 转换为无符号长整数。将负值都变为0。
+@en These functions convert @var{a} to an unsigned long.  Negative values
+@en all become zero.
+这些函数将@var{a}转换为无符号长整数。将负值都变为0。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_floatsisd (int @var{i})
@@ -620,7 +784,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} _Decimal64 __bid_floatsidd (int @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_floatsitd (int @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __bid_floatsitd (int @var{i})
-这些函数将有符号整数 @var{i} 转换为十进制浮点数。
+@en These functions convert @var{i}, a signed integer, to decimal floating point.
+这些函数将有符号整数@var{i}转换为十进制浮点数。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_floatdisd (long @var{i})
@@ -629,7 +794,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} _Decimal64 __bid_floatdidd (long @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_floatditd (long @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __bid_floatditd (long @var{i})
-这些函数将有符号长整数 @var{i} 转换为十进制浮点数。
+@en These functions convert @var{i}, a signed long, to decimal floating point.
+这些函数将有符号长整数@var{i}转换为十进制浮点数。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_floatunssisd (unsigned int @var{i})
@@ -638,7 +804,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} _Decimal64 __bid_floatunssidd (unsigned int @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_floatunssitd (unsigned int @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __bid_floatunssitd (unsigned int @var{i})
-这些函数将无符号整数 @var{i} 转换为十进制浮点数。
+@en These functions convert @var{i}, an unsigned integer, to decimal floating point.
+这些函数将无符号整数@var{i}转换为十进制浮点数。
 @end deftypefn
 
 @deftypefn {Runtime Function} _Decimal32 __dpd_floatunsdisd (unsigned long @var{i})
@@ -647,9 +814,11 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} _Decimal64 __bid_floatunsdidd (unsigned long @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __dpd_floatunsditd (unsigned long @var{i})
 @deftypefnx {Runtime Function} _Decimal128 __bid_floatunsditd (unsigned long @var{i})
-这些函数将无符号长整数 @var{i} 转换为十进制浮点数。
+@en These functions convert @var{i}, an unsigned long, to decimal floating point.
+这些函数将无符号长整数@var{i}转换为十进制浮点数。
 @end deftypefn
 
+@en @subsection Comparison functions
 @subsection 比较函数
 
 @deftypefn {Runtime Function} int __dpd_unordsd2 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -658,11 +827,16 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} int __bid_unorddd2 (_Decimal64 @var{a}, _Decimal64 @var{b})
 @deftypefnx {Runtime Function} int __dpd_unordtd2 (_Decimal128 @var{a}, _Decimal128 @var{b})
 @deftypefnx {Runtime Function} int __bid_unordtd2 (_Decimal128 @var{a}, _Decimal128 @var{b})
+@en These functions return a nonzero value if either argument is NaN, otherwise 0.
 如果有任一参数为NaN，则这些函数返回非0，否则返回0。
 @end deftypefn
 
-还有一个直接对应于比较运算符的高级函数的完备群。它们按照ISO C语义实现
-了浮点数比较运算，将NaN考虑了进来。要仔细注意每组函数的返回值定义。究
+@en There is also a complete group of higher level functions which
+@en correspond directly to comparison operators.  They implement the ISO C
+@en semantics for floating-point comparisons, taking NaN into account.
+@en Pay careful attention to the return values defined for each set.
+@en Under the hood, all of these routines are implemented as
+还有一个直接对应于比较运算符的高级函数的完备群。它们按照ISO C语义实现了浮点数比较运算，将NaN考虑了进来。要仔细注意每组函数的返回值定义。究
 其原因，所有这些函数都采用以下方式实现：
 
 @smallexample
@@ -672,8 +846,11 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @end smallexample
 
 @noindent
-其中 @var{E} 是一个常数，被选来给出针对NaN的适当行为。因此，对于每组
-函数的返回值其意义都有所不同。所以不要依赖于这些函数实现；只有在下文
+@en where @var{E} is a constant chosen to give the proper behavior for
+@en NaN@.  Thus, the meaning of the return value is different for each set.
+@en Do not rely on this implementation; only the semantics documented
+@en below are guaranteed.
+其中@var{E}是一个常数，被选来给出针对NaN的适当行为。因此，对于每组函数的返回值其意义都有所不同。所以不要依赖于这些函数实现；只有在下文
 明确说明的语义才是可以保证的。
 
 @deftypefn {Runtime Function} int __dpd_eqsd2 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -682,7 +859,9 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} int __bid_eqdd2 (_Decimal64 @var{a}, _Decimal64 @var{b})
 @deftypefnx {Runtime Function} int __dpd_eqtd2 (_Decimal128 @var{a}, _Decimal128 @var{b})
 @deftypefnx {Runtime Function} int __bid_eqtd2 (_Decimal128 @var{a}, _Decimal128 @var{b})
-如果参数都不为NaN，并且 @var{a} 和 @var{b} 相等，则这些函数返回0。
+@en These functions return zero if neither argument is NaN, and @var{a} and
+@en @var{b} are equal.
+如果参数都不为NaN，并且@var{a}和@var{b}相等，则这些函数返回0。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __dpd_nesd2 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -691,7 +870,9 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} int __bid_nedd2 (_Decimal64 @var{a}, _Decimal64 @var{b})
 @deftypefnx {Runtime Function} int __dpd_netd2 (_Decimal128 @var{a}, _Decimal128 @var{b})
 @deftypefnx {Runtime Function} int __bid_netd2 (_Decimal128 @var{a}, _Decimal128 @var{b})
-如果有任一参数为NaN，或者 @var{a} 和 @var{b} 不相等，则这些函数返回非0。
+@en These functions return a nonzero value if either argument is NaN, or
+@en if @var{a} and @var{b} are unequal.
+如果有任一参数为NaN，或者@var{a}和@var{b}不相等，则这些函数返回非0。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __dpd_gesd2 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -700,7 +881,10 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} int __bid_gedd2 (_Decimal64 @var{a}, _Decimal64 @var{b})
 @deftypefnx {Runtime Function} int __dpd_getd2 (_Decimal128 @var{a}, _Decimal128 @var{b})
 @deftypefnx {Runtime Function} int __bid_getd2 (_Decimal128 @var{a}, _Decimal128 @var{b})
-如果参数都不为NaN，并且 @var{a} 大于或等于 @var{b}，则这些函数返回一个大于或等于0的值。
+@en These functions return a value greater than or equal to zero if
+@en neither argument is NaN, and @var{a} is greater than or equal to
+@en @var{b}.
+如果参数都不为NaN，并且@var{a}大于或等于@var{b}，则这些函数返回一个大于或等于0的值。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __dpd_ltsd2 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -709,7 +893,9 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} int __bid_ltdd2 (_Decimal64 @var{a}, _Decimal64 @var{b})
 @deftypefnx {Runtime Function} int __dpd_lttd2 (_Decimal128 @var{a}, _Decimal128 @var{b})
 @deftypefnx {Runtime Function} int __bid_lttd2 (_Decimal128 @var{a}, _Decimal128 @var{b})
-如果参数都不为NaN，并且 @var{a} 严格小于 @var{b}，则这些函数返回一个小于0的值。
+@en These functions return a value less than zero if neither argument is
+@en NaN, and @var{a} is strictly less than @var{b}.
+如果参数都不为NaN，并且@var{a}严格小于@var{b}，则这些函数返回一个小于0的值。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __dpd_lesd2 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -718,7 +904,9 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} int __bid_ledd2 (_Decimal64 @var{a}, _Decimal64 @var{b})
 @deftypefnx {Runtime Function} int __dpd_letd2 (_Decimal128 @var{a}, _Decimal128 @var{b})
 @deftypefnx {Runtime Function} int __bid_letd2 (_Decimal128 @var{a}, _Decimal128 @var{b})
-如果参数都不为NaN，并且 @var{a} 小于或等于 @var{b}，则这些函数返回一个小于或等于0的值。
+@en These functions return a value less than or equal to zero if neither
+@en argument is NaN, and @var{a} is less than or equal to @var{b}.
+如果参数都不为NaN，并且@var{a}小于或等于@var{b}，则这些函数返回一个小于或等于0的值。
 @end deftypefn
 
 @deftypefn {Runtime Function} int __dpd_gtsd2 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -727,22 +915,47 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} int __bid_gtdd2 (_Decimal64 @var{a}, _Decimal64 @var{b})
 @deftypefnx {Runtime Function} int __dpd_gttd2 (_Decimal128 @var{a}, _Decimal128 @var{b})
 @deftypefnx {Runtime Function} int __bid_gttd2 (_Decimal128 @var{a}, _Decimal128 @var{b})
-如果参数都不为NaN，并且 @var{a} 严格大于 @var{b}，则这些函数返回一个大于0的值。
+@en These functions return a value greater than zero if neither argument
+@en is NaN, and @var{a} is strictly greater than @var{b}.
+如果参数都不为NaN，并且@var{a}严格大于@var{b}，则这些函数返回一个大于0的值。
 @end deftypefn
 
+@en @node Fixed-point fractional library routines
+@en @section Routines for fixed-point fractional emulation
 @node 定点小数库例程
 @section 定点小数模拟例程
 @cindex fixed-point fractional library
 @cindex fractional types
 @cindex Embedded C
 
+@en The software fixed-point library implements fixed-point fractional
+@en arithmetic, and is only activated on selected targets.
 软定点库实现了定点小数运算，并且只在选择的目标机上起作用。
 
-为了便于理解，@code{fract}为@code{_Fract}类型的别名，
-@code{accum}为@code{_Accum}的别名，并且@code{sat}为@code{_Sat}的别名。
+@en For ease of comprehension @code{fract} is an alias for the
+@en @code{_Fract} type, @code{accum} an alias for @code{_Accum}, and
+@en @code{sat} an alias for @code{_Sat}.
+为了便于理解，@code{fract}为@code{_Fract}类型的别名，@code{accum}为@code{_Accum}的别名，并且@code{sat}为@code{_Sat}的别名。
 
-出于解说的目的，在该章节中，
-定点小数类型@code{@w{short fract}}被假设为对应于机器模式@code{QQmode}；
+@en For illustrative purposes, in this section the fixed-point fractional type
+@en @code{@w{short fract}} is assumed to correspond to machine mode @code{QQmode};
+@en @code{@w{unsigned short fract}} to @code{UQQmode};
+@en @code{fract} to @code{HQmode};
+@en @code{@w{unsigned fract}} to @code{UHQmode};
+@en @code{@w{long fract}} to @code{SQmode};
+@en @code{@w{unsigned long fract}} to @code{USQmode};
+@en @code{@w{long long fract}} to @code{DQmode};
+@en and @code{@w{unsigned long long fract}} to @code{UDQmode}.
+@en Similarly the fixed-point accumulator type
+@en @code{@w{short accum}} corresponds to @code{HAmode};
+@en @code{@w{unsigned short accum}} to @code{UHAmode};
+@en @code{accum} to @code{SAmode};
+@en @code{@w{unsigned accum}} to @code{USAmode};
+@en @code{@w{long accum}} to @code{DAmode};
+@en @code{@w{unsigned long accum}} to @code{UDAmode};
+@en @code{@w{long long accum}} to @code{TAmode};
+@en and @code{@w{unsigned long long accum}} to @code{UTAmode}.
+出于解说的目的，在该章节中，定点小数类型@code{@w{short fract}}被假设为对应于机器模式@code{QQmode}；
 @code{@w{unsigned short fract}}对应于@code{UQQmode}；
 @code{fract}对应于@code{HQmode}；
 @code{@w{unsigned fract}}对应于@code{UHQmode}；
@@ -759,6 +972,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @code{@w{long long accum}}对应于@code{TAmode}；
 以及@code{@w{unsigned long long accum}}对应于@code{UTAmode}；
 
+@en @subsection Arithmetic functions
 @subsection 算术函数
 
 @deftypefn {Runtime Function} {short fract} __addqq3 (short fract @var{a}, short fract @var{b})
@@ -777,7 +991,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned accum} __addusa3 (unsigned accum @var{a}, unsigned accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long accum} __adduda3 (unsigned long accum @var{a}, unsigned long accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long long accum} __adduta3 (unsigned long long accum @var{a}, unsigned long long accum @var{b})
-这些函数返回@var{a}和@var{b}的和。
+These functions return the sum of @var{a} and @var{b}.
+@en 这些函数返回@var{a}和@var{b}的和。
 @end deftypefn
 
 @deftypefn {Runtime Function} {short fract} __ssaddqq3 (short fract @var{a}, short fract @var{b})
@@ -788,6 +1003,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {accum} __ssaddsa3 (accum @var{a}, accum @var{b})
 @deftypefnx {Runtime Function} {long accum} __ssaddda3 (long accum @var{a}, long accum @var{b})
 @deftypefnx {Runtime Function} {long long accum} __ssaddta3 (long long accum @var{a}, long long accum @var{b})
+@en These functions return the sum of @var{a} and @var{b} with signed saturation.
 这些函数返回@var{a}和@var{b}的和，并带有有符号的饱和（saturation）。
 @end deftypefn
 
@@ -799,6 +1015,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned accum} __usaddusa3 (unsigned accum @var{a}, unsigned accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long accum} __usadduda3 (unsigned long accum @var{a}, unsigned long accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long long accum} __usadduta3 (unsigned long long accum @var{a}, unsigned long long accum @var{b})
+@en These functions return the sum of @var{a} and @var{b} with unsigned saturation.
 这些函数返回@var{a}和@var{b}的和，并带有无符号的饱和（saturation）。
 @end deftypefn
 
@@ -818,6 +1035,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned accum} __subusa3 (unsigned accum @var{a}, unsigned accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long accum} __subuda3 (unsigned long accum @var{a}, unsigned long accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long long accum} __subuta3 (unsigned long long accum @var{a}, unsigned long long accum @var{b})
+@en These functions return the difference of @var{a} and @var{b};
+@en that is, @code{@var{a} - @var{b}}.
 这些函数返回@var{a}和@var{b}的差，也就是@code{@var{a} - @var{b}}。
 @end deftypefn
 
@@ -829,8 +1048,9 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {accum} __sssubsa3 (accum @var{a}, accum @var{b})
 @deftypefnx {Runtime Function} {long accum} __sssubda3 (long accum @var{a}, long accum @var{b})
 @deftypefnx {Runtime Function} {long long accum} __sssubta3 (long long accum @var{a}, long long accum @var{b})
-这些函数返回@var{a}和@var{b}的差，也就是@code{@var{a} - @var{b}}，
-并带有有符号的饱和（saturation）。
+@en These functions return the difference of @var{a} and @var{b} with signed
+@en saturation;  that is, @code{@var{a} - @var{b}}.
+这些函数返回@var{a}和@var{b}的差，也就是@code{@var{a} - @var{b}}，并带有有符号的饱和（saturation）。
 @end deftypefn
 
 @deftypefn {Runtime Function} {unsigned short fract} __ussubuqq3 (unsigned short fract @var{a}, unsigned short fract @var{b})
@@ -841,8 +1061,9 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned accum} __ussubusa3 (unsigned accum @var{a}, unsigned accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long accum} __ussubuda3 (unsigned long accum @var{a}, unsigned long accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long long accum} __ussubuta3 (unsigned long long accum @var{a}, unsigned long long accum @var{b})
-这些函数返回@var{a}和@var{b}的差，也就是@code{@var{a} - @var{b}}，
-并带有无符号的饱和（saturation）。
+@en These functions return the difference of @var{a} and @var{b} with unsigned
+@en saturation;  that is, @code{@var{a} - @var{b}}.
+这些函数返回@var{a}和@var{b}的差，也就是@code{@var{a} - @var{b}}，并带有无符号的饱和（saturation）。
 @end deftypefn
 
 @deftypefn {Runtime Function} {short fract} __mulqq3 (short fract @var{a}, short fract @var{b})
@@ -861,6 +1082,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned accum} __mulusa3 (unsigned accum @var{a}, unsigned accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long accum} __muluda3 (unsigned long accum @var{a}, unsigned long accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long long accum} __muluta3 (unsigned long long accum @var{a}, unsigned long long accum @var{b})
+@en These functions return the product of @var{a} and @var{b}.
 这些函数返回@var{a}和@var{b}的乘积。
 @end deftypefn
 
@@ -872,6 +1094,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {accum} __ssmulsa3 (accum @var{a}, accum @var{b})
 @deftypefnx {Runtime Function} {long accum} __ssmulda3 (long accum @var{a}, long accum @var{b})
 @deftypefnx {Runtime Function} {long long accum} __ssmulta3 (long long accum @var{a}, long long accum @var{b})
+@en These functions return the product of @var{a} and @var{b} with signed
+@en saturation.
 这些函数返回@var{a}和@var{b}的乘积，并带有有符号的饱和（saturation）。
 @end deftypefn
 
@@ -883,6 +1107,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned accum} __usmulusa3 (unsigned accum @var{a}, unsigned accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long accum} __usmuluda3 (unsigned long accum @var{a}, unsigned long accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long long accum} __usmuluta3 (unsigned long long accum @var{a}, unsigned long long accum @var{b})
+@en These functions return the product of @var{a} and @var{b} with unsigned
+@en saturation.
 这些函数返回@var{a}和@var{b}的乘积，并带有无符号的饱和（saturation）。
 @end deftypefn
 
@@ -894,6 +1120,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {accum} __divsa3 (accum @var{a}, accum @var{b})
 @deftypefnx {Runtime Function} {long accum} __divda3 (long accum @var{a}, long accum @var{b})
 @deftypefnx {Runtime Function} {long long accum} __divta3 (long long accum @var{a}, long long accum @var{b})
+@en These functions return the quotient of the signed division of @var{a}
+@en and @var{b}.
 这些函数返回@var{a}和@var{b}的有符号除法的商。
 @end deftypefn
 
@@ -905,6 +1133,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned accum} __udivusa3 (unsigned accum @var{a}, unsigned accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long accum} __udivuda3 (unsigned long accum @var{a}, unsigned long accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long long accum} __udivuta3 (unsigned long long accum @var{a}, unsigned long long accum @var{b})
+@en These functions return the quotient of the unsigned division of @var{a}
+@en and @var{b}.
 这些函数返回@var{a}和@var{b}的无符号除法的商。
 @end deftypefn
 
@@ -916,6 +1146,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {accum} __ssdivsa3 (accum @var{a}, accum @var{b})
 @deftypefnx {Runtime Function} {long accum} __ssdivda3 (long accum @var{a}, long accum @var{b})
 @deftypefnx {Runtime Function} {long long accum} __ssdivta3 (long long accum @var{a}, long long accum @var{b})
+@en These functions return the quotient of the signed division of @var{a}
+@en and @var{b} with signed saturation.
 这些函数返回@var{a}和@var{b}的有符号除法的商，并带有有符号的饱和（saturation）。
 @end deftypefn
 
@@ -927,6 +1159,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned accum} __usdivusa3 (unsigned accum @var{a}, unsigned accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long accum} __usdivuda3 (unsigned long accum @var{a}, unsigned long accum @var{b})
 @deftypefnx {Runtime Function} {unsigned long long accum} __usdivuta3 (unsigned long long accum @var{a}, unsigned long long accum @var{b})
+@en These functions return the quotient of the unsigned division of @var{a}
+@en and @var{b} with unsigned saturation.
 这些函数返回@var{a}和@var{b}的无符号除法的商，并带有无符号的饱和（saturation）。
 @end deftypefn
 
@@ -946,6 +1180,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned accum} __negusa2 (unsigned accum @var{a})
 @deftypefnx {Runtime Function} {unsigned long accum} __neguda2 (unsigned long accum @var{a})
 @deftypefnx {Runtime Function} {unsigned long long accum} __neguta2 (unsigned long long accum @var{a})
+@en These functions return the negation of @var{a}.
 这些函数返回@var{a}的负数。
 @end deftypefn
 
@@ -957,6 +1192,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {accum} __ssnegsa2 (accum @var{a})
 @deftypefnx {Runtime Function} {long accum} __ssnegda2 (long accum @var{a})
 @deftypefnx {Runtime Function} {long long accum} __ssnegta2 (long long accum @var{a})
+@en These functions return the negation of @var{a} with signed saturation.
 这些函数返回@var{a}的负数，并带有有符号的饱和（saturation）。
 @end deftypefn
 
@@ -968,6 +1204,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned accum} __usnegusa2 (unsigned accum @var{a})
 @deftypefnx {Runtime Function} {unsigned long accum} __usneguda2 (unsigned long accum @var{a})
 @deftypefnx {Runtime Function} {unsigned long long accum} __usneguta2 (unsigned long long accum @var{a})
+@en These functions return the negation of @var{a} with unsigned saturation.
 这些函数返回@var{a}的负数，并带有无符号的饱和（saturation）。
 @end deftypefn
 
@@ -987,6 +1224,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned accum} __ashlusa3 (unsigned accum @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {unsigned long accum} __ashluda3 (unsigned long accum @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {unsigned long long accum} __ashluta3 (unsigned long long accum @var{a}, int @var{b})
+@en These functions return the result of shifting @var{a} left by @var{b} bits.
 这些函数返回@var{a}左移@var{b}位的结果。
 @end deftypefn
 
@@ -998,6 +1236,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {accum} __ashrsa3 (accum @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {long accum} __ashrda3 (long accum @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {long long accum} __ashrta3 (long long accum @var{a}, int @var{b})
+@en These functions return the result of arithmetically shifting @var{a} right
+@en by @var{b} bits.
 这些函数返回@var{a}算术右移@var{b}位的结果。
 @end deftypefn
 
@@ -1009,6 +1249,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned accum} __lshrusa3 (unsigned accum @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {unsigned long accum} __lshruda3 (unsigned long accum @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {unsigned long long accum} __lshruta3 (unsigned long long accum @var{a}, int @var{b})
+@en These functions return the result of logically shifting @var{a} right
+@en by @var{b} bits.
 这些函数返回@var{a}逻辑右移@var{b}位的结果。
 @end deftypefn
 
@@ -1019,6 +1261,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {accum} __ssashlsa3 (accum @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {long accum} __ssashlda3 (long accum @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {long long accum} __ssashlta3 (long long accum @var{a}, int @var{b})
+@en These functions return the result of shifting @var{a} left by @var{b} bits
+@en with signed saturation.
 这些函数返回@var{a}左移@var{b}位的结果，并带有有符号的饱和（saturation）。
 @end deftypefn
 
@@ -1030,11 +1274,20 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {unsigned accum} __usashlusa3 (unsigned accum @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {unsigned long accum} __usashluda3 (unsigned long accum @var{a}, int @var{b})
 @deftypefnx {Runtime Function} {unsigned long long accum} __usashluta3 (unsigned long long accum @var{a}, int @var{b})
+@en These functions return the result of shifting @var{a} left by @var{b} bits
+@en with unsigned saturation.
 这些函数返回@var{a}左移@var{b}位的结果，并带有无符号的饱和（saturation）。
 @end deftypefn
 
+@en @subsection Comparison functions
 @subsection 比较函数
 
+@en The following functions implement fixed-point comparisons.  These functions
+@en implement a low-level compare, upon which the higher level comparison
+@en operators (such as less than and greater than or equal to) can be
+@en constructed.  The returned values lie in the range zero to two, to allow
+@en the high-level operators to be implemented by testing the returned
+@en result using either signed or unsigned comparison.
 下列函数实现了定点比较。这些函数实现了低层次的比较，可以在此基础上构造高层次的比较运算符（例如小于，大于或者等于）。返回值的范围为0到2，这样高层次的比较运算符可以使用有符号或者无符号比较，通过测试返回结果来实现。
 
 @deftypefn {Runtime Function} {int} __cmpqq2 (short fract @var{a}, short fract @var{b})
@@ -1053,11 +1306,14 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者
 @deftypefnx {Runtime Function} {int} __cmpusa2 (unsigned accum @var{a}, unsigned accum @var{b})
 @deftypefnx {Runtime Function} {int} __cmpuda2 (unsigned long accum @var{a}, unsigned long accum @var{b})
 @deftypefnx {Runtime Function} {int} __cmputa2 (unsigned long long accum @var{a}, unsigned long long accum @var{b})
-这些函数执行一个@var{a}和@var{b}的有符号或者无符号比较（取决于所选择的机器模式）。
-如果@var{a}小于@var{b}，则返回0；如果@var{a}大于@var{b}，则返回2；
-如果@var{a}和@var{b}相等，则返回1。
+@en These functions perform a signed or unsigned comparison of @var{a} and
+@en @var{b} (depending on the selected machine mode).  If @var{a} is less
+@en than @var{b}, they return 0; if @var{a} is greater than @var{b}, they
+@en return 2; and if @var{a} and @var{b} are equal they return 1.
+这些函数执行一个@var{a}和@var{b}的有符号或者无符号比较（取决于所选择的机器模式）。如果@var{a}小于@var{b}，则返回0；如果@var{a}大于@var{b}，则返回2；如果@var{a}和@var{b}相等，则返回1。
 @end deftypefn
 
+@en @subsection Conversion functions
 @subsection 转换函数
 
 @deftypefn {Runtime Function} {fract} __fractqqhq2 (short fract @var{a})
@@ -2133,6 +2389,8 @@ These functions convert from unsigned non-fractionals to fractionals,
 with saturation.
 @end deftypefn
 
+@en @node Exception handling routines
+@en @section Language-independent routines for exception handling
 @node 异常处理例程
 @section 语言无关的异常处理例程
 
@@ -2169,10 +2427,14 @@ document me!
   __register_frame_table
 @end smallexample
 
+@en @node Miscellaneous routines
+@en @section Miscellaneous runtime library routines
 @node 其它例程
 @section 其它运行时库例程
 
+@en @subsection Cache control functions
 @subsection Cache控制函数
 @deftypefn {Runtime Function} void __clear_cache (char *@var{beg}, char *@var{end})
-该函数清除 @var{beg} 和 @var{end} 之间的指令缓存。
+@en This function clears the instruction cache between @var{beg} and @var{end}.
+该函数清除@var{beg}和@var{end}之间的指令缓存。
 @end deftypefn
