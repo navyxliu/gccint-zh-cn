@@ -3,50 +3,79 @@
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
+@en @node Interface
+@en @chapter Interfacing to GCC Output
 @node 接口
 @chapter GCC的输出接口
 @cindex interfacing to GCC output
 @cindex run-time conventions
 @cindex function call conventions
 @cindex conventions, run-time
-通常情况下GCC被配置为使用与目标系统上相同的函数调用约定。
-这是通过机器描述宏来实现的（参见 @ref{目标宏}）。
+
+@en GCC is normally configured to use the same function calling convention
+@en normally in use on the target system.  This is done with the
+@en machine-description macros described (@pxref{Target Macros}).
+通常情况下GCC被配置为使用与目标系统上相同的函数调用约定。这是通过机器描述宏来实现的（参见 @ref{目标宏}）。
 
 @cindex unions, returning
 @cindex structures, returning
 @cindex returning structures and unions
-但是，结构体和联合体的值的返回在一些目标机上采用了不同的方式。于是，使用PCC编译
-的返回这些类型的函数就不能够被使用GCC编译的代码调用，反之亦然。但是，这并没有造
-成麻烦，因为很少有Unix库函数是返回结构体或联合体的。
+@en However, returning of structure and union values is done differently on
+@en some target machines.  As a result, functions compiled with PCC
+@en returning such types cannot be called from code compiled with GCC,
+@en and vice versa.  This does not cause trouble often because few Unix
+@en library routines return structures or unions.
+但是，结构体和联合体的值的返回在一些目标机上采用了不同的方式。于是，使用PCC编译的返回这些类型的函数就不能够被使用GCC编译的代码调用，反之亦然。但是，这并没有造成麻烦，因为很少有Unix库函数是返回结构体或联合体的。
 
-GCC代码使用存放 @code{int} 或者 @code{double} 返回值的寄存器来返回1，2，4或者8个
-字节长的结构体和联合体。（GCC还通常将这样类型的变量分配在寄存器中。）其它大小的
-结构体和联合体在返回时，将它们存放在调用者传给的一个地址中（通常在一个寄存器中）
-。目标钩子（target hook）@code{TARGET_STRUCT_VALUE_RTX} 告诉GCC从哪里来传递该
-地址。
+@en GCC code returns structures and unions that are 1, 2, 4 or 8 bytes
+@en long in the same registers used for @code{int} or @code{double} return
+@en values.  (GCC typically allocates variables of such types in
+@en registers also.)  Structures and unions of other sizes are returned by
+@en storing them into an address passed by the caller (usually in a
+@en register).  The target hook @code{TARGET_STRUCT_VALUE_RTX}
+@en tells GCC where to pass this address.
+GCC代码使用存放 @code{int} 或者 @code{double} 返回值的寄存器来返回1，2，4或者8个字节长的结构体和联合体。（GCC还通常将这样类型的变量分配在寄存器中。）其它大小的结构体和联合体在返回时，将它们存放在调用者传给的一个地址中（通常在一个寄存器中）。目标钩子（target hook）@code{TARGET_STRUCT_VALUE_RTX} 告诉GCC从哪里来传递该地址。
 
-相比之下，PCC在大多目标机上返回任何大小的结构体和联合体时，都是通过将数据复制到
-一个静态存储区域，然后将那个存储地址当作指针值返回。调用者必须将数据从那个内存区
-域复制到需要的地方。这比GCC使用的方法要慢，而且无法重入（reentrant）。
+@en By contrast, PCC on most target machines returns structures and unions
+@en of any size by copying the data into an area of static storage, and then
+@en returning the address of that storage as if it were a pointer value.
+@en The caller must copy the data from that memory area to the place where
+@en the value is wanted.  This is slower than the method used by GCC, and
+@en fails to be reentrant.
+相比之下，PCC在大多目标机上返回任何大小的结构体和联合体时，都是通过将数据复制到一个静态存储区域，然后将那个存储地址当作指针值返回。调用者必须将数据从那个内存区域复制到需要的地方。这比GCC使用的方法要慢，而且无法重入（reentrant）。
 
-在一些目标机上，例如RISC机器和80386，标准的系统约定是将返回值的地址传给子程序。
-在这些机器上，当使用这种方法时，GCC被配置为与标准编译器兼容。这可能会对于1，2，4
-或者8字节的结构体不兼容。
+@en On some target machines, such as RISC machines and the 80386, the
+@en standard system convention is to pass to the subroutine the address of
+@en where to return the value.  On these machines, GCC has been
+@en configured to be compatible with the standard compiler, when this method
+@en is used.  It may not be compatible for structures of 1, 2, 4 or 8 bytes.
+在一些目标机上，例如RISC机器和80386，标准的系统约定是将返回值的地址传给子程序。在这些机器上，当使用这种方法时，GCC被配置为与标准编译器兼容。这可能会对于1，2，4或者8字节的结构体不兼容。
 
 @cindex argument passing
 @cindex passing arguments
-GCC使用系统的标准约定来传递参数。在一些机器上，是前几个参数通过寄存器传递；在另
-一些机器上，是所有的都通过栈传递。本来是可以在所有机器上都使用寄存器来传递参数的
-，而且这样还有可能显著提高性能。但是，这样就会与使用标准约定的代码完全不兼容了。
-所以这种改变只有在你将GCC作为系统的唯一C编译器时才实用。当我们拥有一套完整的GNU
-系统，能够用GCC来编译库时，我们可以在特定机器上实现寄存器参数传递。
+@en GCC uses the system's standard convention for passing arguments.  On
+@en some machines, the first few arguments are passed in registers; in
+@en others, all are passed on the stack.  It would be possible to use
+@en registers for argument passing on any machine, and this would probably
+@en result in a significant speedup.  But the result would be complete
+@en incompatibility with code that follows the standard convention.  So this
+@en change is practical only if you are switching to GCC as the sole C
+@en compiler for the system.  We may implement register argument passing on
+@en certain machines once we have a complete GNU system so that we can
+@en compile the libraries with GCC@.
+GCC使用系统的标准约定来传递参数。在一些机器上，是前几个参数通过寄存器传递；在另一些机器上，是所有的都通过栈传递。本来是可以在所有机器上都使用寄存器来传递参数的，而且这样还有可能显著提高性能。但是，这样就会与使用标准约定的代码完全不兼容了。所以这种改变只有在你将GCC作为系统的唯一C编译器时才实用。当我们拥有一套完整的GNU系统，能够用GCC来编译库时，我们可以在特定机器上实现寄存器参数传递。
 
-在一些机器上（特别是SPARC），一些类型参数通过“隐匿引用”（invisible reference）来
-传递。这意味着值是存储在内存中，将内存地址传给子程序。
+@en On some machines (particularly the SPARC), certain types of arguments
+@en are passed ``by invisible reference''.  This means that the value is
+@en stored in memory, and the address of the memory location is passed to
+@en the subroutine.
+在一些机器上（特别是SPARC），一些类型参数通过“隐匿引用”（invisible reference）来传递。这意味着值是存储在内存中，将内存地址传给子程序。
 
 @cindex @code{longjmp} and automatic variables
-如果使用 @code{longjmp}，则需要注意自动变量。ISO C规定了没有声明为 
-@code{volatile} 的自动变量在 @code{longjmp} 之后其值未定义。这也是GCC所承诺的，
-因为很难正确的恢复寄存器变量的值，而且GCC的一个特点是可以在未作要求的情况下也可
-以将变量放在寄存器中。
-
+@en If you use @code{longjmp}, beware of automatic variables.  ISO C says that
+@en automatic variables that are not declared @code{volatile} have undefined
+@en values after a @code{longjmp}.  And this is all GCC promises to do,
+@en because it is very difficult to restore register variables correctly, and
+@en one of GCC's features is that it can put variables in registers without
+@en your asking it to.
+如果使用 @code{longjmp}，则需要注意自动变量。ISO C规定了没有声明为@code{volatile} 的自动变量在 @code{longjmp} 之后其值未定义。这也是GCC所承诺的，因为很难正确的恢复寄存器变量的值，而且GCC的一个特点是可以在未作要求的情况下也可以将变量放在寄存器中。
