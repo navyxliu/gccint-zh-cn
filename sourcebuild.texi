@@ -1,16 +1,27 @@
-@c Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009
+@c Copyright (C) 2002, 2003, 2004, 2005, 2007, 2008, 2009, 2010
 @c Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
+@en @node Source Tree
+@en @chapter Source Tree Structure and Build System
 @node 源目录
 @chapter 源目录结构和构建系统
 
+@en This chapter describes the structure of the GCC source tree, and how
+@en GCC is built.  The user documentation for building and installing GCC
+@en is in a separate manual (@uref{http://gcc.gnu.org/install/}), with
+@en which it is presumed that you are familiar.
 这一章描述了GCC的源文件目录结构，以及GCC是如何被构建的。关于构建
 和安装GCC的用户文档在另一个单独的手册里作介绍
 （@uref{http://gcc.gnu.org/install/}），这里假设你对此已经有所了
 解。
 
+@en @menu
+@en * Configure Terms:: Configuration terminology and history.
+@en * Top Level::       The top level source directory.
+@en * gcc Directory::   The @file{gcc} subdirectory.
+@en @end menu
 @menu
 * 配置术语::    有关配置的术语和历史。
 * 顶层目录::    顶层源文件目录。
@@ -20,25 +31,41 @@
 
 @include configterms.texi
 
+@en @node Top Level
+@en @section Top Level Source Directory
 @node 顶层目录
 @section 顶层源文件目录
 
+@en The top level source directory in a GCC distribution contains several
+@en files and directories that are shared with other software
+@en distributions such as that of GNU Binutils.  It also contains several
+@en subdirectories that contain parts of GCC and its runtime libraries:
 在GCC发行版本中，顶层源目录下包含了几个与其它软件发行版本，比如
 GNU Binutils，共享的文件和目录。另外还包含几个子目录，里面包含了
 GCC的各个部分以及运行时库。
 
 @table @file
-@item boehm-gc
+@en @item boehm-gc
+@en The Boehm conservative garbage collector, used as part of the Java
+@en runtime library.
 Boehm保守垃圾收集器，作为Java运行时库的一部分。
 
+@item config
+Autoconf macros and Makefile fragments used throughout the tree.
+
 @item contrib
+@en Contributed scripts that may be found useful in conjunction with GCC@.
+@en One of these, @file{contrib/texi2pod.pl}, is used to generate man
+@en pages from Texinfo manuals as part of the GCC build process.
 贡献的脚本，可以用来和GCC一起使用。其中，@file{contrib/texi2pod.pl} 
 作为GCC构建过程的一部分，可以用来将Texinfo手册生成为man页。
 
-@item fastjar
-@command{jar} 命令的一个实现，和Java前端一起使用。
-
 @item fixincludes
+@en The support for fixing system headers to work with GCC@.  See
+@en @file{fixincludes/README} for more information.  The headers fixed by
+@en this mechanism are installed in @file{@var{libsubdir}/include-fixed}.
+@en Along with those headers, @file{README-fixinc} is also installed, as
+@en @file{@var{libsubdir}/include-fixed/README}.
 用于修订系统头文件，使得可以和GCC一起工作。更多信息参见
 @file{fixincludes/README} 。通过这种机制修订的头文件被安装在
 @file{@var{libsubdir}/include-fixed}下。
@@ -46,51 +73,96 @@ Boehm保守垃圾收集器，作为Java运行时库的一部分。
 @file{@var{libsubdir}/include-fixed/README}。
 
 @item gcc
+@en The main sources of GCC itself (except for runtime libraries),
+@en including optimizers, support for different target architectures,
+@en language front ends, and testsuites.  @xref{gcc Directory, , The
+@en @file{gcc} Subdirectory}, for details.
 GCC本身的主要源文件（运行时库除外），包括优化器，不同目标体系结构
 的支持，语言前端和测试包。
 参见@ref{gcc目录, , @file{gcc} 子目录}。
 
+@item gnattools
+Support tools for GNAT.
+
 @item include
+@en Headers for the @code{libiberty} library.
 @code{libiberty} 库的头文件。
 
 @item intl
+@en GNU @code{libintl}, from GNU @code{gettext}, for systems which do not
+@en include it in @code{libc}.
 GNU @code{libintl}，来自GNU @code{gettext}，用于在libc中不包含它的系统上。
 
 @item libada
+@en The Ada runtime library.
 Ada运行时库。
 
 @item libcpp
+@en The C preprocessor library.
 C预处理器库。
 
-@item libgfortran
-Fortran运行时库。
+@item libdecnumber
+The Decimal Float support library.
 
 @item libffi
 @code{libffi} 库，作为Java运行时库的一部分。
 
+@item libgcc
+The GCC runtime library.
+
+@item libgfortran
+Fortran运行时库。
+
+@item libgomp
+The GNU OpenMP runtime library.
+
 @item libiberty
+@en The @code{libiberty} library, used for portability and for some
+@en generally useful data structures and algorithms.  @xref{Top, ,
+@en Introduction, libiberty, @sc{gnu} libiberty}, for more information
+@en about this library.
 @code{libiberty} 库，实现了一些常用的数据结构和算法，用于提高可移植性。
 @pxref{Top, ,Introduction, libiberty, @sc{gnu} libiberty}。
 
 @item libjava
+@en The Java runtime library.
 Java运行时库。
 
 @item libmudflap
+@en The @code{libmudflap} library, used for instrumenting pointer and array
+@en dereferencing operations.
 @code{libmudflap} 库用于instrument指针和数组的dereferencing操作。
 
 @item libobjc
+@en The Objective-C and Objective-C++ runtime library.
 Objective-C和Objective-C++运行时库。
 
+@item libssp
+The Stack protector runtime library.
+
 @item libstdc++-v3
+@en The C++ runtime library.
 C++运行时库。
 
+@item lto-plugin
+Plugin used by @command{gold} if link-time optimizations are enabled.
+
 @item maintainer-scripts
+@en Scripts used by the @code{gccadmin} account on @code{gcc.gnu.org}.
 @code{gcc.gnu.org} 上的 @code{gccadmin} 帐户使用的脚本。
 
 @item zlib
+The @code{zlib} compression library, used by the Java front end, as
+part of the Java runtime library, and for compressing and uncompressing
+GCC's intermediate language in LTO object files.
 @code{zlib} zlib压缩库，用于Java前端，作为Java运行库的一部分。
 @end table
 
+@en The build system in the top level directory, including how recursion
+@en into subdirectories works and how building runtime libraries for
+@en multilibs is handled, is documented in a separate manual, included
+@en with GNU Binutils.  @xref{Top, , GNU configure and build system,
+@en configure, The GNU configure and build system}, for details.
 顶层目录的构建系统，包括子目录递归的工作方式，以及构建各种库的运行时库的
 处理方式，这些在GNU Binutils的一个单独手册中有介绍。
 @pxref{Top, , GNU configure and build system, configure, The GNU configure and build system}
