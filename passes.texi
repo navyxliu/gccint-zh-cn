@@ -6,6 +6,11 @@
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
+@en @node Passes
+@en @chapter Passes and Files of the Compiler
+@en @cindex passes and files of the compiler
+@en @cindex files and passes of the compiler
+@en @cindex compiler passes and files
 @node Passes
 @chapter 编译器的Passes和相关文件
 @cindex passes and files of the compiler
@@ -18,6 +23,13 @@
 @en where near complete.
 这章综述了编译器的优化和代码产生@term{pass}。
 
+@en @menu
+@en * Parsing pass::         The language front end turns text into bits.
+@en * Gimplification pass::  The bits are turned into something we can optimize.
+@en * Pass manager::         Sequencing the optimization passes.
+@en * Tree SSA passes::      Optimizations on a high-level representation.
+@en * RTL passes::           Optimizations on a low-level representation.
+@en @end menu
 @menu
 * 语法分析@term{pass}::        语言前端将文本转换为机器字节。
 * Gimplification过程::  将机器字节转换为可以优化的形式。
@@ -26,10 +38,19 @@
 * RTL过程::             基于低级表示上的优化。
 @end menu
 
+@en @node Parsing pass
+@en @section Parsing pass
 @node 语法分析过程
 @section 语法分析过程
 @cindex GENERIC
 @findex lang_hooks.parse_file
+@en The language front end is invoked only once, via
+@en @code{lang_hooks.parse_file}, to parse the entire input.  The language
+@en front end may use any intermediate language representation deemed
+@en appropriate.  The C front end uses GENERIC trees (CROSSREF), plus
+@en a double handful of language specific tree codes defined in
+@en @file{c-common.def}.  The Fortran front end uses a completely different
+@en private representation.
 语言前端只被调用一次，通过@code{lang_hooks.parse_file}，
 用来解析整个输入。语言前端可以使用任何被认为合适的中间语言表示。
 C前端使用了GENERIC树，以及在@file{c-common.def}中定义的
@@ -42,6 +63,18 @@ Fortran前端使用了完全不同的私有表示。
 @cindex language-independent intermediate representation
 @cindex intermediate representation lowering
 @cindex lowering, language-dependent intermediate representation
+@en At some point the front end must translate the representation used in the
+@en front end to a representation understood by the language-independent
+@en portions of the compiler.  Current practice takes one of two forms.
+@en The C front end manually invokes the gimplifier (CROSSREF) on each function,
+@en and uses the gimplifier callbacks to convert the language-specific tree
+@en nodes directly to GIMPLE (CROSSREF) before passing the function off to
+@en be compiled.
+@en The Fortran front end converts from a private representation to GENERIC,
+@en which is later lowered to GIMPLE when the function is compiled.  Which
+@en route to choose probably depends on how well GENERIC (plus extensions)
+@en can be made to match up with the source language and necessary parsing
+@en data structures.
 在某个地方，
 前端必须将其使用的表示转换为编译器中语言独立的部分能够理解的表示。
 目前的实现采用了两种形式。C前端在函数编译完之前，
@@ -51,11 +84,25 @@ Fortran前端将私有表示转换为 GENERIC，之后当函数编译完时，
 再降低为GIMPLE。选择哪种途径可能取决于GENERIC（及其扩展）
 是否能够很好的匹配源语言，以及是否需要解析数据结构。
 
+@en BUG: Gimplification must occur before nested function lowering,
+@en and nested function lowering must be done by the front end before
+@en passing the data off to cgraph.
 BUG：Gimplification必须在nested function lowering之前进行，
 并且nested function lowering必须在将数据传给cgraph之前，由前端完成。
 
+@en TODO: Cgraph should control nested function lowering.  It would
+@en only be invoked when it is certain that the outer-most function
+@en is used.
 TODO：Cgraph应该控制nested function lowering。并且只会在确定最外层函数被使用时才调用。
 
+@en TODO: Cgraph needs a gimplify_function callback.  It should be
+@en invoked when (1) it is certain that the function is used, (2)
+@en warning flags specified by the user require some amount of
+@en compilation in order to honor, (3) the language indicates that
+@en semantic analysis is not complete until gimplification occurs.
+@en Hum@dots{} this sounds overly complicated.  Perhaps we should just
+@en have the front end gimplify always; in most cases it's only one
+@en function call.
 TODO：Cgraph需要一个gimplify_function回调函数。
 并且在下列情况下会被调用：(1)确定函数被使用，
 (2)为了兑现用户指定的警告选项，需要多次的编译，
@@ -63,6 +110,16 @@ TODO：Cgraph需要一个gimplify_function回调函数。
 嗯。。。听起来有点过度复杂。或许我们应该总是进行前端的gimplify；
 大多数情况，这只是一个函数调用。
 
+@en The front end needs to pass all function definitions and top level
+@en declarations off to the middle-end so that they can be compiled and
+@en emitted to the object file.  For a simple procedural language, it is
+@en usually most convenient to do this as each top level declaration or
+@en definition is seen.  There is also a distinction to be made between
+@en generating functional code and generating complete debug information.
+@en The only thing that is absolutely required for functional code is that
+@en function and data @emph{definitions} be passed to the middle-end.  For
+@en complete debug information, function, data and type declarations
+@en should all be passed as well.
 前端需要将所有函数的定义和顶层的声明传给中端，
 以至于它们能被编译和生成目标文件。对于一个简单的程序语言，
 顶层的每个声明和定义都能找到，因此这样做非常方便。
@@ -73,25 +130,52 @@ TODO：Cgraph需要一个gimplify_function回调函数。
 @findex rest_of_decl_compilation
 @findex rest_of_type_compilation
 @findex cgraph_finalize_function
+@en In any case, the front end needs each complete top-level function or
+@en data declaration, and each data definition should be passed to
+@en @code{rest_of_decl_compilation}.  Each complete type definition should
+@en be passed to @code{rest_of_type_compilation}.  Each function definition
+@en should be passed to @code{cgraph_finalize_function}.
 任何情况下，如果前端需要每个完全的顶层函数或数据声明，
 则每个数据定义应该传给@code{rest_of_decl_compilation}。
 每个完全的类型定义应该传给@code{rest_of_type_compilation}。
 每个函数定义应给传给@code{cgraph_finalize_function}。
 
+TODO: I know rest_of_compilation currently has all sorts of
+RTL generation semantics.  I plan to move all code generation
+bits (both Tree and RTL) to compile_function.  Should we hide
+cgraph from the front ends and move back to rest_of_compilation
+as the official interface?  Possibly we should rename all three
+interfaces such that the names match in some meaningful way and
+that is more descriptive than "rest_of".
+
+@en The middle-end will, at its option, emit the function and data
+@en definitions immediately or queue them for later processing.
 中端根据自己的选择，将会立即生成函数和数据的定义，
 或者放入队列中以便后面的处理。
 
+@en @node Gimplification pass
+@en @section Gimplification pass
 @node Gimplification过程
 @section Gimplification过程
 
 @cindex gimplification
 @cindex GIMPLE
+@en @dfn{Gimplification} is a whimsical term for the process of converting
+@en the intermediate representation of a function into the GIMPLE language
+@en (CROSSREF).  The term stuck, and so words like ``gimplification'',
+@en ``gimplify'', ``gimplifier'' and the like are sprinkled throughout this
+@en section of code.
 @dfn{Gimplification}是一个离奇的术语，
 用来表示将函数的中间表示转换为GIMPLE语言的过程。
 The term stuck，所以像“gimplification”, “gimplify”, 
 “gimplifier” 等类似的单词会分布在这部分代码中。
 
 @cindex GENERIC
+@en While a front end may certainly choose to generate GIMPLE directly if
+@en it chooses, this can be a moderately complex process unless the
+@en intermediate language used by the front end is already fairly simple.
+@en Usually it is easier to generate GENERIC trees plus extensions
+@en and let the language-independent gimplifier do most of the work.
 当然，尽管前端可以选择直接生成GIMPLE，但如果这样，
 则处理起来可能会有些复杂，除非前端使用的中间语言非常简单。
 通常生成GENERIC树以及其扩展会相对容易些，
@@ -100,6 +184,12 @@ The term stuck，所以像“gimplification”, “gimplify”,
 @findex gimplify_function_tree
 @findex gimplify_expr
 @findex lang_hooks.gimplify_expr
+@en The main entry point to this pass is @code{gimplify_function_tree}
+@en located in @file{gimplify.c}.  From here we process the entire
+@en function gimplifying each statement in turn.  The main workhorse
+@en for this pass is @code{gimplify_expr}.  Approximately everything
+@en passes through here at least once, and it is from here that we
+@en invoke the @code{lang_hooks.gimplify_expr} callback.
 这个过程的主入口点是@code{gimplify_function_tree}，
 位于@file{gimplify.c}中。我们从这里处理整个函数，
 依次的对每条语句进行gimplify。
@@ -107,6 +197,17 @@ The term stuck，所以像“gimplification”, “gimplify”,
 几乎每个处理都需要经过这里一次，
 并且我们是从这里来调用@code{lang_hooks.gimplify_expr}回调的。
 
+@en The callback should examine the expression in question and return
+@en @code{GS_UNHANDLED} if the expression is not a language specific
+@en construct that requires attention.  Otherwise it should alter the
+@en expression in some way to such that forward progress is made toward
+@en producing valid GIMPLE@.  If the callback is certain that the
+@en transformation is complete and the expression is valid GIMPLE, it
+@en should return @code{GS_ALL_DONE}.  Otherwise it should return
+@en @code{GS_OK}, which will cause the expression to be processed again.
+@en If the callback encounters an error during the transformation (because
+@en the front end is relying on the gimplification process to finish
+@en semantic checks), it should return @code{GS_ERROR}.
 回调函数应该考虑检查表达式，
 并且当表达式不是一个需要注意的语言特定的结构，
 则返回@code{GS_UNHANDLES}。
@@ -118,24 +219,54 @@ The term stuck，所以像“gimplification”, “gimplify”,
 （因为前端依赖于gimplification处理来完成语义检测），
 则应该返回@code{GS_ERROR}。
 
+@en @node Pass manager
+@en @section Pass manager
 @node 过程管理器
 @section 过程管理器
 
+@en The pass manager is located in @file{passes.c}, @file{tree-optimize.c}
+@en and @file{tree-pass.h}.
+@en Its job is to run all of the individual passes in the correct order,
+@en and take care of standard bookkeeping that applies to every pass.
 过程管理器在@file{passes.c}，
 @file{tree-optimize.c}和@file{tree-pass.h}中。
 它的工作是按照正确的顺序来运行所有单独的过程，
 并且处理应用到每个过程的标准薄记（standard bookkeeping）。
 
+@en The theory of operation is that each pass defines a structure that
+@en represents everything we need to know about that pass---when it
+@en should be run, how it should be run, what intermediate language
+@en form or on-the-side data structures it needs.  We register the pass
+@en to be run in some particular order, and the pass manager arranges
+@en for everything to happen in the correct order.
 工作原理是每个过程定义了一个结构体，
 用来表示我们需要知道的关于该过程的每件事情——应该什么运行，
 应该如何运行，需要什么中间语言或者附加的数据结构。
 我们按照某种特定的运行顺序来注册过程，
 过程管理器来安排所有的事情都按正确的顺序发生。
 
+@en The actuality doesn't completely live up to the theory at present.
+@en Command-line switches and @code{timevar_id_t} enumerations must still
+@en be defined elsewhere.  The pass manager validates constraints but does
+@en not attempt to (re-)generate data structures or lower intermediate
+@en language form based on the requirements of the next pass.  Nevertheless,
+@en what is present is useful, and a far sight better than nothing at all.
 目前实际的实现并不是完全做到了理论上所描述的。
 命令行开关和@code{timevar_id_t}枚举还必须定义在其它地方。
 过程管理器。。。不管怎样，现在的实现是有用的，比没有强。
 
+Each pass should have a unique name.
+Each pass may have its own dump file (for GCC debugging purposes).
+Passes with a name starting with a star do not dump anything.
+Sometimes passes are supposed to share a dump file / option name.
+To still give these unique names, you can use a prefix that is delimited
+by a space from the part that is used for the dump file / option name.
+E.g. When the pass name is "ud dce", the name used for dump file/options
+is "dce".
+
+@en TODO: describe the global variables set up by the pass manager,
+@en and a brief description of how a new pass should use it.
+@en I need to look at what info RTL passes use first@enddots{}
 TODO：描述由过程管理器建立的全局变量，以及对一个新的过程应该如何使用。
 
 @node Tree-SSA过程
