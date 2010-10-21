@@ -1,35 +1,51 @@
-@c Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008
+@c Copyright (C) 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
 @c Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
+@en @node Options
+@en @chapter Option specification files
 @node 选项
 @chapter 选项描述文件
 @cindex option specification files
 @cindex @samp{optc-gen.awk}
 
-大多数GCC命令行选项由特定的选项定义文件来描述，按照惯例命名
-为 @code{.opt}。这章描述了这些文件的格式。
+@en Most GCC command-line options are described by special option
+@en definition files, the names of which conventionally end in
+@en @code{.opt}.  This chapter describes the format of these files.
+大多数GCC命令行选项由特定的选项定义文件来描述，按照惯例命名为@code{.opt}。这章描述了这些文件的格式。
 
+@en @menu
+@en * Option file format::   The general layout of the files
+@en * Option properties::    Supported option properties
+@en @end menu
 @menu
 * 选项文件格式::   文件的总体结构
 * 选项属性::    所支持的选项属性
 @end menu
 
+@en @node Option file format
+@en @section Option file format
 @node 选项文件格式
 @section 选项文件格式
 
-选项文件是一个简单的记录列表，记录中的每个域独自占有一行，记录之间
-由空行分隔。注释独自占有一行，可以出现在文件的任何地方，并且由分号
-开头。分号前允许有空格。
+@en Option files are a simple list of records in which each field occupies
+@en its own line and in which the records themselves are separated by
+@en blank lines.  Comments may appear on their own line anywhere within
+@en the file and are preceded by semicolons.  Whitespace is allowed before
+@en the semicolon.
+选项文件是一个简单的记录列表，记录中的每个域独自占有一行，记录之间由空行分隔。注释独自占有一行，可以出现在文件的任何地方，并且由分号开头。分号前允许有空格。
 
+@en The files can contain the following types of record:
 文件中可以包含下列类型的记录：
 
 @itemize @bullet
 @item
-语言定义记录。这些记录有两个域：字符串 @samp{Language} 和语言的名字。
-一旦通过这种方式声明了一个语言，则可以作为选项属性来使用。
-参见 @ref{选项属性}。
+@en A language definition record.  These records have two fields: the
+@en string @samp{Language} and the name of the language.  Once a language
+@en has been declared in this way, it can be used as an option property.
+@en @xref{Option properties}.
+语言定义记录。这些记录有两个域：字符串@samp{Language}和语言的名字。一旦通过这种方式声明了一个语言，则可以作为选项属性来使用。参见@ref{选项属性}。
 
 @item
 A target specific save record to save additional information. These
@@ -37,155 +53,316 @@ records have two fields: the string @samp{TargetSave}, and a
 declaration type to go in the @code{cl_target_option} structure.
 
 @item
+@en An option definition record.  These records have the following fields:
 选项定义记录。这些记录有如下域： 
 @enumerate
 @item
+@en the name of the option, with the leading ``-'' removed
 选项的名字，去掉前导符“-”
 @item
+@en a space-separated list of option properties (@pxref{Option properties})
 空格分隔的选项属性列表 (参见 @ref{选项属性})
 @item
-帮助文本，用于 @option{--help}（如果第二个域包含 @code{Undocumented} 
-属性，则会忽略该域）
+@en the help text to use for @option{--help} (omitted if the second field
+@en contains the @code{Undocumented} property).
+帮助文本，用于@option{--help}（如果第二个域包含@code{Undocumented}属性，则会忽略该域）
 @end enumerate
 
-缺省的，所有以“f”，“W”或者“m”开头的选项被隐式的假设会有一个“no-”形式。
-该形式不必再单独列出来。如果以这些字母开头的选项没有“no-”形式，可以使
-用 @code{RejectNegative} 属性来去掉。
+@en By default, all options beginning with ``f'', ``W'' or ``m'' are
+@en implicitly assumed to take a ``no-'' form.  This form should not be
+@en listed separately.  If an option beginning with one of these letters
+@en does not have a ``no-'' form, you can use the @code{RejectNegative}
+@en property to reject it.
+缺省的，所有以“f”，“W”或者“m”开头的选项被隐式的假设会有一个“no-”形式。该形式不必再单独列出来。如果以这些字母开头的选项没有“no-”形式，可以使用@code{RejectNegative}属性来去掉。
 
-帮助文本在显示前会被自动换行。正常情况下，选项的名字会被打印在输出的左
-边，帮助文本被打印在右边。但是，如果帮助文本包含一个tab字符，则tab左边
-的文本会被用来替代选项的名字，tab右边的文本作为帮助文本。这样就可以用来
-详尽的阐述选项会使用什么类型的参数。
+@en The help text is automatically line-wrapped before being displayed.
+@en Normally the name of the option is printed on the left-hand side of
+@en the output and the help text is printed on the right.  However, if the
+@en help text contains a tab character, the text to the left of the tab is
+@en used instead of the option's name and the text to the right of the
+@en tab forms the help text.  This allows you to elaborate on what type
+@en of argument the option takes.
+帮助文本在显示前会被自动换行。正常情况下，选项的名字会被打印在输出的左边，帮助文本被打印在右边。但是，如果帮助文本包含一个tab字符，则tab左边的文本会被用来替代选项的名字，tab右边的文本作为帮助文本。这样就可以用来详尽的阐述选项会使用什么类型的参数。
 
 @item
-目标掩码记录。这些记录有一个域，形式为 @samp{Mask(@var{x})}。选项处理脚
-本将会自动在target_flags（参见运行时目标）中为每个掩码名字x分配一个位，
-并且将 @code{MASK_@var{x}} 宏对应的位置位。同时，会声明一个 
-@code{TARGET_@var{x}} 宏，当 @code{MASK_@var{x}} 位被置位时其值为1，否则为0。
+@en A target mask record.  These records have one field of the form
+@en @samp{Mask(@var{x})}.  The options-processing script will automatically
+@en allocate a bit in @code{target_flags} (@pxref{Run-time Target}) for
+@en each mask name @var{x} and set the macro @code{MASK_@var{x}} to the
+@en appropriate bitmask.  It will also declare a @code{TARGET_@var{x}}
+@en macro that has the value 1 when bit @code{MASK_@var{x}} is set and
+@en 0 otherwise.
+目标掩码记录。这些记录有一个域，形式为@samp{Mask(@var{x})}。选项处理脚本将会自动在target_flags（参见运行时目标）中为每个掩码名字x分配一个位，并且将@code{MASK_@var{x}}宏对应的位置位。同时，会声明一个@code{TARGET_@var{x}}宏，当@code{MASK_@var{x}}位被置位时其值为1，否则为0。
 
-它们最初是为了声明与用户选项没有联系的目标掩码，或者是因为这些掩码表示内
-部的开关，或者是因为这些选项不在所有的配置中，但是还需要定义掩码的。
+@en They are primarily intended to declare target masks that are not
+@en associated with user options, either because these masks represent
+@en internal switches or because the options are not available on all
+@en configurations and yet the masks always need to be defined.
+它们最初是为了声明与用户选项没有联系的目标掩码，或者是因为这些掩码表示内部的开关，或者是因为这些选项不在所有的配置中，但是还需要定义掩码的。
 @end itemize
 
+@en @node Option properties
+@en @section Option properties
 @node 选项属性
 @section 选项属性
+
+@en The second field of an option record can specify any of the following
+@en properties.  When an option takes an argument, it is enclosed in parentheses
+@en following the option property name.  The parser that handles option files
+@en is quite simplistic, and will be tricked by any nested parentheses within
+@en the argument text itself; in this case, the entire option argument can
+@en be wrapped in curly braces within the parentheses to demarcate it, e.g.:
+
+@smallexample
+Condition(@{defined (USE_CYGWIN_LIBSTDCXX_WRAPPERS)@})
+@end smallexample
 
 选项记录的第二个域可以指定下列属性：
 
 @table @code
 @item Common
+@en The option is available for all languages and targets.
 选项对所有语言和目标都有效。 
 
 @item Target
+@en The option is available for all languages but is target-specific.
 选项对所有语言都有效，但是目标特定的。 
 
+@item Driver
+@en The option is handled by the compiler driver using code not shared
+@en with the compilers proper (@file{cc1} etc.).
+
 @item @var{language}
+@en The option is available when compiling for the given language.
 当编译给定语言时，选项有效。
 
-可以为多个不同的语言指定同一个选项。每个语言 @var{language} 必须
-已经被之前的 @code{Language} 记录声明过。参见 @ref{选项文件格式}。
+@en It is possible to specify several different languages for the same
+@en option.  Each @var{language} must have been declared by an earlier
+@en @code{Language} record.  @xref{Option file format}.
+
+可以为多个不同的语言指定同一个选项。每个语言@var{language}必须已经被之前的@code{Language}记录声明过。参见@ref{选项文件格式}。
+
+@item RejectDriver
+The option is only handled by the compilers proper (@file{cc1} etc.)@:
+and should not be accepted by the driver.
 
 @item RejectNegative
-选项没有“no-”形式。所有由“f”，“W”或者“m”开始的选项都被假设具有“no-”形式，
-除非使用这个属性。
+@en The option does not have a ``no-'' form.  All options beginning with
+@en ``f'', ``W'' or ``m'' are assumed to have a ``no-'' form unless this
+@en property is used.
+选项没有“no-”形式。所有由“f”，“W”或者“m”开始的选项都被假设具有“no-”形式，除非使用这个属性。
 
 @item Negative(@var{othername})
-选项将会关掉另一个选项 @var{othername}，这是去掉前导符“-”的选项名字。
-这会通过 @code{Negative} 属性来传播一连串的选项关闭行为。
+@en The option will turn off another option @var{othername}, which is
+@en the option name with the leading ``-'' removed.  This chain action will
+@en propagate through the @code{Negative} property of the option to be
+@en turned off.
+选项将会关掉另一个选项@var{othername}，这是去掉前导符“-”的选项名字。这会通过@code{Negative}属性来传播一连串的选项关闭行为。
 
 @item Joined
 @itemx Separate
-选项接受一个强制参数。@code{Joined} 指示选项和参数可以被包含在同一个
-@code{argv} 项中（例如 @code{-mflush-func=@var{name}}）。
-@code{Separate} 指示选项和参数可以为分开的 @code{argv} 项（如 @code{-o}）。
-一个选项允许同时具有这两个属性。 
+@en The option takes a mandatory argument.  @code{Joined} indicates
+@en that the option and argument can be included in the same @code{argv}
+@en entry (as with @code{-mflush-func=@var{name}}, for example).
+@en @code{Separate} indicates that the option and argument can be
+@en separate @code{argv} entries (as with @code{-o}).  An option is
+@en allowed to have both of these properties.
+选项接受一个强制参数。@code{Joined}指示选项和参数可以被包含在同一个@code{argv}项中（例如 @code{-mflush-func=@var{name}}）。@code{Separate}指示选项和参数可以为分开的@code{argv}项（如@code{-o}）。一个选项允许同时具有这两个属性。 
 
 @item JoinedOrMissing
-选项接受一个可选参数。如果参数给出，则会作为选项本身的 @code{argv} 项
-的一部分。
+@en The option takes an optional argument.  If the argument is given,
+@en it will be part of the same @code{argv} entry as the option itself.
 
-该属性不能和 @code{Joined} 或 @code{Separate} 一起使用。
+@en This property cannot be used alongside @code{Joined} or @code{Separate}.
+选项接受一个可选参数。如果参数给出，则会作为选项本身的@code{argv}项的一部分。
+
+该属性不能和@code{Joined}或@code{Separate}一起使用。
+
+@item MissingArgError(@var{message})
+@en For an option marked @code{Joined} or @code{Separate}, the message
+@en @var{message} will be used as an error message if the mandatory
+@en argument is missing; for options without @code{MissingArgError}, a
+@en generic error message is used.  @var{message} should contain a single
+@en @samp{%qs} format, which will be used to format the name of the option
+@en passed.
 
 @item UInteger
+@en The option's argument is a non-negative integer.  The option parser
+@en will check and convert the argument before passing it to the relevant
+@en option handler.  @code{UInteger} should also be used on options like
+@en @code{-falign-loops} where both @code{-falign-loops} and
+@en @code{-falign-loops}=@var{n} are supported to make sure the saved
+@en options are given a full integer.
 选项的参数是一个非负整数。选项解析器将会在传给选项处理前检测并转换参数。
 
+@item NoDriverArg
+For an option marked @code{Separate}, the option only takes an
+argument in the compiler proper, not in the driver.  This is for
+compatibility with existing options that are used both directly and
+via @option{-Wp,}; new options should not have this property.
+
 @item Var(@var{var})
-该选项的状态将被存储在变量 @var{var} 中。存储状态的方式取决于选项的类型：
+@en The state of this option should be stored in variable @var{var}.
+@en The way that the state is stored depends on the type of option:
+该选项的状态将被存储在变量@var{var}中。存储状态的方式取决于选项的类型：
 
 @itemize @bullet
 @item
-如果使用了 @code{Mask} 或者 @code{InverseMask} 属性，则 @var{var} 为包含
+@en If the option uses the @code{Mask} or @code{InverseMask} properties,
+@en @var{var} is the integer variable that contains the mask.
+如果使用了@code{Mask}或者@code{InverseMask}属性，则@var{var}为包含
 mask的整数变量。
 
 @item
-如果选项是一个正常的on/off开关，则 @var{var} 为整数变量，并且当启用该选
-项时其值为非零。当使用选项的正面形式时，选项解析器会把变量置为1，当使用
-“no-”形式的时候，置为0。
+@en If the option is a normal on/off switch, @var{var} is an integer
+@en variable that is nonzero when the option is enabled.  The options
+@en parser will set the variable to 1 when the positive form of the
+@en option is used and 0 when the ``no-'' form is used.
+如果选项是一个正常的on/off开关，则@var{var}为整数变量，并且当启用该选项时其值为非零。当使用选项的正面形式时，选项解析器会把变量置为1，当使用“no-”形式的时候，置为0。
 
 @item
-如果选项接受一个参数，并且具有 @code{UInteger} 属性，则 @var{var} 为整数
-变量，并且存储了参数的值。
+@en If the option takes an argument and has the @code{UInteger} property,
+@en @var{var} is an integer variable that stores the value of the argument.
+如果选项接受一个参数，并且具有@code{UInteger}属性，则@var{var}为整数变量，并且存储了参数的值。
 
 @item
-否则，如果选项接受一个参数，则 @var{var} 为指向参数字符串的指针。如果参数
-是可选的并且没有给出，则该指针将为null。
+@en Otherwise, if the option takes an argument, @var{var} is a pointer to
+@en the argument string.  The pointer will be null if the argument is optional
+@en and wasn't given.
+否则，如果选项接受一个参数，则@var{var}为指向参数字符串的指针。如果参数是可选的并且没有给出，则该指针将为null。
 @end itemize
 
-选项处理脚本通常会在 @file{options.c} 中声明 @var{var}，并且在起动时间将
-其初始化为0。你可以使用 @code{VarExists} 和 @code{Init} 来修改这种行为。
+@en The option-processing script will usually declare @var{var} in
+@en @file{options.c} and leave it to be zero-initialized at start-up time.
+@en You can modify this behavior using @code{VarExists} and @code{Init}.
+选项处理脚本通常会在@file{options.c}中声明@var{var}，并且在起动时间将其初始化为0。你可以使用@code{VarExists}和@code{Init}来修改这种行为。
 
 @item Var(@var{var}, @var{set})
-选项控制一个整数变量 @var{var}，并且当 @var{var} 等于 @var{set} 时起作用。
-当使用选项的正面形式时，选项解析器会把变量置为 @var{set}，当使用“no-”形式
-的时候，置为 @code{!@var{set}}。
+@en The option controls an integer variable @var{var} and is active when
+@en @var{var} equals @var{set}.  The option parser will set @var{var} to
+@en @var{set} when the positive form of the option is used and @code{!@var{set}}
+@en when the ``no-'' form is used.
+选项控制一个整数变量@var{var}，并且当@var{var}等于@var{set}时起作用。当使用选项的正面形式时，选项解析器会把变量置为@var{set}，当使用“no-”形式的时候，置为@code{!@var{set}}。
 
-@var{var} 的声明方式与上面描述的单一参数形式的具有相同的方式。
+@en @var{var} is declared in the same way as for the single-argument form
+@en described above.
+@var{var}的声明方式与上面描述的单一参数形式的具有相同的方式。
 
 @item VarExists
-由 @var{Var} 属性指定的变量已经存在。这样，就不会有任何定义被增加到 
-@file{options.c} 中。
+@en The variable specified by the @code{Var} property already exists.
+@en No definition should be added to @file{options.c} in response to
+@en this option record.
+由@var{Var}属性指定的变量已经存在。这样，就不会有任何定义被增加到@file{options.c}中。
 
-应该只有在 @file{options.c} 之外声明了该变量的时候，才使用这个属性。
+@en You should use this property only if the variable is declared outside
+@en @file{options.c}.
+应该只有在@file{options.c}之外声明了该变量的时候，才使用这个属性。
 
 @item Init(@var{value})
-由属性 @code{Var} 指定的变量应该被静态初始化为 @var{value}。
+@en The variable specified by the @code{Var} property should be statically
+@en initialized to @var{value}.
+由属性@code{Var}指定的变量应该被静态初始化为@var{value}。
 
 @item Mask(@var{name})
-选项与 @code{target_flags} 变量（@pxref{运行时目标机}）中的一个位
-相关联，并且当该位被置位时才起作用。你还可以指定 @code{Var} 去选择一
-个变量，而不只是 @code{target_flags}。
+@en The option is associated with a bit in the @code{target_flags}
+@en variable (@pxref{Run-time Target}) and is active when that bit is set.
+@en You may also specify @code{Var} to select a variable other than
+@en @code{target_flags}.
+选项与@code{target_flags}变量（@pxref{运行时目标机}）中的一个位相关联，并且当该位被置位时才起作用。你还可以指定@code{Var}去选择一个变量，而不只是@code{target_flags}。
 
-选项处理脚本将会自动为选项分配一个唯一的位。如果选项与 @samp{target_flags}
-关联，则脚本会将宏 @code{MASK_@var{name}} 设为合适的位掩码。它还会声明一个
-@code{TARGET_@var{name}} 宏，当选项起作用时其值为1，否则为0。如果使用 
-@var{Var} 将选项关联到不同的变量上，则相关的宏分别叫做 
-@code{OPTION_MASK_@var{name}} 和 @code{OPTION_@var{name}}。
+@en The options-processing script will automatically allocate a unique bit
+@en for the option.  If the option is attached to @samp{target_flags},
+@en the script will set the macro @code{MASK_@var{name}} to the appropriate
+@en bitmask.  It will also declare a @code{TARGET_@var{name}} macro that has
+@en the value 1 when the option is active and 0 otherwise.  If you use @code{Var}
+@en to attach the option to a different variable, the associated macros are
+@en called @code{OPTION_MASK_@var{name}} and @code{OPTION_@var{name}} respectively.
+选项处理脚本将会自动为选项分配一个唯一的位。如果选项与@samp{target_flags}关联，则脚本会将宏@code{MASK_@var{name}}设为合适的位掩码。它还会声明一个@code{TARGET_@var{name}}宏，当选项起作用时其值为1，否则为0。如果使用@var{Var}将选项关联到不同的变量上，则相关的宏分别叫做@code{OPTION_MASK_@var{name}}和@code{OPTION_@var{name}}。
 
+@en You can disable automatic bit allocation using @code{MaskExists}.
 可以使用 @code{MaskExists} 来禁止自动位分配。
 
 @item InverseMask(@var{othername})
 @itemx InverseMask(@var{othername}, @var{thisname})
-选项是具有 @code{Mask(@var{othername})}属性的另一个选项的反面。如果给出了
-@var{thisname}，则选项处理脚本会声明一个 @code{TARGET_@var{thisname}} 宏，
-当选项起作用时其为1，否则为0。
+@en The option is the inverse of another option that has the
+@en @code{Mask(@var{othername})} property.  If @var{thisname} is given,
+@en the options-processing script will declare a @code{TARGET_@var{thisname}}
+@en macro that is 1 when the option is active and 0 otherwise.
+选项是具有@code{Mask(@var{othername})}属性的另一个选项的反面。如果给出了@var{thisname}，则选项处理脚本会声明一个@code{TARGET_@var{thisname}}宏，当选项起作用时其为1，否则为0。
 
 @item MaskExists
-由 @code{Mask} 属性指定的掩码已经存在。这样，就不会有 @code{MASK} 和 
-@code{TARGET} 定义被增加到 @file{options.h} 中。
+@en The mask specified by the @code{Mask} property already exists.
+@en No @code{MASK} or @code{TARGET} definitions should be added to
+@en @file{options.h} in response to this option record.
+由@code{Mask}属性指定的掩码已经存在。这样，就不会有@code{MASK}和@code{TARGET}定义被增加到@file{options.h}中。
 
-该属性的主要目的用来支持同义选项。第一个选项应该使用 @samp{Mask(@var{name})} 
-并且其它的应该使用 @samp{Mask(@var{name}) MaskExists}。
+@en The main purpose of this property is to support synonymous options.
+@en The first option should use @samp{Mask(@var{name})} and the others
+@en should use @samp{Mask(@var{name}) MaskExists}.
+该属性的主要目的用来支持同义选项。第一个选项应该使用@samp{Mask(@var{name})}并且其它的应该使用@samp{Mask(@var{name}) MaskExists}。
+
+@item Alias(@var{opt})
+@itemx Alias(@var{opt}, @var{arg})
+@itemx Alias(@var{opt}, @var{posarg}, @var{negarg})
+The option is an alias for @option{-@var{opt}}.  In the first form,
+any argument passed to the alias is considered to be passed to
+@option{-@var{opt}}, and @option{-@var{opt}} is considered to be
+negated if the alias is used in negated form.  In the second form, the
+alias may not be negated or have an argument, and @var{posarg} is
+considered to be passed as an argument to @option{-@var{opt}}.  In the
+third form, the alias may not have an argument, if the alias is used
+in the positive form then @var{posarg} is considered to be passed to
+@option{-@var{opt}}, and if the alias is used in the negative form
+then @var{negarg} is considered to be passed to @option{-@var{opt}}.
+
+Aliases should not specify @code{Var} or @code{Mask} or
+@code{UInteger}.  Aliases should normally specify the same languages
+as the target of the alias; the flags on the target will be used to
+determine any diagnostic for use of an option for the wrong language,
+while those on the alias will be used to identify what command-line
+text is the option and what text is any argument to that option.
+
+When an @code{Alias} definition is used for an option, driver specs do
+not need to handle it and no @samp{OPT_} enumeration value is defined
+for it; only the canonical form of the option will be seen in those
+places.
+
+@item Ignore
+This option is ignored apart from printing any warning specified using
+@code{Warn}.  The option will not be seen by specs and no @samp{OPT_}
+enumeration value is defined for it.
+
+@item SeparateAlias
+For an option marked with @code{Joined}, @code{Separate} and
+@code{Alias}, the option only acts as an alias when passed a separate
+argument; with a joined argument it acts as a normal option, with an
+@samp{OPT_} enumeration value.  This is for compatibility with the
+Java @option{-d} option and should not be used for new options.
+
+@item Warn(@var{message})
+If this option is used, output the warning @var{message}.
+@var{message} is a format string, either taking a single operand with
+a @samp{%qs} format which is the option name, or not taking any
+operands, which is passed to the @samp{warning} function.  If an alias
+is marked @code{Warn}, the target of the alias must not also be marked
+@code{Warn}.
 
 @item Report
-选项的说明应该通过 @option{-fverbose-asm} 来打印。 
+@en The state of the option should be printed by @option{-fverbose-asm}.
+选项的说明应该通过@option{-fverbose-asm}来打印。 
 
 @item Undocumented
-选项有意的不提供文档，并且不应该包括在 @option{--help} 输出中。 
+@en The option is deliberately missing documentation and should not
+@en be included in the @option{--help} output.
+选项有意的不提供文档，并且不应该包括在@option{--help}输出中。 
 
 @item Condition(@var{cond})
-选项应该只在预处理程序条件 @var{cond} 为真时才被接受。注意即使 @var{cond} 为
-假时，任何与选项相关的C声明也会存在；@var{cond}只是简单的控制选项是否被接受，
-以及是否在 @option{--help} 输出中被打印。
+@en The option should only be accepted if preprocessor condition
+@en @var{cond} is true.  Note that any C declarations associated with the
+@en option will be present even if @var{cond} is false; @var{cond} simply
+@en controls whether the option is accepted and whether it is printed in
+@en the @option{--help} output.
+选项应该只在预处理程序条件@var{cond}为真时才被接受。注意即使@var{cond}为假时，任何与选项相关的C声明也会存在；@var{cond}只是简单的控制选项是否被接受，以及是否在@option{--help}输出中被打印。
 
 @item Save
 Build the @code{cl_target_option} structure to hold a copy of the
