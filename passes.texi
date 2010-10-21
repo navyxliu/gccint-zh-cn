@@ -51,11 +51,7 @@
 @en a double handful of language specific tree codes defined in
 @en @file{c-common.def}.  The Fortran front end uses a completely different
 @en private representation.
-语言前端只被调用一次，通过@code{lang_hooks.parse_file}，
-用来解析整个输入。语言前端可以使用任何被认为合适的中间语言表示。
-C前端使用了GENERIC树，以及在@file{c-common.def}中定义的
-（double handful of）语言特定的树代码。
-Fortran前端使用了完全不同的私有表示。
+语言前端只被调用一次，通过@code{lang_hooks.parse_file}，用来解析整个输入。语言前端可以使用任何被认为合适的中间语言表示。C前端使用了GENERIC树，以及在@file{c-common.def}中定义的（double handful of）语言特定的树代码。Fortran前端使用了完全不同的私有表示。
 
 @cindex GIMPLE
 @cindex gimplification
@@ -75,20 +71,12 @@ Fortran前端使用了完全不同的私有表示。
 @en route to choose probably depends on how well GENERIC (plus extensions)
 @en can be made to match up with the source language and necessary parsing
 @en data structures.
-在某个地方，
-前端必须将其使用的表示转换为编译器中语言独立的部分能够理解的表示。
-目前的实现采用了两种形式。C前端在函数编译完之前，
-手动的对每个函数调用gimplifier，
-并且使用gimplifier回调函数将语言特定的树代码直接转换为GIMPLE。
-Fortran前端将私有表示转换为 GENERIC，之后当函数编译完时，
-再降低为GIMPLE。选择哪种途径可能取决于GENERIC（及其扩展）
-是否能够很好的匹配源语言，以及是否需要解析数据结构。
+在某个地方，前端必须将其使用的表示转换为编译器中语言独立的部分能够理解的表示。目前的实现采用了两种形式。C前端在函数编译完之前，手动的对每个函数调用gimplifier，并且使用gimplifier回调函数将语言特定的树代码直接转换为GIMPLE。Fortran前端将私有表示转换为 GENERIC，之后当函数编译完时，再降低为GIMPLE。选择哪种途径可能取决于GENERIC（及其扩展）是否能够很好的匹配源语言，以及是否需要解析数据结构。
 
 @en BUG: Gimplification must occur before nested function lowering,
 @en and nested function lowering must be done by the front end before
 @en passing the data off to cgraph.
-BUG：Gimplification必须在nested function lowering之前进行，
-并且nested function lowering必须在将数据传给cgraph之前，由前端完成。
+BUG：Gimplification必须在nested function lowering之前进行，并且nested function lowering必须在将数据传给cgraph之前，由前端完成。
 
 @en TODO: Cgraph should control nested function lowering.  It would
 @en only be invoked when it is certain that the outer-most function
@@ -103,12 +91,7 @@ TODO：Cgraph应该控制nested function lowering。并且只会在确定最外�
 @en Hum@dots{} this sounds overly complicated.  Perhaps we should just
 @en have the front end gimplify always; in most cases it's only one
 @en function call.
-TODO：Cgraph需要一个gimplify_function回调函数。
-并且在下列情况下会被调用：(1)确定函数被使用，
-(2)为了兑现用户指定的警告选项，需要多次的编译，
-(3)语言本身表明了在gimplification进行前，语义分析会不完整。
-嗯。。。听起来有点过度复杂。或许我们应该总是进行前端的gimplify；
-大多数情况，这只是一个函数调用。
+TODO：Cgraph需要一个gimplify_function回调函数。并且在下列情况下会被调用：(1)确定函数被使用，(2)为了兑现用户指定的警告选项，需要多次的编译，(3)语言本身表明了在gimplification进行前，语义分析会不完整。嗯。。。听起来有点过度复杂。或许我们应该总是进行前端的gimplify；大多数情况，这只是一个函数调用。
 
 @en The front end needs to pass all function definitions and top level
 @en declarations off to the middle-end so that they can be compiled and
@@ -120,12 +103,7 @@ TODO：Cgraph需要一个gimplify_function回调函数。
 @en function and data @emph{definitions} be passed to the middle-end.  For
 @en complete debug information, function, data and type declarations
 @en should all be passed as well.
-前端需要将所有函数的定义和顶层的声明传给中端，
-以至于它们能被编译和生成目标文件。对于一个简单的程序语言，
-顶层的每个声明和定义都能找到，因此这样做非常方便。
-另外，对于生成函数代码和生成完全的调试信息，也有差别。
-对于函数代码，唯一必须的是将函数和数据定义传给中端。
-对于完全的调试信息，函数，数据和类型的声明也都需要被传递。
+前端需要将所有函数的定义和顶层的声明传给中端，以至于它们能被编译和生成目标文件。对于一个简单的程序语言，顶层的每个声明和定义都能找到，因此这样做非常方便。另外，对于生成函数代码和生成完全的调试信息，也有差别。对于函数代码，唯一必须的是将函数和数据定义传给中端。对于完全的调试信息，函数，数据和类型的声明也都需要被传递。
 
 @findex rest_of_decl_compilation
 @findex rest_of_type_compilation
@@ -135,10 +113,7 @@ TODO：Cgraph需要一个gimplify_function回调函数。
 @en @code{rest_of_decl_compilation}.  Each complete type definition should
 @en be passed to @code{rest_of_type_compilation}.  Each function definition
 @en should be passed to @code{cgraph_finalize_function}.
-任何情况下，如果前端需要每个完全的顶层函数或数据声明，
-则每个数据定义应该传给@code{rest_of_decl_compilation}。
-每个完全的类型定义应该传给@code{rest_of_type_compilation}。
-每个函数定义应给传给@code{cgraph_finalize_function}。
+任何情况下，如果前端需要每个完全的顶层函数或数据声明，则每个数据定义应该传给@code{rest_of_decl_compilation}。每个完全的类型定义应该传给@code{rest_of_type_compilation}。每个函数定义应给传给@code{cgraph_finalize_function}。
 
 TODO: I know rest_of_compilation currently has all sorts of
 RTL generation semantics.  I plan to move all code generation
@@ -150,8 +125,7 @@ that is more descriptive than "rest_of".
 
 @en The middle-end will, at its option, emit the function and data
 @en definitions immediately or queue them for later processing.
-中端根据自己的选择，将会立即生成函数和数据的定义，
-或者放入队列中以便后面的处理。
+中端根据自己的选择，将会立即生成函数和数据的定义，或者放入队列中以便后面的处理。
 
 @en @node Gimplification pass
 @en @section Gimplification pass
@@ -165,10 +139,7 @@ that is more descriptive than "rest_of".
 @en (CROSSREF).  The term stuck, and so words like ``gimplification'',
 @en ``gimplify'', ``gimplifier'' and the like are sprinkled throughout this
 @en section of code.
-@dfn{Gimplification}是一个离奇的术语，
-用来表示将函数的中间表示转换为GIMPLE语言的过程。
-The term stuck，所以像“gimplification”, “gimplify”, 
-“gimplifier” 等类似的单词会分布在这部分代码中。
+@dfn{Gimplification}是一个离奇的术语，用来表示将函数的中间表示转换为GIMPLE语言的过程。The term stuck，所以像“gimplification”, “gimplify”, “gimplifier” 等类似的单词会分布在这部分代码中。
 
 @cindex GENERIC
 @en While a front end may certainly choose to generate GIMPLE directly if
@@ -176,10 +147,7 @@ The term stuck，所以像“gimplification”, “gimplify”,
 @en intermediate language used by the front end is already fairly simple.
 @en Usually it is easier to generate GENERIC trees plus extensions
 @en and let the language-independent gimplifier do most of the work.
-当然，尽管前端可以选择直接生成GIMPLE，但如果这样，
-则处理起来可能会有些复杂，除非前端使用的中间语言非常简单。
-通常生成GENERIC树以及其扩展会相对容易些，
-并且让语言独立的gimplifier来多大部分的工作。
+当然，尽管前端可以选择直接生成GIMPLE，但如果这样，则处理起来可能会有些复杂，除非前端使用的中间语言非常简单。通常生成GENERIC树以及其扩展会相对容易些，并且让语言独立的gimplifier来多大部分的工作。
 
 @findex gimplify_function_tree
 @findex gimplify_expr
@@ -190,12 +158,7 @@ The term stuck，所以像“gimplification”, “gimplify”,
 @en for this pass is @code{gimplify_expr}.  Approximately everything
 @en passes through here at least once, and it is from here that we
 @en invoke the @code{lang_hooks.gimplify_expr} callback.
-这个过程的主入口点是@code{gimplify_function_tree}，
-位于@file{gimplify.c}中。我们从这里处理整个函数，
-依次的对每条语句进行gimplify。
-这个过程的主要工作是@code{gimplify_expr}。
-几乎每个处理都需要经过这里一次，
-并且我们是从这里来调用@code{lang_hooks.gimplify_expr}回调的。
+这个过程的主入口点是@code{gimplify_function_tree}，位于@file{gimplify.c}中。我们从这里处理整个函数，依次的对每条语句进行gimplify。这个过程的主要工作是@code{gimplify_expr}。几乎每个处理都需要经过这里一次，并且我们是从这里来调用@code{lang_hooks.gimplify_expr}回调的。
 
 @en The callback should examine the expression in question and return
 @en @code{GS_UNHANDLED} if the expression is not a language specific
@@ -208,16 +171,7 @@ The term stuck，所以像“gimplification”, “gimplify”,
 @en If the callback encounters an error during the transformation (because
 @en the front end is relying on the gimplification process to finish
 @en semantic checks), it should return @code{GS_ERROR}.
-回调函数应该考虑检查表达式，
-并且当表达式不是一个需要注意的语言特定的结构，
-则返回@code{GS_UNHANDLES}。
-否则，应该通过某种方式修改表达式使得可以产生合法的GIMPLE。
-如果回调函数确定已经完全转换，并且表达式是合法的GIMPLE，
-则应该返回@code{GS_ALL_DONE}。
-否则，应该返回@code{GS_OK}，这将会使得表达式会被再次处理。
-如果回调函数在转换过程中遇到一个错误
-（因为前端依赖于gimplification处理来完成语义检测），
-则应该返回@code{GS_ERROR}。
+回调函数应该考虑检查表达式，并且当表达式不是一个需要注意的语言特定的结构，则返回@code{GS_UNHANDLES}。否则，应该通过某种方式修改表达式使得可以产生合法的GIMPLE。如果回调函数确定已经完全转换，并且表达式是合法的GIMPLE，则应该返回@code{GS_ALL_DONE}。否则，应该返回@code{GS_OK}，这将会使得表达式会被再次处理。如果回调函数在转换过程中遇到一个错误（因为前端依赖于gimplification处理来完成语义检测），则应该返回@code{GS_ERROR}。
 
 @en @node Pass manager
 @en @section Pass manager
@@ -228,10 +182,7 @@ The term stuck，所以像“gimplification”, “gimplify”,
 @en and @file{tree-pass.h}.
 @en Its job is to run all of the individual passes in the correct order,
 @en and take care of standard bookkeeping that applies to every pass.
-过程管理器在@file{passes.c}，
-@file{tree-optimize.c}和@file{tree-pass.h}中。
-它的工作是按照正确的顺序来运行所有单独的过程，
-并且处理应用到每个过程的标准薄记（standard bookkeeping）。
+过程管理器在@file{passes.c}，@file{tree-optimize.c}和@file{tree-pass.h}中。它的工作是按照正确的顺序来运行所有单独的过程，并且处理应用到每个过程的标准薄记（standard bookkeeping）。
 
 @en The theory of operation is that each pass defines a structure that
 @en represents everything we need to know about that pass---when it
@@ -239,11 +190,7 @@ The term stuck，所以像“gimplification”, “gimplify”,
 @en form or on-the-side data structures it needs.  We register the pass
 @en to be run in some particular order, and the pass manager arranges
 @en for everything to happen in the correct order.
-工作原理是每个过程定义了一个结构体，
-用来表示我们需要知道的关于该过程的每件事情——应该什么运行，
-应该如何运行，需要什么中间语言或者附加的数据结构。
-我们按照某种特定的运行顺序来注册过程，
-过程管理器来安排所有的事情都按正确的顺序发生。
+工作原理是每个过程定义了一个结构体，用来表示我们需要知道的关于该过程的每件事情——应该什么运行，应该如何运行，需要什么中间语言或者附加的数据结构。我们按照某种特定的运行顺序来注册过程，过程管理器来安排所有的事情都按正确的顺序发生。
 
 @en The actuality doesn't completely live up to the theory at present.
 @en Command-line switches and @code{timevar_id_t} enumerations must still
@@ -251,9 +198,7 @@ The term stuck，所以像“gimplification”, “gimplify”,
 @en not attempt to (re-)generate data structures or lower intermediate
 @en language form based on the requirements of the next pass.  Nevertheless,
 @en what is present is useful, and a far sight better than nothing at all.
-目前实际的实现并不是完全做到了理论上所描述的。
-命令行开关和@code{timevar_id_t}枚举还必须定义在其它地方。
-过程管理器。。。不管怎样，现在的实现是有用的，比没有强。
+目前实际的实现并不是完全做到了理论上所描述的。命令行开关和@code{timevar_id_t}枚举还必须定义在其它地方。过程管理器。。。不管怎样，现在的实现是有用的，比没有强。
 
 Each pass should have a unique name.
 Each pass may have its own dump file (for GCC debugging purposes).
@@ -269,369 +214,635 @@ is "dce".
 @en I need to look at what info RTL passes use first@enddots{}
 TODO：描述由过程管理器建立的全局变量，以及对一个新的过程应该如何使用。
 
+@en @node Tree SSA passes
+@en @section Tree SSA passes
 @node Tree-SSA过程
 @section Tree-SSA过程
 
+@en The following briefly describes the Tree optimization passes that are
+@en run after gimplification and what source files they are located in.
 下面简要描述了经过gimplification之后的树优化过程，以及所在的源文件。
 
 @itemize @bullet
+@en @item Remove useless statements
 @item 删除无用语句（Remove useless statements） 
 
-该过程对gimple代码进行非常简单的扫描，识别出明显的死代码并删除。
-我们在这里做的一些事情包括，简化具有不变条件的@code{if}语句，
-删除对显然不会抛出异常的代码所做的异常处理，
-删除不含有变量的词法绑定（lexical bindings），以及其它各种简单的清除。
-这是为了能够快速的去掉一些显而易见的东西，而不是等到后面去花费更多的功夫。
-该过程在@file{tree-cfg.c}中，并且由@code{pass_remove_useless_stmts}来描述。
+@en This pass is an extremely simple sweep across the gimple code in which
+@en we identify obviously dead code and remove it.  Here we do things like
+@en simplify @code{if} statements with constant conditions, remove
+@en exception handling constructs surrounding code that obviously cannot
+@en throw, remove lexical bindings that contain no variables, and other
+@en assorted simplistic cleanups.  The idea is to get rid of the obvious
+@en stuff quickly rather than wait until later when it's more work to get
+@en rid of it.  This pass is located in @file{tree-cfg.c} and described by
+@en @code{pass_remove_useless_stmts}.
+该过程对gimple代码进行非常简单的扫描，识别出明显的死代码并删除。我们在这里做的一些事情包括，简化具有不变条件的@code{if}语句，删除对显然不会抛出异常的代码所做的异常处理，删除不含有变量的词法绑定（lexical bindings），以及其它各种简单的清除。这是为了能够快速的去掉一些显而易见的东西，而不是等到后面去花费更多的功夫。该过程在@file{tree-cfg.c}中，并且由@code{pass_remove_useless_stmts}来描述。
 
+@en @item Mudflap declaration registration
 @item Mudflap声明注册（Mudflap declaration registration） 
 
-如果启用了mudflap（参见@ref{Optimize Options,,-fmudflap -fmudflapth -fmudflapir,gcc,Using the GNU Compiler Collection (GCC)}
-我们便产生代码来记录一些使用mudflap运行时的变量声明。特别的，
-运行时会跟踪这些变量声明的生命期，将它们的地址记录下来，
-或者哪些边界在编译时不知道（@code{extern}）。
-该过程生成新的异常处理结构（@code{try}/@code{finally}），
-因此必须在它们下降之前运行。另外，
-该过程enqueque生命期扩展为整个程序的静态变量声明。
-过程位于@file{tree-mudflap.c}中，并由@code{pass_mudflap_1}来描述。
+@en If mudflap (@pxref{Optimize Options,,-fmudflap -fmudflapth
+@en -fmudflapir,gcc,Using the GNU Compiler Collection (GCC)}) is
+@en enabled, we generate code to register some variable declarations with
+@en the mudflap runtime.  Specifically, the runtime tracks the lifetimes of
+@en those variable declarations that have their addresses taken, or whose
+@en bounds are unknown at compile time (@code{extern}).  This pass generates
+@en new exception handling constructs (@code{try}/@code{finally}), and so
+@en must run before those are lowered.  In addition, the pass enqueues
+@en declarations of static variables whose lifetimes extend to the entire
+@en program.  The pass is located in @file{tree-mudflap.c} and is described
+@en by @code{pass_mudflap_1}.
+如果启用了mudflap（参见@ref{Optimize Options,,-fmudflap -fmudflapth -fmudflapir,gcc,Using the GNU Compiler Collection (GCC)}我们便产生代码来记录一些使用mudflap运行时的变量声明。特别的，运行时会跟踪这些变量声明的生命期，将它们的地址记录下来，或者哪些边界在编译时不知道（@code{extern}）。该过程生成新的异常处理结构（@code{try}/@code{finally}），因此必须在它们下降之前运行。另外，该过程enqueque生命期扩展为整个程序的静态变量声明。过程位于@file{tree-mudflap.c}中，并由@code{pass_mudflap_1}来描述。
 
+@en @item OpenMP lowering
 @item OpenMP下降（OpenMP lowering） 
 
+@en If OpenMP generation (@option{-fopenmp}) is enabled, this pass lowers
+@en OpenMP constructs into GIMPLE.
 如果启用了OpenMP生成（@option{-fopenmp}），该过程将OpenMP结构下降为GIMPLE。
 
-OpenMP结构下降涉及到为使用数据共享子句映射的局部变量创建替代表达式，
-揭示最可能同步指令的控制流，以及增加region标记来帮助控制流图的创建。
-该过程位于@file{omp-low.c}中，并由@code{pass_lower_omp}来描述。
+@en Lowering of OpenMP constructs involves creating replacement
+@en expressions for local variables that have been mapped using data
+@en sharing clauses, exposing the control flow of most synchronization
+@en directives and adding region markers to facilitate the creation of the
+@en control flow graph.  The pass is located in @file{omp-low.c} and is
+@en described by @code{pass_lower_omp}.
+OpenMP结构下降涉及到为使用数据共享子句映射的局部变量创建替代表达式，揭示最可能同步指令的控制流，以及增加region标记来帮助控制流图的创建。该过程位于@file{omp-low.c}中，并由@code{pass_lower_omp}来描述。
 
+@en @item OpenMP expansion
 @item OpenMP扩展（OpenMP expansion）
 
-如果启用了OpenMP生成（@option{-fopenmp}），
-该过程将并行region扩展为由线程库调用的它们自己的函数。
-过程位于@file{omp-low.c}中，并由@code{pass_expand_omp}来描述。
+@en If OpenMP generation (@option{-fopenmp}) is enabled, this pass expands
+@en parallel regions into their own functions to be invoked by the thread
+@en library.  The pass is located in @file{omp-low.c} and is described by
+@en @code{pass_expand_omp}.
+如果启用了OpenMP生成（@option{-fopenmp}），该过程将并行region扩展为由线程库调用的它们自己的函数。过程位于@file{omp-low.c}中，并由@code{pass_expand_omp}来描述。
 
+@en @item Lower control flow
 @item 控制流下降（Lower control flow） 
 
-该过程压平（flatten）@code{if}语句（@code{COND_EXPR}），
-并将词法绑定（@code{BIND_EXPR}）移到行外。在该过程之后，
-所有@code{if}语句将会有确切的两条@code{goto}语句在@code{then}和@code{else}处。
-每条语句的词法绑定信息将在@code{TREE_BLOCK}中找到，
-而不是由@code{BIND_EXPR}下的它的位置来推算出。
-该过程可以在@file{gimple-low.c}中找到，并由@code{pass_lower_cf}来描述。
+@en This pass flattens @code{if} statements (@code{COND_EXPR})
+@en and moves lexical bindings (@code{BIND_EXPR}) out of line.  After
+@en this pass, all @code{if} statements will have exactly two @code{goto}
+@en statements in its @code{then} and @code{else} arms.  Lexical binding
+@en information for each statement will be found in @code{TREE_BLOCK} rather
+@en than being inferred from its position under a @code{BIND_EXPR}.  This
+@en pass is found in @file{gimple-low.c} and is described by
+@en @code{pass_lower_cf}.
+该过程压平（flatten）@code{if}语句（@code{COND_EXPR}），并将词法绑定（@code{BIND_EXPR}）移到行外。在该过程之后，所有@code{if}语句将会有确切的两条@code{goto}语句在@code{then}和@code{else}处。每条语句的词法绑定信息将在@code{TREE_BLOCK}中找到，而不是由@code{BIND_EXPR}下的它的位置来推算出。该过程可以在@file{gimple-low.c}中找到，并由@code{pass_lower_cf}来描述。
 
+@en @item Lower exception handling control flow
 @item 异常处理控制流下降（Lower exception handling control flow） 
 
-该过程将高级别的异常处理结构（@code{TRY_FINALLY_EXPR}和@code{TRY_CATCH_EXPR}）
-转换为能显示表示控制流相关的形式。该过程之后，@code{lookup_stmt_eh_region}将会
-为任何可能具有EH控制流语义的语句返回一个非负数；对于确切的语义可以检查
-@code{tree_can_throw_internal}或@code{tree_can_throw_external}。
-确切的控制流可以从@code{foreach_reachable_handler}中提取。
-EH region嵌套树在@file{except.h}和@file{except.c}中定义。
-下降过程本身在@file{tree-eh.c}中，并由@code{pass_lower_eh}来描述。
+@en This pass decomposes high-level exception handling constructs
+@en (@code{TRY_FINALLY_EXPR} and @code{TRY_CATCH_EXPR}) into a form
+@en that explicitly represents the control flow involved.  After this
+@en pass, @code{lookup_stmt_eh_region} will return a non-negative
+@en number for any statement that may have EH control flow semantics;
+@en examine @code{tree_can_throw_internal} or @code{tree_can_throw_external}
+@en for exact semantics.  Exact control flow may be extracted from
+@en @code{foreach_reachable_handler}.  The EH region nesting tree is defined
+@en in @file{except.h} and built in @file{except.c}.  The lowering pass
+@en itself is in @file{tree-eh.c} and is described by @code{pass_lower_eh}.
+该过程将高级别的异常处理结构（@code{TRY_FINALLY_EXPR}和@code{TRY_CATCH_EXPR}）转换为能显示表示控制流相关的形式。该过程之后，@code{lookup_stmt_eh_region}将会为任何可能具有EH控制流语义的语句返回一个非负数；对于确切的语义可以检查@code{tree_can_throw_internal}或@code{tree_can_throw_external}。确切的控制流可以从@code{foreach_reachable_handler}中提取。EH region嵌套树在@file{except.h}和@file{except.c}中定义。下降过程本身在@file{tree-eh.c}中，并由@code{pass_lower_eh}来描述。
 
+@en @item Build the control flow graph
 @item 构建控制流图（Build the control flow graph）
 
-该过程将函数分解为基本块，并创建所有相连的边。它位于@file{tree-cfg.c}中，
-并由@code{pass_build_cfg}描述。
+@en This pass decomposes a function into basic blocks and creates all of
+@en the edges that connect them.  It is located in @file{tree-cfg.c} and
+@en is described by @code{pass_build_cfg}.
+该过程将函数分解为基本块，并创建所有相连的边。它位于@file{tree-cfg.c}中，并由@code{pass_build_cfg}描述。
 
+@en @item Find all referenced variables
 @item 找到所有被引用的变量（Find all referenced variables） 
 
-该过程遍历整个函数，并将函数中所有被引用的变量搜集到一个数组中，
-@code{referenced_vars}。每个变量在数组中的索引被用作函数中这个变量的UID。
-SSA重写程序需要用到该数据。过程位于@file{tree-dfa.c}中，
-并由@code{pass_referenced_vars}来描述。
+@en This pass walks the entire function and collects an array of all
+@en variables referenced in the function, @code{referenced_vars}.  The
+@en index at which a variable is found in the array is used as a UID
+@en for the variable within this function.  This data is needed by the
+@en SSA rewriting routines.  The pass is located in @file{tree-dfa.c}
+@en and is described by @code{pass_referenced_vars}.
+该过程遍历整个函数，并将函数中所有被引用的变量搜集到一个数组中，@code{referenced_vars}。每个变量在数组中的索引被用作函数中这个变量的UID。SSA重写程序需要用到该数据。过程位于@file{tree-dfa.c}中，并由@code{pass_referenced_vars}来描述。
 
+@en @item Enter static single assignment form
 @item 进入静态单赋值形式（Enter static single assignment form） 
 
-该过程将函数重写为SSA形式。该过程之后，
-所有@code{is_gimple_reg}变量将通过@code{SSA_NAME}来引用，
-并且所有其它变量将由@code{VDEFS}和@code{VUSES}来注解；对于每个基本块，
-PHI节点将会在需要的时候被插入。该过程位于@file{tree-ssa.c}中，
-并由@code{pass_build_ssa}来描述。
+@en This pass rewrites the function such that it is in SSA form.  After
+@en this pass, all @code{is_gimple_reg} variables will be referenced by
+@en @code{SSA_NAME}, and all occurrences of other variables will be
+@en annotated with @code{VDEFS} and @code{VUSES}; PHI nodes will have
+@en been inserted as necessary for each basic block.  This pass is
+@en located in @file{tree-ssa.c} and is described by @code{pass_build_ssa}.
+该过程将函数重写为SSA形式。该过程之后，所有@code{is_gimple_reg}变量将通过@code{SSA_NAME}来引用，并且所有其它变量将由@code{VDEFS}和@code{VUSES}来注解；对于每个基本块，PHI节点将会在需要的时候被插入。该过程位于@file{tree-ssa.c}中，并由@code{pass_build_ssa}来描述。
 
+@en @item Warn for uninitialized variables
 @item 未初始化变量警告（Warn for uninitialized variables） 
 
-该过程扫描函数，寻找使用缺省定义的@code{SSA_NAME}。对于非参数变量，
-这样的使用是未初始化的。该过程运行两次，优化前和优化后。第一次过程中，
-我们只警告肯定是未初始化的；在第二次过程中，我们警告可能未初始化的。
-过程位于@file{tree-ssa.c}中，并由@code{pass_early_warn_uninitialized}和
-@code{pass_late_warn_uninitialized}定义。
+@en This pass scans the function for uses of @code{SSA_NAME}s that
+@en are fed by default definition.  For non-parameter variables, such
+@en uses are uninitialized.  The pass is run twice, before and after
+@en optimization (if turned on).  In the first pass we only warn for uses that are
+@en positively uninitialized; in the second pass we warn for uses that
+@en are possibly uninitialized.  The pass is located in @file{tree-ssa.c}
+@en and is defined by @code{pass_early_warn_uninitialized} and
+@en @code{pass_late_warn_uninitialized}.
+该过程扫描函数，寻找使用缺省定义的@code{SSA_NAME}。对于非参数变量，这样的使用是未初始化的。该过程运行两次，优化前和优化后。第一次过程中，我们只警告肯定是未初始化的；在第二次过程中，我们警告可能未初始化的。过程位于@file{tree-ssa.c}中，并由@code{pass_early_warn_uninitialized}和@code{pass_late_warn_uninitialized}定义。
 
+@en @item Dead code elimination
 @item 死代码消除（Dead code elimination） 
 
-该过程扫描函数来寻找没有副作用，且结果没有被使用的语句。它不进行内存活跃分析，
-所以任何存储在内存中值都被认为是被使用的。该过程在整个优化处理中被运行多次。
-它位于@file{tree-ssa-dce.c}中，并由@code{pass_dce}来描述。
+@en This pass scans the function for statements without side effects whose
+@en result is unused.  It does not do memory life analysis, so any value
+@en that is stored in memory is considered used.  The pass is run multiple
+@en times throughout the optimization process.  It is located in
+@en @file{tree-ssa-dce.c} and is described by @code{pass_dce}.
+该过程扫描函数来寻找没有副作用，且结果没有被使用的语句。它不进行内存活跃分析，所以任何存储在内存中值都被认为是被使用的。该过程在整个优化处理中被运行多次。它位于@file{tree-ssa-dce.c}中，并由@code{pass_dce}来描述。
 
+@en @item Dominator optimizations
 @item dominator优化（Dominator optimizations） 
 
-该过程执行平凡的基于dominator的复制和常量传播，表达式简化，以及跳转线程化。
-它在整个优化处理中被运行多次。它位于@file{tree-ssa-dom.c}中，
-并由pass_dominator来描述。
-@code{pass_dominator}.
+@en This pass performs trivial dominator-based copy and constant propagation,
+@en expression simplification, and jump threading.  It is run multiple times
+@en throughout the optimization process.  It is located in @file{tree-ssa-dom.c}
+@en and is described by @code{pass_dominator}.
+该过程执行平凡的基于dominator的复制和常量传播，表达式简化，以及跳转线程化。它在整个优化处理中被运行多次。它位于@file{tree-ssa-dom.c}中，
+并由pass_dominator来描述。@code{pass_dominator}.
 
+@en @item Forward propagation of single-use variables
 @item 单用变量向前传播（Forward propagation of single-use variables） 
 
-该过程尝试移除冗余计算，通过将只使用一次的变量替换为使用它们的表达式，
-并查看是否得到的结果可以被简化。它位于@file{tree-ssa-forwprop.c}中，
-并由@code{pass_forwprop}来描述。
+@en This pass attempts to remove redundant computation by substituting
+@en variables that are used once into the expression that uses them and
+@en seeing if the result can be simplified.  It is located in
+@en @file{tree-ssa-forwprop.c} and is described by @code{pass_forwprop}.
+该过程尝试移除冗余计算，通过将只使用一次的变量替换为使用它们的表达式，并查看是否得到的结果可以被简化。它位于@file{tree-ssa-forwprop.c}中，并由@code{pass_forwprop}来描述。
 
+@en @item Copy Renaming
 @item 复制重名命（Copy Renaming） 
 
-该过程尝试改变涉及复制操作的编译器临时对象的名字，例如SSA->normal。
-当编译器临时对象是用户变量复制时，它还将编译器临时对象重命名为用户变量，
-使得可以更好的使用用户符号。它位于@file{tree-ssa-copyrename.c}中，
-并由@code{pass_copyrename}来描述。
+@en This pass attempts to change the name of compiler temporaries involved in
+@en copy operations such that SSA->normal can coalesce the copy away.  When compiler
+@en temporaries are copies of user variables, it also renames the compiler
+@en temporary to the user variable resulting in better use of user symbols.  It is
+@en located in @file{tree-ssa-copyrename.c} and is described by
+@en @code{pass_copyrename}.
+该过程尝试改变涉及复制操作的编译器临时对象的名字，例如SSA->normal。当编译器临时对象是用户变量复制时，它还将编译器临时对象重命名为用户变量，使得可以更好的使用用户符号。它位于@file{tree-ssa-copyrename.c}中，并由@code{pass_copyrename}来描述。
 
+@en @item PHI node optimizations
 @item PHI节点优化（PHI node optimizations） 
 
-该过程识别可以被表示为条件表达式的PHI输入，并将它们重写成线形的代码。
-它位于@file{tree-ssa-phiopt.c}中，并由@code{pass_phiopt}来描述。
+@en This pass recognizes forms of PHI inputs that can be represented as
+@en conditional expressions and rewrites them into straight line code.
+@en It is located in @file{tree-ssa-phiopt.c} and is described by
+@en @code{pass_phiopt}.
+该过程识别可以被表示为条件表达式的PHI输入，并将它们重写成线形的代码。它位于@file{tree-ssa-phiopt.c}中，并由@code{pass_phiopt}来描述。
 
+@en @item May-alias optimization
 @item 可能别名优化（May-alias optimization） 
 
-该过程执行一个流敏感基于SSA指向的分析。所得的may-alias, must-alias和escape分析
-信息用来将变量从内存中可寻址的对象提升为可以被重命名为SSA形式的无别名变量。
-我们还为非可命名的聚合体更新@code{VDEF}/@code{VUSE}内存标记，
-使得可以获得较少的错误。过程位于@file{tree-ssa-alias.c}中，
-并由@code{pass_may_alias}来描述。
+@en This pass performs a flow sensitive SSA-based points-to analysis.
+@en The resulting may-alias, must-alias, and escape analysis information
+@en is used to promote variables from in-memory addressable objects to
+@en non-aliased variables that can be renamed into SSA form.  We also
+@en update the @code{VDEF}/@code{VUSE} memory tags for non-renameable
+@en aggregates so that we get fewer false kills.  The pass is located
+@en in @file{tree-ssa-alias.c} and is described by @code{pass_may_alias}.
+该过程执行一个流敏感基于SSA指向的分析。所得的may-alias, must-alias和escape分析信息用来将变量从内存中可寻址的对象提升为可以被重命名为SSA形式的无别名变量。我们还为非可命名的聚合体更新@code{VDEF}/@code{VUSE}内存标记，使得可以获得较少的错误。过程位于@file{tree-ssa-alias.c}中，并由@code{pass_may_alias}来描述。
 
-进程间的指向信息位于@file{tree-ssa-structalias.c}中，
-并由@code{pass_ipa_pta}来描述。
+@en Interprocedural points-to information is located in
+@en @file{tree-ssa-structalias.c} and described by @code{pass_ipa_pta}.
+进程间的指向信息位于@file{tree-ssa-structalias.c}中，并由@code{pass_ipa_pta}来描述。
 
 @item Profiling
 
-该过程重写函数，用于搜集运行时块和评估profiling数据。
-这些数据可以反馈给随后的编译器运行，这样就可以进行基于预期执行频率的优化。
-过程位于@file{predict.c}中，并由@code{pass_profile}来描述。
+@en This pass rewrites the function in order to collect runtime block
+@en and value profiling data.  Such data may be fed back into the compiler
+@en on a subsequent run so as to allow optimization based on expected
+@en execution frequencies.  The pass is located in @file{predict.c} and
+@en is described by @code{pass_profile}.
+该过程重写函数，用于搜集运行时块和评估profiling数据。这些数据可以反馈给随后的编译器运行，这样就可以进行基于预期执行频率的优化。过程位于@file{predict.c}中，并由@code{pass_profile}来描述。
 
+@en @item Lower complex arithmetic
 @item 复数算术运算下降（Lower complex arithmetic） 
 
-该过程将复数算术运算重写为各部分的标量算术运算。
-过程位于@file{tree-complex.c}中，并由@code{pass_lower_complex}来描述。
+@en This pass rewrites complex arithmetic operations into their component
+@en scalar arithmetic operations.  The pass is located in @file{tree-complex.c}
+@en and is described by @code{pass_lower_complex}.
+该过程将复数算术运算重写为各部分的标量算术运算。过程位于@file{tree-complex.c}中，并由@code{pass_lower_complex}来描述。
 
+@en @item Scalar replacement of aggregates
 @item 聚合体标量替换（Scalar replacement of aggregates） 
 
-该过程将适当的非别名局部聚合体变量重写为一个标量集合。
-所得的标量变量被重写成SSA形式，这样就允许后面的优化过程来做更好的工作。
-过程位于@file{tree-sra.c}中，并由@code{pass_sra}来描述。
+@en This pass rewrites suitable non-aliased local aggregate variables into
+@en a set of scalar variables.  The resulting scalar variables are
+@en rewritten into SSA form, which allows subsequent optimization passes
+@en to do a significantly better job with them.  The pass is located in
+@en @file{tree-sra.c} and is described by @code{pass_sra}.
+该过程将适当的非别名局部聚合体变量重写为一个标量集合。所得的标量变量被重写成SSA形式，这样就允许后面的优化过程来做更好的工作。过程位于@file{tree-sra.c}中，并由@code{pass_sra}来描述。
 
+@en @item Dead store elimination
 @item 死存储消除（Dead store elimination） 
 
-该过程消除死存储，即存储到内存中，而该内存被随后的另一个存储操作重新写入，
-并且之间没有加载操作。过程位于@file{tree-ssa-dse.c}中，
-并由@code{pass_dse}来描述。
+@en This pass eliminates stores to memory that are subsequently overwritten
+@en by another store, without any intervening loads.  The pass is located
+@en in @file{tree-ssa-dse.c} and is described by @code{pass_dse}.
+该过程消除死存储，即存储到内存中，而该内存被随后的另一个存储操作重新写入，并且之间没有加载操作。过程位于@file{tree-ssa-dse.c}中，并由@code{pass_dse}来描述。
 
+@en @item Tail recursion elimination
 @item 尾递归消除（Tail recursion elimination） 
 
-该过程将所有的尾递归转换到一个循环中。它位于@file{tree-tailcall.c}中，
-并由@code{pass_tail_recursion}来描述。
+@en This pass transforms tail recursion into a loop.  It is located in
+@en @file{tree-tailcall.c} and is described by @code{pass_tail_recursion}.
+该过程将所有的尾递归转换到一个循环中。它位于@file{tree-tailcall.c}中，并由@code{pass_tail_recursion}来描述。
 
+@en @item Forward store motion
 @item 向前存储移动（Forward store motion） 
 
-该过程将存储和赋值操作下沉到流图中接近它的使用点。
-过程位于@file{tree-ssa-sink.c}中，并由@code{pass_sink_code}来描述。
+@en This pass sinks stores and assignments down the flowgraph closer to their
+@en use point.  The pass is located in @file{tree-ssa-sink.c} and is
+described by @code{pass_sink_code}.
+该过程将存储和赋值操作下沉到流图中接近它的使用点。过程位于@file{tree-ssa-sink.c}中，并由@code{pass_sink_code}来描述。
 
+@en @item Partial redundancy elimination
 @item 部分冗余消除（Partial redundancy elimination） 
 
-该过程消除部分冗余计算，同时执行加载移动。过程位于@file{tree-ssa-pre.c}中，
-并由@code{pass_pre}来描述。
+@en This pass eliminates partially redundant computations, as well as
+@en performing load motion.  The pass is located in @file{tree-ssa-pre.c}
+@en and is described by @code{pass_pre}.
+该过程消除部分冗余计算，同时执行加载移动。过程位于@file{tree-ssa-pre.c}中，并由@code{pass_pre}来描述。
 
-如果设置了@option{-funsafe-math-optimizations}，则在部分冗余消除前，
-GCC尝试通过倒数方式将除法转换为乘法。过程位于@file{tree-ssa-math-opts.c}中，
-并由@code{pass_cse_reciprocal}来描述。
+@en Just before partial redundancy elimination, if
+@en @option{-funsafe-math-optimizations} is on, GCC tries to convert
+@en divisions to multiplications by the reciprocal.  The pass is located
+@en in @file{tree-ssa-math-opts.c} and is described by
+@en @code{pass_cse_reciprocal}.
+如果设置了@option{-funsafe-math-optimizations}，则在部分冗余消除前，GCC尝试通过倒数方式将除法转换为乘法。过程位于@file{tree-ssa-math-opts.c}中，并由@code{pass_cse_reciprocal}来描述。
 
+@en @item Full redundancy elimination
 @item 完全冗余消除（Full redundancy elimination） 
 
-这是一个较简单的PRE形式，只消除在所有路径上产生的冗余。
-它位于@file{tree-ssa-pre.c}中，并由@code{pass_fre}来描述。
+@en This is a simpler form of PRE that only eliminates redundancies that
+@en occur an all paths.  It is located in @file{tree-ssa-pre.c} and
+@en described by @code{pass_fre}.
+这是一个较简单的PRE形式，只消除在所有路径上产生的冗余。它位于@file{tree-ssa-pre.c}中，并由@code{pass_fre}来描述。
 
+@en @item Loop optimization
 @item 循环优化（Loop optimization） 
 
+@en The main driver of the pass is placed in @file{tree-ssa-loop.c}
+@en and described by @code{pass_loop}.
 该过程的主驱动程序位于@file{tree-ssa-loop.c}中，并且由@code{pass_loop}来描述。
 
+@en The optimizations performed by this pass are:
 该过程执行的优化为：
 
-循环不变量移动。该过程只移动在rtl级难以处理的不变量（像函数调用这样的操作被展开成普通的insns序列）。使用@option{-funswitch-loops}时，
-它还将不变的条件操作数移到循环外面，
-使得我们能够在循环外提过程中只需要进行平凡不变量分析。该过程还包括存储移动。
-该过程在@file{tree-ssa-loop-im.c}中实现。
+@en Loop invariant motion.  This pass moves only invariants that
+@en would be hard to handle on RTL level (function calls, operations that expand to
+@en nontrivial sequences of insns).  With @option{-funswitch-loops} it also moves
+@en operands of conditions that are invariant out of the loop, so that we can use
+@en just trivial invariantness analysis in loop unswitching.  The pass also includes
+@en store motion.  The pass is implemented in @file{tree-ssa-loop-im.c}.
+循环不变量移动。该过程只移动在rtl级难以处理的不变量（像函数调用这样的操作被展开成普通的insns序列）。使用@option{-funswitch-loops}时，它还将不变的条件操作数移到循环外面，使得我们能够在循环外提过程中只需要进行平凡不变量分析。该过程还包括存储移动。该过程在@file{tree-ssa-loop-im.c}中实现。
 
-正规归纳变量创建。该过程为循环迭代次数创建一个简单计数器，
-并使用它来替换循环的退出条件，以用于当一个复杂的分析需要确定迭代次数的时候。
-之后的优化便可以容易的确定迭代次数。
-该过程在@file{tree-ssa-loop-ivcanon.c}中实现。
+@en Canonical induction variable creation.  This pass creates a simple counter
+@en for number of iterations of the loop and replaces the exit condition of the
+@en loop using it, in case when a complicated analysis is necessary to determine
+@en the number of iterations.  Later optimizations then may determine the number
+@en easily.  The pass is implemented in @file{tree-ssa-loop-ivcanon.c}.
+正规归纳变量创建。该过程为循环迭代次数创建一个简单计数器，并使用它来替换循环的退出条件，以用于当一个复杂的分析需要确定迭代次数的时候。之后的优化便可以容易的确定迭代次数。该过程在@file{tree-ssa-loop-ivcanon.c}中实现。
 
-规约变量优化。该过程执行标准的规约变量优化，包括强度缩减，规约变量合并，
-以及规约变量消除。该过程在@file{tree-ssa-loop-ivopts.c}中实现。
+@en Induction variable optimizations.  This pass performs standard induction
+@en variable optimizations, including strength reduction, induction variable
+@en merging and induction variable elimination.  The pass is implemented in
+@en @file{tree-ssa-loop-ivopts.c}.
+规纳变量优化。该过程执行标准的规约变量优化，包括强度缩减，规约变量合并，以及规约变量消除。该过程在@file{tree-ssa-loop-ivopts.c}中实现。
 
-循环外提。该过程将不变的条件跳转移到循环外面。为了达到这一点，
-对于每种可能的条件跳转结果都会创建一个循环副本。
-该过程在@file{tree-ssa-loop-unswitch.c}中实现。
-该过程应该最终替代在@file{loop-unswitch.c}中的rtl级的循环外提，
-但是目前rtl级的过程还不是完全多余的，是因为还缺少tree级的别名分析。
+@en Loop unswitching.  This pass moves the conditional jumps that are invariant
+@en out of the loops.  To achieve this, a duplicate of the loop is created for
+@en each possible outcome of conditional jump(s).  The pass is implemented in
+@en @file{tree-ssa-loop-unswitch.c}.  This pass should eventually replace the
+@en RTL level loop unswitching in @file{loop-unswitch.c}, but currently
+@en the RTL level pass is not completely redundant yet due to deficiencies
+@en in tree level alias analysis.
+循环外提。该过程将不变的条件跳转移到循环外面。为了达到这一点，对于每种可能的条件跳转结果都会创建一个循环副本。该过程在@file{tree-ssa-loop-unswitch.c}中实现。该过程应该最终替代在@file{loop-unswitch.c}中的rtl级的循环外提，但是目前rtl级的过程还不是完全多余的，是因为还缺少tree级的别名分析。
 
-这些优化还用到了@file{tree-ssa-loop-manip.c}, @file{cfgloop.c}, 
-@file{cfgloopanal.c}和@file{cfgloopmanip.c}中的各种函数。
+@en The optimizations also use various utility functions contained in
+@en @file{tree-ssa-loop-manip.c}, @file{cfgloop.c}, @file{cfgloopanal.c} and
+@en @file{cfgloopmanip.c}.
+这些优化还用到了@file{tree-ssa-loop-manip.c}, @file{cfgloop.c}, @file{cfgloopanal.c}和@file{cfgloopmanip.c}中的各种函数。
 
+@en Vectorization.  This pass transforms loops to operate on vector types
+@en instead of scalar types.  Data parallelism across loop iterations is exploited
+@en to group data elements from consecutive iterations into a vector and operate 
+@en on them in parallel.  Depending on available target support the loop is 
+@en conceptually unrolled by a factor @code{VF} (vectorization factor), which is
+@en the number of elements operated upon in parallel in each iteration, and the 
+@en @code{VF} copies of each scalar operation are fused to form a vector operation.
+@en Additional loop transformations such as peeling and versioning may take place
+@en to align the number of iterations, and to align the memory accesses in the 
+@en loop.
+@en The pass is implemented in @file{tree-vectorizer.c} (the main driver),
+@en @file{tree-vect-loop.c} and @file{tree-vect-loop-manip.c} (loop specific parts 
+@en and general loop utilities), @file{tree-vect-slp} (loop-aware SLP 
+@en functionality), @file{tree-vect-stmts.c} and @file{tree-vect-data-refs.c}.
+@en Analysis of data references is in @file{tree-data-ref.c}.
+
+@en SLP Vectorization.  This pass performs vectorization of straight-line code. The
+@en pass is implemented in @file{tree-vectorizer.c} (the main driver),
+@en @file{tree-vect-slp.c}, @file{tree-vect-stmts.c} and 
+@en @file{tree-vect-data-refs.c}.
 向量化。该过程将循环由标量类型操作转换为向量类型操作。跨越循环迭代的数据并行被利用，将数据元素从连续的迭代中组合成一个向量，对它们并行的操作。取决于可用的目标机的支持，循环在概念上按照因子@code{VF}（vectorization factor）被展开。
 
+@en Autoparallelization.  This pass splits the loop iteration space to run
+@en into several threads.  The pass is implemented in @file{tree-parloops.c}.
 自动并行化。该过程将循环迭代空间拆分到几个线程来运行。该过程在tree-parloops.c中实现。
 
+Graphite is a loop transformation framework based on the polyhedral
+model.  Graphite stands for Gimple Represented as Polyhedra.  The
+internals of this infrastructure are documented in
+@w{@uref{http://gcc.gnu.org/wiki/Graphite}}.  The passes working on
+this representation are implemented in the various @file{graphite-*}
+files.
+
+@en @item Tree level if-conversion for vectorizer
 @item 用于向量化的Tree级if转换 （Tree level if-conversion for vectorizer） 
 
-该过程对简单的循环应用if转换，以助于向量化。我们识别可以if转换的循环，
-并将基本块合并到一个大块中。想法是将循环表现为这样的形式，
-使得向量化能够对语句和可用的向量操作进行一一映射。
-该patch在GIMPLE级重新引入了COND_EXPR。该过程位于@file{tree-if-conv.c}中，
-并由@code{pass_if_conversion}来描述。
+@en This pass applies if-conversion to simple loops to help vectorizer.
+@en We identify if convertible loops, if-convert statements and merge
+@en basic blocks in one big block.  The idea is to present loop in such
+@en form so that vectorizer can have one to one mapping between statements
+@en and available vector operations.  This patch re-introduces COND_EXPR
+@en at GIMPLE level.  This pass is located in @file{tree-if-conv.c} and is
+@en described by @code{pass_if_conversion}.
+该过程对简单的循环应用if转换，以助于向量化。我们识别可以if转换的循环，并将基本块合并到一个大块中。想法是将循环表现为这样的形式，使得向量化能够对语句和可用的向量操作进行一一映射。该patch在GIMPLE级重新引入了COND_EXPR。该过程位于@file{tree-if-conv.c}中，并由@code{pass_if_conversion}来描述。
 
+@en @item Conditional constant propagation
 @item 条件常量传播（Conditional constant propagation）
 
-该过程松弛一个点阵值用于识别那些即使在条件分支中也肯定是常数的。
-该过程位于@file{tree-ssa-ccp.c}中，并由@code{pass_ccp}来描述。
+@en This pass relaxes a lattice of values in order to identify those
+@en that must be constant even in the presence of conditional branches.
+@en The pass is located in @file{tree-ssa-ccp.c} and is described
+@en by @code{pass_ccp}.
 
-一个相关的工作于内存加载和存储，而不只是寄存器值的过程，
-位于@file{tree-ssa-ccp.c}中，并由@code{pass_store_ccp}来描述。
+该过程松弛一个点阵值用于识别那些即使在条件分支中也肯定是常数的。该过程位于@file{tree-ssa-ccp.c}中，并由@code{pass_ccp}来描述。
 
+@en A related pass that works on memory loads and stores, and not just
+@en register values, is located in @file{tree-ssa-ccp.c} and described by
+@en @code{pass_store_ccp}.
+一个相关的工作于内存加载和存储，而不只是寄存器值的过程，位于@file{tree-ssa-ccp.c}中，并由@code{pass_store_ccp}来描述。
+
+@en @item Conditional copy propagation
 @item 条件复制传播（Conditional copy propagation） 
 
-这类似于常量传播，不过点阵值是与“copy-of”相关的。它消除代码中的冗余复制。
-该过程位于@file{tree-ssa-copy.c}中，并由@code{pass_copy_prop}来描述。
+@en This is similar to constant propagation but the lattice of values is
+@en the ``copy-of'' relation.  It eliminates redundant copies from the
+@en code.  The pass is located in @file{tree-ssa-copy.c} and described by
+@en @code{pass_copy_prop}.
 
-一个相关的工作于内存复制而不只是寄存器复制的过程，位于@file{tree-ssa-copy.c}中，
-并由@code{pass_store_copy_prop}来描述。
+这类似于常量传播，不过点阵值是与“copy-of”相关的。它消除代码中的冗余复制。该过程位于@file{tree-ssa-copy.c}中，并由@code{pass_copy_prop}来描述。
 
+@en A related pass that works on memory copies, and not just register
+@en copies, is located in @file{tree-ssa-copy.c} and described by
+@en @code{pass_store_copy_prop}.
+一个相关的工作于内存复制而不只是寄存器复制的过程，位于@file{tree-ssa-copy.c}中，并由@code{pass_store_copy_prop}来描述。
+
+@en @item Value range propagation
 @item 值范围传播（Value range propagation） 
 
-该转换类似于常量传播，只不过它是传播已知值的范围，而不是传播单个常数值。
-该实现基于Patterson的范围传播算法（Accurate Static Branch Prediction by Value Range Propagation, J. R. C. Patterson, PLDI '95）。
-相对于Patterson的算法，该实现没有传播分支可能性，也没有对SSA名使用多个范围。
-这意味着现在的实现不能用于分支预测（虽然并不难实现）。
-该过程位于@file{tree-vrp.c}中，并由@code{pass_vrp}来描述。
+@en This transformation is similar to constant propagation but
+@en instead of propagating single constant values, it propagates
+@en known value ranges.  The implementation is based on Patterson's
+@en range propagation algorithm (Accurate Static Branch Prediction by
+@en Value Range Propagation, J. R. C. Patterson, PLDI '95).  In
+@en contrast to Patterson's algorithm, this implementation does not
+@en propagate branch probabilities nor it uses more than a single
+@en range per SSA name. This means that the current implementation
+@en cannot be used for branch prediction (though adapting it would
+@en not be difficult).  The pass is located in @file{tree-vrp.c} and is
+@en described by @code{pass_vrp}.
+该转换类似于常量传播，只不过它是传播已知值的范围，而不是传播单个常数值。该实现基于Patterson的范围传播算法（Accurate Static Branch Prediction by Value Range Propagation, J. R. C. Patterson, PLDI '95）。相对于Patterson的算法，该实现没有传播分支可能性，也没有对SSA名使用多个范围。这意味着现在的实现不能用于分支预测（虽然并不难实现）。该过程位于@file{tree-vrp.c}中，并由@code{pass_vrp}来描述。
 
+@en @item Folding built-in functions
 @item 折叠built-in函数（Folding built-in functions） 
 
-该过程适当的简化built-in函数，使用常量参数或者可推算出的字符串长度。
-它位于@file{tree-ssa-ccp.c}中，并由@code{pass_fold_builtins}来描述。
+@en This pass simplifies built-in functions, as applicable, with constant
+@en arguments or with inferable string lengths.  It is located in
+@en @file{tree-ssa-ccp.c} and is described by @code{pass_fold_builtins}.
+该过程适当的简化built-in函数，使用常量参数或者可推算出的字符串长度。它位于@file{tree-ssa-ccp.c}中，并由@code{pass_fold_builtins}来描述。
 
+@en @item Split critical edges
 @item 拆分临界边（Split critical edges） 
 
-该过程识别出临界边，并插入空基本块来将其转换为非临界的。
-该过程位于@file{tree-cfg.c}，并由@code{pass_split_crit_edges}描述。
+@en This pass identifies critical edges and inserts empty basic blocks
+@en such that the edge is no longer critical.  The pass is located in
+@en @file{tree-cfg.c} and is described by @code{pass_split_crit_edges}.
+该过程识别出临界边，并插入空基本块来将其转换为非临界的。该过程位于@file{tree-cfg.c}，并由@code{pass_split_crit_edges}描述。
 
+@en @item Control dependence dead code elimination
 @item 控制依赖死代码消除（Control dependence dead code elimination） 
 
-该过程是死代码消除的较强形式，能够消除不必要的控制流程语句。
-它位于@file{tree-ssa-dce.c}中，并由@code{pass_cd_dce}来描述。
+@en This pass is a stronger form of dead code elimination that can
+@en eliminate unnecessary control flow statements.   It is located
+@en in @file{tree-ssa-dce.c} and is described by @code{pass_cd_dce}.
+该过程是死代码消除的较强形式，能够消除不必要的控制流程语句。它位于@file{tree-ssa-dce.c}中，并由@code{pass_cd_dce}来描述。
 
 @item 尾调用消除（Tail call elimination） 
 
-该过程识别可以被重写为跳转的函数调用。这里没有进行实际的代码转换，
-不过却解决了数据流和控制流的问题。代码转换需要目标机支持，因此被推迟到RTL级。
-同时，@code{CALL_EXPR_TAILCALL}被设置，以用来指示可能性。
-该过程位于@file{tree-tailcall.c}中，并且由@code{pass_tail_calls}来描述。
-RTL转换由@file{calls.c}中的@code{fixup_tail_calls}来处理。
+@en This pass identifies function calls that may be rewritten into
+@en jumps.  No code transformation is actually applied here, but the
+@en data and control flow problem is solved.  The code transformation
+@en requires target support, and so is delayed until RTL@.  In the
+@en meantime @code{CALL_EXPR_TAILCALL} is set indicating the possibility.
+@en The pass is located in @file{tree-tailcall.c} and is described by
+@en @code{pass_tail_calls}.  The RTL transformation is handled by
+@en @code{fixup_tail_calls} in @file{calls.c}.
+该过程识别可以被重写为跳转的函数调用。这里没有进行实际的代码转换，不过却解决了数据流和控制流的问题。代码转换需要目标机支持，因此被推迟到RTL级。同时，@code{CALL_EXPR_TAILCALL}被设置，以用来指示可能性。该过程位于@file{tree-tailcall.c}中，并且由@code{pass_tail_calls}来描述。RTL转换由@file{calls.c}中的@code{fixup_tail_calls}来处理。
 
+@en @item Warn for function return without value
 @item 对函数没有返回值的警告（Warn for function return without value） 
 
-对于非void型的函数，该过程定位没有指定一个值的返回语句，并产生一个警告。
-这样的语句可能是在函数结束处。该过程在最后运行，
-这样我们能够更多可能的去检验这些语句是不可达的。其位于@file{tree-cfg.c}中，
-并由@code{pass_warn_function_return}来描述。
+@en For non-void functions, this pass locates return statements that do
+@en not specify a value and issues a warning.  Such a statement may have
+@en been injected by falling off the end of the function.  This pass is
+@en run last so that we have as much time as possible to prove that the
+@en statement is not reachable.  It is located in @file{tree-cfg.c} and
+@en is described by @code{pass_warn_function_return}.
+对于非void型的函数，该过程定位没有指定一个值的返回语句，并产生一个警告。这样的语句可能是在函数结束处。该过程在最后运行，这样我们能够更多可能的去检验这些语句是不可达的。其位于@file{tree-cfg.c}中，并由@code{pass_warn_function_return}来描述。
 
+@en @item Mudflap statement annotation
 @item Mudflap语句注解（Mudflap statement annotation）
 
-如果启用了mudflap，我们便重写一些内存访问代码以确保内存访问是正确的。特别的，
-涉及到指针废除的表达式（INDIRECT_REF, ARRARY_REF等等）被替代为检查选择地址范围
-的代码，而不是mudflap运行时数据库的有效域。该检查包括一个内联的对直接映射缓存
-的查找，基于对指针值的shift/mask操作，和对运行时的回滚函数调用。
-该过程位于@file{tree-mudflap.c}中，并由@code{pass_mudflap_2}来描述。
+@en If mudflap is enabled, we rewrite some memory accesses with code to
+@en validate that the memory access is correct.  In particular, expressions
+@en involving pointer dereferences (@code{INDIRECT_REF}, @code{ARRAY_REF},
+@en etc.) are replaced by code that checks the selected address range
+@en against the mudflap runtime's database of valid regions.  This check
+@en includes an inline lookup into a direct-mapped cache, based on
+@en shift/mask operations of the pointer value, with a fallback function
+@en call into the runtime.  The pass is located in @file{tree-mudflap.c} and
+@en is described by @code{pass_mudflap_2}.
+如果启用了mudflap，我们便重写一些内存访问代码以确保内存访问是正确的。特别的，涉及到指针废除的表达式（INDIRECT_REF, ARRARY_REF等等）被替代为检查选择地址范围的代码，而不是mudflap运行时数据库的有效域。该检查包括一个内联的对直接映射缓存的查找，基于对指针值的shift/mask操作，和对运行时的回滚函数调用。该过程位于@file{tree-mudflap.c}中，并由@code{pass_mudflap_2}来描述。
 
+@en @item Leave static single assignment form
 @item 离开静态单赋值形式（Leave static single assignment form） 
 
-该过程重写函数使得其处于正常形式。同时，我们尽可能的消去单一使用的临时对象，
-这样中间语言就不再是GIMPLE了，而是GENERIC。该过程位于@file{tree-outof-ssa.c}中，
-并且由@code{pass_del_ssa}来描述。
+@en This pass rewrites the function such that it is in normal form.  At
+@en the same time, we eliminate as many single-use temporaries as possible,
+@en so the intermediate language is no longer GIMPLE, but GENERIC@.  The
+@en pass is located in @file{tree-outof-ssa.c} and is described by
+@en @code{pass_del_ssa}.
+该过程重写函数使得其处于正常形式。同时，我们尽可能的消去单一使用的临时对象，这样中间语言就不再是GIMPLE了，而是GENERIC。该过程位于@file{tree-outof-ssa.c}中，并且由@code{pass_del_ssa}来描述。
 
+@en @item Merge PHI nodes that feed into one another
 @item 合并PHI节点（Merge PHI nodes that feed into one another） 
 
-这是CFG清除过程的一部分。它试图将PHI节点从前部CFG块合并到另一个带有PHI节点的块。
-该过程位于@file{tree-cfgcleanup.c}中，并由@code{pass_merge_phi}来描述。
+@en This is part of the CFG cleanup passes.  It attempts to join PHI nodes
+@en from a forwarder CFG block into another block with PHI nodes.  The
+@en pass is located in @file{tree-cfgcleanup.c} and is described by
+@en @code{pass_merge_phi}.
+这是CFG清除过程的一部分。它试图将PHI节点从前部CFG块合并到另一个带有PHI节点的块。该过程位于@file{tree-cfgcleanup.c}中，并由@code{pass_merge_phi}来描述。
 
+@en @item Return value optimization
 @item 返回值优化（Return value optimization）
 
-如果函数总是返回同一局部变量，并且那个局部变量是一个聚合类型，
-则变量将由函数返回值来替换（即函数的DECL_RESULT）。
-这相当于作用于GIMPLE的C++命名返回值优化。该过程位于@file{tree-nrv.c}中，
-并且由@code{pass_nrv}来描述。
+@en If a function always returns the same local variable, and that local
+@en variable is an aggregate type, then the variable is replaced with the
+@en return value for the function (i.e., the function's DECL_RESULT).  This
+@en is equivalent to the C++ named return value optimization applied to
+@en GIMPLE@.  The pass is located in @file{tree-nrv.c} and is described by
+@en @code{pass_nrv}.
+如果函数总是返回同一局部变量，并且那个局部变量是一个聚合类型，则变量将由函数返回值来替换（即函数的DECL_RESULT）。这相当于作用于GIMPLE的C++命名返回值优化。该过程位于@file{tree-nrv.c}中，并且由@code{pass_nrv}来描述。
 
+@en @item Return slot optimization
 @item 返回槽优化（Return slot optimization） 
 
-如果函数返回一个内存对象，并且像@code{var = foo()}这样被调用，
-该过程尝试改变调用，使得@code{var}的地址传送给调用者，以避免一次额外的内存复制。
-该过程位于@code{tree-nrv.c}中，并由@code{pass_return_slot}来描述。
+@en If a function returns a memory object and is called as @code{var =
+@en foo()}, this pass tries to change the call so that the address of
+@en @code{var} is sent to the caller to avoid an extra memory copy.  This
+@en pass is located in @code{tree-nrv.c} and is described by
+@en @code{pass_return_slot}.
+如果函数返回一个内存对象，并且像@code{var = foo()}这样被调用，该过程尝试改变调用，使得@code{var}的地址传送给调用者，以避免一次额外的内存复制。该过程位于@code{tree-nrv.c}中，并由@code{pass_return_slot}来描述。
 
+@en @item Optimize calls to @code{__builtin_object_size}
 @item 优化调用@code{__builtin_object_size}（Optimize calls to @code{__builtin_object_size}）
 
-这是一个类似于CCP的传播过程，其试图移除对@code{__builtin_object_size}的调用，
-当对象的大小能够在编译时计算出的时候。该过程位于@file{tree-object-size.c}中，
-并有@code{pass_object_sizes}来描述。
+@en This is a propagation pass similar to CCP that tries to remove calls
+@en to @code{__builtin_object_size} when the size of the object can be
+@en computed at compile-time.  This pass is located in
+@en @file{tree-object-size.c} and is described by
+@en @code{pass_object_sizes}.
+这是一个类似于CCP的传播过程，其试图移除对@code{__builtin_object_size}的调用，当对象的大小能够在编译时计算出的时候。该过程位于@file{tree-object-size.c}中，并有@code{pass_object_sizes}来描述。
 
+@en @item Loop invariant motion
 @item 循环不变量移动（Loop invariant motion） 
 
-该过程将昂贵的循环不变量计算移出循环。该过程位于@file{tree-ssa-loop.c}中，
-并由@code{pass_lim}来描述。
+@en This pass removes expensive loop-invariant computations out of loops.
+@en The pass is located in @file{tree-ssa-loop.c} and described by
+@en @code{pass_lim}.
+该过程将昂贵的循环不变量计算移出循环。该过程位于@file{tree-ssa-loop.c}中，并由@code{pass_lim}来描述。
 
+@en @item Loop nest optimizations
 @item 循环嵌套优化（Loop nest optimizations） 
 
-这是一类工作于循环嵌套的循环转换。它包括循环变换（loop interchange），scaling，
-skewing和逆转（reversal），并且它们用来配合。
-该过程位于@file{tree-loop-linear.c}中，并由@code{pass_linear_transform}来描述。
+@en This is a family of loop transformations that works on loop nests.  It
+@en includes loop interchange, scaling, skewing and reversal and they are
+@en all geared to the optimization of data locality in array traversals
+@en and the removal of dependencies that hamper optimizations such as loop
+@en parallelization and vectorization.  The pass is located in
+@en @file{tree-loop-linear.c} and described by
+@en @code{pass_linear_transform}.
+这是一类工作于循环嵌套的循环转换。它包括循环变换（loop interchange），scaling，skewing和逆转（reversal），并且它们用来配合。该过程位于@file{tree-loop-linear.c}中，并由@code{pass_linear_transform}来描述。
 
+@en @item Removal of empty loops
 @item 空循环移除（Removal of empty loops）
 
-该过程移除不含代码的循环。该过程位于@file{tree-ssa-loop-ivcanon.c}中，
-并由@code{pass_empty_loop}来描述。
+@en This pass removes loops with no code in them.  The pass is located in
+@en @file{tree-ssa-loop-ivcanon.c} and described by
+@en @code{pass_empty_loop}.
+该过程移除不含代码的循环。该过程位于@file{tree-ssa-loop-ivcanon.c}中，并由@code{pass_empty_loop}来描述。
 
+@en @item Unrolling of small loops
 @item 小循环展开（Unrolling of small loops） 
 
-该过程将迭代次数很少的循环完全展开。该过程位于@file{tree-ssa-loop-ivcanon.c}中，
-并由@code{pass_complete_unroll}来描述。
+@en This pass completely unrolls loops with few iterations.  The pass
+@en is located in @file{tree-ssa-loop-ivcanon.c} and described by
+@en @code{pass_complete_unroll}.
+该过程将迭代次数很少的循环完全展开。该过程位于@file{tree-ssa-loop-ivcanon.c}中，并由@code{pass_complete_unroll}来描述。
 
+@en @item Predictive commoning
 @item 预测公约（Predictive commoning） 
 
-该过程使代码可以重用先前循环迭代的计算，特别是对内存的加载和存贮。
-该过程位于@file{tree-predcom.c}中，并由@code{pass_predcom}来描述。
+@en This pass makes the code reuse the computations from the previous
+@en iterations of the loops, especially loads and stores to memory.
+@en It does so by storing the values of these computations to a bank
+@en of temporary variables that are rotated at the end of loop.  To avoid
+@en the need for this rotation, the loop is then unrolled and the copies
+@en of the loop body are rewritten to use the appropriate version of
+@en the temporary variable.  This pass is located in @file{tree-predcom.c}
+@en and described by @code{pass_predcom}.
+该过程使代码可以重用先前循环迭代的计算，特别是对内存的加载和存贮。该过程位于@file{tree-predcom.c}中，并由@code{pass_predcom}来描述。
 
+@en @item Array prefetching
 @item 数组预取（Array prefetching） 
 
-该过程为循环中的数组引用产生预提取指令。
-过程位于@file{tree-ssa-loop-prefetch.c}中，并由@code{pass_loop_prefetch}来描述。
+@en This pass issues prefetch instructions for array references inside
+@en loops.  The pass is located in @file{tree-ssa-loop-prefetch.c} and
+@en described by @code{pass_loop_prefetch}.
+该过程为循环中的数组引用产生预提取指令。过程位于@file{tree-ssa-loop-prefetch.c}中，并由@code{pass_loop_prefetch}来描述。
 
+@en @item Reassociation
 @item 重组（Reassociation） 
 
-该过程将算术表达式重写为可以进行优化的形式，例如冗余消除和向量化。
-过程位于@file{tree-ssa-reassoc.c}中，并由@code{pass_reassoc}来描述。
+@en This pass rewrites arithmetic expressions to enable optimizations that
+@en operate on them, like redundancy elimination and vectorization.  The
+@en pass is located in @file{tree-ssa-reassoc.c} and described by
+@en @code{pass_reassoc}.
+该过程将算术表达式重写为可以进行优化的形式，例如冗余消除和向量化。过程位于@file{tree-ssa-reassoc.c}中，并由@code{pass_reassoc}来描述。
 
+@en @item Optimization of @code{stdarg} functions
 @item 优化@code{stdarg}函数 
 
-该过程设法避免在@code{stdarg}函数入口处将寄存器参数保存到栈中。
-如果函数不使用任何@code{va_start}宏，则没有寄存器需要被保存。
-如果使用了@code{va_start}宏，@code{va_list}变量的使用范围不超出该函数，
-则只需要保存将在@code{va_arg}宏中使用的寄存器。例如，
-如果@code{va_arg}在函数中只用于整数类型，则不需要保存浮点寄存器。
-该过程位于@code{tree-stdarg.c}中，并由@code{pass_stdarg}来描述。
+@en This pass tries to avoid the saving of register arguments into the
+@en stack on entry to @code{stdarg} functions.  If the function doesn't
+@en use any @code{va_start} macros, no registers need to be saved.  If
+@en @code{va_start} macros are used, the @code{va_list} variables don't
+@en escape the function, it is only necessary to save registers that will
+@en be used in @code{va_arg} macros.  For instance, if @code{va_arg} is
+@en only used with integral types in the function, floating point
+@en registers don't need to be saved.  This pass is located in
+@en @code{tree-stdarg.c} and described by @code{pass_stdarg}.
+该过程设法避免在@code{stdarg}函数入口处将寄存器参数保存到栈中。如果函数不使用任何@code{va_start}宏，则没有寄存器需要被保存。如果使用了@code{va_start}宏，@code{va_list}变量的使用范围不超出该函数，则只需要保存将在@code{va_arg}宏中使用的寄存器。例如，如果@code{va_arg}在函数中只用于整数类型，则不需要保存浮点寄存器。该过程位于@code{tree-stdarg.c}中，并由@code{pass_stdarg}来描述。
 
 @end itemize
 
+@en @node RTL passes
+@en @section RTL passes
 @node RTL过程
 @section RTL过程
 
+@en The following briefly describes the RTL generation and optimization
+@en passes that are run after the Tree optimization passes.
 下面简要描述了tree优化之后所运行的rtl生成和优化过程。
 
 @itemize @bullet
+@en @item RTL generation
 @item RTL生成 
 
+@c Avoiding overfull is tricky here.
+@en The source files for RTL generation include
+@en @file{stmt.c},
+@en @file{calls.c},
+@en @file{expr.c},
+@en @file{explow.c},
+@en @file{expmed.c},
+@en @file{function.c},
+@en @file{optabs.c}
+@en and @file{emit-rtl.c}.
+@en Also, the file
+@en @file{insn-emit.c}, generated from the machine description by the
+@en program @code{genemit}, is used in this pass.  The header file
+@en @file{expr.h} is used for communication within this pass.
 实现RTL生成的源文件包括
 @file{stmt.c},
 @file{calls.c},
@@ -640,191 +851,304 @@ skewing和逆转（reversal），并且它们用来配合。
 @file{expmed.c},
 @file{function.c},
 @file{optabs.c}和@file{emit-rtl.c}。
-该过程还用到了由@code{genemit}程序通过机器描述生成的@file{insn-emit.c}文件。
-该过程使用头文件@file{expr.h}来交互信息。
+该过程还用到了由@code{genemit}程序通过机器描述生成的@file{insn-emit.c}文件。该过程使用头文件@file{expr.h}来交互信息。
 
 @findex genflags
 @findex gencodes
-由程序@code{genflags}和@code{gencodes}通过机器描述来生成的头文件
-@file{insn-flags.h}和@file{insn-codes.h}，告诉了该过程哪些标准名字可用，
-以及哪些模式与它们对应。
+@en The header files @file{insn-flags.h} and @file{insn-codes.h},
+@en generated from the machine description by the programs @code{genflags}
+@en and @code{gencodes}, tell this pass which standard names are available
+@en for use and which patterns correspond to them.
+由程序@code{genflags}和@code{gencodes}通过机器描述来生成的头文件@file{insn-flags.h}和@file{insn-codes.h}，告诉了该过程哪些标准名字可用，以及哪些模式与它们对应。
 
+@en @item Generation of exception landing pads
 @item 生成异常处理着陆架（Generate exception handling landing pads） 
 
-该过程生成用来管理异常处理库程序和函数中的异常处理器之间通讯的粘合机制（glue）。
-由异常处理库调用的函数的入口点，被称作着陆架（@dfn{landing pads}）。
-该过程的代码位于@file{except.c}中。
+@en This pass generates the glue that handles communication between the
+@en exception handling library routines and the exception handlers within
+@en the function.  Entry points in the function that are invoked by the
+@en exception handling library are called @dfn{landing pads}.  The code
+@en for this pass is located in @file{except.c}.
+该过程生成用来管理异常处理库程序和函数中的异常处理器之间通讯的粘合机制（glue）。由异常处理库调用的函数的入口点，被称作着陆架（@dfn{landing pads}）。该过程的代码位于@file{except.c}中。
 
+@en @item Control flow graph cleanup
 @item 清除控制流图（Cleanup control flow graph）
 
-该过程去除不可达代码，对跳转到下一条指令（jumps to next），
-连续跳转（jumps to jump），交叉跳转（jumps across jumps）等情况进行简化。
-该过程被运行多次。出于历史原因，该过程有时被称为“跳转优化过程”。
-该过程的主要代码在@file{cfgcleanup.c}中，
-还有一些辅助程序在@file{cfgrtl.c}和@file{jump.c}中。
+@en This pass removes unreachable code, simplifies jumps to next, jumps to
+@en jump, jumps across jumps, etc.  The pass is run multiple times.
+@en For historical reasons, it is occasionally referred to as the ``jump
+@en optimization pass''.  The bulk of the code for this pass is in
+@en @file{cfgcleanup.c}, and there are support routines in @file{cfgrtl.c}
+@en and @file{jump.c}.
+该过程去除不可达代码，对跳转到下一条指令（jumps to next），连续跳转（jumps to jump），交叉跳转（jumps across jumps）等情况进行简化。该过程被运行多次。出于历史原因，该过程有时被称为“跳转优化过程”。该过程的主要代码在@file{cfgcleanup.c}中，还有一些辅助程序在@file{cfgrtl.c}和@file{jump.c}中。
 
+@en @item Forward propagation of single-def values
 @item 单定义值的向前传播（Forward propagation of single-def values） 
 
-该过程尝试通过替换来自单一定义的变量，并观察结果是否能够被简化的方式，
-来去除冗余计算。它执行了复制传播和寻址模式选择。该过程运行两次，
-并只在第二次的时候将值传播到循环中。它位于@file{fwprop.c}中。
+@en This pass attempts to remove redundant computation by substituting
+@en variables that come from a single definition, and
+@en seeing if the result can be simplified.  It performs copy propagation
+@en and addressing mode selection.  The pass is run twice, with values
+@en being propagated into loops only on the second run.  The code is
+@en located in @file{fwprop.c}.
+该过程尝试通过替换来自单一定义的变量，并观察结果是否能够被简化的方式，来去除冗余计算。它执行了复制传播和寻址模式选择。该过程运行两次，并只在第二次的时候将值传播到循环中。它位于@file{fwprop.c}中。
 
+@en @item Common subexpression elimination
 @item 公共子表达式消除（Common subexpression elimination） 
 
-该过程去除基本块中的冗余计算，并且根据代价来优化寻址模式。该过程运行两次。
-源代码位于@file{cse.c}中。
+@en This pass removes redundant computation within basic blocks, and
+@en optimizes addressing modes based on cost.  The pass is run twice.
+@en The code for this pass is located in @file{cse.c}.
+该过程去除基本块中的冗余计算，并且根据代价来优化寻址模式。该过程运行两次。源代码位于@file{cse.c}中。
 
+@en @item Global common subexpression elimination
 @item 全局公共子表达式消除（Global common subexpression elimination） 
 
-该过程执行两种不同类型的GCSE，取决于你是否在优化代码大小（基于LCM的GCSE趋向于通
-过增加代码大小来获得速度，而基于Morel- Renvoise的GCSE则不是）。当优化代码大小时
-，使用Morel-Renvoise Partial Redundancy Elimination（部分冗余消除）来做GCSE，
-并不尝试将不变量移到循环之外——这留到循环优化过程。如果进行MR PRE，
-则还会进行代码提升（code hoisting），（也称为code unification），
-还有加载移动（load motion）。如果你在优化速度，则会进行基于LCM
-（lazy code motion）的GCSE。LCM是基于Knoop, Ruthing和Steffen的工作。
-基于LCM的GCSE也会进行循环不变量代码移动。当优化速度时，
-我们还执行加载和存储移动。不管使用哪一种类型的GCSE，
-该过程都还执行全局常量传播和复制传播。该过程的源代码为@file{gcse.c}，
-LCM程序在@file{lcm.c}中。
+@en This pass performs two
+@en different types of GCSE  depending on whether you are optimizing for
+@en size or not (LCM based GCSE tends to increase code size for a gain in
+@en speed, while Morel-Renvoise based GCSE does not).
+@en When optimizing for size, GCSE is done using Morel-Renvoise Partial
+@en Redundancy Elimination, with the exception that it does not try to move
+@en invariants out of loops---that is left to  the loop optimization pass.
+@en If MR PRE GCSE is done, code hoisting (aka unification) is also done, as
+@en well as load motion.
+@en If you are optimizing for speed, LCM (lazy code motion) based GCSE is
+@en done.  LCM is based on the work of Knoop, Ruthing, and Steffen.  LCM
+@en based GCSE also does loop invariant code motion.  We also perform load
+@en and store motion when optimizing for speed.
+@en Regardless of which type of GCSE is used, the GCSE pass also performs
+@en global constant and  copy propagation.
+@en The source file for this pass is @file{gcse.c}, and the LCM routines
+@en are in @file{lcm.c}.
+该过程执行两种不同类型的GCSE，取决于你是否在优化代码大小（基于LCM的GCSE趋向于通过增加代码大小来获得速度，而基于Morel- Renvoise的GCSE则不是）。当优化代码大小时，使用Morel-Renvoise Partial Redundancy Elimination（部分冗余消除）来做GCSE，并不尝试将不变量移到循环之外——这留到循环优化过程。如果进行MR PRE，则还会进行代码提升（code hoisting），（也称为code unification），还有加载移动（load motion）。如果你在优化速度，则会进行基于LCM（lazy code motion）的GCSE。LCM是基于Knoop, Ruthing和Steffen的工作。基于LCM的GCSE也会进行循环不变量代码移动。当优化速度时，我们还执行加载和存储移动。不管使用哪一种类型的GCSE，该过程都还执行全局常量传播和复制传播。该过程的源代码为@file{gcse.c}，LCM程序在@file{lcm.c}中。
 
+@en @item Loop optimization
 @item 循环优化（Loop optimization） 
 
-该过程执行几个循环相关的优化。源文件@file{cfgloopanal.c}和@file{cfgloopmanip.c}
-包含了通用的循环分析和操作代码。循环结构体的初始化和完成（finalization）
-由@file{loop-init.c}处理。循环不变量移动过程在@file{loop-invariant.c}中实现。
-基本块级的优化—— unrolling,peeling和unswitching——在@file{loop-unswitch.c}和
-@file{loop-unroll.c}中实现。@file{loop-doloop.c}是关于使用特定的机器相关结构来
-替代循环退出条件的处理。
+@en This pass performs several loop related optimizations.
+@en The source files @file{cfgloopanal.c} and @file{cfgloopmanip.c} contain
+@en generic loop analysis and manipulation code.  Initialization and finalization
+@en of loop structures is handled by @file{loop-init.c}.
+@en A loop invariant motion pass is implemented in @file{loop-invariant.c}.
+@en Basic block level optimizations---unrolling, peeling and unswitching loops---
+@en are implemented in @file{loop-unswitch.c} and @file{loop-unroll.c}.
+@en Replacing of the exit condition of loops by special machine-dependent
+@en instructions is handled by @file{loop-doloop.c}.
+该过程执行几个循环相关的优化。源文件@file{cfgloopanal.c}和@file{cfgloopmanip.c}包含了通用的循环分析和操作代码。循环结构体的初始化和完成（finalization）由@file{loop-init.c}处理。循环不变量移动过程在@file{loop-invariant.c}中实现。基本块级的优化—— unrolling,peeling和unswitching——在@file{loop-unswitch.c}和@file{loop-unroll.c}中实现。@file{loop-doloop.c}是关于使用特定的机器相关结构来替代循环退出条件的处理。
 
+@en @item Jump bypassing
 @item 跳转迂回（Jump bypassing） 
 
-该过程是GCSE的激进形式，通过传播常数到条件分支指令中来转换函数的控制流图。
-该过程的源文件为@file{gcse.c}。
+@en This pass is an aggressive form of GCSE that transforms the control
+@en flow graph of a function by propagating constants into conditional
+@en branch instructions.  The source file for this pass is @file{gcse.c}.
+该过程是GCSE的激进形式，通过传播常数到条件分支指令中来转换函数的控制流图。该过程的源文件为@file{gcse.c}。
 
+@en @item If conversion
 @item If转换（If conversion） 
+
+@en This pass attempts to replace conditional branches and surrounding
+@en assignments with arithmetic, boolean value producing comparison
+@en instructions, and conditional move instructions.  In the very last
+@en invocation after reload, it will generate predicated instructions
+@en when supported by the target.  The code is located in @file{ifcvt.c}.
 该过程尝试使用产生比较指令和条件移送指令的算术的布尔值，来替换条件分支和附近的赋值。在重载之后最近的调用中，当目标机支持的时候，其将生成断言指令。该过程位于@file{ifcvt.c}。
 
+@en @item Web construction
 @item Web构造（Web construction） 
 
-该过程拆分为独立的使用每个伪寄存器。这能够提高其它转换过程的效率，
-例如CSE或者寄存器分配。源文件为@file{web.c}。
+@en This pass splits independent uses of each pseudo-register.  This can
+@en improve effect of the other transformation, such as CSE or register
+@en allocation.  The code for this pass is located in @file{web.c}.
+该过程拆分为独立的使用每个伪寄存器。这能够提高其它转换过程的效率，例如CSE或者寄存器分配。源文件为@file{web.c}。
 
-@item 生命期分析（Life analysis） 
-
-该过程计算在程序的每个点上哪些伪寄存器是活跃的，
-并且使第一条指令使用一个值来指向计算值的指令。
-然后它删除结果从来不会被使用的计算，
-并且将内存引用和加减指令组合为自动增量或者自动减量寻址。
-该过程位于@file{flow.c}中。
-
+@en @item Instruction combination
 @item 指令合并（Instruction combination） 
 
-该过程尝试去将数据流相关的两条或者三条指令组合并为单一指令。它通过替代，
-使用代数简化结果的方式来为指令合并RTL表达式，然后尝试去将结果跟机器描述匹配。
-该过程位于@file{combine.c}。
+@en This pass attempts to combine groups of two or three instructions that
+@en are related by data flow into single instructions.  It combines the
+@en RTL expressions for the instructions by substitution, simplifies the
+@en result using algebra, and then attempts to match the result against
+@en the machine description.  The code is located in @file{combine.c}.
+该过程尝试去将数据流相关的两条或者三条指令组合并为单一指令。它通过替代，使用代数简化结果的方式来为指令合并RTL表达式，然后尝试去将结果跟机器描述匹配。该过程位于@file{combine.c}。
 
+@en @item Register movement
 @item 寄存器移动（Register movement） 
 
-该过程寻找这样的情况，即当匹配约束条件时会迫使指令需要重载，
-并且这个重载为一个寄存器到寄存器的move操作。
-然后它尝试改变指令使用的寄存器来避免move指令。该过程位于@file{regmove.c}中。
+@en This pass looks for cases where matching constraints would force an
+@en instruction to need a reload, and this reload would be a
+@en register-to-register move.  It then attempts to change the registers
+@en used by the instruction to avoid the move instruction.  The code is
+@en located in @file{regmove.c}.
+该过程寻找这样的情况，即当匹配约束条件时会迫使指令需要重载，并且这个重载为一个寄存器到寄存器的move操作。然后它尝试改变指令使用的寄存器来避免move指令。该过程位于@file{regmove.c}中。
 
+@en @item Mode switching optimization
 @item 优化模式转换（Optimize mode switching） 
 
-该过程寻找这样的指令，即需要处理器处于特定的模式（mode），
-然后将模式改变的数目减到最少。这些模式是什么以及应用于什么完全是目标机特定的。
-源代码位于@file{mode-switching.c}中。
+@en This pass looks for instructions that require the processor to be in a
+@en specific ``mode'' and minimizes the number of mode changes required to
+@en satisfy all users.  What these modes are, and what they apply to are
+@en completely target-specific.  The code for this pass is located in
+@en @file{mode-switching.c}.
+该过程寻找这样的指令，即需要处理器处于特定的模式（mode），然后将模式改变的数目减到最少。这些模式是什么以及应用于什么完全是目标机特定的。源代码位于@file{mode-switching.c}中。
 
 @cindex modulo scheduling
 @cindex sms, swing, software pipelining
+@en @item Modulo scheduling
 @item 模调度（Modulo scheduling） 
 
-该过程查看内部循环并且通过复合不同的迭代来重排它们的指令。
-模调度在指令调度之后立即被执行。该过程位于@file{modulo-sched.c}。
+@en This pass looks at innermost loops and reorders their instructions
+@en by overlapping different iterations.  Modulo scheduling is performed
+@en immediately before instruction scheduling.  The code for this pass is
+@en located in @file{modulo-sched.c}.
+该过程查看内部循环并且通过复合不同的迭代来重排它们的指令。模调度在指令调度之后立即被执行。该过程位于@file{modulo-sched.c}。
 
+@en @item Instruction scheduling
 @item 指令调度（Instruction scheduling）
 
-该过程寻找这样的指令，其输出在后来的指令中不会用到。在RISC机器上，
-内存加载和浮点指令经常会有这样的特征。
-它重新排序基本块中的指令以尝试将定义和使用分开，从而避免引起流水线阻塞。
-该过程执行两次，分别在寄存器分配之前和之后。
-该过程位于@file{haifa-sched.c}, @file{sched-deps.c}, @file{sched-ebb.c}, 
-@file{sched-rgn.c}和@file{sched-vis.c}中。
+@en This pass looks for instructions whose output will not be available by
+@en the time that it is used in subsequent instructions.  Memory loads and
+@en floating point instructions often have this behavior on RISC machines.
+@en It re-orders instructions within a basic block to try to separate the
+@en definition and use of items that otherwise would cause pipeline
+@en stalls.  This pass is performed twice, before and after register
+@en allocation.  The code for this pass is located in @file{haifa-sched.c},
+@en @file{sched-deps.c}, @file{sched-ebb.c}, @file{sched-rgn.c} and
+@en @file{sched-vis.c}.
+该过程寻找这样的指令，其输出在后来的指令中不会用到。在RISC机器上，内存加载和浮点指令经常会有这样的特征。它重新排序基本块中的指令以尝试将定义和使用分开，从而避免引起流水线阻塞。该过程执行两次，分别在寄存器分配之前和之后。该过程位于@file{haifa-sched.c}, @file{sched-deps.c}, @file{sched-ebb.c}, @file{sched-rgn.c}和@file{sched-vis.c}中。
 
+@en @item Register allocation
 @item 寄存器分配（Register allocation） 
 
-这些过程确保所有伪寄存器都被去除，或者通过给它们分配硬件寄存器，
-或者使用等价表达式来替换（例如常数），或者将它们放在栈中。这由几个子过程来完成：
+@en These passes make sure that all occurrences of pseudo registers are
+@en eliminated, either by allocating them to a hard register, replacing
+@en them by an equivalent expression (e.g.@: a constant) or by placing
+@en them on the stack.  This is done in several subpasses:
+这些过程确保所有伪寄存器都被去除，或者通过给它们分配硬件寄存器，或者使用等价表达式来替换（例如常数），或者将它们放在栈中。这由几个子过程来完成：
 
 @itemize @bullet
 @item
+@en Register move optimizations.  This pass makes some simple RTL code
+@en transformations which improve the subsequent register allocation.  The
+@en source file is @file{regmove.c}.
 寄存器移送优化。该过程进行一些简单的RTL代码转换，来改进后续的寄存器分配。源文件为@file{regmove.c}。
 
 @item
+@en The integrated register allocator (@acronym{IRA}).  It is called
+@en integrated because coalescing, register live range splitting, and hard
+@en register preferencing are done on-the-fly during coloring.  It also
+@en has better integration with the reload pass.  Pseudo-registers spilled
+@en by the allocator or the reload have still a chance to get
+@en hard-registers if the reload evicts some pseudo-registers from
+@en hard-registers.  The allocator helps to choose better pseudos for
+@en spilling based on their live ranges and to coalesce stack slots
+@en allocated for the spilled pseudo-registers.  IRA is a regional
+@en register allocator which is transformed into Chaitin-Briggs allocator
+@en if there is one region.  By default, IRA chooses regions using
+@en register pressure but the user can force it to use one region or
+@en regions corresponding to all loops.
 集成寄存器分配(@acronym{IRA})。其被称作集成的，是因为合并，寄存器活跃范围拆分，以及硬件寄存器优先选定，都在图着色中被执行。其还更好的与重载过程集合在一起。寄存器分配或者重载所溢出的伪寄存器还有机会来获得硬件寄存器，如果重载从硬件寄存器中赶出了一些伪寄存器。寄存器分配可以帮助选择更好的伪寄存器来溢出，基于它们的活跃返回，并且合并为溢出的伪寄存器所分配的栈槽。IRA为一个区域的寄存器分配，如果只有一个区域，则其被转换成Chaitin-Briggs寄存器分配。缺省的IRA使用寄存器压力来选择区域，不过用户可以强制其使用一个区域或者对应于所有循环的多个区域。
 
-寄存器分配的源文件为@file{ira.c}, @file{ira-build.c},
-@file{ira-costs.c}, @file{ira-conflicts.c}, @file{ira-color.c},
-@file{ira-emit.c}, @file{ira-lives}，以及头文件@file{ira.h}和@file{ira-int.h}，用于在分配器和编译器其它部分，以及IRA文件之间的交互。
+@en Source files of the allocator are @file{ira.c}, @file{ira-build.c},
+@en @file{ira-costs.c}, @file{ira-conflicts.c}, @file{ira-color.c},
+@en @file{ira-emit.c}, @file{ira-lives}, plus header files @file{ira.h}
+@en and @file{ira-int.h} used for the communication between the allocator
+@en and the rest of the compiler and between the IRA files.
+寄存器分配的源文件为@file{ira.c}, @file{ira-build.c},@file{ira-costs.c}, @file{ira-conflicts.c}, @file{ira-color.c},@file{ira-emit.c}, @file{ira-lives}，以及头文件@file{ira.h}和@file{ira-int.h}，用于在分配器和编译器其它部分，以及IRA文件之间的交互。
 
 @cindex reloading
 @item
-重载（reloading）。该过程使用分配的硬件寄存器编号来重新为伪寄存器编号。
-没有获得硬件寄存器的伪寄存器被分配到栈槽中。然后寻找那些由于无法放入寄存器，
-或者放入错误类型寄存器所引起的无效指令。
-通过将有问题的值临时重载到寄存器中来修复这些指令，并生成辅助的指令进行复制。
+@en Reloading.  This pass renumbers pseudo registers with the hardware
+@en registers numbers they were allocated.  Pseudo registers that did not
+@en get hard registers are replaced with stack slots.  Then it finds
+@en instructions that are invalid because a value has failed to end up in
+@en a register, or has ended up in a register of the wrong kind.  It fixes
+@en up these instructions by reloading the problematical values
+@en temporarily into registers.  Additional instructions are generated to
+@en do the copying.
+重载（reloading）。该过程使用分配的硬件寄存器编号来重新为伪寄存器编号。没有获得硬件寄存器的伪寄存器被分配到栈槽中。然后寻找那些由于无法放入寄存器，或者放入错误类型寄存器所引起的无效指令。通过将有问题的值临时重载到寄存器中来修复这些指令，并生成辅助的指令进行复制。
 
-重载过程还可选的消除帧指针，
-以及插入指令来保存和恢复调用破坏掉的（call-clobbered）寄存器。
+@en The reload pass also optionally eliminates the frame pointer and inserts
+@en instructions to save and restore call-clobbered registers around calls.
+重载过程还可选的消除帧指针，以及插入指令来保存和恢复调用破坏掉的（call-clobbered）寄存器。
 
-源文件为@file{reload.c}和@file{reload1.c}，
-还有用于信息交互的头文件@file{reload.h}。
+@en Source files are @file{reload.c} and @file{reload1.c}, plus the header
+@en @file{reload.h} used for communication between them.
+源文件为@file{reload.c}和@file{reload1.c}，还有用于信息交互的头文件@file{reload.h}。
 @end itemize
 
+@en @item Basic block reordering
 @item 基本块重新排序（Basic block reordering） 
 
-该过程实现了profile指导的代码安置（code positioning）。如果profile信息不可用，
-便会执行不同类型的静态分析来作出通常通过profile反馈（IE执行频率，分支可能性等）
-而得出的预测。其在@file{bb-reorder.c}中实现，不同的预测程序在@file{predict.c}中。
+@en This pass implements profile guided code positioning.  If profile
+@en information is not available, various types of static analysis are
+@en performed to make the predictions normally coming from the profile
+@en feedback (IE execution frequency, branch probability, etc).  It is
+@en implemented in the file @file{bb-reorder.c}, and the various
+@en prediction routines are in @file{predict.c}.
+该过程实现了profile指导的代码安置（code positioning）。如果profile信息不可用，便会执行不同类型的静态分析来作出通常通过profile反馈（IE执行频率，分支可能性等）而得出的预测。其在@file{bb-reorder.c}中实现，不同的预测程序在@file{predict.c}中。
 
+@en @item Variable tracking
 @item 变量跟踪（Variable tracking） 
 
-该过程计算变量在代码中的每个位置（position）所被存储的到的地方，
-并生成注解到RTL代码中来描述变量位置(location)。
-如果调试信息格式支持位置列表(location lists)的话，
-便会根据这些注解来生成位置列表到调试信息中。
+@en This pass computes where the variables are stored at each
+@en position in code and generates notes describing the variable locations
+@en to RTL code.  The location lists are then generated according to these
+@en notes to debug information if the debugging information format supports
+@en location lists.  The code is located in @file{var-tracking.c}.
+该过程计算变量在代码中的每个位置（position）所被存储的到的地方，并生成注解到RTL代码中来描述变量位置(location)。如果调试信息格式支持位置列表(location lists)的话，便会根据这些注解来生成位置列表到调试信息中。
 
+@en @item Delayed branch scheduling
 @item 延迟分支调度（Delayed branch scheduling）
 
-该可选的过程尝试去找到能够放在其它指令，通常是跳转或者调用指令，
-的延迟槽中的指令。源文件名为@file{reorg.c}。
+@en This optional pass attempts to find instructions that can go into the
+@en delay slots of other instructions, usually jumps and calls.  The code
+@en for this pass is located in @file{reorg.c}.
+该可选的过程尝试去找到能够放在其它指令，通常是跳转或者调用指令，的延迟槽中的指令。源文件名为@file{reorg.c}。
 
+@en @item Branch shortening
 @item 分支缩短（Branch shortening） 
 
-许多RISC机器上，分支指令有一个限制范围。因此，较长的指令序列必须用于长分支。
-在这个过程中，编译器计算出指令间的距离有多长，
-并且对于每个分支是否使用普通指令或者交长的指令序列。
+@en On many RISC machines, branch instructions have a limited range.
+@en Thus, longer sequences of instructions must be used for long branches.
+@en In this pass, the compiler figures out what how far each instruction
+@en will be from each other instruction, and therefore whether the usual
+@en instructions, or the longer sequences, must be used for each branch.
+@en The code for this pass is located in @file{final.c}.
+许多RISC机器上，分支指令有一个限制范围。因此，较长的指令序列必须用于长分支。在这个过程中，编译器计算出指令间的距离有多长，并且对于每个分支是否使用普通指令或者交长的指令序列。
 
+@en @item Register-to-stack conversion
 @item 寄存器到栈的转换（Register-to-stack conversion） 
 
-将一些硬件寄存器的使用转换为一个寄存器栈的使用可以在这里完成。目前，
-该过程只支持Intel 80387协处理器的浮点寄存器。源文件名为@file{reg-stack.c}。
+@en Conversion from usage of some hard registers to usage of a register
+@en stack may be done at this point.  Currently, this is supported only
+@en for the floating-point registers of the Intel 80387 coprocessor.  The
+@en code for this pass is located in @file{reg-stack.c}.
+将一些硬件寄存器的使用转换为一个寄存器栈的使用可以在这里完成。目前，该过程只支持Intel 80387协处理器的浮点寄存器。源文件名为@file{reg-stack.c}。
 
+@en @item Final
 @item Final过程
 
-该过程输出函数的汇编代码。源文件为@file{final.c}和@file{insn-output.c}，
-后者由工具@file{genoutput}通过机器描述自动生成。
-头文件@file{conditions.h}用于这些文件间的信息交互。如果启用了mudflap，
-延迟声明和可寻址常量（如字符串文字）的队列将由@code{mudflap_finish_file}处理
-成一个调用mudflap运行时的综合构造器函数。
+@en This pass outputs the assembler code for the function.  The source files
+@en are @file{final.c} plus @file{insn-output.c}; the latter is generated
+@en automatically from the machine description by the tool @file{genoutput}.
+@en The header file @file{conditions.h} is used for communication between
+@en these files.  If mudflap is enabled, the queue of deferred declarations
+@en and any addressed constants (e.g., string literals) is processed by
+@en @code{mudflap_finish_file} into a synthetic constructor function
+@en containing calls into the mudflap runtime.
+该过程输出函数的汇编代码。源文件为@file{final.c}和@file{insn-output.c}，后者由工具@file{genoutput}通过机器描述自动生成。头文件@file{conditions.h}用于这些文件间的信息交互。如果启用了mudflap，延迟声明和可寻址常量（如字符串文字）的队列将由@code{mudflap_finish_file}处理成一个调用mudflap运行时的综合构造器函数。
 
+@en @item Debugging information output
 @item 调试信息输出
 
-该过程在Final过程之后运行，
-是因为它必须为没有获得硬件寄存器的伪寄存器输出栈槽偏移量。源文件包括，
-用于DBX符号表格式的@file{dbxout.c}，用于SDB符号表格式的@file{sdbout.c}，
-用于DWARF符号表格式的@file{dwarfout.c}，
-用于DWARF2符号表格式的@file{dwarf2out.c}和@file{dwarf2asm.c}，
-以及用于VMS调试符号表格式的@file{vmsdbgout.c}。
+@en This is run after final because it must output the stack slot offsets
+@en for pseudo registers that did not get hard registers.  Source files
+@en are @file{dbxout.c} for DBX symbol table format, @file{sdbout.c} for
+@en SDB symbol table format, @file{dwarfout.c} for DWARF symbol table
+@en format, files @file{dwarf2out.c} and @file{dwarf2asm.c} for DWARF2
+@en symbol table format, and @file{vmsdbgout.c} for VMS debug symbol table
+@en format.
+该过程在Final过程之后运行，是因为它必须为没有获得硬件寄存器的伪寄存器输出栈槽偏移量。源文件包括，用于DBX符号表格式的@file{dbxout.c}，用于SDB符号表格式的@file{sdbout.c}，用于DWARF符号表格式的@file{dwarfout.c}，用于DWARF2符号表格式的@file{dwarf2out.c}和@file{dwarf2asm.c}，以及用于VMS调试符号表格式的@file{vmsdbgout.c}。
 @end itemize
