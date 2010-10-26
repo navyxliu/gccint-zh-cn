@@ -1,19 +1,53 @@
 @c Copyright (C) 1988, 1989, 1992, 1994, 1997, 1998, 1999, 2000, 2001, 2002,
-@c 2003, 2004, 2005, 2006, 2007, 2008
+@c 2003, 2004, 2005, 2006, 2007, 2008, 2010
 @c Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
 @node RTL
+@chapter RTL Representation
+@node RTL
 @chapter RTL表示
-@cindex RTL表示
+@cindex RTL representation
 @cindex representation of RTL
 @cindex Register Transfer Language (RTL)
 
+The last part of the compiler work is done on a low-level intermediate
+representation called Register Transfer Language.  In this language, the
+instructions to be output are described, pretty much one by one, in an
+algebraic form that describes what the instruction does.
 编译器的大部分工作都是基于一种中间表示，叫做寄存器传送语言（register transfer language）。在该语言中，描述了将要输出的指令，并且差不多是按照字母顺序一个一个的来描述指令的行为。
 
+RTL is inspired by Lisp lists.  It has both an internal form, made up of
+structures that point at other structures, and a textual form that is used
+in the machine description and in printed debugging dumps.  The textual
+form uses nested parentheses to indicate the pointers in the internal form.
 RTL的灵感来自Lisp列表。它同时具有一个内部形式，由指向结构体的结构体组成，以及一个文本形式，用在机器描述和打印的调试输出中。文本形式使用嵌套的括号，来表示内部形式中的指针。
 
+@menu
+* RTL Objects::       Expressions vs vectors vs strings vs integers.
+* RTL Classes::       Categories of RTL expression objects, and their structure.
+* Accessors::         Macros to access expression operands or vector elts.
+* Special Accessors:: Macros to access specific annotations on RTL.
+* Flags::             Other flags in an RTL expression.
+* Machine Modes::     Describing the size and format of a datum.
+* Constants::         Expressions with constant values.
+* Regs and Memory::   Expressions representing register contents or memory.
+* Arithmetic::        Expressions representing arithmetic on other expressions.
+* Comparisons::       Expressions representing comparison of expressions.
+* Bit-Fields::        Expressions representing bit-fields in memory or reg.
+* Vector Operations:: Expressions involving vector datatypes.
+* Conversions::       Extending, truncating, floating or fixing.
+* RTL Declarations::  Declaring volatility, constancy, etc.
+* Side Effects::      Expressions for storing in registers, etc.
+* Incdec::            Embedded side-effects for autoincrement addressing.
+* Assembler::         Representing @code{asm} with operands.
+* Debug Information:: Expressions representing debugging information.
+* Insns::             Expression types for entire insns.
+* Calls::             RTL representation of function call insns.
+* Sharing::           Some expressions are unique; others *must* be copied.
+* Reading RTL::       Reading textual RTL from a file.
+@end menu
 @menu
 * RTL对象::       表达式、向量、字符串、整数 
 * RTL类别::       RTL表达式对象的类别，以及它们的结构 
@@ -38,6 +72,8 @@ RTL的灵感来自Lisp列表。它同时具有一个内部形式，由指向结�
 * 读取RTL::       从文件中读取文本的RTL
 @end menu
 
+@node RTL Objects
+@section RTL Object Types
 @node RTL对象
 @section RTL对象类型
 @cindex RTL object types
@@ -47,32 +83,93 @@ RTL的灵感来自Lisp列表。它同时具有一个内部形式，由指向结�
 @cindex RTL vectors
 @cindex RTL expression
 @cindex RTX (See RTL)
+RTL uses five kinds of objects: expressions, integers, wide integers,
+strings and vectors.  Expressions are the most important ones.  An RTL
+expression (``RTX'', for short) is a C structure, but it is usually
+referred to with a pointer; a type that is given the typedef name
+@code{rtx}.
 RTL使用五种对象：表达式、整数、宽整数、字符串和向量。其中，最重要的是表达式。RTL 表达式（简称RTX）是一个C结构体，通常用指针来引用它。这种引用它的指针的类型定义名为@code{rtx}。
 
+An integer is simply an @code{int}; their written form uses decimal
+digits.  A wide integer is an integral object whose type is
+@code{HOST_WIDE_INT}; their written form uses decimal digits.
 整数就是C中的@code{int}，书写形式使用十进制表示。宽整数是@code{HOST_WIDE_INT}类型的一个整数对象，其书写形式也用十进制表示。
 
+A string is a sequence of characters.  In core it is represented as a
+@code{char *} in usual C fashion, and it is written in C syntax as well.
+However, strings in RTL may never be null.  If you write an empty string in
+a machine description, it is represented in core as a null pointer rather
+than as a pointer to a null character.  In certain contexts, these null
+pointers instead of strings are valid.  Within RTL code, strings are most
+commonly found inside @code{symbol_ref} expressions, but they appear in
+other contexts in the RTL expressions that make up machine descriptions.
 字符串为一串字符，在存储器中以C的@code{char *}形式表示且按C语法规定书写。然而，RTL中的字符串决不会为空值。若机器描述中有一空字符串，它在存储器中则表示成一个空指针而不是通常意义上的指向空字符的指针。在某些上下文中，允许用这种空指针表示空字符串。在RTL代码中，字符串经常出现在@code{symbol_ref}表达式中，但也出现在某些机器描述的RTL表达式中。
 
+In a machine description, strings are normally written with double
+quotes, as you would in C@.  However, strings in machine descriptions may
+extend over many lines, which is invalid C, and adjacent string
+constants are not concatenated as they are in C@.  Any string constant
+may be surrounded with a single set of parentheses.  Sometimes this
+makes the machine description easier to read.
+
+There is also a special syntax for strings, which can be useful when C
+code is embedded in a machine description.  Wherever a string can
+appear, it is also valid to write a C-style brace block.  The entire
+brace block, including the outermost pair of braces, is considered to be
+the string constant.  Double quote characters inside the braces are not
+special.  Therefore, if you write string constants in the C code, you
+need not escape each quote character with a backslash.
 对于字符串，还有一种特殊的语法，用于在机器描述中嵌入C代码。只要字符串可以出现的地方，都可以书写一个C风格的大括号代码块。整个大括号代码块，包括最外面的一对括号，被作为字符串常量看待。括号里面的双引号字符不是特殊字符。因此，如果你在C代码中书写字符串常量，则不需要使用反斜杠来转义每个引号字符。
 
+A vector contains an arbitrary number of pointers to expressions.  The
+number of elements in the vector is explicitly present in the vector.
+The written form of a vector consists of square brackets
+(@samp{[@dots{}]}) surrounding the elements, in sequence and with
+whitespace separating them.  Vectors of length zero are not created;
+null pointers are used instead.
 向量包含任意数目的指向表达式的指针。向量中元素的个数，在向量中显式的存在。向量的书写形式为，方括号（@samp{[@dots{}]}），里面是元素，并使用空格分隔。长度为0的向量不会被创建；而是使用空指针来替代。
 
 @cindex expression codes
 @cindex codes, RTL expression
 @findex GET_CODE
 @findex PUT_CODE
+Expressions are classified by @dfn{expression codes} (also called RTX
+codes).  The expression code is a name defined in @file{rtl.def}, which is
+also (in uppercase) a C enumeration constant.  The possible expression
+codes and their meanings are machine-independent.  The code of an RTX can
+be extracted with the macro @code{GET_CODE (@var{x})} and altered with
+@code{PUT_CODE (@var{x}, @var{newcode})}.
 表达式根据@dfn{expression codes}来划分类别（也称作RTX代码）。表达式代码为在@file{rtl.def}中定义的一个名字，其也是一个（大写的）C枚举常量。合理的表达式代码以及它们的含义，是机器无关的。RTX的代码可以使用宏@code{GET_CODE (@var{x})}来抽取，以及使用@code{PUT_CODE (@var{x}, @var{newcode})}来修改。
 
+The expression code determines how many operands the expression contains,
+and what kinds of objects they are.  In RTL, unlike Lisp, you cannot tell
+by looking at an operand what kind of object it is.  Instead, you must know
+from its context---from the expression code of the containing expression.
+For example, in an expression of code @code{subreg}, the first operand is
+to be regarded as an expression and the second operand as an integer.  In
+an expression of code @code{plus}, there are two operands, both of which
+are to be regarded as expressions.  In a @code{symbol_ref} expression,
+there is one operand, which is to be regarded as a string.
 表达式代码决定了表达式包含了多少个操作数，以及它们都是什么对象。在RTL中，不像Lisp，你不能通过查看一个操作数来得知它是什么对象。替代的，你必须通过它的上下文来知道——通过所包含的表达式的表达式代码。例如，在一个表达式代码为@code{subreg}的表达式中，第一个操作数被作为一个表达式，第二个操作数为一个整数。在代码为@code{plus}的表达式中，有两个操作数，都作为表达式。在@code{symbol_ref}表达式中，有一个操作数，作为一个字符串。
 
+Expressions are written as parentheses containing the name of the
+expression type, its flags and machine mode if any, and then the operands
+of the expression (separated by spaces).
 表达式被书写为，一对括号，包含了表达式类型的名字，它的标记和机器模式（如果存在的话），然后是表达式的操作数（通过空格分隔）。
 
+Expression code names in the @samp{md} file are written in lowercase,
+but when they appear in C code they are written in uppercase.  In this
+manual, they are shown as follows: @code{const_int}.
 表达式代码名，在@samp{md}文件中按小写形式书写，但在C代码中出现时按大写形式书写。在这个手册里，它们按照如下形式表示：@code{const_int}。
 
 @cindex (nil)
 @cindex nil
+In a few contexts a null pointer is valid where an expression is normally
+wanted.  The written form of this is @code{(nil)}.
 在一些上下文中，表达式通常会需要一个空指针。这种书写形式为@code{(nil)}。
 
+@node RTL Classes
+@section RTL Classes and Formats
 @node RTL类别
 @section RTL类别和格式
 @cindex RTL classes
@@ -80,8 +177,75 @@ RTL使用五种对象：表达式、整数、宽整数、字符串和向量。�
 @cindex RTX codes, classes of
 @findex GET_RTX_CLASS
 
+The various expression codes are divided into several @dfn{classes},
+which are represented by single characters.  You can determine the class
+of an RTX code with the macro @code{GET_RTX_CLASS (@var{code})}.
+Currently, @file{rtl.def} defines these classes:
 不同的表达式代码被分为几个类别（@dfn{classes}），其有单个字符表示。你可以使用宏@code{GET_RTX_CLASS (@var{code})}来确定RTX代码的类别。当前，@file{rtl.def}定义了这些类别：
 
+@table @code
+@item RTX_OBJ
+An RTX code that represents an actual object, such as a register
+(@code{REG}) or a memory location (@code{MEM}, @code{SYMBOL_REF}).
+@code{LO_SUM}) is also included; instead, @code{SUBREG} and
+@code{STRICT_LOW_PART} are not in this class, but in class @code{x}.
+
+@item RTX_CONST_OBJ
+An RTX code that represents a constant object.  @code{HIGH} is also
+included in this class.
+
+@item RTX_COMPARE
+An RTX code for a non-symmetric comparison, such as @code{GEU} or
+@code{LT}.
+
+@item RTX_COMM_COMPARE
+An RTX code for a symmetric (commutative) comparison, such as @code{EQ}
+or @code{ORDERED}.
+
+@item RTX_UNARY
+An RTX code for a unary arithmetic operation, such as @code{NEG},
+@code{NOT}, or @code{ABS}.  This category also includes value extension
+(sign or zero) and conversions between integer and floating point.
+
+@item RTX_COMM_ARITH
+An RTX code for a commutative binary operation, such as @code{PLUS} or
+@code{AND}.  @code{NE} and @code{EQ} are comparisons, so they have class
+@code{<}.
+
+@item RTX_BIN_ARITH
+An RTX code for a non-commutative binary operation, such as @code{MINUS},
+@code{DIV}, or @code{ASHIFTRT}.
+
+@item RTX_BITFIELD_OPS
+An RTX code for a bit-field operation.  Currently only
+@code{ZERO_EXTRACT} and @code{SIGN_EXTRACT}.  These have three inputs
+and are lvalues (so they can be used for insertion as well).
+@xref{Bit-Fields}.
+
+@item RTX_TERNARY
+An RTX code for other three input operations.  Currently only
+@code{IF_THEN_ELSE} and @code{VEC_MERGE}.
+
+@item RTX_INSN
+An RTX code for an entire instruction:  @code{INSN}, @code{JUMP_INSN}, and
+@code{CALL_INSN}.  @xref{Insns}.
+
+@item RTX_MATCH
+An RTX code for something that matches in insns, such as
+@code{MATCH_DUP}.  These only occur in machine descriptions.
+
+@item RTX_AUTOINC
+An RTX code for an auto-increment addressing mode, such as
+@code{POST_INC}.
+
+@item RTX_EXTRA
+All other RTX codes.  This category includes the remaining codes used
+only in machine descriptions (@code{DEFINE_*}, etc.).  It also includes
+all the codes describing side effects (@code{SET}, @code{USE},
+@code{CLOBBER}, etc.) and the non-insns that may appear on an insn
+chain, such as @code{NOTE}, @code{BARRIER}, and @code{CODE_LABEL}.
+@code{SUBREG} is also part of this class.
+@end table
 @table @code
 @item RTX_OBJ
 一个RTX代码，表示一个实际的对象，例如一个寄存器(@code{REG})或者一个内存位置(@code{MEM}, @code{SYMBOL_REF})。也包括@code{LO_SUM})；但是，@code{SUBREG}和@code{STRICT_LOW_PART}不在这个类别中，而是在@code{x}类别中。
@@ -125,11 +289,32 @@ RTL使用五种对象：表达式、整数、宽整数、字符串和向量。�
 @end table
 
 @cindex RTL format
+For each expression code, @file{rtl.def} specifies the number of
+contained objects and their kinds using a sequence of characters
+called the @dfn{format} of the expression code.  For example,
+the format of @code{subreg} is @samp{ei}.
 对于每个表达式代码，@file{rtl.def}使用称作表达式代码格式（@dfn{format}）的字符序列，来说明所包含的对象数目，以及它们的种类。例如，@code{subreg}的格式为@samp{ei}。
 
 @cindex RTL format characters
+These are the most commonly used format characters:
 这些是最常用的格式字符：
 
+@table @code
+@item e
+An expression (actually a pointer to an expression).
+
+@item i
+An integer.
+
+@item w
+A wide integer.
+
+@item s
+A string.
+
+@item E
+A vector of expressions.
+@end table
 @table @code
 @item e
 一个表达式（实际是一个表达式指针）
@@ -147,8 +332,39 @@ RTL使用五种对象：表达式、整数、宽整数、字符串和向量。�
 一个表达式向量。
 @end table
 
+A few other format characters are used occasionally:
 还有一些其它的格式字符有时会被用到：
 
+@table @code
+@item u
+@samp{u} is equivalent to @samp{e} except that it is printed differently
+in debugging dumps.  It is used for pointers to insns.
+
+@item n
+@samp{n} is equivalent to @samp{i} except that it is printed differently
+in debugging dumps.  It is used for the line number or code number of a
+@code{note} insn.
+
+@item S
+@samp{S} indicates a string which is optional.  In the RTL objects in
+core, @samp{S} is equivalent to @samp{s}, but when the object is read,
+from an @samp{md} file, the string value of this operand may be omitted.
+An omitted string is taken to be the null string.
+
+@item V
+@samp{V} indicates a vector which is optional.  In the RTL objects in
+core, @samp{V} is equivalent to @samp{E}, but when the object is read
+from an @samp{md} file, the vector value of this operand may be omitted.
+An omitted vector is effectively the same as a vector of no elements.
+
+@item B
+@samp{B} indicates a pointer to basic block structure.
+
+@item 0
+@samp{0} means a slot whose contents do not fit any normal category.
+@samp{0} slots are not printed at all in dumps, and are often used in
+special ways by small parts of the compiler.
+@end table
 @table @code
 @item u
 @samp{u}等价于@samp{e}，只不过是在调试转储中的打印有所区别。其用于insn指针。
@@ -169,8 +385,46 @@ RTL使用五种对象：表达式、整数、宽整数、字符串和向量。�
 @samp{0}表示一个插槽，其内容不使用任何常规的类别。@samp{0}插槽根本不在转储中打印，通常在编译器中用于特定的方式。
 @end table
 
+There are macros to get the number of operands and the format
+of an expression code:
 这些是获得操作数数目和表达式代码格式的宏：
 
+@table @code
+@findex GET_RTX_LENGTH
+@item GET_RTX_LENGTH (@var{code})
+Number of operands of an RTX of code @var{code}.
+
+@findex GET_RTX_FORMAT
+@item GET_RTX_FORMAT (@var{code})
+The format of an RTX of code @var{code}, as a C string.
+@end table
+
+Some classes of RTX codes always have the same format.  For example, it
+is safe to assume that all comparison operations have format @code{ee}.
+
+@table @code
+@item 1
+All codes of this class have format @code{e}.
+
+@item <
+@itemx c
+@itemx 2
+All codes of these classes have format @code{ee}.
+
+@item b
+@itemx 3
+All codes of these classes have format @code{eee}.
+
+@item i
+All codes of this class have formats that begin with @code{iuueiee}.
+@xref{Insns}.  Note that not all RTL objects linked onto an insn chain
+are of class @code{i}.
+
+@item o
+@itemx m
+@itemx x
+You can make no assumptions about the format of these codes.
+@end table
 @table @code
 @findex GET_RTX_LENGTH
 @item GET_RTX_LENGTH (@var{code})
@@ -205,6 +459,8 @@ RTL使用五种对象：表达式、整数、宽整数、字符串和向量。�
 你可以不去假设这些代码的格式。
 @end table
 
+@node Accessors
+@section Access to Operands
 @node 访问方式
 @section 访问操作数
 @cindex accessors
@@ -215,6 +471,10 @@ RTL使用五种对象：表达式、整数、宽整数、字符串和向量。�
 @findex XINT
 @findex XWINT
 @findex XSTR
+Operands of expressions are accessed using the macros @code{XEXP},
+@code{XINT}, @code{XWINT} and @code{XSTR}.  Each of these macros takes
+two arguments: an expression-pointer (RTX) and an operand number
+(counting from zero).  Thus,
 表达式的操作数用宏@code{XEXP}、@code{XINT}、@code{XWINT}和@code{XSTR}访问。
 所有这些宏都有两个参数：一个为表达式指针（RTX），
 另一个为操作数序号 ( 从0 开始计算 )。如：
@@ -224,6 +484,7 @@ XEXP (@var{x}, 2)
 @end smallexample
 
 @noindent
+accesses operand 2 of expression @var{x}, as an expression.
 表示以表达式方式访问表达式@var{x}的第2个操作数。
 
 @smallexample
@@ -231,13 +492,31 @@ XINT (@var{x}, 2)
 @end smallexample
 
 @noindent
+accesses the same operand as an integer.  @code{XSTR}, used in the same
+fashion, would access it as a string.
 表示以整数方式访问@code{x}的第2个操作数。
 @code{XSTR}表示以字符串方式访问。
 
+Any operand can be accessed as an integer, as an expression or as a string.
+You must choose the correct method of access for the kind of value actually
+stored in the operand.  You would do this based on the expression code of
+the containing expression.  That is also how you would know how many
+operands there are.
 任何一个操作数都能以整数方式、表达式方式或字符串方式来访问，
 但必须根据存贮在操作数中的实际值选择正确的访问方式。
 这可根据表达式的代码而获得，同样也可表达式代码获得操作数的个数。
 
+For example, if @var{x} is a @code{subreg} expression, you know that it has
+two operands which can be correctly accessed as @code{XEXP (@var{x}, 0)}
+and @code{XINT (@var{x}, 1)}.  If you did @code{XINT (@var{x}, 0)}, you
+would get the address of the expression operand but cast as an integer;
+that might occasionally be useful, but it would be cleaner to write
+@code{(int) XEXP (@var{x}, 0)}.  @code{XEXP (@var{x}, 1)} would also
+compile without error, and would return the second, integer operand cast as
+an expression pointer, which would probably result in a crash when
+accessed.  Nothing stops you from writing @code{XEXP (@var{x}, 28)} either,
+but this will access memory past the end of the expression with
+unpredictable results.
 例如：若@var{x}是@code{subreg}表达式，通过表达式代码可知它有二个操作数，
 这两个操作数的访问应该是@code{XEXP (@var{x}, 0)} 和@code{XINT (@var{x}, 1)}，
 若写成@code{XINT (@var{x}, 0)}，那么，你得到的表达式地址将被强制成整数，
@@ -247,9 +526,31 @@ XINT (@var{x}, 2)
 这可能会导致出错。同样，你也可以写成@code{XEXP (@var{x}, 28)}，
 但这超出了此表达式的存贮边界，所得到的将是一个预料不到的结果。
 
+Access to operands which are vectors is more complicated.  You can use the
+macro @code{XVEC} to get the vector-pointer itself, or the macros
+@code{XVECEXP} and @code{XVECLEN} to access the elements and length of a
+vector.
 对向量操作数的访问较为复杂些，可用@code{XVEC}宏来获取向量指针本身，
 @code{XVECEXP}和@code{XVECLEN}宏访问一个向量的元素和长度。
 
+@table @code
+@findex XVEC
+@item XVEC (@var{exp}, @var{idx})
+Access the vector-pointer which is operand number @var{idx} in @var{exp}.
+
+@findex XVECLEN
+@item XVECLEN (@var{exp}, @var{idx})
+Access the length (number of elements) in the vector which is
+in operand number @var{idx} in @var{exp}.  This value is an @code{int}.
+
+@findex XVECEXP
+@item XVECEXP (@var{exp}, @var{idx}, @var{eltnum})
+Access element number @var{eltnum} in the vector which is
+in operand number @var{idx} in @var{exp}.  This value is an RTX@.
+
+It is up to you to make sure that @var{eltnum} is not negative
+and is less than @code{XVECLEN (@var{exp}, @var{idx})}.
+@end table
 @table @code
 @findex XVEC
 @item XVEC (@var{exp}, @var{idx})
@@ -268,51 +569,88 @@ XINT (@var{x}, 2)
 需要由你来确保@var{eltnum}不为负，并且小于@code{XVECLEN (@var{exp}, @var{idx})}。
 @end table
 
+All the macros defined in this section expand into lvalues and therefore
+can be used to assign the operands, lengths and vector elements as well as
+to access them.
 在本节中所定义的所有宏定义都被扩展成左值，
 因而也可用于对操作数、长度和向量元素赋值。
 
+@node Special Accessors
+@section Access to Special Operands
 @node 访问特殊操作数
 @section 访问特殊操作数
 @cindex access to special operands
 
+Some RTL nodes have special annotations associated with them.
 一些RTL节点具有与它们相关联的特殊的注解。
+
 
 @table @code
 @item MEM
 @table @code
 @findex MEM_ALIAS_SET
 @item MEM_ALIAS_SET (@var{x})
+If 0, @var{x} is not in any alias set, and may alias anything.  Otherwise,
+@var{x} can only alias @code{MEM}s in a conflicting alias set.  This value
+is set in a language-dependent manner in the front-end, and should not be
+altered in the back-end.  In some front-ends, these numbers may correspond
+in some way to types, or other language-level entities, but they need not,
+and the back-end makes no such assumptions.
+These set numbers are tested with @code{alias_sets_conflict_p}.
 如果为0，则@var{x}不在任何别名集中，并可能为任何对象的别名。否则，@var{x}只能为在冲突别名集中的@code{MEM}的别名。该值在前端使用语言相关的方式来设置，并且不能在后端修改。在一些前端中，这些可以通过某种方式对应到类型，或者其它语言级的实体，但是不要求非要这样，所以在后端不要做这样的假设。这些集合编号使用@code{alias_sets_conflict_p}来测试。
 
 @findex MEM_EXPR
 @item MEM_EXPR (@var{x})
+If this register is known to hold the value of some user-level
+declaration, this is that tree node.  It may also be a
+@code{COMPONENT_REF}, in which case this is some field reference,
+and @code{TREE_OPERAND (@var{x}, 0)} contains the declaration,
+or another @code{COMPONENT_REF}, or null if there is no compile-time
+object associated with the reference.
 如果该寄存器被已知为存放了一些用户级的声明的值，则为那个tree节点。其也可以为@code{COMPONENT_REF}，这种情况下，其为某个域的引用，并且@code{TREE_OPERAND (@var{x}, 0)}包含了声明，或者另一个@code{COMPONENT_REF}，或者如果没有编译时对象相关引用，则为空。
 
 @findex MEM_OFFSET
 @item MEM_OFFSET (@var{x})
+The offset from the start of @code{MEM_EXPR} as a @code{CONST_INT} rtx.
 从@code{MEM_EXPR}起始的偏移量，为一个@code{CONST_INT} rtx。
 
 @findex MEM_SIZE
 @item MEM_SIZE (@var{x})
+The size in bytes of the memory reference as a @code{CONST_INT} rtx.
+This is mostly relevant for @code{BLKmode} references as otherwise
+the size is implied by the mode.
 以字节为单位的内存引用长度，为一个@code{CONST_INT} rtx。这主要与@code{BLKmode}引用相关，否则机器模式已经隐含了长度。
 
 @findex MEM_ALIGN
 @item MEM_ALIGN (@var{x})
+The known alignment in bits of the memory reference.
 内存引用的已知的对齐方式，以位为单位。
+
+@findex MEM_ADDR_SPACE
+@item MEM_ADDR_SPACE (@var{x})
+The address space of the memory reference.  This will commonly be zero
+for the generic address space.
 @end table
 
 @item REG
 @table @code
 @findex ORIGINAL_REGNO
 @item ORIGINAL_REGNO (@var{x})
+This field holds the number the register ``originally'' had; for a
+pseudo register turned into a hard reg this will hold the old pseudo
+register number.
 该域存放了寄存器原先具有的编号；对于伪寄存器放入到一个硬寄存器中，其将存放旧的伪寄存器编号。
 
 @findex REG_EXPR
 @item REG_EXPR (@var{x})
+If this register is known to hold the value of some user-level
+declaration, this is that tree node.
 如果该寄存器被已知存放了某个用户级的声明的值，则其为那个tree节点。
 
 @findex REG_OFFSET
 @item REG_OFFSET (@var{x})
+If this register is known to hold the value of some user-level
+declaration, this is the offset into that logical storage.
 如果该寄存器被已知存放了某个用户级的声明的值，则其为相对那个逻辑存储的便宜量。
 
 @end table
@@ -321,80 +659,126 @@ XINT (@var{x}, 2)
 @table @code
 @findex SYMBOL_REF_DECL
 @item SYMBOL_REF_DECL (@var{x})
+If the @code{symbol_ref} @var{x} was created for a @code{VAR_DECL} or
+a @code{FUNCTION_DECL}, that tree is recorded here.  If this value is
+null, then @var{x} was created by back end code generation routines,
+and there is no associated front end symbol table entry.
 如果是针对@code{VAR_DECL}或@code{FUNCTION_DECL}创建的@code{symbol_ref} @var{x}，则那个tree被记录在这里。如果该值为空，则@var{x}由后端代码生成例程创建，并不与前端的符号表实体相关联。
 
+@code{SYMBOL_REF_DECL} may also point to a tree of class @code{'c'},
+that is, some sort of constant.  In this case, the @code{symbol_ref}
+is an entry in the per-file constant pool; again, there is no associated
+front end symbol table entry.
 @code{SYMBOL_REF_DECL}也可以指向@code{'c'}类别的tree，即某种常量。这种情况下，@code{symbol_ref}为每个文件的常量池中的实体；同样，不与前端的符号表实体相关联。
 
 @findex SYMBOL_REF_CONSTANT
 @item SYMBOL_REF_CONSTANT (@var{x})
+If @samp{CONSTANT_POOL_ADDRESS_P (@var{x})} is true, this is the constant
+pool entry for @var{x}.  It is null otherwise.
 如果@samp{CONSTANT_POOL_ADDRESS_P (@var{x})}为真，则为@var{x}的常量池实体。否则为空。
 
 @findex SYMBOL_REF_DATA
 @item SYMBOL_REF_DATA (@var{x})
+A field of opaque type used to store @code{SYMBOL_REF_DECL} or
+@code{SYMBOL_REF_CONSTANT}.
 一个不透明类型的域，用来存储@code{SYMBOL_REF_DECL}或@code{SYMBOL_REF_CONSTANT}。
 
 @findex SYMBOL_REF_FLAGS
 @item SYMBOL_REF_FLAGS (@var{x})
+In a @code{symbol_ref}, this is used to communicate various predicates
+about the symbol.  Some of these are common enough to be computed by
+common code, some are specific to the target.  The common bits are:
 在一个@code{symbol_ref}中，其用于传达关于符号的各种断言。它们中的一些可以使用通用的代码来计算，一些是特定于目标机器的。通用的位：
 
 @table @code
 @findex SYMBOL_REF_FUNCTION_P
 @findex SYMBOL_FLAG_FUNCTION
 @item SYMBOL_FLAG_FUNCTION
+Set if the symbol refers to a function.
 用来表示符号引用一个函数。
 
 @findex SYMBOL_REF_LOCAL_P
 @findex SYMBOL_FLAG_LOCAL
 @item SYMBOL_FLAG_LOCAL
+Set if the symbol is local to this ``module''.
+See @code{TARGET_BINDS_LOCAL_P}.
 用来表示符号局部于该模块。参见@code{TARGET_BINDS_LOCAL_P}。
 
 @findex SYMBOL_REF_EXTERNAL_P
 @findex SYMBOL_FLAG_EXTERNAL
 @item SYMBOL_FLAG_EXTERNAL
+Set if this symbol is not defined in this translation unit.
+Note that this is not the inverse of @code{SYMBOL_FLAG_LOCAL}.
 用来表示该符号不在该转换单元中定义。注意，其并不是@code{SYMBOL_FLAG_LOCAL}的反转。
 
 @findex SYMBOL_REF_SMALL_P
 @findex SYMBOL_FLAG_SMALL
 @item SYMBOL_FLAG_SMALL
+Set if the symbol is located in the small data section.
+See @code{TARGET_IN_SMALL_DATA_P}.
 用来表示符号位于小数据段。参见@code{TARGET_IN_SMALL_DATA_P}。
 
 @findex SYMBOL_FLAG_TLS_SHIFT
 @findex SYMBOL_REF_TLS_MODEL
 @item SYMBOL_REF_TLS_MODEL (@var{x})
+This is a multi-bit field accessor that returns the @code{tls_model}
+to be used for a thread-local storage symbol.  It returns zero for
+non-thread-local symbols.
 这是多个位的域访问，其返回用于线程局部存储符号的@code{tls_model}。对于非线程局部符号，其返回0。
 
 @findex SYMBOL_REF_HAS_BLOCK_INFO_P
 @findex SYMBOL_FLAG_HAS_BLOCK_INFO
 @item SYMBOL_FLAG_HAS_BLOCK_INFO
+Set if the symbol has @code{SYMBOL_REF_BLOCK} and
+@code{SYMBOL_REF_BLOCK_OFFSET} fields.
 用来表示符号具有@code{SYMBOL_REF_BLOCK}和@code{SYMBOL_REF_BLOCK_OFFSET}域。
 
 @findex SYMBOL_REF_ANCHOR_P
 @findex SYMBOL_FLAG_ANCHOR
 @cindex @option{-fsection-anchors}
 @item SYMBOL_FLAG_ANCHOR
+Set if the symbol is used as a section anchor.  ``Section anchors''
+are symbols that have a known position within an @code{object_block}
+and that can be used to access nearby members of that block.
+They are used to implement @option{-fsection-anchors}.
 用来表示符号作为section anchor。``Section anchors''为在@code{object_block}中具有一个已知位置的符号，并且可以用来访问该块中的附近成员。它们用来实现@option{-fsection-anchors}。
 
+If this flag is set, then @code{SYMBOL_FLAG_HAS_BLOCK_INFO} will be too.
 如果该标记被设置，则@code{SYMBOL_FLAG_HAS_BLOCK_INFO}也被设置。
 
 @end table
 
+Bits beginning with @code{SYMBOL_FLAG_MACH_DEP} are available for
+the target's use.
 起始于@code{SYMBOL_FLAG_MACH_DEP}的位，可供目标机器使用。
 @end table
 
 @findex SYMBOL_REF_BLOCK
 @item SYMBOL_REF_BLOCK (@var{x})
+If @samp{SYMBOL_REF_HAS_BLOCK_INFO_P (@var{x})}, this is the
+@samp{object_block} structure to which the symbol belongs,
+or @code{NULL} if it has not been assigned a block.
 如果@samp{SYMBOL_REF_HAS_BLOCK_INFO_P (@var{x})}，则其为该符号所属的@samp{object_block}结构体， 或者如果其没有被分配给一个块，则为@code{NULL}。
 
 @findex SYMBOL_REF_BLOCK_OFFSET
+If @samp{SYMBOL_REF_HAS_BLOCK_INFO_P (@var{x})}, this is the offset of @var{x}
+from the first object in @samp{SYMBOL_REF_BLOCK (@var{x})}.  The value is
+negative if @var{x} has not yet been assigned to a block, or it has not
+been given an offset within that block.
 @item SYMBOL_REF_BLOCK_OFFSET (@var{x})
 如果@samp{SYMBOL_REF_HAS_BLOCK_INFO_P (@var{x})}，则其为@var{x}的偏移量，从@samp{SYMBOL_REF_BLOCK (@var{x})}中的第一个对象开始。如果@var{x}还没有被分配给一个块，或者其还没有在那个块中给定一个偏移量，则值为负数。
 
 @end table
 
+@node Flags
+@section Flags in an RTL Expression
 @node 标记
 @section RTL表达式中的标记
 @cindex flags in RTL expression
 
+RTL expressions contain several flags (one-bit bit-fields)
+that are used in certain types of expression.  Most often they
+are accessed with the following macros, which expand into lvalues.
 RTL表达式包含几个标记（位域），用于特定类型的表达式。通常它们使用下列的宏来访问，并被扩展为左值。
 
 @table @code
@@ -402,29 +786,48 @@ RTL表达式包含几个标记（位域），用于特定类型的表达式。�
 @cindex @code{symbol_ref} and @samp{/u}
 @cindex @code{unchanging}, in @code{symbol_ref}
 @item CONSTANT_POOL_ADDRESS_P (@var{x})
+Nonzero in a @code{symbol_ref} if it refers to part of the current
+function's constant pool.  For most targets these addresses are in a
+@code{.rodata} section entirely separate from the function, but for
+some targets the addresses are close to the beginning of the function.
+In either case GCC assumes these addresses can be addressed directly,
+perhaps with the help of base registers.
+Stored in the @code{unchanging} field and printed as @samp{/u}.
 位于@code{symbol_ref}中，如果其引用了当前函数的常量池中的一部分，则非零。对于大多数目标机器，这些地址在@code{.rodata}段中，与函数完全分离，但是对于有些目标机器，这些地址是靠近函数起始处。不管哪种情况，GCC都假设这些地址可以被直接寻址，或者通过基址寄存器。其被存储在@code{unchanging}域，打印输出为@samp{/u}。
 
 @findex RTL_CONST_CALL_P
 @cindex @code{call_insn} and @samp{/u}
 @cindex @code{unchanging}, in @code{call_insn}
 @item RTL_CONST_CALL_P (@var{x})
+In a @code{call_insn} indicates that the insn represents a call to a
+const function.  Stored in the @code{unchanging} field and printed as
+@samp{/u}.
 位于@code{call_insn}中，表明该insn表示一个对const函数的调用。存储在@code{unchanging}域，打印输出为@samp{/u}。
 
 @findex RTL_PURE_CALL_P
 @cindex @code{call_insn} and @samp{/i}
 @cindex @code{return_val}, in @code{call_insn}
 @item RTL_PURE_CALL_P (@var{x})
+In a @code{call_insn} indicates that the insn represents a call to a
+pure function.  Stored in the @code{return_val} field and printed as
+@samp{/i}.
 位于@code{call_insn}中，表明该insn表示一个对pure函数的调用。存储在@code{return_val}域，打印输出为@samp{/i}。
 
 @findex RTL_CONST_OR_PURE_CALL_P
 @cindex @code{call_insn} and @samp{/u} or @samp{/i}
 @item RTL_CONST_OR_PURE_CALL_P (@var{x})
+In a @code{call_insn}, true if @code{RTL_CONST_CALL_P} or
+@code{RTL_PURE_CALL_P} is true.
 位于@code{call_insn}中，如果@code{RTL_CONST_CALL_P}或者@code{RTL_PURE_CALL_P}为真，则其为真。
 
 @findex RTL_LOOPING_CONST_OR_PURE_CALL_P
 @cindex @code{call_insn} and @samp{/c}
 @cindex @code{call}, in @code{call_insn}
 @item RTL_LOOPING_CONST_OR_PURE_CALL_P (@var{x})
+In a @code{call_insn} indicates that the insn represents a possibly
+infinite looping call to a const or pure function.  Stored in the
+@code{call} field and printed as @samp{/c}.  Only true if one of
+@code{RTL_CONST_CALL_P} or @code{RTL_PURE_CALL_P} is true.
 位于@code{call_insn}中，表明该insn表示一个对const或者pure函数，可能是无限循环的调用。存储在@code{call}域，打印输出为@samp{/c}。只有当@code{RTL_CONST_CALL_P}或者@code{RTL_PURE_CALL_P}为真时，其才为真。
 
 @findex INSN_ANNULLED_BRANCH_P
@@ -433,6 +836,10 @@ RTL表达式包含几个标记（位域），用于特定类型的表达式。�
 @cindex @code{insn} and @samp{/u}
 @cindex @code{unchanging}, in @code{jump_insn}, @code{call_insn} and @code{insn}
 @item INSN_ANNULLED_BRANCH_P (@var{x})
+In a @code{jump_insn}, @code{call_insn}, or @code{insn} indicates
+that the branch is an annulling one.  See the discussion under
+@code{sequence} below.  Stored in the @code{unchanging} field and
+printed as @samp{/u}.
 位于@code{jump_insn}，@code{call_insn}或者@code{insn}中，表明该分支跳转被取消。参见下面关于@code{sequence}的讨论。存储在@code{unchanging}域，打印输出为@samp{/u}。
 
 @findex INSN_DELETED_P
@@ -444,6 +851,10 @@ RTL表达式包含几个标记（位域），用于特定类型的表达式。�
 @cindex @code{note} and @samp{/v}
 @cindex @code{volatil}, in @code{insn}, @code{call_insn}, @code{jump_insn}, @code{code_label}, @code{barrier}, and @code{note}
 @item INSN_DELETED_P (@var{x})
+In an @code{insn}, @code{call_insn}, @code{jump_insn}, @code{code_label},
+@code{barrier}, or @code{note},
+nonzero if the insn has been deleted.  Stored in the
+@code{volatil} field and printed as @samp{/v}.
 位于@code{insn}, @code{call_insn}, @code{jump_insn}, @code{code_label}, @code{barrier}或@code{note}中，如果该insn被删除掉，则非零。存储在@code{volatil}域，打印输出为@samp{/v}。
 
 @findex INSN_FROM_TARGET_P
@@ -452,6 +863,15 @@ RTL表达式包含几个标记（位域），用于特定类型的表达式。�
 @cindex @code{call_insn} and @samp{/s}
 @cindex @code{in_struct}, in @code{insn} and @code{jump_insn} and @code{call_insn}
 @item INSN_FROM_TARGET_P (@var{x})
+In an @code{insn} or @code{jump_insn} or @code{call_insn} in a delay
+slot of a branch, indicates that the insn
+is from the target of the branch.  If the branch insn has
+@code{INSN_ANNULLED_BRANCH_P} set, this insn will only be executed if
+the branch is taken.  For annulled branches with
+@code{INSN_FROM_TARGET_P} clear, the insn will be executed only if the
+branch is not taken.  When @code{INSN_ANNULLED_BRANCH_P} is not set,
+this insn will always be executed.  Stored in the @code{in_struct}
+field and printed as @samp{/s}.
 位于@code{insn}，@code{jump_insn}或者@code{call_insn}中，在分支延迟槽中，表明该insn是来自分支跳转的目标。如果分支insn设置了@code{INSN_ANNULLED_BRANCH_P}，则该insn只有当进行分支跳转的时候，才被执行。对于被取消的分支，如果是清除了@code{INSN_FROM_TARGET_P}，则insn只有当没有进行分支跳转的时候，才被执行。当@code{INSN_ANNULLED_BRANCH_P}没有被设置，该insn将总是被执行。存储在@code{in_struct}域，打印输出为@samp{/s}。
 
 @findex LABEL_PRESERVE_P
@@ -459,6 +879,10 @@ RTL表达式包含几个标记（位域），用于特定类型的表达式。�
 @cindex @code{note} and @samp{/i}
 @cindex @code{in_struct}, in @code{code_label} and @code{note}
 @item LABEL_PRESERVE_P (@var{x})
+In a @code{code_label} or @code{note}, indicates that the label is referenced by
+code or data not visible to the RTL of a given function.
+Labels referenced by a non-local goto will have this bit set.  Stored
+in the @code{in_struct} field and printed as @samp{/s}.
 位于@code{code_label}或者@code{note}中，表明被代码或者数据引用的该标号，对于给定的函数RTL不可见。通过非局部goto引用的标号，将设置该位。存储在@code{in_struct}域中，打印输出为@samp{/s}。
 
 @findex LABEL_REF_NONLOCAL_P
@@ -466,24 +890,44 @@ RTL表达式包含几个标记（位域），用于特定类型的表达式。�
 @cindex @code{reg_label} and @samp{/v}
 @cindex @code{volatil}, in @code{label_ref} and @code{reg_label}
 @item LABEL_REF_NONLOCAL_P (@var{x})
+In @code{label_ref} and @code{reg_label} expressions, nonzero if this is
+a reference to a non-local label.
+Stored in the @code{volatil} field and printed as @samp{/v}.
 位于@code{label_ref}和@code{reg_label}表达式中，如果其为对一个非局部标号的引用，则非零。存储在@code{volatil}域中，打印输出为@samp{/v}。
 
 @findex MEM_IN_STRUCT_P
 @cindex @code{mem} and @samp{/s}
 @cindex @code{in_struct}, in @code{mem}
 @item MEM_IN_STRUCT_P (@var{x})
+In @code{mem} expressions, nonzero for reference to an entire structure,
+union or array, or to a component of one.  Zero for references to a
+scalar variable or through a pointer to a scalar.  If both this flag and
+@code{MEM_SCALAR_P} are clear, then we don't know whether this @code{mem}
+is in a structure or not.  Both flags should never be simultaneously set.
+Stored in the @code{in_struct} field and printed as @samp{/s}.
 位于@code{mem}表达式中，对于引用一整个结构体，联合体，数组，或者是它们的一部分，则非零。如果是引用一个标量变量，或者是标量指针，则为零。如果该标记和@code{MEM_SCALAR_P}都被清除，则我们无法知道该@code{mem}是否在一个结构体中。这两个标记不要被同时设置。存储在@code{in_struct}域中，打印输出为@samp{/s}。
 
 @findex MEM_KEEP_ALIAS_SET_P
 @cindex @code{mem} and @samp{/j}
 @cindex @code{jump}, in @code{mem}
 @item MEM_KEEP_ALIAS_SET_P (@var{x})
+In @code{mem} expressions, 1 if we should keep the alias set for this
+mem unchanged when we access a component.  Set to 1, for example, when we
+are already in a non-addressable component of an aggregate.
+Stored in the @code{jump} field and printed as @samp{/j}.
 位于@code{mem}表达式中，如果为1，则表明当访问一个部件时，应该保持该mem的别名集合不变。例如，当在一个聚合体的不可寻址部件中的时候，将其设为1。存储在@code{jump}域中，打印输出为@samp{/j}。
 
 @findex MEM_SCALAR_P
 @cindex @code{mem} and @samp{/i}
 @cindex @code{return_val}, in @code{mem}
 @item MEM_SCALAR_P (@var{x})
+In @code{mem} expressions, nonzero for reference to a scalar known not
+to be a member of a structure, union, or array.  Zero for such
+references and for indirections through pointers, even pointers pointing
+to scalar types.  If both this flag and @code{MEM_IN_STRUCT_P} are clear,
+then we don't know whether this @code{mem} is in a structure or not.
+Both flags should never be simultaneously set.
+Stored in the @code{return_val} field and printed as @samp{/i}.
 位于@code{mem}表达式中，如果引用的标量，被已知不是结构体，联合体或者数组的成员，则为非零。如果是这样的引用，或者通过指针的间接引用，即便是指向标量类型，则为零，如果该标记和@code{MEM_IN_STRUCT_P}都被清除，则我们无法知道该@code{mem}是否为一个结构体。这两个标记不要被同时设置。存储在@code{return_val}域中，打印输出为@samp{/i}。
 
 @findex MEM_VOLATILE_P
@@ -492,37 +936,58 @@ RTL表达式包含几个标记（位域），用于特定类型的表达式。�
 @cindex @code{asm_operands} and @samp{/v}
 @cindex @code{volatil}, in @code{mem}, @code{asm_operands}, and @code{asm_input}
 @item MEM_VOLATILE_P (@var{x})
+In @code{mem}, @code{asm_operands}, and @code{asm_input} expressions,
+nonzero for volatile memory references.
+Stored in the @code{volatil} field and printed as @samp{/v}.
 位于@code{mem}, @code{asm_operands}和@code{asm_input}表达式中，对于volatile内存引用，为非零。存储在@code{volatil}域中，打印输出为@samp{/v}。
 
 @findex MEM_NOTRAP_P
 @cindex @code{mem} and @samp{/c}
 @cindex @code{call}, in @code{mem}
 @item MEM_NOTRAP_P (@var{x})
+In @code{mem}, nonzero for memory references that will not trap.
+Stored in the @code{call} field and printed as @samp{/c}.
 位于@code{mem}中，对于不会产生陷阱的内存引用，为非零。存储在@code{call}域中，打印输出为@samp{/c}。
 
 @findex MEM_POINTER
 @cindex @code{mem} and @samp{/f}
 @cindex @code{frame_related}, in @code{mem}
 @item MEM_POINTER (@var{x})
+Nonzero in a @code{mem} if the memory reference holds a pointer.
+Stored in the @code{frame_related} field and printed as @samp{/f}.
 位于@code{mem}中，如果内存引用存放了一个指针，则非零。存储在@code{frame_related}域中，打印输出为@samp{/f}。
 
 @findex REG_FUNCTION_VALUE_P
 @cindex @code{reg} and @samp{/i}
 @cindex @code{return_val}, in @code{reg}
 @item REG_FUNCTION_VALUE_P (@var{x})
+Nonzero in a @code{reg} if it is the place in which this function's
+value is going to be returned.  (This happens only in a hard
+register.)  Stored in the @code{return_val} field and printed as
+@samp{/i}.
 位于@code{reg}中，如果其为存放函数返回值的地方，则非零。（这只发生在硬件寄存器中。）存储在@code{return_val}域中，打印输出为@samp{/i}。
 
 @findex REG_POINTER
 @cindex @code{reg} and @samp{/f}
 @cindex @code{frame_related}, in @code{reg}
 @item REG_POINTER (@var{x})
+Nonzero in a @code{reg} if the register holds a pointer.  Stored in the
+@code{frame_related} field and printed as @samp{/f}.
 位于@code{reg}中，如果寄存器存放一个指针，则非零。存储在@code{frame_related}域中，打印输出为@samp{/f}。
 
 @findex REG_USERVAR_P
 @cindex @code{reg} and @samp{/v}
 @cindex @code{volatil}, in @code{reg}
 @item REG_USERVAR_P (@var{x})
+In a @code{reg}, nonzero if it corresponds to a variable present in
+the user's source code.  Zero for temporaries generated internally by
+the compiler.  Stored in the @code{volatil} field and printed as
+@samp{/v}.
 位于@code{reg}中，如果其对应于用户源代码中出现的一个变量，则非零。对于编译器内部生成的临时对象，则为零。存储在@code{volatil}域中，打印输出为@samp{/v}。
+
+The same hard register may be used also for collecting the values of
+functions called by this one, but @code{REG_FUNCTION_VALUE_P} is zero
+in this kind of use.
 
 @findex RTX_FRAME_RELATED_P
 @cindex @code{insn} and @samp{/f}
@@ -532,22 +997,52 @@ RTL表达式包含几个标记（位域），用于特定类型的表达式。�
 @cindex @code{set} and @samp{/f}
 @cindex @code{frame_related}, in @code{insn}, @code{call_insn}, @code{jump_insn}, @code{barrier}, and @code{set}
 @item RTX_FRAME_RELATED_P (@var{x})
+Nonzero in an @code{insn}, @code{call_insn}, @code{jump_insn},
+@code{barrier}, or @code{set} which is part of a function prologue
+and sets the stack pointer, sets the frame pointer, or saves a register.
+This flag should also be set on an instruction that sets up a temporary
+register to use in place of the frame pointer.
+Stored in the @code{frame_related} field and printed as @samp{/f}.
 位于@code{insn}, @code{call_insn}, @code{jump_insn}, @code{barrier}, 或者@code{set}中，如果其为函数序言的一部分，用来设置栈指针，帧指针，或者保存寄存器，则为非零。对于设置用于帧指针的临时寄存器的指令，该标记也应被设置。存储在@code{frame_related}域中，打印输出为@samp{/f}。
 
+In particular, on RISC targets where there are limits on the sizes of
+immediate constants, it is sometimes impossible to reach the register
+save area directly from the stack pointer.  In that case, a temporary
+register is used that is near enough to the register save area, and the
+Canonical Frame Address, i.e., DWARF2's logical frame pointer, register
+must (temporarily) be changed to be this temporary register.  So, the
+instruction that sets this temporary register must be marked as
+@code{RTX_FRAME_RELATED_P}.
 特别的，在一些RISC目标机器上，对于立即数常量的大小有限制，有时不能直接通过栈指针来到达寄存器的保存区域。这种情况下，一个足够接近寄存器保存区域的临时寄存器被使用，并且正则帧地址（Canonical Frame Address）寄存器，即DWARF2的逻辑帧指针寄存器，必须（临时的）被改成该临时寄存器。所以，设置该临时寄存器的指令必须被标记为@code{RTX_FRAME_RELATED_P}。
 
+If the marked instruction is overly complex (defined in terms of what
+@code{dwarf2out_frame_debug_expr} can handle), you will also have to
+create a @code{REG_FRAME_RELATED_EXPR} note and attach it to the
+instruction.  This note should contain a simple expression of the
+computation performed by this instruction, i.e., one that
+@code{dwarf2out_frame_debug_expr} can handle.
 如果被标记的指令过于复杂（跟据@code{dwarf2out_frame_debug_expr}能否处理，而定义的术语），则你还必须要创建一个@code{REG_FRAME_RELATED_EXPR}注解，并附加在该指令上。该注解应该包含一个该指令执行计算的简单表达式，即@code{dwarf2out_frame_debug_expr}可以处理的。
 
+This flag is required for exception handling support on targets with RTL
+prologues.
 在带有RTL序言的目标机器上，提供异常处理的支持时，会用到该标记。
 
 @findex MEM_READONLY_P
 @cindex @code{mem} and @samp{/u}
 @cindex @code{unchanging}, in @code{mem}
 @item MEM_READONLY_P (@var{x})
+Nonzero in a @code{mem}, if the memory is statically allocated and read-only.
 位于@code{mem}中，如果内存是静态分配并且只读的，则非零。 
 
+Read-only in this context means never modified during the lifetime of the
+program, not necessarily in ROM or in write-disabled pages.  A common
+example of the later is a shared library's global offset table.  This
+table is initialized by the runtime loader, so the memory is technically
+writable, but after control is transfered from the runtime loader to the
+application, this memory will never be subsequently modified.
 在该上下文中只读，意味着在程序的生命周期中不会被修改，但是不必要是在ROM或者不可写的页中。对于后者，一个常见的例子，是共享库的全局偏移表。该表由运行时加载器初始化，所以内存在技术上是可写的，但是当控制从运行时加载器转移给应用程序时，该内存将不再被修改。
 
+Stored in the @code{unchanging} field and printed as @samp{/u}.
 存储在@code{unchanging}域中，打印输出为@samp{/u}。
 
 @findex SCHED_GROUP_P
@@ -556,24 +1051,38 @@ RTL表达式包含几个标记（位域），用于特定类型的表达式。�
 @cindex @code{jump_insn} and @samp{/s}
 @cindex @code{in_struct}, in @code{insn}, @code{jump_insn} and @code{call_insn}
 @item SCHED_GROUP_P (@var{x})
+During instruction scheduling, in an @code{insn}, @code{call_insn} or
+@code{jump_insn}, indicates that the
+previous insn must be scheduled together with this insn.  This is used to
+ensure that certain groups of instructions will not be split up by the
+instruction scheduling pass, for example, @code{use} insns before
+a @code{call_insn} may not be separated from the @code{call_insn}.
+Stored in the @code{in_struct} field and printed as @samp{/s}.
 在指令调度过程中，位于@code{insn}, @code{call_insn}或者@code{jump_insn}中，表明前一个insn必须与该insn一起调度。这用来确保特定的指令组不会被指令调度过程分隔开。例如，在@code{call_insn}之前的@code{use} insn不可以从@code{call_insn}中分开。存储在@code{in_struct}域中，打印输出为@samp{/s}。
 
 @findex SET_IS_RETURN_P
 @cindex @code{insn} and @samp{/j}
 @cindex @code{jump}, in @code{insn}
 @item SET_IS_RETURN_P (@var{x})
+For a @code{set}, nonzero if it is for a return.
+Stored in the @code{jump} field and printed as @samp{/j}.
 对于@code{set}，如果是针对一个return，则非零。存储在@code{jump}域中，打印输出为@samp{/j}。
 
 @findex SIBLING_CALL_P
 @cindex @code{call_insn} and @samp{/j}
 @cindex @code{jump}, in @code{call_insn}
 @item SIBLING_CALL_P (@var{x})
+For a @code{call_insn}, nonzero if the insn is a sibling call.
+Stored in the @code{jump} field and printed as @samp{/j}.
 对于@code{call_insn}，如果该insn为一个sibling call，则非零。存储在@code{jump}域中，打印输出为@samp{/j}。
 
 @findex STRING_POOL_ADDRESS_P
 @cindex @code{symbol_ref} and @samp{/f}
 @cindex @code{frame_related}, in @code{symbol_ref}
 @item STRING_POOL_ADDRESS_P (@var{x})
+For a @code{symbol_ref} expression, nonzero if it addresses this function's
+string constant pool.
+Stored in the @code{frame_related} field and printed as @samp{/f}.
 对于一个@code{symbol_ref}表达式，如果其为对该函数的字符串常量池的寻址，则非零。存储在@code{frame_related}域中，打印输出为@samp{/f}。
 
 @findex SUBREG_PROMOTED_UNSIGNED_P
@@ -581,6 +1090,14 @@ RTL表达式包含几个标记（位域），用于特定类型的表达式。�
 @cindex @code{unchanging}, in @code{subreg}
 @cindex @code{volatil}, in @code{subreg}
 @item SUBREG_PROMOTED_UNSIGNED_P (@var{x})
+Returns a value greater then zero for a @code{subreg} that has
+@code{SUBREG_PROMOTED_VAR_P} nonzero if the object being referenced is kept
+zero-extended, zero if it is kept sign-extended, and less then zero if it is
+extended some other way via the @code{ptr_extend} instruction.
+Stored in the @code{unchanging}
+field and @code{volatil} field, printed as @samp{/u} and @samp{/v}.
+This macro may only be used to get the value it may not be used to change
+the value.  Use @code{SUBREG_PROMOTED_UNSIGNED_SET} to change the value.
 如果@code{subreg}对于@code{SUBREG_PROMOTED_VAR_P}为非零，并且被引用的对象为零扩展，则返回一个大于零的值；如果保持为符号扩展，则为零；如果是通过@code{ptr_extend}指令，进行某种其它方式的扩展，则小于零。存储在@code{unchanging}域和@code{volatil}域中，打印输出为@samp{/u}和@samp{/v}。该宏只用于获得值，不能用于修改值。使用@code{SUBREG_PROMOTED_UNSIGNED_SET}来修改值。
 
 @findex SUBREG_PROMOTED_UNSIGNED_SET
@@ -588,317 +1105,541 @@ RTL表达式包含几个标记（位域），用于特定类型的表达式。�
 @cindex @code{unchanging}, in @code{subreg}
 @cindex @code{volatil}, in @code{subreg}
 @item SUBREG_PROMOTED_UNSIGNED_SET (@var{x})
+Set the @code{unchanging} and @code{volatil} fields in a @code{subreg}
+to reflect zero, sign, or other extension.  If @code{volatil} is
+zero, then @code{unchanging} as nonzero means zero extension and as
+zero means sign extension.  If @code{volatil} is nonzero then some
+other type of extension was done via the @code{ptr_extend} instruction.
 设置@code{subreg}中的@code{unchanging}和@code{volatil}域，来反映零扩展，符号扩展，或其它扩展。如果@code{volatil}为零，然后如果@code{unchanging}为非零，则意味着零扩展，如果为零，则意味着符号扩展。如果@code{volatil}为非零，则通过@code{ptr_extend}指令使用了其它某种扩展。
 
 @findex SUBREG_PROMOTED_VAR_P
 @cindex @code{subreg} and @samp{/s}
 @cindex @code{in_struct}, in @code{subreg}
 @item SUBREG_PROMOTED_VAR_P (@var{x})
+Nonzero in a @code{subreg} if it was made when accessing an object that
+was promoted to a wider mode in accord with the @code{PROMOTED_MODE} machine
+description macro (@pxref{Storage Layout}).  In this case, the mode of
+the @code{subreg} is the declared mode of the object and the mode of
+@code{SUBREG_REG} is the mode of the register that holds the object.
+Promoted variables are always either sign- or zero-extended to the wider
+mode on every assignment.  Stored in the @code{in_struct} field and
+printed as @samp{/s}.
 位于@code{subreg}中，如果当访问一个被提升为符合机器描述宏@code{PROMOTED_MODE}的(@pxref{存储布局})，宽机器模式的对象时，则非零。这种情况下，@code{subreg}的机器模式为对象被声明的机器模式，@code{SUBREG_REG}的机器模式为存放该对象的寄存器的机器模式。被提升的变量，在每个赋值中，总是被符号扩展或者零扩展成宽机器模式。存储在@code{in_struct}域中，打印输出为@samp{/s}。
 
 @findex SYMBOL_REF_USED
 @cindex @code{used}, in @code{symbol_ref}
 @item SYMBOL_REF_USED (@var{x})
+In a @code{symbol_ref}, indicates that @var{x} has been used.  This is
+normally only used to ensure that @var{x} is only declared external
+once.  Stored in the @code{used} field.
 位于@code{symbol_ref}中，表明@var{x}已经被使用。这通常只用于确保@var{x}只在外部被声明一次。存储在@code{used}中。
 
 @findex SYMBOL_REF_WEAK
 @cindex @code{symbol_ref} and @samp{/i}
 @cindex @code{return_val}, in @code{symbol_ref}
 @item SYMBOL_REF_WEAK (@var{x})
+In a @code{symbol_ref}, indicates that @var{x} has been declared weak.
+Stored in the @code{return_val} field and printed as @samp{/i}.
 位于@code{symbol_ref}中，表明@var{x}已经被声明为weak。存储在@code{return_val}域中，打印输出为@samp{/i}。
 
 @findex SYMBOL_REF_FLAG
 @cindex @code{symbol_ref} and @samp{/v}
 @cindex @code{volatil}, in @code{symbol_ref}
 @item SYMBOL_REF_FLAG (@var{x})
+In a @code{symbol_ref}, this is used as a flag for machine-specific purposes.
+Stored in the @code{volatil} field and printed as @samp{/v}.
 位于@code{symbol_ref}中，用于机器特定目的的标记。存储在@code{volatil}域中，打印输出为@samp{/v}。
 
+Most uses of @code{SYMBOL_REF_FLAG} are historic and may be subsumed
+by @code{SYMBOL_REF_FLAGS}.  Certainly use of @code{SYMBOL_REF_FLAGS}
+is mandatory if the target requires more than one bit of storage.
 大多对@code{SYMBOL_REF_FLAG}的使用，是历史性的，并且可以通过@code{SYMBOL_REF_FLAGS}来归类。当然，如果目标机器需要多于一个位的存储时，对@code{SYMBOL_REF_FLAGS}的使用是强制的。
 
+@findex PREFETCH_SCHEDULE_BARRIER_P
+@cindex @code{prefetch} and @samp{/v}
+@cindex @code{volatile}, in @code{prefetch}
+@item PREFETCH_SCHEDULE_BARRIER_P (@var{x})
+In a @code{prefetch}, indicates that the prefetch is a scheduling barrier.
+No other INSNs will be moved over it.
+Stored in the @code{volatil} field and printed as @samp{/v}.
 @end table
 
+These are the fields to which the above macros refer:
 这些是上面的宏所引用的域：
 
 @table @code
 @findex call
 @cindex @samp{/c} in RTL dump
 @item call
+In a @code{mem}, 1 means that the memory reference will not trap.
 在@code{mem}中，1表示该内存引用不会有陷阱。
 
+In a @code{call}, 1 means that this pure or const call may possibly
+infinite loop.
 在@code{call}中，1表示该pure或者const调用，可能为无限循环。
 
+In an RTL dump, this flag is represented as @samp{/c}.
 在RTL转储中，该标记被表示为@samp{/c}。
 
 @findex frame_related
 @cindex @samp{/f} in RTL dump
 @item frame_related
+In an @code{insn} or @code{set} expression, 1 means that it is part of
+a function prologue and sets the stack pointer, sets the frame pointer,
+saves a register, or sets up a temporary register to use in place of the
+frame pointer.
 在@code{insn}或者@code{set}表达式中，1表示其为函数序言的一部分，设置栈寄存器，设置帧寄存器，保存寄存器，或者设置一个用于帧寄存器的临时寄存器。
 
+In @code{reg} expressions, 1 means that the register holds a pointer.
 在@code{reg}表达式中，1表示该寄存器存放一个指针。
 
+In @code{mem} expressions, 1 means that the memory reference holds a pointer.
 在@code{mem}表达式中，1表示该内存引用存放一个指针。
 
+In @code{symbol_ref} expressions, 1 means that the reference addresses
+this function's string constant pool.
 在@code{symbol_ref}表达式中，1表示该引用是对函数的字符串常量池的寻址。
 
+In an RTL dump, this flag is represented as @samp{/f}.
 在RTL转储中，该标记被表示为@samp{/f}。
 
 @findex in_struct
 @cindex @samp{/s} in RTL dump
 @item in_struct
+In @code{mem} expressions, it is 1 if the memory datum referred to is
+all or part of a structure or array; 0 if it is (or might be) a scalar
+variable.  A reference through a C pointer has 0 because the pointer
+might point to a scalar variable.  This information allows the compiler
+to determine something about possible cases of aliasing.
 在@code{mem}表达式中，如果所引用的内存数据为整个结构体或者数组，或者一部分，其为1；如果为（或者可能为）一个标量变量。则为0。通过C指针的引用，为0，因为指针可以指向一个标量变量。该信息允许编译器来确定别名的可能情况。
 
+In @code{reg} expressions, it is 1 if the register has its entire life
+contained within the test expression of some loop.
 在@code{reg}表达式中，如果寄存器整个生命期都包含在某个循环的测试表达式中，则为1。
 
+In @code{subreg} expressions, 1 means that the @code{subreg} is accessing
+an object that has had its mode promoted from a wider mode.
 在@code{subreg}表达式中，1表示@code{subreg}在访问一个从更宽的机器模式进行提升的对象。
 
+In @code{label_ref} expressions, 1 means that the referenced label is
+outside the innermost loop containing the insn in which the @code{label_ref}
+was found.
 在@code{label_ref}表达式中，1表示被引用的标号位于包含发现@code{label_ref}的insn的最内层循环的外面。
 
+In @code{code_label} expressions, it is 1 if the label may never be deleted.
+This is used for labels which are the target of non-local gotos.  Such a
+label that would have been deleted is replaced with a @code{note} of type
+@code{NOTE_INSN_DELETED_LABEL}.
 在@code{code_label}表达式中，如果标号不能被删除，则为1。这用于其为非局部goto的目标的标号。对于已经被删除的这样的标号，使用类型为@code{NOTE_INSN_DELETED_LABEL}的@code{note}来替换。
 
+In an @code{insn} during dead-code elimination, 1 means that the insn is
+dead code.
 在@code{insn}中，在死代码消除阶段，1表示该insn为死代码。
 
+In an @code{insn} or @code{jump_insn} during reorg for an insn in the
+delay slot of a branch,
+1 means that this insn is from the target of the branch.
 在@code{insn}或者@code{jump_insn}中，在针对分支延迟槽中insn的reorg阶段，1表示该insn来自分支跳转的目标。
 
+In an @code{insn} during instruction scheduling, 1 means that this insn
+must be scheduled as part of a group together with the previous insn.
 在@code{insn}中，在指令调度阶段，1表示该insn必须与之前的insn一起进行调度。
 
+In an RTL dump, this flag is represented as @samp{/s}.
 在RTL转储中，该标记被表示为@samp{/s}。
 
 @findex return_val
 @cindex @samp{/i} in RTL dump
 @item return_val
+In @code{reg} expressions, 1 means the register contains
+the value to be returned by the current function.  On
+machines that pass parameters in registers, the same register number
+may be used for parameters as well, but this flag is not set on such
+uses.
 在@code{reg}表达式中，1表示寄存器包含了当且函数的返回值。对于在寄存器中传递参数的机器上，同一个寄存器编号也可以被用作参数，但是这种情况下，该标记不被设置。
 
+In @code{mem} expressions, 1 means the memory reference is to a scalar
+known not to be a member of a structure, union, or array.
 在@code{mem}中，1表示内存引用为一个已知不为结构体，联合体，数组的成员的标量。
 
+In @code{symbol_ref} expressions, 1 means the referenced symbol is weak.
 在@code{symbol_ref}表达式中，1表示被引用的符号为weak。
 
+In @code{call} expressions, 1 means the call is pure.
 在@code{call}表达式中，1表示调用是pure。
 
+In an RTL dump, this flag is represented as @samp{/i}.
 在RTL转储中，该标记被表示为@samp{/i}。
 
 @findex jump
 @cindex @samp{/j} in RTL dump
 @item jump
+In a @code{mem} expression, 1 means we should keep the alias set for this
+mem unchanged when we access a component.
 在@code{mem}表达式中，1表示当访问一个部件时，应该保持该mem的别名集不变。
 
+In a @code{set}, 1 means it is for a return.
 在@code{set}中，1表示其为一个return。
 
+In a @code{call_insn}, 1 means it is a sibling call.
 在@code{call_insn}中，1表示其为一个sibling call。
 
+In an RTL dump, this flag is represented as @samp{/j}.
 在RTL转储中，该标记被表示为@samp{/j}。
 
 @findex unchanging
 @cindex @samp{/u} in RTL dump
 @item unchanging
+In @code{reg} and @code{mem} expressions, 1 means
+that the value of the expression never changes.
 在@code{reg}和@code{mem}表达式中，1表示表达式的值不会改变。
 
-在@code{subreg}表达式中，如果@code{subreg}引用了机器模式已经被提升为一个宽模式的无符号对象，则为1。 references an
+In @code{subreg} expressions, it is 1 if the @code{subreg} references an
+unsigned object whose mode has been promoted to a wider mode.
+在@code{subreg}表达式中，如果@code{subreg}引用了机器模式已经被提升为一个宽模式的无符号对象，则为1。 
 
+In an @code{insn} or @code{jump_insn} in the delay slot of a branch
+instruction, 1 means an annulling branch should be used.
 在分支指令延迟槽中的@code{insn}或@code{jump_insn}中，1表示将使用一个被取消的分支。
 
+In a @code{symbol_ref} expression, 1 means that this symbol addresses
+something in the per-function constant pool.
 在@code{symbol_ref}表达式中，1表示该符号对函数的常量池进行寻址。
 
+In a @code{call_insn} 1 means that this instruction is a call to a const
+function.
 在@code{call_insn}中，1表示该指令为对const函数的调用。
 
+In an RTL dump, this flag is represented as @samp{/u}.
 在RTL转储中，该标记被表示为@samp{/u}。
 
 @findex used
 @item used
+This flag is used directly (without an access macro) at the end of RTL
+generation for a function, to count the number of times an expression
+appears in insns.  Expressions that appear more than once are copied,
+according to the rules for shared structure (@pxref{Sharing}).
 该标记在函数的RTL生成阶段的结尾被直接使用（不通过访问宏），来计数表达式在insns中出现的次数。出现次数大于一的表达式，根据共享结构的规则（@pxref{共享}），被复制。
 
+For a @code{reg}, it is used directly (without an access macro) by the
+leaf register renumbering code to ensure that each register is only
+renumbered once.
 对于@code{reg}，其被叶子寄存器重编号代码直接使用（不通过访问宏），来确保每个寄存器只被重编号一次。
 
+In a @code{symbol_ref}, it indicates that an external declaration for
+the symbol has already been written.
 在@code{symbol_ref}中，其表示该符号的外部声明已经被书写了。
 
 @findex volatil
 @cindex @samp{/v} in RTL dump
 @item volatil
 @cindex volatile memory references
+In a @code{mem}, @code{asm_operands}, or @code{asm_input}
+expression, it is 1 if the memory
+reference is volatile.  Volatile memory references may not be deleted,
+reordered or combined.
 在@code{mem}, @code{asm_operands}或者@code{asm_input}表达式中，如果内存引用是volatile的，则为1。volatile的内存引用不可以被删除，重排或者合并。
 
+In a @code{symbol_ref} expression, it is used for machine-specific
+purposes.
 在@code{symbol_ref}表达式中，其用于机器特定的目的。
 
+In a @code{reg} expression, it is 1 if the value is a user-level variable.
+0 indicates an internal compiler temporary.
 在@code{reg}表达式中，如果值为用户级的变量，则为1。0表示为内部的编译器临时对象。
 
+In an @code{insn}, 1 means the insn has been deleted.
 在@code{insn}中，1表示该insn已经被删除。
 
+In @code{label_ref} and @code{reg_label} expressions, 1 means a reference
+to a non-local label.
 在@code{label_ref}和@code{reg_label}表达式中，1表示对非局部标号的引用。
 
+In @code{prefetch} expressions, 1 means that the containing insn is a
+scheduling barrier.
+
+In an RTL dump, this flag is represented as @samp{/v}.
 在RTL转储中，该标记被表示为@samp{/v}。
 @end table
 
+@node Machine Modes
+@section Machine Modes
 @node 机器模式
 @section 机器模式
 @cindex machine modes
 
 @findex enum machine_mode
+A machine mode describes a size of data object and the representation used
+for it.  In the C code, machine modes are represented by an enumeration
+type, @code{enum machine_mode}, defined in @file{machmode.def}.  Each RTL
+expression has room for a machine mode and so do certain kinds of tree
+expressions (declarations and types, to be precise).
 机器模式描述数据对象的大小及其表示。在C 代码中，机器模式表示成枚举类型@code{enum machine_mode}。此类型定义在@file{machmode.def}中。每个RTL表达式都有机器模式域。一些树结构如变量定义、类型等也有机器模式域。
 
+In debugging dumps and machine descriptions, the machine mode of an RTL
+expression is written after the expression code with a colon to separate
+them.  The letters @samp{mode} which appear at the end of each machine mode
+name are omitted.  For example, @code{(reg:SI 38)} is a @code{reg}
+expression with machine mode @code{SImode}.  If the mode is
+@code{VOIDmode}, it is not written at all.
 在调试信息及机器描述中，RTL表达式的机器模式紧跟在RTL 代码之后，其间用冒号隔开。每一种机器模式名未尾的字母省缺为@samp{mode}。例如：@code{(reg:SI 38)}是一个@code{reg}表达式，其机器模式为@code{SImode}。如果方式为@code{VOIDmode}，表达式中完全不出现此模式。
 
+Here is a table of machine modes.  The term ``byte'' below refers to an
+object of @code{BITS_PER_UNIT} bits (@pxref{Storage Layout}).
 以下是一个机器模式表，这里的“字节”是指具有@code{BITS_PER_UNIT}个存储位的对象
 （@pxref{存储布局}）。
 
 @table @code
 @findex BImode
 @item BImode
+``Bit'' mode represents a single bit, for predicate registers.
 “Bit”模式，表示一位，用于断言寄存器。
 
 @findex QImode
 @item QImode
+``Quarter-Integer'' mode represents a single byte treated as an integer.
 “Quarter-Integer”模式，表示一个一字节的整数。
 
 @findex HImode
 @item HImode
+``Half-Integer'' mode represents a two-byte integer.
 “Half-Integer”模式，表示一个两字节的整数。
 
 @findex PSImode
 @item PSImode
+``Partial Single Integer'' mode represents an integer which occupies
+four bytes but which doesn't really use all four.  On some machines,
+this is the right mode to use for pointers.
 “Partial Single Integer”模式，表示一个占有四个字节但并不真正使用全部四个字节的整数。
 
 @findex SImode
 @item SImode
+``Single Integer'' mode represents a four-byte integer.
 “Single Integer”模式，表示一个四字节的整数。
 
 @findex PDImode
 @item PDImode
+``Partial Double Integer'' mode represents an integer which occupies
+eight bytes but which doesn't really use all eight.  On some machines,
+this is the right mode to use for certain pointers.
 “Partial Double Integer”模式，表示一个占有八个字节但并不真正使用全部八个字节的整数。
 
 @findex DImode
 @item DImode
+``Double Integer'' mode represents an eight-byte integer.
 “Double Integer”模式，表示一个8 字节的整数。
 
 @findex TImode
 @item TImode
+``Tetra Integer'' (?) mode represents a sixteen-byte integer.
 “Tetra Integer”模式，表示一个16 字节的整数。
 
 @findex OImode
 @item OImode
+``Octa Integer'' (?) mode represents a thirty-two-byte integer.
 “Octa Integer” 模式，表示一个32 字节的整数。
 
 @findex QFmode
 @item QFmode
+``Quarter-Floating'' mode represents a quarter-precision (single byte)
+floating point number.
 “Quarter-Floating” 模式，表示一个四分之一精度（单字节）浮点数。
 
 @findex HFmode
 @item HFmode
+``Half-Floating'' mode represents a half-precision (two byte) floating
+point number.
 “Half-Floating” 模式，表示一个二分之一精度（双字节）浮点数。
 
 @findex TQFmode
 @item TQFmode
+``Three-Quarter-Floating'' (?) mode represents a three-quarter-precision
+(three byte) floating point number.
 “Three-Quarter-Floating” 模式，表示一个四分之三精度（单字节）浮点数。
 
 @findex SFmode
 @item SFmode
+``Single Floating'' mode represents a four byte floating point number.
+In the common case, of a processor with IEEE arithmetic and 8-bit bytes,
+this is a single-precision IEEE floating point number; it can also be
+used for double-precision (on processors with 16-bit bytes) and
+single-precision VAX and IBM types.
 “Single Floating”模式，表示一个单精度（4 个字节）浮点数。
 
 @findex DFmode
 @item DFmode
+``Double Floating'' mode represents an eight byte floating point number.
+In the common case, of a processor with IEEE arithmetic and 8-bit bytes,
+this is a double-precision IEEE floating point number.
 “Double Floating”模式，表示一个双精度（8 字节）浮点数。
 
 
 @findex XFmode
 @item XFmode
+``Extended Floating'' mode represents an IEEE extended floating point
+number.  This mode only has 80 meaningful bits (ten bytes).  Some
+processors require such numbers to be padded to twelve bytes, others
+to sixteen; this mode is used for either.
 “Extended Floating”模式，表示一个三精度（12 字节）浮点数。本方式用来表示 IEEE 扩展浮点类型。
 
 @findex SDmode
 @item SDmode
+``Single Decimal Floating'' mode represents a four byte decimal
+floating point number (as distinct from conventional binary floating
+point).
 ``Single Decimal Floating''模式，表示一个四字节十进制浮点数（区别于常规的二进制浮点）。
 
 @findex DDmode
 @item DDmode
+``Double Decimal Floating'' mode represents an eight byte decimal
+floating point number.
 ``Double Decimal Floating''模式，表示一个八字节十进制浮点数。
 
 @findex TDmode
 @item TDmode
+``Tetra Decimal Floating'' mode represents a sixteen byte decimal
+floating point number all 128 of whose bits are meaningful.
 ``Tetra Decimal Floating''模式，表示一个十六字节十进制浮点数，所有128位都有含义。
 
 @findex TFmode
 @item TFmode
+``Tetra Floating'' mode represents a sixteen byte floating point number
+all 128 of whose bits are meaningful.  One common use is the
+IEEE quad-precision format.
 “Tetra Floating”模式，表示一个四精度（16 字节）浮点数。
 
 @findex QQmode
 @item QQmode
+``Quarter-Fractional'' mode represents a single byte treated as a signed
+fractional number.  The default format is ``s.7''.
 ``Quarter-Fractional''模式，表示一个单字节的有符号小数。缺省格式为``s.7''。
 
 @findex HQmode
 @item HQmode
+``Half-Fractional'' mode represents a two-byte signed fractional number.
+The default format is ``s.15''.
 ``Half-Fractional''模式，表示一个双字节的有符号小数。缺省格式为``s.15''。
 
 @findex SQmode
 @item SQmode
+``Single Fractional'' mode represents a four-byte signed fractional number.
+The default format is ``s.31''.
 ``Single Fractional''模式，表示一个四字节的有符号小数。缺省格式为``s.31''。
 
 @findex DQmode
 @item DQmode
+``Double Fractional'' mode represents an eight-byte signed fractional number.
+The default format is ``s.63''.
 ``Double Fractional''模式，表示一个八字节的有符号小数。缺省格式为``s.63''。
 
 @findex TQmode
 @item TQmode
+``Tetra Fractional'' mode represents a sixteen-byte signed fractional number.
+The default format is ``s.127''.
 ``Tetra Fractional''模式，表示一个十六字节有符号小数。缺省格式为``s.127''。
 
 @findex UQQmode
 @item UQQmode
+``Unsigned Quarter-Fractional'' mode represents a single byte treated as an
+unsigned fractional number.  The default format is ``.8''.
 ``Unsigned Quarter-Fractional''模式，表示一个单字节的无符号小数。缺省格式为``.8''。
 
 @findex UHQmode
 @item UHQmode
+``Unsigned Half-Fractional'' mode represents a two-byte unsigned fractional
+number.  The default format is ``.16''.
 ``Unsigned Half-Fractional''模式，表示一个双字节的无符号小数。缺省格式为``.16''。
 
 @findex USQmode
 @item USQmode
+``Unsigned Single Fractional'' mode represents a four-byte unsigned fractional
+number.  The default format is ``.32''.
 ``Unsigned Single Fractional''模式，表示一个四字节的无符号小数。缺省格式为``.32''。
 
 @findex UDQmode
 @item UDQmode
+``Unsigned Double Fractional'' mode represents an eight-byte unsigned
+fractional number.  The default format is ``.64''.
 ``Unsigned Double Fractional''模式，表示一个八字节的无符号小数。缺省格式为``.64''。
 
 @findex UTQmode
 @item UTQmode
+``Unsigned Tetra Fractional'' mode represents a sixteen-byte unsigned
+fractional number.  The default format is ``.128''.
 ``Unsigned Tetra Fractional''模式，表示一个十六字节的无符号小数。缺省格式为``.128''。
 
 @findex HAmode
 @item HAmode
+``Half-Accumulator'' mode represents a two-byte signed accumulator.
+The default format is ``s8.7''.
 ``Half-Accumulator''模式，表示一个双字节的有符号累加器。缺省格式为``s8.7''。
 
 @findex SAmode
 @item SAmode
+``Single Accumulator'' mode represents a four-byte signed accumulator.
+The default format is ``s16.15''.
 ``Single Accumulator''模式，表示一个四字节的有符号累加器。缺省格式为``s16.15''。
 
 @findex DAmode
 @item DAmode
+``Double Accumulator'' mode represents an eight-byte signed accumulator.
+The default format is ``s32.31''.
 ``Double Accumulator''模式，表示一个八字节的有符号累加器。缺省格式为``s32.31''。
 
 @findex TAmode
 @item TAmode
+``Tetra Accumulator'' mode represents a sixteen-byte signed accumulator.
+The default format is ``s64.63''.
 ``Tetra Accumulator''模式，表示一个十六字节的有符号累加器。缺省格式为``s64.63''。
 
 @findex UHAmode
 @item UHAmode
+``Unsigned Half-Accumulator'' mode represents a two-byte unsigned accumulator.
+The default format is ``8.8''.
 ``Unsigned Half-Accumulator''模式，表示一个双字节的无符号累加器。缺省格式为``8.8''。
 
 @findex USAmode
 @item USAmode
+``Unsigned Single Accumulator'' mode represents a four-byte unsigned
+accumulator.  The default format is ``16.16''.
 ``Unsigned Single Accumulator''模式，表示一个四字节的无符号累加器。缺省格式为``16.16''。
 
 @findex UDAmode
 @item UDAmode
+``Unsigned Double Accumulator'' mode represents an eight-byte unsigned
+accumulator.  The default format is ``32.32''.
 ``Unsigned Double Accumulator''模式，表示一个八字节的无符号累加器。缺省格式为``32.32''。
 
 @findex UTAmode
 @item UTAmode
+``Unsigned Tetra Accumulator'' mode represents a sixteen-byte unsigned
+accumulator.  The default format is ``64.64''.
 ``Unsigned Tetra Accumulator''模式，表示一个十六字节的无符号累加器。缺省格式为``64.64''。
 
 @findex CCmode
 @item CCmode
+``Condition Code'' mode represents the value of a condition code, which
+is a machine-specific set of bits used to represent the result of a
+comparison operation.  Other machine-specific modes may also be used for
+the condition code.  These modes are not used on machines that use
+@code{cc0} (see @pxref{Condition Code}).
 “condition code”模式，表示条件代码的值。其中条件代码是一组与机器相关的位集合，用来表示比较的结果。在使用了 cc0 的机器上，不用CCmode。
 
 @findex BLKmode
 @item BLKmode
+``Block'' mode represents values that are aggregates to which none of
+the other modes apply.  In RTL, only memory references can have this mode,
+and only if they appear in string-move or vector instructions.  On machines
+which have no such instructions, @code{BLKmode} will not appear in RTL@.
 “Block”模式，表示其它模式都不适用的聚合值。在 RTL 中，只有内存引用才能有此方式，并且仅当出现在字符串移动指令或向量指令中时，才能有此方式。若机器没有上述指令，则@code{BLKmode}将不出现在 RTL中。
 
 @findex VOIDmode
 @item VOIDmode
+Void mode means the absence of a mode or an unspecified mode.
+For example, RTL expressions of code @code{const_int} have mode
+@code{VOIDmode} because they can be taken to have whatever mode the context
+requires.  In debugging dumps of RTL, @code{VOIDmode} is expressed by
+the absence of any mode.
 意味着模式不出现或一个不确定的模式。例 如：@code{const_int}表达式的模式就是@code{VOIDmode}， 因为此类表达式可认为具有其上下文所要求的任何模式。在RTL的调试输出中，@code{VOIDmode}表示成没有任何模式出现。
 
 @findex QCmode
@@ -908,6 +1649,10 @@ RTL表达式包含几个标记（位域），用于特定类型的表达式。�
 @findex XCmode
 @findex TCmode
 @item QCmode, HCmode, SCmode, DCmode, XCmode, TCmode
+These modes stand for a complex number represented as a pair of floating
+point values.  The floating point values are in @code{QFmode},
+@code{HFmode}, @code{SFmode}, @code{DFmode}, @code{XFmode}, and
+@code{TFmode}, respectively.
 这些方式模式由一对浮点数组成的复数。其中， 浮点数分别具有@code{QFmode}、@code{HFmode}, @code{SFmode}, @code{DFmode}, @code{XFmode}和@code{TFmode}。
 
 @findex CQImode
@@ -917,113 +1662,178 @@ RTL表达式包含几个标记（位域），用于特定类型的表达式。�
 @findex CTImode
 @findex COImode
 @item CQImode, CHImode, CSImode, CDImode, CTImode, COImode
+These modes stand for a complex number represented as a pair of integer
+values.  The integer values are in @code{QImode}, @code{HImode},
+@code{SImode}, @code{DImode}, @code{TImode}, and @code{OImode},
+respectively.
 这些模式代表由一对整数组成的复数。整数值分别具有方式@code{QImode}, @code{HImode},@code{SImode}, @code{DImode}, @code{TImode}和@code{OImode}。
 
 @end table
 
+The machine description defines @code{Pmode} as a C macro which expands
+into the machine mode used for addresses.  Normally this is the mode
+whose size is @code{BITS_PER_WORD}, @code{SImode} on 32-bit machines.
 机器描述定义@code{Pmode}为一个C宏，其扩展为用于寻址的机器模式。通常这是一个在32位机器上，大小为@code{BITS_PER_WORD}, @code{SImode}模式。
 
+The only modes which a machine description @i{must} support are
+@code{QImode}, and the modes corresponding to @code{BITS_PER_WORD},
+@code{FLOAT_TYPE_SIZE} and @code{DOUBLE_TYPE_SIZE}.
+The compiler will attempt to use @code{DImode} for 8-byte structures and
+unions, but this can be prevented by overriding the definition of
+@code{MAX_FIXED_MODE_SIZE}.  Alternatively, you can have the compiler
+use @code{TImode} for 16-byte structures and unions.  Likewise, you can
+arrange for the C type @code{short int} to avoid using @code{HImode}.
 机器描述唯一必须要支持的机器模式为@code{QImode}，以及对应于@code{BITS_PER_WORD}，@code{FLOAT_TYPE_SIZE}和@code{DOUBLE_TYPE_SIZE}的机器模式。编译器将尝试使用@code{DImode}，表示8字节的结构体和联合体，不过这可以通过重写@code{MAX_FIXED_MODE_SIZE}的定义来阻止。替换的，你可以让编译器使用@code{TImode}表示16字节的结构体和联合体。同样，你可以使得C类型@code{short int}避免使用@code{HImode}。
 
 @cindex mode classes
+Very few explicit references to machine modes remain in the compiler and
+these few references will soon be removed.  Instead, the machine modes
+are divided into mode classes.  These are represented by the enumeration
+type @code{enum mode_class} defined in @file{machmode.h}.  The possible
+mode classes are:
 编译器中，有很少的对机器模式显式的引用，并且这些引用将不久被移除掉。替代的，机器模式被分成机器模式类别。这些由定义在@file{machmode.h}中的枚举类型@code{enum mode_class}来表示。可能的机器类别有：
 
 @table @code
 @findex MODE_INT
 @item MODE_INT
+Integer modes.  By default these are @code{BImode}, @code{QImode},
+@code{HImode}, @code{SImode}, @code{DImode}, @code{TImode}, and
+@code{OImode}.
 整数模式。缺省情况下，它们是@code{BImode}, @code{QImode}, @code{HImode}, @code{SImode}, @code{DImode}, @code{TImode}和@code{OImode}。
 
 @findex MODE_PARTIAL_INT
 @item MODE_PARTIAL_INT
+The ``partial integer'' modes, @code{PQImode}, @code{PHImode},
+@code{PSImode} and @code{PDImode}.
 部分整数模式，@code{PQImode}, @code{PHImode}, @code{PSImode}和@code{PDImode}。
 
 @findex MODE_FLOAT
 @item MODE_FLOAT
+Floating point modes.  By default these are @code{QFmode},
+@code{HFmode}, @code{TQFmode}, @code{SFmode}, @code{DFmode},
+@code{XFmode} and @code{TFmode}.
 浮点模式。缺省情况下，这些是@code{QFmode}, @code{HFmode}, @code{TQFmode}, @code{SFmode}, @code{DFmode}, @code{XFmode}和@code{TFmode}。
 
 @findex MODE_DECIMAL_FLOAT
 @item MODE_DECIMAL_FLOAT
+Decimal floating point modes.  By default these are @code{SDmode},
+@code{DDmode} and @code{TDmode}.
 十进制浮点模式。缺省的，这些是@code{SDmode}, @code{DDmode}和@code{TDmode}。
 
 @findex MODE_FRACT
 @item MODE_FRACT
+Signed fractional modes.  By default these are @code{QQmode}, @code{HQmode},
+@code{SQmode}, @code{DQmode} and @code{TQmode}.
 有符号小数模式。缺省的，这些是@code{QQmode}, @code{HQmode}, @code{SQmode}, @code{DQmode}和@code{TQmode}。
 
 @findex MODE_UFRACT
 @item MODE_UFRACT
+Unsigned fractional modes.  By default these are @code{UQQmode}, @code{UHQmode},
+@code{USQmode}, @code{UDQmode} and @code{UTQmode}.
 无符号小数模式。缺省的，这些是@code{UQQmode}, @code{UHQmode}, @code{USQmode}, @code{UDQmode}和@code{UTQmode}。
 
 @findex MODE_ACCUM
 @item MODE_ACCUM
+Signed accumulator modes.  By default these are @code{HAmode},
+@code{SAmode}, @code{DAmode} and @code{TAmode}.
 有符号累加器模式。缺省的，这些@code{HAmode}, @code{SAmode}, @code{DAmode}和@code{TAmode}。
 
 @findex MODE_UACCUM
 @item MODE_UACCUM
+Unsigned accumulator modes.  By default these are @code{UHAmode},
+@code{USAmode}, @code{UDAmode} and @code{UTAmode}.
 无符号累加器模式。缺省的，这些是@code{UHAmode}, @code{USAmode}, @code{UDAmode}和@code{UTAmode}。
 
 @findex MODE_COMPLEX_INT
 @item MODE_COMPLEX_INT
+Complex integer modes.  (These are not currently implemented).
 复数整数模式。（当前还没有被实现。）
 
 @findex MODE_COMPLEX_FLOAT
 @item MODE_COMPLEX_FLOAT
+Complex floating point modes.  By default these are @code{QCmode},
+@code{HCmode}, @code{SCmode}, @code{DCmode}, @code{XCmode}, and
+@code{TCmode}.
 复数浮点模式。缺省情况下，为@code{QCmode}, @code{HCmode}, @code{SCmode}, @code{DCmode}, @code{XCmode}和@code{TCmode}。
 
 @findex MODE_FUNCTION
 @item MODE_FUNCTION
+Algol or Pascal function variables including a static chain.
+(These are not currently implemented).
 Algol或者Pascal函数变量，包括一个静态链。（这些目前还没有被实现。）
 
 @findex MODE_CC
 @item MODE_CC
+Modes representing condition code values.  These are @code{CCmode} plus
+any @code{CC_MODE} modes listed in the @file{@var{machine}-modes.def}.  
+@xref{Jump Patterns},
+also see @ref{Condition Code}.
 表示条件码的值的模式。为@code{CCmode}加上在@file{@var{machine}-modes.def}中列出的任何@code{CC_MODE}模式。@xref{跳转指令模式}, 同时参见@ref{条件代码}。
 
 @findex MODE_RANDOM
 @item MODE_RANDOM
+This is a catchall mode class for modes which don't fit into the above
+classes.  Currently @code{VOIDmode} and @code{BLKmode} are in
+@code{MODE_RANDOM}.
 这是所有不适合上面的类别的模式。目前@code{VOIDmode}和@code{BLKmode}包括在@code{MODE_RANDOM}中。
 
 @end table
 
+Here are some C macros that relate to machine modes:
 这些是与机器模式相关的C宏：
 
 @table @code
 @findex GET_MODE
 @item GET_MODE (@var{x})
+Returns the machine mode of the RTX @var{x}.
 返回RTX @var{x}的机器模式。
 
 @findex PUT_MODE
 @item PUT_MODE (@var{x}, @var{newmode})
+Alters the machine mode of the RTX @var{x} to be @var{newmode}.
 将RTX @var{x}的机器模式修改为@var{newmode}。
 
 @findex NUM_MACHINE_MODES
 @item NUM_MACHINE_MODES
+Stands for the number of machine modes available on the target
+machine.  This is one greater than the largest numeric value of any
+machine mode.
 表示目标机器上可用的机器模式的个数。比最大的机器模式数值大1。
 
 @findex GET_MODE_NAME
 @item GET_MODE_NAME (@var{m})
+Returns the name of mode @var{m} as a string.
 返回机器模式@var{m}的字符串名字。
 
 @findex GET_MODE_CLASS
 @item GET_MODE_CLASS (@var{m})
+Returns the mode class of mode @var{m}.
 返回机器模式@var{m}的类别。
 
 @findex GET_MODE_WIDER_MODE
 @item GET_MODE_WIDER_MODE (@var{m})
+Returns the next wider natural mode.  For example, the expression
+@code{GET_MODE_WIDER_MODE (QImode)} returns @code{HImode}.
 返回下一个宽的自然的机器模式。例如，表达式@code{GET_MODE_WIDER_MODE (QImode)}返回@code{HImode}。
 
 @findex GET_MODE_SIZE
 @item GET_MODE_SIZE (@var{m})
+Returns the size in bytes of a datum of mode @var{m}.
 返回机器模式@var{m}的字节数。
 
 @findex GET_MODE_BITSIZE
 @item GET_MODE_BITSIZE (@var{m})
+Returns the size in bits of a datum of mode @var{m}.
 返回机器模式@var{m}位数。
 
 @findex GET_MODE_IBIT
 @item GET_MODE_IBIT (@var{m})
+Returns the number of integral bits of a datum of fixed-point mode @var{m}.
 返回定点机器模式@var{m}的整数位数。
 
 @findex GET_MODE_FBIT
 @item GET_MODE_FBIT (@var{m})
+Returns the number of fractional bits of a datum of fixed-point mode @var{m}.
 返回定点机器模式@var{m}的小数位数。
 
 @findex GET_MODE_MASK
