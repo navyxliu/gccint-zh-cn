@@ -1,4 +1,4 @@
-@c Copyright (c) 2008, 2009 Free Software Foundation, Inc.
+@c Copyright (c) 2008, 2009, 2010 Free Software Foundation, Inc.
 @c Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
@@ -7,22 +7,88 @@
 @chapter GIMPLE
 @cindex GIMPLE
 
+@en GIMPLE is a three-address representation derived from GENERIC by
+@en breaking down GENERIC expressions into tuples of no more than 3
+@en operands (with some exceptions like function calls).  GIMPLE was
+@en heavily influenced by the SIMPLE IL used by the McCAT compiler
+@en project at McGill University, though we have made some different
+@en choices.  For one thing, SIMPLE doesn't support @code{goto}.
 GIMPLE为一个三地址表示，通过将GENERIC表达式分解成不超过3个操作数（有些情况例外，比如函数调用）的元组。GIMPLE在很大程度上受McGill大学的McCAT编译器项目中使用的SIMPLE IL的影响。我们也做了一些改变，例如SIMPLE不支持（GIMPLE支持的）@code{goto}。
 
+@en Temporaries are introduced to hold intermediate values needed to
+@en compute complex expressions. Additionally, all the control
+@en structures used in GENERIC are lowered into conditional jumps,
+@en lexical scopes are removed and exception regions are converted
+@en into an on the side exception region tree.
 临时对象被引入，用来存放计算复杂表达式所需要的中间值。另外，GENERIC中所有的控制结构被下降为条件跳转，词法作用域被移除，异常区域被转换成一个异常区域tree。
 
+@en The compiler pass which converts GENERIC into GIMPLE is referred to as
+@en the @samp{gimplifier}.  The gimplifier works recursively, generating
+@en GIMPLE tuples out of the original GENERIC expressions.
 将GENERIC转换成GIMPLE的编译器过程，被称作@samp{gimplifier}。@samp{gimplifier}按递归的方式进行工作，从原始的GENERIC表达式生成GIMPLE元组。
 
+@en One of the early implementation strategies used for the GIMPLE
+@en representation was to use the same internal data structures used
+@en by front ends to represent parse trees. This simplified
+@en implementation because we could leverage existing functionality
+@en and interfaces. However, GIMPLE is a much more restrictive
+@en representation than abstract syntax trees (AST), therefore it
+@en does not require the full structural complexity provided by the
+@en main tree data structure.
 早期用于GIMPLE表示的实现策略为，使用与前端表示解析树相同的内部数据结构。这会简化实现，因为我们可以利用现存的功能和接口。然而，与抽象语法树（AST）相比，GIMPLE是一个更加严格的表示，因此其不需要tree数据结构所提供的完整复杂的结构。
 
+@en The GENERIC representation of a function is stored in the
+@en @code{DECL_SAVED_TREE} field of the associated @code{FUNCTION_DECL}
+@en tree node.  It is converted to GIMPLE by a call to
+@en @code{gimplify_function_tree}.
 函数的GENERIC表示被存放在所关联的@code{FUNCTION_DECL} tree结点的@code{DECL_SAVED_TREE}域。其通过调用@code{gimplify_function_tree}来转换成GIMPLE。
 
+@en If a front end wants to include language-specific tree codes in the tree
+@en representation which it provides to the back end, it must provide a
+@en definition of @code{LANG_HOOKS_GIMPLIFY_EXPR} which knows how to
+@en convert the front end trees to GIMPLE@.  Usually such a hook will involve
+@en much of the same code for expanding front end trees to RTL@.  This function
+@en can return fully lowered GIMPLE, or it can return GENERIC trees and let the
+@en main gimplifier lower them the rest of the way; this is often simpler.
+@en GIMPLE that is not fully lowered is known as ``High GIMPLE'' and
+@en consists of the IL before the pass @code{pass_lower_cf}.  High GIMPLE
+@en contains some container statements like lexical scopes
+@en (represented by @code{GIMPLE_BIND}) and nested expressions (e.g.,
+@en @code{GIMPLE_TRY}), while ``Low GIMPLE'' exposes all of the
+@en implicit jumps for control and exception expressions directly in
+@en the IL and EH region trees.
 如果前端想在tree表示中包含语言特定的tree代码，并提供给后端，则其必须提供一个@code{LANG_HOOKS_GIMPLIFY_EXPR}的定义，其知道如果将前端的tree转换成GIMPLE。通常这样的钩子会涉及许多相同的代码，用来将前端tree扩展成RTL。该函数可以返回被完全下降的GIMPLE，或者可以返回GENERIC tree并让主gimplifier将它们下降；这通常会更简单些。没有被完全下降的GIMPLE被称为``High GIMPLE''，由@code{pass_lower_cf}过程之前的IL组成。High GIMPLE包含一些容器语句，例如词法作用域（由@code{GIMPLE_BIND}来表示），以及嵌套表达式（例如，@code{GIMPLE_TRY}）。而``Low GIMPLE''将所有隐式的控制跳转或者异常表达式都直接暴露成IL和EH区域tree。
 
+@en The C and C++ front ends currently convert directly from front end
+@en trees to GIMPLE, and hand that off to the back end rather than first
+@en converting to GENERIC@.  Their gimplifier hooks know about all the
+@en @code{_STMT} nodes and how to convert them to GENERIC forms.  There
+@en was some work done on a genericization pass which would run first, but
+@en the existence of @code{STMT_EXPR} meant that in order to convert all
+@en of the C statements into GENERIC equivalents would involve walking the
+@en entire tree anyway, so it was simpler to lower all the way.  This
+@en might change in the future if someone writes an optimization pass
+@en which would work better with higher-level trees, but currently the
+@en optimizers all expect GIMPLE@.
 C和C++前端目前直接从前端tree转换成GIMPLE，并将其交给后端，而不是首先转换成GENERIC。它们的gimplifier钩子知道所有的@code{_STMT}结点，以及如何将它们转成GENERIC形式。在genericization过程中有一些工作，应该首先被运行，但是@code{STMT_EXPR}的存在意味着，为了将所有的C语句转换成GENERIC，则需要遍历整个tree，所以一起下降会更简单些。如果有人写了一个优化过程，其在更高级别的tree上会工作的更好，则这在将来可能会有改变，但是目前所有的优化都是在GIMPLE上进行的。
 
+@en You can request to dump a C-like representation of the GIMPLE form
+@en with the flag @option{-fdump-tree-gimple}.
 你可以使用选项@option{-fdump-tree-gimple}来转储一个类C的GIMPLE表示形式。
 
+@en @menu
+@en * Tuple representation::
+@en * GIMPLE instruction set::
+@en * GIMPLE Exception Handling::
+@en * Temporaries::
+@en * Operands::
+@en * Manipulating GIMPLE statements::
+@en * Tuple specific accessors::
+@en * GIMPLE sequences::
+@en * Sequence iterators::
+@en * Adding a new GIMPLE statement code::
+@en * Statement and operand traversals::
+@en @end menu
 @menu
 * 元组表示::
 * GIMPLE指令集::
@@ -37,15 +103,27 @@ C和C++前端目前直接从前端tree转换成GIMPLE，并将其交给后端，
 * 语句和操作数遍历::
 @end menu
 
+@en @node Tuple representation
+@en @section Tuple representation
 @node 元组表示
 @section 元组表示
 @cindex tuples
 
+@en GIMPLE instructions are tuples of variable size divided in two
+@en groups: a header describing the instruction and its locations,
+@en and a variable length body with all the operands. Tuples are
+@en organized into a hierarchy with 3 main classes of tuples.
 GIMPLE指令为可变大小的元组，并由两部分组成：一个描述指令和位置的头，一个具有所有操作数的可变长度的身体。元组被组织成一个层次结构，并有3个主要类别。
 
 @subsection @code{gimple_statement_base} (gsbase)
 @cindex gimple_statement_base
 
+@en This is the root of the hierarchy, it holds basic information
+@en needed by most GIMPLE statements. There are some fields that
+@en may not be relevant to every GIMPLE statement, but those were
+@en moved into the base structure to take advantage of holes left by
+@en other fields (thus making the structure more compact).  The
+@en structure takes 4 words (32 bytes) on 64 bit hosts:
 这是层次结构的根，其存放了大多GIMPLE语句所需要的基本信息。有一些域并不与所有的GIMPLE语句相关，但是被挪到基础结构中是为了利用其它域剩下的空位（从而使得结构体更加紧凑）。结构体在64位主机上占用4个字（32个字节 ）：
 
 @multitable {@code{references_memory_p}} {Size (bits)}
@@ -69,45 +147,86 @@ GIMPLE指令为可变大小的元组，并由两部分组成：一个描述指�
 
 @itemize @bullet
 @item @code{code}
+@en Main identifier for a GIMPLE instruction. 
 GIMPLE指令的主要标识 
 
 @item @code{subcode}
+@en Used to distinguish different variants of the same basic
+@en instruction or provide flags applicable to a given code. The
+@en @code{subcode} flags field has different uses depending on the code of
+@en the instruction, but mostly it distinguishes instructions of the
+@en same family. The most prominent use of this field is in
+@en assignments, where subcode indicates the operation done on the
+@en RHS of the assignment. For example, a = b + c is encoded as
+@en @code{GIMPLE_ASSIGN <PLUS_EXPR, a, b, c>}.
 用来区分相同基本指令的不同变体，或者提供使用于给定代码的标记。@code{subcode}标记域具有不同的用法，并取决于指令的代码，但是其主要是用来区分相同家族的指令。该域最突出的用法是在赋值中，其子代码指出了在赋值的右手边所进行的操作。例如，a = b + c被编码为@code{GIMPLE_ASSIGN <PLUS_EXPR, a, b, c>}。
 
 @item @code{no_warning}
+@en Bitflag to indicate whether a warning has already been issued on
+@en this statement.
 位标记，用来指出是否在该语句上已经产生了一个警告。
 
 @item @code{visited}
+@en General purpose ``visited'' marker. Set and cleared by each pass
+@en when needed.
 通用目的的“访问”标记 。由每个编译过程根据需要来设置和清除。
 
 @item @code{nontemporal_move}
+@en Bitflag used in assignments that represent non-temporal moves.
+@en Although this bitflag is only used in assignments, it was moved
+@en into the base to take advantage of the bit holes left by the
+@en previous fields.
 位标记，用在赋值中，用来表示非临时的移动。虽然该位标记只用于赋值，但其被放到这里是为了利用先前域所剩下的空位。
 
 @item @code{plf}
+@en Pass Local Flags. This 2-bit mask can be used as general purpose
+@en markers by any pass. Passes are responsible for clearing and
+@en setting these two flags accordingly.
 编译过程局部标记。该2个位的掩码可以由任何编译过程用作通用的标记。编译过程负责相应的清除和设置这两个标记。
 
 @item @code{modified}
+@en Bitflag to indicate whether the statement has been modified.
+@en Used mainly by the operand scanner to determine when to re-scan a
+@en statement for operands.
 位标记，用来指出语句是否被修改。主要由操作数扫描器来使用，用来确定什么时候重新扫描一条语句的操作数。
 
 @item @code{has_volatile_ops}
+@en Bitflag to indicate whether this statement contains operands that
+@en have been marked volatile.
 位标记，用来指出语句是否包含被标记为volatile的操作数。
 
 @item @code{references_memory_p}
+@en Bitflag to indicate whether this statement contains memory
+@en references (i.e., its operands are either global variables, or
+@en pointer dereferences or anything that must reside in memory).
 位标记，用来指出语句是否包含内存引用（即，其操作数为全局变量，或者指针解引用，或者任何必须在内存中的）。
 
 @item @code{uid}
+@en This is an unsigned integer used by passes that want to assign
+@en IDs to every statement. These IDs must be assigned and used by
+@en each pass.
 为无符号整数，由想要为每条语句分配ID的编译过程使用。这些ID必须由每个编译过程来分配和使用。
 
 @item @code{location}
+@en This is a @code{location_t} identifier to specify source code
+@en location for this statement. It is inherited from the front
+@en end.
 为一个@code{location_t}标识符，用来指定该语句的源代码位置。其从前端继承下来。
 
 @item @code{num_ops}
+@en Number of operands that this statement has. This specifies the
+@en size of the operand vector embedded in the tuple. Only used in
+@en some tuples, but it is declared in the base tuple to take
+@en advantage of the 32-bit hole left by the previous fields.
 该语句具有的操作数个数。这描述了元组中嵌套的操作数向量的大小。只在一些元组中使用，但其声明在基础元组中是为了利用先前语所剩下的32位空位。
 
 @item @code{bb}
+@en Basic block holding the instruction.
 包含该语句的基本块。
  
 @item @code{block}
+@en Lexical block holding this statement.  Also used for debug
+@en information generation.
 包含该语句的词法块。还用于调试信息的生成。
 
 @end itemize
@@ -115,8 +234,23 @@ GIMPLE指令的主要标识
 @subsection @code{gimple_statement_with_ops}
 @cindex gimple_statement_with_ops
 
+@en This tuple is actually split in two:
+@en @code{gimple_statement_with_ops_base} and
+@en @code{gimple_statement_with_ops}. This is needed to accommodate the
+@en way the operand vector is allocated. The operand vector is
+@en defined to be an array of 1 element. So, to allocate a dynamic
+@en number of operands, the memory allocator (@code{gimple_alloc}) simply
+@en allocates enough memory to hold the structure itself plus @code{N
+@en - 1} operands which run ``off the end'' of the structure. For
+@en example, to allocate space for a tuple with 3 operands,
+@en @code{gimple_alloc} reserves @code{sizeof (struct
+@en gimple_statement_with_ops) + 2 * sizeof (tree)} bytes.
 该元组实际分成两部分：@code{gimple_statement_with_ops_base} 和 @code{gimple_statement_with_ops}。这是为了适应操作数向量的分配方法。操作数向量被定义为有1个元素的数组。所以，要分配动态数目的操作数，内存分配器(@code{gimple_alloc})只是简单的分配足够的内存来存放结构体本身，以及在结构体尾部加上@code{N - 1}个操作数。例如，要为有3个操作数的元组分配空间，@code{gimple_alloc}预留了@code{sizeof (struct gimple_statement_with_ops) + 2 * sizeof (tree)}个字节。
 
+@en On the other hand, several fields in this tuple need to be shared
+@en with the @code{gimple_statement_with_memory_ops} tuple. So, these
+@en common fields are placed in @code{gimple_statement_with_ops_base} which
+@en is then inherited from the other two tuples.
 另一方面，该元组中的一些域需要与@code{gimple_statement_with_memory_ops}元组共享。所以，这些公共域被放在@code{gimple_statement_with_ops_base}中，然后由其它两个元组来继承。
 
 @multitable {@code{addresses_taken}}	{56 + 8 * @code{num_ops} bytes}
@@ -130,23 +264,34 @@ GIMPLE指令的主要标识
 
 @itemize @bullet
 @item @code{gsbase}
+@en Inherited from @code{struct gimple_statement_base}.
 继承自@code{struct gimple_statement_base}。
 
-@item @code{addresses_taken}
-位图，存放了所有@code{VAR_DECL}的UID，该语句使用了这些@code{VAR_DECL}的地址。例如，形式为@code{p = &b}的语句将在该集合中具有符号@code{b}的UID。
-
 @item @code{def_ops}
+@en Array of pointers into the operand array indicating all the slots that
+@en contain a variable written-to by the statement. This array is
+@en also used for immediate use chaining. Note that it would be
+@en possible to not rely on this array, but the changes required to
+@en implement this are pretty invasive.
 指针数组，指向操作数数组，指出该包含语句写入的变量的所有插槽。该数组还用于立即使用链。注意，是可以不依赖该数组的，但是这种实现会很具有入侵性。
 
 @item @code{use_ops}
+@en Similar to @code{def_ops} but for variables read by the statement.
 类似于@code{def_ops}，不过是针对语句读取的变量。
 
 @item @code{op}
+@en Array of trees with @code{num_ops} slots.
 具有@code{num_ops}插槽的tree数组。
 @end itemize
 
 @subsection @code{gimple_statement_with_memory_ops}
 
+@en This tuple is essentially identical to @code{gimple_statement_with_ops},
+@en except that it contains 4 additional fields to hold vectors
+@en related memory stores and loads.  Similar to the previous case,
+@en the structure is split in two to accommodate for the operand
+@en vector (@code{gimple_statement_with_memory_ops_base} and
+@en @code{gimple_statement_with_memory_ops}).
 该元组本质上等同于@code{gimple_statement_with_ops}，除了其包含4个额外的域，来存放与内存存储和加载相关的向量。类似于先前的情况，结构体被分成两部分，用来容纳操作数向量(@code{gimple_statement_with_memory_ops_base}和@code{gimple_statement_with_memory_ops})。
 
 @multitable {@code{addresses_taken}}	{88 + 8 * @code{num_ops} bytes}
@@ -165,19 +310,38 @@ GIMPLE指令的主要标识
 
 @itemize @bullet
 @item @code{vdef_ops}
+@en Similar to @code{def_ops} but for @code{VDEF} operators. There is
+@en one entry per memory symbol written by this statement. This is
+@en used to maintain the memory SSA use-def and def-def chains.
 类似于@code{def_ops}，不过用于@code{VDEF}操作符。这是该语句写入的内存符号的一个实体。这用于维护内存SSA use-def和def-def链。
 
 @item @code{vuse_ops}
+@en Similar to @code{use_ops} but for @code{VUSE} operators. There is
+@en one entry per memory symbol loaded by this statement. This is
+@en used to maintain the memory SSA use-def chains.
 类似于@code{use_ops}，不过用于@code{VUSE}操作数。这是该语句加载的内存符号的一个实体。这用于维护内存SSA use-def链。
 
 @item @code{stores}
+@en Bitset with all the UIDs for the symbols written-to by the
+@en statement.  This is different than @code{vdef_ops} in that all the
+@en affected symbols are mentioned in this set.  If memory
+@en partitioning is enabled, the @code{vdef_ops} vector will refer to memory
+@en partitions. Furthermore, no SSA information is stored in this
+@en set.
 位集合，该语句写入的符号的所有UID。这与@code{vdef_ops}不同之处是，所有被影响的符号都在该集合中被提到。如果开启了内存划分，则@code{vdef_ops}向量将指向内存划分。而且，该集合中不存放SSA信息。
 
 @item @code{loads}
+@en Similar to @code{stores}, but for memory loads. (Note that there
+@en is some amount of redundancy here, it should be possible to
+@en reduce memory utilization further by removing these sets).
 类似于@code{stores}，不过用于内存加载。（注意，这里有一些冗余，应该可以通过移除这些集合来减少内存使用）。
 
 @end itemize
 
+@en All the other tuples are defined in terms of these three basic
+@en ones. Each tuple will add some fields. The main gimple type
+@en is defined to be the union of all these structures (@code{GTY} markers
+@en elided for clarity):
 所有其它元组按照这三个基本元组来定义。每个元组会增加一些域。gimple类型被定义成所有这些结构体的联合体（为了清晰，省略掉了@code{GTY}标记）：
 
 @smallexample
@@ -207,14 +371,17 @@ union gimple_statement_d
 @};
 @end smallexample
 
- 
+@en @node GIMPLE instruction set
+@en @section GIMPLE instruction set 
 @node GIMPLE指令集
 @section GIMPLE指令集
 @cindex GIMPLE instruction set
 
+@en The following table briefly describes the GIMPLE instruction set.
 下面的表格简短地描述了GIMPLE指令集。
 
 @multitable {@code{GIMPLE_CHANGE_DYNAMIC_TYPE}} {High GIMPLE} {Low GIMPLE}
+@en @item Instruction			@tab High GIMPLE	@tab Low GIMPLE
 @item 指令			@tab 高层GIMPLE	    @tab 低层GIMPLE
 @item @code{GIMPLE_ASM}			@tab x			@tab x
 @item @code{GIMPLE_ASSIGN}		@tab x			@tab x
@@ -247,34 +414,80 @@ union gimple_statement_d
 @item @code{GIMPLE_TRY}			@tab x			@tab
 @end multitable
 
+@en @node GIMPLE Exception Handling
+@en @section Exception Handling
 @node GIMPLE异常处理
 @section 异常处理
 @cindex GIMPLE Exception Handling
 
+@en Other exception handling constructs are represented using
+@en @code{GIMPLE_TRY_CATCH}.  @code{GIMPLE_TRY_CATCH} has two operands.  The
+@en first operand is a sequence of statements to execute.  If executing
+@en these statements does not throw an exception, then the second operand
+@en is ignored.  Otherwise, if an exception is thrown, then the second
+@en operand of the @code{GIMPLE_TRY_CATCH} is checked.  The second
+@en operand may have the following forms:
 其它异常处理结构使用@code{GIMPLE_TRY_CATCH}来表示。@code{GIMPLE_TRY_CATCH}有两个操作数。第一个操作数为一个要执行的语句序列。如果执行这些语句并没有抛出异常，则第二个操作数被忽略。否则，如果有异常被抛出，则@code{GIMPLE_TRY_CATCH}的第二个操作数将被检查。第二个操作数可以具有以下形式：
 
 @enumerate
 
+@en @item A sequence of statements to execute.  When an exception occurs,
+@en these statements are executed, and then the exception is rethrown.
 @item 一个要执行的语句序列。当发生异常时，这些语句被执行，然后异常被重新抛出。
 
+@en @item A sequence of @code{GIMPLE_CATCH} statements.  Each
+@en @code{GIMPLE_CATCH} has a list of applicable exception types and
+@en handler code.  If the thrown exception matches one of the caught
+@en types, the associated handler code is executed.  If the handler
+@en code falls off the bottom, execution continues after the original
+@en @code{GIMPLE_TRY_CATCH}.
 @item 一个@code{GIMPLE_CATCH}语句序列。每个@code{GIMPLE_CATCH}有一个可适用的异常类型列表和处理代码。如果被抛出的异常匹配其中一个类型，则相关的处理代码被执行。如果处理代码执行到结尾并结束，则在最初的@code{GIMPLE_TRY_CATCH}之后继续执行。
 
+@en @item A @code{GIMPLE_EH_FILTER} statement.  This has a list of
+@en permitted exception types, and code to handle a match failure.  If the
+@en thrown exception does not match one of the allowed types, the
+@en associated match failure code is executed.  If the thrown exception
+@en does match, it continues unwinding the stack looking for the next
+@en handler.
 @item 一条@code{GIMPLE_EH_FILTER}语句。具有一个允许的异常类型列表，和当匹配失败时的处理代码。如果被抛出的异常不匹配所允许的类型之一，则相关的匹配失败代码会被执行。如果抛出的异常确实匹配，则继续查找下一个处理。
 
 @end enumerate
 
+@en Currently throwing an exception is not directly represented in
+@en GIMPLE, since it is implemented by calling a function.  At some
+@en point in the future we will want to add some way to express that
+@en the call will throw an exception of a known type.
 目前抛出异常并不直接用GIMPLE来表示，而是通过调用一个函数来实现。将来的某个时候，我们将增加某种方式来表示抛出已知类型的异常的调用。
 
+@en Just before running the optimizers, the compiler lowers the
+@en high-level EH constructs above into a set of @samp{goto}s, magic
+@en labels, and EH regions.  Continuing to unwind at the end of a
+@en cleanup is represented with a @code{GIMPLE_RESX}.
 就在运行优化器之前，编译器将高级别的EH结构下降为一组@samp{goto}，魔术标号，以及EH区域。
 
 @node Temporaries
 @section Temporaries
 @cindex Temporaries
 
+@en When gimplification encounters a subexpression that is too
+@en complex, it creates a new temporary variable to hold the value of
+@en the subexpression, and adds a new statement to initialize it
+@en before the current statement. These special temporaries are known
+@en as @samp{expression temporaries}, and are allocated using
+@en @code{get_formal_tmp_var}.  The compiler tries to always evaluate
+@en identical expressions into the same temporary, to simplify
+@en elimination of redundant calculations.
 当gimplification遇到一个过于复杂的子表达式的时候，会创建一个新的临时变量来存放子表达式的值，并且在当前语句之前，增加一条新的语句对其初始化。这些特殊的临时对象被称作@samp{expression temporaries}，并使用@code{get_formal_tmp_var}来分配。编译器总是尝试将相等的表达式放到同一个临时对象中，来简化冗余计算消除。
 
+@en We can only use expression temporaries when we know that it will
+@en not be reevaluated before its value is used, and that it will not
+@en be otherwise modified@footnote{These restrictions are derived
+@en from those in Morgan 4.8.}. Other temporaries can be allocated
+@en using @code{get_initialized_tmp_var} or @code{create_tmp_var}.
 只有当我们知道在使用表达式临时对象的值之前，其不会被重新求值的时候，才可以使用，否则其将不能被修改@footnote{这些限制源自Morgan 4.8.}。其它临时对象可以使用@code{get_initialized_tmp_var}或@code{create_tmp_var}来分配。
 
+@en Currently, an expression like @code{a = b + 5} is not reduced any
+@en further.  We tried converting it to something like
 目前，像@code{a = b + 5}这样的表达式没有被进一步简化。我们曾经尝试将其转换成型如
 
 @smallexample
@@ -282,27 +495,49 @@ union gimple_statement_d
   a = T1;
 @end smallexample
 
+@en but this bloated the representation for minimal benefit.  However, a
+@en variable which must live in memory cannot appear in an expression; its
+@en value is explicitly loaded into a temporary first.  Similarly, storing
+@en the value of an expression to a memory variable goes through a
+@en temporary.
 的样子。但这会使表示变得膨胀，而无法获益。然而，必须在内存中的变量不能出现在表达式中；其值先被显式的加载到一个临时对象中。类似的，将表达式的值存放到内存变量中，也要通过一个临时对象。
 
+@en @node Operands
+@en @section Operands
 @node 操作数
 @section 操作数
 @cindex Operands
 
+@en In general, expressions in GIMPLE consist of an operation and the
+@en appropriate number of simple operands; these operands must either be a
+@en GIMPLE rvalue (@code{is_gimple_val}), i.e.@: a constant or a register
+@en variable.  More complex operands are factored out into temporaries, so
+@en that
 总得来说，GIMPLE表达式由一个运算和适当数目的简单操作数组成；这些操作数必须或者为GIMPLE右值(@code{is_gimple_val})，即一个常量，或者一个寄存器变量。更复杂的操作数被分解到临时对象中，所以，
 
 @smallexample
   a = b + c + d
 @end smallexample
+@en becomes
 会变成
 @smallexample
   T1 = b + c;
   a = T1 + d;
 @end smallexample
 
+@en The same rule holds for arguments to a @code{GIMPLE_CALL}.
 对于@code{GIMPLE_CALL}的参数也是同样的规则。
 
+@en The target of an assignment is usually a variable, but can also be a
+@en @code{MEM_REF} or a compound lvalue as described below.
 一个赋值的目标通常为一个变量，但是也可以为一个@code{INDIRECT_REF}或者一个由下面描述的复合左值。
 
+@en @menu
+@en * Compound Expressions::
+@en * Compound Lvalues::
+@en * Conditional Expressions::
+@en * Logical Operators::
+@en @end menu
 @menu
 * 复合表达式::
 * 复合左值::
@@ -310,16 +545,27 @@ union gimple_statement_d
 * 逻辑运算符::
 @end menu
 
+@en @node Compound Expressions
+@en @subsection Compound Expressions
 @node 复合表达式
 @subsection 复合表达式
 @cindex Compound Expressions
 
+@en The left-hand side of a C comma expression is simply moved into a separate
+@en statement.
 C逗号表达式的左手边被简单的移送到一个独立的语句中。
 
+@en @node Compound Lvalues
+@en @subsection Compound Lvalues
 @node 复合左值
 @subsection 复合左值
 @cindex Compound Lvalues
 
+@en Currently compound lvalues involving array and structure field references
+@en are not broken down; an expression like @code{a.b[2] = 42} is not reduced
+@en any further (though complex array subscripts are).  This restriction is a
+@en workaround for limitations in later optimizers; if we were to convert this
+@en to
 目前涉及到数组和结构体域引用的复合左值，没有被分解；像@code{a.b[2] = 42}这样的表达式不再被简化（虽然是复杂的数组下标）。这种限制可以解决之后的优化器的局限性；如果我们要将其转换成
 
 @smallexample
@@ -327,17 +573,26 @@ C逗号表达式的左手边被简单的移送到一个独立的语句中。
   T1[2] = 42;
 @end smallexample
 
+@en alias analysis would not remember that the reference to @code{T1[2]} came
+@en by way of @code{a.b}, so it would think that the assignment could alias
+@en another member of @code{a}; this broke @code{struct-alias-1.c}.  Future
+@en optimizer improvements may make this limitation unnecessary.
 则别名分析无法记住对@code{T1[2]}的引用是来自@code{a.b}，所以，其会认为该赋值会与@code{a}的另一个成员有别名关系；这会使@code{struct-alias-1.c}运行失败。将来对优化器的改进可以不再需要限制。
 
+@en @node Conditional Expressions
+@en @subsection Conditional Expressions
 @node 条件表达式
 @subsection 条件表达式
 @cindex Conditional Expressions
 
+@en A C @code{?:} expression is converted into an @code{if} statement with
+@en each branch assigning to the same temporary.  So,
 C @code{?:} 表达式被转换成一条@code{if}语句，每个分支被分配给相同的临时对象。所以，
 
 @smallexample
   a = b ? c : d;
 @end smallexample
+@en becomes
 会变成
 @smallexample
   if (b == 1)
@@ -347,14 +602,24 @@ C @code{?:} 表达式被转换成一条@code{if}语句，每个分支被分配�
   a = T1;
 @end smallexample
 
+@en The GIMPLE level if-conversion pass re-introduces @code{?:}
+@en expression, if appropriate. It is used to vectorize loops with
+@en conditions using vector conditional operations.
 GIMPLE级别的if-conversion过程在适当的时候，重新引入了@code{?:}表达式。其用于向量化循环。
 
+@en Note that in GIMPLE, @code{if} statements are represented using
+@en @code{GIMPLE_COND}, as described below.
 注意在GIMPLE中，@code{if}语句通过@code{GIMPLE_COND}来表示，正如下面所描述。
 
+@en @node Logical Operators
+@en @subsection Logical Operators
 @node 逻辑运算符
 @subsection 逻辑运算符
 @cindex Logical Operators
 
+@en Except when they appear in the condition operand of a
+@en @code{GIMPLE_COND}, logical `and' and `or' operators are simplified
+@en as follows: @code{a = b && c} becomes
 除非它们出现在@code{GIMPLE_COND}的条件操作数中，否则逻辑的`and'和`or'操作符将按照下列方式进行简化：@code{a = b && c}变成
 
 @smallexample
@@ -364,279 +629,448 @@ GIMPLE级别的if-conversion过程在适当的时候，重新引入了@code{?:}�
   a = T1;
 @end smallexample
 
+@en Note that @code{T1} in this example cannot be an expression temporary,
+@en because it has two different assignments.
 注意该例子中的@code{T1}不能为表达式临时对象，因为其具有两个不同的赋值。
 
+@en @subsection Manipulating operands
 @subsection 操作操作数
 
+@en All gimple operands are of type @code{tree}.  But only certain
+@en types of trees are allowed to be used as operand tuples.  Basic
+@en validation is controlled by the function
+@en @code{get_gimple_rhs_class}, which given a tree code, returns an
+@en @code{enum} with the following values of type @code{enum
+@en gimple_rhs_class}
 所有的gimple操作数都是@code{tree}类型的。不过只有特定类型的tree可以被用作操作数元组。函数@code{get_gimple_rhs_class}可以进行基本的验证，其给定一个tree代码，返回一个@code{enum}，为下列@code{enum gimple_rhs_class}类型的值
 
 @itemize @bullet
 @item @code{GIMPLE_INVALID_RHS}
+@en The tree cannot be used as a GIMPLE operand.
 该tree不能用作GIMPLE操作数。
 
+@item @code{GIMPLE_TERNARY_RHS}
+@en The tree is a valid GIMPLE ternary operation.
+
 @item @code{GIMPLE_BINARY_RHS}
+@en The tree is a valid GIMPLE binary operation.
 该tree为一个有效的GIMPLE二元运算。
 
 @item @code{GIMPLE_UNARY_RHS}
+@en The tree is a valid GIMPLE unary operation.
 该tree为一个有效的GIMPLE一元运算。
 
 @item @code{GIMPLE_SINGLE_RHS}
+@en The tree is a single object, that cannot be split into simpler
+@en operands (for instance, @code{SSA_NAME}, @code{VAR_DECL}, @code{COMPONENT_REF}, etc).
 该tree为单个对象，不能被拆分成更简单的操作数（例如，@code{SSA_NAME}, @code{VAR_DECL}, @code{COMPONENT_REF}等等）。
 
+@en This operand class also acts as an escape hatch for tree nodes
+@en that may be flattened out into the operand vector, but would need
+@en more than two slots on the RHS.  For instance, a @code{COND_EXPR}
+@en expression of the form @code{(a op b) ? x : y} could be flattened
+@en out on the operand vector using 4 slots, but it would also
+@en require additional processing to distinguish @code{c = a op b}
+@en from @code{c = a op b ? x : y}.  Something similar occurs with
+@en @code{ASSERT_EXPR}.   In time, these special case tree
+@en expressions should be flattened into the operand vector.
 该操作数类别还作为转义通口，对于那些可以被平整到操作数向量中，但是右手边会需要多于两个插槽的tree节点。例如，@code{(a op b) ? x : y}的@code{COND_EXPR}表达式，会被平整到使用4个插槽的操作数向量中，但是其还需要额外的处理来从@code{c = a op b ? x : y}中判断@code{c = a op b}。对于@code{ASSERT_EXPR}，也有类似的情况。这些特殊情况的tree表达式应该被平整到操作数向量中。
 @end itemize
 
+@en For tree nodes in the categories @code{GIMPLE_TERNARY_RHS},
+@en @code{GIMPLE_BINARY_RHS} and @code{GIMPLE_UNARY_RHS}, they cannot be
+@en stored inside tuples directly.  They first need to be flattened and
+@en separated into individual components.  For instance, given the GENERIC
+@en expression
 对于在@code{GIMPLE_BINARY_RHS}和@code{GIMPLE_UNARY_RHS}类别中的tree节点，它们不能被直接存放在元组中。需要首先被平整，分隔到独立的部分。例如，给定GENERIC表达式
 
 @smallexample
 a = b + c
 @end smallexample
 
+@en its tree representation is:
 其tree表示为:
 
 @smallexample
 MODIFY_EXPR <VAR_DECL  <a>, PLUS_EXPR <VAR_DECL <b>, VAR_DECL <c>>>
 @end smallexample
 
+@en In this case, the GIMPLE form for this statement is logically
+@en identical to its GENERIC form but in GIMPLE, the @code{PLUS_EXPR}
+@en on the RHS of the assignment is not represented as a tree,
+@en instead the two operands are taken out of the @code{PLUS_EXPR} sub-tree
+@en and flattened into the GIMPLE tuple as follows:
 这种情况下，该语句的GIMPLE形式逻辑上等同于它的GENERIC形式，但是在GIMPLE中，赋值语句的右手边@code{PLUS_EXPR}，不被表示成一个tree，替代的，@code{PLUS_EXPR}的两个操作数子树被拿出来，并平整到GIMPLE元组中，如下：
 
 @smallexample
 GIMPLE_ASSIGN <PLUS_EXPR, VAR_DECL <a>, VAR_DECL <b>, VAR_DECL <c>>
 @end smallexample
 
+@en @subsection Operand vector allocation
 @subsection 操作数向量分配
 
+@en The operand vector is stored at the bottom of the three tuple
+@en structures that accept operands. This means, that depending on
+@en the code of a given statement, its operand vector will be at
+@en different offsets from the base of the structure.  To access
+@en tuple operands use the following accessors
 操作数向量被存放在三元组结构的底部。这意味着，取决于给定语句的代码，其操作数向量相对于基本结构体的偏移量会不同。使用下列方法来访问元组操作数
 
 @deftypefn {GIMPLE function} unsigned gimple_num_ops (gimple g)
+@en Returns the number of operands in statement G.
 返回语句@code{G}中的操作数个数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_op (gimple g, unsigned i)
+@en Returns operand @code{I} from statement @code{G}.
 返回语句@code{G}的第@code{I}个操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree *gimple_ops (gimple g)
+@en Returns a pointer into the operand vector for statement @code{G}.  This
+@en is computed using an internal table called @code{gimple_ops_offset_}[].
+@en This table is indexed by the gimple code of @code{G}.
 返回指向语句@code{G}的操作数向量的指针。这通过内部称作@code{gimple_ops_offset_}[]的表来计算。该表的索引为@code{G}的gimple代码。
 
+@en When the compiler is built, this table is filled-in using the
+@en sizes of the structures used by each statement code defined in
+@en gimple.def.  Since the operand vector is at the bottom of the
+@en structure, for a gimple code @code{C} the offset is computed as sizeof
+@en (struct-of @code{C}) - sizeof (tree).
 当编译器被构建时，将gimple.def中定义的每个语句代码，所对应的结构体大小来填充该表。因为操作数向量在结构体的底部，所以对于gimple代码@code{C}，其偏移量被计算为sizeof (struct-of @code{C}) - sizeof (tree)。
 
+@en This mechanism adds one memory indirection to every access when
+@en using @code{gimple_op}(), if this becomes a bottleneck, a pass can
+@en choose to memoize the result from @code{gimple_ops}() and use that to
+@en access the operands.
 该机制对于使用@code{gimple_op}()的每次访问，都增加了一个内存重定向，如果这会变成瓶颈，则编译过程可以选择记住@code{gimple_ops}()的结果，并使用它来访问操作数。
 @end deftypefn
 
+@en @subsection Operand validation
 @subsection 操作数有效性
 
+@en When adding a new operand to a gimple statement, the operand will
+@en be validated according to what each tuple accepts in its operand
+@en vector.  These predicates are called by the
+@en @code{gimple_<name>_set_...()}.  Each tuple will use one of the
+@en following predicates (Note, this list is not exhaustive):
 当为gimple语句增加一个新的操作数，将根据每个元组在它操作数向量中可以接受的情况来验证该操作数。这些断言由@code{gimple_<name>_set_...()}调用。元组会使用下列断言（注意，该列表并不全）：
 
 @deftypefn {GIMPLE function} is_gimple_operand (tree t)
+@en This is the most permissive of the predicates.  It essentially
+@en checks whether t has a @code{gimple_rhs_class} of @code{GIMPLE_SINGLE_RHS}.
 这是条件最宽的断言。其实质上是检查t是否具有@code{GIMPLE_SINGLE_RHS}的@code{gimple_rhs_class}。
 @end deftypefn
 
 
 @deftypefn {GIMPLE function} is_gimple_val (tree t)
+@en Returns true if t is a "GIMPLE value", which are all the
+@en non-addressable stack variables (variables for which
+@en @code{is_gimple_reg} returns true) and constants (expressions for which
+@en @code{is_gimple_min_invariant} returns true).
 返回真，如果t为一个“GIMPLE值”，其为所有非寻址的栈变量（@code{is_gimple_reg}返回真的变量）和常量（@code{is_gimple_min_invariant}返回真的表达式）。
 @end deftypefn
 
 @deftypefn {GIMPLE function} is_gimple_addressable (tree t)
+@en Returns true if t is a symbol or memory reference whose address
+@en can be taken.
 返回真，如果t为一个符号，或者内存引用，其地址可以被使用。
 @end deftypefn
 
 @deftypefn {GIMPLE function} is_gimple_asm_val (tree t)
+@en Similar to @code{is_gimple_val} but it also accepts hard registers.
 类似于@code{is_gimple_val}，不过其还接受硬件寄存器。
 @end deftypefn
 
 @deftypefn {GIMPLE function} is_gimple_call_addr (tree t)
+@en Return true if t is a valid expression to use as the function
+@en called by a @code{GIMPLE_CALL}.
 返回真，如果t为一个有效的表达式，被作用由@code{GIMPLE_CALL}调用的函数。
 @end deftypefn
 
+@deftypefn {GIMPLE function} is_gimple_mem_ref_addr (tree t)
+@en Return true if t is a valid expression to use as first operand
+@en of a @code{MEM_REF} expression.
+@end deftypefn
+
 @deftypefn {GIMPLE function} is_gimple_constant (tree t)
+@en Return true if t is a valid gimple constant.
 返回真，如果t为一个有效的gimple常量。
 @end deftypefn
 
 @deftypefn {GIMPLE function} is_gimple_min_invariant (tree t)
+@en Return true if t is a valid minimal invariant.  This is different
+@en from constants, in that the specific value of t may not be known
+@en at compile time, but it is known that it doesn't change (e.g.,
+@en the address of a function local variable).
 返回真，如果t为一个有效的最小不变量。这与常量不同，其特定的值在编译的时候可能不已知，但是知道其不会改变（例如，函数局部变量的地址）。
 @end deftypefn
 
 @deftypefn {GIMPLE function} is_gimple_min_invariant_address (tree t)
+@en Return true if t is an @code{ADDR_EXPR} that does not change once a
+@en function is running.
 返回真，如果t为一个@code{ADDR_EXPR}，其在程序运行时不会改变。
 @end deftypefn
 
+@deftypefn {GIMPLE function} is_gimple_ip_invariant (tree t)
+@en Return true if t is an interprocedural invariant.  This means that t
+@en is a valid invariant in all functions (e.g. it can be an address of a
+@en global variable but not of a local one).
+@end deftypefn
 
+@deftypefn {GIMPLE function} is_gimple_ip_invariant_address (tree t)
+@en Return true if t is an @code{ADDR_EXPR} that does not change once the
+@en program is running (and which is valid in all functions).
+@end deftypefn
+
+@subsection Statement validation
 @subsection 语句有效性
 
 @deftypefn {GIMPLE function} is_gimple_assign (gimple g)
+@en Return true if the code of g is @code{GIMPLE_ASSIGN}.
 返回真，如果g的代码为@code{GIMPLE_ASSIGN}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} is_gimple_call (gimple g)
+@en Return true if the code of g is @code{GIMPLE_CALL}.
 返回真，如果g的代码为@code{GIMPLE_CALL}。
+@end deftypefn
+
+@deftypefn {GIMPLE function} is_gimple_debug (gimple g)
+@en Return true if the code of g is @code{GIMPLE_DEBUG}.
 @end deftypefn
  
 @deftypefn {GIMPLE function} gimple_assign_cast_p (gimple g)
+@en Return true if g is a @code{GIMPLE_ASSIGN} that performs a type cast
+@en operation.
 返回真，如果g为一个@code{GIMPLE_ASSIGN}并执行一个类型转换操作。
 @end deftypefn
 
+@deftypefn {GIMPLE function} gimple_debug_bind_p (gimple g)
+@en Return true if g is a @code{GIMPLE_DEBUG} that binds the value of an
+@en expression to a variable.
+@end deftypefn
+
+@en @node Manipulating GIMPLE statements
+@en @section Manipulating GIMPLE statements
 @node 操作GIMPLE语句
 @section 操作GIMPLE语句
 @cindex Manipulating GIMPLE statements
 
+@en This section documents all the functions available to handle each
+@en of the GIMPLE instructions.
 这章介绍了所有可用于处理每个GIMPLE指令的函数。
 
+@subsection Common accessors 
+@en The following are common accessors for gimple statements.
 @subsection 通用访问方法
 下列为对gimple语句的通用访问。
 
 @deftypefn {GIMPLE function} enum gimple_code gimple_code (gimple g)
+@en Return the code for statement @code{G}.
 返回语句@code{G}的代码。
 @end deftypefn
  
 @deftypefn {GIMPLE function} basic_block gimple_bb (gimple g)
+@en Return the basic block to which statement @code{G} belongs to.
 返回语句@code{G}所属的基本块。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_block (gimple g)
+@en Return the lexical scope block holding statement @code{G}.
 返回包含语句@code{G}的词法作用域。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_expr_type (gimple stmt)
+@en Return the type of the main expression computed by @code{STMT}. Return
+@en @code{void_type_node} if @code{STMT} computes nothing. This will only return
+@en something meaningful for @code{GIMPLE_ASSIGN}, @code{GIMPLE_COND} and
+@en @code{GIMPLE_CALL}.  For all other tuple codes, it will return
+@en @code{void_type_node}.
 返回@code{STMT}所计算的主表达式。如果@code{STMT}不做任何计算，则返回@code{void_type_node}。这将只为@code{GIMPLE_ASSIGN}, @code{GIMPLE_COND} 和 @code{GIMPLE_CALL}返回一些有意义的东西。对于所有其它元组代码，其将返回@code{void_type_node}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} enum tree_code gimple_expr_code (gimple stmt)
+@en Return the tree code for the expression computed by @code{STMT}.  This
+@en is only meaningful for @code{GIMPLE_CALL}, @code{GIMPLE_ASSIGN} and
+@en @code{GIMPLE_COND}.  If @code{STMT} is @code{GIMPLE_CALL}, it will return @code{CALL_EXPR}.
+@en For @code{GIMPLE_COND}, it returns the code of the comparison predicate.
+@en For @code{GIMPLE_ASSIGN} it returns the code of the operation performed
+@en by the @code{RHS} of the assignment.
 返回@code{STMT}所计算的表达式的tree代码。这将只为@code{GIMPLE_CALL}, @code{GIMPLE_ASSIGN}和@code{GIMPLE_COND}返回一些有意义的东西。如果@code{STMT}为@code{GIMPLE_CALL}，其将返回@code{CALL_EXPR}。对于@code{GIMPLE_COND}，其返回比较断言的代码。对于@code{GIMPLE_ASSIGN}，其返回赋值语句的右手边所执行的操作代码。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_set_block (gimple g, tree block)
+@en Set the lexical scope block of @code{G} to @code{BLOCK}.
 将@code{G}的词法作用域块设置为@code{BLOCK}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} location_t gimple_locus (gimple g)
+@en Return locus information for statement @code{G}.
 返回语句@code{G}的locus信息。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_locus (gimple g, location_t locus)
+@en Set locus information for statement @code{G}.
 为语句@code{G}设置locus信息。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_locus_empty_p (gimple g)
+@en Return true if @code{G} does not have locus information.
 返回真，如果@code{G}不具有locus信息。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_no_warning_p (gimple stmt)
+@en Return true if no warnings should be emitted for statement @code{STMT}.
 返回真，如果对于语句@code{STMT}不会产生警告。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_visited (gimple stmt, bool visited_p)
+@en Set the visited status on statement @code{STMT} to @code{VISITED_P}.
 在语句@code{STMT}上将访问状态设置成@code{VISITED_P}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_visited_p (gimple stmt)
+@en Return the visited status on statement @code{STMT}.
 返回语句@code{STMT}上的访问状态。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_plf (gimple stmt, enum plf_mask plf, bool val_p)
+@en Set pass local flag @code{PLF} on statement @code{STMT} to @code{VAL_P}.
 将语句@code{STMT}上的编译过程局部标记@code{PLF}设置为@code{VAL_P}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} unsigned int gimple_plf (gimple stmt, enum plf_mask plf)
+@en Return the value of pass local flag @code{PLF} on statement @code{STMT}.
 返回语句@code{STMT}上的编译过程局部标记@code{PLF}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_has_ops (gimple g)
+@en Return true if statement @code{G} has register or memory operands.
 返回真，如果语句@code{G}具有寄存器或内存操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_has_mem_ops (gimple g)
+@en Return true if statement @code{G} has memory operands.
 返回真，如果语句@code{G}具有内存操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} unsigned gimple_num_ops (gimple g)
+@en Return the number of operands for statement @code{G}.
 返回语句@code{G}的操作数个数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree *gimple_ops (gimple g)
+@en Return the array of operands for statement @code{G}.
 返回语句@code{G}的操作数数组。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_op (gimple g, unsigned i)
+@en Return operand @code{I} for statement @code{G}.
 返回语句@code{G}的操作数@code{I}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree *gimple_op_ptr (gimple g, unsigned i)
+@en Return a pointer to operand @code{I} for statement @code{G}.
 返回语句@code{G}的操作数@code{I}的指针。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_op (gimple g, unsigned i, tree op)
+@en Set operand @code{I} of statement @code{G} to @code{OP}.
 将语句@code{G}的操作数@code{I}设置为@code{OP}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bitmap gimple_addresses_taken (gimple stmt)
+@en Return the set of symbols that have had their address taken by
+@en @code{STMT}.
 返回@code{STMT}使用过其地址的符号集合。
 @end deftypefn
  
 @deftypefn {GIMPLE function} struct def_optype_d *gimple_def_ops (gimple g)
+@en Return the set of @code{DEF} operands for statement @code{G}.
 返回语句@code{G}的@code{DEF}操作数集合。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_def_ops (gimple g, struct def_optype_d *def)
+@en Set @code{DEF} to be the set of @code{DEF} operands for statement @code{G}.
 将语句@code{G}的@code{DEF}操作数集合设置为@code{DEF}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} struct use_optype_d *gimple_use_ops (gimple g)
+@en Return the set of @code{USE} operands for statement @code{G}.
 返回语句@code{G}的@code{USE}操作数集合。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_use_ops (gimple g, struct use_optype_d *use)
+@en Set @code{USE} to be the set of @code{USE} operands for statement @code{G}.
 将语句@code{G}的@code{USE}操作数集合设置为@code{USE}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} struct voptype_d *gimple_vuse_ops (gimple g)
+@en Return the set of @code{VUSE} operands for statement @code{G}.
 返回语句@code{G}的@code{VUSE}操作数集合。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_vuse_ops (gimple g, struct voptype_d *ops)
+@en Set @code{OPS} to be the set of @code{VUSE} operands for statement @code{G}.
 将语句@code{G}的@code{VUSE}操作数集合设置为@code{OPS}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} struct voptype_d *gimple_vdef_ops (gimple g)
+@en Return the set of @code{VDEF} operands for statement @code{G}.
 返回语句@code{G}的@code{VDEF}操作数集合。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_vdef_ops (gimple g, struct voptype_d *ops)
+@en Set @code{OPS} to be the set of @code{VDEF} operands for statement @code{G}.
 将语句@code{G}的@code{VDEF}操作数集合设置为@code{OPS}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bitmap gimple_loaded_syms (gimple g)
+@en Return the set of symbols loaded by statement @code{G}.  Each element of
+@en the set is the @code{DECL_UID} of the corresponding symbol.
 返回语句@code{G}所加载的符号集合。集合中的每个元素为对应符号的@code{DECL_UID}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bitmap gimple_stored_syms (gimple g)
+@en Return the set of symbols stored by statement @code{G}.  Each element of
+@en the set is the @code{DECL_UID} of the corresponding symbol.
 返回语句@code{G}所存储的符号集合。集合中的每个元素为对应符号的@code{DECL_UID}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_modified_p (gimple g)
+@en Return true if statement @code{G} has operands and the modified field
+@en has been set.
 返回真，如果语句@code{G}具有操作数并且被修改域已经被设置。
 @end deftypefn
  
 @deftypefn {GIMPLE function} bool gimple_has_volatile_ops (gimple stmt)
+@en Return true if statement @code{STMT} contains volatile operands.
 返回真，如果语句@code{STMT}包含volatile操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_set_has_volatile_ops (gimple stmt, bool volatilep)
+@en Return true if statement @code{STMT} contains volatile operands.
 返回真，如果语句@code{STMT}包含volatile操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void update_stmt (gimple s)
+@en Mark statement @code{S} as modified, and update it.
 将语句@code{S}标记为已经被修改，并对其进行更新。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void update_stmt_if_modified (gimple s)
+@en Update statement @code{S} if it has been marked modified.
 更新语句@code{S}，如果其已经被标记为被修改。
 @end deftypefn
  
 @deftypefn {GIMPLE function} gimple gimple_copy (gimple stmt)
+@en Return a deep copy of statement @code{STMT}.
 返回语句@code{STMT}的一个深度复制。
 @end deftypefn
 
+@en @node Tuple specific accessors
+@en @section Tuple specific accessors
 @node 元组特定访问方法
 @section 元组特定访问方法
 @cindex Tuple specific accessors
@@ -647,8 +1081,8 @@ GIMPLE_ASSIGN <PLUS_EXPR, VAR_DECL <a>, VAR_DECL <b>, VAR_DECL <c>>
 * @code{GIMPLE_BIND}::
 * @code{GIMPLE_CALL}::
 * @code{GIMPLE_CATCH}::
-* @code{GIMPLE_CHANGE_DYNAMIC_TYPE}::
 * @code{GIMPLE_COND}::
+* @code{GIMPLE_DEBUG}::
 * @code{GIMPLE_EH_FILTER}::
 * @code{GIMPLE_LABEL}::
 * @code{GIMPLE_NOP}::
@@ -678,63 +1112,85 @@ GIMPLE_ASSIGN <PLUS_EXPR, VAR_DECL <a>, VAR_DECL <b>, VAR_DECL <c>>
 @cindex @code{GIMPLE_ASM}
 
 @deftypefn {GIMPLE function} gimple gimple_build_asm (const char *string, ninputs, noutputs, nclobbers, ...)
+@en Build a @code{GIMPLE_ASM} statement.  This statement is used for
+@en building in-line assembly constructs.  @code{STRING} is the assembly
+@en code.  @code{NINPUT} is the number of register inputs.  @code{NOUTPUT} is the
+@en number of register outputs.  @code{NCLOBBERS} is the number of clobbered
+@en registers.  The rest of the arguments trees for each input,
+@en output, and clobbered registers.
 构建一条@code{GIMPLE_ASM}语句。该语句用于内联的汇编结构。@code{STRING}为汇编代码。@code{NINPUT}为寄存器输入的数目。@code{NOUTPUT}为寄存器输出的数目。@code{NCLOBBERS}为被破坏的寄存器的数目。剩下的参数tree对应于每个输入，输出和被破坏的寄存器。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple gimple_build_asm_vec (const char *, VEC(tree,gc) *, VEC(tree,gc) *, VEC(tree,gc) *)
+@en Identical to gimple_build_asm, but the arguments are passed in
+@en VECs.
 等同于gimple_build_asm，不过参数在VEC中传递。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_asm_ninputs (gimple g)
+@en Return the number of input operands for @code{GIMPLE_ASM} @code{G}. 
 返回@code{GIMPLE_ASM} @code{G}的输入操作数的数目。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_asm_noutputs (gimple g)
+@en Return the number of output operands for @code{GIMPLE_ASM} @code{G}. 
 返回@code{GIMPLE_ASM} @code{G}的输出操作数的数目。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_asm_nclobbers (gimple g)
+@en Return the number of clobber operands for @code{GIMPLE_ASM} @code{G}. 
 返回@code{GIMPLE_ASM} @code{G}的破坏操作数的数目。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_asm_input_op (gimple g, unsigned index)
+@en Return input operand @code{INDEX} of @code{GIMPLE_ASM} @code{G}. 
 返回@code{GIMPLE_ASM} @code{G}的索引为@code{INDEX}的输入操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_asm_set_input_op (gimple g, unsigned index, tree in_op)
+@en Set @code{IN_OP} to be input operand @code{INDEX} in @code{GIMPLE_ASM} @code{G}. 
 将@code{IN_OP}设置为@code{GIMPLE_ASM} @code{G}的索引为@code{INDEX}的输入操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_asm_output_op (gimple g, unsigned index)
+@en Return output operand @code{INDEX} of @code{GIMPLE_ASM} @code{G}. 
 返回@code{GIMPLE_ASM} @code{G}的索引为@code{INDEX}的输出操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_asm_set_output_op (gimple g, @
 unsigned index, tree out_op)
+@en Set @code{OUT_OP} to be output operand @code{INDEX} in @code{GIMPLE_ASM} @code{G}. 
 将@code{OUT_OP}设置为@code{GIMPLE_ASM} @code{G}的索引为@code{INDEX}的输出操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_asm_clobber_op (gimple g, unsigned index)
+@en Return clobber operand @code{INDEX} of @code{GIMPLE_ASM} @code{G}. 
 返回@code{GIMPLE_ASM} @code{G}的索引为@code{INDEX}的破坏操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_asm_set_clobber_op (gimple g, unsigned index, tree clobber_op)
+@en Set @code{CLOBBER_OP} to be clobber operand @code{INDEX} in @code{GIMPLE_ASM} @code{G}. 
 将@code{CLOBBER_OP}设置为@code{GIMPLE_ASM} @code{G}的索引为@code{INDEX}的破坏操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} const char *gimple_asm_string (gimple g)
+@en Return the string representing the assembly instruction in
+@en @code{GIMPLE_ASM} @code{G}. 
 返回@code{GIMPLE_ASM} @code{G}中的字符串表示的汇编指令。
 @end deftypefn
 
 @deftypefn {GIMPLE function} bool gimple_asm_volatile_p (gimple g)
+@en Return true if @code{G} is an asm statement marked volatile. 
 返回真，如果@code{G}为一个标记为volatile的asm语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_asm_set_volatile (gimple g)
+@en Mark asm statement @code{G} as volatile. 
 将asm语句@code{G}标记为volatile。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_asm_clear_volatile (gimple g)
+@en Remove volatile marker from asm statement @code{G}. 
 从asm语句@code{G}中移除volatile标记。 
 @end deftypefn
 
@@ -743,74 +1199,127 @@ unsigned index, tree out_op)
 @cindex @code{GIMPLE_ASSIGN}
 
 @deftypefn {GIMPLE function} gimple gimple_build_assign (tree lhs, tree rhs)
+@en Build a @code{GIMPLE_ASSIGN} statement.  The left-hand side is an lvalue
+@en passed in lhs.  The right-hand side can be either a unary or
+@en binary tree expression.  The expression tree rhs will be
+@en flattened and its operands assigned to the corresponding operand
+@en slots in the new statement.  This function is useful when you
+@en already have a tree expression that you want to convert into a
+@en tuple.  However, try to avoid building expression trees for the
+@en sole purpose of calling this function.  If you already have the
+@en operands in separate trees, it is better to use
+@en @code{gimple_build_assign_with_ops}.
 构建一条@code{GIMPLE_ASSIGN}语句。左手边为lhs中传递的左值。右手边可以为一个一元或者二元tree表达式。表达式tree rhs将被平整，其操作数赋值给新语句中相应的操作数插槽中。该函数可用于，你已经有一个tree表达式，并想将其转成元组的时候。然而，不用为了调用该函数，而特意构建表达式tree。如果操作数已经是在独立的tree中，则最好使用@code{gimple_build_assign_with_ops}。
 @end deftypefn
 
 
 @deftypefn {GIMPLE function} gimple gimplify_assign (tree dst, tree src, gimple_seq *seq_p)
+@en Build a new @code{GIMPLE_ASSIGN} tuple and append it to the end of
+@en @code{*SEQ_P}.
 构建一个新的@code{GIMPLE_ASSIGN}元组，并将其追加到@code{*SEQ_P}的结尾。
 @end deftypefn
 
+@en @code{DST}/@code{SRC} are the destination and source respectively.  You can
+@en pass ungimplified trees in @code{DST} or @code{SRC}, in which
+@en case they will be converted to a gimple operand if necessary.
 @code{DST}/@code{SRC}分别为目的和源。你可以在@code{DST}或@code{SRC}中传递ungimplified tree，它们会在需要的时候被转换成gimple操作数。
 
+@en This function returns the newly created @code{GIMPLE_ASSIGN} tuple.
 该函数返回新创建的@code{GIMPLE_ASSIGN}元组。
 
 @deftypefn {GIMPLE function} gimple gimple_build_assign_with_ops @
-(enum tree_code subcode, tree lhs, tree op1, tree op2)
+@en (enum tree_code subcode, tree lhs, tree op1, tree op2)
+@en This function is similar to @code{gimple_build_assign}, but is used to
+@en build a @code{GIMPLE_ASSIGN} statement when the operands of the
+@en right-hand side of the assignment are already split into
+@en different operands.
 该函数类似于@code{gimple_build_assign}，不过是当赋值的右手边操作数已经被拆分成不同操作数的时候，用来构建一个@code{GIMPLE_ASSIGN}语句。
 
+@en The left-hand side is an lvalue passed in lhs.  Subcode is the
+@en @code{tree_code} for the right-hand side of the assignment.  Op1 and op2
+@en are the operands.  If op2 is null, subcode must be a @code{tree_code}
+@en for a unary expression.
 左手边为在lhs中传递的左值。subcode为赋值的右手边的@code{tree_code}。op1和op2为操作数。如果op2为null，则subcode必须为一个一元表达式的
 @end deftypefn
 
 @deftypefn {GIMPLE function} enum tree_code gimple_assign_rhs_code (gimple g)
+@en Return the code of the expression computed on the @code{RHS} of
+@en assignment statement @code{G}.
 返回赋值语句@code{G}的@code{RHS}上的表达式代码。
 @end deftypefn
  
 @deftypefn {GIMPLE function} enum gimple_rhs_class gimple_assign_rhs_class (gimple g)
+@en Return the gimple rhs class of the code for the expression
+@en computed on the rhs of assignment statement @code{G}.  This will never
+@en return @code{GIMPLE_INVALID_RHS}.
 返回赋值语句@code{G}右手边的表达式代码的gimple rhs类别。这个永远不会返回@code{GIMPLE_INVALID_RHS}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_assign_lhs (gimple g)
+@en Return the @code{LHS} of assignment statement @code{G}.
 返回赋值语句@code{G}的@code{LHS}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree *gimple_assign_lhs_ptr (gimple g)
+@en Return a pointer to the @code{LHS} of assignment statement @code{G}.
 返回指向赋值语句@code{G}的@code{LHS}的指针。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_assign_rhs1 (gimple g)
+@en Return the first operand on the @code{RHS} of assignment statement @code{G}.
 返回指向赋值语句@code{G}的@code{RHS}的第一个操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree *gimple_assign_rhs1_ptr (gimple g)
+@en Return the address of the first operand on the @code{RHS} of assignment
+@en statement @code{G}.
 返回指向赋值语句@code{G}的@code{RHS}的第一个操作数的地址。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_assign_rhs2 (gimple g)
+@en Return the second operand on the @code{RHS} of assignment statement @code{G}.
 返回指向赋值语句@code{G}的@code{RHS}的第二个操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree *gimple_assign_rhs2_ptr (gimple g)
+@en Return the address of the second operand on the @code{RHS} of assignment
+@en statement @code{G}.
 返回指向赋值语句@code{G}的@code{RHS}的第二个操作数的地址。
 @end deftypefn
  
+@deftypefn {GIMPLE function} tree gimple_assign_rhs3 (gimple g)
+@en Return the third operand on the @code{RHS} of assignment statement @code{G}.
+@end deftypefn
+ 
+@deftypefn {GIMPLE function} tree *gimple_assign_rhs3_ptr (gimple g)
+@en Return the address of the third operand on the @code{RHS} of assignment
+@en statement @code{G}.
+@end deftypefn
+
 @deftypefn {GIMPLE function} void gimple_assign_set_lhs (gimple g, tree lhs)
+@en Set @code{LHS} to be the @code{LHS} operand of assignment statement @code{G}.
 将@code{LHS}设置为赋值语句@code{G}的@code{LHS}操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_assign_set_rhs1 (gimple g, tree rhs)
+@en Set @code{RHS} to be the first operand on the @code{RHS} of assignment
+@en statement @code{G}.
 将@code{RHS}设置为赋值语句@code{G}的@code{RHS}的第一个操作数。
 @end deftypefn
  
-@deftypefn {GIMPLE function} tree *gimple_assign_rhs2_ptr (gimple g)
-返回指向赋值语句@code{G}的@code{RHS}的第二个操作数的指针。
-@end deftypefn
- 
 @deftypefn {GIMPLE function} void gimple_assign_set_rhs2 (gimple g, tree rhs)
+@en Set @code{RHS} to be the second operand on the @code{RHS} of assignment
+@en statement @code{G}.
 将@code{RHS}设置为赋值语句@code{G}的@code{RHS}的第二个操作数。
 @end deftypefn
- 
+
+@deftypefn {GIMPLE function} void gimple_assign_set_rhs3 (gimple g, tree rhs)
+@en Set @code{RHS} to be the third operand on the @code{RHS} of assignment
+@en statement @code{G}.
+@end deftypefn
+
 @deftypefn {GIMPLE function} bool gimple_assign_cast_p (gimple s)
+@en Return true if @code{S} is a type-cast assignment.
 返回真，如果@code{S}为一个有类型转换的赋值。
 @end deftypefn
 
@@ -820,42 +1329,58 @@ unsigned index, tree out_op)
 @cindex @code{GIMPLE_BIND}
 
 @deftypefn {GIMPLE function} gimple gimple_build_bind (tree vars, gimple_seq body)
+@en Build a @code{GIMPLE_BIND} statement with a list of variables in @code{VARS}
+@en and a body of statements in sequence @code{BODY}.
 构建一条@code{GIMPLE_BIND}语句，使用@code{VARS}中的变量列表和@code{BODY}序列中的语句体。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_bind_vars (gimple g)
+@en Return the variables declared in the @code{GIMPLE_BIND} statement @code{G}. 
 返回在@code{GIMPLE_BIND}语句@code{G}中声明的变量。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_bind_set_vars (gimple g, tree vars)
+@en Set @code{VARS} to be the set of variables declared in the @code{GIMPLE_BIND}
+@en statement @code{G}. 
 将@code{VARS}设置为@code{GIMPLE_BIND}语句@code{G}中的声明变量集。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_bind_append_vars (gimple g, tree vars)
+@en Append @code{VARS} to the set of variables declared in the @code{GIMPLE_BIND}
+@en statement @code{G}.
 将@code{VARS}追加到@code{GIMPLE_BIND}语句@code{G}中的声明变量集中。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_seq gimple_bind_body (gimple g)
+@en Return the GIMPLE sequence contained in the @code{GIMPLE_BIND} statement
+@en @code{G}. 
 返回在@code{GIMPLE_BIND}语句@code{G}中包含的GIMPLE序列。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_bind_set_body (gimple g, gimple_seq seq)
+@en Set @code{SEQ} to be sequence contained in the @code{GIMPLE_BIND} statement @code{G}.
 将@code{SEQ}设置为@code{GIMPLE_BIND}语句@code{G}中包含的序列。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_bind_add_stmt (gimple gs, gimple stmt)
+@en Append a statement to the end of a @code{GIMPLE_BIND}'s body. 
 追加一条语句到@code{GIMPLE_BIND}的主体的结尾。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_bind_add_seq (gimple gs, gimple_seq seq)
+@en Append a sequence of statements to the end of a @code{GIMPLE_BIND}'s
 追加一个语句序列到@code{GIMPLE_BIND}的主体的结尾。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_bind_block (gimple g)
+@en Return the @code{TREE_BLOCK} node associated with @code{GIMPLE_BIND} statement
+@en @code{G}. This is analogous to the @code{BIND_EXPR_BLOCK} field in trees. 
 返回与@code{GIMPLE_BIND}语句@code{G}相关联的@code{TREE_BLOCK}节点。这类似于tree中的@code{BIND_EXPR_BLOCK}域。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_bind_set_block (gimple g, tree block)
+@en Set @code{BLOCK} to be the @code{TREE_BLOCK} node associated with @code{GIMPLE_BIND}
+@en statement @code{G}. 
 将@code{BLOCK}设置为与@code{GIMPLE_BIND}语句@code{G}相关联的@code{TREE_BLOCK}节点。
 @end deftypefn
 
@@ -865,95 +1390,140 @@ unsigned index, tree out_op)
 @cindex @code{GIMPLE_CALL}
 
 @deftypefn {GIMPLE function} gimple gimple_build_call (tree fn, unsigned nargs, ...)
+@en Build a @code{GIMPLE_CALL} statement to function @code{FN}.  The argument @code{FN}
+@en must be either a @code{FUNCTION_DECL} or a gimple call address as
+@en determined by @code{is_gimple_call_addr}.  @code{NARGS} are the number of
+@en arguments.  The rest of the arguments follow the argument @code{NARGS},
+@en and must be trees that are valid as rvalues in gimple (i.e., each
+@en operand is validated with @code{is_gimple_operand}).
 构建一条对函数@code{FN}的@code{GIMPLE_CALL}语句。参数@code{FN}必须为一个@code{FUNCTION_DECL}或者一个由@code{is_gimple_call_addr}确定的gimple调用地址。@code{NARGS}为参数的数目。其余的参数在参数@code{NARGS}之后，必须为可以在gimple中作为右值的tree（即，每个操作数使用@code{is_gimple_operand}验证有效）。
 @end deftypefn
 
 
 @deftypefn {GIMPLE function} gimple gimple_build_call_from_tree (tree call_expr)
+@en Build a @code{GIMPLE_CALL} from a @code{CALL_EXPR} node.  The arguments and the
+@en function are taken from the expression directly.  This routine
+@en assumes that @code{call_expr} is already in GIMPLE form.  That is, its
+@en operands are GIMPLE values and the function call needs no further
+@en simplification.  All the call flags in @code{call_expr} are copied over
+@en to the new @code{GIMPLE_CALL}.
 根据@code{CALL_EXPR}节点构建一个@code{GIMPLE_CALL}。参数和函数直接取自表达式。该函数假设@code{call_expr}已经是GIMPLE形式。也就是说，其操作数为GIMPLE值，并且函数调用不需要进一步的简化。@code{call_expr}中所有的调用标记被复制到新的@code{GIMPLE_CALL}中。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple gimple_build_call_vec (tree fn, @code{VEC}(tree, heap) *args)
+@en Identical to @code{gimple_build_call} but the arguments are stored in a
+@en @code{VEC}().
 等同于@code{gimple_build_call}，不过参数是存储在@code{VEC}()中。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_call_lhs (gimple g)
+@en Return the @code{LHS} of call statement @code{G}.
 返回调用语句@code{G}的@code{LHS}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree *gimple_call_lhs_ptr (gimple g)
+@en Return a pointer to the @code{LHS} of call statement @code{G}.
 返回指向调用语句@code{G}的@code{LHS}的指针。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_call_set_lhs (gimple g, tree lhs)
+@en Set @code{LHS} to be the @code{LHS} operand of call statement @code{G}.
 将@code{LHS}设置为调用语句@code{G}的@code{LHS}操作数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_call_fn (gimple g)
+@en Return the tree node representing the function called by call
+@en statement @code{G}.
 返回调用语句@code{G}所调用的tree节点表示的函数。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_call_set_fn (gimple g, tree fn)
+@en Set @code{FN} to be the function called by call statement @code{G}.  This has
+@en to be a gimple value specifying the address of the called
+@en function.
 将@code{FN}设置为调用语句@code{G}所调用的函数。这必须是一个gimple值，描述了被调用函数的地址。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_call_fndecl (gimple g)
+@en If a given @code{GIMPLE_CALL}'s callee is a @code{FUNCTION_DECL}, return it.
+@en Otherwise return @code{NULL}.  This function is analogous to
+@en @code{get_callee_fndecl} in @code{GENERIC}.
 如果给定的@code{GIMPLE_CALL}的调用者为一个@code{FUNCTION_DECL}，则将其返回。否则返回@code{NULL}。该函数类似于@code{GENERIC}中的@code{get_callee_fndecl}。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_call_set_fndecl (gimple g, tree fndecl)
+@en Set the called function to @code{FNDECL}.
 将被调用的函数设置为@code{FNDECL}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_call_return_type (gimple g)
+@en Return the type returned by call statement @code{G}.
 返回调用语句@code{G}所返回的类型。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_call_chain (gimple g)
+@en Return the static chain for call statement @code{G}. 
 返回调用语句@code{G}的静态链。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_call_set_chain (gimple g, tree chain)
+@en Set @code{CHAIN} to be the static chain for call statement @code{G}. 
 将@code{CHAIN}设置为调用语句@code{G}的静态链。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_call_num_args (gimple g)
+@en Return the number of arguments used by call statement @code{G}. 
 返回调用语句@code{G}的参数个数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_call_arg (gimple g, unsigned index)
+@en Return the argument at position @code{INDEX} for call statement @code{G}.  The
+@en first argument is 0.
 返回调用语句@code{G}在位置@code{INDEX}上的参数。第一个参数的索引为0。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree *gimple_call_arg_ptr (gimple g, unsigned index)
+@en Return a pointer to the argument at position @code{INDEX} for call
+@en statement @code{G}. 
 返回指向调用语句@code{G}在位置@code{INDEX}上的参数的指针。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_call_set_arg (gimple g, unsigned index, tree arg)
+@en Set @code{ARG} to be the argument at position @code{INDEX} for call statement
+@en @code{G}. 
 将@code{ARG}设置为调用语句@code{G}在位置@code{INDEX}上的参数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_call_set_tail (gimple s)
+@en Mark call statement @code{S} as being a tail call (i.e., a call just
+@en before the exit of a function). These calls are candidate for
+@en tail call optimization. 
 将调用语句@code{S}标记为一个尾调用（即，就在exit函数之前的调用）。这些调用为尾调用优化的候选。
 @end deftypefn
 
 @deftypefn {GIMPLE function} bool gimple_call_tail_p (gimple s)
+@en Return true if @code{GIMPLE_CALL} @code{S} is marked as a tail call. 
 返回真，如果@code{GIMPLE_CALL} @code{S}被标记为尾调用。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_call_mark_uninlinable (gimple s)
+@en Mark @code{GIMPLE_CALL} @code{S} as being uninlinable. 
 将@code{GIMPLE_CALL} @code{S}标记为不可内联的。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} bool gimple_call_cannot_inline_p (gimple s)
+@en Return true if @code{GIMPLE_CALL} @code{S} cannot be inlined. 
 返回真，如果@code{GIMPLE_CALL} @code{S}不能被内联。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} bool gimple_call_noreturn_p (gimple s)
+@en Return true if @code{S} is a noreturn call. 
 返回真，如果@code{S}为一个noreturn调用。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple gimple_call_copy_skip_args (gimple stmt, bitmap args_to_skip)
+@en Build a @code{GIMPLE_CALL} identical to @code{STMT} but skipping the arguments
+@en in the positions marked by the set @code{ARGS_TO_SKIP}.
 构建一个@code{GIMPLE_CALL}，等同于@code{STMT}，不过跳过由@code{ARGS_TO_SKIP}集标记的位置参数。
 @end deftypefn
 
@@ -963,60 +1533,39 @@ unsigned index, tree out_op)
 @cindex @code{GIMPLE_CATCH}
 
 @deftypefn {GIMPLE function} gimple gimple_build_catch (tree types, gimple_seq handler)
+@en Build a @code{GIMPLE_CATCH} statement.  @code{TYPES} are the tree types this
+@en catch handles.  @code{HANDLER} is a sequence of statements with the code
+@en for the handler.
 构建一个@code{GIMPLE_CATCH}语句。@code{TYPES}为该catch所处理的tree类型。@code{HANDLER}是一个语句序列，为处理代码。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_catch_types (gimple g)
+@en Return the types handled by @code{GIMPLE_CATCH} statement @code{G}. 
 返回由@code{GIMPLE_CATCH}语句@code{G}所处理的类型。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree *gimple_catch_types_ptr (gimple g)
+@en Return a pointer to the types handled by @code{GIMPLE_CATCH} statement
+@en @code{G}. 
 返回指向由@code{GIMPLE_CATCH}语句@code{G}所处理的类型的指针。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_seq gimple_catch_handler (gimple g)
+@en Return the GIMPLE sequence representing the body of the handler
+@en of @code{GIMPLE_CATCH} statement @code{G}. 
 返回表示@code{GIMPLE_CATCH}语句@code{G}的处理者主体的GIMPLE序列。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_catch_set_types (gimple g, tree t)
+@en Set @code{T} to be the set of types handled by @code{GIMPLE_CATCH} @code{G}. 
 将@code{T}设置为@code{GIMPLE_CATCH}语句@code{G}处理的类型集。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_catch_set_handler (gimple g, gimple_seq handler)
+@en Set @code{HANDLER} to be the body of @code{GIMPLE_CATCH} @code{G}. 
 将@code{HANDLER}设置为@code{GIMPLE_CATCH} @code{G}的主体。 
 @end deftypefn
 
-@node @code{GIMPLE_CHANGE_DYNAMIC_TYPE}
-@subsection @code{GIMPLE_CHANGE_DYNAMIC_TYPE}
-@cindex @code{GIMPLE_CHANGE_DYNAMIC_TYPE}
-
-@deftypefn {GIMPLE function} gimple gimple_build_cdt (tree type, tree ptr)
-构建一个@code{GIMPLE_CHANGE_DYNAMIC_TYPE}语句。@code{TYPE}为位置@code{PTR}的新类型。
-@end deftypefn
-
-@deftypefn {GIMPLE function} tree gimple_cdt_new_type (gimple g)
-返回由@code{GIMPLE_CHANGE_DYNAMIC_TYPE}语句@code{G}设置的新类型。
-@end deftypefn
-
-@deftypefn {GIMPLE function} tree *gimple_cdt_new_type_ptr (gimple g)
-返回一个指针，指向由@code{GIMPLE_CHANGE_DYNAMIC_TYPE}语句@code{G}设置的新类型。
-@end deftypefn
-
-@deftypefn {GIMPLE function} void gimple_cdt_set_new_type (gimple g, tree new_type)
-将@code{NEW_TYPE}设置为@code{GIMPLE_CHANGE_DYNAMIC_TYPE}语句@code{G}返回的类型。
-@end deftypefn
-
-@deftypefn {GIMPLE function} tree gimple_cdt_location (gimple g)
-返回@code{GIMPLE_CHANGE_DYNAMIC_TYPE}语句@code{G}所影响的位置。
-@end deftypefn
-
-@deftypefn {GIMPLE function} tree *gimple_cdt_location_ptr (gimple g)
-返回一个指针，指向@code{GIMPLE_CHANGE_DYNAMIC_TYPE}语句@code{G}所影响的位置。 
-@end deftypefn
-
-@deftypefn {GIMPLE function} void gimple_cdt_set_location (gimple g, tree ptr)
-将@code{PTR}设置为@code{GIMPLE_CHANGE_DYNAMIC_TYPE}语句@code{G}所影响的位置。
-@end deftypefn
 
 
 @node @code{GIMPLE_COND}
@@ -1024,96 +1573,215 @@ unsigned index, tree out_op)
 @cindex @code{GIMPLE_COND}
 
 @deftypefn {GIMPLE function} gimple gimple_build_cond (enum tree_code pred_code, tree lhs, tree rhs, tree t_label, tree f_label)
+@en Build a @code{GIMPLE_COND} statement.  @code{A} @code{GIMPLE_COND} statement compares
+@en @code{LHS} and @code{RHS} and if the condition in @code{PRED_CODE} is true, jump to
+@en the label in @code{t_label}, otherwise jump to the label in @code{f_label}.
+@en @code{PRED_CODE} are relational operator tree codes like @code{EQ_EXPR},
+@en @code{LT_EXPR}, @code{LE_EXPR}, @code{NE_EXPR}, etc.
 构建一个@code{GIMPLE_COND}语句。@code{A} @code{GIMPLE_COND}语句比较@code{LHS} 和 @code{RHS}，如果@code{PRED_CODE}中的条件为真，则跳到@code{t_label}中的标号上去，否则跳到@code{f_label}中的标号上去。@code{PRED_CODE}为关系操作符tree节点，比如@code{EQ_EXPR},
 @code{LT_EXPR}, @code{LE_EXPR}, @code{NE_EXPR}等等。
 @end deftypefn
 
 
 @deftypefn {GIMPLE function} gimple gimple_build_cond_from_tree (tree cond, tree t_label, tree f_label)
+@en Build a @code{GIMPLE_COND} statement from the conditional expression
+@en tree @code{COND}.  @code{T_LABEL} and @code{F_LABEL} are as in @code{gimple_build_cond}.
 跟条件表达式tree@code{COND}，构建一个@code{GIMPLE_COND}语句。@code{T_LABEL} 和 @code{F_LABEL}与@code{gimple_build_cond}中的一样。
 @end deftypefn
 
 @deftypefn {GIMPLE function} enum tree_code gimple_cond_code (gimple g)
+@en Return the code of the predicate computed by conditional
+@en statement @code{G}. 
 返回条件语句@code{G}计算的断言代码。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_cond_set_code (gimple g, enum tree_code code)
+@en Set @code{CODE} to be the predicate code for the conditional statement
+@en @code{G}. 
 将@code{CODE}设置为条件语句@code{G}的断言代码。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_cond_lhs (gimple g)
+@en Return the @code{LHS} of the predicate computed by conditional statement
+@code{G}. 
 返回条件语句@code{G}要计算的断言的@code{LHS}操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_cond_set_lhs (gimple g, tree lhs)
+@en Set @code{LHS} to be the @code{LHS} operand of the predicate computed by
+@en conditional statement @code{G}. 
 将@code{LHS}设置为条件语句@code{G}要计算的断言的@code{LHS}操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_cond_rhs (gimple g)
+@en Return the @code{RHS} operand of the predicate computed by conditional
+@en @code{G}. 
 返回条件语句@code{G}要计算的断言的@code{RHS}操作数。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_cond_set_rhs (gimple g, tree rhs)
+@en Set @code{RHS} to be the @code{RHS} operand of the predicate computed by
+@en conditional statement @code{G}. 
 将@code{RHS}设置为条件语句@code{G}要计算的断言的@code{RHS}操作数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_cond_true_label (gimple g)
+@en Return the label used by conditional statement @code{G} when its
+@en predicate evaluates to true. 
 返回条件语句@code{G}当其断言求值为真时使用的标号。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_cond_set_true_label (gimple g, tree label)
+@en Set @code{LABEL} to be the label used by conditional statement @code{G} when
+@en its predicate evaluates to true. 
 将@code{LABEL}设为条件语句@code{G}当其断言求值为真时使用的标号。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_cond_set_false_label (gimple g, tree label)
+@en Set @code{LABEL} to be the label used by conditional statement @code{G} when
+@en its predicate evaluates to false. 
 将@code{LABEL}设为条件语句@code{G}当其断言求值为假时使用的标号。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_cond_false_label (gimple g)
+@en Return the label used by conditional statement @code{G} when its
+@en predicate evaluates to false. 
 返回条件语句@code{G}当其断言求值为假时使用的标号。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_cond_make_false (gimple g)
+@en Set the conditional @code{COND_STMT} to be of the form 'if (1 == 0)'. 
 将条件@code{COND_STMT}设置为'if (1 == 0)'的形式。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_cond_make_true (gimple g)
+@en Set the conditional @code{COND_STMT} to be of the form 'if (1 == 1)'. 
 将条件@code{COND_STMT}设置为'if (1 == 1)'的形式。 
 @end deftypefn
+
+@node @code{GIMPLE_DEBUG}
+@subsection @code{GIMPLE_DEBUG}
+@cindex @code{GIMPLE_DEBUG}
+@cindex @code{GIMPLE_DEBUG_BIND}
+
+@deftypefn {GIMPLE function} gimple gimple_build_debug_bind (tree var, tree value, gimple stmt)
+Build a @code{GIMPLE_DEBUG} statement with @code{GIMPLE_DEBUG_BIND} of
+@code{subcode}.  The effect of this statement is to tell debug
+information generation machinery that the value of user variable
+@code{var} is given by @code{value} at that point, and to remain with
+that value until @code{var} runs out of scope, a
+dynamically-subsequent debug bind statement overrides the binding, or
+conflicting values reach a control flow merge point.  Even if
+components of the @code{value} expression change afterwards, the
+variable is supposed to retain the same value, though not necessarily
+the same location.
+
+It is expected that @code{var} be most often a tree for automatic user
+variables (@code{VAR_DECL} or @code{PARM_DECL}) that satisfy the
+requirements for gimple registers, but it may also be a tree for a
+scalarized component of a user variable (@code{ARRAY_REF},
+@code{COMPONENT_REF}), or a debug temporary (@code{DEBUG_EXPR_DECL}).
+
+As for @code{value}, it can be an arbitrary tree expression, but it is
+recommended that it be in a suitable form for a gimple assignment
+@code{RHS}.  It is not expected that user variables that could appear
+as @code{var} ever appear in @code{value}, because in the latter we'd
+have their @code{SSA_NAME}s instead, but even if they were not in SSA
+form, user variables appearing in @code{value} are to be regarded as
+part of the executable code space, whereas those in @code{var} are to
+be regarded as part of the source code space.  There is no way to
+refer to the value bound to a user variable within a @code{value}
+expression.
+
+If @code{value} is @code{GIMPLE_DEBUG_BIND_NOVALUE}, debug information
+generation machinery is informed that the variable @code{var} is
+unbound, i.e., that its value is indeterminate, which sometimes means
+it is really unavailable, and other times that the compiler could not
+keep track of it.
+
+Block and location information for the newly-created stmt are
+taken from @code{stmt}, if given.
+@end deftypefn
+
+@deftypefn {GIMPLE function} tree gimple_debug_bind_get_var (gimple stmt)
+Return the user variable @var{var} that is bound at @code{stmt}.
+@end deftypefn
+
+@deftypefn {GIMPLE function} tree gimple_debug_bind_get_value (gimple stmt)
+Return the value expression that is bound to a user variable at
+@code{stmt}.
+@end deftypefn
+
+@deftypefn {GIMPLE function} tree *gimple_debug_bind_get_value_ptr (gimple stmt)
+Return a pointer to the value expression that is bound to a user
+variable at @code{stmt}.
+@end deftypefn
+
+@deftypefn {GIMPLE function} void gimple_debug_bind_set_var (gimple stmt, tree var)
+Modify the user variable bound at @code{stmt} to @var{var}.
+@end deftypefn
+
+@deftypefn {GIMPLE function} void gimple_debug_bind_set_value (gimple stmt, tree var)
+Modify the value bound to the user variable bound at @code{stmt} to
+@var{value}.
+@end deftypefn
+
+@deftypefn {GIMPLE function} void gimple_debug_bind_reset_value (gimple stmt)
+Modify the value bound to the user variable bound at @code{stmt} so
+that the variable becomes unbound.
+@end deftypefn
+
+@deftypefn {GIMPLE function} bool gimple_debug_bind_has_value_p (gimple stmt)
+Return @code{TRUE} if @code{stmt} binds a user variable to a value,
+and @code{FALSE} if it unbinds the variable.
+@end deftypefn
+
 
 @node @code{GIMPLE_EH_FILTER}
 @subsection @code{GIMPLE_EH_FILTER}
 @cindex @code{GIMPLE_EH_FILTER}
 
 @deftypefn {GIMPLE function} gimple gimple_build_eh_filter (tree types, gimple_seq failure)
+@en Build a @code{GIMPLE_EH_FILTER} statement.  @code{TYPES} are the filter's
+@en types.  @code{FAILURE} is a sequence with the filter's failure action.
 构建一个@code{GIMPLE_EH_FILTER}语句。@code{TYPES}为过滤器的类型。@code{FAILURE}为一个序列，为过滤器的失败动作。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_eh_filter_types (gimple g)
+@en Return the types handled by @code{GIMPLE_EH_FILTER} statement @code{G}. 
 返回@code{GIMPLE_EH_FILTER}语句@code{G}处理的类型。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree *gimple_eh_filter_types_ptr (gimple g)
+@en Return a pointer to the types handled by @code{GIMPLE_EH_FILTER}
+@en statement @code{G}. 
 返回一个指针，指向@code{GIMPLE_EH_FILTER}语句@code{G}处理的类型。
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_seq gimple_eh_filter_failure (gimple g)
+@en Return the sequence of statement to execute when @code{GIMPLE_EH_FILTER}
+@en statement fails. 
 返回当@code{GIMPLE_EH_FILTER}语句失败时执行的语句序列。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_eh_filter_set_types (gimple g, tree types)
+@en Set @code{TYPES} to be the set of types handled by @code{GIMPLE_EH_FILTER} @code{G}. 
 将@code{TYPES}设置为@code{GIMPLE_EH_FILTER}语句@code{G}处理的类型集。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_eh_filter_set_failure (gimple g, gimple_seq failure)
+@en Set @code{FAILURE} to be the sequence of statements to execute on
+@en failure for @code{GIMPLE_EH_FILTER} @code{G}. 
 将@code{FAILURE}设置为@code{GIMPLE_EH_FILTER}语句失败时执行的语句序列。
 @end deftypefn
 
 @deftypefn {GIMPLE function} bool gimple_eh_filter_must_not_throw (gimple g)
+@en Return the @code{EH_FILTER_MUST_NOT_THROW} flag. 
 返回@code{EH_FILTER_MUST_NOT_THROW}标记。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_eh_filter_set_must_not_throw (gimple g, bool mntp)
+@en Set the @code{EH_FILTER_MUST_NOT_THROW} flag. 
 设置@code{EH_FILTER_MUST_NOT_THROW}标记。
 @end deftypefn
 
@@ -1123,27 +1791,35 @@ unsigned index, tree out_op)
 @cindex @code{GIMPLE_LABEL}
 
 @deftypefn {GIMPLE function} gimple gimple_build_label (tree label)
+@en Build a @code{GIMPLE_LABEL} statement with corresponding to the tree
+@en label, @code{LABEL}.
 构建一个@code{GIMPLE_LABEL}语句，对应于tree标号@code{LABEL}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_label_label (gimple g)
+@en Return the @code{LABEL_DECL} node used by @code{GIMPLE_LABEL} statement @code{G}. 
 返回@code{GIMPLE_LABEL}语句@code{G}使用的@code{LABEL_DECL}节点。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_label_set_label (gimple g, tree label)
+@en Set @code{LABEL} to be the @code{LABEL_DECL} node used by @code{GIMPLE_LABEL}
+@en statement @code{G}. 
 将@code{LABEL}设置为@code{GIMPLE_LABEL}语句@code{G}使用的@code{LABEL_DECL}节点。
 @end deftypefn
 
 
 @deftypefn {GIMPLE function} gimple gimple_build_goto (tree dest)
+@en Build a @code{GIMPLE_GOTO} statement to label @code{DEST}.
 构建一个到标号@code{DEST}的@code{GIMPLE_GOTO}语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_goto_dest (gimple g)
+@en Return the destination of the unconditional jump @code{G}. 
 返回无条件跳转@code{G}的目的。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_goto_set_dest (gimple g, tree dest)
+@en Set @code{DEST} to be the destination of the unconditional jump @code{G}.
 将@code{DEST}设置为无条件跳转@code{G}的目的。
 @end deftypefn
 
@@ -1153,10 +1829,12 @@ unsigned index, tree out_op)
 @cindex @code{GIMPLE_NOP}
 
 @deftypefn {GIMPLE function} gimple gimple_build_nop (void)
+@en Build a @code{GIMPLE_NOP} statement.
 构建一个@code{GIMPLE_NOP}语句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} bool gimple_nop_p (gimple g)
+@en Returns @code{TRUE} if statement @code{G} is a @code{GIMPLE_NOP}. 
 返回@code{TRUE}，如果语句@code{G}为一个@code{GIMPLE_NOP}。 
 @end deftypefn
 
@@ -1165,22 +1843,29 @@ unsigned index, tree out_op)
 @cindex @code{GIMPLE_OMP_ATOMIC_LOAD}
 
 @deftypefn {GIMPLE function} gimple gimple_build_omp_atomic_load (tree lhs, tree rhs)
+@en Build a @code{GIMPLE_OMP_ATOMIC_LOAD} statement.  @code{LHS} is the left-hand
+@en side of the assignment.  @code{RHS} is the right-hand side of the
+@en assignment.
 构建一个@code{GIMPLE_OMP_ATOMIC_LOAD}语句。@code{LHS}为赋值的左手边。@code{RHS}为赋值的右手边。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_atomic_load_set_lhs (gimple g, tree lhs)
+@en Set the @code{LHS} of an atomic load. 
 设置原子加载的@code{LHS}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_omp_atomic_load_lhs (gimple g)
+@en Get the @code{LHS} of an atomic load. 
 获得原子加载的@code{LHS}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_atomic_load_set_rhs (gimple g, tree rhs)
+@en Set the @code{RHS} of an atomic set. 
 设置原子加载的@code{RHS}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_omp_atomic_load_rhs (gimple g)
+@en Get the @code{RHS} of an atomic set. 
 获得原子加载的@code{RHS}。
 @end deftypefn
 
@@ -1190,14 +1875,18 @@ unsigned index, tree out_op)
 @cindex @code{GIMPLE_OMP_ATOMIC_STORE}
 
 @deftypefn {GIMPLE function} gimple gimple_build_omp_atomic_store (tree val)
+@en Build a @code{GIMPLE_OMP_ATOMIC_STORE} statement. @code{VAL} is the value to be
+@en stored.
 构建一个@code{GIMPLE_OMP_ATOMIC_STORE}语句。@code{VAL}为要存储的值。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_atomic_store_set_val (gimple g, tree val)
+@en Set the value being stored in an atomic store. 
 设置在原子存储中要存储的值。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_omp_atomic_store_val (gimple g)
+@en Return the value being stored in an atomic store. 
 返回在原子存储中要存储的值。
 @end deftypefn
 
@@ -1206,30 +1895,43 @@ unsigned index, tree out_op)
 @cindex @code{GIMPLE_OMP_CONTINUE}
 
 @deftypefn {GIMPLE function} gimple gimple_build_omp_continue (tree control_def, tree control_use)
+@en Build a @code{GIMPLE_OMP_CONTINUE} statement.  @code{CONTROL_DEF} is the
+@en definition of the control variable.  @code{CONTROL_USE} is the use of
+@en the control variable.
 构建一个@code{GIMPLE_OMP_CONTINUE}语句。@code{CONTROL_DEF}为控制变量的定义。@code{CONTROL_USE}为对控制变量的使用。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_omp_continue_control_def (gimple s)
+@en Return the definition of the control variable on a
+@en @code{GIMPLE_OMP_CONTINUE} in @code{S}.
 返回@code{S}中@code{GIMPLE_OMP_CONTINUE}的控制变量的定义。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_omp_continue_control_def_ptr (gimple s)
+@en Same as above, but return the pointer.
 与上面相同，不过是返回指针。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_omp_continue_set_control_def (gimple s)
+@en Set the control variable definition for a @code{GIMPLE_OMP_CONTINUE}
+@en statement in @code{S}.
 设置@code{S}中@code{GIMPLE_OMP_CONTINUE}的控制变量的定义。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_omp_continue_control_use (gimple s)
+@en Return the use of the control variable on a @code{GIMPLE_OMP_CONTINUE}
+@en in @code{S}.
 返回@code{S}中@code{GIMPLE_OMP_CONTINUE}的对控制变量的使用。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_omp_continue_control_use_ptr (gimple s)
+@en Same as above, but return the pointer.
 与上面相同，不过是返回指针。
 @end deftypefn
  
 @deftypefn {GIMPLE function} tree gimple_omp_continue_set_control_use (gimple s)
+@en Set the control variable use for a @code{GIMPLE_OMP_CONTINUE} statement
+@en in @code{S}.
 设置@code{S}中@code{GIMPLE_OMP_CONTINUE}的对控制变量的使用。
 @end deftypefn
 
@@ -1239,18 +1941,25 @@ unsigned index, tree out_op)
 @cindex @code{GIMPLE_OMP_CRITICAL}
 
 @deftypefn {GIMPLE function} gimple gimple_build_omp_critical (gimple_seq body, tree name)
+@en Build a @code{GIMPLE_OMP_CRITICAL} statement. @code{BODY} is the sequence of
+@en statements for which only one thread can execute.  @code{NAME} is an
+@en optional identifier for this critical block.
 构建一个@code{GIMPLE_OMP_CRITICAL}语句。@code{BODY}为只有一个线程可以执行的语句序列。@code{NAME}为可选的该临界块的标识。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_omp_critical_name (gimple g)
+@en Return the name associated with @code{OMP_CRITICAL} statement @code{G}. 
 返回@code{OMP_CRITICAL}语句@code{G}关联的名字。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree *gimple_omp_critical_name_ptr (gimple g)
+@en Return a pointer to the name associated with @code{OMP} critical
+@en statement @code{G}. 
 返回一个指针，指向@code{OMP}临界语句@code{G}的名字。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_critical_set_name (gimple g, tree name)
+@en Set @code{NAME} to be the name associated with @code{OMP} critical statement @code{G}. 
 设置@code{NAME}为@code{OMP}临界语句@code{G}的名字。 
 @end deftypefn
 
@@ -1261,82 +1970,111 @@ unsigned index, tree out_op)
 @deftypefn {GIMPLE function} gimple gimple_build_omp_for (gimple_seq body, @
 tree clauses, tree index, tree initial, tree final, tree incr, @
 gimple_seq pre_body, enum tree_code omp_for_cond)
+@en Build a @code{GIMPLE_OMP_FOR} statement. @code{BODY} is sequence of statements
+@en inside the for loop.  @code{CLAUSES}, are any of the @code{OMP} loop
+@en construct's clauses: private, firstprivate,  lastprivate,
+@en reductions, ordered, schedule, and nowait.  @code{PRE_BODY} is the
+@en sequence of statements that are loop invariant.  @code{INDEX} is the
+@en index variable.  @code{INITIAL} is the initial value of @code{INDEX}.  @code{FINAL} is
+@en final value of @code{INDEX}.  OMP_FOR_COND is the predicate used to
+@en compare @code{INDEX} and @code{FINAL}.  @code{INCR} is the increment expression.
 构建一个@code{GIMPLE_OMP_FOR}语句。@code{BODY}为for循环中的语句序列。@code{CLAUSES}为@code{OMP}循环结构的从句：private, firstprivate,  lastprivate, reductions, ordered, schedule, 和 nowait。@code{PRE_BODY}为循环不变的语句序列。@code{INDEX}为索引变量。@code{INITIAL}为@code{INDEX}的初始值。@code{FINAL}为@code{INDEX}的最终值。OMP_FOR_COND为断言，用于比较@code{INDEX}和@code{FINAL}。@code{INCR}为递增表达式。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_omp_for_clauses (gimple g)
+@en Return the clauses associated with @code{OMP_FOR} @code{G}. 
 返回@code{OMP_FOR} @code{G}相关联的从句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree *gimple_omp_for_clauses_ptr (gimple g)
+@en Return a pointer to the @code{OMP_FOR} @code{G}. 
 返回一个指针，指向@code{OMP_FOR} @code{G}。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_for_set_clauses (gimple g, tree clauses)
+@en Set @code{CLAUSES} to be the list of clauses associated with @code{OMP_FOR} @code{G}. 
 将@code{CLAUSES}设置为@code{OMP_FOR} @code{G}相关联的从句列表。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_omp_for_index (gimple g)
+@en Return the index variable for @code{OMP_FOR} @code{G}. 
 返回@code{OMP_FOR} @code{G}的索引变量。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree *gimple_omp_for_index_ptr (gimple g)
+@en Return a pointer to the index variable for @code{OMP_FOR} @code{G}. 
 返回一个指针，指向@code{OMP_FOR} @code{G}的索引变量。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_for_set_index (gimple g, tree index)
+@en Set @code{INDEX} to be the index variable for @code{OMP_FOR} @code{G}. 
 将@code{INDEX}设置为@code{OMP_FOR} @code{G}的索引变量。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_omp_for_initial (gimple g)
+@en Return the initial value for @code{OMP_FOR} @code{G}. 
 返回@code{OMP_FOR} @code{G}的初始值。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree *gimple_omp_for_initial_ptr (gimple g)
+@en Return a pointer to the initial value for @code{OMP_FOR} @code{G}. 
 返回一个指针，指向@code{OMP_FOR} @code{G}的初始值。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_for_set_initial (gimple g, tree initial)
+@en Set @code{INITIAL} to be the initial value for @code{OMP_FOR} @code{G}.
 将@code{INITIAL}设置为@code{OMP_FOR} @code{G}的初始值。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_omp_for_final (gimple g)
+@en Return the final value for @code{OMP_FOR} @code{G}. 
 返回@code{OMP_FOR} @code{G}的最终值。  
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree *gimple_omp_for_final_ptr (gimple g)
+@en turn a pointer to the final value for @code{OMP_FOR} @code{G}. 
 返回一个指针，指向@code{OMP_FOR} @code{G}的最终值。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_for_set_final (gimple g, tree final)
+@en Set @code{FINAL} to be the final value for @code{OMP_FOR} @code{G}. 
 将@code{FINAL}设置为@code{OMP_FOR} @code{G}的最终值。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_omp_for_incr (gimple g)
+@en Return the increment value for @code{OMP_FOR} @code{G}. 
 返回@code{OMP_FOR} @code{G}的递增值。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree *gimple_omp_for_incr_ptr (gimple g)
+@en Return a pointer to the increment value for @code{OMP_FOR} @code{G}. 
 返回一个指针，指向@code{OMP_FOR} @code{G}的递增值。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_for_set_incr (gimple g, tree incr)
+@en Set @code{INCR} to be the increment value for @code{OMP_FOR} @code{G}. 
 将@code{INCR}设置为@code{OMP_FOR} @code{G}的递增值。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} gimple_seq gimple_omp_for_pre_body (gimple g)
+@en Return the sequence of statements to execute before the @code{OMP_FOR}
+@en statement @code{G} starts. 
 返回在@code{OMP_FOR}语句@code{G}开始之前执行的语句序列。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_for_set_pre_body (gimple g, gimple_seq pre_body)
+@en Set @code{PRE_BODY} to be the sequence of statements to execute before
+@en the @code{OMP_FOR} statement @code{G} starts.
 将@code{PRE_BODY}设置为@code{OMP_FOR}语句@code{G}开始之前执行的语句序列。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_omp_for_set_cond (gimple g, enum tree_code cond)
+@en Set @code{COND} to be the condition code for @code{OMP_FOR} @code{G}. 
 将@code{COND}设置为@code{OMP_FOR} @code{G}的条件代码。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} enum tree_code gimple_omp_for_cond (gimple g)
+@en Return the condition code associated with @code{OMP_FOR} @code{G}. 
 返回@code{OMP_FOR} @code{G}关联的条件代码。 
 @end deftypefn
 
@@ -1346,6 +2084,8 @@ gimple_seq pre_body, enum tree_code omp_for_cond)
 @cindex @code{GIMPLE_OMP_MASTER}
 
 @deftypefn {GIMPLE function} gimple gimple_build_omp_master (gimple_seq body)
+@en Build a @code{GIMPLE_OMP_MASTER} statement. @code{BODY} is the sequence of
+@en statements to be executed by just the master.
 构建一个@code{GIMPLE_OMP_MASTER}语句。@code{BODY}为只被master执行的语句序列。
 @end deftypefn
 
@@ -1355,9 +2095,12 @@ gimple_seq pre_body, enum tree_code omp_for_cond)
 @cindex @code{GIMPLE_OMP_ORDERED}
 
 @deftypefn {GIMPLE function} gimple gimple_build_omp_ordered (gimple_seq body)
+@en Build a @code{GIMPLE_OMP_ORDERED} statement.
 构建一个@code{GIMPLE_OMP_ORDERED}语句。
 @end deftypefn
 
+@en @code{BODY} is the sequence of statements inside a loop that will
+@en executed in sequence.
 @code{BODY}为循环中顺序执行的语句序列。
 
 
@@ -1366,64 +2109,90 @@ gimple_seq pre_body, enum tree_code omp_for_cond)
 @cindex @code{GIMPLE_OMP_PARALLEL}
 
 @deftypefn {GIMPLE function} gimple gimple_build_omp_parallel (gimple_seq body, tree clauses, tree child_fn, tree data_arg)
+@en Build a @code{GIMPLE_OMP_PARALLEL} statement.
 构建一个@code{GIMPLE_OMP_PARALLEL}语句。
 @end deftypefn
 
+@en @code{BODY} is sequence of statements which are executed in parallel.
+@en @code{CLAUSES}, are the @code{OMP} parallel construct's clauses.  @code{CHILD_FN} is
+@en the function created for the parallel threads to execute.
+@en @code{DATA_ARG} are the shared data argument(s).
 @code{BODY}为并行执行的语句序列。@code{CLAUSES}为@code{OMP}并行结构从句。@code{CHILD_FN}为创建的并行线程执行的函数。@code{DATA_ARG} 为共享的数据参数。
 
 @deftypefn {GIMPLE function} bool gimple_omp_parallel_combined_p (gimple g)
+@en Return true if @code{OMP} parallel statement @code{G} has the
+@en @code{GF_OMP_PARALLEL_COMBINED} flag set.
 返回真，如果@code{OMP}并行语句@code{G}设置了@code{GF_OMP_PARALLEL_COMBINED}标记。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_omp_parallel_set_combined_p (gimple g)
+@en Set the @code{GF_OMP_PARALLEL_COMBINED} field in @code{OMP} parallel statement
+@en @code{G}.
 设置@code{OMP}并行语句@code{G}的@code{GF_OMP_PARALLEL_COMBINED}域。
 @end deftypefn
  
 @deftypefn {GIMPLE function} gimple_seq gimple_omp_body (gimple g)
+@en Return the body for the @code{OMP} statement @code{G}. 
 返回@code{OMP}语句@code{G}的主体。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_set_body (gimple g, gimple_seq body)
+@en Set @code{BODY} to be the body for the @code{OMP} statement @code{G}. 
 将@code{BODY}设置为@code{OMP}语句@code{G}的主体。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_omp_parallel_clauses (gimple g)
+@en Return the clauses associated with @code{OMP_PARALLEL} @code{G}. 
 返回@code{OMP_PARALLEL} @code{G}关联的从句。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree *gimple_omp_parallel_clauses_ptr (gimple g)
+@en Return a pointer to the clauses associated with @code{OMP_PARALLEL} @code{G}. 
 返回一个指针，指向@code{OMP_PARALLEL} @code{G}关联的从句。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_parallel_set_clauses (gimple g, tree clauses)
+@en Set @code{CLAUSES} to be the list of clauses associated with
+@en @code{OMP_PARALLEL} @code{G}. 
 将@code{CLAUSES}设置为@code{OMP_PARALLEL} @code{G}关联的从句列表。
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_omp_parallel_child_fn (gimple g)
+@en Return the child function used to hold the body of @code{OMP_PARALLEL}
+@en @code{G}. 
 返回用于存放@code{OMP_PARALLEL}主体的子函数。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree *gimple_omp_parallel_child_fn_ptr (gimple g)
+@en Return a pointer to the child function used to hold the body of
+@en @code{OMP_PARALLEL} @code{G}. 
 返回一个指针，指向用于存放@code{OMP_PARALLEL} @code{G}的主体的子函数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_parallel_set_child_fn (gimple g, tree child_fn)
+@en Set @code{CHILD_FN} to be the child function for @code{OMP_PARALLEL} @code{G}. 
 将@code{CHILD_FN}设置为@code{OMP_PARALLEL} @code{G}的子函数。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree gimple_omp_parallel_data_arg (gimple g)
+@en Return the artificial argument used to send variables and values
+@en from the parent to the children threads in @code{OMP_PARALLEL} @code{G}. 
 返回在@code{OMP_PARALLEL} @code{G}中用于从父线程到子线程发送变量和值的人工参数。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} tree *gimple_omp_parallel_data_arg_ptr (gimple g)
+@en Return a pointer to the data argument for @code{OMP_PARALLEL} @code{G}. 
 返回一个指针，指向@code{OMP_PARALLEL} @code{G}的数据参数。 
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_parallel_set_data_arg (gimple g, tree data_arg)
+@en Set @code{DATA_ARG} to be the data argument for @code{OMP_PARALLEL} @code{G}. 
 将@code{DATA_ARG}设置为@code{OMP_PARALLEL} @code{G}的数据参数。
 @end deftypefn
 
 @deftypefn {GIMPLE function} bool is_gimple_omp (gimple stmt)
+@en Returns true when the gimple statement @code{STMT} is any of the OpenMP
+@en types. 
 返回真，当gimple语句@code{STMT}为OpenMP类型的。 
 @end deftypefn
 
@@ -1433,15 +2202,20 @@ gimple_seq pre_body, enum tree_code omp_for_cond)
 @cindex @code{GIMPLE_OMP_RETURN}
 
 @deftypefn {GIMPLE function} gimple gimple_build_omp_return (bool wait_p)
+@en Build a @code{GIMPLE_OMP_RETURN} statement. @code{WAIT_P} is true if this is a
+@en non-waiting return.
 构建一个@code{GIMPLE_OMP_RETURN}语句。@code{WAIT_P}为真，如果这是一个非等待的返回。
 @end deftypefn
 
 @deftypefn {GIMPLE function} void gimple_omp_return_set_nowait (gimple s)
+@en Set the nowait flag on @code{GIMPLE_OMP_RETURN} statement @code{S}.
 设置@code{GIMPLE_OMP_RETURN}语句@code{S}的nowait标记。
 @end deftypefn
  
 
 @deftypefn {GIMPLE function} bool gimple_omp_return_nowait_p (gimple g)
+@en Return true if @code{OMP} return statement @code{G} has the
+@en @code{GF_OMP_RETURN_NOWAIT} flag set.
 返回真，如果@code{OMP}返回语句@code{G}设置了@code{GF_OMP_RETURN_NOWAIT}标记。
 @end deftypefn
 
@@ -1450,18 +2224,67 @@ gimple_seq pre_body, enum tree_code omp_for_cond)
 @cindex @code{GIMPLE_OMP_SECTION}
 
 @deftypefn {GIMPLE function} gimple gimple_build_omp_section (gimple_seq body)
+@en Build a @code{GIMPLE_OMP_SECTION} statement for a sections statement.
 构建一个@code{GIMPLE_OMP_SECTION}语句。
 @end deftypefn
 
+@en @code{BODY} is the sequence of statements in the section.
 @code{BODY}为段中的语句序列。
 
 @deftypefn {GIMPLE function} bool gimple_omp_section_last_p (gimple g)
+@en Return true if @code{OMP} section statement @code{G} has the
+@en @code{GF_OMP_SECTION_LAST} flag set.
 返回真，如果@code{OMP}段语句@code{G}设置了@code{GF_OMP_SECTION_LAST}标记。
 @end deftypefn
  
 @deftypefn {GIMPLE function} void gimple_omp_section_set_last (gimple g)
+@en Set the @code{GF_OMP_SECTION_LAST} flag on @code{G}.
 设置@code{G}的@code{GF_OMP_SECTION_LAST}标记。
 @end deftypefn
+
+@en @node @code{GIMPLE_OMP_SECTIONS}
+@en @subsection @code{GIMPLE_OMP_SECTIONS}
+@en @cindex @code{GIMPLE_OMP_SECTIONS}
+@en 
+@en @deftypefn {GIMPLE function} gimple gimple_build_omp_sections (gimple_seq body, tree clauses)
+@en Build a @code{GIMPLE_OMP_SECTIONS} statement. @code{BODY} is a sequence of
+@en section statements.  @code{CLAUSES} are any of the @code{OMP} sections
+@en construct's clauses: private, firstprivate, lastprivate,
+@en reduction, and nowait.
+@en @end deftypefn
+@en 
+@en 
+@en @deftypefn {GIMPLE function} gimple gimple_build_omp_sections_switch (void)
+@en Build a @code{GIMPLE_OMP_SECTIONS_SWITCH} statement.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} tree gimple_omp_sections_control (gimple g)
+@en Return the control variable associated with the
+@en @code{GIMPLE_OMP_SECTIONS} in @code{G}.
+@en @end deftypefn
+@en  
+@en @deftypefn {GIMPLE function} tree *gimple_omp_sections_control_ptr (gimple g)
+@en Return a pointer to the clauses associated with the
+@en @code{GIMPLE_OMP_SECTIONS} in @code{G}.
+@en @end deftypefn
+@en  
+@en @deftypefn {GIMPLE function} void gimple_omp_sections_set_control (gimple g, tree control)
+@en Set @code{CONTROL} to be the set of clauses associated with the
+@en @code{GIMPLE_OMP_SECTIONS} in @code{G}.
+@en @end deftypefn
+@en  
+@en @deftypefn {GIMPLE function} tree gimple_omp_sections_clauses (gimple g)
+@en Return the clauses associated with @code{OMP_SECTIONS} @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} tree *gimple_omp_sections_clauses_ptr (gimple g)
+@en Return a pointer to the clauses associated with @code{OMP_SECTIONS} @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_omp_sections_set_clauses (gimple g, tree clauses)
+@en Set @code{CLAUSES} to be the set of clauses associated with @code{OMP_SECTIONS}
+@en @code{G}. 
+@en @end deftypefn
 
 @node @code{GIMPLE_OMP_SECTIONS}
 @subsection @code{GIMPLE_OMP_SECTIONS}
@@ -1500,6 +2323,28 @@ gimple_seq pre_body, enum tree_code omp_for_cond)
 将@code{CLAUSES}设置为@code{G}中@code{GIMPLE_OMP_SECTIONS}相关联的从句。
 @end deftypefn
 
+@en @node @code{GIMPLE_OMP_SINGLE}
+@en @subsection @code{GIMPLE_OMP_SINGLE}
+@en @cindex @code{GIMPLE_OMP_SINGLE}
+@en 
+@en @deftypefn {GIMPLE function} gimple gimple_build_omp_single (gimple_seq body, tree clauses)
+@en Build a @code{GIMPLE_OMP_SINGLE} statement. @code{BODY} is the sequence of
+@en statements that will be executed once.  @code{CLAUSES} are any of the
+@en @code{OMP} single construct's clauses: private, firstprivate,
+@en copyprivate, nowait.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} tree gimple_omp_single_clauses (gimple g)
+@en Return the clauses associated with @code{OMP_SINGLE} @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} tree *gimple_omp_single_clauses_ptr (gimple g)
+@en Return a pointer to the clauses associated with @code{OMP_SINGLE} @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_omp_single_set_clauses (gimple g, tree clauses)
+@en Set @code{CLAUSES} to be the clauses associated with @code{OMP_SINGLE} @code{G}. 
+@en @end deftypefn
 
 @node @code{GIMPLE_OMP_SINGLE}
 @subsection @code{GIMPLE_OMP_SINGLE}
@@ -1522,6 +2367,45 @@ gimple_seq pre_body, enum tree_code omp_for_cond)
 @end deftypefn
 
 
+@en @node @code{GIMPLE_PHI}
+@en @subsection @code{GIMPLE_PHI}
+@en @cindex @code{GIMPLE_PHI}
+@en 
+@en @deftypefn {GIMPLE function} gimple make_phi_node (tree var, int len)
+@en Build a @code{PHI} node with len argument slots for variable var.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} unsigned gimple_phi_capacity (gimple g)
+@en Return the maximum number of arguments supported by @code{GIMPLE_PHI} @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} unsigned gimple_phi_num_args (gimple g)
+@en Return the number of arguments in @code{GIMPLE_PHI} @code{G}. This must always
+@en be exactly the number of incoming edges for the basic block
+@en holding @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} tree gimple_phi_result (gimple g)
+@en Return the @code{SSA} name created by @code{GIMPLE_PHI} @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} tree *gimple_phi_result_ptr (gimple g)
+@en Return a pointer to the @code{SSA} name created by @code{GIMPLE_PHI} @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_phi_set_result (gimple g, tree result)
+@en Set @code{RESULT} to be the @code{SSA} name created by @code{GIMPLE_PHI} @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} struct phi_arg_d *gimple_phi_arg (gimple g, index)
+@en Return the @code{PHI} argument corresponding to incoming edge @code{INDEX} for
+@en @code{GIMPLE_PHI} @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_phi_set_arg (gimple g, index, struct phi_arg_d * phiarg)
+@en Set @code{PHIARG} to be the argument corresponding to incoming edge
+@en @code{INDEX} for @code{GIMPLE_PHI} @code{G}. 
+@en @end deftypefn
 @node @code{GIMPLE_PHI}
 @subsection @code{GIMPLE_PHI}
 @cindex @code{GIMPLE_PHI}
@@ -1558,6 +2442,25 @@ gimple_seq pre_body, enum tree_code omp_for_cond)
 将@code{PHIARG}设置为对应于@code{GIMPLE_PHI} @code{G}的输入边索引为@code{INDEX}的参数。
 @end deftypefn
 
+
+@en @node @code{GIMPLE_RESX}
+@en @subsection @code{GIMPLE_RESX}
+@en @cindex @code{GIMPLE_RESX}
+@en 
+@en @deftypefn {GIMPLE function} gimple gimple_build_resx (int region)
+@en Build a @code{GIMPLE_RESX} statement which is a statement.  This
+@en statement is a placeholder for _Unwind_Resume before we know if a
+@en function call or a branch is needed.  @code{REGION} is the exception
+@en region from which control is flowing.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} int gimple_resx_region (gimple g)
+@en Return the region number for @code{GIMPLE_RESX} @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_resx_set_region (gimple g, int region)
+@en Set @code{REGION} to be the region number for @code{GIMPLE_RESX} @code{G}. 
+@en @end deftypefn
 @node @code{GIMPLE_RESX}
 @subsection @code{GIMPLE_RESX}
 @cindex @code{GIMPLE_RESX}
@@ -1574,6 +2477,21 @@ gimple_seq pre_body, enum tree_code omp_for_cond)
 将@code{REGION}设置为@code{GIMPLE_RESX} @code{G}的区域编号。 
 @end deftypefn
 
+@en @node @code{GIMPLE_RETURN}
+@en @subsection @code{GIMPLE_RETURN}
+@en @cindex @code{GIMPLE_RETURN}
+@en 
+@en @deftypefn {GIMPLE function} gimple gimple_build_return (tree retval)
+@en Build a @code{GIMPLE_RETURN} statement whose return value is retval.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} tree gimple_return_retval (gimple g)
+@en Return the return value for @code{GIMPLE_RETURN} @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_return_set_retval (gimple g, tree retval)
+@en Set @code{RETVAL} to be the return value for @code{GIMPLE_RETURN} @code{G}. 
+@en @end deftypefn
 @node @code{GIMPLE_RETURN}
 @subsection @code{GIMPLE_RETURN}
 @cindex @code{GIMPLE_RETURN}
@@ -1590,6 +2508,60 @@ gimple_seq pre_body, enum tree_code omp_for_cond)
 将@code{RETVAL}设置为@code{GIMPLE_RETURN} @code{G}的返回值。 
 @end deftypefn
 
+@en @node @code{GIMPLE_SWITCH}
+@en @subsection @code{GIMPLE_SWITCH}
+@en @cindex @code{GIMPLE_SWITCH}
+@en 
+@en @deftypefn {GIMPLE function} gimple gimple_build_switch ( nlabels, tree index, tree default_label, ...)
+@en Build a @code{GIMPLE_SWITCH} statement.  @code{NLABELS} are the number of
+@en labels excluding the default label.  The default label is passed
+@en in @code{DEFAULT_LABEL}.  The rest of the arguments are trees
+@en representing the labels.  Each label is a tree of code
+@en @code{CASE_LABEL_EXPR}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple gimple_build_switch_vec (tree index, tree default_label, @code{VEC}(tree,heap) *args)
+@en This function is an alternate way of building @code{GIMPLE_SWITCH}
+@en statements.  @code{INDEX} and @code{DEFAULT_LABEL} are as in
+@en gimple_build_switch.  @code{ARGS} is a vector of @code{CASE_LABEL_EXPR} trees
+@en that contain the labels.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} unsigned gimple_switch_num_labels (gimple g)
+@en Return the number of labels associated with the switch statement
+@en @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_switch_set_num_labels (gimple g, unsigned nlabels)
+@en Set @code{NLABELS} to be the number of labels for the switch statement
+@en @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} tree gimple_switch_index (gimple g)
+@en Return the index variable used by the switch statement @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_switch_set_index (gimple g, tree index)
+@en Set @code{INDEX} to be the index variable for switch statement @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} tree gimple_switch_label (gimple g, unsigned index)
+@en Return the label numbered @code{INDEX}. The default label is 0, followed
+@en by any labels in a switch statement. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_switch_set_label (gimple g, unsigned index, tree label)
+@en Set the label number @code{INDEX} to @code{LABEL}. 0 is always the default
+@en label. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} tree gimple_switch_default_label (gimple g)
+@en Return the default label for a switch statement. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_switch_set_default_label (gimple g, tree label)
+@en Set the default label for a switch statement. 
+@en @end deftypefn
 @node @code{GIMPLE_SWITCH}
 @subsection @code{GIMPLE_SWITCH}
 @cindex @code{GIMPLE_SWITCH}
@@ -1635,6 +2607,51 @@ gimple_seq pre_body, enum tree_code omp_for_cond)
 @end deftypefn
 
 
+@en @node @code{GIMPLE_TRY}
+@en @subsection @code{GIMPLE_TRY}
+@en @cindex @code{GIMPLE_TRY}
+@en 
+@en @deftypefn {GIMPLE function} gimple gimple_build_try (gimple_seq eval, gimple_seq cleanup, unsigned int kind)
+@en Build a @code{GIMPLE_TRY} statement.  @code{EVAL} is a sequence with the
+@en expression to evaluate.  @code{CLEANUP} is a sequence of statements to
+@en run at clean-up time.  @code{KIND} is the enumeration value
+@en @code{GIMPLE_TRY_CATCH} if this statement denotes a try/catch construct
+@en or @code{GIMPLE_TRY_FINALLY} if this statement denotes a try/finally
+@en construct.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} enum gimple_try_flags gimple_try_kind (gimple g)
+@en Return the kind of try block represented by @code{GIMPLE_TRY} @code{G}. This is
+@en either @code{GIMPLE_TRY_CATCH} or @code{GIMPLE_TRY_FINALLY}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} bool gimple_try_catch_is_cleanup (gimple g)
+@en Return the @code{GIMPLE_TRY_CATCH_IS_CLEANUP} flag. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_seq gimple_try_eval (gimple g)
+@en Return the sequence of statements used as the body for @code{GIMPLE_TRY}
+@en @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_seq gimple_try_cleanup (gimple g)
+@en Return the sequence of statements used as the cleanup body for
+@en @code{GIMPLE_TRY} @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_try_set_catch_is_cleanup (gimple g, bool catch_is_cleanup)
+@en Set the @code{GIMPLE_TRY_CATCH_IS_CLEANUP} flag. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_try_set_eval (gimple g, gimple_seq eval)
+@en Set @code{EVAL} to be the sequence of statements to use as the body for
+@en @code{GIMPLE_TRY} @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_try_set_cleanup (gimple g, gimple_seq cleanup)
+@en Set @code{CLEANUP} to be the sequence of statements to use as the
+@en cleanup body for @code{GIMPLE_TRY} @code{G}. 
+@en @end deftypefn
 @node @code{GIMPLE_TRY}
 @subsection @code{GIMPLE_TRY}
 @cindex @code{GIMPLE_TRY}
@@ -1671,6 +2688,30 @@ gimple_seq pre_body, enum tree_code omp_for_cond)
 将@code{CLEANUP}设置为@code{GIMPLE_TRY} @code{G}的清除体使用的语句序列。
 @end deftypefn
 
+@en @node @code{GIMPLE_WITH_CLEANUP_EXPR}
+@en @subsection @code{GIMPLE_WITH_CLEANUP_EXPR}
+@en @cindex @code{GIMPLE_WITH_CLEANUP_EXPR}
+@en 
+@en @deftypefn {GIMPLE function} gimple gimple_build_wce (gimple_seq cleanup)
+@en Build a @code{GIMPLE_WITH_CLEANUP_EXPR} statement.  @code{CLEANUP} is the
+@en clean-up expression.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_seq gimple_wce_cleanup (gimple g)
+@en Return the cleanup sequence for cleanup statement @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_wce_set_cleanup (gimple g, gimple_seq cleanup)
+@en Set @code{CLEANUP} to be the cleanup sequence for @code{G}. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} bool gimple_wce_cleanup_eh_only (gimple g)
+@en Return the @code{CLEANUP_EH_ONLY} flag for a @code{WCE} tuple. 
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_wce_set_cleanup_eh_only (gimple g, bool eh_only_p)
+@en Set the @code{CLEANUP_EH_ONLY} flag for a @code{WCE} tuple. 
+@en @end deftypefn
 @node @code{GIMPLE_WITH_CLEANUP_EXPR}
 @subsection @code{GIMPLE_WITH_CLEANUP_EXPR}
 @cindex @code{GIMPLE_WITH_CLEANUP_EXPR}
@@ -1695,7 +2736,92 @@ gimple_seq pre_body, enum tree_code omp_for_cond)
 为@code{WCE}元组设置@code{CLEANUP_EH_ONLY}标记。 
 @end deftypefn
 
-
+@en @node GIMPLE sequences 
+@en @section GIMPLE sequences 
+@en @cindex GIMPLE sequences 
+@en 
+@en GIMPLE sequences are the tuple equivalent of @code{STATEMENT_LIST}'s
+@en used in @code{GENERIC}.  They are used to chain statements together, and
+@en when used in conjunction with sequence iterators, provide a
+@en framework for iterating through statements.
+@en 
+@en GIMPLE sequences are of type struct @code{gimple_sequence}, but are more
+@en commonly passed by reference to functions dealing with sequences.
+@en The type for a sequence pointer is @code{gimple_seq} which is the same
+@en as struct @code{gimple_sequence} *.  When declaring a local sequence,
+@en you can define a local variable of type struct @code{gimple_sequence}.
+@en When declaring a sequence allocated on the garbage collected
+@en heap, use the function @code{gimple_seq_alloc} documented below.
+@en 
+@en There are convenience functions for iterating through sequences
+@en in the section entitled Sequence Iterators.
+@en 
+@en Below is a list of functions to manipulate and query sequences.
+@en 
+@en @deftypefn {GIMPLE function} void gimple_seq_add_stmt (gimple_seq *seq, gimple g)
+@en Link a gimple statement to the end of the sequence *@code{SEQ} if @code{G} is
+@en not @code{NULL}.  If *@code{SEQ} is @code{NULL}, allocate a sequence before linking.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_seq_add_seq (gimple_seq *dest, gimple_seq src)
+@en Append sequence @code{SRC} to the end of sequence *@code{DEST} if @code{SRC} is not
+@en @code{NULL}.  If *@code{DEST} is @code{NULL}, allocate a new sequence before
+@en appending.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_seq gimple_seq_deep_copy (gimple_seq src)
+@en Perform a deep copy of sequence @code{SRC} and return the result.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_seq gimple_seq_reverse (gimple_seq seq)
+@en Reverse the order of the statements in the sequence @code{SEQ}.  Return
+@en @code{SEQ}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple gimple_seq_first (gimple_seq s)
+@en Return the first statement in sequence @code{S}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple gimple_seq_last (gimple_seq s)
+@en Return the last statement in sequence @code{S}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_seq_set_last (gimple_seq s, gimple last)
+@en Set the last statement in sequence @code{S} to the statement in @code{LAST}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_seq_set_first (gimple_seq s, gimple first)
+@en Set the first statement in sequence @code{S} to the statement in @code{FIRST}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_seq_init (gimple_seq s)
+@en Initialize sequence @code{S} to an empty sequence.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_seq gimple_seq_alloc (void)
+@en Allocate a new sequence in the garbage collected store and return
+@en it.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gimple_seq_copy (gimple_seq dest, gimple_seq src)
+@en Copy the sequence @code{SRC} into the sequence @code{DEST}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} bool gimple_seq_empty_p (gimple_seq s)
+@en Return true if the sequence @code{S} is empty.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_seq bb_seq (basic_block bb)
+@en Returns the sequence of statements in @code{BB}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void set_bb_seq (basic_block bb, gimple_seq seq)
+@en Sets the sequence of statements in @code{BB} to @code{SEQ}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} bool gimple_seq_singleton_p (gimple_seq seq)
+@en Determine whether @code{SEQ} contains exactly one statement.
+@en @end deftypefn
 @node GIMPLE序列 
 @section GIMPLE序列 
 @cindex GIMPLE sequences 
@@ -1768,6 +2894,223 @@ GIMPLE序列的类型为struct @code{gimple_sequence}。序列指针的类型为
 确定序列@code{SEQ}中是否只包含一条语句。
 @end deftypefn
 
+@en @node Sequence iterators 
+@en @section Sequence iterators 
+@en @cindex Sequence iterators 
+@en 
+@en Sequence iterators are convenience constructs for iterating
+@en through statements in a sequence.  Given a sequence @code{SEQ}, here is
+@en a typical use of gimple sequence iterators:
+@en 
+@en @smallexample
+@en gimple_stmt_iterator gsi;
+@en 
+@en for (gsi = gsi_start (seq); !gsi_end_p (gsi); gsi_next (&gsi))
+@en   @{
+@en     gimple g = gsi_stmt (gsi);
+@en     /* Do something with gimple statement @code{G}.  */
+@en   @}
+@en @end smallexample
+@en 
+@en Backward iterations are possible:
+@en 
+@en @smallexample
+@en         for (gsi = gsi_last (seq); !gsi_end_p (gsi); gsi_prev (&gsi))
+@en @end smallexample
+@en 
+@en Forward and backward iterations on basic blocks are possible with
+@en @code{gsi_start_bb} and @code{gsi_last_bb}.
+@en 
+@en In the documentation below we sometimes refer to enum
+@en @code{gsi_iterator_update}.  The valid options for this enumeration are:
+@en 
+@en @itemize @bullet
+@en @item @code{GSI_NEW_STMT}
+@en Only valid when a single statement is added.  Move the iterator to it.
+@en 
+@en @item @code{GSI_SAME_STMT}
+@en Leave the iterator at the same statement.
+@en 
+@en @item @code{GSI_CONTINUE_LINKING}
+@en Move iterator to whatever position is suitable for linking other
+@en statements in the same direction.
+@en @end itemize
+@en 
+@en Below is a list of the functions used to manipulate and use
+@en statement iterators.
+@en 
+@en @deftypefn {GIMPLE function} gimple_stmt_iterator gsi_start (gimple_seq seq)
+@en Return a new iterator pointing to the sequence @code{SEQ}'s first
+@en statement.  If @code{SEQ} is empty, the iterator's basic block is @code{NULL}.
+@en Use @code{gsi_start_bb} instead when the iterator needs to always have
+@en the correct basic block set.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_stmt_iterator gsi_start_bb (basic_block bb)
+@en Return a new iterator pointing to the first statement in basic
+@en block @code{BB}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_stmt_iterator gsi_last (gimple_seq seq)
+@en Return a new iterator initially pointing to the last statement of
+@en sequence @code{SEQ}.  If @code{SEQ} is empty, the iterator's basic block is
+@en @code{NULL}.  Use @code{gsi_last_bb} instead when the iterator needs to always
+@en have the correct basic block set.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_stmt_iterator gsi_last_bb (basic_block bb)
+@en Return a new iterator pointing to the last statement in basic
+@en block @code{BB}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} bool gsi_end_p (gimple_stmt_iterator i)
+@en Return @code{TRUE} if at the end of @code{I}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} bool gsi_one_before_end_p (gimple_stmt_iterator i)
+@en Return @code{TRUE} if we're one statement before the end of @code{I}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_next (gimple_stmt_iterator *i)
+@en Advance the iterator to the next gimple statement.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_prev (gimple_stmt_iterator *i)
+@en Advance the iterator to the previous gimple statement.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple gsi_stmt (gimple_stmt_iterator i)
+@en Return the current stmt.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_stmt_iterator gsi_after_labels (basic_block bb)
+@en Return a block statement iterator that points to the first
+@en non-label statement in block @code{BB}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple *gsi_stmt_ptr (gimple_stmt_iterator *i)
+@en Return a pointer to the current stmt.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} basic_block gsi_bb (gimple_stmt_iterator i)
+@en Return the basic block associated with this iterator.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_seq gsi_seq (gimple_stmt_iterator i)
+@en Return the sequence associated with this iterator.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_remove (gimple_stmt_iterator *i, bool remove_eh_info)
+@en Remove the current stmt from the sequence.  The iterator is
+@en updated to point to the next statement.  When @code{REMOVE_EH_INFO} is
+@en true we remove the statement pointed to by iterator @code{I} from the @code{EH}
+@en tables.  Otherwise we do not modify the @code{EH} tables.  Generally,
+@en @code{REMOVE_EH_INFO} should be true when the statement is going to be
+@en removed from the @code{IL} and not reinserted elsewhere.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_link_seq_before (gimple_stmt_iterator *i, gimple_seq seq, enum gsi_iterator_update mode)
+@en Links the sequence of statements @code{SEQ} before the statement pointed
+@en by iterator @code{I}.  @code{MODE} indicates what to do with the iterator
+@en after insertion (see @code{enum gsi_iterator_update} above).
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_link_before (gimple_stmt_iterator *i, gimple g, enum gsi_iterator_update mode)
+@en Links statement @code{G} before the statement pointed-to by iterator @code{I}.
+@en Updates iterator @code{I} according to @code{MODE}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_link_seq_after (gimple_stmt_iterator *i, gimple_seq seq, enum gsi_iterator_update mode)
+@en Links sequence @code{SEQ} after the statement pointed-to by iterator @code{I}.
+@en @code{MODE} is as in @code{gsi_insert_after}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_link_after (gimple_stmt_iterator *i, gimple g, enum gsi_iterator_update mode)
+@en Links statement @code{G} after the statement pointed-to by iterator @code{I}.
+@en @code{MODE} is as in @code{gsi_insert_after}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_seq gsi_split_seq_after (gimple_stmt_iterator i)
+@en Move all statements in the sequence after @code{I} to a new sequence.
+@en Return this new sequence.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_seq gsi_split_seq_before (gimple_stmt_iterator *i)
+@en Move all statements in the sequence before @code{I} to a new sequence.
+@en Return this new sequence.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_replace (gimple_stmt_iterator *i, gimple stmt, bool update_eh_info)
+@en Replace the statement pointed-to by @code{I} to @code{STMT}.  If @code{UPDATE_EH_INFO}
+@en is true, the exception handling information of the original
+@en statement is moved to the new statement.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_insert_before (gimple_stmt_iterator *i, gimple stmt, enum gsi_iterator_update mode)
+@en Insert statement @code{STMT} before the statement pointed-to by iterator
+@en @code{I}, update @code{STMT}'s basic block and scan it for new operands.  @code{MODE}
+@en specifies how to update iterator @code{I} after insertion (see enum
+@en @code{gsi_iterator_update}).
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_insert_seq_before (gimple_stmt_iterator *i, gimple_seq seq, enum gsi_iterator_update mode)
+@en Like @code{gsi_insert_before}, but for all the statements in @code{SEQ}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_insert_after (gimple_stmt_iterator *i, gimple stmt, enum gsi_iterator_update mode)
+@en Insert statement @code{STMT} after the statement pointed-to by iterator
+@en @code{I}, update @code{STMT}'s basic block and scan it for new operands.  @code{MODE}
+@en specifies how to update iterator @code{I} after insertion (see enum
+@en @code{gsi_iterator_update}).
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_insert_seq_after (gimple_stmt_iterator *i, gimple_seq seq, enum gsi_iterator_update mode)
+@en Like @code{gsi_insert_after}, but for all the statements in @code{SEQ}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} gimple_stmt_iterator gsi_for_stmt (gimple stmt)
+@en Finds iterator for @code{STMT}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_move_after (gimple_stmt_iterator *from, gimple_stmt_iterator *to)
+@en Move the statement at @code{FROM} so it comes right after the statement
+@en at @code{TO}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_move_before (gimple_stmt_iterator *from, gimple_stmt_iterator *to)
+@en Move the statement at @code{FROM} so it comes right before the statement
+@en at @code{TO}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_move_to_bb_end (gimple_stmt_iterator *from, basic_block bb)
+@en Move the statement at @code{FROM} to the end of basic block @code{BB}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_insert_on_edge (edge e, gimple stmt)
+@en Add @code{STMT} to the pending list of edge @code{E}.  No actual insertion is
+@en made until a call to @code{gsi_commit_edge_inserts}() is made.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_insert_seq_on_edge (edge e, gimple_seq seq)
+@en Add the sequence of statements in @code{SEQ} to the pending list of edge
+@en @code{E}.  No actual insertion is made until a call to
+@en @code{gsi_commit_edge_inserts}() is made.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} basic_block gsi_insert_on_edge_immediate (edge e, gimple stmt)
+@en Similar to @code{gsi_insert_on_edge}+@code{gsi_commit_edge_inserts}.  If a new
+@en block has to be created, it is returned.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_commit_one_edge_insert (edge e, basic_block *new_bb)
+@en Commit insertions pending at edge @code{E}.  If a new block is created,
+@en set @code{NEW_BB} to this block, otherwise set it to @code{NULL}.
+@en @end deftypefn
+@en 
+@en @deftypefn {GIMPLE function} void gsi_commit_edge_inserts (void)
+@en This routine will commit all pending edge insertions, creating
+@en any new basic blocks which are necessary.
+@en @end deftypefn
 @node 序列迭代器 
 @section 序列迭代器 
 @cindex Sequence iterators 
@@ -1943,7 +3286,32 @@ for (gsi = gsi_start (seq); !gsi_end_p (gsi); gsi_next (&gsi))
 该函数将提交所有要进行的边插入操作，并在需要的时候创建新的基本块。
 @end deftypefn
 
-
+@en @node Adding a new GIMPLE statement code
+@en @section Adding a new GIMPLE statement code
+@en @cindex Adding a new GIMPLE statement code
+@en 
+@en The first step in adding a new GIMPLE statement code, is
+@en modifying the file @code{gimple.def}, which contains all the GIMPLE
+@en codes.  Then you must add a corresponding structure, and an entry
+@en in @code{union gimple_statement_d}, both of which are located in
+@en @code{gimple.h}.  This in turn, will require you to add a corresponding
+@en @code{GTY} tag in @code{gsstruct.def}, and code to handle this tag in
+@en @code{gss_for_code} which is located in @code{gimple.c}.
+@en 
+@en In order for the garbage collector to know the size of the
+@en structure you created in @code{gimple.h}, you need to add a case to
+@en handle your new GIMPLE statement in @code{gimple_size} which is located
+@en in @code{gimple.c}.
+@en 
+@en You will probably want to create a function to build the new
+@en gimple statement in @code{gimple.c}.  The function should be called
+@en @code{gimple_build_<@code{NEW_TUPLE_NAME}>}, and should return the new tuple
+@en of type gimple.
+@en 
+@en If your new statement requires accessors for any members or
+@en operands it may have, put simple inline accessors in
+@en @code{gimple.h} and any non-trivial accessors in @code{gimple.c} with a
+@en corresponding prototype in @code{gimple.h}.
 @node 增加一个新的GIMPLE语句代码
 @section 增加一个新的GIMPLE语句代码
 @cindex Adding a new GIMPLE statement code
@@ -1956,6 +3324,62 @@ for (gsi = gsi_start (seq); !gsi_end_p (gsi); gsi_next (&gsi))
 
 如果你的新语句需要对其成员或者操作数进行访问的代码，则在@code{gimple.h}中放入简单的inline访问代码，以及在@code{gimple.c}中任何不平凡的访问代码，并在@code{gimple.h}中有相应的函数原型。
 
+@en @node Statement and operand traversals
+@en @section Statement and operand traversals
+@en @cindex Statement and operand traversals
+@en  
+@en There are two functions available for walking statements and
+@en sequences: @code{walk_gimple_stmt} and @code{walk_gimple_seq},
+@en accordingly, and a third function for walking the operands in a
+@en statement: @code{walk_gimple_op}.
+@en 
+@en @deftypefn {GIMPLE function} tree walk_gimple_stmt (gimple_stmt_iterator *gsi, walk_stmt_fn callback_stmt, walk_tree_fn callback_op, struct walk_stmt_info *wi)
+@en This function is used to walk the current statement in @code{GSI},
+@en optionally using traversal state stored in @code{WI}.  If @code{WI} is @code{NULL}, no
+@en state is kept during the traversal.
+@en 
+@en The callback @code{CALLBACK_STMT} is called.  If @code{CALLBACK_STMT} returns
+@en true, it means that the callback function has handled all the
+@en operands of the statement and it is not necessary to walk its
+@en operands.
+@en 
+@en If @code{CALLBACK_STMT} is @code{NULL} or it returns false, @code{CALLBACK_OP} is
+@en called on each operand of the statement via @code{walk_gimple_op}.  If
+@en @code{walk_gimple_op} returns non-@code{NULL} for any operand, the remaining
+@en operands are not scanned.
+@en 
+@en The return value is that returned by the last call to
+@en @code{walk_gimple_op}, or @code{NULL_TREE} if no @code{CALLBACK_OP} is specified.
+@en @end deftypefn
+@en 
+@en 
+@en @deftypefn {GIMPLE function} tree walk_gimple_op (gimple stmt, walk_tree_fn callback_op, struct walk_stmt_info *wi)
+@en Use this function to walk the operands of statement @code{STMT}.  Every
+@en operand is walked via @code{walk_tree} with optional state information
+@en in @code{WI}.
+@en 
+@en @code{CALLBACK_OP} is called on each operand of @code{STMT} via @code{walk_tree}.
+@en Additional parameters to @code{walk_tree} must be stored in @code{WI}.  For
+@en each operand @code{OP}, @code{walk_tree} is called as:
+@en 
+@en @smallexample
+@en     walk_tree (&@code{OP}, @code{CALLBACK_OP}, @code{WI}, @code{WI}- @code{PSET})
+@en @end smallexample
+@en 
+@en If @code{CALLBACK_OP} returns non-@code{NULL} for an operand, the remaining
+@en operands are not scanned.  The return value is that returned by
+@en the last call to @code{walk_tree}, or @code{NULL_TREE} if no @code{CALLBACK_OP} is
+@en specified.
+@en @end deftypefn
+@en 
+@en 
+@en @deftypefn {GIMPLE function} tree walk_gimple_seq (gimple_seq seq, walk_stmt_fn callback_stmt, walk_tree_fn callback_op, struct walk_stmt_info *wi)
+@en This function walks all the statements in the sequence @code{SEQ}
+@en calling @code{walk_gimple_stmt} on each one.  @code{WI} is as in
+@en @code{walk_gimple_stmt}.  If @code{walk_gimple_stmt} returns non-@code{NULL}, the walk
+@en is stopped and the value returned.  Otherwise, all the statements
+@en are walked and @code{NULL_TREE} returned.
+@en @end deftypefn
 @node 语句和操作数遍历
 @section 语句和操作数遍历
 @cindex Statement and operand traversals
