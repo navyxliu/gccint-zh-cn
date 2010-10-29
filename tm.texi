@@ -1250,30 +1250,59 @@ Define this macro to 1 if your target needs this facility.  The default
 is 0.
 @end defmac
 
+@en @node Per-Function Data
+@en @section Defining data structures for per-function information.
 @node 每个函数的数据
 @section 为基于每个函数的信息定义数据结构
 @cindex per-function data
 @cindex data structures
 
+@en If the target needs to store information on a per-function basis, GCC
+@en provides a macro and a couple of variables to allow this.  Note, just
+@en using statics to store the information is a bad idea, since GCC supports
+@en nested functions, so you can be halfway through encoding one function
+@en when another one comes along.
 如果target需要存储基于每个函数的信息，则GCC为此提供了一个宏和一些变量。
 注意，只是使用静态变量来保存信息是一个糟糕的想法，因为GCC支持嵌套函数，
 所以可能会在编码一个函数的中途遇到另一个。
 
+@en GCC defines a data structure called @code{struct function} which
+@en contains all of the data specific to an individual function.  This
+@en structure contains a field called @code{machine} whose type is
+@en @code{struct machine_function *}, which can be used by targets to point
+@en to their own specific data.
 GCC定义了称为@code{struct function}的数据结构体，
 包含了特定于单个函数的所有数据。该结构体包含一个称为@code{machine}的域，
 其类型为@code{struct machine_function *}，
 可以被target用于指向它们自己的特定数据。
 
+@en If a target needs per-function specific data it should define the type
+@en @code{struct machine_function} and also the macro @code{INIT_EXPANDERS}.
+@en This macro should be used to initialize the function pointer
+@en @code{init_machine_status}.  This pointer is explained below.
 如果一个target需要基于每个函数的特定数据，
 则应该定义类型@code{struct machine_function}，
 以及宏@code{INIT_EXPANDERS}。
 该宏将被用于初始化函数指针@code{init_machine_status}。
 该指针将在下面说明。
 
+@en One typical use of per-function, target specific data is to create an
+@en RTX to hold the register containing the function's return address.  This
+@en RTX can then be used to implement the @code{__builtin_return_address}
+@en function, for level 0.
 一个典型的基于每个函数的target特定数据，
 是用于创建一个RTX来存放含有函数返回地址的寄存器。
 该RTX随后可以被用于实现@code{__builtin_return_address}函数。
 
+@en Note---earlier implementations of GCC used a single data area to hold
+@en all of the per-function information.  Thus when processing of a nested
+@en function began the old per-function data had to be pushed onto a
+@en stack, and when the processing was finished, it had to be popped off the
+@en stack.  GCC used to provide function pointers called
+@en @code{save_machine_status} and @code{restore_machine_status} to handle
+@en the saving and restoring of the target specific information.  Since the
+@en single data area approach is no longer used, these pointers are no
+@en longer supported.
 注意，早期的GCC实现使用了单个数据区域来存放所有的基于每个函数的信息。
 因此当开始处理嵌套函数时，旧式的基于每个函数的数据不得不被压入栈中，
 并且当处理完成，还要出栈。
@@ -1282,145 +1311,242 @@ GCC曾经提供名为@code{save_machine_status}和@code{restore_machine_status}
 由于单数据区域的方法不再被使用了，这些指针也不再被支持。
 
 @defmac INIT_EXPANDERS
+@en Macro called to initialize any target specific information.  This macro
+@en is called once per function, before generation of any RTL has begun.
+@en The intention of this macro is to allow the initialization of the
+@en function pointer @code{init_machine_status}.
 被调用的宏，用来初始化任何target特定信息。
 该宏在任何RTL生成开始之前，基于每个函数被调用一次。
 该宏的目的是允许函数指针@code{init_machine_status}的初始化。
 @end defmac
 
 @deftypevar {void (*)(struct function *)} init_machine_status
+@en If this function pointer is non-@code{NULL} it will be called once per
+@en function, before function compilation starts, in order to allow the
+@en target to perform any target specific initialization of the
+@en @code{struct function} structure.  It is intended that this would be
+@en used to initialize the @code{machine} of that structure.
 如果该函数指针非空，则会在函数编译开始之前，基于每个函数被调用一次，
 用于允许target来执行对@code{struct function}结构体的任何target特定初始化。
 它将被用于初始化那个结构体的@code{machine}域。
 
+@en @code{struct machine_function} structures are expected to be freed by GC@.
+@en Generally, any memory that they reference must be allocated by using
+@en GC allocation, including the structure itself.
 结构体@code{struct machine_function}将期望被GC来释放。通常，
 它们所引用的任何内存都必须使用@code{ggc_alloc}来分配，包括结构体本身。
 @end deftypevar
 
+@en @node Storage Layout
+@en @section Storage Layout
 @node 存储布局
 @section 存储布局
 @cindex storage layout
 
+@en Note that the definitions of the macros in this table which are sizes or
+@en alignments measured in bits do not need to be constant.  They can be C
+@en expressions that refer to static variables, such as the @code{target_flags}.
+@en @xref{Run-time Target}.
 注意该表格中的宏定义中，对于以bit为单位的大小或对齐，不需要为常量。
 它们可以为引用了静态变量的C表达式，例如@code{target_flags}。
 参见@ref{运行时目标机}。
 
 @defmac BITS_BIG_ENDIAN
+@en Define this macro to have the value 1 if the most significant bit in a
+@en byte has the lowest number; otherwise define it to have the value zero.
+@en This means that bit-field instructions count from the most significant
+@en bit.  If the machine has no bit-field instructions, then this must still
+@en be defined, but it doesn't matter which value it is defined to.  This
+@en macro need not be a constant.
 定义该宏的值为1，如果字节中的最高有效位具有最低编号；否则定义其值为0。
 这意味着bit-field指令从最高有效位计数。如果机器没有bit-field指令，
 则该宏也需要被定义，但定义什么值都无所谓。该宏不需要为一个常量。
 
+@en This macro does not affect the way structure fields are packed into
+@en bytes or words; that is controlled by @code{BYTES_BIG_ENDIAN}.
 该宏不影响结构体域被打包成字节或者字的方式；
 那是由@code{BYTES_BIG_ENDIAN}来控制的。
 @end defmac
 
 @defmac BYTES_BIG_ENDIAN
+@en Define this macro to have the value 1 if the most significant byte in a
+@en word has the lowest number.  This macro need not be a constant.
 定义该宏的值为1，如果字中的最高有效字节具有最低编号。该宏不需要为一个常量。
 @end defmac
 
 @defmac WORDS_BIG_ENDIAN
+@en Define this macro to have the value 1 if, in a multiword object, the
+@en most significant word has the lowest number.  This applies to both
+@en memory locations and registers; GCC fundamentally assumes that the
+@en order of words in memory is the same as the order in registers.  This
+@en macro need not be a constant.
 定义该宏的值为1，如果在多字（multiword）对象中，最高有效字具有最低编号。
 这同时应用于内存位置和寄存器中；
 GCC从根本上假设在内存中的字的顺序与在寄存器中的一样。该宏不需要为一个常量。
 @end defmac
 
 @defmac LIBGCC2_WORDS_BIG_ENDIAN
+@en Define this macro if @code{WORDS_BIG_ENDIAN} is not constant.  This must be a
+@en constant value with the same meaning as @code{WORDS_BIG_ENDIAN}, which will be
+@en used only when compiling @file{libgcc2.c}.  Typically the value will be set
+@en based on preprocessor defines.
 定义该宏如果@code{WORDS_BIG_ENDIAN}不是常量。该宏必须为一个常量值，
 其与@code{WORDS_BIG_ENDIAN}的具有相同的含义，
 并只用于编译@file{libgcc2.c}的时候。通常该值会根据预处理器定义来设置。
 @end defmac
 
 @defmac FLOAT_WORDS_BIG_ENDIAN
+@en Define this macro to have the value 1 if @code{DFmode}, @code{XFmode} or
+@en @code{TFmode} floating point numbers are stored in memory with the word
+@en containing the sign bit at the lowest address; otherwise define it to
+@en have the value 0.  This macro need not be a constant.
 定义该宏值为1，如果@code{DFmode}, @code{XFmode}或@code{TFmode}浮点数被存储在
 内存中，并且包含符号位的字位于最低地址；否则值为0。该宏不需要为一个常量。
 
+@en You need not define this macro if the ordering is the same as for
+@en multi-word integers.
 你不需要定义该宏，如果顺序与多字整数相同。
 @end defmac
 
 @defmac BITS_PER_UNIT
+@en Define this macro to be the number of bits in an addressable storage
+@en unit (byte).  If you do not define this macro the default is 8.
 定义该宏为一个可寻址的存储单元（字节）中的位数。如果没有定义，缺省为8。
 @end defmac
 
 @defmac BITS_PER_WORD
+@en Number of bits in a word.  If you do not define this macro, the default
+@en is @code{BITS_PER_UNIT * UNITS_PER_WORD}.
 字的位数。如果没有定义，缺省为@code{BITS_PER_UNIT * UNITS_PER_WORD}。
 @end defmac
 
 @defmac MAX_BITS_PER_WORD
+@en Maximum number of bits in a word.  If this is undefined, the default is
+@en @code{BITS_PER_WORD}.  Otherwise, it is the constant value that is the
+@en largest value that @code{BITS_PER_WORD} can have at run-time.
 字的最大位数。如果没有定义，缺省为@code{BITS_PER_WORD}。
 否则其为一个常量，为@code{BITS_PER_WORD}在运行时可以具有的最大值。
 @end defmac
 
 @defmac UNITS_PER_WORD
+@en Number of storage units in a word; normally the size of a general-purpose
+@en register, a power of two from 1 or 8.
 字中的存储单元数；通常为通用目的寄存器的大小，2的1到8次幂。
 @end defmac
 
 @defmac MIN_UNITS_PER_WORD
+@en Minimum number of units in a word.  If this is undefined, the default is
+@en @code{UNITS_PER_WORD}.  Otherwise, it is the constant value that is the
+@en smallest value that @code{UNITS_PER_WORD} can have at run-time.
 字中的最小存储单元数。如果没有定义，缺省为@code{UNITS_PER_WORD}。否则，
 其为一个常量，为@code{UNITS_PER_WORD}在运行时可以具有的最小值。
 @end defmac
 
 @defmac UNITS_PER_SIMD_WORD (@var{mode})
+@en Number of units in the vectors that the vectorizer can produce for
+@en scalar mode @var{mode}.  The default is equal to @code{UNITS_PER_WORD},
+@en because the vectorizer can do some transformations even in absence of
+@en specialized @acronym{SIMD} hardware.
 向量化可以产生的向量的单元数。缺省等于@code{UNITS_PER_WORD}，
 因为向量化可以在即使没有专门的@acronym{SIMD}硬件的情况下做一些转换。
 @end defmac
 
 @defmac POINTER_SIZE
+@en Width of a pointer, in bits.  You must specify a value no wider than the
+@en width of @code{Pmode}.  If it is not equal to the width of @code{Pmode},
+@en you must define @code{POINTERS_EXTEND_UNSIGNED}.  If you do not specify
+@en a value the default is @code{BITS_PER_WORD}.
 指针的宽度，位数。必须指定不比@code{Pmode}宽的值。
 如果其不等于@code{Pmode}的宽度，则必须定义@code{POINTERS_EXTEND_UNSIGNED}。
 如果没有指定一个值，则缺省为@code{BITS_PER_WORD}。
 @end defmac
 
 @defmac POINTERS_EXTEND_UNSIGNED
+@en A C expression that determines how pointers should be extended from
+@en @code{ptr_mode} to either @code{Pmode} or @code{word_mode}.  It is
+@en greater than zero if pointers should be zero-extended, zero if they
+@en should be sign-extended, and negative if some other sort of conversion
+@en is needed.  In the last case, the extension is done by the target's
+@en @code{ptr_extend} instruction.
 一个C表达式，用来确定指针应该如何从@code{ptr_mode}扩展为@code{Pmode}或者
 @code{word_mode}。如果指针应该被零扩展，则其比0大，如果应该被符号扩展则为0，
 如果需要其它转换方式则为负。对于最后一种情况，
 扩展通过target的@code{ptr_extend}指令来完成。
 
+@en You need not define this macro if the @code{ptr_mode}, @code{Pmode}
+@en and @code{word_mode} are all the same width.
 你不需要定义该宏，如果@code{ptr_mode}, @code{Pmode}和@code{word_mode}都为相同的宽度。
 @end defmac
 
 @defmac PROMOTE_MODE (@var{m}, @var{unsignedp}, @var{type})
+@en A macro to update @var{m} and @var{unsignedp} when an object whose type
+@en is @var{type} and which has the specified mode and signedness is to be
+@en stored in a register.  This macro is only called when @var{type} is a
+@en scalar type.
 用来更新@var{m}和@var{unsignedp}，当一个类型为@var{type}并且具有特定的机器模式
 的对象要被存储到寄存器中时。该宏只在@var{type}为一个标量类型时才被调用。
 
+@en On most RISC machines, which only have operations that operate on a full
+@en register, define this macro to set @var{m} to @code{word_mode} if
+@en @var{m} is an integer mode narrower than @code{BITS_PER_WORD}.  In most
+@en cases, only integer modes should be widened because wider-precision
+@en floating-point operations are usually more expensive than their narrower
+@en counterparts.
 在大多数RISC机器上，只有作用于在整个寄存器上的运算，
 定义该宏将@var{m}设为为@code{word_mode}，
 如果@var{m}为一个比@code{BITS_PER_WORD}窄的整数模式。在大多数情况下，
 只有整数模式应该被加宽，因为宽精度的浮点运算通常比相应的窄精度的运算代价要更高。
 
+@en For most machines, the macro definition does not change @var{unsignedp}.
+@en However, some machines, have instructions that preferentially handle
+@en either signed or unsigned quantities of certain modes.  For example, on
+@en the DEC Alpha, 32-bit loads from memory and 32-bit add instructions
+@en sign-extend the result to 64 bits.  On such machines, set
+@en @var{unsignedp} according to which kind of extension is more efficient.
 大多数机器，宏定义不改变@var{unsignedp}。然而，
 一些机器具有优先处理特定模式的有符号或者无符号的指令。例如，在DEC Alpha上，
 32位load和32位add指令会将结果有符号扩展为64位。在这样的机器上，
 根据扩展的类型来设置@var{unsignedp}会更加有效。
 
+@en Do not define this macro if it would never modify @var{m}.
 如果从来不会修改@var{m}，则不要定义该宏。
 @end defmac
 
-@defmac PROMOTE_FUNCTION_MODE
-类似于@code{PROMOTE_MODE}，但应用于输出的函数参数，或者函数返回值，
-分别由@code{TARGET_PROMOTE_FUNCTION_ARGS}和@code{TARGET_PROMOTE_FUNCTION_RETURN}指定。
+@deftypefn {Target Hook} {enum machine_mode} TARGET_PROMOTE_FUNCTION_MODE (const_tree @var{type}, enum machine_mode @var{mode}, int *@var{punsignedp}, const_tree @var{funtype}, int @var{for_return})
+Like @code{PROMOTE_MODE}, but it is applied to outgoing function arguments or
+function return values.  The target hook should return the new mode
+and possibly change @code{*@var{punsignedp}} if the promotion should
+change signedness.  This function is called only for scalar @emph{or
+pointer} types.
 
-缺省为@code{PROMOTE_MODE}。
-@end defmac
+@var{for_return} allows to distinguish the promotion of arguments and
+return values.  If it is @code{1}, a return value is being promoted and
+@code{TARGET_FUNCTION_VALUE} must perform the same promotions done here.
+If it is @code{2}, the returned mode should be that of the register in
+which an incoming parameter is copied, or the outgoing result is computed;
+then the hook should return the same mode as @code{promote_mode}, though
+the signedness may be different.
 
-@deftypefn {Target Hook} bool TARGET_PROMOTE_FUNCTION_ARGS (tree @var{fntype})
-该target钩子应该返回@code{true}，
-如果由@code{PROMOTE_FUNCTION_MODE}描述的提升应该应用于输出的函数参数。
-@end deftypefn
-
-@deftypefn {Target Hook} bool TARGET_PROMOTE_FUNCTION_RETURN (tree @var{fntype})
-该target钩子应该返回@code{true}，
-如果由@code{PROMOTE_FUNCTION_MODE}描述的提升应该应用于函数返回值。
-
-如果该target钩子返回@code{true}，
-则@code{TARGET_FUNCTION_VALUE}必须执行与@code{PROMOTE_FUNCTION_MODE}相同的提升。
+The default is to not promote arguments and return values.  You can
+also define the hook to @code{default_promote_function_mode_always_promote}
+if you would like to apply the same rules given by @code{PROMOTE_MODE}.
 @end deftypefn
 
 @defmac PARM_BOUNDARY
+@en Normal alignment required for function parameters on the stack, in
+@en bits.  All stack parameters receive at least this much alignment
+@en regardless of data type.  On most machines, this is the same as the
+@en size of an integer.
 函数参数在栈上的对齐方式，位数。所有栈参数都接受这样的对齐，
 而不论数据类型是什么。在大多数机器上，这与整数的大小相同。
 @end defmac
 
 @defmac STACK_BOUNDARY
+@en Define this macro to the minimum alignment enforced by hardware for the
+@en stack pointer on this machine.  The definition is a C expression for the
+@en desired alignment (measured in bits).  This value is used as a default
+@en if @code{PREFERRED_STACK_BOUNDARY} is not defined.  On most machines,
+@en this should be the same as @code{PARM_BOUNDARY}.
 定义该宏为硬件要求的在该机器上的栈指针的最小对齐。定义为一个C表达式，
 为所要的对齐（位数）。该值作为缺省值使用，
 如果没有定义@code{PREFERRED_STACK_BOUNDARY}。在大多数机器上，
@@ -1428,22 +1554,31 @@ GCC从根本上假设在内存中的字的顺序与在寄存器中的一样。�
 @end defmac
 
 @defmac PREFERRED_STACK_BOUNDARY
+@en Define this macro if you wish to preserve a certain alignment for the
+@en stack pointer, greater than what the hardware enforces.  The definition
+@en is a C expression for the desired alignment (measured in bits).  This
+@en macro must evaluate to a value equal to or larger than
+@en @code{STACK_BOUNDARY}.
 定义该宏，如果你希望对栈指针维持一个特定的对齐，大于硬件要求的对齐。
 定义为一个C表达式，为所要的对齐（位数）。
 该宏必须等于或大于@code{STACK_BOUNDARY}。
 @end defmac
 
 @defmac INCOMING_STACK_BOUNDARY
-Define this macro if the incoming stack boundary may be different
-from @code{PREFERRED_STACK_BOUNDARY}.  This macro must evaluate
-to a value equal to or larger than @code{STACK_BOUNDARY}.
+@en Define this macro if the incoming stack boundary may be different
+@en from @code{PREFERRED_STACK_BOUNDARY}.  This macro must evaluate
+@en to a value equal to or larger than @code{STACK_BOUNDARY}.
 @end defmac
 
 @defmac FUNCTION_BOUNDARY
+@en Alignment required for a function entry point, in bits.
 函数入口点所需的对齐位数。
 @end defmac
 
 @defmac BIGGEST_ALIGNMENT
+@en Biggest alignment that any data type can require on this machine, in
+@en bits.  Note that this is not the biggest alignment that is supported,
+@en just the biggest alignment that, when violated, may cause a fault.
 该机器上任何数据类型可以需要的最大对齐位数。注意这不是所支持的最大对齐，
 而是如果违反该对齐则可能会造成错误。
 @end defmac
@@ -1459,18 +1594,32 @@ not defined, the default value is @code{BIGGEST_ALIGNMENT}.
 @end defmac
 
 @defmac MINIMUM_ATOMIC_ALIGNMENT
+@en If defined, the smallest alignment, in bits, that can be given to an
+@en object that can be referenced in one operation, without disturbing any
+@en nearby object.  Normally, this is @code{BITS_PER_UNIT}, but may be larger
+@en on machines that don't have byte or half-word store operations.
 如果被定义，则为最小对齐位数，可以分给一个对象并且在一个操作中被应用，
 而不需要干扰任何附近的对象。通常为@code{BITS_PER_UNIT}，
 但在没有字节或半字的存储运算的机器上可以更大些。
 @end defmac
 
 @defmac BIGGEST_FIELD_ALIGNMENT
+@en Biggest alignment that any structure or union field can require on this
+@en machine, in bits.  If defined, this overrides @code{BIGGEST_ALIGNMENT} for
+@en structure and union fields only, unless the field alignment has been set
+@en by the @code{__attribute__ ((aligned (@var{n})))} construct.
 任何结构体或者联合体域在该机器上需要的最大对齐。如果被定义，
 这将只覆盖结构体和联合体的域的@code{BIGGEST_ALIGNMENT}，
 除非域对齐已经通过@code{__attribute__ ((aligned (@var{n})))}设置。
 @end defmac
 
 @defmac ADJUST_FIELD_ALIGN (@var{field}, @var{computed})
+@en An expression for the alignment of a structure field @var{field} if the
+@en alignment computed in the usual way (including applying of
+@en @code{BIGGEST_ALIGNMENT} and @code{BIGGEST_FIELD_ALIGNMENT} to the
+@en alignment) is @var{computed}.  It overrides alignment only if the
+@en field alignment has not been set by the
+@en @code{__attribute__ ((aligned (@var{n})))} construct.
 一个表达式，为结构体域@var{field}的对齐方式，如果对齐方式是按照通常方式计算
 （包括应用@code{BIGGEST_ALIGNMENT}和@code{BIGGEST_FIELD_ALIGNMENT}）。
 其只覆盖没有通过@code{__attribute__ ((aligned (@var{n})))}设置的域。
@@ -1489,10 +1638,19 @@ If not defined, the default value is @code{STACK_BOUNDARY}.
 @end defmac
 
 @defmac MAX_OFILE_ALIGNMENT
+@en Biggest alignment supported by the object file format of this machine.
+@en Use this macro to limit the alignment which can be specified using the
+@en @code{__attribute__ ((aligned (@var{n})))} construct.  If not defined,
+@en the default value is @code{BIGGEST_ALIGNMENT}.
 由该机器的目标文件格式所支持的最大对齐。使用该宏来限制可以使用
 @code{__attribute__ ((aligned (@var{n})))}结构来指定的对齐。
 如果没有定义，则缺省值为@code{BIGGEST_ALIGNMENT}。
 
+@en On systems that use ELF, the default (in @file{config/elfos.h}) is
+@en the largest supported 32-bit ELF section alignment representable on
+@en a 32-bit host e.g. @samp{(((unsigned HOST_WIDEST_INT) 1 << 28) * 8)}.
+@en On 32-bit ELF the largest supported section alignment in bits is
+@en @samp{(0x80000000 * 8)}, but this is not representable on 32-bit hosts.
 在使用ELF的系统上，缺省（在@file{config/elfos.h}中）为在32位host上可以表示的
 32位ELF section对齐，即@samp{(((unsigned HOST_WIDEST_INT) 1 << 28) * 8)}。
 在32位ELF上，最大支持的section对齐位数是@samp{(0x80000000 * 8)}，
@@ -1500,34 +1658,59 @@ If not defined, the default value is @code{STACK_BOUNDARY}.
 @end defmac
 
 @defmac DATA_ALIGNMENT (@var{type}, @var{basic-align})
+@en If defined, a C expression to compute the alignment for a variable in
+@en the static store.  @var{type} is the data type, and @var{basic-align} is
+@en the alignment that the object would ordinarily have.  The value of this
+@en macro is used instead of that alignment to align the object.
 如果定义，则为一个C表达式，来计算在静态存储中的变量的对齐。
 @var{type}为数据类型，@var{basic-align}为对象通常具有的对齐。
 该宏的值被用于替代那个对齐，并应用的对象上。
 
+@en If this macro is not defined, then @var{basic-align} is used.
 如果该宏没有定义，则使用@var{basic-align}。
 
 @findex strcpy
+@en One use of this macro is to increase alignment of medium-size data to
+@en make it all fit in fewer cache lines.  Another is to cause character
+@en arrays to be word-aligned so that @code{strcpy} calls that copy
+@en constants to character arrays can be done inline.
 该宏的一种用法是增加中等大小数据的对齐，使得可以放在最少的cache line中。
 另一种用法是使得字符数组按照字对齐，这样@code{strcpy}调用可以通过内联方式完成。
 @end defmac
 
 @defmac CONSTANT_ALIGNMENT (@var{constant}, @var{basic-align})
+@en If defined, a C expression to compute the alignment given to a constant
+@en that is being placed in memory.  @var{constant} is the constant and
+@en @var{basic-align} is the alignment that the object would ordinarily
+@en have.  The value of this macro is used instead of that alignment to
+@en align the object.
 如果定义，为一个C表达式，来计算放在内存中的常量的对齐。@var{constant}为常量，
 @var{basic-align}为该对象通常具有的对齐。该宏的值被用于替代那个对齐，
 并应用的对象上。
 
+@en If this macro is not defined, then @var{basic-align} is used.
 如果该宏没有定义，则使用@var{basic-align}。
 
+@en The typical use of this macro is to increase alignment for string
+@en constants to be word aligned so that @code{strcpy} calls that copy
+@en constants can be done inline.
 该宏的典型用法为增加字符串常量的对齐，使其为字对齐，
 这样@code{strcpy}调用可以通过内联方式完成。
 @end defmac
 
 @defmac LOCAL_ALIGNMENT (@var{type}, @var{basic-align})
+@en If defined, a C expression to compute the alignment for a variable in
+@en the local store.  @var{type} is the data type, and @var{basic-align} is
+@en the alignment that the object would ordinarily have.  The value of this
+@en macro is used instead of that alignment to align the object.
 如果定义，为一个C表达式，来计算在局部存储中的对象的对齐。@var{type}为数据类型，
 @var{basic-align}为对象通常的对齐。该宏的值被用于替代那个对齐，并应用的对象上。
 
+@en If this macro is not defined, then @var{basic-align} is used.
 如果该宏没有定义，则使用@var{basic-align}。
 
+@en One use of this macro is to increase alignment of medium-size data to
+@en make it all fit in fewer cache lines.
 该宏的一种用法是增加中等大小数据的对齐，使得可以放在最少的cache line中。
 @end defmac
 
@@ -1558,47 +1741,93 @@ One use of this macro is to increase alignment of medium-size data to
 make it all fit in fewer cache lines.
 @end defmac
 
+@defmac MINIMUM_ALIGNMENT (@var{exp}, @var{mode}, @var{align})
+If defined, a C expression to compute the minimum required alignment
+for dynamic stack realignment purposes for @var{exp} (a type or decl),
+@var{mode}, assuming normal alignment @var{align}.
+
+If this macro is not defined, then @var{align} will be used.
+@end defmac
+
 @defmac EMPTY_FIELD_BOUNDARY
+@en Alignment in bits to be given to a structure bit-field that follows an
+@en empty field such as @code{int : 0;}.
 允许像@code{int : 0;}；这样的空域的结构体位域的对齐位数。
 
+@en If @code{PCC_BITFIELD_TYPE_MATTERS} is true, it overrides this macro.
 如果@code{PCC_BITFIELD_TYPE_MATTERS}为真，则其覆盖该宏。
 @end defmac
 
 @defmac STRUCTURE_SIZE_BOUNDARY
+@en Number of bits which any structure or union's size must be a multiple of.
+@en Each structure or union's size is rounded up to a multiple of this.
 任何结构体或联合体的大小必须为该位数的倍数。
 每个结构体或联合体的大小都将被舍入到该位数的一个倍数。
 
+@en If you do not define this macro, the default is the same as
+@en @code{BITS_PER_UNIT}.
 如果没有定义该宏，则缺省与@code{BITS_PER_UNIT}相同。
 @end defmac
 
 @defmac STRICT_ALIGNMENT
+@en Define this macro to be the value 1 if instructions will fail to work
+@en if given data not on the nominal alignment.  If instructions will merely
+@en go slower in that case, define this macro as 0.
 定义该宏值为1，如果给定数据不在通常对齐方式上，则指令无法工作。
 如果对于这种情况指令只不过是变慢，则定义该宏为0。
 @end defmac
 
 @defmac PCC_BITFIELD_TYPE_MATTERS
+@en Define this if you wish to imitate the way many other C compilers handle
+@en alignment of bit-fields and the structures that contain them.
 定义该宏，如果你希望仿效许多其它C编译器处理位域和包含它们的结构体的对齐方式。
 
+@en The behavior is that the type written for a named bit-field (@code{int},
+@en @code{short}, or other integer type) imposes an alignment for the entire
+@en structure, as if the structure really did contain an ordinary field of
+@en that type.  In addition, the bit-field is placed within the structure so
+@en that it would fit within such a field, not crossing a boundary for it.
 该行为是书写为命名位域（@code{int},@code{short}或其它整数类型）的类型被实施
 用于整个结构体的对齐，就好像结构体包含了一个该类型的普通的域。另外，
 位域放在结构体中，使得其将适合这样的域，而不会跨越边界。
 
+@en Thus, on most machines, a named bit-field whose type is written as
+@en @code{int} would not cross a four-byte boundary, and would force
+@en four-byte alignment for the whole structure.  (The alignment used may
+@en not be four bytes; it is controlled by the other alignment parameters.)
 这样，大多数机器上，书写为@code{int}的命名位域将不会跨越一个四字节的边界，
 并将使得整个结构体为四字节对齐。（可能不使用四字节对齐；其由其它对齐参数控制。）
 
+@en An unnamed bit-field will not affect the alignment of the containing
+@en structure.
 一个没有命名的位域将不会影响包含结构体的对齐。
 
+@en If the macro is defined, its definition should be a C expression;
+@en a nonzero value for the expression enables this behavior.
 如果定义了该宏，则其定义为一个C表达式；该表达式的非0值会使用这样方式。
 
+@en Note that if this macro is not defined, or its value is zero, some
+@en bit-fields may cross more than one alignment boundary.  The compiler can
+@en support such references if there are @samp{insv}, @samp{extv}, and
+@en @samp{extzv} insns that can directly reference memory.
 注意如果该宏没有定义，或者其值为0，则一些位域可能跨越多于一个的对齐边界。
 编译器可以支持这种引用，如果有@samp{insv}, 
 @samp{extv}和@samp{extzv} insns可以直接引用内存。
 
+@en The other known way of making bit-fields work is to define
+@en @code{STRUCTURE_SIZE_BOUNDARY} as large as @code{BIGGEST_ALIGNMENT}.
+@en Then every structure can be accessed with fullwords.
 其它已知的可以使位域工作的的方式为定义@code{STRUCTURE_SIZE_BOUNDARY}和@code{BIGGEST_ALIGNMENT}一样大。
 
+@en Unless the machine has bit-field instructions or you define
+@en @code{STRUCTURE_SIZE_BOUNDARY} that way, you must define
+@en @code{PCC_BITFIELD_TYPE_MATTERS} to have a nonzero value.
 除非机器具有位域指令或者你按照那种方式定义了@code{STRUCTURE_SIZE_BOUNDARY}，
 否则你必须定义@code{PCC_BITFIELD_TYPE_MATTERS}具有非0值。
 
+@en If your aim is to make GCC use the same conventions for laying out
+@en bit-fields as are used by another compiler, here is how to investigate
+@en what the other compiler does.  Compile and run this program:
 如果你的目标是使得GCC使用与其它编译器相同的约定来布局位域，
 则这里有一种方式可以调查其它编译器是如何做的。编译运行该程序：
 
@@ -1627,101 +1856,163 @@ main ()
 @}
 @end smallexample
 
+@en If this prints 2 and 5, then the compiler's behavior is what you would
+@en get from @code{PCC_BITFIELD_TYPE_MATTERS}.
 如果其打印2和5，则编译器的行为就是你通过@code{PCC_BITFIELD_TYPE_MATTERS}获得的效果。
 @end defmac
 
 @defmac BITFIELD_NBYTES_LIMITED
+@en Like @code{PCC_BITFIELD_TYPE_MATTERS} except that its effect is limited
+@en to aligning a bit-field within the structure.
 跟@code{PCC_BITFIELD_TYPE_MATTERS}相似，除了它只影响结构体中的位域的对齐。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_ALIGN_ANON_BITFIELD (void)
+@en When @code{PCC_BITFIELD_TYPE_MATTERS} is true this hook will determine
+@en whether unnamed bitfields affect the alignment of the containing
+@en structure.  The hook should return true if the structure should inherit
+@en the alignment requirements of an unnamed bitfield's type.
 当@code{PCC_BITFIELD_TYPE_MATTERS}为真，
 该钩子将确定未命名位域是否要影响包含它的结构体的对齐。
 钩子应该返回真，如果结构体应该继承未命名位域的类型所要求的对齐。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_NARROW_VOLATILE_BITFIELD (void)
+@en This target hook should return @code{true} if accesses to volatile bitfields
+@en should use the narrowest mode possible.  It should return @code{false} if
+@en these accesses should use the bitfield container type.
 该target钩子应该返回@code{true}，如果访问volatile位域应该尽可能使用最窄的机器模式。其应该返回@code{false}，如果这些访问应该使用位域的容器的类型。
 
+@en The default is @code{!TARGET_STRICT_ALIGN}.
 缺省为@code{!TARGET_STRICT_ALIGN}。
 @end deftypefn
 
 @defmac MEMBER_TYPE_FORCES_BLK (@var{field}, @var{mode})
+@en Return 1 if a structure or array containing @var{field} should be accessed using
+@en @code{BLKMODE}.
 返回1，如果一个包含@var{field}的结构体或者数组应该使用@code{BLKMODE}模式来访问。
 
+@en If @var{field} is the only field in the structure, @var{mode} is its
+@en mode, otherwise @var{mode} is VOIDmode.  @var{mode} is provided in the
+@en case where structures of one field would require the structure's mode to
+@en retain the field's mode.
 如果@var{field}为结构体中唯一的域，则@var{mode}为它的机器模式，
 否则@var{mode}为VOIDmode。
 
+@en Normally, this is not needed.
 通常，不需要该宏。
 @end defmac
 
 @defmac ROUND_TYPE_ALIGN (@var{type}, @var{computed}, @var{specified})
+@en Define this macro as an expression for the alignment of a type (given
+@en by @var{type} as a tree node) if the alignment computed in the usual
+@en way is @var{computed} and the alignment explicitly specified was
+@en @var{specified}.
 定义该宏为一个表达式，为一个类型（由作为树节点的@var{type}给定）的对齐，
 如果按照通常方式计算的对齐方式为@var{computed}并且显示指定的对齐方式为@var{specified}。
 
+@en The default is to use @var{specified} if it is larger; otherwise, use
+@en the smaller of @var{computed} and @code{BIGGEST_ALIGNMENT}
 缺省是使用@var{specified}，如果其更大；
 否则使用@var{computed}和@code{BIGGEST_ALIGNMENT}中较小的。
 @end defmac
 
 @defmac MAX_FIXED_MODE_SIZE
+@en An integer expression for the size in bits of the largest integer
+@en machine mode that should actually be used.  All integer machine modes of
+@en this size or smaller can be used for structures and unions with the
+@en appropriate sizes.  If this macro is undefined, @code{GET_MODE_BITSIZE
+@en (DImode)} is assumed.
 一个整数表达式，为实际应该被使用的最大的整数机器模式的位数。
 所有该大小或者更小一些的整数机器模式都可以用于结构体和联合体。
 如果哦没有定义该宏，则假设为@code{GET_MODE_BITSIZE (DImode)}。
 @end defmac
 
 @defmac STACK_SAVEAREA_MODE (@var{save_level})
+@en If defined, an expression of type @code{enum machine_mode} that
+@en specifies the mode of the save area operand of a
+@en @code{save_stack_@var{level}} named pattern (@pxref{Standard Names}).
+@en @var{save_level} is one of @code{SAVE_BLOCK}, @code{SAVE_FUNCTION}, or
+@en @code{SAVE_NONLOCAL} and selects which of the three named patterns is
+@en having its mode specified.
 如果定义，则为一个@code{enum machine_mode}类型的表达式，
 指定名为@code{save_stack_@var{level}}的指令模式（参见@ref{标准名字}）的save区域操作数的机器模式。
 @var{save_level}为@code{SAVE_BLOCK}, @code{SAVE_FUNCTION}或@code{SAVE_NONLOCAL}中之一。
 
+@en You need not define this macro if it always returns @code{Pmode}.  You
+@en would most commonly define this macro if the
+@en @code{save_stack_@var{level}} patterns need to support both a 32- and a
+@en 64-bit mode.
 你不需要定义该宏，如果其总是返回@code{Pmode}。你通常将会定义该宏，
 如果@code{save_stack_@var{level}}指令模式需要同时支持32和64位机器模式。
 @end defmac
 
 @defmac STACK_SIZE_MODE
+@en If defined, an expression of type @code{enum machine_mode} that
+@en specifies the mode of the size increment operand of an
+@en @code{allocate_stack} named pattern (@pxref{Standard Names}).
 如果定义，为一个@code{enum machine_mode}类型的表达式，
 指定名为@code{allocate_stack}的指令模式（参见@ref{标准名字}）的size increment操作数的机器模式。
 
+@en You need not define this macro if it always returns @code{word_mode}.
+@en You would most commonly define this macro if the @code{allocate_stack}
+@en pattern needs to support both a 32- and a 64-bit mode.
 你不需要定义该宏，如果其总是返回@code{word_mode}。你通常将会定义该宏，
 如果@code{allocate_stack}指令模式需要同时支持32和64位机器模式。
 @end defmac
 
 @deftypefn {Target Hook} {enum machine_mode} TARGET_LIBGCC_CMP_RETURN_MODE ()
+@en This target hook should return the mode to be used for the return value
+@en of compare instructions expanded to libgcc calls.  If not defined
+@en @code{word_mode} is returned which is the right choice for a majority of
+@en targets.
 该target钩子应该返回扩展为libgcc调用的比较指令的返回值的机器模式。
 如果没有定义，则返回@code{word_mode}，其对于大多数target是正确的。
 @end deftypefn
 
 @deftypefn {Target Hook} {enum machine_mode} TARGET_LIBGCC_SHIFT_COUNT_MODE ()
+@en This target hook should return the mode to be used for the shift count operand
+@en of shift instructions expanded to libgcc calls.  If not defined
+@en @code{word_mode} is returned which is the right choice for a majority of
+@en targets.
 该target钩子应该返回扩展为libgcc调用的移位指令的shift count操作数的机器模式。
 如果没有定义，则返回@code{word_mode}，其对于大多数target是正确的。
 @end deftypefn
 
+@deftypefn {Target Hook} {enum machine_mode} TARGET_UNWIND_WORD_MODE (void)
+Return machine mode to be used for @code{_Unwind_Word} type.
+The default is to use @code{word_mode}.
+@end deftypefn
+
 @defmac ROUND_TOWARDS_ZERO
+@en If defined, this macro should be true if the prevailing rounding
+@en mode is towards zero.
 如果定义，该宏应该为真，如果舍入的模式是朝向0。
 
+@en Defining this macro only affects the way @file{libgcc.a} emulates
+@en floating-point arithmetic.
 定义该宏只影响@file{libgcc.a}模拟浮点算术的方式。
 
+@en Not defining this macro is equivalent to returning zero.
 不定义该宏，等价于其返回0。
 @end defmac
 
 @defmac LARGEST_EXPONENT_IS_NORMAL (@var{size})
+@en This macro should return true if floats with @var{size}
+@en bits do not have a NaN or infinity representation, but use the largest
+@en exponent for normal numbers instead.
 该宏应该返回真，如果具有@var{size}位数的浮点不具有NaN或无穷的表示，
 但是使用最大的普通数的指数来替代表示。
 
+@en Defining this macro only affects the way @file{libgcc.a} emulates
+@en floating-point arithmetic.
 定义该宏只影响@file{libgcc.a}模拟浮点算术的方式。
 
+@en The default definition of this macro returns false for all sizes.
 该宏缺省定义对所有的size都返回假。
 @end defmac
 
-@deftypefn {Target Hook} bool TARGET_VECTOR_OPAQUE_P (tree @var{type})
-This target hook should return @code{true} a vector is opaque.  That
-is, if no cast is needed when copying a vector value of type
-@var{type} into another vector lvalue of the same size.  Vector opaque
-types cannot be initialized.  The default is that there are no such
-types.
-@end deftypefn
-
-@deftypefn {Target Hook} bool TARGET_MS_BITFIELD_LAYOUT_P (tree @var{record_type})
+@deftypefn {Target Hook} bool TARGET_MS_BITFIELD_LAYOUT_P (const_tree @var{record_type})
 This target hook returns @code{true} if bit-fields in the given
 @var{record_type} are to be laid out following the rules of Microsoft
 Visual C/C++, namely: (i) a bit-field won't share the same storage
@@ -1750,24 +2041,34 @@ may affect its placement.
 @end deftypefn
 
 @deftypefn {Target Hook} {bool} TARGET_DECIMAL_FLOAT_SUPPORTED_P (void)
+@en Returns true if the target supports decimal floating point.
 返回真，如果target支持十进制浮点。
 @end deftypefn
 
 @deftypefn {Target Hook} {bool} TARGET_FIXED_POINT_SUPPORTED_P (void)
+@en Returns true if the target supports fixed-point arithmetic.
 返回真，如果target支持定点算术。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_EXPAND_TO_RTL_HOOK (void)
+@en This hook is called just before expansion into rtl, allowing the target
+@en to perform additional initializations or analysis before the expansion.
+@en For example, the rs6000 port uses it to allocate a scratch stack slot
+@en for use in copying SDmode values between memory and floating point
+@en registers whenever the function being expanded has any SDmode
+@en usage.
 该钩子在扩展为rtl之前被调用，允许target在扩展前执行额外的实例化或者分析。
 例如，rs6000port使用它来分配scratch栈槽，当被扩展的函数具有任何SDmode使用时，
 用于在内存和浮点寄存器之间复制SDmode值。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_INSTANTIATE_DECLS (void)
+@en This hook allows the backend to perform additional instantiations on rtl
+@en that are not actually in any insns yet, but will be later.
 该钩子允许后端执行额外的rtl实例化，这些实际上不存在于任何insn中，但在之后会有。
 @end deftypefn
 
-@deftypefn {Target Hook} {const char *} TARGET_MANGLE_TYPE (tree @var{type})
+@deftypefn {Target Hook} {const char *} TARGET_MANGLE_TYPE (const_tree @var{type})
 If your target defines any fundamental types, or any types your target
 uses should be mangled differently from the default, define this hook
 to return the appropriate encoding for these types as part of a C++
@@ -1801,111 +2102,182 @@ appropriate for a target that does not define any new fundamental
 types.
 @end deftypefn
 
+@en @node Type Layout
+@en @section Layout of Source Language Data Types
 @node 类型布局
 @section 源语言的数据类型布局
 
+@en These macros define the sizes and other characteristics of the standard
+@en basic data types used in programs being compiled.  Unlike the macros in
+@en the previous section, these apply to specific features of C and related
+@en languages, rather than to fundamental aspects of storage layout.
 这些宏定义了在被编译的程序中使用的标准基础数据类型的大小和其它特征。
 不像之前章节中的宏，这些是应用到C和相关语言的特定特征上，
 而不是存储布局的基础方面。
 
 @defmac INT_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{int} on the
+@en target machine.  If you don't define this, the default is one word.
 一个C表达式，为在target机器上类型@code{int}的位大小。
 如果没有定义，缺省为一个字。
 @end defmac
 
 @defmac SHORT_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{short} on the
+@en target machine.  If you don't define this, the default is half a word.
+@en (If this would be less than one storage unit, it is rounded up to one
+@en unit.)
 一个C表达式，为在target机器上类型@code{short}的位大小。如果没有定义，
 缺省为半个字。（如果比一个存储单元小，则会向上舍入为一个单元。）
 @end defmac
 
 @defmac LONG_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{long} on the
+@en target machine.  If you don't define this, the default is one word.
 一个C表达式，为在target机器上类型@code{long}的位大小。
 如果没有定义，缺省为一个字。
 @end defmac
 
 @defmac ADA_LONG_TYPE_SIZE
+@en On some machines, the size used for the Ada equivalent of the type
+@en @code{long} by a native Ada compiler differs from that used by C@.  In
+@en that situation, define this macro to be a C expression to be used for
+@en the size of that type.  If you don't define this, the default is the
+@en value of @code{LONG_TYPE_SIZE}.
 在一些机器上，本地Ada编译器使用的类型@code{long}的大小与C使用的不相同。
 这种情况下，定义该宏为一个C表达式用于那个类型的大小。如果没有定义，
 则缺省为@code{LONG_TYPE_SIZE}的值。
 @end defmac
 
 @defmac LONG_LONG_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{long long} on the
+@en target machine.  If you don't define this, the default is two
+@en words.  If you want to support GNU Ada on your machine, the value of this
+@en macro must be at least 64.
 一个C表达式，为在target机器上类型@code{long long}的位大小。如果没有定义，
 缺省为两个字。如果你想在你的机器上支持GNU Ada，则该宏的值最少必须为64。
 @end defmac
 
 @defmac CHAR_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{char} on the
+@en target machine.  If you don't define this, the default is
+@en @code{BITS_PER_UNIT}.
 一个C表达式，为在target机器上类型@code{char}的位大小。
 如果没有定义，缺省为@code{BITS_PER_UNIT}。
 @end defmac
 
 @defmac BOOL_TYPE_SIZE
+@en A C expression for the size in bits of the C++ type @code{bool} and
+@en C99 type @code{_Bool} on the target machine.  If you don't define
+@en this, and you probably shouldn't, the default is @code{CHAR_TYPE_SIZE}.
 一个C表达式，为在target机器上C++类型@code{bool}和C99类型@code{_Bool}的位大小。
 如果没有定义，并且通常不会定义，缺省为@code{CHAR_TYPE_SIZE}。
 @end defmac
 
 @defmac FLOAT_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{float} on the
+@en target machine.  If you don't define this, the default is one word.
 一个C表达式，为在target机器上类型@code{float}的位大小。
 如果没有定义，缺省为一个字。
 @end defmac
 
 @defmac DOUBLE_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{double} on the
+@en target machine.  If you don't define this, the default is two
+@en words.
 一个C表达式，为在target机器上类型@code{double}的位大小。
 如果没有定义，缺省为两个字。
 @end defmac
 
 @defmac LONG_DOUBLE_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{long double} on
+@en the target machine.  If you don't define this, the default is two
+@en words.
 一个C表达式，为在target机器上类型@code{long double}的位大小。
 如果没有定义，缺省为两个字。
 @end defmac
 
 @defmac SHORT_FRACT_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{short _Fract} on
+@en the target machine.  If you don't define this, the default is
+@en @code{BITS_PER_UNIT}.
 一个C表达式，为在target机器上类型@code{short _Fract}的位大小。
 如果没有定义，缺省为@code{BITS_PER_UNIT}。
 @end defmac
 
 @defmac FRACT_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{_Fract} on
+@en the target machine.  If you don't define this, the default is
+@en @code{BITS_PER_UNIT * 2}.
 一个C表达式，为在target机器上类型@code{_Fract}的位大小。如果没有定义，
 缺省为@code{BITS_PER_UNIT * 2}。
 @end defmac
 
 @defmac LONG_FRACT_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{long _Fract} on
+@en the target machine.  If you don't define this, the default is
+@en @code{BITS_PER_UNIT * 4}.
 一个C表达式，为在target机器上类型@code{long _Fract}的位大小。
 如果没有定义，缺省为@code{BITS_PER_UNIT * 4}。
 @end defmac
 
 @defmac LONG_LONG_FRACT_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{long long _Fract} on
+@en the target machine.  If you don't define this, the default is
+@en @code{BITS_PER_UNIT * 8}.
 一个C表达式，为在target机器上类型@code{long long _Fract}的位大小。
 如果没有定义，缺省为@code{BITS_PER_UNIT * 8}。
 @end defmac
 
 @defmac SHORT_ACCUM_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{short _Accum} on
+@en the target machine.  If you don't define this, the default is
+@en @code{BITS_PER_UNIT * 2}.
 一个C表达式，为在target机器上类型@code{short _Accum}的位大小。
 如果没有定义，缺省为@code{BITS_PER_UNIT * 2}。
 @end defmac
 
 @defmac ACCUM_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{_Accum} on
+@en the target machine.  If you don't define this, the default is
+@en @code{BITS_PER_UNIT * 4}.
 一个C表达式，为在target机器上类型@code{_Accum}的位大小。
 如果没有定义，缺省为@code{BITS_PER_UNIT * 4}。
 @end defmac
 
 @defmac LONG_ACCUM_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{long _Accum} on
+@en the target machine.  If you don't define this, the default is
+@en @code{BITS_PER_UNIT * 8}.
 一个C表达式，为在target机器上类型@code{long _Accum}的位大小。
 如果没有定义，缺省为@code{BITS_PER_UNIT * 8}。
 @end defmac
 
 @defmac LONG_LONG_ACCUM_TYPE_SIZE
+@en A C expression for the size in bits of the type @code{long long _Accum} on
+@en the target machine.  If you don't define this, the default is
+@en @code{BITS_PER_UNIT * 16}.
 一个C表达式，为在target机器上类型@code{long long _Accum}的位大小。
 如果没有定义，缺省为@code{BITS_PER_UNIT * 16}。
 @end defmac
 
 @defmac LIBGCC2_LONG_DOUBLE_TYPE_SIZE
+@en Define this macro if @code{LONG_DOUBLE_TYPE_SIZE} is not constant or
+@en if you want routines in @file{libgcc2.a} for a size other than
+@en @code{LONG_DOUBLE_TYPE_SIZE}.  If you don't define this, the
+@en default is @code{LONG_DOUBLE_TYPE_SIZE}.
 定义该宏，如果@code{LONG_DOUBLE_TYPE_SIZE}不是常量或者如果你想让@file{libgcc2.a}
 中具有大小不是@code{LONG_DOUBLE_TYPE_SIZE}的程序。如果没有定义，
 缺省为@code{LONG_DOUBLE_TYPE_SIZE}。
 @end defmac
 
 @defmac LIBGCC2_HAS_DF_MODE
+@en Define this macro if neither @code{LIBGCC2_DOUBLE_TYPE_SIZE} nor
+@en @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is
+@en @code{DFmode} but you want @code{DFmode} routines in @file{libgcc2.a}
+@en anyway.  If you don't define this and either @code{LIBGCC2_DOUBLE_TYPE_SIZE}
+@en or @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is 64 then the default is 1,
+@en otherwise it is 0.
 定义该宏，如果@code{LIBGCC2_DOUBLE_TYPE_SIZE}和
 @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}都不是@code{DFmode}，
 但是你还想让@file{libgcc2.a}中具有@code{DFmode}的程序。如果没有定义，
@@ -1914,12 +2286,20 @@ types.
 @end defmac
 
 @defmac LIBGCC2_HAS_XF_MODE
+@en Define this macro if @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is not
+@en @code{XFmode} but you want @code{XFmode} routines in @file{libgcc2.a}
+@en anyway.  If you don't define this and @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}
+@en is 80 then the default is 1, otherwise it is 0.
 定义该宏，如果@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}不是@code{XFmode}，
 但是你还想让@file{libgcc2.a}中具有@code{XFmode}的程序。如果没有定义，
 并且@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}为80，则缺省为1，否则为0。
 @end defmac
 
 @defmac LIBGCC2_HAS_TF_MODE
+@en Define this macro if @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is not
+@en @code{TFmode} but you want @code{TFmode} routines in @file{libgcc2.a}
+@en anyway.  If you don't define this and @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}
+@en is 128 then the default is 1, otherwise it is 0.
 定义该宏，如果@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}不是@code{TFmode}，
 但是你还想让@file{libgcc2.a}中具有@code{TFmode}的程序。如果没有定义，
 并且@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}为128，则缺省为1，否则为0。
@@ -1929,6 +2309,14 @@ types.
 @defmacx DF_SIZE
 @defmacx XF_SIZE
 @defmacx TF_SIZE
+@en Define these macros to be the size in bits of the mantissa of
+@en @code{SFmode}, @code{DFmode}, @code{XFmode} and @code{TFmode} values,
+@en if the defaults in @file{libgcc2.h} are inappropriate.  By default,
+@en @code{FLT_MANT_DIG} is used for @code{SF_SIZE}, @code{LDBL_MANT_DIG}
+@en for @code{XF_SIZE} and @code{TF_SIZE}, and @code{DBL_MANT_DIG} or
+@en @code{LDBL_MANT_DIG} for @code{DF_SIZE} according to whether
+@en @code{LIBGCC2_DOUBLE_TYPE_SIZE} or
+@en @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is 64.
 定义这些宏为@code{SFmode}, @code{DFmode}, @code{XFmode}和@code{TFmode}值的尾数
 位大小，如果在@file{libgcc2.h}中的缺省定义不合适。缺省的，
 @code{FLT_MANT_DIG}用于@code{SF_SIZE}, @code{LDBL_MANT_DIG}用于@code{XF_SIZE}和
@@ -1938,91 +2326,200 @@ types.
 @end defmac
 
 @defmac TARGET_FLT_EVAL_METHOD
+@en A C expression for the value for @code{FLT_EVAL_METHOD} in @file{float.h},
+@en assuming, if applicable, that the floating-point control word is in its
+@en default state.  If you do not define this macro the value of
+@en @code{FLT_EVAL_METHOD} will be zero.
 一个C表达式，为@file{float.h}中的@code{FLT_EVAL_METHOD}的值。
 如果没有定义，则@code{FLT_EVAL_METHOD}的值将为0。
 @end defmac
 
 @defmac WIDEST_HARDWARE_FP_SIZE
+@en A C expression for the size in bits of the widest floating-point format
+@en supported by the hardware.  If you define this macro, you must specify a
+@en value less than or equal to the value of @code{LONG_DOUBLE_TYPE_SIZE}.
+@en If you do not define this macro, the value of @code{LONG_DOUBLE_TYPE_SIZE}
+@en is the default.
 一个C表达式，为硬件支持的最宽浮点格式的位数。如果定义该宏，
 则必须指定一个小于或等于@code{LONG_DOUBLE_TYPE_SIZE}的值。如果没有定义，
 则缺省为@code{LONG_DOUBLE_TYPE_SIZE}的值。
 @end defmac
 
 @defmac DEFAULT_SIGNED_CHAR
+@en An expression whose value is 1 or 0, according to whether the type
+@en @code{char} should be signed or unsigned by default.  The user can
+@en always override this default with the options @option{-fsigned-char}
+@en and @option{-funsigned-char}.
 一个表达式，其值为1或者0，根据类型@code{char}缺省应该为有符号的还是无符号的。
 用户总是可以使用选项@option{-fsigned-char}和@option{-funsigned-char}来覆盖该缺省定义。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_DEFAULT_SHORT_ENUMS (void)
+@en This target hook should return true if the compiler should give an
+@en @code{enum} type only as many bytes as it takes to represent the range
+@en of possible values of that type.  It should return false if all
+@en @code{enum} types should be allocated like @code{int}.
 该target钩子应该返回真，如果编译器应该为@code{enum}类型设置为可以表示该类型值
 范围的字节数。其应该返回假，如果所有的@code{enum}类型应该按照@code{int}类型的
 方式来分配。
 
+@en The default is to return false.
 缺省为返回假。
 @end deftypefn
 
 @defmac SIZE_TYPE
+@en A C expression for a string describing the name of the data type to use
+@en for size values.  The typedef name @code{size_t} is defined using the
+@en contents of the string.
 一个C表达式，为一个字符串描述了用于size值的数据类型名。
 typedef名@code{size_t}使用该字符串的内容来定义。
 
+@en The string can contain more than one keyword.  If so, separate them with
+@en spaces, and write first any length keyword, then @code{unsigned} if
+@en appropriate, and finally @code{int}.  The string must exactly match one
+@en of the data type names defined in the function
+@en @code{init_decl_processing} in the file @file{c-decl.c}.  You may not
+@en omit @code{int} or change the order---that would cause the compiler to
+@en crash on startup.
 字符串可以包含多一个的关键字。如果是这样，则将它们使用空格分开，
 首先是任意长度的关键字，然后是合适@code{unsigned} 的，最后是@code{int}。
 字符串必须显示的匹配文件@file{c-decl.c}中函数@code{init_decl_processing}中
 定义的数据类型名。不可以省略掉@code{int}或者改变顺序，
 这将会使编译器在启动时崩溃。
 
+@en If you don't define this macro, the default is @code{"long unsigned
+@en int"}.
 如果没有定义，缺省为@code{"long unsigned int"}。
 @end defmac
 
 @defmac PTRDIFF_TYPE
+@en A C expression for a string describing the name of the data type to use
+@en for the result of subtracting two pointers.  The typedef name
+@en @code{ptrdiff_t} is defined using the contents of the string.  See
+@en @code{SIZE_TYPE} above for more information.
 一个C表达式，为一个字符串，描述了用于两个指针相减的结果的数据类型名。
 typedef名@code{ptrdiff_t}使用该字符串的内容来定义。更多信息，
 参见上面的@code{SIZE_TYPE}。
 
+@en If you don't define this macro, the default is @code{"long int"}.
 如果没有定义，则缺省为@code{"long int"}。
 @end defmac
 
 @defmac WCHAR_TYPE
+@en A C expression for a string describing the name of the data type to use
+@en for wide characters.  The typedef name @code{wchar_t} is defined using
+@en the contents of the string.  See @code{SIZE_TYPE} above for more
+@en information.
 一个C表达式，为一个字符串，描述了用于宽字符的数据类型名。
 typedef名@code{wchar_t}使用该字符串的内容来定义。更多信息，
 参见上面的@code{SIZE_TYPE}。
 
+@en If you don't define this macro, the default is @code{"int"}.
 如果没有定义，则缺省为@code{"int"}。
 @end defmac
 
 @defmac WCHAR_TYPE_SIZE
+@en A C expression for the size in bits of the data type for wide
+@en characters.  This is used in @code{cpp}, which cannot make use of
+@en @code{WCHAR_TYPE}.
 一个C表达式，为宽字符数据类型的位数。
 这用于不能使用@code{WCHAR_TYPE}的@code{cpp}中。
 @end defmac
 
 @defmac WINT_TYPE
+@en A C expression for a string describing the name of the data type to
+@en use for wide characters passed to @code{printf} and returned from
+@en @code{getwc}.  The typedef name @code{wint_t} is defined using the
+@en contents of the string.  See @code{SIZE_TYPE} above for more
+@en information.
 一个C表达式，为一个字符串，
 描述了传递给@code{printf}并且从@code{getwc}中返回的宽字符数据类型名。
 typedef名@code{wint_t}使用该字符串的内容来定义。更多信息，
 参见上面的@code{SIZE_TYPE}。
 
+@en If you don't define this macro, the default is @code{"unsigned int"}.
 如果没有定义，则缺省为@code{"unsigned int"}。
 @end defmac
 
 @defmac INTMAX_TYPE
+@en A C expression for a string describing the name of the data type that
+@en can represent any value of any standard or extended signed integer type.
+@en The typedef name @code{intmax_t} is defined using the contents of the
+@en string.  See @code{SIZE_TYPE} above for more information.
 一个C表达式，为一个字符串，
 描述了可以表示任何标准或者扩展的有符号整数类型值的数据类型名。
 typedef名@code{intmax_t}使用该字符串的内容来定义。更多信息，
 参见上面的@code{SIZE_TYPE}。
 
+@en If you don't define this macro, the default is the first of
+@en @code{"int"}, @code{"long int"}, or @code{"long long int"} that has as
+@en much precision as @code{long long int}.
 如果没有定义，则缺省为@code{"int"}, @code{"long int"}或
 @code{"long long int"}中第一个与@code{long long int}具有相同精度的字符串。
 @end defmac
 
 @defmac UINTMAX_TYPE
+@en A C expression for a string describing the name of the data type that
+@en can represent any value of any standard or extended unsigned integer
+@en type.  The typedef name @code{uintmax_t} is defined using the contents
+@en of the string.  See @code{SIZE_TYPE} above for more information.
 一个C表达式，为一个字符串，
 描述了可以表示任何标准或者扩展的无符号整数类型值的数据类型名。
 typedef名@code{uintmax_t}使用该字符串的内容来定义。更多信息，
 参见上面的@code{SIZE_TYPE}。
 
+@en If you don't define this macro, the default is the first of
+@en @code{"unsigned int"}, @code{"long unsigned int"}, or @code{"long long
+@en unsigned int"} that has as much precision as @code{long long unsigned
+@en int}.
 如果没有定义，则缺省为@code{"unsigned int"}, @code{"long unsigned int"}或
 @code{"long long unsigned int"}中第一个与@code{long long unsigned int}
 具有相同精度的字符串。
+@end defmac
+
+@defmac SIG_ATOMIC_TYPE
+@defmacx INT8_TYPE
+@defmacx INT16_TYPE
+@defmacx INT32_TYPE
+@defmacx INT64_TYPE
+@defmacx UINT8_TYPE
+@defmacx UINT16_TYPE
+@defmacx UINT32_TYPE
+@defmacx UINT64_TYPE
+@defmacx INT_LEAST8_TYPE
+@defmacx INT_LEAST16_TYPE
+@defmacx INT_LEAST32_TYPE
+@defmacx INT_LEAST64_TYPE
+@defmacx UINT_LEAST8_TYPE
+@defmacx UINT_LEAST16_TYPE
+@defmacx UINT_LEAST32_TYPE
+@defmacx UINT_LEAST64_TYPE
+@defmacx INT_FAST8_TYPE
+@defmacx INT_FAST16_TYPE
+@defmacx INT_FAST32_TYPE
+@defmacx INT_FAST64_TYPE
+@defmacx UINT_FAST8_TYPE
+@defmacx UINT_FAST16_TYPE
+@defmacx UINT_FAST32_TYPE
+@defmacx UINT_FAST64_TYPE
+@defmacx INTPTR_TYPE
+@defmacx UINTPTR_TYPE
+C expressions for the standard types @code{sig_atomic_t},
+@code{int8_t}, @code{int16_t}, @code{int32_t}, @code{int64_t},
+@code{uint8_t}, @code{uint16_t}, @code{uint32_t}, @code{uint64_t},
+@code{int_least8_t}, @code{int_least16_t}, @code{int_least32_t},
+@code{int_least64_t}, @code{uint_least8_t}, @code{uint_least16_t},
+@code{uint_least32_t}, @code{uint_least64_t}, @code{int_fast8_t},
+@code{int_fast16_t}, @code{int_fast32_t}, @code{int_fast64_t},
+@code{uint_fast8_t}, @code{uint_fast16_t}, @code{uint_fast32_t},
+@code{uint_fast64_t}, @code{intptr_t}, and @code{uintptr_t}.  See
+@code{SIZE_TYPE} above for more information.
+
+If any of these macros evaluates to a null pointer, the corresponding
+type is not supported; if GCC is configured to provide
+@code{<stdint.h>} in such a case, the header provided may not conform
+to C99, depending on the type in question.  The defaults for all of
+these macros are null pointers.
 @end defmac
 
 @defmac TARGET_PTRMEMFUNC_VBIT_LOCATION
