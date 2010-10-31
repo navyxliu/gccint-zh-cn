@@ -6298,39 +6298,78 @@ saving and restoring an arbitrary return value.
 对于大多数机器，该宏不需要被定义，因为GCC将选择最小的合适的机器模式。
 @end defmac
 
+@en @node Function Entry
+@en @subsection Function Entry and Exit
 @node 函数入口
 @subsection 函数入口和出口
 @cindex function entry and exit
 @cindex prologue
 @cindex epilogue
 
+@en This section describes the macros that output function entry
+@en (@dfn{prologue}) and exit (@dfn{epilogue}) code.
 这一章描述了输出函数入口（@dfn{prologue}）和出口（@dfn{epilogue}）代码的宏。
 
 @deftypefn {Target Hook} void TARGET_ASM_FUNCTION_PROLOGUE (FILE *@var{file}, HOST_WIDE_INT @var{size})
+@en If defined, a function that outputs the assembler code for entry to a
+@en function.  The prologue is responsible for setting up the stack frame,
+@en initializing the frame pointer register, saving registers that must be
+@en saved, and allocating @var{size} additional bytes of storage for the
+@en local variables.  @var{size} is an integer.  @var{file} is a stdio
+@en stream to which the assembler code should be output.
 如果被定义，则为一个函数，其为函数的入口输出汇编代码。序言负责设置栈帧，
 初始化帧指针寄存器，保存必须被保存的机器，并分配保存局部变量所需要的额外字节数
 @var{size}。@var{size}为一个整数。
 @var{file}为汇编代码应该被输出到的一个stdio流。
 
+@en The label for the beginning of the function need not be output by this
+@en macro.  That has already been done when the macro is run.
 函数起始处的标号不需要被该宏输出。其已经在该宏运行时被输出了。
 
 @findex regs_ever_live
+@en To determine which registers to save, the macro can refer to the array
+@en @code{regs_ever_live}: element @var{r} is nonzero if hard register
+@en @var{r} is used anywhere within the function.  This implies the function
+@en prologue should save register @var{r}, provided it is not one of the
+@en call-used registers.  (@code{TARGET_ASM_FUNCTION_EPILOGUE} must likewise use
+@en @code{regs_ever_live}.)
 要确定哪些寄存器要保存，该宏可以引用数组@code{regs_ever_live}：
 元素@var{r}为非零，如果硬件寄存器@var{r}在函数某处被使用。
 这意味着倘若其不是调用使用的（call-used）寄存器，
 则函数序言应该保存寄存器@var{r}。
 (同样@code{TARGET_ASM_FUNCTION_EPILOGUE}也必须使用@code{regs_ever_live}。)
 
+@en On machines that have ``register windows'', the function entry code does
+@en not save on the stack the registers that are in the windows, even if
+@en they are supposed to be preserved by function calls; instead it takes
+@en appropriate steps to ``push'' the register stack, if any non-call-used
+@en registers are used in the function.
 在具有“寄存器窗口”的机器上，函数入口代码不在栈中保存位于窗口中的寄存器，
 即使它们认为被函数调用保留；替代的，如果在函数中使用了任何非调用使用的寄存器，
 其使用适当的步骤来“压入”寄存器栈中。
 
 @findex frame_pointer_needed
+@en On machines where functions may or may not have frame-pointers, the
+@en function entry code must vary accordingly; it must set up the frame
+@en pointer if one is wanted, and not otherwise.  To determine whether a
+@en frame pointer is in wanted, the macro can refer to the variable
+@en @code{frame_pointer_needed}.  The variable's value will be 1 at run
+@en time in a function that needs a frame pointer.  @xref{Elimination}.
 在一些机器上，函数可以有帧指针，也可以没有，则函数入口代码必须相应的有所不同；
 如果需要则其必须建立帧指针，否则不建立。要确定是否想要帧指针，
 宏可以引用变量@code{frame_pointer_needed}。在运行时，如果函数需要帧指针，
 则变量的值将被设为1。参见@ref{消除}。
 
+@en The function entry code is responsible for allocating any stack space
+@en required for the function.  This stack space consists of the regions
+@en listed below.  In most cases, these regions are allocated in the
+@en order listed, with the last listed region closest to the top of the
+@en stack (the lowest address if @code{STACK_GROWS_DOWNWARD} is defined, and
+@en the highest address if it is not defined).  You can use a different order
+@en for a machine if doing so is more convenient or required for
+@en compatibility reasons.  Except in cases where required by standard
+@en or by a debugger, there is no reason why the stack layout used by GCC
+@en need agree with that used by other compilers for a machine.
 函数入口代码负责分配函数需要的任何栈空间。该栈空间包括下面列出的域。
 大多数情况下，这些域按照列出的顺序被分配，最后列出的域最靠近栈顶
 （如果@code{STACK_GROWS_DOWNWARD}被定义，则为最低地址，如果没有定义，
@@ -6340,47 +6379,91 @@ saving and restoring an arbitrary return value.
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_FUNCTION_END_PROLOGUE (FILE *@var{file})
+@en If defined, a function that outputs assembler code at the end of a
+@en prologue.  This should be used when the function prologue is being
+@en emitted as RTL, and you have some extra assembler that needs to be
+@en emitted.  @xref{prologue instruction pattern}.
 如果被定义，则为一个函数，在序言的结尾处输出汇编代码。
 这应该被用于当函数序言作为RTL输出时，并且你需要输出一些额外的汇编语言。
 参见“序言指令模式”
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_FUNCTION_BEGIN_EPILOGUE (FILE *@var{file})
+@en If defined, a function that outputs assembler code at the start of an
+@en epilogue.  This should be used when the function epilogue is being
+@en emitted as RTL, and you have some extra assembler that needs to be
+@en emitted.  @xref{epilogue instruction pattern}.
 如果被定义，则为一个函数，在尾声的起始处输出汇编代码。
 这应该被用于当函数尾声作为RTL输出时，并且你需要输出一些额外的汇编语言。
 参见“尾声指令模式”
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_FUNCTION_EPILOGUE (FILE *@var{file}, HOST_WIDE_INT @var{size})
+@en If defined, a function that outputs the assembler code for exit from a
+@en function.  The epilogue is responsible for restoring the saved
+@en registers and stack pointer to their values when the function was
+@en called, and returning control to the caller.  This macro takes the
+@en same arguments as the macro @code{TARGET_ASM_FUNCTION_PROLOGUE}, and the
+@en registers to restore are determined from @code{regs_ever_live} and
+@en @code{CALL_USED_REGISTERS} in the same way.
 如果被定义，则为一个函数，其为函数的退出输出汇编代码。
 尾声负责恢复保存的寄存器和栈指针为函数被调用时的值，并将控制返回给调用者。
 该宏接受跟@code{TARGET_ASM_FUNCTION_PROLOGUE}相同的参数，
 并且要恢复的寄存器按照相同的方式通过@code{regs_ever_live}和
 @code{CALL_USED_REGISTERS}来确定。
 
+@en On some machines, there is a single instruction that does all the work
+@en of returning from the function.  On these machines, give that
+@en instruction the name @samp{return} and do not define the macro
+@en @code{TARGET_ASM_FUNCTION_EPILOGUE} at all.
 在一些机器上，有一个单独的指令，可以做从函数中返回的所有工作。
 在这些机器上，给出那个名为@samp{return}的指令，
 并且不要定义宏@code{TARGET_ASM_FUNCTION_EPILOGUE}。
 
+@en Do not define a pattern named @samp{return} if you want the
+@en @code{TARGET_ASM_FUNCTION_EPILOGUE} to be used.  If you want the target
+@en switches to control whether return instructions or epilogues are used,
+@en define a @samp{return} pattern with a validity condition that tests the
+@en target switches appropriately.  If the @samp{return} pattern's validity
+@en condition is false, epilogues will be used.
 如果你想使用@code{TARGET_ASM_FUNCTION_EPILOGUE}，
 则不要定义名为@samp{return}的指令模式。
 如果你想target切换使用return指令或者尾声，则定义一个@samp{return}指令模式，
 带有一个有效性条件用来测试target的适当的切换。
 如果@samp{return}指令模式的有效性条件为假，则使用尾声。
 
+@en On machines where functions may or may not have frame-pointers, the
+@en function exit code must vary accordingly.  Sometimes the code for these
+@en two cases is completely different.  To determine whether a frame pointer
+@en is wanted, the macro can refer to the variable
+@en @code{frame_pointer_needed}.  The variable's value will be 1 when compiling
+@en a function that needs a frame pointer.
 在一些机器上，函数可以有帧指针，也可以没有，则函数的退出代码必须相应有所不同。
 有时这两种情况的代码会完全不同。要确定是否需要帧指针，
 该宏可以引用变量@code{frame_pointer_needed}。当编译一个需要帧指针的函数时，
 变量的值将为1。
 
+@en Normally, @code{TARGET_ASM_FUNCTION_PROLOGUE} and
+@en @code{TARGET_ASM_FUNCTION_EPILOGUE} must treat leaf functions specially.
+@en The C variable @code{current_function_is_leaf} is nonzero for such a
+@en function.  @xref{Leaf Functions}.
 通常，@code{TARGET_ASM_FUNCTION_PROLOGUE}和@code{TARGET_ASM_FUNCTION_EPILOGUE}
 必须单独处理叶子函数。对于这样的函数，C变量@code{current_function_is_leaf}为
 非零。参见@ref{叶子函数}。
 
+@en On some machines, some functions pop their arguments on exit while
+@en others leave that for the caller to do.  For example, the 68020 when
+@en given @option{-mrtd} pops arguments in functions that take a fixed
+@en number of arguments.
 在一些机器上，一些函数在退出时弹出它们的参数，而其它的则将它们留给调用者来完成。
 例如，68020当给定@option{-mrtd}时会弹出具有固定参数个数的函数的参数。
 
 @findex current_function_pops_args
+@en Your definition of the macro @code{RETURN_POPS_ARGS} decides which
+@en functions pop their own arguments.  @code{TARGET_ASM_FUNCTION_EPILOGUE}
+@en needs to know what was decided.  The number of bytes of the current
+@en function's arguments that this function should pop is available in
+@en @code{crtl->args.pops_args}.  @xref{Scalar Return}.
 你对宏的定义决定了哪些函数弹出它们的自己的参数。
 @code{TARGET_ASM_FUNCTION_EPILOGUE}需要知道这些。
 称作@code{current_function_pops_args}的变量为函数应该弹出的参数的字节个数。
@@ -6390,6 +6473,15 @@ saving and restoring an arbitrary return value.
 @itemize @bullet
 @item
 @findex current_function_pretend_args_size
+@en A region of @code{current_function_pretend_args_size} bytes of
+@en uninitialized space just underneath the first argument arriving on the
+@en stack.  (This may not be at the very start of the allocated stack region
+@en if the calling sequence has pushed anything else since pushing the stack
+@en arguments.  But usually, on such machines, nothing else has been pushed
+@en yet, because the function prologue itself does all the pushing.)  This
+@en region is used on machines where an argument may be passed partly in
+@en registers and partly in memory, and, in some cases to support the
+@en features in @code{<stdarg.h>}.
 @code{current_function_pretend_args_size}个字节大小的未初始化空间位于栈中第一个
 参数的下面。（这可能不是被分配的栈域的最起始处，如果调用序列在压入栈参数时还压入
 了其它东西。通常，在这样的机器上，并没有压入其它东西，因为函数序言本身来做所有的
@@ -6397,50 +6489,92 @@ saving and restoring an arbitrary return value.
 以及支持@code{<stdarg.h>}的特性的情况。
 
 @item
+@en An area of memory used to save certain registers used by the function.
+@en The size of this area, which may also include space for such things as
+@en the return address and pointers to previous stack frames, is
+@en machine-specific and usually depends on which registers have been used
+@en in the function.  Machines with register windows often do not require
+@en a save area.
 有一块内存用于保存函数使用的特定的寄存器。该区域的大小，
 可能还包括作为返回地址和指向之前栈帧的指针的一些空间，
 其为机器特定的并且通常取决于函数中已经使用了哪些寄存器。
 具有寄存器窗口的机器通常不需要这样的存储区域。
 
 @item
+@en A region of at least @var{size} bytes, possibly rounded up to an allocation
+@en boundary, to contain the local variables of the function.  On some machines,
+@en this region and the save area may occur in the opposite order, with the
+@en save area closer to the top of the stack.
 一块至少@var{size}个字节的区域，可能舍人到一个分配边界的大小，
 来保存函数的局部变量。在一些机器上，该域和保存域可以按照相反的顺序出现，
 使得保存域接近于栈顶。
 
 @item
 @cindex @code{ACCUMULATE_OUTGOING_ARGS} and stack frames
+@en Optionally, when @code{ACCUMULATE_OUTGOING_ARGS} is defined, a region of
+@en @code{current_function_outgoing_args_size} bytes to be used for outgoing
+@en argument lists of the function.  @xref{Stack Arguments}.
 可选的，当@code{ACCUMULATE_OUTGOING_ARGS}被定义时，
 还有一块@code{current_function_outgoing_args_size}字节大小的区域用于函数的传出
 的参数列表。参见@ref{栈参数}。
 @end itemize
 
 @defmac EXIT_IGNORE_STACK
+@en Define this macro as a C expression that is nonzero if the return
+@en instruction or the function epilogue ignores the value of the stack
+@en pointer; in other words, if it is safe to delete an instruction to
+@en adjust the stack pointer before a return from the function.  The
+@en default is 0.
 定义该宏为一个C表达式，其为非0，如果返回指令或者函数尾声忽略栈指针的值；
 换句话说，如果在从函数中返回前，删除调整栈指针的指令是安全的。缺省为0。
 
+@en Note that this macro's value is relevant only for functions for which
+@en frame pointers are maintained.  It is never safe to delete a final
+@en stack adjustment in a function that has no frame pointer, and the
+@en compiler knows this regardless of @code{EXIT_IGNORE_STACK}.
 注意该宏的值只于维护帧指针的函数相关。
 在没有帧指针的函数中删除最后的栈调整是绝对不安全的，并且编译器知道这种情况，
 而不管@code{EXIT_IGNORE_STACK}定义如何。
 @end defmac
 
 @defmac EPILOGUE_USES (@var{regno})
+@en Define this macro as a C expression that is nonzero for registers that are
+@en used by the epilogue or the @samp{return} pattern.  The stack and frame
+@en pointer registers are already assumed to be used as needed.
 定义该宏为一个C表达式，其为非0，对于用于尾声或者@samp{return}指令模式的寄存器。
 栈和帧指针寄存器已经被假设需要使用。
 @end defmac
 
 @defmac EH_USES (@var{regno})
+@en Define this macro as a C expression that is nonzero for registers that are
+@en used by the exception handling mechanism, and so should be considered live
+@en on entry to an exception edge.
 定义该宏为一个C表达式，其为非0，对于用于异常处理机制的寄存器，
 所以其应该被考虑为在一个异常边的入口上是活跃的。
 @end defmac
 
 @defmac DELAY_SLOTS_FOR_EPILOGUE
+@en Define this macro if the function epilogue contains delay slots to which
+@en instructions from the rest of the function can be ``moved''.  The
+@en definition should be a C expression whose value is an integer
+@en representing the number of delay slots there.
 定义该宏，如果函数尾声包含延迟槽，并且函数其余的指令可以被移动过去。
 该定义应该为一个C表达式，其值为一个整数表示有多少个延迟槽。
 @end defmac
 
 @defmac ELIGIBLE_FOR_EPILOGUE_DELAY (@var{insn}, @var{n})
+@en A C expression that returns 1 if @var{insn} can be placed in delay
+@en slot number @var{n} of the epilogue.
 一个C表达式，返回1，如果@var{insn}可以放在尾声中的延迟槽编号@var{n}中。
 
+@en The argument @var{n} is an integer which identifies the delay slot now
+@en being considered (since different slots may have different rules of
+@en eligibility).  It is never negative and is always less than the number
+@en of epilogue delay slots (what @code{DELAY_SLOTS_FOR_EPILOGUE} returns).
+@en If you reject a particular insn for a given delay slot, in principle, it
+@en may be reconsidered for a subsequent delay slot.  Also, other insns may
+@en (at least in principle) be considered for the so far unfilled delay
+@en slot.
 参数@var{n}为一个整数，其标识了目前被考虑的延迟槽（由于不同的延迟槽可以具有不同
 的适任规则）。其从不为负，并且总是小于尾声延迟槽的总数
 （@code{DELAY_SLOTS_FOR_EPILOGUE}的返回值）。
@@ -6449,22 +6583,45 @@ saving and restoring an arbitrary return value.
 
 @findex current_function_epilogue_delay_list
 @findex final_scan_insn
+@en The insns accepted to fill the epilogue delay slots are put in an RTL
+@en list made with @code{insn_list} objects, stored in the variable
+@en @code{current_function_epilogue_delay_list}.  The insn for the first
+@en delay slot comes first in the list.  Your definition of the macro
+@en @code{TARGET_ASM_FUNCTION_EPILOGUE} should fill the delay slots by
+@en outputting the insns in this list, usually by calling
+@en @code{final_scan_insn}.
 被接受填充尾声延迟槽的insn被放在一个RTL链表中，使用@code{insn_list}对象，
 并存储在变量@code{current_function_epilogue_delay_list}中。
 第一个延迟槽的insn位于链表中的第一个。你对宏@code{TARGET_ASM_FUNCTION_EPILOGUE}
 的定义应该通过输出该链表的insn来填充延迟槽，通常是调用@code{final_scan_insn}。
 
+@en You need not define this macro if you did not define
+@en @code{DELAY_SLOTS_FOR_EPILOGUE}.
 你不需要定义该宏，如果你没有定义@code{DELAY_SLOTS_FOR_EPILOGUE}。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_OUTPUT_MI_THUNK (FILE *@var{file}, tree @var{thunk_fndecl}, HOST_WIDE_INT @var{delta}, HOST_WIDE_INT @var{vcall_offset}, tree @var{function})
+@en A function that outputs the assembler code for a thunk
+@en function, used to implement C++ virtual function calls with multiple
+@en inheritance.  The thunk acts as a wrapper around a virtual function,
+@en adjusting the implicit object parameter before handing control off to
+@en the real function.
 一个函数，输出一个thunk函数的汇编代码，用于实现具有多继承的C++虚函数调用。
 thunk作为一个虚函数的封装，用来调整隐式对象参数，在将控制移交给实函数之前。
 
+@en First, emit code to add the integer @var{delta} to the location that
+@en contains the incoming first argument.  Assume that this argument
+@en contains a pointer, and is the one used to pass the @code{this} pointer
+@en in C++.  This is the incoming argument @emph{before} the function prologue,
+@en e.g.@: @samp{%o0} on a sparc.  The addition must preserve the values of
+@en all other incoming arguments.
 首选，输出代码来增加整数@var{delta}为包含传递进来的第一个参数的为。
 假设该参数包含一个指针，并用于在C++中传递@code{this}指针。
 这是在函数序言之前的参数，例如在sparc上为@samp{%o0}。
 
+@en Then, if @var{vcall_offset} is nonzero, an additional adjustment should be
+@en made after adding @code{delta}.  In particular, if @var{p} is the
+@en adjusted pointer, the following adjustment should be made:
 然后，如果@var{vcall_offset}非0，则在增加@var{delta}之后应该进行额外的调整。
 特别是，如果@var{p}为被调整的指针，则应该进行如下的调整：
 
@@ -6472,52 +6629,93 @@ thunk作为一个虚函数的封装，用来调整隐式对象参数，在将控
 p += (*((ptrdiff_t **)p))[vcall_offset/sizeof(ptrdiff_t)]
 @end smallexample
 
+@en After the additions, emit code to jump to @var{function}, which is a
+@en @code{FUNCTION_DECL}.  This is a direct pure jump, not a call, and does
+@en not touch the return address.  Hence returning from @var{FUNCTION} will
+@en return to whoever called the current @samp{thunk}.
 加法之后，输出代码跳转到@var{function}，其为@code{FUNCTION_DECL}。
 这是一个直接跳转，而不是调用，并且不触及返回地址。因此从@var{FUNCTION}中返回时，
 将返回到调用当前@samp{thunk}的地方。
 
+@en The effect must be as if @var{function} had been called directly with
+@en the adjusted first argument.  This macro is responsible for emitting all
+@en of the code for a thunk function; @code{TARGET_ASM_FUNCTION_PROLOGUE}
+@en and @code{TARGET_ASM_FUNCTION_EPILOGUE} are not invoked.
 其效果就好像是函数被直接调用，并使用调整后的第一个参数。
 该宏负责输出thunk函数的所有代码；@code{TARGET_ASM_FUNCTION_PROLOGUE}和@code{TARGET_ASM_FUNCTION_EPILOGUE}不被调用。
 
+@en The @var{thunk_fndecl} is redundant.  (@var{delta} and @var{function}
+@en have already been extracted from it.)  It might possibly be useful on
+@en some targets, but probably not.
 @var{thunk_fndecl}是冗余的。（@var{delta}和@var{function}已经从中被抽取出来。）
 其可能在一些target上有用，也很可能没用。
 
+@en If you do not define this macro, the target-independent code in the C++
+@en front end will generate a less efficient heavyweight thunk that calls
+@en @var{function} instead of jumping to it.  The generic approach does
+@en not support varargs.
 如果你没有定义该宏，则C++前端的target无关代码将会生成一个不太有效的重量级的
 thunk，其调用@var{function}而不是直接跳转过去。普通的方法不支持varargs。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_ASM_CAN_OUTPUT_MI_THUNK (tree @var{thunk_fndecl}, HOST_WIDE_INT @var{delta}, HOST_WIDE_INT @var{vcall_offset}, tree @var{function})
+@en A function that returns true if TARGET_ASM_OUTPUT_MI_THUNK would be able
+@en to output the assembler code for the thunk function specified by the
+@en arguments it is passed, and false otherwise.  In the latter case, the
+@en generic approach will be used by the C++ front end, with the limitations
+@en previously exposed.
 一个函数，返回真，如果TARGET_ASM_OUTPUT_MI_THUNK应该能够为其传递的参数所指定的
 thunk函数输出汇编代码，否则为假。在后一种情况下，C++前端将会使用普通的方式，
 并具有之前提到的限制。
 @end deftypefn
 
+@en @node Profiling
+@en @subsection Generating Code for Profiling
 @node Profiling
 @subsection 为profiling生成代码
 @cindex profiling, code generation
 
+@en These macros will help you generate code for profiling.
 这些宏将帮助你为profiling生成代码。
 
 @defmac FUNCTION_PROFILER (@var{file}, @var{labelno})
+@en A C statement or compound statement to output to @var{file} some
+@en assembler code to call the profiling subroutine @code{mcount}.
 一条C语句或者复合语句，来输出到@var{file}中一些汇编代码，
 来调用profiling子程序@code{mcount}。
 
 @findex mcount
+@en The details of how @code{mcount} expects to be called are determined by
+@en your operating system environment, not by GCC@.  To figure them out,
+@en compile a small program for profiling using the system's installed C
+@en compiler and look at the assembler code that results.
 关于@code{mcount}期望如何被调用的细节，由你的操作系统环境来决定，
 而不是GCC。要弄清楚它们，可以编译一个小程序，
 使用系统安装的C编译进行profiling，并查看生成的汇编代码。
 
+@en Older implementations of @code{mcount} expect the address of a counter
+@en variable to be loaded into some register.  The name of this variable is
+@en @samp{LP} followed by the number @var{labelno}, so you would generate
+@en the name using @samp{LP%d} in a @code{fprintf}.
 @code{mcount}的旧的实现，期望一个计数变量的地址被加载到某个寄存器中。
 该变量的名字为@samp{LP}，后面跟随数字@var{labelno}，
 所以你应该生成该名字，在@code{fprintf}中使用@samp{LP%d}。
 @end defmac
 
 @defmac PROFILE_HOOK
+@en A C statement or compound statement to output to @var{file} some assembly
+@en code to call the profiling subroutine @code{mcount} even the target does
+@en not support profiling.
 一条C语句或者复合语句，来输出到@var{file}中一些汇编代码，
 来调用profiling子程序@code{mcount}，即使target不支持profiling。
 @end defmac
 
 @defmac NO_PROFILE_COUNTERS
+@en Define this macro to be an expression with a nonzero value if the
+@en @code{mcount} subroutine on your system does not need a counter variable
+@en allocated for each function.  This is true for almost all modern
+@en implementations.  If you define this macro, you must not use the
+@en @var{labelno} argument to @code{FUNCTION_PROFILER}.
 定义该宏为一个表达式，具有一个非0的值，
 如果你系统上的@code{mcount}子程序不需要为每个函数分配一个计数变量。
 这对于大多数现代实现都是正确的。如果你定义了该宏，
@@ -6525,24 +6723,43 @@ thunk函数输出汇编代码，否则为假。在后一种情况下，C++前端
 @end defmac
 
 @defmac PROFILE_BEFORE_PROLOGUE
+@en Define this macro if the code for function profiling should come before
+@en the function prologue.  Normally, the profiling code comes after.
 定义该宏，如果函数profiling的代码应该位于函数序言之前。
 通常profiling代码位于之后。
 @end defmac
 
+@en @node Tail Calls
+@en @subsection Permitting tail calls
 @node 尾调用
 @subsection 允许尾调用
 @cindex tail calls
 
 @deftypefn {Target Hook} bool TARGET_FUNCTION_OK_FOR_SIBCALL (tree @var{decl}, tree @var{exp})
+@en True if it is ok to do sibling call optimization for the specified
+@en call expression @var{exp}.  @var{decl} will be the called function,
+@en or @code{NULL} if this is an indirect call.
 如果可以为指定的调用表达式@var{exp}做sibling call优化，则为真。
 @var{decl}为被调用的函数，或者为@var{NULL}，如果这是一个间接调用。
 
+@en It is not uncommon for limitations of calling conventions to prevent
+@en tail calls to functions outside the current unit of translation, or
+@en during PIC compilation.  The hook is used to enforce these restrictions,
+@en as the @code{sibcall} md pattern can not fail, or fall over to a
+@en ``normal'' call.  The criteria for successful sibling call optimization
+@en may vary greatly between different architectures.
 通常调用约定的限制不会阻止当前转换单元之外的或者PIC编译过程中的函数尾调用。
 钩子用来加强这些限制，由于@code{sibcall} md模式不能fail。
 成功的sibling call优化的标准可能在不同的体系结构上有很大的差别。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_EXTRA_LIVE_ON_ENTRY (bitmap *@var{regs})
+@en Add any hard registers to @var{regs} that are live on entry to the
+@en function.  This hook only needs to be defined to provide registers that
+@en cannot be found by examination of FUNCTION_ARG_REGNO_P, the callee saved
+@en registers, STATIC_CHAIN_INCOMING_REGNUM, STATIC_CHAIN_REGNUM,
+@en TARGET_STRUCT_VALUE_RTX, FRAME_POINTER_REGNUM, EH_USES,
+@en FRAME_POINTER_REGNUM, ARG_POINTER_REGNUM, and the PIC_OFFSET_TABLE_REGNUM.
 增加任何在函数入口为活跃的硬件寄存器到@var{regs}。
 该钩子只需要被定义来提供不能通过检查FUNCTION_ARG_REGNO_P，
 callee保存的寄存器，STATIC_CHAIN_INCOMING_REGNUM，
@@ -6551,24 +6768,39 @@ EH_USES， FRAME_POINTER_REGNUM，
 ARG_POINTER_REGNUM和PIC_OFFSET_TABLE_REGNUM来发现的寄存器。
 @end deftypefn
 
+@en @node Stack Smashing Protection
+@en @subsection Stack smashing protection
 @node 栈冲突保护
 @subsection 栈冲突保护
 @cindex stack smashing protection
 
 @deftypefn {Target Hook} tree TARGET_STACK_PROTECT_GUARD (void)
+@en This hook returns a @code{DECL} node for the external variable to use
+@en for the stack protection guard.  This variable is initialized by the
+@en runtime to some random value and is used to initialize the guard value
+@en that is placed at the top of the local stack frame.  The type of this
+@en variable must be @code{ptr_type_node}.
 该钩子返回一个外部变量的@code{DECL}节点，用作栈保护者。
 该变量在运行时被初始化为某个随即值，
 并用于初始化放在局部栈帧顶端的警卫值。
 该变量的类型必须为@code{ptr_type_node}。
 
+@en The default version of this hook creates a variable called
+@en @samp{__stack_chk_guard}, which is normally defined in @file{libgcc2.c}.
 该钩子的缺省版本创建一个叫做@samp{__stack_chk_guard}的变量，
 其通常在@file{libgcc2.c}中被定义。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_STACK_PROTECT_FAIL (void)
+@en This hook returns a tree expression that alerts the runtime that the
+@en stack protect guard variable has been modified.  This expression should
+@en involve a call to a @code{noreturn} function.
 该钩子返回一个tree表达式，用以警告运行时，栈保护者变量被修改了。
 该表达式应该包括一个对无返回的（@code{noreturn}）函数的调用。
 
+@en The default version of this hook invokes a function called
+@en @samp{__stack_chk_fail}, taking no arguments.  This function is
+@en normally defined in @file{libgcc2.c}.
 该钩子的缺省版本调用一个叫做@samp{__stack_chk_fail}的函数，
 不接受任何参数。该函数通常在@file{libgcc2.c}中被定义。
 @end deftypefn
