@@ -4244,13 +4244,32 @@ See the documentation for @code{TARGET_IRA_COVER_CLASSES}.
 一起使用。其类似于@samp{p}约束。
 @end defmac
 
+@en @node Stack and Calling
+@en @section Stack Layout and Calling Conventions
 @node 栈和调用
 @section 栈布局和调用约定
 @cindex calling conventions
 
 @c prevent bad page break with this line
+@en This describes the stack layout and calling conventions.
 这一节描述了栈的布局和调用约定。
 
+@en @menu
+@en * Frame Layout::
+@en * Exception Handling::
+@en * Stack Checking::
+@en * Frame Registers::
+@en * Elimination::
+@en * Stack Arguments::
+@en * Register Arguments::
+@en * Scalar Return::
+@en * Aggregate Return::
+@en * Caller Saves::
+@en * Function Entry::
+@en * Profiling::
+@en * Tail Calls::
+@en * Stack Smashing Protection::
+@en @end menu
 @menu
 * 帧布局::
 * 异常处理::
@@ -4268,44 +4287,72 @@ See the documentation for @code{TARGET_IRA_COVER_CLASSES}.
 * 栈冲突保护::
 @end menu
 
+@en @node Frame Layout
+@en @subsection Basic Stack Layout
 @node 帧布局
 @subsection 基本的帧布局
 @cindex stack frame layout
 @cindex frame layout
 
 @c prevent bad page break with this line
+@en Here is the basic stack layout.
 这里是基本的栈布局。
 
 @defmac STACK_GROWS_DOWNWARD
+@en Define this macro if pushing a word onto the stack moves the stack
+@en pointer to a smaller address.
 定义该宏，如果将一个字压入栈中使得栈指针移向更小的地址。
 
+@en When we say, ``define this macro if @dots{}'', it means that the
+@en compiler checks this macro only with @code{#ifdef} so the precise
+@en definition used does not matter.
 当我们说“定义该宏，如果@dots{}”，这意味着编译器只是使用@code{#ifdef}来检查该宏，
 所以具体定义的值并没有关系。
 @end defmac
 
 @defmac STACK_PUSH_CODE
+@en This macro defines the operation used when something is pushed
+@en on the stack.  In RTL, a push operation will be
+@en @code{(set (mem (STACK_PUSH_CODE (reg sp))) @dots{})}
 该宏定义了当压栈所使用的操作。对于RTL形式，
 压栈操作将为@code{(set (mem (STACK_PUSH_CODE (reg sp))) @dots{})}。
 
+@en The choices are @code{PRE_DEC}, @code{POST_DEC}, @code{PRE_INC},
+@en and @code{POST_INC}.  Which of these is correct depends on
+@en the stack direction and on whether the stack pointer points
+@en to the last item on the stack or whether it points to the
+@en space for the next item on the stack.
 可选择的方式为@code{PRE_DEC}, @code{POST_DEC}, @code{PRE_INC}和@code{POST_INC}。
 使用哪一个是正确的，取决于栈的方向和栈指针是否指向栈中的最后一项，
 还是指向之后的空间。
 
+@en The default is @code{PRE_DEC} when @code{STACK_GROWS_DOWNWARD} is
+@en defined, which is almost always right, and @code{PRE_INC} otherwise,
+@en which is often wrong.
 缺省为@code{PRE_DEC}，当@code{STACK_GROWS_DOWNWARD}被定义时，
 这大多情况下都是正确，否则为@code{PRE_INC}，这经常是错误的。
 @end defmac
 
 @defmac FRAME_GROWS_DOWNWARD
+@en Define this macro to nonzero value if the addresses of local variable slots
+@en are at negative offsets from the frame pointer.
 定义该宏为非零值，如果局部变量槽的地址位于帧指针的负偏移处。
 @end defmac
 
 @defmac ARGS_GROW_DOWNWARD
+@en Define this macro if successive arguments to a function occupy decreasing
+@en addresses on the stack.
 定义该宏，如果函数的连续的参数在栈上的地址是递减的。
 @end defmac
 
 @defmac STARTING_FRAME_OFFSET
+@en Offset from the frame pointer to the first local variable slot to be allocated.
 帧指针到第一个被分配的局部变量槽的偏移量。
 
+@en If @code{FRAME_GROWS_DOWNWARD}, find the next slot's offset by
+@en subtracting the first slot's length from @code{STARTING_FRAME_OFFSET}.
+@en Otherwise, it is found by adding the length of the first slot to the
+@en value @code{STARTING_FRAME_OFFSET}.
 如果@code{FRAME_GROWS_DOWNWARD}，则通过从@code{STARTING_FRAME_OFFSET}减去第一个
 栈槽的长度来查找下一个栈槽的偏移量。否则，通过从@code{STARTING_FRAME_OFFSET}
 加上第一个栈槽的长度来查找。
@@ -4314,36 +4361,63 @@ See the documentation for @code{TARGET_IRA_COVER_CLASSES}.
 @end defmac
 
 @defmac STACK_ALIGNMENT_NEEDED
+@en Define to zero to disable final alignment of the stack during reload.
+@en The nonzero default for this macro is suitable for most ports.
 定义为0，来禁止在重载过程中对栈的对齐。缺省的非0值适合于大多part。
 
+@en On ports where @code{STARTING_FRAME_OFFSET} is nonzero or where there
+@en is a register save block following the local block that doesn't require
+@en alignment to @code{STACK_BOUNDARY}, it may be beneficial to disable
+@en stack alignment and do it in the backend.
 在一些port上，@code{STARTING_FRAME_OFFSET}为非0，
 或者在局部块之后有一块寄存器保存区域，其不需要对齐到@code{STACK_BOUNDARY}，
 这样禁止栈对齐并且在后端实现可能会更好。
 @end defmac
 
 @defmac STACK_POINTER_OFFSET
+@en Offset from the stack pointer register to the first location at which
+@en outgoing arguments are placed.  If not specified, the default value of
+@en zero is used.  This is the proper value for most machines.
 从栈指针寄存器到第一个输出的参数所放在的位置的偏移量。
 如果没有指定，则缺省值0被使用。这对于大多数机器都合适。
 
+@en If @code{ARGS_GROW_DOWNWARD}, this is the offset to the location above
+@en the first location at which outgoing arguments are placed.
 如果@code{ARGS_GROW_DOWNWARD}，
 则这是输出参数位于的第一个位置的上面的位置的偏移量。
 @end defmac
 
 @defmac FIRST_PARM_OFFSET (@var{fundecl})
+@en Offset from the argument pointer register to the first argument's
+@en address.  On some machines it may depend on the data type of the
+@en function.
 参数指针寄存器到第一个参数的地址的偏移量。在一些机器上，
 其可能依赖于函数的数据类型。
 
+@en If @code{ARGS_GROW_DOWNWARD}, this is the offset to the location above
+@en the first argument's address.
 如果@code{ARGS_GROW_DOWNWARD}，则这是第一个参数的地址的上面的位置的偏移量。
 @end defmac
 
 @defmac STACK_DYNAMIC_OFFSET (@var{fundecl})
+@en Offset from the stack pointer register to an item dynamically allocated
+@en on the stack, e.g., by @code{alloca}.
 栈指针寄存器到在栈上动态分配的对象的偏移量，例如，通过@code{alloca}。
 
+@en The default value for this macro is @code{STACK_POINTER_OFFSET} plus the
+@en length of the outgoing arguments.  The default is correct for most
+@en machines.  See @file{function.c} for details.
 该宏的缺省值为@code{STACK_POINTER_OFFSET}加上输出参数的长度。
 缺省值对于大多数机器是正确的。详情参见@file{function.c}。
 @end defmac
 
 @defmac INITIAL_FRAME_ADDRESS_RTX
+@en A C expression whose value is RTL representing the address of the initial
+@en stack frame. This address is passed to @code{RETURN_ADDR_RTX} and
+@en @code{DYNAMIC_CHAIN_ADDRESS}.  If you don't define this macro, a reasonable
+@en default value will be used.  Define this macro in order to make frame pointer
+@en elimination work in the presence of @code{__builtin_frame_address (count)} and
+@en @code{__builtin_return_address (count)} for @code{count} not equal to zero.
 一个C表达式，其值为RTL，表示初始栈帧的地址。
 该地址被传给@code{RETURN_ADDR_RTX}和@code{DYNAMIC_CHAIN_ADDRESS}。
 如果你没有定义该宏，则一个合理的缺省值将被使用。定义该宏，
@@ -4352,20 +4426,37 @@ See the documentation for @code{TARGET_IRA_COVER_CLASSES}.
 @end defmac
 
 @defmac DYNAMIC_CHAIN_ADDRESS (@var{frameaddr})
+@en A C expression whose value is RTL representing the address in a stack
+@en frame where the pointer to the caller's frame is stored.  Assume that
+@en @var{frameaddr} is an RTL expression for the address of the stack frame
+@en itself.
 一个C表达式，其值为RTL，表示栈帧中的地址，指向被存储的调用者的帧。
 假设@var{frameaddr}为一个栈帧本身的地址的RTL表达式。
 
+@en If you don't define this macro, the default is to return the value
+@en of @var{frameaddr}---that is, the stack frame address is also the
+@en address of the stack word that points to the previous frame.
 如果你没有定义该宏，则缺省为返回@var{frameaddr}的值——也就是说，
 栈帧地址也是指向之前帧的地址。
 @end defmac
 
 @defmac SETUP_FRAME_ADDRESSES
+@en If defined, a C expression that produces the machine-specific code to
+@en setup the stack so that arbitrary frames can be accessed.  For example,
+@en on the SPARC, we must flush all of the register windows to the stack
+@en before we can access arbitrary stack frames.  You will seldom need to
+@en define this macro.
 如果定义，为一个C表达式，其产生机器特定的代码来建立栈，使得可以访问任意的帧。
 例如，在SPARC上，我们必须刷新栈的所有寄存器窗口，在我们可以访问任意栈帧之前。
 你很少会需要定义该宏。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_BUILTIN_SETJMP_FRAME_VALUE ()
+@en This target hook should return an rtx that is used to store
+@en the address of the current frame into the built in @code{setjmp} buffer.
+@en The default value, @code{virtual_stack_vars_rtx}, is correct for most
+@en machines.  One reason you may need to define this target hook is if
+@en @code{hard_frame_pointer_rtx} is the appropriate value on your machine.
 该target钩子应该返回一个rtx，用于将当前帧的地址存储到内建的@code{setjmp}缓存中。
 缺省值，@code{virtual_stack_vars_rtx}，对于大多数机器是正确的。
 一种你可能需要定义该target钩子的原因是，
@@ -4373,6 +4464,11 @@ See the documentation for @code{TARGET_IRA_COVER_CLASSES}.
 @end deftypefn
 
 @defmac FRAME_ADDR_RTX (@var{frameaddr})
+@en A C expression whose value is RTL representing the value of the frame
+@en address for the current frame.  @var{frameaddr} is the frame pointer
+@en of the current frame.  This is used for __builtin_frame_address.
+@en You need only define this macro if the frame address is not the same
+@en as the frame pointer.  Most machines do not need to define it.
 一个C表达式，其值为RTL，表示当前帧的帧地址。@var{frameaddr}为当前帧的帧指针。
 这用于__builtin_frame_address。你只有当帧地址与帧指针不同的时候才需要定义该宏。
 大多数机器不需要定义该宏。
@@ -4391,75 +4487,138 @@ determine the return address of other frames.
 @end defmac
 
 @defmac RETURN_ADDR_IN_PREVIOUS_FRAME
+@en Define this if the return address of a particular stack frame is accessed
+@en from the frame pointer of the previous stack frame.
 定义该宏，如果一个特定的栈帧的返回地址是从之前栈帧的帧指针中访问的。
 @end defmac
 
 @defmac INCOMING_RETURN_ADDR_RTX
+@en A C expression whose value is RTL representing the location of the
+@en incoming return address at the beginning of any function, before the
+@en prologue.  This RTL is either a @code{REG}, indicating that the return
+@en value is saved in @samp{REG}, or a @code{MEM} representing a location in
+@en the stack.
 一个C表达式，其值为RTL，表示在任何函数的起始处，在序言之前，
 流入的返回地址的位置。该RTL或者为一个@code{REG}，
 指示返回地址保存在@samp{REG}中，或者一个@code{MEM}表示位于栈中。
 
+@en You only need to define this macro if you want to support call frame
+@en debugging information like that provided by DWARF 2.
 你只在你想支持调用帧调试信息，像DWARF2提供的那样，的时候才需要定义该宏。
 
+@en If this RTL is a @code{REG}, you should also define
+@en @code{DWARF_FRAME_RETURN_COLUMN} to @code{DWARF_FRAME_REGNUM (REGNO)}.
 如果该RTL为一个@code{REG}，
 你还要定义@code{DWARF_FRAME_RETURN_COLUMN}为@code{DWARF_FRAME_REGNUM (REGNO)}。
 @end defmac
 
 @defmac DWARF_ALT_FRAME_RETURN_COLUMN
+@en A C expression whose value is an integer giving a DWARF 2 column
+@en number that may be used as an alternative return column.  The column
+@en must not correspond to any gcc hard register (that is, it must not
+@en be in the range of @code{DWARF_FRAME_REGNUM}).
 一个C表达式，其值为一个整数，给出了DWARF2的列号，可以用作替代的返回列。
 column必须不对应于任何gcc硬件寄存器（也就是说，
 其必须不在@code{DWARF_FRAME_REGNUM}的范围中）。
 
+@en This macro can be useful if @code{DWARF_FRAME_RETURN_COLUMN} is set to a
+@en general register, but an alternative column needs to be used for signal
+@en frames.  Some targets have also used different frame return columns
+@en over time.
 该宏当被设为一个通用寄存器，但是候选的column需要用于signal帧的时候会很有用。
 一些target还使用了不同的帧返回列。
 @end defmac
 
 @defmac DWARF_ZERO_REG
+@en A C expression whose value is an integer giving a DWARF 2 register
+@en number that is considered to always have the value zero.  This should
+@en only be defined if the target has an architected zero register, and
+@en someone decided it was a good idea to use that register number to
+@en terminate the stack backtrace.  New ports should avoid this.
 一个C表达式，其值为一个整数，给出了DWARF2寄存器编号，其被认为总是具有值0。
 这应该只当target的体系结构中具有一个0寄存器并且认为使用寄存器编号来确定栈的
 回溯是一个好主意的时候才被定义。新的part应该避免该宏。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_DWARF_HANDLE_FRAME_UNSPEC (const char *@var{label}, rtx @var{pattern}, int @var{index})
+@en This target hook allows the backend to emit frame-related insns that
+@en contain UNSPECs or UNSPEC_VOLATILEs.  The DWARF 2 call frame debugging
+@en info engine will invoke it on insns of the form
 该target钩子允许后端生成帧相关的insn，其包含了UNSPECs或UNSPEC_VOLATILEs。
 DWARF2调用帧调试信息引擎将会按照如下的形式来调用它
 @smallexample
 (set (reg) (unspec [@dots{}] UNSPEC_INDEX))
 @end smallexample
+@en and
 和 
 @smallexample
 (set (reg) (unspec_volatile [@dots{}] UNSPECV_INDEX)).
 @end smallexample
+@en to let the backend emit the call frame instructions.  @var{label} is
+@en the CFI label attached to the insn, @var{pattern} is the pattern of
+@en the insn and @var{index} is @code{UNSPEC_INDEX} or @code{UNSPECV_INDEX}.
 来使后端生成调用帧指令。@var{label}为insn附带的CFI标号，
 @var{pattern}为insn的指令模式，
 @var{index}为@code{UNSPEC_INDEX}或@code{UNSPECV_INDEX}。
 @end deftypefn
 
 @defmac INCOMING_FRAME_SP_OFFSET
+@en A C expression whose value is an integer giving the offset, in bytes,
+@en from the value of the stack pointer register to the top of the stack
+@en frame at the beginning of any function, before the prologue.  The top of
+@en the frame is defined to be the value of the stack pointer in the
+@en previous frame, just before the call instruction.
 一个C表达式，其值为一个整数，给出了偏移字节数，
 从栈指针寄存器到任何函数的起始处，序言之前的栈帧的顶部。
 帧的顶部被定义为之前帧的栈指针的值，就在call指令之前。
 
+@en You only need to define this macro if you want to support call frame
+@en debugging information like that provided by DWARF 2.
 你只有当你想支持像DWARF2提供的那样的帧调试信息时才需要定义该宏。
 @end defmac
 
 @defmac ARG_POINTER_CFA_OFFSET (@var{fundecl})
+@en A C expression whose value is an integer giving the offset, in bytes,
+@en from the argument pointer to the canonical frame address (cfa).  The
+@en final value should coincide with that calculated by
+@en @code{INCOMING_FRAME_SP_OFFSET}.  Which is unfortunately not usable
+@en during virtual register instantiation.
 一个C表达式，其值为一个整数，给出了偏移字节数，从参数指针到规范化帧地址（cfa）。
 最终的值应该与通过@code{INCOMING_FRAME_SP_OFFSET}所计算的一致。
 不幸的是这在虚寄存器实例化的时候不可用。
 
+@en The default value for this macro is
+@en @code{FIRST_PARM_OFFSET (fundecl) + crtl->args.pretend_args_size},
+@en which is correct for most machines; in general, the arguments are found
+@en immediately before the stack frame.  Note that this is not the case on
+@en some targets that save registers into the caller's frame, such as SPARC
+@en and rs6000, and so such targets need to define this macro.
 该宏的缺省值为@code{FIRST_PARM_OFFSET (fundecl)}，其对于大多数机器是正确的；
 总的来说，参数在栈帧之前被找到。注意有些情况不是这样的，一些target将寄存器保存在调用者的帧中，像SPARC和rs6000，这样的target就不需要定义该宏。
 
+@en You only need to define this macro if the default is incorrect, and you
+@en want to support call frame debugging information like that provided by
+@en DWARF 2.
 你只有当缺省是不正确的时候，
 以及你想支持像DWARF2提供的那样的帧调试信息时才需要定义该宏。
 @end defmac
 
 @defmac FRAME_POINTER_CFA_OFFSET (@var{fundecl})
+@en If defined, a C expression whose value is an integer giving the offset
+@en in bytes from the frame pointer to the canonical frame address (cfa).
+@en The final value should coincide with that calculated by
+@en @code{INCOMING_FRAME_SP_OFFSET}.
 如果被定义，则为一个C表达式，其值为一个整数，给出了偏移字节数，
 从帧指针到规范化帧地址（cfa）。
 最终的值应该与通过@code{INCOMING_FRAME_SP_OFFSET}所计算的一致。
 
+@en Normally the CFA is calculated as an offset from the argument pointer,
+@en via @code{ARG_POINTER_CFA_OFFSET}, but if the argument pointer is
+@en variable due to the ABI, this may not be possible.  If this macro is
+@en defined, it implies that the virtual register instantiation should be
+@en based on the frame pointer instead of the argument pointer.  Only one
+@en of @code{FRAME_POINTER_CFA_OFFSET} and @code{ARG_POINTER_CFA_OFFSET}
+@en should be defined.
 通常CFA被作为参数指针的偏移量来计算，通过@code{ARG_POINTER_CFA_OFFSET}，
 但是如果参数指针是一个变量，这就不太可能了。如果该宏被定义，
 它暗示了虚寄存器实例化应该基于帧指针而不是参数指针。
@@ -4467,88 +4626,168 @@ DWARF2调用帧调试信息引擎将会按照如下的形式来调用它
 @end defmac
 
 @defmac CFA_FRAME_BASE_OFFSET (@var{fundecl})
+@en If defined, a C expression whose value is an integer giving the offset
+@en in bytes from the canonical frame address (cfa) to the frame base used
+@en in DWARF 2 debug information.  The default is zero.  A different value
+@en may reduce the size of debug information on some ports.
 如果定义，则为一个C表达式，其值为一个整数，给出了偏移字节数，
 从规范化帧地址（cfa）到DWARF2调试信息使用的frame base。缺省为0。
 不同的值可以在一些port上减少调试信息的大小。
 @end defmac
 
+@en @node Exception Handling
+@en @subsection Exception Handling Support
 @node 异常处理
 @subsection 对异常处理的支持
 @cindex exception handling
 
 @defmac EH_RETURN_DATA_REGNO (@var{N})
+@en A C expression whose value is the @var{N}th register number used for
+@en data by exception handlers, or @code{INVALID_REGNUM} if fewer than
+@en @var{N} registers are usable.
 一个C表达式，其值为第@var{N}个寄存器的编号，用于异常处理的数据，
 或者为@code{INVALID_REGNUM}，如果小于@var{N}个寄存器可用。
 
+@en The exception handling library routines communicate with the exception
+@en handlers via a set of agreed upon registers.  Ideally these registers
+@en should be call-clobbered; it is possible to use call-saved registers,
+@en but may negatively impact code size.  The target must support at least
+@en 2 data registers, but should define 4 if there are enough free registers.
 异常处理库程序与异常处理者通过一套协定好的寄存器来通讯。理想的，
 这些寄存器应该为调用破坏的；可以使用调用保存的寄存器，
 但可能会对代码大小产生负影响。target必须支持至少两个数据寄存器，
 但如果有足够的可用的寄存器，则应该定义为4。
 
+@en You must define this macro if you want to support call frame exception
+@en handling like that provided by DWARF 2.
 你必须定义该宏，如果你想支持像DWARF 2提供的调用帧异常处理。
 @end defmac
 
 @defmac EH_RETURN_STACKADJ_RTX
+@en A C expression whose value is RTL representing a location in which
+@en to store a stack adjustment to be applied before function return.
+@en This is used to unwind the stack to an exception handler's call frame.
+@en It will be assigned zero on code paths that return normally.
 一个C表达式，其值为RTL，表示一个位置，用来存储栈调整，在函数返回前应用。
 这用于unwind栈到一个异常处理的调用帧中。其将被赋予0在通常的返回代码路径上。
 
+@en Typically this is a call-clobbered hard register that is otherwise
+@en untouched by the epilogue, but could also be a stack slot.
 通常这是一个调用破坏的硬件寄存器，但也可以为一个栈槽。
 
+@en Do not define this macro if the stack pointer is saved and restored
+@en by the regular prolog and epilog code in the call frame itself; in
+@en this case, the exception handling library routines will update the
+@en stack location to be restored in place.  Otherwise, you must define
+@en this macro if you want to support call frame exception handling like
+@en that provided by DWARF 2.
 不要定义该宏，如果栈指针在调用帧本身通过序言和尾声来保存和恢复时；
 这种情况下，异常处理库函数将更新栈位置并保存。否则，你必须定义该宏，
 如果你想支持调用帧异常处理，就像DWARF2提供的那样。
 @end defmac
 
 @defmac EH_RETURN_HANDLER_RTX
+@en A C expression whose value is RTL representing a location in which
+@en to store the address of an exception handler to which we should
+@en return.  It will not be assigned on code paths that return normally.
 一个C表达式，其值为一个RTL，表示一个位置，用来存储我们应该返回的异常处理的地址。
 其在通常的返回的代码路径上将不被赋值。
 
+@en Typically this is the location in the call frame at which the normal
+@en return address is stored.  For targets that return by popping an
+@en address off the stack, this might be a memory address just below
+@en the @emph{target} call frame rather than inside the current call
+@en frame.  If defined, @code{EH_RETURN_STACKADJ_RTX} will have already
+@en been assigned, so it may be used to calculate the location of the
+@en target call frame.
 通常这是在调用帧中通常返回地址存储的位置。对于通过在栈中弹出地址的target，
 这可以为一个内存地址，就在target调用帧的下面，而不是在当前调用帧中。
 如果被定义，@code{EH_RETURN_STACKADJ_RTX}将已经被赋值，
 所以其可以用于计算target调用帧的位置。
 
+@en Some targets have more complex requirements than storing to an
+@en address calculable during initial code generation.  In that case
+@en the @code{eh_return} instruction pattern should be used instead.
 一些target具有更加复杂的要求，比在初始化代码生成阶段存储到地址中。
 这种情况下，要替代的使用@code{eh_return}指令模式。
 
+@en If you want to support call frame exception handling, you must
+@en define either this macro or the @code{eh_return} instruction pattern.
 如果你想支持调用帧异常处理，你必须定义该宏或者@code{eh_return}指令模式。
 @end defmac
 
 @defmac RETURN_ADDR_OFFSET
+@en If defined, an integer-valued C expression for which rtl will be generated
+@en to add it to the exception handler address before it is searched in the
+@en exception handling tables, and to subtract it again from the address before
+@en using it to return to the exception handler.
 如果定义，则为一个整数值的C表达式，并会为此生成rtl来加上异常处理地址，
 在其在异常处理表中搜索之前，并且再减去它，在用它来返回到异常处理之前。
 @end defmac
 
 @defmac ASM_PREFERRED_EH_DATA_FORMAT (@var{code}, @var{global})
+@en This macro chooses the encoding of pointers embedded in the exception
+@en handling sections.  If at all possible, this should be defined such
+@en that the exception handling section will not require dynamic relocations,
+@en and so may be read-only.
 该宏选择在异常处理section中嵌入的指针的解码。如果尽可能，该宏应该被定义，
 这样异常处理section将不会要求进行动态重定位，并可以为只读的。
 
+@en @var{code} is 0 for data, 1 for code labels, 2 for function pointers.
+@en @var{global} is true if the symbol may be affected by dynamic relocations.
+@en The macro should return a combination of the @code{DW_EH_PE_*} defines
+@en as found in @file{dwarf2.h}.
 @var{code}为0，对于数据，1对于代码标号，2对于函数指针。
 @var{global}为真，如果符号可以由动态重定位影响。
 宏应该返回在@file{dwarf2.h}中可以找到的@code{DW_EH_PE_*}的组合。
 
+@en If this macro is not defined, pointers will not be encoded but
+@en represented directly.
 如果该宏没有定义，则指针将不被解码，而是直接表示。
 @end defmac
 
 @defmac ASM_MAYBE_OUTPUT_ENCODED_ADDR_RTX (@var{file}, @var{encoding}, @var{size}, @var{addr}, @var{done})
+@en This macro allows the target to emit whatever special magic is required
+@en to represent the encoding chosen by @code{ASM_PREFERRED_EH_DATA_FORMAT}.
+@en Generic code takes care of pc-relative and indirect encodings; this must
+@en be defined if the target uses text-relative or data-relative encodings.
 该宏允许target生成特定的magic，
 用于表示@code{ASM_PREFERRED_EH_DATA_FORMAT}选择的encoding。
 通常代码考虑pc-relative和indirect解码；
 如果target使用text-relative或者data-relative解码，则必须定义该宏。
 
+@en This is a C statement that branches to @var{done} if the format was
+@en handled.  @var{encoding} is the format chosen, @var{size} is the number
+@en of bytes that the format occupies, @var{addr} is the @code{SYMBOL_REF}
+@en to be emitted.
 这是一个C语句，如果格式被处理，则执行分支跳转。@var{encoding}为选择的格式，
 @var{size}为格式占用的字节数，@var{addr}为生成的@code{SYMBOL_REF}。
 @end defmac
 
 @defmac MD_UNWIND_SUPPORT
+@en A string specifying a file to be #include'd in unwind-dw2.c.  The file
+@en so included typically defines @code{MD_FALLBACK_FRAME_STATE_FOR}.
 一个字符串，指定了文件在unwind-dw2.c中被#include包含进来。
 被包含进来的文件通常定义了@code{MD_FALLBACK_FRAME_STATE_FOR}。
 @end defmac
 
 @defmac MD_FALLBACK_FRAME_STATE_FOR (@var{context}, @var{fs})
+@en This macro allows the target to add CPU and operating system specific
+@en code to the call-frame unwinder for use when there is no unwind data
+@en available.  The most common reason to implement this macro is to unwind
+@en through signal frames.
 该宏允许target增加CPU和操作系统特定代码到call-frame unwinder，
 用于当没有unwind数据可用时。最常见的原因是实现该宏来通过signal帧来unwind。
 
+@en This macro is called from @code{uw_frame_state_for} in
+@en @file{unwind-dw2.c}, @file{unwind-dw2-xtensa.c} and
+@en @file{unwind-ia64.c}.  @var{context} is an @code{_Unwind_Context};
+@en @var{fs} is an @code{_Unwind_FrameState}.  Examine @code{context->ra}
+@en for the address of the code being executed and @code{context->cfa} for
+@en the stack pointer value.  If the frame can be decoded, the register
+@en save addresses should be updated in @var{fs} and the macro should
+@en evaluate to @code{_URC_NO_REASON}.  If the frame cannot be decoded,
+@en the macro should evaluate to @code{_URC_END_OF_STACK}.
 该宏由@file{unwind-dw2.c}, @file{unwind-dw2-xtensa.c}和@file{unwind-ia64.c}中的
 @code{uw_frame_state_for}调用。@var{context}为一个@code{_Unwind_Context}；
 @var{fs}为一个@code{_Unwind_FrameState}。检查@code{context->ra}来得到被执行的
@@ -4556,14 +4795,25 @@ DWARF2调用帧调试信息引擎将会按照如下的形式来调用它
 则寄存器保存地址应该在@var{fs}中更新，并且宏应该求值为@code{_URC_NO_REASON}。
 如果帧不能被解码，则宏应该求解为@code{_URC_END_OF_STACK}。
 
+@en For proper signal handling in Java this macro is accompanied by
+@en @code{MAKE_THROW_FRAME}, defined in @file{libjava/include/*-signal.h} headers.
 对于java中合适的信号处理，该宏通过@code{MAKE_THROW_FRAME}来应用，
 在@file{libjava/include/*-signal.h}中定义。
 @end defmac
 
 @defmac MD_HANDLE_UNWABI (@var{context}, @var{fs})
+@en This macro allows the target to add operating system specific code to the
+@en call-frame unwinder to handle the IA-64 @code{.unwabi} unwinding directive,
+@en usually used for signal or interrupt frames.
 该宏允许target增加操作系统特定的代码到调用帧unwinder，
 来处理IA-64 @code{.unwabi} unwinding伪指令，通常用于signal或者interrrupt帧。
 
+@en This macro is called from @code{uw_update_context} in @file{unwind-ia64.c}.
+@en @var{context} is an @code{_Unwind_Context};
+@en @var{fs} is an @code{_Unwind_FrameState}.  Examine @code{fs->unwabi}
+@en for the abi and context in the @code{.unwabi} directive.  If the
+@en @code{.unwabi} directive can be handled, the register save addresses should
+@en be updated in @var{fs}.
 该宏由@file{unwind-ia64.c}中的@code{uw_update_context}调用。
 @var{context}为一个@code{_Unwind_Context}；
 @var{fs}为一个@code{_Unwind_FrameState}。检查@code{fs->unwabi}来得到abi。
@@ -4571,13 +4821,21 @@ DWARF2调用帧调试信息引擎将会按照如下的形式来调用它
 @end defmac
 
 @defmac TARGET_USES_WEAK_UNWIND_INFO
+@en A C expression that evaluates to true if the target requires unwind
+@en info to be given comdat linkage.  Define it to be @code{1} if comdat
+@en linkage is necessary.  The default is @code{0}.
 一个C表达式，计算为真，如果target需要unwind info给定comdat linkage。
 定义其为@code{1}，如果comdat linkage有必要。缺省为@code{0}。
 @end defmac
 
+@en @node Stack Checking
+@en @subsection Specifying How Stack Checking is Done
 @node 栈检查
 @subsection 指定如何进行栈检查
 
+@en GCC will check that stack references are within the boundaries of the
+@en stack, if the option @option{-fstack-check} is specified, in one of
+@en three ways:
 GCC将检查栈引用是否位于栈的边界里，如果指定了@option{-fstack-check}，
 使用三种方式的之一：
 
