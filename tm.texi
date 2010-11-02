@@ -12377,8 +12377,17 @@ label为跳转的普通目的地并且不具有fallthru入边。
 @section 控制调试信息格式
 
 @c prevent bad page break with this line
+@en This describes how to specify debugging information.
 描述了如何指定调试信息。
 
+@en @menu
+@en * All Debuggers::      Macros that affect all debugging formats uniformly.
+@en * DBX Options::        Macros enabling specific options in DBX format.
+@en * DBX Hooks::          Hook macros for varying DBX format.
+@en * File Names and DBX:: Macros controlling output of file names in DBX format.
+@en * SDB and DWARF::      Macros for SDB (COFF) and DWARF formats.
+@en * VMS Debug::          Macros for VMS debug format.
+@en @end menu
 @menu
 * 所有调试器::  影响所有调试信息的宏   
 * DBX选项::     启用DBX格式的特定选项的宏  
@@ -12388,19 +12397,33 @@ label为跳转的普通目的地并且不具有fallthru入边。
 * VMS调试::     用于VMS调试格式的宏
 @end menu
 
+@en @node All Debuggers
+@en @subsection Macros Affecting All Debugging Formats
 @node 所有调试器
 @subsection 影响所有调试格式的宏
 
 @c prevent bad page break with this line
+@en These macros affect all debugging formats.
 这些宏影响所有的调试格式。
 
 @defmac DBX_REGISTER_NUMBER (@var{regno})
+@en A C expression that returns the DBX register number for the compiler
+@en register number @var{regno}.  In the default macro provided, the value
+@en of this expression will be @var{regno} itself.  But sometimes there are
+@en some registers that the compiler knows about and DBX does not, or vice
+@en versa.  In such cases, some register may need to have one number in the
+@en compiler and another for DBX@.
 一个C表达式，返回编译器寄存器号@var{regno}的DBX寄存器号。
 在提供的缺省宏中，该表达式的值将为@var{regno}本身。
 但是有时候，有些寄存器编译器知道但是DBX不知道，或者相反。
 对于这种情况，寄存器可能需要在编译器中具有一个编号，
 而在DBX中具有另一个。
 
+@en If two registers have consecutive numbers inside GCC, and they can be
+@en used as a pair to hold a multiword value, then they @emph{must} have
+@en consecutive numbers after renumbering with @code{DBX_REGISTER_NUMBER}.
+@en Otherwise, debuggers will be unable to access such a pair, because they
+@en expect register pairs to be consecutive in their own numbering scheme.
 如果两个寄存器在GCC中具有连续的编号，
 并且可以作为一对用来保存多字的值，
 则它们在使用@code{DBX_REGISTER_NUMBER}重新编号之后
@@ -12408,11 +12431,21 @@ label为跳转的普通目的地并且不具有fallthru入边。
 否则，调试器将无法访问这样的寄存器对，
 因为调试器期望寄存器对在自己的编号方案下也是连续的。
 
+@en If you find yourself defining @code{DBX_REGISTER_NUMBER} in way that
+@en does not preserve register pairs, then what you must do instead is
+@en redefine the actual register numbering scheme.
 如果你发现自己定义的@code{DBX_REGISTER_NUMBER}不能保持寄存器对，
 则必须重定义实际的寄存器编号方案。
 @end defmac
 
 @defmac DEBUGGER_AUTO_OFFSET (@var{x})
+@en A C expression that returns the integer offset value for an automatic
+@en variable having address @var{x} (an RTL expression).  The default
+@en computation assumes that @var{x} is based on the frame-pointer and
+@en gives the offset from the frame-pointer.  This is required for targets
+@en that produce debugging output for DBX or COFF-style debugging output
+@en for SDB and allow the frame-pointer to be eliminated when the
+@en @option{-g} options is used.
 一个C表达式，返回具有地址@var{x}（RTL表达式）的自动变量的整数偏移量。
 缺省计算是假设@var{x}基于帧指针的，并会给出相对帧指针的偏移量。
 这对于产生DBX调试输出或COFF风格的SDB调试输出，
@@ -12420,11 +12453,20 @@ label为跳转的普通目的地并且不具有fallthru入边。
 @end defmac
 
 @defmac DEBUGGER_ARG_OFFSET (@var{offset}, @var{x})
+@en A C expression that returns the integer offset value for an argument
+@en having address @var{x} (an RTL expression).  The nominal offset is
+@en @var{offset}.
 一个C表达式，返回具有地址@var{x}（RTL表达式）的参数的整数偏移量。
 名义上的偏移量为@var{offset}。
 @end defmac
 
 @defmac PREFERRED_DEBUGGING_TYPE
+@en A C expression that returns the type of debugging output GCC should
+@en produce when the user specifies just @option{-g}.  Define
+@en this if you have arranged for GCC to support more than one format of
+@en debugging output.  Currently, the allowable values are @code{DBX_DEBUG},
+@en @code{SDB_DEBUG}, @code{DWARF_DEBUG}, @code{DWARF2_DEBUG},
+@en @code{XCOFF_DEBUG}, @code{VMS_DEBUG}, and @code{VMS_AND_DWARF2_DEBUG}.
 一个C表达式，返回当用户只指定@option{-g}时，
 GCC应该产生的调试输出类型。
 如果你已经使得GCC支持多种调试输出格式的时候，则定义该宏。
@@ -12432,42 +12474,68 @@ GCC应该产生的调试输出类型。
 @code{DWARF2_DEBUG}, @code{XCOFF_DEBUG}, 
 @code{VMS_DEBUG}和@code{VMS_AND_DWARF2_DEBUG}。
 
+@en When the user specifies @option{-ggdb}, GCC normally also uses the
+@en value of this macro to select the debugging output format, but with two
+@en exceptions.  If @code{DWARF2_DEBUGGING_INFO} is defined, GCC uses the
+@en value @code{DWARF2_DEBUG}.  Otherwise, if @code{DBX_DEBUGGING_INFO} is
+@en defined, GCC uses @code{DBX_DEBUG}.
 当用户指定@option{-ggdb}时，GCC通常还使用该宏的值来选择调试输出格式，
 但是有两个例外。如果定义了@code{DWARF2_DEBUGGING_INFO}，
 则GCC使用值@code{DWARF2_DEBUG}，如果定义了@code{DBX_DEBUGGING_INFO}，
 则GCC使用@code{DBX_DEBUG}。
 
+@en The value of this macro only affects the default debugging output; the
+@en user can always get a specific type of output by using @option{-gstabs},
+@en @option{-gcoff}, @option{-gdwarf-2}, @option{-gxcoff}, or @option{-gvms}.
 该宏的值只影响缺省调试输出；用户总是可以通过使用@option{-gstabs},
 @option{-gcoff}, @option{-gdwarf-2}, 
 @option{-gxcoff}或@option{-gvms}来获得指定类型的输出。
 @end defmac
 
+@en @node DBX Options
+@en @subsection Specific Options for DBX Output
 @node DBX选项
 @subsection 用于DBX输出的特定选项
 
 @c prevent bad page break with this line
+@en These are specific options for DBX output.
 这些是用于DBX输出的特定选项。
 
 @defmac DBX_DEBUGGING_INFO
+@en Define this macro if GCC should produce debugging output for DBX
+@en in response to the @option{-g} option.
 定义该宏，如果对于@option{-g}选项，GCC应该产生DBX的调试输出。
 @end defmac
 
 @defmac XCOFF_DEBUGGING_INFO
+@en Define this macro if GCC should produce XCOFF format debugging output
+@en in response to the @option{-g} option.  This is a variant of DBX format.
 定义该宏，如果对于@option{-g}选项，GCC应该产生XCOFF格式的调试输出。
 这是DBX格式的变体。
 @end defmac
 
 @defmac DEFAULT_GDB_EXTENSIONS
+@en Define this macro to control whether GCC should by default generate
+@en GDB's extended version of DBX debugging information (assuming DBX-format
+@en debugging information is enabled at all).  If you don't define the
+@en macro, the default is 1: always generate the extended information
+@en if there is any occasion to.
 定义该宏来控制GCC是否缺省的生成GDB的扩展版本DBX调试信息
 （假设是使用DBX格式的调试信息）。如果没有定义该宏，则缺省为1：
 如果可能的话，总是生成扩展信息。
 @end defmac
 
 @defmac DEBUG_SYMS_TEXT
+@en Define this macro if all @code{.stabs} commands should be output while
+@en in the text section.
 定义该宏，如果所有@code{.stabs}命令应该输出在text section中。
 @end defmac
 
 @defmac ASM_STABS_OP
+@en A C string constant, including spacing, naming the assembler pseudo op to
+@en use instead of @code{"\t.stabs\t"} to define an ordinary debugging symbol.
+@en If you don't define this macro, @code{"\t.stabs\t"} is used.  This macro
+@en applies only to DBX debugging information format.
 一个C字符串常量，包括空格，
 命名了用来替代@code{"\t.stabs\t"}的汇编伪指令，
 来定义一个普通调试符号。
@@ -12476,6 +12544,11 @@ GCC应该产生的调试输出类型。
 @end defmac
 
 @defmac ASM_STABD_OP
+@en A C string constant, including spacing, naming the assembler pseudo op to
+@en use instead of @code{"\t.stabd\t"} to define a debugging symbol whose
+@en value is the current location.  If you don't define this macro,
+@en @code{"\t.stabd\t"} is used.  This macro applies only to DBX debugging
+@en information format.
 一个C字符串常量，包括空格，
 命名了用来替代@code{"\t.stabd\t"}的汇编伪指令，
 来定义一个普通调试符号。
@@ -12484,18 +12557,33 @@ GCC应该产生的调试输出类型。
 @end defmac
 
 @defmac ASM_STABN_OP
+@en A C string constant, including spacing, naming the assembler pseudo op to
+@en use instead of @code{"\t.stabn\t"} to define a debugging symbol with no
+@en name.  If you don't define this macro, @code{"\t.stabn\t"} is used.  This
+@en macro applies only to DBX debugging information format.
 一个C字符串常量，包括空格，
 命名了用来替代@code{"\t.stabn\t"}的汇编伪指令，来定义一个普通调试符号。
 如果没有定义该宏，则使用@code{"\t.stabn\t"}。该宏只用于DBX调试信息格式。
 @end defmac
 
 @defmac DBX_NO_XREFS
+@en Define this macro if DBX on your system does not support the construct
+@en @samp{xs@var{tagname}}.  On some systems, this construct is used to
+@en describe a forward reference to a structure named @var{tagname}.
+@en On other systems, this construct is not supported at all.
 定义该宏，如果DBX在你的系统上不支持@samp{xs@var{tagname}}结构。
 在一些系统上，该结构被用于描述对名字叫@var{tagname}的结构体的向前引用。
 在其它系统上，该结构根本不被支持。
 @end defmac
 
 @defmac DBX_CONTIN_LENGTH
+@en A symbol name in DBX-format debugging information is normally
+@en continued (split into two separate @code{.stabs} directives) when it
+@en exceeds a certain length (by default, 80 characters).  On some
+@en operating systems, DBX requires this splitting; on others, splitting
+@en must not be done.  You can inhibit splitting by defining this macro
+@en with the value zero.  You can override the default splitting-length by
+@en defining this macro as an expression for the length you desire.
 DBX格式的调试信息中的符号名被连续的处理
 （分成两个独立的@code{.stabs}指令）
 当其达到一个特定长度时（缺省为80个字符）。
@@ -12505,64 +12593,107 @@ DBX格式的调试信息中的符号名被连续的处理
 @end defmac
 
 @defmac DBX_CONTIN_CHAR
+@en Normally continuation is indicated by adding a @samp{\} character to
+@en the end of a @code{.stabs} string when a continuation follows.  To use
+@en a different character instead, define this macro as a character
+@en constant for the character you want to use.  Do not define this macro
+@en if backslash is correct for your system.
 通常通过在@code{.stabs}字符串的结尾增加一个@samp{\}字符来表示连续的处理。
 要是用不用的字符，定义该宏为一个你想使用的字符常量。
 不要定义该宏，如果反斜杠在你的系统上是正确的。
 @end defmac
 
 @defmac DBX_STATIC_STAB_DATA_SECTION
+@en Define this macro if it is necessary to go to the data section before
+@en outputting the @samp{.stabs} pseudo-op for a non-global static
+@en variable.
 定义该宏，如果需要在为非全局的静态变量输出@samp{.stabs}伪操作符之前进入data section。
 @end defmac
 
 @defmac DBX_TYPE_DECL_STABS_CODE
+@en The value to use in the ``code'' field of the @code{.stabs} directive
+@en for a typedef.  The default is @code{N_LSYM}.
 对于typedef，@code{.stabs}指令的“code”域所使用的值。
 缺省为@code{N_LSYM}。
 @end defmac
 
 @defmac DBX_STATIC_CONST_VAR_CODE
+@en The value to use in the ``code'' field of the @code{.stabs} directive
+@en for a static variable located in the text section.  DBX format does not
+@en provide any ``right'' way to do this.  The default is @code{N_FUN}.
 对于位于text section的静态变量，@code{.stabs}指令的“code”域所使用的值。
 DBX格式不提供任何正确是方式。缺省为@code{N_FUN}。
 @end defmac
 
 @defmac DBX_REGPARM_STABS_CODE
+@en The value to use in the ``code'' field of the @code{.stabs} directive
+@en for a parameter passed in registers.  DBX format does not provide any
+@en ``right'' way to do this.  The default is @code{N_RSYM}.
 对于寄存器中传递的参数，@code{.stabs}指令的“code”域所使用的值。
 DBX格式不提供任何正确是方式。缺省为@code{N_RSYM}。
 @end defmac
 
 @defmac DBX_REGPARM_STABS_LETTER
+@en The letter to use in DBX symbol data to identify a symbol as a parameter
+@en passed in registers.  DBX format does not customarily provide any way to
+@en do this.  The default is @code{'P'}.
 在DBX符号数据中使用的字母，用来标识一个符号为在寄存器中传递的参数。
 DBX格式目前没有提供任何这样做的方式。缺省为@code{'P'}。
 @end defmac
 
 @defmac DBX_FUNCTION_FIRST
+@en Define this macro if the DBX information for a function and its
+@en arguments should precede the assembler code for the function.  Normally,
+@en in DBX format, the debugging information entirely follows the assembler
+@en code.
 定义该宏，如果对于函数和它的参数的DBX信息应该位于函数的汇编代码之前。
 通常，在DBX格式中，调试信息完全位于汇编代码之后。
 @end defmac
 
 @defmac DBX_BLOCKS_FUNCTION_RELATIVE
+@en Define this macro, with value 1, if the value of a symbol describing
+@en the scope of a block (@code{N_LBRAC} or @code{N_RBRAC}) should be
+@en relative to the start of the enclosing function.  Normally, GCC uses
+@en an absolute address.
 定义该宏为1，
 如果描述块（@code{N_LBRAC}或@code{N_RBRAC}）的作用域的符号的值，
 应该相对于函数括号的起始处。通常GCC使用绝对值。
 @end defmac
 
 @defmac DBX_LINES_FUNCTION_RELATIVE
+@en Define this macro, with value 1, if the value of a symbol indicating
+@en the current line number (@code{N_SLINE}) should be relative to the
+@en start of the enclosing function.  Normally, GCC uses an absolute address.
 定义该宏为1，如果指示当前行（@code{N_SLINE}）的符号的值，
 应该相对于函数括号的起始处。通常GCC使用绝对值。
 @end defmac
 
 @defmac DBX_USE_BINCL
+@en Define this macro if GCC should generate @code{N_BINCL} and
+@en @code{N_EINCL} stabs for included header files, as on Sun systems.  This
+@en macro also directs GCC to output a type number as a pair of a file
+@en number and a type number within the file.  Normally, GCC does not
+@en generate @code{N_BINCL} or @code{N_EINCL} stabs, and it outputs a single
+@en number for a type number.
 定义该宏，
 如果GCC应该为被包含的头文件生成@code{N_BINCL}和@code{N_EINCL} stabs，
 如Sun系统。通常，GCC不生成@code{N_BINCL}或@code{N_EINCL} stabs。
 @end defmac
 
+@en @node DBX Hooks
+@en @subsection Open-Ended Hooks for DBX Format
 @node DBX钩子 
 @subsection 针对DBX格式的钩子
 
 @c prevent bad page break with this line
-这些是针对DBX格式的钩子。
+@en These are hooks for DBX format.
+@en 这些是针对DBX格式的钩子。
 
 @defmac DBX_OUTPUT_LBRAC (@var{stream}, @var{name})
+@en Define this macro to say how to output to @var{stream} the debugging
+@en information for the start of a scope level for variable names.  The
+@en argument @var{name} is the name of an assembler symbol (for use with
+@en @code{assemble_name}) whose value is the address where the scope begins.
 定义该宏，
 以告知如何将变量名的作用域级别的起始调试信息输出到@var{stream}中。
 参数@var{name}为一个汇编符号的名字（使用@code{assemble_name}），
@@ -12570,98 +12701,159 @@ DBX格式目前没有提供任何这样做的方式。缺省为@code{'P'}。
 @end defmac
 
 @defmac DBX_OUTPUT_RBRAC (@var{stream}, @var{name})
+@en Like @code{DBX_OUTPUT_LBRAC}, but for the end of a scope level.
 类似@code{DBX_OUTPUT_LBRAC}，不过是作用域级别的结尾。
 @end defmac
 
 @defmac DBX_OUTPUT_NFUN (@var{stream}, @var{lscope_label}, @var{decl})
+@en Define this macro if the target machine requires special handling to
+@en output an @code{N_FUN} entry for the function @var{decl}.
 定义该宏，
 如果target机器要求对函数@var{decl}输出一个@code{N_FUN}条目进行特殊处理。
 @end defmac
 
 @defmac DBX_OUTPUT_SOURCE_LINE (@var{stream}, @var{line}, @var{counter})
+@en A C statement to output DBX debugging information before code for line
+@en number @var{line} of the current source file to the stdio stream
+@en @var{stream}.  @var{counter} is the number of time the macro was
+@en invoked, including the current invocation; it is intended to generate
+@en unique labels in the assembly output.
 一条C语句，将DBX调试信息在当前源文件行号@var{line}的代码前，
 输出到stdio流@var{stream}中。@var{counter}为宏被调用的次数，
 包括当前调用；其用于在汇编输出中生成为一个标号。
 
+@en This macro should not be defined if the default output is correct, or
+@en if it can be made correct by defining @code{DBX_LINES_FUNCTION_RELATIVE}.
 如果缺省输出是正确的，
 或者其能够通过定义@code{DBX_LINES_FUNCTION_RELATIVE}而变的正确，
 则不要定义该宏。
 @end defmac
 
 @defmac NO_DBX_FUNCTION_END
+@en Some stabs encapsulation formats (in particular ECOFF), cannot handle the
+@en @code{.stabs "",N_FUN,,0,0,Lscope-function-1} gdb dbx extension construct.
+@en On those machines, define this macro to turn this feature off without
+@en disturbing the rest of the gdb extensions.
 一些stab封装格式（特别是ECOFF），
 不能处理@code{.stabs "",N_FUN,,0,0,Lscope-function-1} gdb dbx扩展结构。
 在那些机器上，定义该宏来关掉这个特点，并且不影响其它gdb扩展。
 @end defmac
 
 @defmac NO_DBX_BNSYM_ENSYM
+@en Some assemblers cannot handle the @code{.stabd BNSYM/ENSYM,0,0} gdb dbx
+@en extension construct.  On those machines, define this macro to turn this
+@en feature off without disturbing the rest of the gdb extensions.
 一些汇编器不能处理@code{.stabd BNSYM/ENSYM,0,0} gdb dbx扩展结构。
 在那些机器上，定义该宏来关掉这个特点，并且不影响其它gdb扩展。
 @end defmac
 
+@en @node File Names and DBX
+@en @subsection File Names in DBX Format
 @node 文件名和DBX
 @subsection DBX格式的文件名
 
 @c prevent bad page break with this line
+@en This describes file names in DBX format.
 这一节描述了DBX格式的文件名。
 
 @defmac DBX_OUTPUT_MAIN_SOURCE_FILENAME (@var{stream}, @var{name})
+@en A C statement to output DBX debugging information to the stdio stream
+@en @var{stream}, which indicates that file @var{name} is the main source
+@en file---the file specified as the input file for compilation.
+@en This macro is called only once, at the beginning of compilation.
 一条C语句，
 将DBX调试信息输出到标准输入输出（stdio）流@var{stream}上，
 其中文件@var{name}为主源文件——被指定为被编译的输入文件。
 该宏只被调用一次，在编译的开始处。
 
+@en This macro need not be defined if the standard form of output
+@en for DBX debugging information is appropriate.
 如果DBX调试信息输出的标准形式合适，则该宏不需要被定义。
 
+@en It may be necessary to refer to a label equal to the beginning of the
+@en text section.  You can use @samp{assemble_name (stream, ltext_label_name)}
+@en to do so.  If you do this, you must also set the variable
+@en @var{used_ltext_label_name} to @code{true}.
 有时可能需要引用相当与text段起始处的标号。
 这时可以使用@samp{assemble_name (stream, ltext_label_name)}来完成。
 如果这样做，则必须还要将变量@var{used_ltext_label_name}设为@code{true}。
 @end defmac
 
 @defmac NO_DBX_MAIN_SOURCE_DIRECTORY
+@en Define this macro, with value 1, if GCC should not emit an indication
+@en of the current directory for compilation and current source language at
+@en the beginning of the file.
 定义该宏的值为1，
 如果不让GCC在文件起始处产生对当前的编译目录和当前的源语言的指示。
 @end defmac
 
 @defmac NO_DBX_GCC_MARKER
+@en Define this macro, with value 1, if GCC should not emit an indication
+@en that this object file was compiled by GCC@.  The default is to emit
+@en an @code{N_OPT} stab at the beginning of every source file, with
+@en @samp{gcc2_compiled.} for the string and value 0.
 定义该宏的值为1，如果不让GCC产生该目标文件是由GCC编译的指示。
 缺省情况是在每个源文件的起始处产生一个@code{N_OPT} stab，
 其中字符串为@samp{gcc2_compiled.}，值为0。
 @end defmac
 
 @defmac DBX_OUTPUT_MAIN_SOURCE_FILE_END (@var{stream}, @var{name})
+@en A C statement to output DBX debugging information at the end of
+@en compilation of the main source file @var{name}.  Output should be
+@en written to the stdio stream @var{stream}.
 一条C语句，用来在主源文件@var{name}的编译结尾输出DBX调试信息。
 输出将被写入标准输入输出流@var{stream}中。
 
+@en If you don't define this macro, nothing special is output at the end
+@en of compilation, which is correct for most machines.
 如果没有定义该宏，则在编译的结尾将不做任何特定的输出，
 这对于大多数机器都是正确的。
 @end defmac
 
 @defmac DBX_OUTPUT_NULL_N_SO_AT_MAIN_SOURCE_FILE_END
+@en Define this macro @emph{instead of} defining
+@en @code{DBX_OUTPUT_MAIN_SOURCE_FILE_END}, if what needs to be output at
+@en the end of compilation is an @code{N_SO} stab with an empty string,
+@en whose value is the highest absolute text address in the file.
 定义该宏而不是定义@code{DBX_OUTPUT_MAIN_SOURCE_FILE_END}，
 如果要在编译结尾输出的是一个@code{N_SO} stab，
 其具有空字符串，值为文件中最高的绝对text地址。
 @end defmac
 
 @need 2000
+@en @node SDB and DWARF
+@en @subsection Macros for SDB and DWARF Output
 @node SDB和DWARF
 @subsection 用于SDB和DWARF输出的宏
 
 @c prevent bad page break with this line
+@en Here are macros for SDB and DWARF output.
 这些是用于SDB和DWARF输出的宏。
 
 @defmac SDB_DEBUGGING_INFO
+@en Define this macro if GCC should produce COFF-style debugging output
+@en for SDB in response to the @option{-g} option.
 定义该宏，如果对于@option{-g}选项，GCC应该为SDB产生COFF风格的调试输出。
 @end defmac
 
 @defmac DWARF2_DEBUGGING_INFO
+@en Define this macro if GCC should produce dwarf version 2 format
+@en debugging output in response to the @option{-g} option.
 定义该宏，如果对于@option{-g}选项，GCC应该产生dwarf本版2格式的调试输出。
 
 @deftypefn {Target Hook} int TARGET_DWARF_CALLING_CONVENTION (tree @var{function})
+@en Define this to enable the dwarf attribute @code{DW_AT_calling_convention} to
+@en be emitted for each function.  Instead of an integer return the enum
+@en value for the @code{DW_CC_} tag.
 定义该钩子，使得为个函数输出dwarf属性@code{DW_AT_calling_convention}。
 返回@code{DW_CC_}标记的enum值。
 @end deftypefn
 
+@en To support optional call frame debugging information, you must also
+@en define @code{INCOMING_RETURN_ADDR_RTX} and either set
+@en @code{RTX_FRAME_RELATED_P} on the prologue insns if you use RTL for the
+@en prologue, or call @code{dwarf2out_def_cfa} and @code{dwarf2out_reg_save}
+@en as appropriate from @code{TARGET_ASM_FUNCTION_PROLOGUE} if you don't.
 要支持可选的调用帧调试信息，
 你必须还要定义@code{INCOMING_RETURN_ADDR_RTX}，并如果在序言中使用RTL，
 则设置@code{RTX_FRAME_RELATED_P}，或者如果没有使用RTL，
@@ -12670,76 +12862,139 @@ DBX格式目前没有提供任何这样做的方式。缺省为@code{'P'}。
 @end defmac
 
 @defmac DWARF2_FRAME_INFO
+@en Define this macro to a nonzero value if GCC should always output
+@en Dwarf 2 frame information.  If @code{DWARF2_UNWIND_INFO}
+@en (@pxref{Exception Region Output} is nonzero, GCC will output this
+@en information not matter how you define @code{DWARF2_FRAME_INFO}.
 定义该宏为非0值，如果GCC应该总是输出Dwarf2帧信息。
 如果@code{DWARF2_UNWIND_INFO}（参见 @ref{异常区域输出}）为非0，
 则GCC将不管你如何定义@code{DWARF2_FRAME_INFO}，都会输出该信息。
 @end defmac
 
 @defmac DWARF2_ASM_LINE_DEBUG_INFO
+@en Define this macro to be a nonzero value if the assembler can generate Dwarf 2
+@en line debug info sections.  This will result in much more compact line number
+@en tables, and hence is desirable if it works.
 定义该宏为非0值，如果汇编器能够生成Dwarf2行调试信息section。
 @end defmac
 
+@deftypevr {Target Hook} bool TARGET_WANT_DEBUG_PUB_SECTIONS
+True if the @code{.debug_pubtypes} and @code{.debug_pubnames} sections should be emitted.  These sections are not used on most platforms, and in particular GDB does not use them.
+@end deftypevr
+
 @defmac ASM_OUTPUT_DWARF_DELTA (@var{stream}, @var{size}, @var{label1}, @var{label2})
+@en A C statement to issue assembly directives that create a difference
+@en @var{lab1} minus @var{lab2}, using an integer of the given @var{size}.
 一条C语句，来输出汇编伪指令，
 以创建一个@var{lab1}减去@var{lab2}的差，使用给定的@var{size}。
 @end defmac
 
+@defmac ASM_OUTPUT_DWARF_VMS_DELTA (@var{stream}, @var{size}, @var{label1}, @var{label2})
+A C statement to issue assembly directives that create a difference
+between the two given labels in system defined units, e.g. instruction
+slots on IA64 VMS, using an integer of the given size.
+@end defmac
+
 @defmac ASM_OUTPUT_DWARF_OFFSET (@var{stream}, @var{size}, @var{label}, @var{section})
+@en A C statement to issue assembly directives that create a
+@en section-relative reference to the given @var{label}, using an integer of the
+@en given @var{size}.  The label is known to be defined in the given @var{section}.
 一条C语句，来输出汇编伪指令，
 以创建一个相对的@var{section}的给定@var{label}的引用，
 使用给定的@var{size}。@var{label}为在给定@var{section}中定义的@var{label}。
 @end defmac
 
 @defmac ASM_OUTPUT_DWARF_PCREL (@var{stream}, @var{size}, @var{label})
+@en A C statement to issue assembly directives that create a self-relative
+@en reference to the given @var{label}, using an integer of the given @var{size}.
 一条C语句，来输出汇编伪指令，
 以创建一个给定@var{label}的引用，使用给定的@var{size}。
 @end defmac
 
+@defmac ASM_OUTPUT_DWARF_TABLE_REF (@var{label})
+A C statement to issue assembly directives that create a reference to
+the DWARF table identifier @var{label} from the current section.  This
+is used on some systems to avoid garbage collecting a DWARF table which
+is referenced by a function.
+@end defmac
+
 @deftypefn {Target Hook} void TARGET_ASM_OUTPUT_DWARF_DTPREL (FILE *@var{FILE}, int @var{size}, rtx @var{x})
+@en If defined, this target hook is a function which outputs a DTP-relative
+@en reference to the given TLS symbol of the specified size.
 如果定义，该target钩子为一个函数，其输出一个相对DTP的引用，对给定的TLS符号。
 @end deftypefn
 
 @defmac PUT_SDB_@dots{}
+@en Define these macros to override the assembler syntax for the special
+@en SDB assembler directives.  See @file{sdbout.c} for a list of these
+@en macros and their arguments.  If the standard syntax is used, you need
+@en not define them yourself.
 定义这些宏来覆盖汇编语法，为特定的SDB汇编伪指令。
 参见@file{sdbout.c}，关于这些宏和它们的参数的列表。
 如果使用标准语法，你不需要定义它们。
 @end defmac
 
 @defmac SDB_DELIM
+@en Some assemblers do not support a semicolon as a delimiter, even between
+@en SDB assembler directives.  In that case, define this macro to be the
+@en delimiter to use (usually @samp{\n}).  It is not necessary to define
+@en a new set of @code{PUT_SDB_@var{op}} macros if this is the only change
+@en required.
 一些汇编器不支持分号作为分隔符，即使在SDB汇编伪指令之间。
 这种情况下，定义该宏为要使用的分隔符（通常为@samp{\n}）。
 如果只需要改变该宏，则不需要定义新的@code{PUT_SDB_@var{op}}宏集合。
 @end defmac
 
 @defmac SDB_ALLOW_UNKNOWN_REFERENCES
+@en Define this macro to allow references to unknown structure,
+@en union, or enumeration tags to be emitted.  Standard COFF does not
+@en allow handling of unknown references, MIPS ECOFF has support for
+@en it.
 定义该宏以允许对未知结构体，联合体和枚举标记的引用，被输出。
 标准的COFF不允许处理未知的引用，MIPS ECOFF支持该特定。
 @end defmac
 
 @defmac SDB_ALLOW_FORWARD_REFERENCES
+@en Define this macro to allow references to structure, union, or
+@en enumeration tags that have not yet been seen to be handled.  Some
+@en assemblers choke if forward tags are used, while some require it.
 定义该宏以允许对未遇到的结构体，联合体和枚举标记的引用，被输出。
 一些汇编器对此会出错。
 @end defmac
 
 @defmac SDB_OUTPUT_SOURCE_LINE (@var{stream}, @var{line})
+@en A C statement to output SDB debugging information before code for line
+@en number @var{line} of the current source file to the stdio stream
+@en @var{stream}.  The default is to emit an @code{.ln} directive.
 一条C语句，输出当前源文件的行号的SDB调试信息在代码前。
 缺省为输出一个@code{.ln}伪指令。
 @end defmac
 
 @need 2000
+@en @node VMS Debug
+@en @subsection Macros for VMS Debug Format
 @node VMS调试
 @subsection 用于VMS调试格式的宏
 
 @c prevent bad page break with this line
+@en Here are macros for VMS debug format.
 这是用于VMS调试格式的宏。
 
 @defmac VMS_DEBUGGING_INFO
+@en Define this macro if GCC should produce debugging output for VMS
+@en in response to the @option{-g} option.  The default behavior for VMS
+@en is to generate minimal debug info for a traceback in the absence of
+@en @option{-g} unless explicitly overridden with @option{-g0}.  This
+@en behavior is controlled by @code{OPTIMIZATION_OPTIONS} and
+@en @code{TARGET_OPTION_OVERRIDE}.
 定义该宏，如果GCC应该为@option{-g}选项产生VMS调试输出。
 VMS的缺省行为是在没有@option{-g}时，生成可以回溯的最少调试信息，
 除非使用@option{-g0}显示的覆盖。
 该行为由@code{OPTIMIZATION_OPTIONS}和@code{OVERRIDE_OPTIONS}控制。
 @end defmac
 
+@en @node Floating Point
+@en @section Cross Compilation and Floating Point
 @node 浮点
 @section 交叉编译和浮点
 @cindex cross compilation and floating point
