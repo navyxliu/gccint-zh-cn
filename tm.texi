@@ -3487,7 +3487,6 @@ the machine has any stack-like registers.
 一个C表达式，其为非0，
 如果寄存器编号@var{num}适合在操作数地址中作为基址寄存器使用。
 其可以为一个合适的硬件寄存器，或者一个已经被分配了这样的硬件寄存器的伪寄存器。
-@end defmac
 
 @findex REG_OK_STRICT
 Compiler source files that want to use the strict variant of this and
@@ -6805,55 +6804,73 @@ ARG_POINTER_REGNUM和PIC_OFFSET_TABLE_REGNUM来发现的寄存器。
 不接受任何参数。该函数通常在@file{libgcc2.c}中被定义。
 @end deftypefn
 
+@en @node Varargs
+@en @section Implementing the Varargs Macros
 @node Varargs
 @section 实现Varargs宏
 @cindex varargs implementation
 
+@en GCC comes with an implementation of @code{<varargs.h>} and
+@en @code{<stdarg.h>} that work without change on machines that pass arguments
+@en on the stack.  Other machines require their own implementations of
+@en varargs, and the two machine independent header files must have
+@en conditionals to include it.
 GCC自带了@code{<varargs.h>}和@code{<stdarg.h>}的实现，
 可直接用于在栈上传递参数的机器上。其它机器需要它们自己的varargs实现，
 并且两个机器独立的头文件必须条件包含它。
 
+@en ISO @code{<stdarg.h>} differs from traditional @code{<varargs.h>} mainly in
+@en the calling convention for @code{va_start}.  The traditional
+@en implementation takes just one argument, which is the variable in which
+@en to store the argument pointer.  The ISO implementation of
+@en @code{va_start} takes an additional second argument.  The user is
+@en supposed to write the last named argument of the function here.
 ISO @code{<stdarg.h>}与传统@code{<varargs.h>}的区别主要在@code{va_start}的调用
 约定上。传统的实现只接受一个参数，其为存储参数指针的变量。
 ISO的实现接受额外的第二个参数。用户应该将函数的最后一个命名参数写在这里。
 
+@en However, @code{va_start} should not use this argument.  The way to find
+@en the end of the named arguments is with the built-in functions described
+@en below.
 然而，@code{va_start}不应该使用这个参数。
 发现命名参数结尾的方法为使用下面描述的内建函数。
 
 @defmac __builtin_saveregs ()
+@en Use this built-in function to save the argument registers in memory so
+@en that the varargs mechanism can access them.  Both ISO and traditional
+@en versions of @code{va_start} must use @code{__builtin_saveregs}, unless
+@en you use @code{TARGET_SETUP_INCOMING_VARARGS} (see below) instead.
 使用该内建函数来将参数寄存器保存在内存中，使得varargs机制可以访问它们。
 @code{va_start}的ISO版本和传统版本都必须使用@code{__builtin_saveregs}，
 除非你使用@code{TARGET_SETUP_INCOMING_VARARGS}来替代（参见下面）。
 
+@en On some machines, @code{__builtin_saveregs} is open-coded under the
+@en control of the target hook @code{TARGET_EXPAND_BUILTIN_SAVEREGS}.  On
+@en other machines, it calls a routine written in assembler language,
+@en found in @file{libgcc2.c}.
 在一些机器上，@code{__builtin_saveregs}为开放编码的，
 在target钩子@code{TARGET_EXPAND_BUILTIN_SAVEREGS}的控制下。
 在其它机器上，其调用了汇编语言写的例程，可以在@file{libgcc2.c}中找到。
 
+@en Code generated for the call to @code{__builtin_saveregs} appears at the
+@en beginning of the function, as opposed to where the call to
+@en @code{__builtin_saveregs} is written, regardless of what the code is.
+@en This is because the registers must be saved before the function starts
+@en to use them for its own purposes.
 不管怎样，调用@code{__builtin_saveregs}的生成代码都出现在函数的起始处。
 这是因为寄存器必须在函数开始使用它们前被保存。
 @c i rewrote the first sentence above to fix an overfull hbox. --mew
 @c 10feb93
 @end defmac
 
-@defmac __builtin_args_info (@var{category})
-使用该内建函数来找到寄存器中第一个匿名参数。
-
-通常，机器可以具有多个用于参数的寄存器类别，每一个用于特定的数据类型。
-（例如，在一些机器上，浮点寄存器用于浮点参数，而其它参数在通用寄存器中传递。）
-要使非varargs函数使用合适的调用约定，你已经定义了@code{CUMULATIVE_ARGS}数据类型
-来记录在每个类别中有多少寄存器已被使用。
-
-@code{__builtin_args_info}在普通参数布局完成之后，
-访问同一数据结构体@code{CUMULATIVE_ARGS}，使用@var{category}来指定访问哪个字。
-因此，其值指示了在给定category中的第一个未使用的寄存器。
-
-通常，你会在@code{va_start}的实现中使用@code{__builtin_args_info}，
-访问每个类一次，并将值存储到@code{va_list}对象中。
-这是因为@code{va_list}将必须更新值，
-因此无法修改通过@code{__builtin_args_info}访问的值。
-@end defmac
-
 @defmac __builtin_next_arg (@var{lastarg})
+@en This builtin returns the address of the first anonymous stack
+@en argument, as type @code{void *}.  If @code{ARGS_GROW_DOWNWARD}, it
+@en returns the address of the location above the first anonymous stack
+@en argument.  Use it in @code{va_start} to initialize the pointer for
+@en fetching arguments from the stack.  Also use it in @code{va_start} to
+@en verify that the second parameter @var{lastarg} is the last named argument
+@en of the current function.
 这与@code{__builtin_args_info}等价，用于栈参数。其返回第一个匿名栈参数的地址，
 类型为@code{void *}。如果@code{ARGS_GROW_DOWNWARD}，
 其返回第一个匿名栈参数的上面的位置地址。在@code{va_start}中使用它来初始化指针，
@@ -6862,62 +6879,121 @@ ISO的实现接受额外的第二个参数。用户应该将函数的最后一�
 @end defmac
 
 @defmac __builtin_classify_type (@var{object})
+@en Since each machine has its own conventions for which data types are
+@en passed in which kind of register, your implementation of @code{va_arg}
+@en has to embody these conventions.  The easiest way to categorize the
+@en specified data type is to use @code{__builtin_classify_type} together
+@en with @code{sizeof} and @code{__alignof__}.
 由于每个机器具有它自己的约定，对于哪些数据类型在哪种寄存器中传递，
 因此你的@code{va_arg}实现必须包含这些约定。
 将指定数据类型归类的最简单方法是使用@code{__builtin_classify_type}，
 加上@code{sizeof}和@code{__alignof__}。
 
+@en @code{__builtin_classify_type} ignores the value of @var{object},
+@en considering only its data type.  It returns an integer describing what
+@en kind of type that is---integer, floating, pointer, structure, and so on.
 @code{__builtin_classify_type}忽略@var{object}的值，只考虑它的数据类型。
 其返回一个整数来描述什么类型为，整型，浮点，指针，结构体等。
 
+@en The file @file{typeclass.h} defines an enumeration that you can use to
+@en interpret the values of @code{__builtin_classify_type}.
 文件@file{typeclass.h}定义了一个枚举，
 你可以用来解析@code{__builtin_classify_type}的值。
 @end defmac
 
+@en These machine description macros help implement varargs:
 这些机器描述宏用来帮助实现varargs：
 
 @deftypefn {Target Hook} rtx TARGET_EXPAND_BUILTIN_SAVEREGS (void)
+@en If defined, this hook produces the machine-specific code for a call to
+@en @code{__builtin_saveregs}.  This code will be moved to the very
+@en beginning of the function, before any parameter access are made.  The
+@en return value of this function should be an RTX that contains the value
+@en to use as the return of @code{__builtin_saveregs}.
 如果定义，该钩子产生机器特定代码，用于调用@code{__builtin_saveregs}。
 该代码将被移动到函数的最开始处，在访问任何参数之前。
 该函数的返回值应该为一个RTX，其包含了@code{__builtin_saveregs}的返回值。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SETUP_INCOMING_VARARGS (CUMULATIVE_ARGS *@var{args_so_far}, enum machine_mode @var{mode}, tree @var{type}, int *@var{pretend_args_size}, int @var{second_time})
+@en This target hook offers an alternative to using
+@en @code{__builtin_saveregs} and defining the hook
+@en @code{TARGET_EXPAND_BUILTIN_SAVEREGS}.  Use it to store the anonymous
+@en register arguments into the stack so that all the arguments appear to
+@en have been passed consecutively on the stack.  Once this is done, you can
+@en use the standard implementation of varargs that works for machines that
+@en pass all their arguments on the stack.
 该target钩子提供了使用@code{__builtin_saveregs}和定义
 @code{TARGET_EXPAND_BUILTIN_SAVEREGS}钩子的替代。
 使用它来将匿名寄存器参数存储到栈中，使得所有参数都像是通过栈连续的传递。
 当这样做时，你可以使用varargs的标准实现，其用于将所有参数在栈上传递的机器上。
 
+@en The argument @var{args_so_far} points to the @code{CUMULATIVE_ARGS} data
+@en structure, containing the values that are obtained after processing the
+@en named arguments.  The arguments @var{mode} and @var{type} describe the
+@en last named argument---its machine mode and its data type as a tree node.
 参数@var{args_so_far}指向@code{CUMULATIVE_ARGS}数据结构体，
 包含了处理完命名参数之后所获得的值。
 参数@var{mode}和@var{type}描述了最后一个命名参数的机器模式和作为树结点的数据类型。
 
+@en The target hook should do two things: first, push onto the stack all the
+@en argument registers @emph{not} used for the named arguments, and second,
+@en store the size of the data thus pushed into the @code{int}-valued
+@en variable pointed to by @var{pretend_args_size}.  The value that you
+@en store here will serve as additional offset for setting up the stack
+@en frame.
 该target钩子应该做两件事：第一，将所有不用于命名参数的参数寄存器压入栈中，
 第二，存储数据的大小，把@var{pretend_args_size}指向的@code{int}值得变量压入。
 这里你存储的值将作为额外的偏移量，用来建立栈帧。
 
+@en Because you must generate code to push the anonymous arguments at
+@en compile time without knowing their data types,
+@en @code{TARGET_SETUP_INCOMING_VARARGS} is only useful on machines that
+@en have just a single category of argument register and use it uniformly
+@en for all data types.
 因为你必须生成代码来将匿名参数在编译时压入，而不需要知道它们的数据类型，
 所以@code{TARGET_SETUP_INCOMING_VARARGS}只在只有一种参数寄存器类别并用于所有
 数据类型的机器上有用。
 
+@en If the argument @var{second_time} is nonzero, it means that the
+@en arguments of the function are being analyzed for the second time.  This
+@en happens for an inline function, which is not actually compiled until the
+@en end of the source file.  The hook @code{TARGET_SETUP_INCOMING_VARARGS} should
+@en not generate any instructions in this case.
 如果参数@var{second_time}非0，其以为着函数的参数被第二次分析。
 这发生于内联函数，其直到源文件结尾才被实际编译。对于这种情况，
 钩子@code{TARGET_SETUP_INCOMING_VARARGS}不应该产生任何指令。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_STRICT_ARGUMENT_NAMING (CUMULATIVE_ARGS *@var{ca})
+@en Define this hook to return @code{true} if the location where a function
+@en argument is passed depends on whether or not it is a named argument.
 定义该钩子来返回@code{true}，如果函数参数传递的位置依赖于其是否为一个命名参数。
 
+@en This hook controls how the @var{named} argument to @code{FUNCTION_ARG}
+@en is set for varargs and stdarg functions.  If this hook returns
+@en @code{true}, the @var{named} argument is always true for named
+@en arguments, and false for unnamed arguments.  If it returns @code{false},
+@en but @code{TARGET_PRETEND_OUTGOING_VARARGS_NAMED} returns @code{true},
+@en then all arguments are treated as named.  Otherwise, all named arguments
+@en except the last are treated as named.
 该钩子控制对于varargs和stdarg函数，如何设置FUNCTION_ARG的@var{named}参数。
 如果该钩子返回@code{true}，则@var{named}参数总是为命名参数，未命名参数总是未假。
 如果返回@code{false}，但是@code{TARGET_PRETEND_OUTGOING_VARARGS_NAMED}返回
 @code{true}，则所有参数都被作为命名的对待。否则所有命名参数，除了最后一个，
 被作为命名的对待。
 
+@en You need not define this hook if it always returns @code{false}.
 如果其总是返回0，则不需要定义该钩子。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_PRETEND_OUTGOING_VARARGS_NAMED
+@en If you need to conditionally change ABIs so that one works with
+@en @code{TARGET_SETUP_INCOMING_VARARGS}, but the other works like neither
+@en @code{TARGET_SETUP_INCOMING_VARARGS} nor @code{TARGET_STRICT_ARGUMENT_NAMING} was
+@en defined, then define this hook to return @code{true} if
+@en @code{TARGET_SETUP_INCOMING_VARARGS} is used, @code{false} otherwise.
+@en Otherwise, you should not define this hook.
 如果你需要条件的改变ABI，使得一种工作于@code{TARGET_SETUP_INCOMING_VARARGS}，
 另一种工作于@code{TARGET_SETUP_INCOMING_VARARGS}和
 @code{TARGET_STRICT_ARGUMENT_NAMING}都没有被定义，则定义该钩子返回@code{true}，
@@ -6925,137 +7001,240 @@ ISO的实现接受额外的第二个参数。用户应该将函数的最后一�
 否则，你不需要定义该钩子。
 @end deftypefn
 
+@en @node Trampolines
+@en @section Trampolines for Nested Functions
 @node Trampolines
 @section 嵌套函数的蹦床
 @cindex trampolines for nested functions
 @cindex nested functions, trampolines for
 
+@en A @dfn{trampoline} is a small piece of code that is created at run time
+@en when the address of a nested function is taken.  It normally resides on
+@en the stack, in the stack frame of the containing function.  These macros
+@en tell GCC how to generate code to allocate and initialize a
+@en trampoline.
 一个蹦床@dfn{trampoline}为在运行时，当使用嵌套函数的地址时，创建的一小块代码。其通常驻于栈上，在包含函数的栈帧中。这些宏告诉GCC如何生成代码来分配和初始化一个蹦床。
 
+@en The instructions in the trampoline must do two things: load a constant
+@en address into the static chain register, and jump to the real address of
+@en the nested function.  On CISC machines such as the m68k, this requires
+@en two instructions, a move immediate and a jump.  Then the two addresses
+@en exist in the trampoline as word-long immediate operands.  On RISC
+@en machines, it is often necessary to load each address into a register in
+@en two parts.  Then pieces of each address form separate immediate
+@en operands.
 在蹦床中的指令必须做两件事情：将一个常量地址加载到静态链寄存器中，并跳转到嵌套函数的实际地址。在CISC机器，像m68k上，这要求两条指令，一个move立即数和一个jump。然后两个地址存放在蹦床中作为字长的立即操作数。在RISC机器上，其通常需要分成两部分加载每个地址到寄存器中。然后地址的各部分形成独立的立即操作数。
 
+@en The code generated to initialize the trampoline must store the variable
+@en parts---the static chain value and the function address---into the
+@en immediate operands of the instructions.  On a CISC machine, this is
+@en simply a matter of copying each address to a memory reference at the
+@en proper offset from the start of the trampoline.  On a RISC machine, it
+@en may be necessary to take out pieces of the address and store them
+@en separately.
 用来初始化蹦床的代码必须将变量的组成部分——静态链值和函数地址——存储到指令的立即操作数中。在CISC机器上，这是简单的复制每个地址到一个内存引用，在蹦床起始处的合适偏移量上。在RISC机器上，其可能需要拿出部分地址并单独存储它们。
 
-@defmac TRAMPOLINE_TEMPLATE (@var{file})
-一条C语句，来在流@var{file}上，为一个包含蹦床常量部分的数据块输出汇编代码。
-该代码应该不包括标号——标号被自动考虑。
+@deftypefn {Target Hook} void TARGET_ASM_TRAMPOLINE_TEMPLATE (FILE *@var{f})
+This hook is called by @code{assemble_trampoline_template} to output,
+on the stream @var{f}, assembler code for a block of data that contains
+the constant parts of a trampoline.  This code should not include a
+label---the label is taken care of automatically.
 
-如果没有定义该宏，其意味着target不需要模版。
-不要在将蹦床复制到一个地方的块移动代码会比在该处生成它的代码大的系统上定义该宏。
-@end defmac
+If you do not define this hook, it means no template is needed
+for the target.  Do not define this hook on systems where the block move
+code to copy the trampoline into place would be larger than the code
+to generate it on the spot.
+@end deftypefn
 
 @defmac TRAMPOLINE_SECTION
+@en Return the section into which the trampoline template is to be placed
+@en (@pxref{Sections}).  The default value is @code{readonly_data_section}.
 返回蹦床模版被放入的section（参见@ref{段}）。
 缺省值为@code{readonly_data_section}。
 @end defmac
 
 @defmac TRAMPOLINE_SIZE
+@en A C expression for the size in bytes of the trampoline, as an integer.
 一个C表达式，蹦床的字节单位的大小，为整数。
 @end defmac
 
 @defmac TRAMPOLINE_ALIGNMENT
+@en Alignment required for trampolines, in bits.
 蹦床需要的对齐，以位为单位。
 
+@en If you don't define this macro, the value of @code{FUNCTION_ALIGNMENT}
+@en is used for aligning trampolines.
 如果没有定义该宏，则使用@code{BIGGEST_ALIGNMENT}的值来对齐蹦床。
 @end defmac
 
-@defmac INITIALIZE_TRAMPOLINE (@var{addr}, @var{fnaddr}, @var{static_chain})
-一条C语句用来初始化蹦床的可变部分。@var{addr}为一个RTX，蹦床的地址；
-@var{fnaddr}为一个RTX，嵌套函数的地址；@var{static_chain}为一个RTX，
-当其被调用时，应该传递给函数的静态链值。
-@end defmac
+@deftypefn {Target Hook} void TARGET_TRAMPOLINE_INIT (rtx @var{m_tramp}, tree @var{fndecl}, rtx @var{static_chain})
+This hook is called to initialize a trampoline.
+@var{m_tramp} is an RTX for the memory block for the trampoline; @var{fndecl}
+is the @code{FUNCTION_DECL} for the nested function; @var{static_chain} is an
+RTX for the static chain value that should be passed to the function
+when it is called.
 
-@defmac TRAMPOLINE_ADJUST_ADDRESS (@var{addr})
-一条C语句，应该执行任何机器特定的调整，对蹦床的地址。
-其参数包含传给@code{INITIALIZE_TRAMPOLINE}的地址。
-对于用于函数调用的地址应该不同于模版被存储的地址的情况，
-应该赋给@var{addr}不同的地址。如果没有定义该宏，则@var{addr}将被用于函数调用。
+If the target defines @code{TARGET_ASM_TRAMPOLINE_TEMPLATE}, then the
+first thing this hook should do is emit a block move into @var{m_tramp}
+from the memory block returned by @code{assemble_trampoline_template}.
+Note that the block move need only cover the constant parts of the 
+trampoline.  If the target isolates the variable parts of the trampoline
+to the end, not all @code{TRAMPOLINE_SIZE} bytes need be copied.
 
-@cindex @code{TARGET_ASM_FUNCTION_EPILOGUE} and trampolines
-@cindex @code{TARGET_ASM_FUNCTION_PROLOGUE} and trampolines
-如果没有定义该宏，缺省的蹦床作为一个栈槽被分配。这对于大多数机器是正确的。
-例外的是一些机器，其不可能在栈区域中执行指令。在这样的机器上，
-你可能必须实行一个独立的栈，使用该宏，
-并结合@code{TARGET_ASM_FUNCTION_PROLOGUE}和@code{TARGET_ASM_FUNCTION_EPILOGUE}。
+If the target requires any other actions, such as flushing caches or
+enabling stack execution, these actions should be performed after 
+initializing the trampoline proper.
+@end deftypefn
 
-@var{fp}指向一个数据结构体，一个@code{struct function}，
-其描述了对直接包含蹦床所对应函数的函数的编译状态。
-蹦床的栈槽在该包含函数的栈帧中。其它分配策略可能也必须作一些类似的事情。
-@end defmac
+@deftypefn {Target Hook} rtx TARGET_TRAMPOLINE_ADJUST_ADDRESS (rtx @var{addr})
+This hook should perform any machine-specific adjustment in
+the address of the trampoline.  Its argument contains the address of the
+memory block that was passed to @code{TARGET_TRAMPOLINE_INIT}.  In case
+the address to be used for a function call should be different from the
+address at which the template was stored, the different address should
+be returned; otherwise @var{addr} should be returned unchanged.
+If this hook is not defined, @var{addr} will be used for function calls.
+@end deftypefn
 
+@en Implementing trampolines is difficult on many machines because they have
+@en separate instruction and data caches.  Writing into a stack location
+@en fails to clear the memory in the instruction cache, so when the program
+@en jumps to that location, it executes the old contents.
 在许多机器上实现蹦床是困难的，因为它们具有独立的指令和数据缓存。
 写到栈位置中使得无法清除指令缓存中的内存，所以当程序跳转到那个位置时，
 其执行了旧的内容。
 
+@en Here are two possible solutions.  One is to clear the relevant parts of
+@en the instruction cache whenever a trampoline is set up.  The other is to
+@en make all trampolines identical, by having them jump to a standard
+@en subroutine.  The former technique makes trampoline execution faster; the
+@en latter makes initialization faster.
 有两种可能的解决方法。一种是清除指令缓存的相关部分，当蹦床被建立的时候。
 另一种是使所有蹦床为等同的，通过使它们跳转到一个标准的子程序中。
 前者使得蹦床执行更快；后者使得初始化更快。
 
+@en To clear the instruction cache when a trampoline is initialized, define
+@en the following macro.
 要在初始化蹦床时清除指令缓存，定义下列宏。
 
 @defmac CLEAR_INSN_CACHE (@var{beg}, @var{end})
+@en If defined, expands to a C expression clearing the @emph{instruction
+@en cache} in the specified interval.  The definition of this macro would
+@en typically be a series of @code{asm} statements.  Both @var{beg} and
+@en @var{end} are both pointer expressions.
 如果被定义，将扩展为一个C表达式，在指定的间隔处来清除指令缓存。
 该宏的定义通常为一系列@code{asm}语句。@var{beg}和@var{end}都为指针表达式。
 @end defmac
 
+@en The operating system may also require the stack to be made executable
+@en before calling the trampoline.  To implement this requirement, define
+@en the following macro.
 操作系统可能还需要栈被设为可执行的，在调用蹦床之前。要实现这种需求，定义下列宏。
 
 @defmac ENABLE_EXECUTE_STACK
+@en Define this macro if certain operations must be performed before executing
+@en code located on the stack.  The macro should expand to a series of C
+@en file-scope constructs (e.g.@: functions) and provide a unique entry point
+@en named @code{__enable_execute_stack}.  The target is responsible for
+@en emitting calls to the entry point in the code, for example from the
+@en @code{TARGET_TRAMPOLINE_INIT} hook.
 定义该宏，如果在执行位于栈上的代码之前必须执行特定的操作。
 宏应该扩展为一系列的C文件作用域的结构（例如函数）并提供一个唯一的如何口点名
 为@code{__enable_execute_stack}。target负责生成对入口点的调用，
 例如从@code{INITIALIZE_TRAMPOLINE}宏中。
 @end defmac
 
+@en To use a standard subroutine, define the following macro.  In addition,
+@en you must make sure that the instructions in a trampoline fill an entire
+@en cache line with identical instructions, or else ensure that the
+@en beginning of the trampoline code is always aligned at the same point in
+@en its cache line.  Look in @file{m68k.h} as a guide.
 要使用标准的子程序，定义下列宏。另外，
 你必须确信在蹦床中的指令使用相同的指令来填充整个缓存行，
 或者蹦床代码的起始处总是在缓存行的某点被对齐。查看@file{m68k.h}作为参考。
 
 @defmac TRANSFER_FROM_TRAMPOLINE
+@en Define this macro if trampolines need a special subroutine to do their
+@en work.  The macro should expand to a series of @code{asm} statements
+@en which will be compiled with GCC@.  They go in a library function named
+@en @code{__transfer_from_trampoline}.
 定义该宏，如果蹦床需要一个特定的子程序来做它们的工作。
 该宏应该扩展为一系列的@code{asm}语句，其将由GCC来编译。
 它们放在名为@code{__transfer_from_trampoline}的库函数中。
 
+@en If you need to avoid executing the ordinary prologue code of a compiled
+@en C function when you jump to the subroutine, you can do so by placing a
+@en special label of your own in the assembler code.  Use one @code{asm}
+@en statement to generate an assembler label, and another to make the label
+@en global.  Then trampolines can use that label to jump directly to your
+@en special assembler code.
 如果当你跳转到子程序时，你需要避免普通的被编译的C函数的序言代码，
 你可以通过在汇编代码中放一个你自己的特定标号。
 使用一条@code{asm}语句来生成汇编标号，另一条语句使得标号为global的。
 然后蹦床可以使用该标号直接跳到你特定的汇编代码上。
 @end defmac
 
+@en @node Library Calls
+@en @section Implicit Calls to Library Routines
 @node 库调用
 @section 库例程的隐式调用
 @cindex library subroutine names
 @cindex @file{libgcc.a}
 
 @c prevent bad page break with this line
+@en Here is an explanation of implicit calls to library routines.
 这是库函数的隐式调用的说明。
 
 @defmac DECLARE_LIBRARY_RENAMES
+@en This macro, if defined, should expand to a piece of C code that will get
+@en expanded when compiling functions for libgcc.a.  It can be used to
+@en provide alternate names for GCC's internal library functions if there
+@en are ABI-mandated names that the compiler should provide.
 该宏，如果被定义，应该扩展为一块C代码，当编译libgcc.a的函数时被扩展。
 其可以被用于提供GCC内部库函数的替代名字，如果有编译应该提供的ABI名字。
 @end defmac
 
-@findex init_one_libfunc
 @findex set_optab_libfunc
+@findex init_one_libfunc
 @deftypefn {Target Hook} void TARGET_INIT_LIBFUNCS (void)
+@en This hook should declare additional library routines or rename
+@en existing ones, using the functions @code{set_optab_libfunc} and
+@en @code{init_one_libfunc} defined in @file{optabs.c}.
+@en @code{init_optabs} calls this macro after initializing all the normal
+@en library routines.
 该钩子应该声明额外的库函数或者重命名存在的，
 使用@file{optabs.c}中定义的函数@code{set_optab_libfunc}和
 @code{init_one_libfunc}。
 @code{init_optabs}调用该宏，在初始化所有正常的库函数之后。
 
+@en The default is to do nothing.  Most ports don't need to define this hook.
 缺省为不作任何事情。大多数port不需要定义该钩子。
 @end deftypefn
 
 @defmac FLOAT_LIB_COMPARE_RETURNS_BOOL (@var{mode}, @var{comparison})
+@en This macro should return @code{true} if the library routine that
+@en implements the floating point comparison operator @var{comparison} in
+@en mode @var{mode} will return a boolean, and @var{false} if it will
+@en return a tristate.
 该宏应该返回@code{true}，如果实现在模式@var{mode}下的浮点比较操作符
 @var{comparison}的库函数应该返回一个布尔值，
 如果应该返回一个三态值则返回@var{false}。
 
+@en GCC's own floating point libraries return tristates from the
+@en comparison operators, so the default returns false always.  Most ports
+@en don't need to define this macro.
 GCC本身的浮点库从比较运算符中返回三态值，所以缺省总是返回假。
 大多数port不需要定义该宏。
 @end defmac
 
 @defmac TARGET_LIB_INT_CMP_BIASED
+@en This macro should evaluate to @code{true} if the integer comparison
+@en functions (like @code{__cmpdi2}) return 0 to indicate that the first
+@en operand is smaller than the second, 1 to indicate that they are equal,
+@en and 2 to indicate that the first operand is greater than the second.
+@en If this macro evaluates to @code{false} the comparison functions return
+@en @minus{}1, 0, and 1 instead of 0, 1, and 2.  If the target uses the routines
+@en in @file{libgcc.a}, you do not need to define this macro.
 该宏应该求解为@code{true}，如果整型比较函数（像@code{__cmpdi2}）
 应该返回0来指示第一个操作数比第二个小，1来指示相等，
 2来指示第一个操作数大于第二个。如果该宏求解为@code{false}，
@@ -7068,14 +7247,25 @@ GCC本身的浮点库从比较运算符中返回三态值，所以缺省总是�
 @cindex GOFAST, floating point emulation library
 @findex gofast_maybe_init_libfuncs
 @defmac US_SOFTWARE_GOFAST
+@en Define this macro if your system C library uses the US Software GOFAST
+@en library to provide floating point emulation.
 定义该宏，如果你的系统C库使用US Software GOFAST库来提供浮点模拟。
 
+@en In addition to defining this macro, your architecture must set
+@en @code{TARGET_INIT_LIBFUNCS} to @code{gofast_maybe_init_libfuncs}, or
+@en else call that function from its version of that hook.  It is defined
+@en in @file{config/gofast.h}, which must be included by your
+@en architecture's @file{@var{cpu}.c} file.  See @file{sparc/sparc.c} for
+@en an example.
 除了定义该宏以外，你的体系结构必须将@code{TARGET_INIT_LIBFUNCS}设为
 @code{gofast_maybe_init_libfuncs}，或者从那个钩子版本中调用该函数。
 其在@file{config/gofast.h}中定义，
 且必须被你的体系结构的@file{@var{cpu}.c}文件包含进来。
 例如参见@file{sparc/sparc.c}。
 
+@en If this macro is defined, the
+@en @code{TARGET_FLOAT_LIB_COMPARE_RETURNS_BOOL} target hook must return
+@en false for @code{SFmode} and @code{DFmode} comparisons.
 如果该宏被定义，
 则@code{TARGET_FLOAT_LIB_COMPARE_RETURNS_BOOL} target钩子必须返回假，
 对于@code{SFmode}和@code{DFmode}比较。
@@ -7084,10 +7274,20 @@ GCC本身的浮点库从比较运算符中返回三态值，所以缺省总是�
 @cindex @code{EDOM}, implicit usage
 @findex matherr
 @defmac TARGET_EDOM
+@en The value of @code{EDOM} on the target machine, as a C integer constant
+@en expression.  If you don't define this macro, GCC does not attempt to
+@en deposit the value of @code{EDOM} into @code{errno} directly.  Look in
+@en @file{/usr/include/errno.h} to find the value of @code{EDOM} on your
+@en system.
 target机器上的@code{EDOM}的值，作为一个C整型常量表达式。如果没有定义该宏，
 则GCC不尝试将@code{EDOM}的值直接存放到@code{errno}中。
 查看@file{/usr/include/errno.h}来查找你的系统上的@code{EDOM}的值。
 
+@en If you do not define @code{TARGET_EDOM}, then compiled code reports
+@en domain errors by calling the library function and letting it report the
+@en error.  If mathematical functions on your system use @code{matherr} when
+@en there is an error, then you should leave @code{TARGET_EDOM} undefined so
+@en that @code{matherr} is used normally.
 如果没有定义@code{TARGET_EDOM}则被编译的代码通过调用库函数并使其报告错误，
 来报告domain错误。如果对于这样的错误，你系统上的数学函数使用@code{matherr}，
 则应该不定义@code{TARGET_EDOM}，以便@code{matherr}被正常使用。
@@ -7095,6 +7295,10 @@ target机器上的@code{EDOM}的值，作为一个C整型常量表达式。如�
 
 @cindex @code{errno}, implicit usage
 @defmac GEN_ERRNO_RTX
+@en Define this macro as a C expression to create an rtl expression that
+@en refers to the global ``variable'' @code{errno}.  (On certain systems,
+@en @code{errno} may not actually be a variable.)  If you don't define this
+@en macro, a reasonable default is used.
 定义该宏为C表达式来创建一个rtl表达式，来引用全局“变量”@code{errno}。
 （在一些系统上，@code{errno}可能实际不是一个变量。）如果没有定义该宏，
 则会使用一个合理的缺省。
@@ -7102,6 +7306,11 @@ target机器上的@code{EDOM}的值，作为一个C整型常量表达式。如�
 
 @cindex C99 math functions, implicit usage
 @defmac TARGET_C99_FUNCTIONS
+@en When this macro is nonzero, GCC will implicitly optimize @code{sin} calls into
+@en @code{sinf} and similarly for other functions defined by C99 standard.  The
+@en default is zero because a number of existing systems lack support for these
+@en functions in their runtime so this macro needs to be redefined to one on
+@en systems that do support the C99 runtime.
 当该宏非0时，GCC将隐式的优化@code{sin}调用为@code{sinf}，
 类似的还有C99标准中定义的其它函数。缺省为非0，这对于大多现代系统是合适的，
 然而有一些系统缺少对这些函数的运行时支持，所以它们需要该宏被重定义为0。
@@ -7109,6 +7318,9 @@ target机器上的@code{EDOM}的值，作为一个C整型常量表达式。如�
 
 @cindex sincos math function, implicit usage
 @defmac TARGET_HAS_SINCOS
+@en When this macro is nonzero, GCC will implicitly optimize calls to @code{sin}
+@en and @code{cos} with the same argument to a call to @code{sincos}.  The
+@en default is zero.  The target has to provide the following functions:
 当该宏非0时，
 GCC将隐式的优化@code{sin}和@code{cos}调用为使用相同参数的@code{sincos}调用。
 缺省为0。target必须提供下列函数：
@@ -7120,12 +7332,20 @@ void sincosl(long double x, long double *sin, long double *cos);
 @end defmac
 
 @defmac NEXT_OBJC_RUNTIME
+@en Define this macro to generate code for Objective-C message sending using
+@en the calling convention of the NeXT system.  This calling convention
+@en involves passing the object, the selector and the method arguments all
+@en at once to the method-lookup library function.
 定义该宏来使用NeXT系统约定为Objective-C消息发送生成代码。
 该调用约定包括将对象，选择者和方法一起传递给方法查询库函数。
 
+@en The default calling convention passes just the object and the selector
+@en to the lookup function, which returns a pointer to the method.
 缺省调用约定只将对象和选择者传递给查询函数，其返回一个指向方法的指针。
 @end defmac
 
+@en @node Addressing Modes
+@en @section Addressing Modes
 @node 寻址模式
 @section 寻址模式
 @cindex addressing modes
