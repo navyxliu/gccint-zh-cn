@@ -7942,38 +7942,112 @@ int foo (void)
 @section 条件代码状态
 @cindex condition code status
 
-@c prevent bad page break with this line
-这节描述了条件代码状态。
+The macros in this section can be split in two families, according to the
+two ways of representing condition codes in GCC.
+
+The first representation is the so called @code{(cc0)} representation
+(@pxref{Jump Patterns}), where all instructions can have an implicit
+clobber of the condition codes.  The second is the condition code
+register representation, which provides better schedulability for
+architectures that do have a condition code register, but on which
+most instructions do not affect it.  The latter category includes
+most RISC machines.
+
+The implicit clobbering poses a strong restriction on the placement of
+the definition and use of the condition code, which need to be in adjacent
+insns for machines using @code{(cc0)}.  This can prevent important
+optimizations on some machines.  For example, on the IBM RS/6000, there
+is a delay for taken branches unless the condition code register is set
+three instructions earlier than the conditional branch.  The instruction
+scheduler cannot perform this optimization if it is not permitted to
+separate the definition and use of the condition code register.
+
+For this reason, it is possible and suggested to use a register to
+represent the condition code for new ports.  If there is a specific
+condition code register in the machine, use a hard register.  If the
+condition code or comparison result can be placed in any general register,
+or if there are multiple condition registers, use a pseudo register.
+Registers used to store the condition code value will usually have a mode
+that is in class @code{MODE_CC}.
+
+Alternatively, you can use @code{BImode} if the comparison operator is
+specified already in the compare instruction.  In this case, you are not
+interested in most macros in this section.
+
+@menu
+* CC0 Condition Codes::      Old style representation of condition codes.
+* MODE_CC Condition Codes::  Modern representation of condition codes.
+* Cond. Exec. Macros::       Macros to control conditional execution.
+@end menu
+
+@node CC0 Condition Codes
+@subsection Representation of condition codes using @code{(cc0)}
+@findex cc0
 
 @findex cc_status
+@en The file @file{conditions.h} defines a variable @code{cc_status} to
+@en describe how the condition code was computed (in case the interpretation of
+@en the condition code depends on the instruction that it was set by).  This
+@en variable contains the RTL expressions on which the condition code is
+@en currently based, and several standard flags.
 文件@file{conditions.h}定义了变量@code{cc_status}，
 用来描述条件代码如何被计算（对于条件代码的解释取决于设置它的指令的情况）。
 该变量包含了条件码目前基于的RTL表达式，以及一些标准的标记。
 
+@en Sometimes additional machine-specific flags must be defined in the machine
+@en description header file.  It can also add additional machine-specific
+@en information by defining @code{CC_STATUS_MDEP}.
 有时额外的机器特定的标记必须被定义，在机器描述头文件中。
 其还可以增加额外的机器特定信息，通过定义@code{CC_STATUS_MDEP}。
 
 @defmac CC_STATUS_MDEP
+@en C code for a data type which is used for declaring the @code{mdep}
+@en component of @code{cc_status}.  It defaults to @code{int}.
 一个数据类型的C代码，其用于声明@code{cc_status}的@code{mdep}部件。
 缺省为@code{int}。
 
+@en This macro is not used on machines that do not use @code{cc0}.
 该宏在不使用@code{cc0}的机器上不被使用。
 @end defmac
 
 @defmac CC_STATUS_MDEP_INIT
+@en A C expression to initialize the @code{mdep} field to ``empty''.
+@en The default definition does nothing, since most machines don't use
+@en the field anyway.  If you want to use the field, you should probably
+@en define this macro to initialize it.
 一个C表达式，用来初始化@code{mdep}域为“空”。缺省定义不做任何事，
 因为大多数机器不使用该域。如果你想使用该域，则可能应该定义该宏来初始化它。
 
+@en This macro is not used on machines that do not use @code{cc0}.
 该宏在不使用@code{cc0}的机器上不被使用。
 @end defmac
 
 @defmac NOTICE_UPDATE_CC (@var{exp}, @var{insn})
+@en A C compound statement to set the components of @code{cc_status}
+@en appropriately for an insn @var{insn} whose body is @var{exp}.  It is
+@en this macro's responsibility to recognize insns that set the condition
+@en code as a byproduct of other activity as well as those that explicitly
+@en set @code{(cc0)}.
 一个C复合语句，用来适当的为主体为@var{exp}的@var{insn}，
 设置@code{cc_status}的部件。
 该宏负责识别insn将条件码设置作为副产品以及显示的set @code{(cc0)}。
 
+@en This macro is not used on machines that do not use @code{cc0}.
 该宏在不使用@code{cc0}的机器上不被使用。
 
+@en If there are insns that do not set the condition code but do alter
+@en other machine registers, this macro must check to see whether they
+@en invalidate the expressions that the condition code is recorded as
+@en reflecting.  For example, on the 68000, insns that store in address
+@en registers do not set the condition code, which means that usually
+@en @code{NOTICE_UPDATE_CC} can leave @code{cc_status} unaltered for such
+@en insns.  But suppose that the previous insn set the condition code
+@en based on location @samp{a4@@(102)} and the current insn stores a new
+@en value in @samp{a4}.  Although the condition code is not changed by
+@en this, it will no longer be true that it reflects the contents of
+@en @samp{a4@@(102)}.  Therefore, @code{NOTICE_UPDATE_CC} must alter
+@en @code{cc_status} in this case to say that nothing is known about the
+@en condition code value.
 如果insn不设置条件码，但修改其它机器寄存器，
 则该宏必须检查它们是否使得记录条件码的表达式变为无效。例如，在68000上，
 在地址寄存器上存储insn不设置条件码，
@@ -7983,20 +8057,66 @@ int foo (void)
 但其不再为真，因为其反映了@samp{a4@@(102)}的内容。因此对于这种情况，
 @code{NOTICE_UPDATE_CC}必须修改@code{cc_status}，来表示条件码值不可知。
 
+@en The definition of @code{NOTICE_UPDATE_CC} must be prepared to deal
+@en with the results of peephole optimization: insns whose patterns are
+@en @code{parallel} RTXs containing various @code{reg}, @code{mem} or
+@en constants which are just the operands.  The RTL structure of these
+@en insns is not sufficient to indicate what the insns actually do.  What
+@en @code{NOTICE_UPDATE_CC} should do when it sees one is just to run
+@en @code{CC_STATUS_INIT}.
 @code{NOTICE_UPDATE_CC}的定义必须要准备处理窥孔优化的结果：
 insn的指令模式为@code{parallel} RTXs，其包含了不同的@code{reg}，
 @code{mem}或者常量操作数。这些insn的RTL结构体不足以表明insn实际要做的事情。
 @code{NOTICE_UPDATE_CC}应该做的是当遇到这样的，就直接运行@code{CC_STATUS_INIT}。
 
+@en A possible definition of @code{NOTICE_UPDATE_CC} is to call a function
+@en that looks at an attribute (@pxref{Insn Attributes}) named, for example,
+@en @samp{cc}.  This avoids having detailed information about patterns in
+@en two places, the @file{md} file and in @code{NOTICE_UPDATE_CC}.
 @code{NOTICE_UPDATE_CC}可能的定义为调用一个函数，
 来查看一个属性（参见 @ref{Insn属性}），例如名为@samp{cc}。这避免了在两个地方，
 @file{md}文件和@code{NOTICE_UPDATE_CC}中具有指令模式的详细信息。
 @end defmac
 
+@node MODE_CC Condition Codes
+@subsection Representation of condition codes using registers
+@findex CCmode
+@findex MODE_CC
+
 @defmac SELECT_CC_MODE (@var{op}, @var{x}, @var{y})
-当比较运算代码@var{op}应用到rtx @var{x}和@var{y}上时，
-从@code{MODE_CC}类中返回一个机器模式。例如，在SPARC上，
-@code{SELECT_CC_MODE}被定义为（该定义的描述，参见 @ref{跳转指令模式}）
+On many machines, the condition code may be produced by other instructions
+than compares, for example the branch can use directly the condition
+code set by a subtract instruction.  However, on some machines
+when the condition code is set this way some bits (such as the overflow
+bit) are not set in the same way as a test instruction, so that a different
+branch instruction must be used for some conditional branches.  When
+this happens, use the machine mode of the condition code register to
+record different formats of the condition code register.  Modes can
+also be used to record which compare instruction (e.g. a signed or an
+unsigned comparison) produced the condition codes.
+
+If other modes than @code{CCmode} are required, add them to
+@file{@var{machine}-modes.def} and define @code{SELECT_CC_MODE} to choose
+a mode given an operand of a compare.  This is needed because the modes
+have to be chosen not only during RTL generation but also, for example,
+by instruction combination.  The result of @code{SELECT_CC_MODE} should
+be consistent with the mode used in the patterns; for example to support
+the case of the add on the SPARC discussed above, we have the pattern
+
+@smallexample
+(define_insn ""
+  [(set (reg:CC_NOOV 0)
+        (compare:CC_NOOV
+          (plus:SI (match_operand:SI 0 "register_operand" "%r")
+                   (match_operand:SI 1 "arith_operand" "rI"))
+          (const_int 0)))]
+  ""
+  "@dots{}")
+@end smallexample
+
+@noindent
+together with a @code{SELECT_CC_MODE} that returns @code{CC_NOOVmode}
+for comparisons whose argument is a @code{plus}:
 
 @smallexample
 #define SELECT_CC_MODE(OP,X,Y) \
@@ -8007,29 +8127,57 @@ insn的指令模式为@code{parallel} RTXs，其包含了不同的@code{reg}，
       ? CC_NOOVmode : CCmode))
 @end smallexample
 
+Another reason to use modes is to retain information on which operands
+were used by the comparison; see @code{REVERSIBLE_CC_MODE} later in
+this section.
+
+@en You should define this macro if and only if you define extra CC modes
+@en in @file{@var{machine}-modes.def}.
 你应该定义该宏，当且仅当你在@file{@var{machine}-modes.def}中定义了额外的CC机器模式。
 @end defmac
 
 @defmac CANONICALIZE_COMPARISON (@var{code}, @var{op0}, @var{op1})
+@en On some machines not all possible comparisons are defined, but you can
+@en convert an invalid comparison into a valid one.  For example, the Alpha
+@en does not have a @code{GT} comparison, but you can use an @code{LT}
+@en comparison instead and swap the order of the operands.
 在一些机器上，并不是所有可能的比较都被定义，
 但你可以将一个无效的比较转换为一个有效的。例如，Alpha没有@code{GT}比较，
 但你可以使用@code{LT}比较来替代，并且交换操作数的顺序。
 
+@en On such machines, define this macro to be a C statement to do any
+@en required conversions.  @var{code} is the initial comparison code
+@en and @var{op0} and @var{op1} are the left and right operands of the
+@en comparison, respectively.  You should modify @var{code}, @var{op0}, and
+@en @var{op1} as required.
 在一些机器上，定义该宏为一条C语句来做任何需要的转换。
 @var{code}为初始化比较代码，@var{op0}和@var{op1}为比较的左，右操作数。
 你应该根据需要来修改@var{code}，@var{op0}和@var{op1}。
 
+@en GCC will not assume that the comparison resulting from this macro is
+@en valid but will see if the resulting insn matches a pattern in the
+@en @file{md} file.
 GCC将不假设该宏的比较结果为有效的，
 但会查看结果insn是否匹配@file{md}文件中的指令模式。
 
+@en You need not define this macro if it would never change the comparison
+@en code or operands.
 你不需要定义该宏，如果其不会改变比较代码或者操作数。
 @end defmac
 
 @defmac REVERSIBLE_CC_MODE (@var{mode})
+@en A C expression whose value is one if it is always safe to reverse a
+@en comparison whose mode is @var{mode}.  If @code{SELECT_CC_MODE}
+@en can ever return @var{mode} for a floating-point inequality comparison,
+@en then @code{REVERSIBLE_CC_MODE (@var{mode})} must be zero.
 一个C表达式，其值为1，如果总是可以安全的将模式为@var{mode}的比较运算逆转。
 如果@code{SELECT_CC_MODE}可以为浮点不等于比较返回@var{mode}，
 则@code{REVERSIBLE_CC_MODE (@var{mode})}必须为0。
 
+@en You need not define this macro if it would always returns zero or if the
+@en floating-point format is anything other than @code{IEEE_FLOAT_FORMAT}.
+@en For example, here is the definition used on the SPARC, where floating-point
+@en inequality comparisons are always given @code{CCFPEmode}:
 你不需要定义该宏，如果其总是返回0，
 或者如果浮点格式不是@code{IEEE_FLOAT_FORMAT}。
 例如，这是在SPARC上的定义，其中浮点不等于比较总是为@code{CCFPEmode}：
@@ -8040,6 +8188,13 @@ GCC将不假设该宏的比较结果为有效的，
 @end defmac
 
 @defmac REVERSE_CONDITION (@var{code}, @var{mode})
+@en A C expression whose value is reversed condition code of the @var{code} for
+@en comparison done in CC_MODE @var{mode}.  The macro is used only in case
+@en @code{REVERSIBLE_CC_MODE (@var{mode})} is nonzero.  Define this macro in case
+@en machine has some non-standard way how to reverse certain conditionals.  For
+@en instance in case all floating point conditions are non-trapping, compiler may
+@en freely convert unordered compares to ordered one.  Then definition may look
+@en like:
 一个C表达式，其值为按照CC_MODE模式进行比较的条件码的逆转。
 宏只用于@code{REVERSIBLE_CC_MODE (@var{mode})}为非0的情况。
 当机器具有某种非标准的方式来反转特定条件时，定义该宏。
@@ -8053,7 +8208,51 @@ GCC将不假设该宏的比较结果为有效的，
 @end smallexample
 @end defmac
 
+@deftypefn {Target Hook} bool TARGET_FIXED_CONDITION_CODE_REGS (unsigned int *@var{p1}, unsigned int *@var{p2})
+
+On targets which do not use @code{(cc0)}, and which use a hard
+register rather than a pseudo-register to hold condition codes, the
+regular CSE passes are often not able to identify cases in which the
+hard register is set to a common value.  Use this hook to enable a
+small pass which optimizes such cases.  This hook should return true
+to enable this pass, and it should set the integers to which its
+arguments point to the hard register numbers used for condition codes.
+When there is only one such register, as is true on most systems, the
+integer pointed to by @var{p2} should be set to
+@code{INVALID_REGNUM}.
+
+The default version of this hook returns false.
+@end deftypefn
+
+@deftypefn {Target Hook} {enum machine_mode} TARGET_CC_MODES_COMPATIBLE (enum machine_mode @var{m1}, enum machine_mode @var{m2})
+On targets which use multiple condition code modes in class
+@code{MODE_CC}, it is sometimes the case that a comparison can be
+validly done in more than one mode.  On such a system, define this
+target hook to take two mode arguments and to return a mode in which
+both comparisons may be validly done.  If there is no such mode,
+return @code{VOIDmode}.
+
+The default version of this hook checks whether the modes are the
+same.  If they are, it returns that mode.  If they are different, it
+returns @code{VOIDmode}.
+@end deftypefn
+
+@node Cond. Exec. Macros
+@subsection Macros to control conditional execution
+@findex conditional execution
+@findex predication
+
+There is one macro that may need to be defined for targets
+supporting conditional execution, independent of how they
+represent conditional branches.
+
 @defmac REVERSE_CONDEXEC_PREDICATES_P (@var{op1}, @var{op2})
+@en A C expression that returns true if the conditional execution predicate
+@en @var{op1}, a comparison operation, is the inverse of @var{op2} and vice
+@en versa.  Define this to return 0 if the target has conditional execution
+@en predicates that cannot be reversed safely.  There is no need to validate
+@en that the arguments of op1 and op2 are the same, this is done separately.
+@en If no expansion is specified, this macro is defined as follows:
 C表达式，返回真，如果条件执行断言@var{op1}，一个比较操作，为@var{op2}的反转，
 反之亦然。定义该宏返回0，如果target具有条件执行断言，且不能被安全的反转。
 不需要验证参数op1和op2相等，这已经被单独执行过。如果没有指定，该宏被定义为：
@@ -8064,26 +8263,8 @@ C表达式，返回真，如果条件执行断言@var{op1}，一个比较操作�
 @end smallexample
 @end defmac
 
-@deftypefn {Target Hook} bool TARGET_FIXED_CONDITION_CODE_REGS (unsigned int *, unsigned int *)
-对于一些target，其不使用@code{(cc0)}，而是使用硬件寄存器来存放条件码，
-而不是伪寄存器，则正规的CSE过程通常不能识别硬件寄存器被设为一个普通值的情况。
-使用该钩子来开启一个小的过程，来优化这种情况。该钩子应该返回真，来开启该过程，
-并且应该将参数设置成指向用于条件码的硬件寄存器编号。当只有一个这样的寄存器时，
-这在大多数系统上都为真，则第二个参数指向的整数应该被设为@code{INVALID_REGNUM}。
-
-该钩子的缺省版本返回假。
-@end deftypefn
-
-@deftypefn {Target Hook} enum machine_mode TARGET_CC_MODES_COMPATIBLE (enum machine_mode, enum machine_mode)
-对于一些target，其使用@code{MODE_CC}类别中的多个条件码机器模式，
-有时比较可以对多个机器模式都有效。在这样的系统上，
-定义该target钩子来接收两个mode参数并返回一个mode，
-对于该模式两个比较都可以被有效执行。如果没有这样的模式，则返回@code{VOIDmode}。
-
-该钩子的缺省版本检查模式是否相同。如果是，则返回该模式。如果不同，
-则返回@code{VOIDmode}。
-@end deftypefn
-
+@en @node Costs
+@en @section Describing Relative Costs of Operations
 @node 代价
 @section 描述操作的相对代价
 @cindex costs of instructions
