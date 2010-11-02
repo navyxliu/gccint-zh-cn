@@ -7351,81 +7351,125 @@ void sincosl(long double x, long double *sin, long double *cos);
 @cindex addressing modes
 
 @c prevent bad page break with this line
+@en This is about addressing modes.
 这是关于寻址模式的宏。
 
 @defmac HAVE_PRE_INCREMENT
 @defmacx HAVE_PRE_DECREMENT
 @defmacx HAVE_POST_INCREMENT
 @defmacx HAVE_POST_DECREMENT
+@en A C expression that is nonzero if the machine supports pre-increment,
+@en pre-decrement, post-increment, or post-decrement addressing respectively.
 一个C表达式，为非0，如果机器分别支持前增，前减，后增，或者后减寻址。
 @end defmac
 
 @defmac HAVE_PRE_MODIFY_DISP
 @defmacx HAVE_POST_MODIFY_DISP
+@en A C expression that is nonzero if the machine supports pre- or
+@en post-address side-effect generation involving constants other than
+@en the size of the memory operand.
 一个C表达式，非零，如果机器支持pre-或者post-address，
 除了生成内存操作数的大小以外，还有常量副作用生成。
 @end defmac
 
 @defmac HAVE_PRE_MODIFY_REG
 @defmacx HAVE_POST_MODIFY_REG
+@en A C expression that is nonzero if the machine supports pre- or
+@en post-address side-effect generation involving a register displacement.
 一个C表达式，非零，如果机器支持pre-或者post-address，
 除了生成内存操作数的大小以外，还有寄存器置换的副作用生成。
 @end defmac
 
 @defmac CONSTANT_ADDRESS_P (@var{x})
+@en A C expression that is 1 if the RTX @var{x} is a constant which
+@en is a valid address.  On most machines the default definition of
+@en @code{(CONSTANT_P (@var{x}) && GET_CODE (@var{x}) != CONST_DOUBLE)}
+@en is acceptable, but a few machines are more restrictive as to which
+@en constant addresses are supported. 
 一个C表达式，为1，如果RTX @var{x}为一个常量，其为一个有效地址。
 在大多数机器上，这可以被定义为@code{CONSTANT_P (@var{x})}，
 但一些机器在支持哪些常量地址方面更加严格。
 @end defmac
 
 @defmac CONSTANT_P (@var{x})
+@en @code{CONSTANT_P}, which is defined by target-independent code,
+@en accepts integer-values expressions whose values are not explicitly
+@en known, such as @code{symbol_ref}, @code{label_ref}, and @code{high}
+@en expressions and @code{const} arithmetic expressions, in addition to
+@en @code{const_int} and @code{const_double} expressions.
 @code{CONSTANT_P}，其由target无关代码定义，接受整数值表达式，
 其值不被显示的知道，例如@code{symbol_ref}, @code{label_ref}，@code{high}表达式，
 以及@code{const}算术表达式，@code{const_int}和@code{const_double}表达式。
 @end defmac
 
 @defmac MAX_REGS_PER_ADDRESS
+@en A number, the maximum number of registers that can appear in a valid
+@en memory address.  Note that it is up to you to specify a value equal to
+@en the maximum number that @code{TARGET_LEGITIMATE_ADDRESS_P} would ever
+@en accept.
 一个数，为可以出现在一个有效的内存地址中的最大寄存器编号。
 注意需要你来指定@code{GO_IF_LEGITIMATE_ADDRESS}应该能够接受的等于该最大值的值。
 @end defmac
 
-@defmac GO_IF_LEGITIMATE_ADDRESS (@var{mode}, @var{x}, @var{label})
-一个C复合语句，带有条件@code{goto @var{label};}；
-如果对于一个模式为@var{mode}的内存操作数，
-@var{x}（一个RTX）为一个在target机器上的合法内存地址时，被执行。
+@deftypefn {Target Hook} bool TARGET_LEGITIMATE_ADDRESS_P (enum machine_mode @var{mode}, rtx @var{x}, bool @var{strict})
+A function that returns whether @var{x} (an RTX) is a legitimate memory
+address on the target machine for a memory operand of mode @var{mode}.
 
-通常定义多个相对简单的宏来作为该宏的子程序。否则其可能会太复杂，难以理解。
+Legitimate addresses are defined in two variants: a strict variant and a
+non-strict one.  The @var{strict} parameter chooses which variant is
+desired by the caller.
 
-该宏必须按照两种方式退出：一种严格的方式和一种非严格的。严格的方式用于重载阶段。
-其必须被定义，以便任何没有被分配硬件寄存器的伪寄存器被作为内存引用考虑。
-在需要某种寄存器的上下文中，一个没有硬件寄存器的伪寄存器必须被拒绝。
+The strict variant is used in the reload pass.  It must be defined so
+that any pseudo-register that has not been allocated a hard register is
+considered a memory reference.  This is because in contexts where some
+kind of register is required, a pseudo-register with no hard register
+must be rejected.  For non-hard registers, the strict variant should look
+up the @code{reg_renumber} array; it should then proceed using the hard
+register number in the array, or treat the pseudo as a memory reference
+if the array holds @code{-1}.
 
-非严格的方式用于其它过程。其必须被定义来接受所有伪寄存器，
-在每个需要某种寄存器的上下文中。
+The non-strict variant is used in other passes.  It must be defined to
+accept all pseudo-registers in every context where some kind of
+register is required.
 
-@findex REG_OK_STRICT
-想要使用该宏的严格方式的编译器源文件定义宏@code{REG_OK_STRICT}。
-你应该使用一个@code{#ifdef REG_OK_STRICT}条件来定义严格方式，反之定义非严格的。
+Normally, constant addresses which are the sum of a @code{symbol_ref}
+and an integer are stored inside a @code{const} RTX to mark them as
+constant.  Therefore, there is no need to recognize such sums
+specifically as legitimate addresses.  Normally you would simply
+recognize any @code{const} as legitimate.
 
-出于不同目的（对于基址寄存器，对于索引寄存器等等）来检查可接受的寄存器的子程序通常用于定义@code{GO_IF_LEGITIMATE_ADDRESS}。
-那么只有这些子程序宏需要这两种方式；高级别的宏对于严格的或者不严格的可以相同。
-
-通常常量地址，其为一个@code{symbol_ref}和一个整数的和，
-被存储在一个@code{const} RTX中，来标记它们为一个常量。
-因此，不需要专门识别这样的和是否为合法地址。
-通常你应该简化识别任何合法的@code{const}。
-
-通常@code{PRINT_OPERAND_ADDRESS}不准备处理没有标记为@code{const}的常量和。
-其假设@code{plus}表示为索引。如果是这样，
-你@emph{必须}作为非法地址来拒绝这样的常量sum，
-以便不会提供给@code{PRINT_OPERAND_ADDRESS}。
+Usually @code{PRINT_OPERAND_ADDRESS} is not prepared to handle constant
+sums that are not marked with  @code{const}.  It assumes that a naked
+@code{plus} indicates indexing.  If so, then you @emph{must} reject such
+naked constant sums as illegitimate addresses, so that none of them will
+be given to @code{PRINT_OPERAND_ADDRESS}.
 
 @cindex @code{TARGET_ENCODE_SECTION_INFO} and address validation
-在一些机器上，一个符号地址是否为合法的，依赖于地址所引用的section。
-在这些机器上，定义target钩子@code{TARGET_ENCODE_SECTION_INFO}来将信息存储
-到@code{symbol_ref}中，然后在此处检查。当你遇到一个@code{const}，
-你将必须查看内部，来找到@code{symbol_ref}，以便确定section。参见@ref{汇编格式}。
-@end defmac
+On some machines, whether a symbolic address is legitimate depends on
+the section that the address refers to.  On these machines, define the
+target hook @code{TARGET_ENCODE_SECTION_INFO} to store the information
+into the @code{symbol_ref}, and then check for it here.  When you see a
+@code{const}, you will have to look inside it to find the
+@code{symbol_ref} in order to determine the section.  @xref{Assembler
+Format}.
+
+@cindex @code{GO_IF_LEGITIMATE_ADDRESS}
+Some ports are still using a deprecated legacy substitute for
+this hook, the @code{GO_IF_LEGITIMATE_ADDRESS} macro.  This macro
+has this syntax:
+
+@example
+#define GO_IF_LEGITIMATE_ADDRESS (@var{mode}, @var{x}, @var{label})
+@end example
+
+@noindent
+and should @code{goto @var{label}} if the address @var{x} is a valid
+address on the target machine for a memory operand of mode @var{mode}.
+Whether the strict or non-strict variants are desired is defined by
+the @code{REG_OK_STRICT} macro introduced earlier in this section.
+Using the hook is usually simpler because it limits the number of
+files that are recompiled when changes are made.
+@end deftypefn
 
 @defmac TARGET_MEM_CONSTRAINT
 A single character to be used instead of the default @code{'m'}
@@ -7439,92 +7483,172 @@ preserve functionality of inline assembly constructs using the
 @end defmac
 
 @defmac FIND_BASE_TERM (@var{x})
+@en A C expression to determine the base term of address @var{x},
+@en or to provide a simplified version of @var{x} from which @file{alias.c}
+@en can easily find the base term.  This macro is used in only two places:
+@en @code{find_base_value} and @code{find_base_term} in @file{alias.c}.
 一个C表达式，用来确定地址@var{x}的base term。该宏只在两个地方使用：
 @file{alias.c}的@code{find_base_value}和 @code{find_base_term}。
 
+@en It is always safe for this macro to not be defined.  It exists so
+@en that alias analysis can understand machine-dependent addresses.
 不定义该宏也总是安全的。它的存在是为了别名分析可以理解机器相关的地址。
 
+@en The typical use of this macro is to handle addresses containing
+@en a label_ref or symbol_ref within an UNSPEC@.
 该宏的典型用法是处理在UNSPEC中包含label_ref或symbol_ref的地址。
 @end defmac
 
-@defmac LEGITIMIZE_ADDRESS (@var{x}, @var{oldx}, @var{mode}, @var{win})
-一个c复合语句，对于模式为@var{mode}的操作数，
-尝试使用有效的内存地址来替换@var{x}。@var{win}为代码中某处的一个c语句标号；
-宏定义可以使用
-
-@smallexample
-GO_IF_LEGITIMATE_ADDRESS (@var{mode}, @var{x}, @var{win});
-@end smallexample
-
-@noindent
-来避免进一步的处理，如果地址已经变为合法的。
+@deftypefn {Target Hook} rtx TARGET_LEGITIMIZE_ADDRESS (rtx @var{x}, rtx @var{oldx}, enum machine_mode @var{mode})
+This hook is given an invalid memory address @var{x} for an
+operand of mode @var{mode} and should try to return a valid memory
+address.
 
 @findex break_out_memory_refs
-@var{x}总是为调用@code{break_out_memory_refs}的结果，
-@var{oldx}将为传给那个函数来生成@var{x}的操作数。
+@var{x} will always be the result of a call to @code{break_out_memory_refs},
+and @var{oldx} will be the operand that was given to that function to produce
+@var{x}.
 
-该宏生成的代码不应该修改@var{x}的子结构。
-如果其将@var{x}转换为一个更加合法的形式，
-其应该为@var{x}（其总为一个c变量）赋予一个新的值。
+The code of the hook should not alter the substructure of
+@var{x}.  If it transforms @var{x} into a more legitimate form, it
+should return the new @var{x}.
 
-该宏不必要产生一个合法的地址。编译器具有做这件事的标准方法。
-实际上省略掉该宏是安全的。但是通常机器相关的策略可以产生更好的代码。
-@end defmac
+It is not necessary for this hook to come up with a legitimate address.
+The compiler has standard ways of doing so in all cases.  In fact, it
+is safe to omit this hook or make it return @var{x} if it cannot find
+a valid way to legitimize the address.  But often a machine-dependent
+strategy can generate better code.
+@end deftypefn
 
 @defmac LEGITIMIZE_RELOAD_ADDRESS (@var{x}, @var{mode}, @var{opnum}, @var{type}, @var{ind_levels}, @var{win})
+@en A C compound statement that attempts to replace @var{x}, which is an address
+@en that needs reloading, with a valid memory address for an operand of mode
+@en @var{mode}.  @var{win} will be a C statement label elsewhere in the code.
+@en It is not necessary to define this macro, but it might be useful for
+@en performance reasons.
 一条C复合语句，其尝试使用一个机器模式为@var{mode}的操作数的有效内存地址，
 来替换地址需要重载的@var{x}。@var{win}为代码中的一个C语句标号。
 不必要定义该宏，但其可能会对性能有帮助。
 
+@en For example, on the i386, it is sometimes possible to use a single
+@en reload register instead of two by reloading a sum of two pseudo
+@en registers into a register.  On the other hand, for number of RISC
+@en processors offsets are limited so that often an intermediate address
+@en needs to be generated in order to address a stack slot.  By defining
+@en @code{LEGITIMIZE_RELOAD_ADDRESS} appropriately, the intermediate addresses
+@en generated for adjacent some stack slots can be made identical, and thus
+@en be shared.
 例如，在i386上，有时可能通过将两个伪寄存器的和重载到一个寄存器中，
 从而只使用一个重载寄存器，而不是两个。另一方面，
 许多RISC处理器的偏移量是有限制的，使得经常要生成一个中间地址来寻址一个栈槽。
 通过适当的定义@code{LEGITIMIZE_RELOAD_ADDRESS}，
 为邻近的一些栈槽生成的中间地址可以为同一个，实现共享。
 
+@en @emph{Note}: This macro should be used with caution.  It is necessary
+@en to know something of how reload works in order to effectively use this,
+@en and it is quite easy to produce macros that build in too much knowledge
+@en of reload internals.
 注意：该宏应该慎重使用。有必要了解重载是如何工作的，以便有效的使用该宏。
 
+@en @emph{Note}: This macro must be able to reload an address created by a
+@en previous invocation of this macro.  If it fails to handle such addresses
+@en then the compiler may generate incorrect code or abort.
 注意：该宏必须能够重载由该宏的之前调用所创建的地址。
 如果不能处理这样的地址，则编译器可能会产生不正确的代码或者中断退出。
 
 @findex push_reload
+@en The macro definition should use @code{push_reload} to indicate parts that
+@en need reloading; @var{opnum}, @var{type} and @var{ind_levels} are usually
+@en suitable to be passed unaltered to @code{push_reload}.
 宏定义应该使用@code{push_reload}来指示需要重载的部分；
 @var{opnum}，@var{type}和@var{ind_levels}通常无需更改而直接传给@code{push_reload}。
 
+@en The code generated by this macro must not alter the substructure of
+@en @var{x}.  If it transforms @var{x} into a more legitimate form, it
+@en should assign @var{x} (which will always be a C variable) a new value.
+@en This also applies to parts that you change indirectly by calling
+@en @code{push_reload}.
 该宏生成的代码必须不要修改@var{x}的子结构体。如果其将@var{x}转换成更合法的形式，
 则其必须为@var{x}（其总为一个c变量）赋予一个新的值。
 这也通常应用于你通过调用@code{push_reload}而间接改变的部分。
 
 @findex strict_memory_address_p
+@en The macro definition may use @code{strict_memory_address_p} to test if
+@en the address has become legitimate.
 宏定义可以使用@code{strict_memory_address_p}来测试地址是否已经为合法的。
 
 @findex copy_rtx
+@en If you want to change only a part of @var{x}, one standard way of doing
+@en this is to use @code{copy_rtx}.  Note, however, that it unshares only a
+@en single level of rtl.  Thus, if the part to be changed is not at the
+@en top level, you'll need to replace first the top level.
+@en It is not necessary for this macro to come up with a legitimate
+@en address;  but often a machine-dependent strategy can generate better code.
 如果你只想改变@var{x}的一部分，一种标准的方法是使用@code{copy_rtx}。
 但是注意，其只与rtl同一级不共享。因此，如果改变的部分不在顶层，
-则你要首先替换顶层。
-
-该宏不必要产生一个合法的地址；但是通常机器相关的策略可以产生更好的代码。
+则你要首先替换顶层。该宏不必要产生一个合法的地址；但是通常机器相关的策略可以产生更好的代码。
 @end defmac
 
+@deftypefn {Target Hook} bool TARGET_MODE_DEPENDENT_ADDRESS_P (const_rtx @var{addr})
+This hook returns @code{true} if memory address @var{addr} can have
+different meanings depending on the machine mode of the memory
+reference it is used for or if the address is valid for some modes
+but not others.
+
+Autoincrement and autodecrement addresses typically have mode-dependent
+effects because the amount of the increment or decrement is the size
+of the operand being addressed.  Some machines have other mode-dependent
+addresses.  Many RISC machines have no mode-dependent addresses.
+
+You may assume that @var{addr} is a valid address for the machine.
+
+The default version of this hook returns @code{false}.
+@end deftypefn
+
 @defmac GO_IF_MODE_DEPENDENT_ADDRESS (@var{addr}, @var{label})
+@en A C statement or compound statement with a conditional @code{goto
+@en @var{label};} executed if memory address @var{x} (an RTX) can have
+@en different meanings depending on the machine mode of the memory
+@en reference it is used for or if the address is valid for some modes
+@en but not others.
 一条C语句或者复合语句，具有一个条件@code{goto @var{label};}；
 当内存地址@var{x}（一个RTX）可以具有不同的含义，
 该含义取决于内存引用的机器模式时，被执行。
 
+@en Autoincrement and autodecrement addresses typically have mode-dependent
+@en effects because the amount of the increment or decrement is the size
+@en of the operand being addressed.  Some machines have other mode-dependent
+@en addresses.  Many RISC machines have no mode-dependent addresses.
 自动递增和自动递减地址通常具有机器模式相关的效果，
 因为递增或递减的数量为被寻址的操作数的大小。
 一些机器具有其它机器模式相关的地址。许多RISC机器没有机器模式相关的地址。
 
+@en You may assume that @var{addr} is a valid address for the machine.
 你可以假设@var{addr}对于机器是一个有效的地址。
+
+These are obsolete macros, replaced by the
+@code{TARGET_MODE_DEPENDENT_ADDRESS_P} target hook.
 @end defmac
 
 @defmac LEGITIMATE_CONSTANT_P (@var{x})
+@en A C expression that is nonzero if @var{x} is a legitimate constant for
+@en an immediate operand on the target machine.  You can assume that
+@en @var{x} satisfies @code{CONSTANT_P}, so you need not check this.  In fact,
+@en @samp{1} is a suitable definition for this macro on machines where
+@en anything @code{CONSTANT_P} is valid.
 一个C表达式，如果@var{x}对于target机器上的一个立即操作数为合法的常量，
 则为非0。你可以假设@var{x}满足@code{CONSTANT_P}，所以不需要进行检查。
 实际上，在任何@code{CONSTANT_P}都是有效的机器上，为该宏定义为@samp{1}是合适的。
 @end defmac
 
 @deftypefn {Target Hook} rtx TARGET_DELEGITIMIZE_ADDRESS (rtx @var{x})
+@en This hook is used to undo the possibly obfuscating effects of the
+@en @code{LEGITIMIZE_ADDRESS} and @code{LEGITIMIZE_RELOAD_ADDRESS} target
+@en macros.  Some backend implementations of these macros wrap symbol
+@en references inside an @code{UNSPEC} rtx to represent PIC or similar
+@en addressing modes.  This target hook allows GCC's optimizers to understand
+@en the semantics of these opaque @code{UNSPEC}s by converting them back
+@en into their original form.
 该钩子用于撤销@code{LEGITIMIZE_ADDRESS}和@code{LEGITIMIZE_RELOAD_ADDRESS} target
 宏可能造成的模糊效果。这些宏的一些后端实现，
 将符号引用包含在一个@code{UNSPEC} rtx中来表示PIC或者类似的寻址模式。
@@ -7533,23 +7657,42 @@ GO_IF_LEGITIMATE_ADDRESS (@var{mode}, @var{x}, @var{win});
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CANNOT_FORCE_CONST_MEM (rtx @var{x})
+@en This hook should return true if @var{x} is of a form that cannot (or
+@en should not) be spilled to the constant pool.  The default version of
+@en this hook returns false.
 该钩子应该返回真，如果@var{x}不能够（或不应该）被溢出到常量池中。
 该钩子的缺省版本返回假。
 
+@en The primary reason to define this hook is to prevent reload from
+@en deciding that a non-legitimate constant would be better reloaded
+@en from the constant pool instead of spilling and reloading a register
+@en holding the constant.  This restriction is often true of addresses
+@en of TLS symbols for various targets.
 定义该钩子的主要原因是阻止重载决定将一个不合法的常量从常量池中重载，
 而不是溢出并重载一个寄存器来保存常量。对于不同的target，
 该限制对于TLS符号的地址常常是真。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_USE_BLOCKS_FOR_CONSTANT_P (enum machine_mode @var{mode}, rtx @var{x})
+@en This hook should return true if pool entries for constant @var{x} can
+@en be placed in an @code{object_block} structure.  @var{mode} is the mode
+@en of @var{x}.
 该钩子应该返回真，
 如果常量@var{x}的池实体（pool entries）可以放在一个@code{object_block}结构体中。
 @var{mode}为@var{x}的机器模式。
 
+@en The default version returns false for all constants.
 缺省版本为所有的常量返回假。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_BUILTIN_RECIPROCAL (enum tree_code @var{fn}, bool @var{tm_fn}, bool @var{sqrt})
+@en This hook should return the DECL of a function that implements reciprocal of
+@en the builtin function with builtin function code @var{fn}, or
+@en @code{NULL_TREE} if such a function is not available.  @var{md_fn} is true
+@en when @var{fn} is a code of a machine-dependent builtin function.  When
+@en @var{sqrt} is true, additional optimizations that apply only to the reciprocal
+@en of a square root function are performed, and only reciprocals of @code{sqrt}
+@en function are valid.
 该钩子应该返回一个函数的decl，该函数实现了代码为@var{fn}的内建函数的倒数，
 或者如果没有这样的函数，则返回@code{NULL_TREE}。
 当@var{fn}为一个机器相关的内建函数的代码时，@var{tm_fn}为真。
@@ -7558,10 +7701,25 @@ GO_IF_LEGITIMATE_ADDRESS (@var{mode}, @var{x}, @var{win});
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_MASK_FOR_LOAD (void)
+@en This hook should return the DECL of a function @var{f} that given an
+@en address @var{addr} as an argument returns a mask @var{m} that can be
+@en used to extract from two vectors the relevant data that resides in
+@en @var{addr} in case @var{addr} is not properly aligned.
 该钩子应该返回一个函数@var{f}的decl，给定一个地址@var{addr}作为参数，
 该函数返回一个掩码@var{m}，在@var{addr}没有被适当的对齐时，
 其可以用于从两个向量中抽取位于@var{addr}中的相关数据。
 
+@en The autovectorizer, when vectorizing a load operation from an address
+@en @var{addr} that may be unaligned, will generate two vector loads from
+@en the two aligned addresses around @var{addr}. It then generates a
+@en @code{REALIGN_LOAD} operation to extract the relevant data from the
+@en two loaded vectors. The first two arguments to @code{REALIGN_LOAD},
+@en @var{v1} and @var{v2}, are the two vectors, each of size @var{VS}, and
+@en the third argument, @var{OFF}, defines how the data will be extracted
+@en from these two vectors: if @var{OFF} is 0, then the returned vector is
+@en @var{v2}; otherwise, the returned vector is composed from the last
+@en @var{VS}-@var{OFF} elements of @var{v1} concatenated to the first
+@en @var{OFF} elements of @var{v2}.
 自动向量化，当向量化一个加载操作，且地址@var{addr}可以没有对齐，
 则会生成两个向量加载，从@var{addr}附件的两个对齐的地址。
 其然后生成一个@code{REALIGN_LOAD}操作，来从两个加载的向量中抽取相关数据。
@@ -7570,6 +7728,15 @@ GO_IF_LEGITIMATE_ADDRESS (@var{mode}, @var{x}, @var{win});
 如果@var{OFF}为0，则返回的向量为@var{V2}；
 否则返回的向量由@var{v1}的后@var{VS}-@var{OFF}个元素连接到@var{v2}的前@var{OFF}个元素而组成。
 
+@en If this hook is defined, the autovectorizer will generate a call
+@en to @var{f} (using the DECL tree that this hook returns) and will
+@en use the return value of @var{f} as the argument @var{OFF} to
+@en @code{REALIGN_LOAD}. Therefore, the mask @var{m} returned by @var{f}
+@en should comply with the semantics expected by @code{REALIGN_LOAD}
+@en described above.
+@en If this hook is not defined, then @var{addr} will be used as
+@en the argument @var{OFF} to @code{REALIGN_LOAD}, in which case the low
+@en log2(@var{VS}) @minus{} 1 bits of @var{addr} will be considered.
 如果定义了该钩子，则自动向量化会生成一个对@var{f}的调用（使用该钩子返回的DECL）
 并使用@var{f}的返回值作为@code{REALIGN_LOAD}的参数@var{OFF}。因此，
 @var{f}返回的掩码@var{m}应该遵守@code{REALIGN_LOAD}所期望的上面描述的语义。
@@ -7579,9 +7746,16 @@ GO_IF_LEGITIMATE_ADDRESS (@var{mode}, @var{x}, @var{win});
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_EVEN (tree @var{x})
+@en This hook should return the DECL of a function @var{f} that implements
+@en widening multiplication of the even elements of two input vectors of type @var{x}.
 该钩子应该返回一个函数@var{f}的decl，
 该函数实现了两个类型为@var{x}的输入向量作为偶数元素的加宽乘法。
 
+@en If this hook is defined, the autovectorizer will use it along with the
+@en @code{TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_ODD} target hook when vectorizing
+@en widening multiplication in cases that the order of the results does not have to be
+@en preserved (e.g.@: used only by a reduction computation). Otherwise, the
+@en @code{widen_mult_hi/lo} idioms will be used.
 如果定义了该钩子，则自动化向量当进行向量化加宽乘法时，
 将会使用它和@code{TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_ODD} target钩子，
 以防结果顺序不需要被保存（例如，只用于减法计算）。
@@ -7589,27 +7763,66 @@ GO_IF_LEGITIMATE_ADDRESS (@var{mode}, @var{x}, @var{win});
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_ODD (tree @var{x})
+@en This hook should return the DECL of a function @var{f} that implements
+@en widening multiplication of the odd elements of two input vectors of type @var{x}.
 该钩子应该返回一个函数@var{f}的decl，
 该函数实现了两个类型为@var{x}的输入向量作为奇数元素的加宽乘法。
 
+@en If this hook is defined, the autovectorizer will use it along with the
+@en @code{TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_EVEN} target hook when vectorizing
+@en widening multiplication in cases that the order of the results does not have to be
+@en preserved (e.g.@: used only by a reduction computation). Otherwise, the
+@en @code{widen_mult_hi/lo} idioms will be used.
 如果定义了该钩子，则自动化向量当进行向量化加宽乘法时，
 将会使用它和@code{TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_EVEN} target钩子，
 以防结果顺序不需要被保存（例如，只用于减法计算）。
 否则将使用@code{widen_mult_hi/lo}。
 @end deftypefn
 
+@deftypefn {Target Hook} int TARGET_VECTORIZE_BUILTIN_VECTORIZATION_COST (enum vect_cost_for_stmt @var{type_of_cost}, tree @var{vectype}, int @var{misalign})
+Returns cost of different scalar or vector statements for vectorization cost model.
+For vector memory operations the cost may depend on type (@var{vectype}) and 
+misalignment value (@var{misalign}).
+@end deftypefn
+
+@deftypefn {Target Hook} bool TARGET_VECTORIZE_VECTOR_ALIGNMENT_REACHABLE (const_tree @var{type}, bool @var{is_packed})
+Return true if vector alignment is reachable (by peeling N iterations) for the given type.
+@end deftypefn
+
+@deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_VEC_PERM (tree @var{type}, tree *@var{mask_element_type})
+Target builtin that implements vector permute.
+@end deftypefn
+
+@deftypefn {Target Hook} bool TARGET_VECTORIZE_BUILTIN_VEC_PERM_OK (tree @var{vec_type}, tree @var{mask})
+Return true if a vector created for @code{builtin_vec_perm} is valid.
+@end deftypefn
+
 @deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_CONVERSION (enum tree_code @var{code}, tree @var{type})
+@en This hook should return the DECL of a function that implements conversion of the
+@en input vector of type @var{src_type} to type @var{dest_type}.
+@en The value of @var{code} is one of the enumerators in @code{enum tree_code} and
+@en specifies how the conversion is to be applied
+@en (truncation, rounding, etc.).
 该钩子应该返回一个函数的decl，该函数实现了类型为@var{type}的输入向量的转换。
 如果@var{type}为一个整数类型，则转换结果为一个同样大小的浮点类型的向量。
 如果@var{type}为浮点类型，则转换结果为一个同样大小的整数类型的向量。
 @var{code}指定了如何应用转换（截断，舍入，等）。
 
+@en If this hook is defined, the autovectorizer will use the
+@en @code{TARGET_VECTORIZE_BUILTIN_CONVERSION} target hook when vectorizing
+@en conversion. Otherwise, it will return @code{NULL_TREE}.
 如果定义了该钩子，则自动向量化当进行向量化转换时，
 会使用@code{TARGET_VECTORIZE_BUILTIN_CONVERSION} target钩子。
 否则，其应该返回@code{NULL_TREE}。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_VECTORIZED_FUNCTION (enum built_in_function @var{code}, tree @var{vec_type_out}, tree @var{vec_type_in})
+@en This hook should return the decl of a function that implements the
+@en vectorized variant of the builtin function with builtin function code
+@en @var{code} or @code{NULL_TREE} if such a function is not available.
+@en The value of @var{fndecl} is the builtin function declaration.  The
+@en return type of the vectorized function shall be of vector type
+@en @var{vec_type_out} and the argument types should be @var{vec_type_in}.
 该钩子应该返回一个函数的decl，
 该函数实现了代码为@var{code}的内建函数的向量化变体，
 或者如果没有这样的函数则返回@code{NULL_TREE}。
@@ -7617,11 +7830,23 @@ GO_IF_LEGITIMATE_ADDRESS (@var{mode}, @var{x}, @var{win});
 并且参数类型应该为@var{vec_type_in}。
 @end deftypefn
 
+@deftypefn {Target Hook} bool TARGET_VECTORIZE_SUPPORT_VECTOR_MISALIGNMENT (enum machine_mode @var{mode}, const_tree @var{type}, int @var{misalignment}, bool @var{is_packed})
+This hook should return true if the target supports misaligned vector
+store/load of a specific factor denoted in the @var{misalignment}
+parameter.  The vector store/load should be of machine mode @var{mode} and
+the elements in the vectors should be of type @var{type}.  @var{is_packed}
+parameter is true if the memory access is defined in a packed struct.
+@end deftypefn
+
+@en @node Anchored Addresses
+@en @section Anchored Addresses
 @node Anchored地址
 @section 锚定的地址
 @cindex anchored addresses
 @cindex @option{-fsection-anchors}
 
+@en GCC usually addresses every static object as a separate entity.
+@en For example, if we have:
 GCC通常将每一个静态对象作为一个单独的实体来寻址。例如，如果我们有：
 
 @smallexample
@@ -7629,6 +7854,11 @@ static int a, b, c;
 int foo (void) @{ return a + b + c; @}
 @end smallexample
 
+@en the code for @code{foo} will usually calculate three separate symbolic
+@en addresses: those of @code{a}, @code{b} and @code{c}.  On some targets,
+@en it would be better to calculate just one symbolic address and access
+@en the three variables relative to it.  The equivalent pseudocode would
+@en be something like:
 @code{foo}的代码通常会计算三个独立的符号地址：@code{a}，@code{b}和@code{c}的。
 在一些target上，只计算一个符号地址并且通过相对地址来访问这三个变量会更好些。
 等价的伪代码可能为：
@@ -7641,29 +7871,50 @@ int foo (void)
 @}
 @end smallexample
 
+@en (which isn't valid C).  We refer to shared addresses like @code{x} as
+@en ``section anchors''.  Their use is controlled by @option{-fsection-anchors}.
 （这不是有效的C）。我们称像@code{x}这样的共享地址为“section anchors”。
 它们的用法由@option{-fsection-anchors}控制。
 
+@en The hooks below describe the target properties that GCC needs to know
+@en in order to make effective use of section anchors.  It won't use
+@en section anchors at all unless either @code{TARGET_MIN_ANCHOR_OFFSET}
+@en or @code{TARGET_MAX_ANCHOR_OFFSET} is set to a nonzero value.
 下面的钩子描述了GCC需要知道的target属性，以便有效利用section anchors。
 除非@code{TARGET_MIN_ANCHOR_OFFSET}或@code{TARGET_MAX_ANCHOR_OFFSET}
 被设为一个非0的值，否则section anchors根本不会被使用。
 
 @deftypevar {Target Hook} HOST_WIDE_INT TARGET_MIN_ANCHOR_OFFSET
+@en The minimum offset that should be applied to a section anchor.
+@en On most targets, it should be the smallest offset that can be
+@en applied to a base register while still giving a legitimate address
+@en for every mode.  The default value is 0.
 应该应用到section anchor的最小偏移量。在大多数target上，
 其应该为可以应用到基址寄存器并且对每种机器模式都可以给出合法地址的最小偏移量。
 缺省值为0。
 @end deftypevar
 
 @deftypevar {Target Hook} HOST_WIDE_INT TARGET_MAX_ANCHOR_OFFSET
+@en Like @code{TARGET_MIN_ANCHOR_OFFSET}, but the maximum (inclusive)
+@en offset that should be applied to section anchors.  The default
+@en value is 0.
 类似@code{TARGET_MIN_ANCHOR_OFFSET}，
 但是为可以应用到section anchors的最大(包括)偏移量。缺省为0。
 @end deftypevar
 
 @deftypefn {Target Hook} void TARGET_ASM_OUTPUT_ANCHOR (rtx @var{x})
+@en Write the assembly code to define section anchor @var{x}, which is a
+@en @code{SYMBOL_REF} for which @samp{SYMBOL_REF_ANCHOR_P (@var{x})} is true.
+@en The hook is called with the assembly output position set to the beginning
+@en of @code{SYMBOL_REF_BLOCK (@var{x})}.
 写汇编代码来定义section anchor @var{x}，其为一个@code{SYMBOL_REF}，
 并且@samp{SYMBOL_REF_ANCHOR_P (@var{x})}为真。该钩子被调用时，
 汇编输出位置被设为@code{SYMBOL_REF_BLOCK (@var{x})}的起始处。
 
+@en If @code{ASM_OUTPUT_DEF} is available, the hook's default definition uses
+@en it to define the symbol as @samp{. + SYMBOL_REF_BLOCK_OFFSET (@var{x})}.
+@en If @code{ASM_OUTPUT_DEF} is not available, the hook's default definition
+@en is @code{NULL}, which disables the use of section anchors altogether.
 如果@code{ASM_OUTPUT_DEF}可用，
 则钩子的缺省定义使用它来定义符号为@samp{. + SYMBOL_REF_BLOCK_OFFSET (@var{x})}。
 如果@code{ASM_OUTPUT_DEF}不可用，则钩子的缺省定义为@code{NULL}，
@@ -7671,14 +7922,22 @@ int foo (void)
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_USE_ANCHORS_FOR_SYMBOL_P (rtx @var{x})
+@en Return true if GCC should attempt to use anchors to access @code{SYMBOL_REF}
+@en @var{x}.  You can assume @samp{SYMBOL_REF_HAS_BLOCK_INFO_P (@var{x})} and
+@en @samp{!SYMBOL_REF_ANCHOR_P (@var{x})}.
 返回真，如果GCC应该尝试使用anchors来访问@code{SYMBOL_REF} @var{x}。
 你可以假设@samp{SYMBOL_REF_HAS_BLOCK_INFO_P (@var{x})}和
 @samp{!SYMBOL_REF_ANCHOR_P (@var{x})}。
 
+@en The default version is correct for most targets, but you might need to
+@en intercept this hook to handle things like target-specific attributes
+@en or target-specific sections.
 缺省版本对于大多数target都正确，
 但是你可能需要截取该钩子来处理target特定的属性或者target特定的section。
 @end deftypefn
 
+@en @node Condition Code
+@en @section Condition Code Status
 @node 条件代码
 @section 条件代码状态
 @cindex condition code status
