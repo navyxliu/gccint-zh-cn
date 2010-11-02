@@ -9759,11 +9759,31 @@ The default version of this hook use the target macro
 所有的常量（包括@code{SYMBOL_REF}）都可以为立即操作数，则不需要定义该宏。
 @end defmac
 
+@en @node Assembler Format
+@en @section Defining the Output Assembler Language
 @node 汇编格式
 @section 定义汇编语言输出
 
+@en This section describes macros whose principal purpose is to describe how
+@en to write instructions in assembler language---rather than what the
+@en instructions do.
 这一节描述的宏，主要用于描述如何使用汇编语言书写指令，而不是指令本身。
 
+@en @menu
+@en * File Framework::       Structural information for the assembler file.
+@en * Data Output::          Output of constants (numbers, strings, addresses).
+@en * Uninitialized Data::   Output of uninitialized variables.
+@en * Label Output::         Output and generation of labels.
+@en * Initialization::       General principles of initialization
+@en                          and termination routines.
+@en * Macros for Initialization::
+@en                          Specific macros that control the handling of
+@en                          initialization and termination routines.
+@en * Instruction Output::   Output of actual instructions.
+@en * Dispatch Tables::      Output of jump tables.
+@en * Exception Region Output:: Output of exception region code.
+@en * Alignment Output::     Pseudo ops for alignment and skipping data.
+@en @end menu
 @menu
 * 文件框架::                   汇编文件的结构化信息  
 * 数据输出::                   常量（数目，字符串，地址）的输出
@@ -9777,16 +9797,25 @@ The default version of this hook use the target macro
 * 对齐输出::                   用于对齐和跳过数据的伪操作
 @end menu
 
+@en @node File Framework
+@en @subsection The Overall Framework of an Assembler File
 @node 文件框架
 @subsection 汇编文件的总体框架
 @cindex assembler format
 @cindex output of assembler code
 
 @c prevent bad page break with this line
+@en This describes the overall framework of an assembly file.
 这章描述了汇编文件的总体框架。
 
 @deftypefn {Target Hook} void TARGET_ASM_FILE_START ()
 @findex default_file_start
+@en Output to @code{asm_out_file} any text which the assembler expects to
+@en find at the beginning of a file.  The default behavior is controlled
+@en by two flags, documented below.  Unless your target's assembler is
+@en quite unusual, if you override the default, you should call
+@en @code{default_file_start} at some point in your target hook.  This
+@en lets other target files rely on these variables.
 将汇编器期望在文件起始处发现的任何文本输出到@code{asm_out_file}。
 缺省行为由两个标志控制，将在下面介绍。除非你target的汇编器十分不常见，
 如果你覆盖了缺省，则应该在你的target钩子上的某处调用@code{default_file_start}。
@@ -9794,58 +9823,128 @@ The default version of this hook use the target macro
 @end deftypefn
 
 @deftypevr {Target Hook} bool TARGET_ASM_FILE_START_APP_OFF
+@en If this flag is true, the text of the macro @code{ASM_APP_OFF} will be
+@en printed as the very first line in the assembly file, unless
+@en @option{-fverbose-asm} is in effect.  (If that macro has been defined
+@en to the empty string, this variable has no effect.)  With the normal
+@en definition of @code{ASM_APP_OFF}, the effect is to notify the GNU
+@en assembler that it need not bother stripping comments or extra
+@en whitespace from its input.  This allows it to work a bit faster.
 如果该标记为真，则宏@code{ASM_APP_OFF}的文本将作为汇编文本的第一行被打印，
 除非正在使用@option{-fverbose-asm}。（如果那个宏被定义为空字符串，
 则该变量将不起作用。）对于@code{ASM_APP_OFF}的通常定义，
 其效果是告知GNU汇编器不需要费功夫从输入中去除掉注释或额外的空格。
 这将使得运行更快些。
 
+@en The default is false.  You should not set it to true unless you have
+@en verified that your port does not generate any extra whitespace or
+@en comments that will cause GAS to issue errors in NO_APP mode.
 缺省为假。不要将其设为真，除非你已经核实你的port不会产生任何额外的空格或者注释，
 这将使得GAS在NO_APP模式下产生错误。
 @end deftypevr
 
 @deftypevr {Target Hook} bool TARGET_ASM_FILE_START_FILE_DIRECTIVE
+@en If this flag is true, @code{output_file_directive} will be called
+@en for the primary source file, immediately after printing
+@en @code{ASM_APP_OFF} (if that is enabled).  Most ELF assemblers expect
+@en this to be done.  The default is false.
 如果该标记为真，对于主源文件，@code{output_file_directive}将被调用，
 就在打印了@code{ASM_APP_OFF}之后（如果启用了该功能）。
 大多数ELF汇编器期望做这件事。缺省为假。
 @end deftypevr
 
 @deftypefn {Target Hook} void TARGET_ASM_FILE_END ()
+@en Output to @code{asm_out_file} any text which the assembler expects
+@en to find at the end of a file.  The default is to output nothing.
 将汇编器期望在文件结尾发现的任何文本输出到中。缺省为什么也不输出。
 @end deftypefn
 
 @deftypefun void file_end_indicate_exec_stack ()
+@en Some systems use a common convention, the @samp{.note.GNU-stack}
+@en special section, to indicate whether or not an object file relies on
+@en the stack being executable.  If your system uses this convention, you
+@en should define @code{TARGET_ASM_FILE_END} to this function.  If you
+@en need to do other things in that hook, have your hook function call
+@en this function.
 一些系统使用通用的约定，用特定的@samp{.note.GNU-stack} section，
 来指示一个依赖栈的目标文件是否被执行。如果你的系统使用了该约定，
 你应该将@code{TARGET_ASM_FILE_END}定义为该函数。
 如果你需要在钩子中做其它事情，则要在你的钩子函数中调用该函数。
 @end deftypefun
 
+@deftypefn {Target Hook} void TARGET_ASM_LTO_START (void)
+@en Output to @code{asm_out_file} any text which the assembler expects
+@en to find at the start of an LTO section.  The default is to output
+@en nothing.
+@end deftypefn
+
+@deftypefn {Target Hook} void TARGET_ASM_LTO_END (void)
+@en Output to @code{asm_out_file} any text which the assembler expects
+@en to find at the end of an LTO section.  The default is to output
+@en nothing.
+@end deftypefn
+
+@deftypefn {Target Hook} void TARGET_ASM_CODE_END (void)
+@en Output to @code{asm_out_file} any text which is needed before emitting
+@en unwind info and debug info at the end of a file.  Some targets emit
+@en here PIC setup thunks that cannot be emitted at the end of file,
+@en because they couldn't have unwind info then.  The default is to output
+@en nothing.
+@end deftypefn
+
 @defmac ASM_COMMENT_START
+@en A C string constant describing how to begin a comment in the target
+@en assembler language.  The compiler assumes that the comment will end at
+@en the end of the line.
 一个C字符串常量，描述了如何在target汇编语言中起始一条注释。
 编译器假设注释将结束于行尾。
 @end defmac
 
 @defmac ASM_APP_ON
+@en A C string constant for text to be output before each @code{asm}
+@en statement or group of consecutive ones.  Normally this is
+@en @code{"#APP"}, which is a comment that has no effect on most
+@en assemblers but tells the GNU assembler that it must check the lines
+@en that follow for all valid assembler constructs.
 一个C字符串常量，将在每个@code{asm}语句或者一组连续的@code{asm}语句之前被输出。
 通常为@code{"#APP"}，其为一条注释，对于多数汇编器不起作用，
 但可以告诉GNU汇编器必须对随后的行检查所有的有效汇编结构。
 @end defmac
 
 @defmac ASM_APP_OFF
+@en A C string constant for text to be output after each @code{asm}
+@en statement or group of consecutive ones.  Normally this is
+@en @code{"#NO_APP"}, which tells the GNU assembler to resume making the
+@en time-saving assumptions that are valid for ordinary compiler output.
 一个C字符串常量，将在每个@code{asm}语句或者一组连续的@code{asm}语句之前被输出。
 通常为@code{"#NO_APP"}，告诉GNU汇编器继续进行省时的假设，
 认为通常的编译器输出是有效的。
 @end defmac
 
 @defmac ASM_OUTPUT_SOURCE_FILENAME (@var{stream}, @var{name})
+@en A C statement to output COFF information or DWARF debugging information
+@en which indicates that filename @var{name} is the current source file to
+@en the stdio stream @var{stream}.
 一条C语句，输出COFF信息或者DWARF调试信息，
 用来指示文件名@var{name}为当前的对于标准输入输出流@var{stream}的源文件。
 
+@en This macro need not be defined if the standard form of output
+@en for the file format in use is appropriate.
 该宏不需要被定义，如果输出的标准形式适用于正在使用的文件格式。
 @end defmac
 
+@deftypefn {Target Hook} void TARGET_ASM_OUTPUT_SOURCE_FILENAME (FILE *@var{file}, const char *@var{name})
+Output COFF information or DWARF debugging information which indicates that filename @var{name} is the current source file to the stdio stream @var{file}.
+ 
+ This target hook need not be defined if the standard form of output for the file format in use is appropriate.
+@end deftypefn
+
 @defmac OUTPUT_QUOTED_STRING (@var{stream}, @var{string})
+@en A C statement to output the string @var{string} to the stdio stream
+@en @var{stream}.  If you do not call the function @code{output_quoted_string}
+@en in your config files, GCC will only call it to output filenames to
+@en the assembler source.  So you can use it to canonicalize the format
+@en of the filename using this macro.
 一条C语句，将字符串@var{string}输出到stdio流@var{stream}中。
 如果你不在你的配置文件中调用函数@code{output_quoted_string}，
 则GCC将只调用它来输出文件名到汇编源文件中。
@@ -9853,12 +9952,20 @@ The default version of this hook use the target macro
 @end defmac
 
 @defmac ASM_OUTPUT_IDENT (@var{stream}, @var{string})
+@en A C statement to output something to the assembler file to handle a
+@en @samp{#ident} directive containing the text @var{string}.  If this
+@en macro is not defined, nothing is output for a @samp{#ident} directive.
 一条C语句，用来输出一些东西到汇编文件中，
 以处理包含文本@var{string}的@samp{#ident}伪指令。如果没有定义该宏，
 对于@samp{#ident}伪指令，将不输出任何东西。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_NAMED_SECTION (const char *@var{name}, unsigned int @var{flags}, unsigned int @var{align})
+@en Output assembly directives to switch to section @var{name}.  The section
+@en should have attributes as specified by @var{flags}, which is a bit mask
+@en of the @code{SECTION_*} flags defined in @file{output.h}.  If @var{decl}
+@en is non-NULL, it is the @code{VAR_DECL} or @code{FUNCTION_DECL} with which
+@en this section is associated.
 输出汇编伪指令来切换section名字。section应该具有@var{flags}指定的属性，
 其为@file{output.h}中定义的@code{SECTION_*}标记的位掩码。如果@var{align}非零，
 则其包含了用于section的对齐字节数，否则将使用target缺省的。
@@ -9867,20 +9974,32 @@ The default version of this hook use the target macro
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_HAVE_NAMED_SECTIONS
+@en This flag is true if the target supports @code{TARGET_ASM_NAMED_SECTION}.
 该标记为真，如果target支持@code{TARGET_ASM_NAMED_SECTION}。
 @end deftypefn
 
 @anchor{TARGET_HAVE_SWITCHABLE_BSS_SECTIONS}
 @deftypefn {Target Hook} bool TARGET_HAVE_SWITCHABLE_BSS_SECTIONS
+@en This flag is true if we can create zeroed data by switching to a BSS
+@en section and then using @code{ASM_OUTPUT_SKIP} to allocate the space.
+@en This is true on most ELF targets.
 该标记为真，如果我们能够通过切换到BSS section来创建初始化为0的数据，
 并且使用@code{ASM_OUTPUT_SKIP}来分配空间。这在大多数ELF target上为真。
 @end deftypefn
 
 @deftypefn {Target Hook} {unsigned int} TARGET_SECTION_TYPE_FLAGS (tree @var{decl}, const char *@var{name}, int @var{reloc})
+@en Choose a set of section attributes for use by @code{TARGET_ASM_NAMED_SECTION}
+@en based on a variable or function decl, a section name, and whether or not the
+@en declaration's initializer may contain runtime relocations.  @var{decl} may be
+@en null, in which case read-write data should be assumed.
 根据变量或函数decl，section名name，和声明的初始化是否可以包含运行时重定位，
 来选择供@code{TARGET_ASM_NAMED_SECTION}使用的section属性集。
 @var{decl}可以为null，这种情况下，将假设为可读写数据。
 
+@en The default version of this function handles choosing code vs data,
+@en read-only vs read-write data, and @code{flag_pic}.  You should only
+@en need to override this if your target has special flags that might be
+@en set via @code{__attribute__}.
 该函数的缺省版本用来处理选择代码和数据，只读数据和可读写数据，
 以及@code{flag_pic}。
 你应该只有在你的target具有通过@code{__attribute__}设置的特定标记时，
@@ -9888,9 +10007,41 @@ The default version of this hook use the target macro
 @end deftypefn
 
 @deftypefn {Target Hook} {int} TARGET_ASM_RECORD_GCC_SWITCHES (print_switch_type @var{type}, const char * @var{text})
+@en Provides the target with the ability to record the gcc command line
+@en switches that have been passed to the compiler, and options that are
+@en enabled.  The @var{type} argument specifies what is being recorded.
+@en It can take the following values:
 使得target能够记录传给编译器的gcc命令行开关，和打开的选项。
 参数@var{type}指定了要记录的内容。其可以为下面的值：
 
+@en @table @gcctabopt
+@en @item SWITCH_TYPE_PASSED
+@en @var{text} is a command line switch that has been set by the user.
+@en 
+@en @item SWITCH_TYPE_ENABLED
+@en @var{text} is an option which has been enabled.  This might be as a
+@en direct result of a command line switch, or because it is enabled by
+@en default or because it has been enabled as a side effect of a different
+@en command line switch.  For example, the @option{-O2} switch enables
+@en various different individual optimization passes.
+@en 
+@en @item SWITCH_TYPE_DESCRIPTIVE
+@en @var{text} is either NULL or some descriptive text which should be
+@en ignored.  If @var{text} is NULL then it is being used to warn the
+@en target hook that either recording is starting or ending.  The first
+@en time @var{type} is SWITCH_TYPE_DESCRIPTIVE and @var{text} is NULL, the
+@en warning is for start up and the second time the warning is for
+@en wind down.  This feature is to allow the target hook to make any
+@en necessary preparations before it starts to record switches and to
+@en perform any necessary tidying up after it has finished recording
+@en switches.
+@en 
+@en @item SWITCH_TYPE_LINE_START
+@en This option can be ignored by this target hook.
+@en 
+@en @item  SWITCH_TYPE_LINE_END
+@en This option can be ignored by this target hook.
+@en @end table
 @table @gcctabopt
 @item SWITCH_TYPE_PASSED
 @var{text}为用户设置的命令行开关。 
@@ -9914,19 +10065,33 @@ The default version of this hook use the target macro
 该选项可以被该target钩子忽略掉。 
 @end table
 
+@en The hook's return value must be zero.  Other return values may be
+@en supported in the future.
 钩子的返回值必须为0。其它返回值可能在将来被支持。
 
+@en By default this hook is set to NULL, but an example implementation is
+@en provided for ELF based targets.  Called @var{elf_record_gcc_switches},
+@en it records the switches as ASCII text inside a new, string mergeable
+@en section in the assembler output file.  The name of the new section is
+@en provided by the @code{TARGET_ASM_RECORD_GCC_SWITCHES_SECTION} target
+@en hook.
 缺省下，该钩子被设为NULL，但是对于基于ELF的target，有一个实现例子。
 叫做@var{elf_record_gcc_switches}，其记录了开关，
 并作为ASCII文本放在汇编输出文件中一个新的，可以字符串合并的section。
 新section的名字由target钩子@code{TARGET_ASM_RECORD_GCC_SWITCHES_SECTION}提供。
 @end deftypefn
 
-@deftypefn {Target Hook} {const char *} TARGET_ASM_RECORD_GCC_SWITCHES_SECTION
+@deftypefn {Target Hook} {const char *} 
+@en TARGET_ASM_RECORD_GCC_SWITCHES_SECTION
+@en This is the name of the section that will be created by the example
+@en ELF implementation of the @code{TARGET_ASM_RECORD_GCC_SWITCHES} target
+@en hook.
 这是@code{TARGET_ASM_RECORD_GCC_SWITCHES} target钩子的ELF实现的例子所创建的section名字。
 @end deftypefn
 
 @need 2000
+@en @node Data Output
+@en @subsection Output of Data
 @node 数据输出
 @subsection 数据的输出
 
@@ -9940,30 +10105,67 @@ The default version of this hook use the target macro
 @deftypevrx {Target Hook} {const char *} TARGET_ASM_UNALIGNED_SI_OP
 @deftypevrx {Target Hook} {const char *} TARGET_ASM_UNALIGNED_DI_OP
 @deftypevrx {Target Hook} {const char *} TARGET_ASM_UNALIGNED_TI_OP
+@en These hooks specify assembly directives for creating certain kinds
+@en of integer object.  The @code{TARGET_ASM_BYTE_OP} directive creates a
+@en byte-sized object, the @code{TARGET_ASM_ALIGNED_HI_OP} one creates an
+@en aligned two-byte object, and so on.  Any of the hooks may be
+@en @code{NULL}, indicating that no suitable directive is available.
 这些钩子指定了用于创建特定类型的整数对象的汇编伪指令。
 @code{TARGET_ASM_BYTE_OP}伪指令创建一个字节大小的对象，
 @code{TARGET_ASM_ALIGNED_HI_OP}创建一个两个字节对齐的对象，等等。
 这些钩子都可以为@code{NULL}，这表示没有合适的伪指令。
 
+@en The compiler will print these strings at the start of a new line,
+@en followed immediately by the object's initial value.  In most cases,
+@en the string should contain a tab, a pseudo-op, and then another tab.
 编译器将在一个新行中的起始处打印这些字符串，随后紧跟对象的初始化值。
 大多数情况下，字符串应该包含一个tab，一个伪操作符，然后是另一个tab。
 @end deftypevr
 
 @deftypefn {Target Hook} bool TARGET_ASM_INTEGER (rtx @var{x}, unsigned int @var{size}, int @var{aligned_p})
+@en The @code{assemble_integer} function uses this hook to output an
+@en integer object.  @var{x} is the object's value, @var{size} is its size
+@en in bytes and @var{aligned_p} indicates whether it is aligned.  The
+@en function should return @code{true} if it was able to output the
+@en object.  If it returns false, @code{assemble_integer} will try to
+@en split the object into smaller parts.
 函数@code{assemble_integer}使用该钩子来输出一个整数对象。@var{x}为对象的值，
 @var{size}为它的以字节为单位的大小，@var{aligned_p}指示其是否为对齐的。
 函数应该返回真，如果它能够输出对象。如果返回假，
 则@code{assemble_integer}将尝试把对象分割为更小的部分。
 
+@en The default implementation of this hook will use the
+@en @code{TARGET_ASM_BYTE_OP} family of strings, returning @code{false}
+@en when the relevant string is @code{NULL}.
 该钩子的缺省实现将使用@code{TARGET_ASM_BYTE_OP}字符串家族，
 当相应字符串为@code{NULL}时返回假。
 @end deftypefn
 
+@deftypefn {Target Hook} bool TARGET_ASM_OUTPUT_ADDR_CONST_EXTRA (FILE *@var{file}, rtx @var{x})
+A target hook to recognize @var{rtx} patterns that @code{output_addr_const}
+can't deal with, and output assembly code to @var{file} corresponding to
+the pattern @var{x}.  This may be used to allow machine-dependent
+@code{UNSPEC}s to appear within constants.
+
+If target hook fails to recognize a pattern, it must return @code{false},
+so that a standard error message is printed.  If it prints an error message
+itself, by calling, for example, @code{output_operand_lossage}, it may just
+return @code{true}.
+@end deftypefn
+
 @defmac OUTPUT_ADDR_CONST_EXTRA (@var{stream}, @var{x}, @var{fail})
+@en A C statement to recognize @var{rtx} patterns that
+@en @code{output_addr_const} can't deal with, and output assembly code to
+@en @var{stream} corresponding to the pattern @var{x}.  This may be used to
+@en allow machine-dependent @code{UNSPEC}s to appear within constants.
 一条C语句用来识别@code{output_addr_const}不能处理的@var{rtx}模式，
 并输出汇编代码到模式@var{x}对应的@var{stream}中。
 这可以用来允许在常量中出现机器相关的@code{UNSPEC}。
 
+@en If @code{OUTPUT_ADDR_CONST_EXTRA} fails to recognize a pattern, it must
+@en @code{goto fail}, so that a standard error message is printed.  If it
+@en prints an error message itself, by calling, for example,
+@en @code{output_operand_lossage}, it may just complete normally.
 如果@code{OUTPUT_ADDR_CONST_EXTRA}没有能够识别出指令模式，
 其必须@code{goto fail}， 这样就会打印出一个标准错误消息。
 如果其本身打印了一个错误消息，
@@ -9971,21 +10173,37 @@ The default version of this hook use the target macro
 @end defmac
 
 @defmac ASM_OUTPUT_ASCII (@var{stream}, @var{ptr}, @var{len})
+@en A C statement to output to the stdio stream @var{stream} an assembler
+@en instruction to assemble a string constant containing the @var{len}
+@en bytes at @var{ptr}.  @var{ptr} will be a C expression of type
+@en @code{char *} and @var{len} a C expression of type @code{int}.
 一条C语句，用来输出到stdio流@var{stream}中一条汇编指令，
 以组合一个在@var{ptr}处包含@var{len}个字节的字符串常量。
 @var{ptr}将为一个@code{char *}类型的C表达式，
 @var{len}为一个@code{int}型的C表达式。
 
+@en If the assembler has a @code{.ascii} pseudo-op as found in the
+@en Berkeley Unix assembler, do not define the macro
+@en @code{ASM_OUTPUT_ASCII}.
 如果汇编器具有一个@code{.ascii}伪指令，正如在Berkeley Unix汇编器上的，
 则不要定义宏@code{ASM_OUTPUT_ASCII}。
 @end defmac
 
 @defmac ASM_OUTPUT_FDESC (@var{stream}, @var{decl}, @var{n})
+@en A C statement to output word @var{n} of a function descriptor for
+@en @var{decl}.  This must be defined if @code{TARGET_VTABLE_USES_DESCRIPTORS}
+@en is defined, and is otherwise unused.
 一条C语句，用来输出@var{decl}的函数描述符的字@var{n}。
 这必须在定义@code{TARGET_VTABLE_USES_DESCRIPTORS}时被定义，否则将不起作用。
 @end defmac
 
 @defmac CONSTANT_POOL_BEFORE_FUNCTION
+@en You may define this macro as a C expression.  You should define the
+@en expression to have a nonzero value if GCC should output the constant
+@en pool for a function before the code for the function, or a zero value if
+@en GCC should output the constant pool after the function.  If you do
+@en not define this macro, the usual case, GCC will output the constant
+@en pool before the function.
 你可以定义该宏为一个C表达式。你应该定义表达式具有非零值，
 如果GCC应该在输出函数的代码前，输出常量池，或者定义为0，
 如果GCC应该在函数后输出常量池。如果你不定义该宏，则通常情况下，
@@ -9993,22 +10211,43 @@ GCC将在函数前输出常量池。
 @end defmac
 
 @defmac ASM_OUTPUT_POOL_PROLOGUE (@var{file}, @var{funname}, @var{fundecl}, @var{size})
+@en A C statement to output assembler commands to define the start of the
+@en constant pool for a function.  @var{funname} is a string giving
+@en the name of the function.  Should the return type of the function
+@en be required, it can be obtained via @var{fundecl}.  @var{size}
+@en is the size, in bytes, of the constant pool that will be written
+@en immediately after this call.
 一条C语句，用来输出汇编命令，以定义函数的常量池的起始。
 @var{funname}为一个字符串，给定了函数的名字。如果需要函数的返回类型，
 则可以通过@var{fundecl}来获得。
 @var{size}为在该调用之后要立即写入的常量池的大小，以字节为单位。
 
+@en If no constant-pool prefix is required, the usual case, this macro need
+@en not be defined.
 通常情况下，如果不需要常量池前缀，该宏不需要被定义。
 @end defmac
 
 @defmac ASM_OUTPUT_SPECIAL_POOL_ENTRY (@var{file}, @var{x}, @var{mode}, @var{align}, @var{labelno}, @var{jumpto})
+@en A C statement (with or without semicolon) to output a constant in the
+@en constant pool, if it needs special treatment.  (This macro need not do
+@en anything for RTL expressions that can be output normally.)
 一条C语句（带有或者不带有分号），用来输出一个常量在常量池中，
 如果其需要特殊的处理。（该宏对于可以正常输出的RTL表达式不需要做任何事情。）
 
+@en The argument @var{file} is the standard I/O stream to output the
+@en assembler code on.  @var{x} is the RTL expression for the constant to
+@en output, and @var{mode} is the machine mode (in case @var{x} is a
+@en @samp{const_int}).  @var{align} is the required alignment for the value
+@en @var{x}; you should output an assembler directive to force this much
+@en alignment.
 参数@var{file}为将汇编代码输出到的标准I/O流。@var{x}为要输出的常量的RTL表达式，
 @var{mode}为机器模式（用于@var{x}为@samp{const_int}时）。
 @var{align}为值@var{x}所需要的对齐；你应该输出一个汇编伪指令来执行该对齐。
 
+@en The argument @var{labelno} is a number to use in an internal label for
+@en the address of this pool entry.  The definition of this macro is
+@en responsible for outputting the label definition at the proper place.
+@en Here is how to do this:
 参数@var{labelno}为该池中实体的地址的内部标号的编号。
 该宏的定义负责在合适的地方输出标号的定义。这里有一个实现的例子：
 
@@ -10016,34 +10255,56 @@ GCC将在函数前输出常量池。
 @code{(*targetm.asm_out.internal_label)} (@var{file}, "LC", @var{labelno});
 @end smallexample
 
+@en When you output a pool entry specially, you should end with a
+@en @code{goto} to the label @var{jumpto}.  This will prevent the same pool
+@en entry from being output a second time in the usual manner.
 当你专门输出一个池中实体时，你应该结束于一个@code{goto}，
 以跳转到标号@var{jumpto}。这将阻止相同的池中实体通过通常的方式被再一次输出。
 
+@en You need not define this macro if it would do nothing.
 如果不做任何事情，则不要定义该宏。
 @end defmac
 
 @defmac ASM_OUTPUT_POOL_EPILOGUE (@var{file} @var{funname} @var{fundecl} @var{size})
+@en A C statement to output assembler commands to at the end of the constant
+@en pool for a function.  @var{funname} is a string giving the name of the
+@en function.  Should the return type of the function be required, you can
+@en obtain it via @var{fundecl}.  @var{size} is the size, in bytes, of the
+@en constant pool that GCC wrote immediately before this call.
 一条C语句，用来输出汇编命令到函数常量池的结尾。@var{funname}为一个字符串，
 给出了函数的名字。如果需要函数的返回类型，可以通过@var{fundecl}来获得。
 @var{size}为GCC在该调用之前立即写入的常量池的大小，以字节为单位。
 
+@en If no constant-pool epilogue is required, the usual case, you need not
+@en define this macro.
 通常情况下，如果不需要常量池结束语，则不需要定义该宏。
 @end defmac
 
 @defmac IS_ASM_LOGICAL_LINE_SEPARATOR (@var{C}, @var{STR})
+@en Define this macro as a C expression which is nonzero if @var{C} is
+@en used as a logical line separator by the assembler.  @var{STR} points
+@en to the position in the string where @var{C} was found; this can be used if
+@en a line separator uses multiple characters.
 定义该宏为一个C表达式，其为非零，如果@var{C}被汇编器用作逻辑行分隔符。
 @var{STR}指向在字符串中@var{C}被发现的位置；
 这可以用于行分隔符使用多个字符的时候。
 
+@en If you do not define this macro, the default is that only
+@en the character @samp{;} is treated as a logical line separator.
 如果你不定义该宏，则缺省的为只将字符@samp{;}作为逻辑行的分隔符。
 @end defmac
 
 @deftypevr {Target Hook} {const char *} TARGET_ASM_OPEN_PAREN
 @deftypevrx {Target Hook} {const char *} TARGET_ASM_CLOSE_PAREN
+@en These target hooks are C string constants, describing the syntax in the
+@en assembler for grouping arithmetic expressions.  If not overridden, they
+@en default to normal parentheses, which is correct for most assemblers.
 这些target钩子为C字符串常量，描述了算术表达式组合的汇编语法。
 如果没有被覆盖，它们缺省为通常的括号，这对大多数汇编器都是正确的。
 @end deftypevr
 
+@en These macros are provided by @file{real.h} for writing the definitions
+@en of @code{ASM_OUTPUT_DOUBLE} and the like:
 这些宏由@file{real.h}提供，用于写@code{ASM_OUTPUT_DOUBLE}等的定义：
 
 @defmac REAL_VALUE_TO_TARGET_SINGLE (@var{x}, @var{l})
@@ -10052,6 +10313,16 @@ GCC将在函数前输出常量池。
 @defmacx REAL_VALUE_TO_TARGET_DECIMAL32 (@var{x}, @var{l})
 @defmacx REAL_VALUE_TO_TARGET_DECIMAL64 (@var{x}, @var{l})
 @defmacx REAL_VALUE_TO_TARGET_DECIMAL128 (@var{x}, @var{l})
+@en These translate @var{x}, of type @code{REAL_VALUE_TYPE}, to the
+@en target's floating point representation, and store its bit pattern in
+@en the variable @var{l}.  For @code{REAL_VALUE_TO_TARGET_SINGLE} and
+@en @code{REAL_VALUE_TO_TARGET_DECIMAL32}, this variable should be a
+@en simple @code{long int}.  For the others, it should be an array of
+@en @code{long int}.  The number of elements in this array is determined
+@en by the size of the desired target floating point data type: 32 bits of
+@en it go in each @code{long int} array element.  Each array element holds
+@en 32 bits of the result, even if @code{long int} is wider than 32 bits
+@en on the host machine.
 这些将类型为@code{REAL_VALUE_TYPE}的@var{x}，转换为target的浮点表示，
 并将其存储在变量@var{l}中。
 对于@code{REAL_VALUE_TO_TARGET_SINGLE}和@code{REAL_VALUE_TO_TARGET_DECIMAL32}，
@@ -10061,33 +10332,67 @@ GCC将在函数前输出常量池。
 每个@code{long int}数组元素有32位。每个数组元素存放32位的结果，
 即使@code{long int}在host机器上比32位宽。
 
+@en The array element values are designed so that you can print them out
+@en using @code{fprintf} in the order they should appear in the target
+@en machine's memory.
 数组元素值被设计成，
 可以使用@code{fprintf}按照在target机器内存中的顺序来打印它们。
 @end defmac
 
+@en @node Uninitialized Data
+@en @subsection Output of Uninitialized Variables
 @node 未初始化的数据
 @subsection 未初始化变量的输出
 
+@en Each of the macros in this section is used to do the whole job of
+@en outputting a single uninitialized variable.
 这一节的每个宏都是用于输出单个未初始化变量的整个工作中。
 
 @defmac ASM_OUTPUT_COMMON (@var{stream}, @var{name}, @var{size}, @var{rounded})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} the assembler definition of a common-label named
+@en @var{name} whose size is @var{size} bytes.  The variable @var{rounded}
+@en is the size rounded up to whatever alignment the caller wants.  It is
+@en possible that @var{size} may be zero, for instance if a struct with no
+@en other member than a zero-length array is defined.  In this case, the
+@en backend must output a symbol definition that allocates at least one
+@en byte, both so that the address of the resulting object does not compare
+@en equal to any other, and because some object formats cannot even express
+@en the concept of a zero-sized common symbol, as that is how they represent
+@en an ordinary undefined external.
 一条C语句（没有分号），用来将大小为@var{size}，
 名字为@var{name}的通用标号的汇编定义，输出到stdio流@var{stream}中。
 变量@var{rounded}为调用者想要对齐而舍入的大小。
 
+@en Use the expression @code{assemble_name (@var{stream}, @var{name})} to
+@en output the name itself; before and after that, output the additional
+@en assembler syntax for defining the name, and a newline.
 使用表达式@code{assemble_name (@var{stream}, @var{name})}来输出name本身；
 在这之前和之后，输出额外的定义name的汇编语法，以及换行。
 
+@en This macro controls how the assembler definitions of uninitialized
+@en common global variables are output.
 该宏控制如何输出未初始化的通用全局变量的汇编定义。
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGNED_COMMON (@var{stream}, @var{name}, @var{size}, @var{alignment})
+@en Like @code{ASM_OUTPUT_COMMON} except takes the required alignment as a
+@en separate, explicit argument.  If you define this macro, it is used in
+@en place of @code{ASM_OUTPUT_COMMON}, and gives you more flexibility in
+@en handling the required alignment of the variable.  The alignment is specified
+@en as the number of bits.
 类似@code{ASM_OUTPUT_COMMON}，除了其接受一个alignment，作为独立，显式的参数。
 如果你定义了该宏，其被用于替换@code{ASM_OUTPUT_COMMON}，
 使得你在处理变量对齐方面变得更加灵活。aligment被指定为位的数目。
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGNED_DECL_COMMON (@var{stream}, @var{decl}, @var{name}, @var{size}, @var{alignment})
+@en Like @code{ASM_OUTPUT_ALIGNED_COMMON} except that @var{decl} of the
+@en variable to be output, if there is one, or @code{NULL_TREE} if there
+@en is no corresponding variable.  If you define this macro, GCC will use it
+@en in place of both @code{ASM_OUTPUT_COMMON} and
+@en @code{ASM_OUTPUT_ALIGNED_COMMON}.  Define this macro when you need to see
+@en the variable's decl in order to chose what to output.
 类似@code{ASM_OUTPUT_ALIGNED_COMMON}，除了要被输出的变量的@var{decl}，
 如果存在的话，或者为@code{NULL_TREE}如果没有相应的变量。如果你定义了该宏，
 GCC将替换@code{ASM_OUTPUT_COMMON}和@code{ASM_OUTPUT_ALIGNED_COMMON}。
@@ -10095,20 +10400,39 @@ GCC将替换@code{ASM_OUTPUT_COMMON}和@code{ASM_OUTPUT_ALIGNED_COMMON}。
 @end defmac
 
 @defmac ASM_OUTPUT_BSS (@var{stream}, @var{decl}, @var{name}, @var{size}, @var{rounded})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} the assembler definition of uninitialized global @var{decl} named
+@en @var{name} whose size is @var{size} bytes.  The variable @var{rounded}
+@en is the size rounded up to whatever alignment the caller wants.
 一条C语句（没有分号），用来将名字为@var{name}，
 大小为@var{size}个字节的未初始化的全局@var{decl}的汇编定义输出到stdio流
 @var{stream}中。变量@var{rounded}为调用者想要对齐而舍入的大小。
 
+@en Try to use function @code{asm_output_bss} defined in @file{varasm.c} when
+@en defining this macro.  If unable, use the expression
+@en @code{assemble_name (@var{stream}, @var{name})} to output the name itself;
+@en before and after that, output the additional assembler syntax for defining
+@en the name, and a newline.
 当定义该宏时，可以尝试使用@file{varasm.c}中定义的@code{asm_output_bss}。
 如果不行，
 使用表达式@code{assemble_name (@var{stream}, @var{name})}来输出name本身；
 在此之前和之后，输出额外的定义name的汇编语法，以及换行。
 
+@en There are two ways of handling global BSS@.  One is to define either
+@en this macro or its aligned counterpart, @code{ASM_OUTPUT_ALIGNED_BSS}.
+@en The other is to have @code{TARGET_ASM_SELECT_SECTION} return a
+@en switchable BSS section (@pxref{TARGET_HAVE_SWITCHABLE_BSS_SECTIONS}).
+@en You do not need to do both.
 有两种方式来处理全局BSS。一种是定义该宏或者它的对齐副本，
 @code{ASM_OUTPUT_ALIGNED_BSS}。
 另一种是让@code{TARGET_ASM_SELECT_SECTION}返回一个可切换的BSS section
 （参见 @ref{TARGET_HAVE_SWITCHABLE_BSS_SECTIONS}）。你不需要两者都做。
 
+@en Some languages do not have @code{common} data, and require a
+@en non-common form of global BSS in order to handle uninitialized globals
+@en efficiently.  C++ is one example of this.  However, if the target does
+@en not support global BSS, the front end may choose to make globals
+@en common in order to save space in the object file.
 一些语言不具有@code{common}数据，并且要求全局BSS为non-common的，
 以便高效的处理未初始化全局变量。C++就是这样的例子。然而，
 如果target不支持全局BSS，则前端可以选择生成全局common，
@@ -10116,47 +10440,83 @@ GCC将替换@code{ASM_OUTPUT_COMMON}和@code{ASM_OUTPUT_ALIGNED_COMMON}。
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGNED_BSS (@var{stream}, @var{decl}, @var{name}, @var{size}, @var{alignment})
+@en Like @code{ASM_OUTPUT_BSS} except takes the required alignment as a
+@en separate, explicit argument.  If you define this macro, it is used in
+@en place of @code{ASM_OUTPUT_BSS}, and gives you more flexibility in
+@en handling the required alignment of the variable.  The alignment is specified
+@en as the number of bits.
 类似@code{ASM_OUTPUT_BSS}，除了其接受需要的aligment作为单独，显式的参数。
 如果你定义了该宏，其被用于替换@code{ASM_OUTPUT_BSS}，
 这使得你在处理变量所需的对齐方面更加灵活。aligment被指定为位数。
 
+@en Try to use function @code{asm_output_aligned_bss} defined in file
+@en @file{varasm.c} when defining this macro.
 当定义该宏时，
 尝试使用在文件@file{varasm.c}中定义的函数@code{asm_output_aligned_bss}。
 @file{varasm.c} when defining this macro.
 @end defmac
 
 @defmac ASM_OUTPUT_LOCAL (@var{stream}, @var{name}, @var{size}, @var{rounded})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} the assembler definition of a local-common-label named
+@en @var{name} whose size is @var{size} bytes.  The variable @var{rounded}
+@en is the size rounded up to whatever alignment the caller wants.
 一条C语句（没有分号），用来将名字为@var{name}，
 大小为@var{size}个字节的local-common标号的汇编定义输出到stdio流@var{stream}中。
 变量@var{rounded}为调用者想要对齐而舍入的大小。
 
+@en Use the expression @code{assemble_name (@var{stream}, @var{name})} to
+@en output the name itself; before and after that, output the additional
+@en assembler syntax for defining the name, and a newline.
 使用表达式@code{assemble_name (@var{stream}, @var{name})}来输出name本身；
 在此之前和之后，输出额外的定义name的汇编语法，以及换行。
 
+@en This macro controls how the assembler definitions of uninitialized
+@en static variables are output.
 该宏控制如何输出未初始化的静态变量的汇编定义。
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGNED_LOCAL (@var{stream}, @var{name}, @var{size}, @var{alignment})
+@en Like @code{ASM_OUTPUT_LOCAL} except takes the required alignment as a
+@en separate, explicit argument.  If you define this macro, it is used in
+@en place of @code{ASM_OUTPUT_LOCAL}, and gives you more flexibility in
+@en handling the required alignment of the variable.  The alignment is specified
+@en as the number of bits.
 类似@code{ASM_OUTPUT_LOCAL}，除了其接受需要的aligment作为单独，显式的参数。
 如果你定义了该宏，其被用于替换@code{ASM_OUTPUT_LOCAL}，
 这使得你在处理变量所需的对齐方面更加灵活。aligment被指定为位数。
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGNED_DECL_LOCAL (@var{stream}, @var{decl}, @var{name}, @var{size}, @var{alignment})
+@en Like @code{ASM_OUTPUT_ALIGNED_DECL} except that @var{decl} of the
+@en variable to be output, if there is one, or @code{NULL_TREE} if there
+@en is no corresponding variable.  If you define this macro, GCC will use it
+@en in place of both @code{ASM_OUTPUT_DECL} and
+@en @code{ASM_OUTPUT_ALIGNED_DECL}.  Define this macro when you need to see
+@en the variable's decl in order to chose what to output.
 类似@code{ASM_OUTPUT_ALIGNED_DECL}，除了要被输出的变量的@var{decl}，
 如果存在的话，或者为@code{NULL_TREE}如果没有相应的变量。如果你定义了该宏，
 GCC将替换@code{ASM_OUTPUT_DECL}和@code{ASM_OUTPUT_ALIGNED_DECL}。
 当你需要看到变量的decl，以便选择如何输出时，可以定义该宏。
 @end defmac
 
+@en @node Label Output
+@en @subsection Output and Generation of Labels
 @node 标号输出
 @subsection 标号的生成和输出
 
 @c prevent bad page break with this line
+@en This is about outputting labels.
 这节是关于标号输出的。
 
 @findex assemble_name
 @defmac ASM_OUTPUT_LABEL (@var{stream}, @var{name})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} the assembler definition of a label named @var{name}.
+@en Use the expression @code{assemble_name (@var{stream}, @var{name})} to
+@en output the name itself; before and after that, output the additional
+@en assembler syntax for defining the name, and a newline.  A default
+@en definition of this macro is provided which is correct for most systems.
 一条C语句（没有分号），
 用来将名字为@var{name}的标号的汇编定义输出到stdio流@var{stream}中。
 使用表达式@code{assemble_name (@var{stream}, @var{name})}来输出name本身；
@@ -10164,18 +10524,44 @@ GCC将替换@code{ASM_OUTPUT_DECL}和@code{ASM_OUTPUT_ALIGNED_DECL}。
 该宏的缺省定义被提供，其对于多数系统都是正确的。
 @end defmac
 
+@defmac ASM_OUTPUT_FUNCTION_LABEL (@var{stream}, @var{name}, @var{decl})
+A C statement (sans semicolon) to output to the stdio stream
+@var{stream} the assembler definition of a label named @var{name} of
+a function.
+Use the expression @code{assemble_name (@var{stream}, @var{name})} to
+output the name itself; before and after that, output the additional
+assembler syntax for defining the name, and a newline.  A default
+definition of this macro is provided which is correct for most systems.
+
+If this macro is not defined, then the function name is defined in the
+usual manner as a label (by means of @code{ASM_OUTPUT_LABEL}).
+@end defmac
+
 @findex assemble_name_raw
 @defmac ASM_OUTPUT_INTERNAL_LABEL (@var{stream}, @var{name})
+@en Identical to @code{ASM_OUTPUT_LABEL}, except that @var{name} is known
+@en to refer to a compiler-generated label.  The default definition uses
+@en @code{assemble_name_raw}, which is like @code{assemble_name} except
+@en that it is more efficient.
 等同于@code{ASM_OUTPUT_LABEL}，除了@var{name}为已知的，引用了编译器生成的标号。
 缺省定义使用@code{assemble_name_raw}，其类似于@code{assemble_name}，
 只不过更加高效。
 @end defmac
 
 @defmac SIZE_ASM_OP
+@en A C string containing the appropriate assembler directive to specify the
+@en size of a symbol, without any arguments.  On systems that use ELF, the
+@en default (in @file{config/elfos.h}) is @samp{"\t.size\t"}; on other
+@en systems, the default is not to define this macro.
 一个C字符串，包含了适当的汇编伪指令，用于指定符号的大小，不需要任何参数。
 在使用ELF的系统上，缺省为（在@file{config/elfos.h}中）@samp{"\t.size\t"}；
 在其它系统上，缺省为不定义该宏。
 
+@en Define this macro only if it is correct to use the default definitions
+@en of @code{ASM_OUTPUT_SIZE_DIRECTIVE} and @code{ASM_OUTPUT_MEASURED_SIZE}
+@en for your system.  If you need your own custom definitions of those
+@en macros, or if you do not need explicit symbol sizes at all, do not
+@en define this macro.
 只有在你的系统上可以正确的使用@code{ASM_OUTPUT_SIZE_DIRECTIVE}和
 @code{ASM_OUTPUT_MEASURED_SIZE}的缺省定义时，才定义该宏。
 如果对于那些宏，你需要自己特定的定义，或者如果你根本不需要显式的符号大小，
@@ -10183,15 +10569,30 @@ GCC将替换@code{ASM_OUTPUT_DECL}和@code{ASM_OUTPUT_ALIGNED_DECL}。
 @end defmac
 
 @defmac ASM_OUTPUT_SIZE_DIRECTIVE (@var{stream}, @var{name}, @var{size})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} a directive telling the assembler that the size of the
+@en symbol @var{name} is @var{size}.  @var{size} is a @code{HOST_WIDE_INT}.
+@en If you define @code{SIZE_ASM_OP}, a default definition of this macro is
+@en provided.
 一条C语句（没有分号），用来将一条伪指令输出到stdio流@var{stream}中，
 以告诉汇编器符号@var{name}的大小为@var{size}。@var{size}为@code{HOST_WIDE_INT}。
 如果你定义了@code{SIZE_ASM_OP}，则该宏的缺省定义会被提供。
 @end defmac
 
 @defmac ASM_OUTPUT_MEASURED_SIZE (@var{stream}, @var{name})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} a directive telling the assembler to calculate the size of
+@en the symbol @var{name} by subtracting its address from the current
+@en address.
 一条C语句（没有分号），用来将一条伪指令输出到stdio流@var{stream}中，
 以告诉汇编器通过从当前地址减去符号@var{name}的地址，来计算符号的大小。
 
+@en If you define @code{SIZE_ASM_OP}, a default definition of this macro is
+@en provided.  The default assumes that the assembler recognizes a special
+@en @samp{.} symbol as referring to the current address, and can calculate
+@en the difference between this and another symbol.  If your assembler does
+@en not recognize @samp{.} or cannot do calculations with it, you will need
+@en to redefine @code{ASM_OUTPUT_MEASURED_SIZE} to use some other technique.
 如果你定义了@code{SIZE_ASM_OP}，则该宏的缺省定义会被提供。
 缺省定义假设汇编器可以识别特殊的@samp{.}符号，作为引用当前地址，
 并能够计算该处和其它符号的差。如果你的汇编器不识别@samp{.}，或者不能计算差，
@@ -10199,125 +10600,225 @@ GCC将替换@code{ASM_OUTPUT_DECL}和@code{ASM_OUTPUT_ALIGNED_DECL}。
 @end defmac
 
 @defmac TYPE_ASM_OP
+@en A C string containing the appropriate assembler directive to specify the
+@en type of a symbol, without any arguments.  On systems that use ELF, the
+@en default (in @file{config/elfos.h}) is @samp{"\t.type\t"}; on other
+@en systems, the default is not to define this macro.
 一个C字符串，包含了适当的汇编伪指令，用于指定符号的类型，不需要任何参数。
 在使用ELF的系统上，缺省为（在@file{config/elfos.h}中）@samp{"\t.type\t"}；
 在其它系统上，缺省为不定义该宏。
 
+@en Define this macro only if it is correct to use the default definition of
+@en @code{ASM_OUTPUT_TYPE_DIRECTIVE} for your system.  If you need your own
+@en custom definition of this macro, or if you do not need explicit symbol
+@en types at all, do not define this macro.
 只有在你的系统上可以正确的使用@code{ASM_OUTPUT_TYPE_DIRECTIVE}的缺省定义时，
 才定义该宏。如果对于该宏，你需要自己特定的定义，
 或者如果你根本不需要显式的符号类型，则不要定义该宏。
 @end defmac
 
 @defmac TYPE_OPERAND_FMT
+@en A C string which specifies (using @code{printf} syntax) the format of
+@en the second operand to @code{TYPE_ASM_OP}.  On systems that use ELF, the
+@en default (in @file{config/elfos.h}) is @samp{"@@%s"}; on other systems,
+@en the default is not to define this macro.
 一个C字符串，
 指定了@code{TYPE_ASM_OP}的第二个操作数的格式（使用@code{printf}语法）。
 在使用ELF的系统上，缺省为（在@file{config/elfos.h}中）@samp{"@@%s"}；
 在其它系统上，缺省为不定义该宏。
 
+@en Define this macro only if it is correct to use the default definition of
+@en @code{ASM_OUTPUT_TYPE_DIRECTIVE} for your system.  If you need your own
+@en custom definition of this macro, or if you do not need explicit symbol
+@en types at all, do not define this macro.
 只有在你的系统上可以正确的使用@code{ASM_OUTPUT_TYPE_DIRECTIVE}的缺省定义时，
 才定义该宏。如果对于该宏，你需要自己特定的定义，
 或者如果你根本不需要显式的符号类型，则不要定义该宏。
 @end defmac
 
 @defmac ASM_OUTPUT_TYPE_DIRECTIVE (@var{stream}, @var{type})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} a directive telling the assembler that the type of the
+@en symbol @var{name} is @var{type}.  @var{type} is a C string; currently,
+@en that string is always either @samp{"function"} or @samp{"object"}, but
+@en you should not count on this.
 一条C语句（没有分号），用以将一条伪指令输出到stdio流@var{stream}中，
 以告诉汇编器符号@var{name}的类型为@var{type}。@var{type}是一个C字符串；
 目前该字符串总是@samp{"function"}或者@samp{"object"}，但你不要依赖于此。
 
+@en If you define @code{TYPE_ASM_OP} and @code{TYPE_OPERAND_FMT}, a default
+@en definition of this macro is provided.
 如果你定义了@code{TYPE_ASM_OP}和@code{TYPE_OPERAND_FMT}，
 则该宏的缺省定义会被提供。
 @end defmac
 
 @defmac ASM_DECLARE_FUNCTION_NAME (@var{stream}, @var{name}, @var{decl})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} any text necessary for declaring the name @var{name} of a
+@en function which is being defined.  This macro is responsible for
+@en outputting the label definition (perhaps using
+@en @code{ASM_OUTPUT_FUNCTION_LABEL}).  The argument @var{decl} is the
+@en @code{FUNCTION_DECL} tree node representing the function.
 一条C语句（没有分号），用以将任何声明被定义的函数名字@var{name}所需要的文本，
 输出到stdio流@var{stream}中。
 该宏负责输出标号定义（或者使用@code{ASM_OUTPUT_LABEL}）。
 参数@var{decl}为表示函数的@code{FUNCTION_DECL}树结点。
 
+@en If this macro is not defined, then the function name is defined in the
+@en usual manner as a label (by means of @code{ASM_OUTPUT_FUNCTION_LABEL}).
 如果该宏没有被定义，
 则函数名被作为标号按照通常的方式来定义（使用@code{ASM_OUTPUT_LABEL}）。
 
+@en You may wish to use @code{ASM_OUTPUT_TYPE_DIRECTIVE} in the definition
+@en of this macro.
 你可能希望在定义该宏时使用@code{ASM_OUTPUT_TYPE_DIRECTIVE}。
 @end defmac
 
 @defmac ASM_DECLARE_FUNCTION_SIZE (@var{stream}, @var{name}, @var{decl})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} any text necessary for declaring the size of a function
+@en which is being defined.  The argument @var{name} is the name of the
+@en function.  The argument @var{decl} is the @code{FUNCTION_DECL} tree node
+@en representing the function.
 一条C语句（没有分号），用以将任何声明被定义的函数的大小所需要的文本，
 输出到stdio流@var{stream}中。参数@var{name}为函数的名字。
 参数@var{decl}为表示函数的@code{FUNCTION_DECL}树结点。
 
+@en If this macro is not defined, then the function size is not defined.
 如果该宏没有被定义，则函数大小没有被定义。
 
+@en You may wish to use @code{ASM_OUTPUT_MEASURED_SIZE} in the definition
+@en of this macro.
 你可能希望在定义该宏时使用@code{ASM_OUTPUT_MEASURED_SIZE}。
 @end defmac
 
 @defmac ASM_DECLARE_OBJECT_NAME (@var{stream}, @var{name}, @var{decl})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} any text necessary for declaring the name @var{name} of an
+@en initialized variable which is being defined.  This macro must output the
+@en label definition (perhaps using @code{ASM_OUTPUT_LABEL}).  The argument
+@en @var{decl} is the @code{VAR_DECL} tree node representing the variable.
 一条C语句（没有分号），
 用以将任何声明被定义的初始化变量名字@var{name}所需要的文本，
 输出到stdio流@var{stream}中。
 该宏必须输出标号定义（可能使用@code{ASM_OUTPUT_LABEL}）。
 参数@var{decl}为表示变量的@code{VAR_DECL}树结点。
 
+@en If this macro is not defined, then the variable name is defined in the
+@en usual manner as a label (by means of @code{ASM_OUTPUT_LABEL}).
 如果该宏没有被定义，
 则变量名被作为标号按照通常的方式来定义（使用@code{ASM_OUTPUT_LABEL}）。
 
+@en You may wish to use @code{ASM_OUTPUT_TYPE_DIRECTIVE} and/or
+@en @code{ASM_OUTPUT_SIZE_DIRECTIVE} in the definition of this macro.
 你可能希望在定义该宏时使用@code{ASM_OUTPUT_TYPE_DIRECTIVE}和/或@code{ASM_OUTPUT_SIZE_DIRECTIVE}。
 @end defmac
 
-@defmac ASM_DECLARE_CONSTANT_NAME (@var{stream}, @var{name}, @var{exp}, @var{size})
-一条C语句（没有分号），用以将任何声明被定义的常量名字@var{name}所需要的文本，
-输出到stdio流@var{stream}中。
-该宏负责输出标号定义（可能使用@code{ASM_OUTPUT_LABEL}）。
-参数@var{exp}为常量的值，@var{size}为常量的大小，以字节为单位。
-@var{name}为内部标号。
+@deftypefn {Target Hook} void TARGET_ASM_DECLARE_CONSTANT_NAME (FILE *@var{file}, const char *@var{name}, const_tree @var{expr}, HOST_WIDE_INT @var{size})
+A target hook to output to the stdio stream @var{file} any text necessary
+for declaring the name @var{name} of a constant which is being defined.  This
+target hook is responsible for outputting the label definition (perhaps using
+@code{assemble_label}).  The argument @var{exp} is the value of the constant,
+and @var{size} is the size of the constant in bytes.  The @var{name}
+will be an internal label.
 
-如果该宏没有被定义，
-则@var{name}被作为标号按照通常的方式来定义（使用@code{ASM_OUTPUT_LABEL}）。
+The default version of this target hook, define the @var{name} in the
+usual manner as a label (by means of @code{assemble_label}).
 
-你可能希望在定义该宏时使用@code{ASM_OUTPUT_TYPE_DIRECTIVE}。
+You may wish to use @code{ASM_OUTPUT_TYPE_DIRECTIVE} in this target hook.
+@end deftypefn
+
+@defmac ASM_DECLARE_REGISTER_GLOBAL (@var{stream}, @var{decl}, @var{regno}, @var{name})
+A C statement (sans semicolon) to output to the stdio stream
+@var{stream} any text necessary for claiming a register @var{regno}
+for a global variable @var{decl} with name @var{name}.
+
+If you don't define this macro, that is equivalent to defining it to do
+nothing.
 @end defmac
 
 @defmac ASM_DECLARE_REGISTER_GLOBAL (@var{stream}, @var{decl}, @var{regno}, @var{name})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} any text necessary for claiming a register @var{regno}
+@en for a global variable @var{decl} with name @var{name}.
 一条C语句（没有分号），用以将任何为具有名字@var{name}的全局变量声明一个寄存器@var{regno}所需要的文本，输出到stdio流@var{stream}中。
 
+@en If you don't define this macro, that is equivalent to defining it to do
+@en nothing.
 如果没有定义该宏，则相当于定义其什么都不做。
 @end defmac
 
 @defmac ASM_FINISH_DECLARE_OBJECT (@var{stream}, @var{decl}, @var{toplevel}, @var{atend})
+@en A C statement (sans semicolon) to finish up declaring a variable name
+@en once the compiler has processed its initializer fully and thus has had a
+@en chance to determine the size of an array when controlled by an
+@en initializer.  This is used on systems where it's necessary to declare
+@en something about the size of the object.
 一条C语句（没有分号），用于在编译器完全处理了初始化者之后，
 来完成声明一个变量名，这样当数组的大小由初始化者控制的时候，
 就有机会来确定数组的大小。这用于需要声明对象的大小的系统上。
 
+@en If you don't define this macro, that is equivalent to defining it to do
+@en nothing.
 如果没有定义该宏，则相当于定义其什么都不做。
 
+@en You may wish to use @code{ASM_OUTPUT_SIZE_DIRECTIVE} and/or
+@en @code{ASM_OUTPUT_MEASURED_SIZE} in the definition of this macro.
 你可能希望在定义该宏时使用@code{ASM_OUTPUT_SIZE_DIRECTIVE}和/或@code{ASM_OUTPUT_MEASURED_SIZE}。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_GLOBALIZE_LABEL (FILE *@var{stream}, const char *@var{name})
+@en This target hook is a function to output to the stdio stream
+@en @var{stream} some commands that will make the label @var{name} global;
+@en that is, available for reference from other files.
 该target钩子为一个函数，用于将一些命令输出到stdio流@var{stream}中，
 从而使得标号@var{name}为全局的；也就是，可以从其它文件中引用。
 
+@en The default implementation relies on a proper definition of
+@en @code{GLOBAL_ASM_OP}.
 缺省实现依赖于@code{GLOBAL_ASM_OP}的适当定义。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_GLOBALIZE_DECL_NAME (FILE *@var{stream}, tree @var{decl})
+@en This target hook is a function to output to the stdio stream
+@en @var{stream} some commands that will make the name associated with @var{decl}
+@en global; that is, available for reference from other files.
 该target钩子为一个函数，用于将一些命令输出到stdio流@var{stream}中，
 从而使得@var{decl}相关联的名字为全局的；也就是，可以从其它文件中引用。
 
+@en The default implementation uses the TARGET_ASM_GLOBALIZE_LABEL target hook.
 缺省实现使用TARGET_ASM_GLOBALIZE_LABEL target钩子。
 @end deftypefn
 
 @defmac ASM_WEAKEN_LABEL (@var{stream}, @var{name})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} some commands that will make the label @var{name} weak;
+@en that is, available for reference from other files but only used if
+@en no other definition is available.  Use the expression
+@en @code{assemble_name (@var{stream}, @var{name})} to output the name
+@en itself; before and after that, output the additional assembler syntax
+@en for making that name weak, and a newline.
 一条C语句（没有分号），用于将一些命令输出到stdio流@var{stream}中，
 从而使得标号@var{name}为弱的；也就是，可以从其它文件中引用，
 但只有在没有其它定义的时候。
 使用表达式@code{assemble_name (@var{stream}, @var{name})}来输出name本身；
 在此之前和之后，输出使得name为弱的额外的汇编语法，以及换行。
 
+@en If you don't define this macro or @code{ASM_WEAKEN_DECL}, GCC will not
+@en support weak symbols and you should not define the @code{SUPPORTS_WEAK}
+@en macro.
 如果没有定义该宏或者@code{ASM_WEAKEN_DECL}，
 GCC将不支持弱符号并且你不要定义宏@code{SUPPORTS_WEAK}。
 @end defmac
 
 @defmac ASM_WEAKEN_DECL (@var{stream}, @var{decl}, @var{name}, @var{value})
+@en Combines (and replaces) the function of @code{ASM_WEAKEN_LABEL} and
+@en @code{ASM_OUTPUT_WEAK_ALIAS}, allowing access to the associated function
+@en or variable decl.  If @var{value} is not @code{NULL}, this C statement
+@en should output to the stdio stream @var{stream} assembler code which
+@en defines (equates) the weak symbol @var{name} to have the value
+@en @var{value}.  If @var{value} is @code{NULL}, it should output commands
+@en to make @var{name} weak.
 组合（并替换）了函数@code{ASM_WEAKEN_LABEL}和@code{ASM_OUTPUT_WEAK_ALIAS}，
 允许访问相关的函数或变量decl。如果@var{value}不为@code{NULL}，
 该C语句应该将定义弱符号@var{name}具有值@var{value}的汇编代码，
@@ -10326,13 +10827,22 @@ GCC将不支持弱符号并且你不要定义宏@code{SUPPORTS_WEAK}。
 @end defmac
 
 @defmac ASM_OUTPUT_WEAKREF (@var{stream}, @var{decl}, @var{name}, @var{value})
+@en Outputs a directive that enables @var{name} to be used to refer to
+@en symbol @var{value} with weak-symbol semantics.  @code{decl} is the
+@en declaration of @code{name}.
 输出一条伪指令，使得@var{name}被用来使用弱符号语义引用符号@var{value}。
 @code{decl}为@code{name}的声明。
 @end defmac
 
 @defmac SUPPORTS_WEAK
+@en A C expression which evaluates to true if the target supports weak symbols.
 一个C表达式，如果target支持弱符号，则求值为真。
 
+@en If you don't define this macro, @file{defaults.h} provides a default
+@en definition.  If either @code{ASM_WEAKEN_LABEL} or @code{ASM_WEAKEN_DECL}
+@en is defined, the default definition is @samp{1}; otherwise, it is
+@en @samp{0}.  Define this macro if you want to control weak symbol support
+@en with a compiler flag such as @option{-melf}.
 如果你没有定义该宏，@file{defaults.h}会提供一个缺省的定义。
 如果@code{ASM_WEAKEN_LABEL}或者@code{ASM_WEAKEN_DECL}被定义，
 则缺省定义为@samp{1}；否则为@samp{0}。如果你想使用编译器标记，
@@ -10340,6 +10850,12 @@ GCC将不支持弱符号并且你不要定义宏@code{SUPPORTS_WEAK}。
 @end defmac
 
 @defmac MAKE_DECL_ONE_ONLY (@var{decl})
+@en A C statement (sans semicolon) to mark @var{decl} to be emitted as a
+@en public symbol such that extra copies in multiple translation units will
+@en be discarded by the linker.  Define this macro if your object file
+@en format provides support for this concept, such as the @samp{COMDAT}
+@en section flags in the Microsoft Windows PE/COFF format, and this support
+@en requires changes to @var{decl}, such as putting it in a separate section.
 一条C语句（没有分号），用来标记@var{decl}作为public符号生成，
 这样在多个转换单元中额外的副本将被连接器丢弃。
 如果你的目标文件格式提供了这样的支持，
@@ -10348,8 +10864,16 @@ GCC将不支持弱符号并且你不要定义宏@code{SUPPORTS_WEAK}。
 @end defmac
 
 @defmac SUPPORTS_ONE_ONLY
+@en A C expression which evaluates to true if the target supports one-only
+@en semantics.
 一个C表达式，如果target支持one-only语义，则其求值为真。
 
+@en If you don't define this macro, @file{varasm.c} provides a default
+@en definition.  If @code{MAKE_DECL_ONE_ONLY} is defined, the default
+@en definition is @samp{1}; otherwise, it is @samp{0}.  Define this macro if
+@en you want to control one-only symbol support with a compiler flag, or if
+@en setting the @code{DECL_ONE_ONLY} flag is enough to mark a declaration to
+@en be emitted as one-only.
 如果你没有定义该宏，@file{varasm.c}会提供一个缺省的定义。
 如果@code{MAKE_DECL_ONE_ONLY}被定义，则缺省定义为@samp{1}；否则为@samp{0}。
 如果你想使用编译器标记来控制one-only符号的支持，
@@ -10358,88 +10882,168 @@ GCC将不支持弱符号并且你不要定义宏@code{SUPPORTS_WEAK}。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_ASSEMBLE_VISIBILITY (tree @var{decl}, const char *@var{visibility})
+@en This target hook is a function to output to @var{asm_out_file} some
+@en commands that will make the symbol(s) associated with @var{decl} have
+@en hidden, protected or internal visibility as specified by @var{visibility}.
 该target钩子为一个函数，用来将一些命令输出到@var{asm_out_file}，
 其将使得与@var{decl}相关的符号具有通过@var{visibility}指定的隐藏，
 保护或者内部可见的属性。
 @end deftypefn
 
 @defmac TARGET_WEAK_NOT_IN_ARCHIVE_TOC
+@en A C expression that evaluates to true if the target's linker expects
+@en that weak symbols do not appear in a static archive's table of contents.
+@en The default is @code{0}.
 一个C表达式，如果target的连接器期望弱符号不出现在静态归档的目录表中，
 则其求值为真。缺省为@code{0}。
 
+@en Leaving weak symbols out of an archive's table of contents means that,
+@en if a symbol will only have a definition in one translation unit and
+@en will have undefined references from other translation units, that
+@en symbol should not be weak.  Defining this macro to be nonzero will
+@en thus have the effect that certain symbols that would normally be weak
+@en (explicit template instantiations, and vtables for polymorphic classes
+@en with noninline key methods) will instead be nonweak.
 将弱符号置于归档的目录表之外，意味着如果符号将只在一个转换单元中有一个定义，
 并且有从其它转换单元中进行未定义的引用，则该符号将不为弱的。定义该宏为非零，
 将使得这样通常为弱的符号成为非弱的。
 
+@en The C++ ABI requires this macro to be zero.  Define this macro for
+@en targets where full C++ ABI compliance is impossible and where linker
+@en restrictions require weak symbols to be left out of a static archive's
+@en table of contents.
 C++ ABI要求该宏为0。当target不能完全遵守C++ ABI，
 并且连接器要求弱符号在静态归档的目录表外面时，定义该宏。
 @end defmac
 
 @defmac ASM_OUTPUT_EXTERNAL (@var{stream}, @var{decl}, @var{name})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} any text necessary for declaring the name of an external
+@en symbol named @var{name} which is referenced in this compilation but
+@en not defined.  The value of @var{decl} is the tree node for the
+@en declaration.
 一条C语句（没有分号），
 用于将声明在该编译中被引用但没有被定义的外部符号名字@var{name}，
 所需要的任何文本输出到stdio流@var{stream}中。@var{decl}的值为声明的树结点。
 
+@en This macro need not be defined if it does not need to output anything.
+@en The GNU assembler and most Unix assemblers don't require anything.
 如果不需要输出任何东西，则不需要定义该宏。
 GNU汇编器和大多数Unix汇编器不需要做任何事情。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_EXTERNAL_LIBCALL (rtx @var{symref})
+@en This target hook is a function to output to @var{asm_out_file} an assembler
+@en pseudo-op to declare a library function name external.  The name of the
+@en library function is given by @var{symref}, which is a @code{symbol_ref}.
 该target钩子是一个函数，用于将一条汇编伪指令输出到@var{asm_out_file}中，
 用以声明一个库函数名字为外部的。库函数的名字由@var{symref}给出，
 @var{symref}为一个@code{symbol_ref}。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_MARK_DECL_PRESERVED (tree @var{decl})
+@en This target hook is a function to output to @var{asm_out_file} an assembler
+@en directive to annotate @var{symbol} as used.  The Darwin target uses the
+@en .no_dead_code_strip directive.
 该target钩子为一个函数，用于将一条汇编伪指令输出到@var{asm_out_file}中，
 用以注释使用的符号。Darwin target使用.no_dead_code_strip伪指令。
 @end deftypefn
 
 @defmac ASM_OUTPUT_LABELREF (@var{stream}, @var{name})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} a reference in assembler syntax to a label named
+@en @var{name}.  This should add @samp{_} to the front of the name, if that
+@en is customary on your operating system, as it is in most Berkeley Unix
+@en systems.  This macro is used in @code{assemble_name}.
 一条C语句（没有分号），
 用于将名为@var{name}的标号的引用的汇编语法输出到stdio流@var{stream}中。
 这应该在name前加上@samp{_}。该宏用于@code{assemble_name}。
 @end defmac
 
 @defmac ASM_OUTPUT_SYMBOL_REF (@var{stream}, @var{sym})
+@en A C statement (sans semicolon) to output a reference to
+@en @code{SYMBOL_REF} @var{sym}.  If not defined, @code{assemble_name}
+@en will be used to output the name of the symbol.  This macro may be used
+@en to modify the way a symbol is referenced depending on information
+@en encoded by @code{TARGET_ENCODE_SECTION_INFO}.
 一条C语句（没有分号），用于输出对@code{SYMBOL_REF} @var{sym}的引用。
 如果没有定义，@code{assemble_name}将被用来输出符号的名字。
 该宏可以用于修改符号被引用的方式，根据@code{TARGET_ENCODE_SECTION_INFO}的信息。
 @end defmac
 
 @defmac ASM_OUTPUT_LABEL_REF (@var{stream}, @var{buf})
+@en A C statement (sans semicolon) to output a reference to @var{buf}, the
+@en result of @code{ASM_GENERATE_INTERNAL_LABEL}.  If not defined,
+@en @code{assemble_name} will be used to output the name of the symbol.
+@en This macro is not used by @code{output_asm_label}, or the @code{%l}
+@en specifier that calls it; the intention is that this macro should be set
+@en when it is necessary to output a label differently when its address is
+@en being taken.
 一条C语句（没有分号），用于输出对@code{ASM_GENERATE_INTERNAL_LABEL}的结果，
 @var{buf}的引用。如果没有定义，@code{assemble_name}将被用来输出符号的名字。
 该宏不被调用它的@code{output_asm_label}或者@code{%l}指示符使用；
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_INTERNAL_LABEL (FILE *@var{stream}, const char *@var{prefix}, unsigned long @var{labelno})
+@en A function to output to the stdio stream @var{stream} a label whose
+@en name is made from the string @var{prefix} and the number @var{labelno}.
 一个函数，将标号输出到stdio流@var{stream}中，
 标号的名字由字符串@var{prefix}和编号@var{labelno}组成。
 
+@en It is absolutely essential that these labels be distinct from the labels
+@en used for user-level functions and variables.  Otherwise, certain programs
+@en will have name conflicts with internal labels.
 当然这些标号应该与用户级别函数和变量使用的标号不同。
 否则，程序将具有与内部标号的命名冲突。
 
+@en It is desirable to exclude internal labels from the symbol table of the
+@en object file.  Most assemblers have a naming convention for labels that
+@en should be excluded; on many systems, the letter @samp{L} at the
+@en beginning of a label has this effect.  You should find out what
+@en convention your system uses, and follow it.
 通常要求内部标号不包含在目标文件的符号表中。大多数汇编器具有命名约定，
 来处理这些标号。在许多系统上，位于标号的起始处的字母@samp{L}，具有这样的效果。
 你应该找到你的系统使用的约定，并遵守。
 
+@en The default version of this function utilizes @code{ASM_GENERATE_INTERNAL_LABEL}.
 该函数的缺省版本利用@code{ASM_GENERATE_INTERNAL_LABEL}了。
 @end deftypefn
 
 @defmac ASM_OUTPUT_DEBUG_LABEL (@var{stream}, @var{prefix}, @var{num})
+@en A C statement to output to the stdio stream @var{stream} a debug info
+@en label whose name is made from the string @var{prefix} and the number
+@en @var{num}.  This is useful for VLIW targets, where debug info labels
+@en may need to be treated differently than branch target labels.  On some
+@en systems, branch target labels must be at the beginning of instruction
+@en bundles, but debug info labels can occur in the middle of instruction
+@en bundles.
 一条C语句，用来将调试信息标号输出到stdio流@var{stream}中，
 标号的名字由字符串@var{prefix}和编号@var{num}组成。这对VLIW target很有用，
 因为调试信息标号可能需要与分支目标标号进行不同的处理。在一些系统上，
 分支目标标号必须在指令束的起始处，但是调试信息标号可以出现在指令束的中间。
 
+@en If this macro is not defined, then @code{(*targetm.asm_out.internal_label)} will be
+@en used.
 如果该宏没有被定义，则会使用@code{(*targetm.asm_out.internal_label)}。
 @end defmac
 
 @defmac ASM_GENERATE_INTERNAL_LABEL (@var{string}, @var{prefix}, @var{num})
+@en A C statement to store into the string @var{string} a label whose name
+@en is made from the string @var{prefix} and the number @var{num}.
 一条C语句，用于将标号存储到字符串@var{string}中，
 标号的名字由字符串@var{prefix}和编号@var{num}组成。
 
+This string, when output subsequently by @code{assemble_name}, should
+produce the output that @code{(*targetm.asm_out.internal_label)} would produce
+with the same @var{prefix} and @var{num}.
+
+@en If the string begins with @samp{*}, then @code{assemble_name} will
+@en output the rest of the string unchanged.  It is often convenient for
+@en @code{ASM_GENERATE_INTERNAL_LABEL} to use @samp{*} in this way.  If the
+@en string doesn't start with @samp{*}, then @code{ASM_OUTPUT_LABELREF} gets
+@en to output the string, and may change it.  (Of course,
+@en @code{ASM_OUTPUT_LABELREF} is also part of your machine description, so
+@en you should know what it does on your machine.)
 如果字符串起始于@samp{*}，
 则@code{assemble_name}将按照不改变剩余字符串的方式被输出。
 这对于@code{ASM_GENERATE_INTERNAL_LABEL}非常方便。
@@ -10449,41 +11053,74 @@ GNU汇编器和大多数Unix汇编器不需要做任何事情。
 @end defmac
 
 @defmac ASM_FORMAT_PRIVATE_NAME (@var{outvar}, @var{name}, @var{number})
+@en A C expression to assign to @var{outvar} (which is a variable of type
+@en @code{char *}) a newly allocated string made from the string
+@en @var{name} and the number @var{number}, with some suitable punctuation
+@en added.  Use @code{alloca} to get space for the string.
 一个C表达式，给@var{outvar}（类型为@code{char *}*的变量）
 赋值一个新分配的字符串，该字符串由字符串@var{name}和编号@var{number}组成，
 并增加适当的标点符号。使用@code{alloca}为字符串获得空间。
 
+@en The string will be used as an argument to @code{ASM_OUTPUT_LABELREF} to
+@en produce an assembler label for an internal static variable whose name is
+@en @var{name}.  Therefore, the string must be such as to result in valid
+@en assembler code.  The argument @var{number} is different each time this
+@en macro is executed; it prevents conflicts between similarly-named
+@en internal static variables in different scopes.
 字符串将被@code{ASM_OUTPUT_LABELREF}作为参数使用，
 来产生一个名字为@var{name}的内部静态变量的汇编标号。
 因此，字符串必须为有效的汇编代码。参数@var{number}在每次执行该宏时都不相同；
 其使得在不同作用域下的内部静态变量的名字不会有冲突。
 
+@en Ideally this string should not be a valid C identifier, to prevent any
+@en conflict with the user's own symbols.  Most assemblers allow periods
+@en or percent signs in assembler symbols; putting at least one of these
+@en between the name and the number will suffice.
 理想情况下，该字符串应该不是一个有效的C标识符，
 以阻止任何与用户自己的符号的冲突。大多数汇编器运行点或者百分号在汇编符号中；
 在名字和编号之间加入至少一个这样的字符便可以。
 
+@en If this macro is not defined, a default definition will be provided
+@en which is correct for most systems.
 如果该宏没有被定义，一个缺省的定义将被提供，其在大多数系统上都是正确的。
 @end defmac
 
 @defmac ASM_OUTPUT_DEF (@var{stream}, @var{name}, @var{value})
+@en A C statement to output to the stdio stream @var{stream} assembler code
+@en which defines (equates) the symbol @var{name} to have the value @var{value}.
 一条C语句，用于将定义符号@var{name}具有值@var{value}的汇编代码输出到stdio流@var{stream}中。
 
 @findex SET_ASM_OP
+@en If @code{SET_ASM_OP} is defined, a default definition is provided which is
+@en correct for most systems.
 如果定义了@code{SET_ASM_OP}，一个缺省的定义将被提供，
 其在大多数系统上都是正确的。
 @end defmac
 
 @defmac ASM_OUTPUT_DEF_FROM_DECLS (@var{stream}, @var{decl_of_name}, @var{decl_of_value})
+@en A C statement to output to the stdio stream @var{stream} assembler code
+@en which defines (equates) the symbol whose tree node is @var{decl_of_name}
+@en to have the value of the tree node @var{decl_of_value}.  This macro will
+@en be used in preference to @samp{ASM_OUTPUT_DEF} if it is defined and if
+@en the tree nodes are available.
 一条C语句，用于将定义树结点为@var{decl_of_name}的符号，
 具有树结点@var{decl_of_value}的值的汇编代码输出到stdio流@var{stream}中。
 该宏将优先于`ASM_OUTPUT_DEF'被使用，如果其被定义，并且如果树结点有效。
 
 @findex SET_ASM_OP
+@en If @code{SET_ASM_OP} is defined, a default definition is provided which is
+@en correct for most systems.
 如果定义了@code{SET_ASM_OP}，一个缺省的定义将被提供，
 其在大多数系统上都是正确的。
 @end defmac
 
 @defmac TARGET_DEFERRED_OUTPUT_DEFS (@var{decl_of_name}, @var{decl_of_value})
+@en A C statement that evaluates to true if the assembler code which defines
+@en (equates) the symbol whose tree node is @var{decl_of_name} to have the value
+@en of the tree node @var{decl_of_value} should be emitted near the end of the
+@en current compilation unit.  The default is to not defer output of defines.
+@en This macro affects defines output by @samp{ASM_OUTPUT_DEF} and
+@en @samp{ASM_OUTPUT_DEF_FROM_DECLS}.
 一条C语句，如果定义树结点为@var{decl_of_name}的符号具有树结点为
 @var{decl_of_value}的值的汇编代码，应该在当前编译单元结尾处被生成，
 则求值为真。缺省为不推迟定义的输出。
@@ -10491,45 +11128,80 @@ GNU汇编器和大多数Unix汇编器不需要做任何事情。
 @end defmac
 
 @defmac ASM_OUTPUT_WEAK_ALIAS (@var{stream}, @var{name}, @var{value})
+@en A C statement to output to the stdio stream @var{stream} assembler code
+@en which defines (equates) the weak symbol @var{name} to have the value
+@en @var{value}.  If @var{value} is @code{NULL}, it defines @var{name} as
+@en an undefined weak symbol.
 一条C语句，用来将定义弱符号@var{name}具有值@var{value}的汇编代码输出
 到stdio流@var{stream}中。如果@var{value}为@code{NULL}，
 其定义@var{name}为未定义的符号。
 
+@en Define this macro if the target only supports weak aliases; define
+@en @code{ASM_OUTPUT_DEF} instead if possible.
 如果target只支持弱别名时，定义该宏；否则尽量定义@code{ASM_OUTPUT_DEF}。
 @end defmac
 
 @defmac OBJC_GEN_METHOD_LABEL (@var{buf}, @var{is_inst}, @var{class_name}, @var{cat_name}, @var{sel_name})
+@en Define this macro to override the default assembler names used for
+@en Objective-C methods.
 定义该宏来覆盖缺省的用于Objective-C方法的汇编名。
 
+@en The default name is a unique method number followed by the name of the
+@en class (e.g.@: @samp{_1_Foo}).  For methods in categories, the name of
+@en the category is also included in the assembler name (e.g.@:
+@en @samp{_1_Foo_Bar}).
 缺省名为一个唯一的方法编号，跟随class的名字（例如@samp{_1_Foo}）。
 对于在category中的方法，category也包含在汇编名中（例如@samp{_1_Foo_Bar}）。
 
+@en These names are safe on most systems, but make debugging difficult since
+@en the method's selector is not present in the name.  Therefore, particular
+@en systems define other ways of computing names.
 这些名字在大多数系统上是安全的，但是使得调试变得困难，
 因为方法selector不在名字中。因此一些特定的系统定义了其它计算名字的方式。
 
+@en @var{buf} is an expression of type @code{char *} which gives you a
+@en buffer in which to store the name; its length is as long as
+@en @var{class_name}, @var{cat_name} and @var{sel_name} put together, plus
+@en 50 characters extra.
 @var{buf}为@code{char *}类型的表达式，给出一个缓存来存储名字；
 其长度等于@var{class_name}，@var{cat_name}和@var{sel_name}的和，
 再加上额外的50个字符。
 
+@en The argument @var{is_inst} specifies whether the method is an instance
+@en method or a class method; @var{class_name} is the name of the class;
+@en @var{cat_name} is the name of the category (or @code{NULL} if the method is not
+@en in a category); and @var{sel_name} is the name of the selector.
 参数@var{is_inst}指定了方法是一个实例方法，还是一个类方法；
 @var{class_name}为类的名字；@var{cat_name}为category的名字（或者为空，
 如果方法不在category中）；@var{sel_name}为selector的名字。
 
+@en On systems where the assembler can handle quoted names, you can use this
+@en macro to provide more human-readable names.
 在汇编器可以处理带引号的名字的系统上，你可以使用该宏来提供更加可读的名字。
 @end defmac
 
 @defmac ASM_DECLARE_CLASS_REFERENCE (@var{stream}, @var{name})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} commands to declare that the label @var{name} is an
+@en Objective-C class reference.  This is only needed for targets whose
+@en linkers have special support for NeXT-style runtimes.
 一条C语句（没有分号），用于将命令输出到stdio流@var{stream}中，
 来声明标号@var{name}为Objective-C class引用。
 这只在连接器具有对NeXT-style运行时的特殊支持的target上需要。
 @end defmac
 
 @defmac ASM_DECLARE_UNRESOLVED_REFERENCE (@var{stream}, @var{name})
+@en A C statement (sans semicolon) to output to the stdio stream
+@en @var{stream} commands to declare that the label @var{name} is an
+@en unresolved Objective-C class reference.  This is only needed for targets
+@en whose linkers have special support for NeXT-style runtimes.
 一条C语句（没有分号），用于将命令输出到stdio流@var{stream}中，
 来声明标号@var{name}为未解决的Objective-C class引用。
 这只在连接器具有对NeXT-style运行时的特殊支持的target上需要。
 @end defmac
 
+@en @node Initialization
+@en @subsection How Initialization Functions Are Handled
 @node 初始化
 @subsection 如何处理初始化函数
 @cindex initialization routines
@@ -10537,33 +11209,68 @@ GNU汇编器和大多数Unix汇编器不需要做任何事情。
 @cindex constructors, output of
 @cindex destructors, output of
 
+@en The compiled code for certain languages includes @dfn{constructors}
+@en (also called @dfn{initialization routines})---functions to initialize
+@en data in the program when the program is started.  These functions need
+@en to be called before the program is ``started''---that is to say, before
+@en @code{main} is called.
 一些语言被编译后的代码中会包含构造者（也称为初始化例程）---当程序启动时，
 用来初始化程序中的数据的函数。这些函数需要在程序开始前被调用---也就是说，
 在调用@code{main}之前。
 
+@en Compiling some languages generates @dfn{destructors} (also called
+@en @dfn{termination routines}) that should be called when the program
+@en terminates.
 编译一些语言还会生成析构者（也成为终止例程），将在程序终止时被调用。
 
+@en To make the initialization and termination functions work, the compiler
+@en must output something in the assembler code to cause those functions to
+@en be called at the appropriate time.  When you port the compiler to a new
+@en system, you need to specify how to do this.
 为了让初始化和终止函数工作，编译器必须在汇编代码中输出一些东西，
 使得那些函数在适当的时候被调用。当你将编译器移植到一个新的系统时，
 你需要指定如何做。
 
+@en There are two major ways that GCC currently supports the execution of
+@en initialization and termination functions.  Each way has two variants.
+@en Much of the structure is common to all four variations.
 GCC目前支持两种主要的方式，来执行初始化和终止函数。
 每种方式都有两个变体。大多数结构体对于这四个变体都是通用的。
 
 @findex __CTOR_LIST__
 @findex __DTOR_LIST__
+@en The linker must build two lists of these functions---a list of
+@en initialization functions, called @code{__CTOR_LIST__}, and a list of
+@en termination functions, called @code{__DTOR_LIST__}.
 连接器必须构建两个这些函数的链表---一个是初始化函数链表，
 叫做@code{__CTOR_LIST__}，一个是终止函数，叫做@code{__DTOR_LIST__}。
 
+@en Each list always begins with an ignored function pointer (which may hold
+@en 0, @minus{}1, or a count of the function pointers after it, depending on
+@en the environment).  This is followed by a series of zero or more function
+@en pointers to constructors (or destructors), followed by a function
+@en pointer containing zero.
 每个列表总是起始于一个被忽略的函数指针（其可能为0，-1，
 或者之后的函数指针的个数，这取决于具体环境）。
 随后是一系列指向构造者（或析构者）的零个或多个函数指针，
 然后是一个包含0的函数指针。
 
+@en Depending on the operating system and its executable file format, either
+@en @file{crtstuff.c} or @file{libgcc2.c} traverses these lists at startup
+@en time and exit time.  Constructors are called in reverse order of the
+@en list; destructors in forward order.
 取决于操作系统和它的可执行文件格式，或者@file{crtstuff.c}，
 或者@file{libgcc2.c}会在起始时间和退出时间遍历这些列表。
 构造者按照列表相反的顺序被调用；析构者按照向前的顺序。
 
+@en The best way to handle static constructors works only for object file
+@en formats which provide arbitrarily-named sections.  A section is set
+@en aside for a list of constructors, and another for a list of destructors.
+@en Traditionally these are called @samp{.ctors} and @samp{.dtors}.  Each
+@en object file that defines an initialization function also puts a word in
+@en the constructor section to point to that function.  The linker
+@en accumulates all these words into one contiguous @samp{.ctors} section.
+@en Termination functions are handled similarly.
 处理静态构造者的最好的方式，
 只有在目标文件格式提供任意命名section的时候才可以工作。
 这会在构造者列表旁边设置一个section，析构者列表旁边设置另一个，
@@ -10573,12 +11280,22 @@ GCC目前支持两种主要的方式，来执行初始化和终止函数。
 连接器将所有这些字累积放入到一个邻近的@samp{.ctors} section中。
 终止函数按照类似的方式处理。
 
+@en This method will be chosen as the default by @file{target-def.h} if
+@en @code{TARGET_ASM_NAMED_SECTION} is defined.  A target that does not
+@en support arbitrary sections, but does support special designated
+@en constructor and destructor sections may define @code{CTORS_SECTION_ASM_OP}
+@en and @code{DTORS_SECTION_ASM_OP} to achieve the same effect.
 如果定义了TARGET_ASM_NAMED_SECTION，
 则该方法将被@file{target-def.h}作为缺省方式选择。
 不支持任意section，但是支持特定的构造者和析构者section的target，
 可以定义@code{CTORS_SECTION_ASM_OP}和@code{DTORS_SECTION_ASM_OP}
 来达到相同的效果。
 
+@en When arbitrary sections are available, there are two variants, depending
+@en upon how the code in @file{crtstuff.c} is called.  On systems that
+@en support a @dfn{.init} section which is executed at program startup,
+@en parts of @file{crtstuff.c} are compiled into that section.  The
+@en program is linked by the @command{gcc} driver like this:
 当支持任意section时，有两个变体，
 取决于如何调用@file{crtstuff.c}中的代码。
 在支持@dfn{.init} section（其在程序起始时被执行）的系统上，
@@ -10589,23 +11306,56 @@ GCC目前支持两种主要的方式，来执行初始化和终止函数。
 ld -o @var{output_file} crti.o crtbegin.o @dots{} -lgcc crtend.o crtn.o
 @end smallexample
 
+@en The prologue of a function (@code{__init}) appears in the @code{.init}
+@en section of @file{crti.o}; the epilogue appears in @file{crtn.o}.  Likewise
+@en for the function @code{__fini} in the @dfn{.fini} section.  Normally these
+@en files are provided by the operating system or by the GNU C library, but
+@en are provided by GCC for a few targets.
 函数（@code{__init}）的序言出现在@file{crti.o}的@code{.init} section中；
 尾声出现在@file{crtn.o}中。同样的，函数@code{__fini}在@dfn{.fini} section中。
 通常这些文件由操作系统或者GNU C库提供，但GCC也为一些target提供。
 
+@en The objects @file{crtbegin.o} and @file{crtend.o} are (for most targets)
+@en compiled from @file{crtstuff.c}.  They contain, among other things, code
+@en fragments within the @code{.init} and @code{.fini} sections that branch
+@en to routines in the @code{.text} section.  The linker will pull all parts
+@en of a section together, which results in a complete @code{__init} function
+@en that invokes the routines we need at startup.
 目标文件@file{crtbegin.o}和@file{crtend.o}是从@file{crtstuff.c}
 中编译出来的（对于大多target）。它们包含了，在@code{.init}和@code{.fini} 
 section中的代码片断，用于跳转到@code{.text} section中的例程中。
 连接器会把section的所有部分放在一起，形成完整的@code{__init}函数，
 其可以在起始处调用我们需要的例程。
 
+@en To use this variant, you must define the @code{INIT_SECTION_ASM_OP}
+macro properly.
 要使用这个变体，你必须适当的定义@code{INIT_SECTION_ASM_OP}宏。
 
+@en If no init section is available, when GCC compiles any function called
+@en @code{main} (or more accurately, any function designated as a program
+@en entry point by the language front end calling @code{expand_main_function}),
+@en it inserts a procedure call to @code{__main} as the first executable code
+@en after the function prologue.  The @code{__main} function is defined
+@en in @file{libgcc2.c} and runs the global constructors.
 如果init section不可用，GCC在编译任何叫做@code{main}（或者更加确切的说，
 任何被语言前端@code{expand_main_function}指定为程序入口点的函数）的函数时，
 其会插入一个调用@code{__main}的程序，以作为在函数序言之后首先执行的代码。
 @code{__main}函数在@file{libgcc2.c}中定义，并运行全局的构造者。
 
+@en In file formats that don't support arbitrary sections, there are again
+@en two variants.  In the simplest variant, the GNU linker (GNU @code{ld})
+@en and an `a.out' format must be used.  In this case,
+@en @code{TARGET_ASM_CONSTRUCTOR} is defined to produce a @code{.stabs}
+@en entry of type @samp{N_SETT}, referencing the name @code{__CTOR_LIST__},
+@en and with the address of the void function containing the initialization
+@en code as its value.  The GNU linker recognizes this as a request to add
+@en the value to a @dfn{set}; the values are accumulated, and are eventually
+@en placed in the executable as a vector in the format described above, with
+@en a leading (ignored) count and a trailing zero element.
+@en @code{TARGET_ASM_DESTRUCTOR} is handled similarly.  Since no init
+@en section is available, the absence of @code{INIT_SECTION_ASM_OP} causes
+@en the compilation of @code{main} to call @code{__main} as above, starting
+@en the initialization process.
 对于文件格式不支持任意section的，也有两个变体。对于最简单的变体，
 必须使用GNU连接器（GNU @code{ld}）和'a.out'格式。在这种情况下，
 @code{TARGET_ASM_CONSTRUCTOR}被定义，
@@ -10619,6 +11369,17 @@ GNU连接器将其识别为一个要设定的值；该值会被累积，
 由于init section不可用，所以使得编译@code{main}来调用@code{__main}，
 以开始初始化。
 
+@en The last variant uses neither arbitrary sections nor the GNU linker.
+@en This is preferable when you want to do dynamic linking and when using
+@en file formats which the GNU linker does not support, such as `ECOFF'@.  In
+@en this case, @code{TARGET_HAVE_CTORS_DTORS} is false, initialization and
+@en termination functions are recognized simply by their names.  This requires
+@en an extra program in the linkage step, called @command{collect2}.  This program
+@en pretends to be the linker, for use with GCC; it does its job by running
+@en the ordinary linker, but also arranges to include the vectors of
+@en initialization and termination functions.  These functions are called
+@en via @code{__main} as described above.  In order to use this method,
+@en @code{use_collect2} must be defined in the target in @file{config.gcc}.
 最后一个变体既不使用任意section，也不使用GNU连接器。这适合于，
 你想进行动态连接并使用GNU连接器不支持的文件格式的时候，例如 'ECOFF'。
 在这种情况下，@code{TARGET_HAVE_CTORS_DTORS}为假，
