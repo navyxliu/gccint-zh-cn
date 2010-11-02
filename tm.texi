@@ -11394,12 +11394,22 @@ The following section describes the specific macros that control and
 customize the handling of initialization and termination functions.
 @end ifinfo
 
+@en @node Macros for Initialization
+@en @subsection Macros Controlling Initialization Routines
 @node 用于初始化的宏
 @subsection 控制初始化例程的宏
 
+@en Here are the macros that control how the compiler handles initialization
+@en and termination functions:
 这里是控制编译器如何处理初始化和终止函数的宏：
 
 @defmac INIT_SECTION_ASM_OP
+@en If defined, a C string constant, including spacing, for the assembler
+@en operation to identify the following data as initialization code.  If not
+@en defined, GCC will assume such a section does not exist.  When you are
+@en using special sections for initialization and termination functions, this
+@en macro also controls how @file{crtstuff.c} and @file{libgcc2.c} arrange to
+@en run the initialization functions.
 如果定义，为一个C字符串常量，包括空格，
 用于将随后的数据作为初始化代码的汇编操作。如果没有定义，
 GCC将假设这样的section不存在。当你使用用于初始化和终止函数的特定的section时，
@@ -11407,59 +11417,101 @@ GCC将假设这样的section不存在。当你使用用于初始化和终止函�
 @end defmac
 
 @defmac HAS_INIT_SECTION
+@en If defined, @code{main} will not call @code{__main} as described above.
+@en This macro should be defined for systems that control start-up code
+@en on a symbol-by-symbol basis, such as OSF/1, and should not
+@en be defined explicitly for systems that support @code{INIT_SECTION_ASM_OP}.
 如果定义，@code{main}将不会调用@code{__main}。对于控制起始代码，
 像OSF/1这样的系统，应该定义该宏，
 对于支持@code{INIT_SECTION_ASM_OP}的系统不应该显式的定义。
 @end defmac
 
 @defmac LD_INIT_SWITCH
+@en If defined, a C string constant for a switch that tells the linker that
+@en the following symbol is an initialization routine.
 如果定义，为一个C字符串，作为一个开关，告诉连接器后面的符号为一个初始化例程。
 @end defmac
 
 @defmac LD_FINI_SWITCH
+@en If defined, a C string constant for a switch that tells the linker that
+@en the following symbol is a finalization routine.
 如果定义，为一个C字符串常量，作为一个开关，告诉连接器后面的符号为一个结束例程。
 @end defmac
 
 @defmac COLLECT_SHARED_INIT_FUNC (@var{stream}, @var{func})
+@en If defined, a C statement that will write a function that can be
+@en automatically called when a shared library is loaded.  The function
+@en should call @var{func}, which takes no arguments.  If not defined, and
+@en the object format requires an explicit initialization function, then a
+@en function called @code{_GLOBAL__DI} will be generated.
 如果定义，为一条C语句，其将写一个在加载共享库时可以被自动调用的函数。
 函数应该调用@var{func}，其不接受任何参数。如果没有定义，
 并且目标格式要求显示的初始化函数，则将会生成一个叫做@code{_GLOBAL__DI}的函数。
 
+@en This function and the following one are used by collect2 when linking a
+@en shared library that needs constructors or destructors, or has DWARF2
+@en exception tables embedded in the code.
 该函数和下面的一个，被collect2使用，用于连接一个需要构造者或者析构者，
 或者代码中具有DWARF2异常表嵌入的共享库的时候。
 @end defmac
 
 @defmac COLLECT_SHARED_FINI_FUNC (@var{stream}, @var{func})
+@en If defined, a C statement that will write a function that can be
+@en automatically called when a shared library is unloaded.  The function
+@en should call @var{func}, which takes no arguments.  If not defined, and
+@en the object format requires an explicit finalization function, then a
+@en function called @code{_GLOBAL__DD} will be generated.
 如果定义，为一条C语句，其将写一个在卸载共享库时可以被自动调用的函数。
 函数应该调用@var{func}，其不接受任何参数。如果没有定义，
 并且目标格式要求显示的初始化函数，则将会生成一个叫做@code{_GLOBAL__DD}的函数。
 @end defmac
 
 @defmac INVOKE__main
+@en If defined, @code{main} will call @code{__main} despite the presence of
+@en @code{INIT_SECTION_ASM_OP}.  This macro should be defined for systems
+@en where the init section is not actually run automatically, but is still
+@en useful for collecting the lists of constructors and destructors.
 如果定义，@code{main}将调用@code{__main}，
 而不管@code{INIT_SECTION_ASM_OP}的存在。对于init section不被自动运行，
 但是仍可以用于搜集构建者和析构者列表的系统，该宏应该被定义。
 @end defmac
 
 @defmac SUPPORTS_INIT_PRIORITY
+@en If nonzero, the C++ @code{init_priority} attribute is supported and the
+@en compiler should emit instructions to control the order of initialization
+@en of objects.  If zero, the compiler will issue an error message upon
+@en encountering an @code{init_priority} attribute.
 如果非零，则支持C++ @code{init_priority}属性，
 并且编译器应该生成指令来控制对象初始化的顺序。
 如果为0，编译器遇到@code{init_priority}属性时，将产生一条错误信息。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_HAVE_CTORS_DTORS
+@en This value is true if the target supports some ``native'' method of
+@en collecting constructors and destructors to be run at startup and exit.
+@en It is false if we must use @command{collect2}.
 该值为真，如果target支持一些搜集构造者和析构者在起始和退出时运行的本地方法。
 如果我们必须使用@command{collect2}，则为假。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_CONSTRUCTOR (rtx @var{symbol}, int @var{priority})
+@en If defined, a function that outputs assembler code to arrange to call
+@en the function referenced by @var{symbol} at initialization time.
 如果定义，为一个函数，输出汇编代码来调用在初始化时@var{symbol}引用的函数。
 
+@en Assume that @var{symbol} is a @code{SYMBOL_REF} for a function taking
+@en no arguments and with no return value.  If the target supports initialization
+@en priorities, @var{priority} is a value between 0 and @code{MAX_INIT_PRIORITY};
+@en otherwise it must be @code{DEFAULT_INIT_PRIORITY}.
 假定@var{symbol}为一个没有参数并没有返回值的函数的@code{SYMBOL_REF}。
 如果target支持初始化优先级，
 @var{priority}为一个0到@code{MAX_INIT_PRIORITY}之间的值；
 否则，其必须为@code{DEFAULT_INIT_PRIORITY}。
 
+@en If this macro is not defined by the target, a suitable default will
+@en be chosen if (1) the target supports arbitrary section names, (2) the
+@en target defines @code{CTORS_SECTION_ASM_OP}, or (3) @code{USE_COLLECT2}
+@en is not defined.
 如果该宏没有被taret定义，则一个适当的缺省将被选择，
 如果（1）target支持任意section名，
 （2）target定义了@code{CTORS_SECTION_ASM_OP}，
@@ -11467,39 +11519,68 @@ GCC将假设这样的section不存在。当你使用用于初始化和终止函�
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_DESTRUCTOR (rtx @var{symbol}, int @var{priority})
+@en This is like @code{TARGET_ASM_CONSTRUCTOR} but used for termination
+@en functions rather than initialization functions.
 类似于@code{TARGET_ASM_CONSTRUCTOR}，不过用于终止函数，而不是初始化函数。
 @end deftypefn
 
+@en If @code{TARGET_HAVE_CTORS_DTORS} is true, the initialization routine
+@en generated for the generated object file will have static linkage.
 如果@code{TARGET_HAVE_CTORS_DTORS}为真，
 对于生成的目标文件的初始化例程将具有静态连接。
 
+@en If your system uses @command{collect2} as the means of processing
+@en constructors, then that program normally uses @command{nm} to scan
+@en an object file for constructor functions to be called.
 如果你的系统使用@command{collec2}作为处理构造者的方法，
 则那个程序通常使用@command{nm}来扫描目标文件，寻找被调用的构造者。
 
+@en On certain kinds of systems, you can define this macro to make
+@en @command{collect2} work faster (and, in some cases, make it work at all):
 在一些特定的系统上，你可以定义该宏，使得@command{collect2}工作的更快。
 
 @defmac OBJECT_FORMAT_COFF
+@en Define this macro if the system uses COFF (Common Object File Format)
+@en object files, so that @command{collect2} can assume this format and scan
+@en object files directly for dynamic constructor/destructor functions.
 定义该宏，如果系统使用COFF（Common Object File Format）目标文件，
 这样@command{collect2}能够假设为该格式，并扫描直接目标文件的构造/析构函数。
 
+@en This macro is effective only in a native compiler; @command{collect2} as
+@en part of a cross compiler always uses @command{nm} for the target machine.
 该宏只有在本地编译器上才有效率；
 对于交叉编译器，@command{collect2}总是使用@command{nm}。
 @end defmac
 
 @defmac REAL_NM_FILE_NAME
+@en Define this macro as a C string constant containing the file name to use
+@en to execute @command{nm}.  The default is to search the path normally for
+@en @command{nm}.
 定义该宏为一个C字符串常量，包含用来执行@command{nm}的文件名。
 缺省为搜索通常的路径。
 
+@en If your system supports shared libraries and has a program to list the
+@en dynamic dependencies of a given library or executable, you can define
+@en these macros to enable support for running initialization and
+@en termination functions in shared libraries:
 如果你的系统支持共享库，并具有一个程序能够列出给定库或可执行程序的动态依赖，
 你可以定义这些宏使得能够运行共享库中的初始化和终止函数。
 @end defmac
 
 @defmac LDD_SUFFIX
+@en Define this macro to a C string constant containing the name of the program
+@en which lists dynamic dependencies, like @command{"ldd"} under SunOS 4.
 定义该宏为一个C字符串常量，包含程序的名字，其可以列出动态依赖，
 像SunOS 4中的@command{"ldd"}。
 @end defmac
 
 @defmac PARSE_LDD_OUTPUT (@var{ptr})
+@en Define this macro to be C code that extracts filenames from the output
+@en of the program denoted by @code{LDD_SUFFIX}.  @var{ptr} is a variable
+@en of type @code{char *} that points to the beginning of a line of output
+@en from @code{LDD_SUFFIX}.  If the line lists a dynamic dependency, the
+@en code must advance @var{ptr} to the beginning of the filename on that
+@en line.  Otherwise, it must set @var{ptr} to @code{NULL}.
 定义该宏为C代码，从@code{LDD_SUFFIX}指定的程序的输出中抽取文件名。
 @var{ptr}为@code{char *}类型的变量，指向@code{LDD_SUFFIX}的输出中的一行。
 如果行中列出的是动态依赖，则代码必须将@var{ptr}前进到那一行的文件名起始处。
@@ -11507,67 +11588,140 @@ GCC将假设这样的section不存在。当你使用用于初始化和终止函�
 @end defmac
 
 @defmac SHLIB_SUFFIX
+@en Define this macro to a C string constant containing the default shared
+@en library extension of the target (e.g., @samp{".so"}).  @command{collect2}
+@en strips version information after this suffix when generating global
+@en constructor and destructor names.  This define is only needed on targets
+@en that use @command{collect2} to process constructors and destructors.
 定义该宏为一个C字符串常量，包含了target缺省的共享库扩展名（例如@samp{".so"}）。
 当生成全局构造者和析构者名字时，@command{collect2}从该后缀的后面剥去版本信息。
 该定义只在使用@command{collect2}来处理构造者和析构者的target上需要。
 @end defmac
 
+@en @node Instruction Output
+@en @subsection Output of Assembler Instructions
 @node 指令输出
 @subsection 汇编指令的输出
 
 @c prevent bad page break with this line
+@en This describes assembler instruction output.
 这章描述了汇编指令的输出。
 
 @defmac REGISTER_NAMES
+@en A C initializer containing the assembler's names for the machine
+@en registers, each one as a C string constant.  This is what translates
+@en register numbers in the compiler into assembler language.
 一段C初始化程序，包含了机器寄存器的汇编名字，每个名字使用C字符串常量表示。
 这用来将编译器中的寄存器编号转换成汇编语言。
 @end defmac
 
 @defmac ADDITIONAL_REGISTER_NAMES
+@en If defined, a C initializer for an array of structures containing a name
+@en and a register number.  This macro defines additional names for hard
+@en registers, thus allowing the @code{asm} option in declarations to refer
+@en to registers using alternate names.
 如果定义，则为结构体数组的初始化程序，结构体包含了名字和寄存器编号。
 该宏定义了硬件寄存器的附加名字，这样就可以允许在声明中的@code{asm}选项，
 来使用附加名引用寄存器。
 @end defmac
 
 @defmac ASM_OUTPUT_OPCODE (@var{stream}, @var{ptr})
+@en Define this macro if you are using an unusual assembler that
+@en requires different names for the machine instructions.
 定义该宏，如果你在使用一个不常见的汇编器，其需要不一样的机器指令名字。
 
+@en The definition is a C statement or statements which output an
+@en assembler instruction opcode to the stdio stream @var{stream}.  The
+@en macro-operand @var{ptr} is a variable of type @code{char *} which
+@en points to the opcode name in its ``internal'' form---the form that is
+@en written in the machine description.  The definition should output the
+@en opcode name to @var{stream}, performing any translation you desire, and
+@en increment the variable @var{ptr} to point at the end of the opcode
+@en so that it will not be output twice.
 定义为C语句，输出一个汇编指令代码到标准输入输出流@var{stream}中。
 宏操作数@var{ptr}为类型是@code{char *}的变量，其指向内部形式中的指令码名字，
 内部形式使用机器描述来表示。该定义应该输出操作码名字到@var{stream}中，
 执行你想要的任何转换，并且将变量@var{ptr}增加到指向opcode的尾部，
 这样其才不会被输出两次。
 
+@en In fact, your macro definition may process less than the entire opcode
+@en name, or more than the opcode name; but if you want to process text
+@en that includes @samp{%}-sequences to substitute operands, you must take
+@en care of the substitution yourself.  Just be sure to increment
+@en @var{ptr} over whatever text should not be output normally.
 实际上，相对于整个指令码的名字，你的宏定义可以处理或多或少的部分；
 但是如果你想处理包含@samp{%}序列的文本，则必须小心你所做的替换。
 要保证增加@var{ptr}，使得不会输出不应该被输出的文本。
 
 @findex recog_data.operand
+@en If you need to look at the operand values, they can be found as the
+@en elements of @code{recog_data.operand}.
 如果需要查看操作数的值，它们可以作为@code{recog_data.operand}的元素被找到。
 
+@en If the macro definition does nothing, the instruction is output
+@en in the usual way.
 如果宏定义不做任何事情，则指令使用通常的方式来输出。
 @end defmac
 
 @defmac FINAL_PRESCAN_INSN (@var{insn}, @var{opvec}, @var{noperands})
+@en If defined, a C statement to be executed just prior to the output of
+@en assembler code for @var{insn}, to modify the extracted operands so
+@en they will be output differently.
 如果定义，则为一条C语句，其就在为@var{insn}输出汇编代码之前将被执行，
 用来修改被抽取的操作数，从而可以被不同方式的输出。
 
+@en Here the argument @var{opvec} is the vector containing the operands
+@en extracted from @var{insn}, and @var{noperands} is the number of
+@en elements of the vector which contain meaningful data for this insn.
+@en The contents of this vector are what will be used to convert the insn
+@en template into assembler code, so you can change the assembler output
+@en by changing the contents of the vector.
 这里的参数@var{opvec}为一个向量，包含了从@var{insn}中抽取的操作数，
 @var{noperands}为向量的元素个数。该向量的内容用于将insn模板转换成汇编代码，
 所以你可以通过修改向量的内容来改变汇编输出。
 
+@en This macro is useful when various assembler syntaxes share a single
+@en file of instruction patterns; by defining this macro differently, you
+@en can cause a large class of instructions to be output differently (such
+@en as with rearranged operands).  Naturally, variations in assembler
+@en syntax affecting individual insn patterns ought to be handled by
+@en writing conditional output routines in those patterns.
 该宏当有多个汇编语法共用一个指令模式文件时很有用；通过定义该宏，
 你可以使大量类别的指令按照不同的方式输出（例如重组操作）。
 自然的，影响单个insn模式的汇编语法，
 应该通过在那些指令模式中写条件输出程序来处理。
 
+@en If this macro is not defined, it is equivalent to a null statement.
 如果没有定义该宏，则其相当于一条空语句。
 @end defmac
 
+@deftypefn {Target Hook} void TARGET_ASM_FINAL_POSTSCAN_INSN (FILE *@var{file}, rtx @var{insn}, rtx *@var{opvec}, int @var{noperands})
+If defined, this target hook is a function which is executed just after the
+output of assembler code for @var{insn}, to change the mode of the assembler
+if necessary.
+
+Here the argument @var{opvec} is the vector containing the operands
+extracted from @var{insn}, and @var{noperands} is the number of
+elements of the vector which contain meaningful data for this insn.
+The contents of this vector are what was used to convert the insn
+template into assembler code, so you can change the assembler mode
+by checking the contents of the vector.
+@end deftypefn
+
 @defmac PRINT_OPERAND (@var{stream}, @var{x}, @var{code})
+@en A C compound statement to output to stdio stream @var{stream} the
+@en assembler syntax for an instruction operand @var{x}.  @var{x} is an
+@en RTL expression.
 C复合语句，用来将指令操作数@var{x}的汇编语法输出到标准输入输出流@var{stream}中。
 @var{x}为RTL表达式。
 
+@var{code} is a value that can be used to specify one of several ways
+@en of printing the operand.  It is used when identical operands must be
+@en printed differently depending on the context.  @var{code} comes from
+@en the @samp{%} specification that was used to request printing of the
+@en operand.  If the specification was just @samp{%@var{digit}} then
+@en @var{code} is 0; if the specification was @samp{%@var{ltr}
+@en @var{digit}} then @var{code} is the ASCII code for @var{ltr}.
 @var{code}值可以用来指定打印操作数的方式。
 用于当操作数必须根据上下文进行不同的打印的时候。
 @var{code}来自用于打印操作数的@samp{%}指定语句。
@@ -11575,16 +11729,29 @@ C复合语句，用来将指令操作数@var{x}的汇编语法输出到标准输
 如果指定语句为@samp{%@var{ltr}@var{digit}}，则@var{code}为@var{ltr}的ASCII码。
 
 @findex reg_names
+@en If @var{x} is a register, this macro should print the register's name.
+@en The names can be found in an array @code{reg_names} whose type is
+@en @code{char *[]}.  @code{reg_names} is initialized from
+@en @code{REGISTER_NAMES}.
 如果@var{x}为寄存器，则该宏应该打印寄存器的名字。
 名字可以在数组@code{reg_names}中找到，数组的类型为@code{char *[]}。
 @code{reg_names}通过@code{REGISTER_NAMES}来初始化。
 
+@en When the machine description has a specification @samp{%@var{punct}}
+@en (a @samp{%} followed by a punctuation character), this macro is called
+@en with a null pointer for @var{x} and the punctuation character for
+@en @var{code}.
 当机器描述具有一个@samp{%@var{punct}}指定语句时
 （@samp{%}后面跟随一个标点符号字符），则该宏被调用时，@var{x}为空指针，
 @var{code}为标点符号字符。
 @end defmac
 
 @defmac PRINT_OPERAND_PUNCT_VALID_P (@var{code})
+@en A C expression which evaluates to true if @var{code} is a valid
+@en punctuation character for use in the @code{PRINT_OPERAND} macro.  If
+@en @code{PRINT_OPERAND_PUNCT_VALID_P} is not defined, it means that no
+@en punctuation characters (except for the standard one, @samp{%}) are used
+@en in this way.
 一个C表达式，
 当@var{code}为在@code{PRINT_OPERAND}宏中使用的有效的标点符号字符时，
 其计算为真。如果没有定义@code{PRINT_OPERAND_PUNCT_VALID_P}，
@@ -11592,10 +11759,18 @@ C复合语句，用来将指令操作数@var{x}的汇编语法输出到标准输
 @end defmac
 
 @defmac PRINT_OPERAND_ADDRESS (@var{stream}, @var{x})
+@en A C compound statement to output to stdio stream @var{stream} the
+@en assembler syntax for an instruction operand that is a memory reference
+@en whose address is @var{x}.  @var{x} is an RTL expression.
 C复合语句，用来将指令操作数为内存引用，其地址为@var{x}的汇编语法，
 输出到标准输入输出流@var{stream}中。@var{x}为一个RTL表达式。
 
 @cindex @code{TARGET_ENCODE_SECTION_INFO} usage
+@en On some machines, the syntax for a symbolic address depends on the
+@en section that the address refers to.  On these machines, define the hook
+@en @code{TARGET_ENCODE_SECTION_INFO} to store the information into the
+@en @code{symbol_ref}, and then check for it here.  @xref{Assembler
+@en Format}.
 在一些机器上，符号地址的语法取决于地址所引用的section。在这些机器上，
 定义钩子@code{TARGET_ENCODE_SECTION_INFO}来将信息存储到@code{symbol_ref}，
 并在这里进行检查。参见 @ref{汇编格式}。
@@ -11603,15 +11778,29 @@ C复合语句，用来将指令操作数为内存引用，其地址为@var{x}的
 
 @findex dbr_sequence_length
 @defmac DBR_OUTPUT_SEQEND (@var{file})
+@en A C statement, to be executed after all slot-filler instructions have
+@en been output.  If necessary, call @code{dbr_sequence_length} to
+@en determine the number of slots filled in a sequence (zero if not
+@en currently outputting a sequence), to decide how many no-ops to output,
+@en or whatever.
 C语句，在所有的栈槽填充指令被输出之后执行。如果需要的话，
 调用@code{dbr_sequence_length}来判定在序列中被填充的栈槽数目
 （如果当前不是输出一个序列，则为0），用来决定输出多少个no-ops，或其它。
 
+@en Don't define this macro if it has nothing to do, but it is helpful in
+@en reading assembly output if the extent of the delay sequence is made
+@en explicit (e.g.@: with white space).
 如果不做任何事情，就不要定义该宏，但是如果将延迟序列显示化，
 则会有助于阅读汇编输出（例如，使用空格）。
 @end defmac
 
 @findex final_sequence
+@en Note that output routines for instructions with delay slots must be
+@en prepared to deal with not being output as part of a sequence
+@en (i.e.@: when the scheduling pass is not run, or when no slot fillers could be
+@en found.)  The variable @code{final_sequence} is null when not
+@en processing a sequence, otherwise it contains the @code{sequence} rtx
+@en being output.
 注意，用于带有延迟槽的指令的输出程序，
 必须准备好处理没有被作为序列输出的情况（即，当没有运行调度过程，
 或者没有找到栈槽填充者）。当没有处理序列时，变量@code{final_sequence}为空，
@@ -11622,6 +11811,11 @@ C语句，在所有的栈槽填充指令被输出之后执行。如果需要的�
 @defmacx LOCAL_LABEL_PREFIX
 @defmacx USER_LABEL_PREFIX
 @defmacx IMMEDIATE_PREFIX
+@en If defined, C string expressions to be used for the @samp{%R}, @samp{%L},
+@en @samp{%U}, and @samp{%I} options of @code{asm_fprintf} (see
+@en @file{final.c}).  These are useful when a single @file{md} file must
+@en support multiple assembler formats.  In that case, the various @file{tm.h}
+@en files can define these macros differently.
 如果定义，则为C字符串表达式，用于@code{asm_fprintf}（参见 @file{final.c}）
 的选项@samp{%R}, @samp{%L}, @samp{%U}和 @samp{%I}。
 这在单个@file{md}文件必须支持多个汇编格式时很有用。这种情况下，
@@ -11629,6 +11823,16 @@ C语句，在所有的栈槽填充指令被输出之后执行。如果需要的�
 @end defmac
 
 @defmac ASM_FPRINTF_EXTENSIONS (@var{file}, @var{argptr}, @var{format})
+@en If defined this macro should expand to a series of @code{case}
+@en statements which will be parsed inside the @code{switch} statement of
+@en the @code{asm_fprintf} function.  This allows targets to define extra
+@en printf formats which may useful when generating their assembler
+@en statements.  Note that uppercase letters are reserved for future
+@en generic extensions to asm_fprintf, and so are not available to target
+@en specific code.  The output file is given by the parameter @var{file}.
+@en The varargs input pointer is @var{argptr} and the rest of the format
+@en string, starting the character after the one that is being switched
+@en upon, is pointed to by @var{format}.
 如果定义，该宏应该被扩展为一系列@code{case}语句，
 其将在@code{asm_fprintf}函数中的@code{switch}语句里被解析。
 这将应允许target来定义额外的printf格式，其在生成它们的汇编语句时很有帮助。
@@ -11638,23 +11842,44 @@ varargs输出指针为@var{argptr}，格式字符串的其余部分，由@var{fo
 @end defmac
 
 @defmac ASSEMBLER_DIALECT
+@en If your target supports multiple dialects of assembler language (such as
+@en different opcodes), define this macro as a C expression that gives the
+@en numeric index of the assembler language dialect to use, with zero as the
+@en first variant.
 如果你的target支持多个汇编语言方言（例如不同的操作码），
 可以定义该宏作为C表达式，给出汇编语言方言的索引，0作为第一个。
 
+@en If this macro is defined, you may use constructs of the form
 如果该宏被定义，你可以在指令模式的输出模版中（参见输出模版）或者asm_fprintf的第一个参数中使用如下的结构形式
 
 @smallexample
 @samp{@{option0|option1|option2@dots{}@}}
 @end smallexample
 @noindent
+@en in the output templates of patterns (@pxref{Output Template}) or in the
+@en first argument of @code{asm_fprintf}.  This construct outputs
+@en @samp{option0}, @samp{option1}, @samp{option2}, etc., if the value of
+@en @code{ASSEMBLER_DIALECT} is zero, one, two, etc.  Any special characters
+@en within these strings retain their usual meaning.  If there are fewer
+@en alternatives within the braces than the value of
+@en @code{ASSEMBLER_DIALECT}, the construct outputs nothing.
 该结构输出@samp{option0}, @samp{option1}, @samp{option2}等等，
 如果@code{ASSEMBLER_DIALECT}的值为0，1，2，等等。
 这些字符串中的任何特殊字符将保留它们通常的含义。
 如果括号中的可选项多于@code{ASSEMBLER_DIALECT}的值，则什么也不输出。
 
+@en If you do not define this macro, the characters @samp{@{}, @samp{|} and
+@en @samp{@}} do not have any special meaning when used in templates or
+@en operands to @code{asm_fprintf}.
 如果没有定义该宏，字符@samp{@{}, @samp{|}和@samp{@}}在模版中或
 @code{asm_fprintf}的操作数中不具有任何特殊含义。
 
+@en Define the macros @code{REGISTER_PREFIX}, @code{LOCAL_LABEL_PREFIX},
+@en @code{USER_LABEL_PREFIX} and @code{IMMEDIATE_PREFIX} if you can express
+@en the variations in assembler language syntax with that mechanism.  Define
+@en @code{ASSEMBLER_DIALECT} and use the @samp{@{option0|option1@}} syntax
+@en if the syntax variant are larger and involve such things as different
+@en opcodes or operand order.
 如果你能够通过定义宏@code{REGISTER_PREFIX}, @code{LOCAL_LABEL_PREFIX}, 
 @code{USER_LABEL_PREFIX}和@code{IMMEDIATE_PREFIX}来表达出汇编语言语法的
 不同之处，则定义这些宏。如果语法差异比较大，涉及到操作码不同或操作数顺序，
@@ -11662,23 +11887,40 @@ varargs输出指针为@var{argptr}，格式字符串的其余部分，由@var{fo
 @end defmac
 
 @defmac ASM_OUTPUT_REG_PUSH (@var{stream}, @var{regno})
+@en A C expression to output to @var{stream} some assembler code
+@en which will push hard register number @var{regno} onto the stack.
+@en The code need not be optimal, since this macro is used only when
+@en profiling.
 C表达式，向@var{stream}中输出汇编代码，用于将硬件寄存器编号@var{regno}压入栈中。
 代码不需要为最优的，因为该宏只在profiling的时候使用。
 @end defmac
 
 @defmac ASM_OUTPUT_REG_POP (@var{stream}, @var{regno})
+@en A C expression to output to @var{stream} some assembler code
+@en which will pop hard register number @var{regno} off of the stack.
+@en The code need not be optimal, since this macro is used only when
+@en profiling.
 C表达式，向@var{stream}中输出汇编代码，用于将硬件寄存器编号@var{regno}弹出栈中。
 代码不需要为最优的，因为该宏只在profiling的时候使用。
 @end defmac
 
+@en @node Dispatch Tables
+@en @subsection Output of Dispatch Tables
 @node 派遣表
 @subsection 派遣表的输出
 
 @c prevent bad page break with this line
+@en This concerns dispatch tables.
 这些是关于派遣表的。
 
 @cindex dispatch table
 @defmac ASM_OUTPUT_ADDR_DIFF_ELT (@var{stream}, @var{body}, @var{value}, @var{rel})
+@en A C statement to output to the stdio stream @var{stream} an assembler
+@en pseudo-instruction to generate a difference between two labels.
+@en @var{value} and @var{rel} are the numbers of two internal labels.  The
+@en definitions of these labels are output using
+@en @code{(*targetm.asm_out.internal_label)}, and they must be printed in the same
+@en way here.  For example,
 一条C语句，用来将汇编伪指令输出到stdio流@var{stream}中，
 以生成两个标号间的距离。@var{value}和@var{rel}为两个内部标号的编号。
 这些标号的定义通过使用@code{(*targetm.asm_out.internal_label)}来输出，
@@ -11689,14 +11931,26 @@ fprintf (@var{stream}, "\t.word L%d-L%d\n",
          @var{value}, @var{rel})
 @end smallexample
 
+@en You must provide this macro on machines where the addresses in a
+@en dispatch table are relative to the table's own address.  If defined, GCC
+@en will also use this macro on all machines when producing PIC@.
+@en @var{body} is the body of the @code{ADDR_DIFF_VEC}; it is provided so that the
+@en mode and flags can be read.
 在一些机器上，派遣表中的地址是相对于表自己的地址，对此你必须提供该宏。
 如果定义，GCC还将在生成PIC的所有机器上使用该宏。
 @var{body}为@code{ADDR_DIFF_VEC}的主体；提供它使得可以读取模式和标记。
 @end defmac
 
 @defmac ASM_OUTPUT_ADDR_VEC_ELT (@var{stream}, @var{value})
+@en This macro should be provided on machines where the addresses
+@en in a dispatch table are absolute.
 在一些机器上，派遣表中的地址为绝对地址，对此应该提供该宏。
 
+@en The definition should be a C statement to output to the stdio stream
+@en @var{stream} an assembler pseudo-instruction to generate a reference to
+@en a label.  @var{value} is the number of an internal label whose
+@en definition is output using @code{(*targetm.asm_out.internal_label)}.
+@en For example,
 定义应该为一条C语句，用来将汇编伪指令输出到stdio流@var{stream}中，
 以生成对一个标号的引用。@var{value}为内部标号的编号，
 其定义应该使用@code{(*targetm.asm_out.internal_label)}输出。例如，
@@ -11707,116 +11961,205 @@ fprintf (@var{stream}, "\t.word L%d\n", @var{value})
 @end defmac
 
 @defmac ASM_OUTPUT_CASE_LABEL (@var{stream}, @var{prefix}, @var{num}, @var{table})
+@en Define this if the label before a jump-table needs to be output
+@en specially.  The first three arguments are the same as for
+@en @code{(*targetm.asm_out.internal_label)}; the fourth argument is the
+@en jump-table which follows (a @code{jump_insn} containing an
+@en @code{addr_vec} or @code{addr_diff_vec}).
 定义该宏，如果在跳转表之前的标号需要被特殊输出。
 前三个参数跟@code{(*targetm.asm_out.internal_label)}相同；
 第四个参数为随后的跳转表（一个包含@code{addr_vec}或@code{addr_diff_vec}
 的@code{jump_insn}）。
 
+@en This feature is used on system V to output a @code{swbeg} statement
+@en for the table.
 该特点用于system V，来为table输出一条@code{swbeg}语句。
 
+@en If this macro is not defined, these labels are output with
+@en @code{(*targetm.asm_out.internal_label)}.
 如果没有定义该宏，这些标号使用@code{(*targetm.asm_out.internal_label)}输出。
 @end defmac
 
 @defmac ASM_OUTPUT_CASE_END (@var{stream}, @var{num}, @var{table})
+@en Define this if something special must be output at the end of a
+@en jump-table.  The definition should be a C statement to be executed
+@en after the assembler code for the table is written.  It should write
+@en the appropriate code to stdio stream @var{stream}.  The argument
+@en @var{table} is the jump-table insn, and @var{num} is the label-number
+@en of the preceding label.
 定义该宏，如果在跳转表的结尾必须输出一些特殊的东西。定义应该为一条C语句，
 在写完table的汇编代码后被执行。其应该将适当的代码写入到stdio流@var{stream}中。
 参数@var{table}为jump-table insn，@var{num}为前面的标号的编号。
 
+@en If this macro is not defined, nothing special is output at the end of
+@en the jump-table.
 如果没有定义该宏，在跳转表的结尾不输出任何特殊的东西。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_ASM_EMIT_UNWIND_LABEL (@var{stream}, @var{decl}, @var{for_eh}, @var{empty})
+@en This target hook emits a label at the beginning of each FDE@.  It
+@en should be defined on targets where FDEs need special labels, and it
+@en should write the appropriate label, for the FDE associated with the
+@en function declaration @var{decl}, to the stdio stream @var{stream}.
+@en The third argument, @var{for_eh}, is a boolean: true if this is for an
+@en exception table.  The fourth argument, @var{empty}, is a boolean:
+@en true if this is a placeholder label for an omitted FDE@.
 该target钩子在每个FDE的起始处生成一个标号。在一些target上，FDE需要特殊的标号，
 对此应该定义该宏。其应该为函数声明@var{decl}相关联的FDE写入适当的标号到stdio流
 @var{stream}中。第三个参数，@var{for_eh}，为一个布尔值；当是异常表时为真。
 第四个参数@var{empty}，为一个布尔值；当是一个省略掉的FDE的占位符标号时为真。
 
+@en The default is that FDEs are not given nonlocal labels.
 缺省为FDE不给出非局部标号。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_ASM_EMIT_EXCEPT_TABLE_LABEL (@var{stream})
+@en This target hook emits a label at the beginning of the exception table.
+@en It should be defined on targets where it is desirable for the table
+@en to be broken up according to function.
 该target钩子在异常表的起始处生成一个标号。在一些target上，
 异常表需要根据函数被分割开，对此应该定义该宏。
 
+The default is that no label is emitted.
 缺省为不生成标号。
 @end deftypefn
 
+@deftypefn {Target Hook} void TARGET_ASM_EMIT_EXCEPT_PERSONALITY (rtx @var{personality})
+If the target implements @code{TARGET_ASM_UNWIND_EMIT}, this hook may be used to emit a directive to install a personality hook into the unwind info.  This hook should not be used if dwarf2 unwind info is used.
+@end deftypefn
+
 @deftypefn {Target Hook} void TARGET_UNWIND_EMIT (FILE * @var{stream}, rtx @var{insn})
+@en This target hook emits assembly directives required to unwind the
+@en given instruction.  This is only used when TARGET_UNWIND_INFO is set.
 该target钩子生成需要展开给定指定的汇编伪指令。
 这只在设置了TARGET_UNWIND_INFO的时候才被使用。
 @end deftypefn
 
+@deftypevr {Target Hook} bool TARGET_ASM_UNWIND_EMIT_BEFORE_INSN
+True if the @code{TARGET_ASM_UNWIND_EMIT} hook should be called before the assembly for @var{insn} has been emitted, false if the hook should be called afterward.
+@end deftypevr
+
+@en @node Exception Region Output
+@en @subsection Assembler Commands for Exception Regions
 @node 异常区域输出
 @subsection 用于异常区域的汇编命令
 
 @c prevent bad page break with this line
-
+@en This describes commands marking the start and the end of an exception
+@en region.
 这一节描述了标记异常区域的起始和结束的命令。
 
 @defmac EH_FRAME_SECTION_NAME
+@en If defined, a C string constant for the name of the section containing
+@en exception handling frame unwind information.  If not defined, GCC will
+@en provide a default definition if the target supports named sections.
+@en @file{crtstuff.c} uses this macro to switch to the appropriate section.
 如果定义，为一个C字符串常量，包含异常处理帧展开信息的section名字。
 如果没有定义，GCC将提供一个缺省定义，如果target支持命名section。
 @file{crtstuff.c}使用该宏来切换到适当的section。
 
+@en You should define this symbol if your target supports DWARF 2 frame
+@en unwind information and the default definition does not work.
 你应该定义该符号，如果你的target支持DWARF2帧展开信息并且缺省定义不工作。
 @end defmac
 
 @defmac EH_FRAME_IN_DATA_SECTION
+@en If defined, DWARF 2 frame unwind information will be placed in the
+@en data section even though the target supports named sections.  This
+@en might be necessary, for instance, if the system linker does garbage
+@en collection and sections cannot be marked as not to be collected.
 如果定义，DWARF2帧展开信息将被放到data section，即使target支持命名section。
 例如当系统连接器进行垃圾搜集并且section不能被标记为不被搜集的时候，
 可能需要这样。
 
+@en Do not define this macro unless @code{TARGET_ASM_NAMED_SECTION} is
+@en also defined.
 不要定义该宏，除非@code{TARGET_ASM_NAMED_SECTION}也被定义。
 @end defmac
 
 @defmac EH_TABLES_CAN_BE_READ_ONLY
+@en Define this macro to 1 if your target is such that no frame unwind
+@en information encoding used with non-PIC code will ever require a
+@en runtime relocation, but the linker may not support merging read-only
+@en and read-write sections into a single read-write section.
 定义该宏为1，如果你的target对于没有使用non-PIC代码编码的帧展开信息，
 将总是要求运行时重定位，
 但是连接器可能不支持将只读和读写section合并到单独的读写section中。
 @end defmac
 
 @defmac MASK_RETURN_ADDR
+@en An rtx used to mask the return address found via @code{RETURN_ADDR_RTX}, so
+@en that it does not contain any extraneous set bits in it.
 一个rtx，用于对通过@code{RETURN_ADDR_RTX}发现的返回地址进行掩码操作，
 使得其不包含任何无关的位。
 @end defmac
 
 @defmac DWARF2_UNWIND_INFO
+@en Define this macro to 0 if your target supports DWARF 2 frame unwind
+@en information, but it does not yet work with exception handling.
+@en Otherwise, if your target supports this information (if it defines
+@en @samp{INCOMING_RETURN_ADDR_RTX} and either @samp{UNALIGNED_INT_ASM_OP}
+@en or @samp{OBJECT_FORMAT_ELF}), GCC will provide a default definition of 1.
 定义该宏为0，如果你的target支持DWARF2帧展开信息，
 但是其还不能与异常处理一起工作。否则，
 如果你的target支持这样的信息（如果定义了@samp{INCOMING_RETURN_ADDR_RTX}，
 并且@samp{UNALIGNED_INT_ASM_OP}和@samp{OBJECT_FORMAT_ELF}之一），
 GCC将提供缺省的定义，1。
 
+@en If @code{TARGET_UNWIND_INFO} is defined, the target specific unwinder
+@en will be used in all cases.  Defining this macro will enable the generation
+@en of DWARF 2 frame debugging information.
 如果定义了@code{TARGET_UNWIND_INFO}，target特定的展开者将用于所有情况。
 定义该宏将使得可以生成DWARF2帧调试信息。
 
+@en If @code{TARGET_UNWIND_INFO} is not defined, and this macro is defined to 1,
+@en the DWARF 2 unwinder will be the default exception handling mechanism;
+@en otherwise, the @code{setjmp}/@code{longjmp}-based scheme will be used by
+@en default.
 如果没有定义@code{TARGET_UNWIND_INFO}，并且该宏被定义为1，
 则DWARF2 unwider将为缺省的异常处理机制；
 否则基于@code{setjmp}/@code{longjmp}的框架将被缺省使用。
 @end defmac
 
 @defmac TARGET_UNWIND_INFO
+@en Define this macro if your target has ABI specified unwind tables.  Usually
+@en these will be output by @code{TARGET_ASM_UNWIND_EMIT}.
 定义该宏，如果你的target具有ABI指定的unwind表。
 通常这些将由@code{TARGET_UNWIND_EMIT}输出。
 @end defmac
 
 @deftypevar {Target Hook} bool TARGET_UNWIND_TABLES_DEFAULT
+@en This variable should be set to @code{true} if the target ABI requires unwinding
+@en tables even when exceptions are not used.
 该变量应该被设为@code{true}，如果target ABI即使不使用异常的时候也要求展开表。
 @end deftypevar
 
 @defmac MUST_USE_SJLJ_EXCEPTIONS
+@en This macro need only be defined if @code{DWARF2_UNWIND_INFO} is
+@en runtime-variable.  In that case, @file{except.h} cannot correctly
+@en determine the corresponding definition of @code{MUST_USE_SJLJ_EXCEPTIONS},
+@en so the target must provide it directly.
 该宏只有当@code{DWARF2_UNWIND_INFO}为运行时变量时才需要被定义。那种情况下，
 @file{except.h}不能正确的确定@code{MUST_USE_SJLJ_EXCEPTIONS}的相应定义，
 所以target必须直接提供。
 @end defmac
 
 @defmac DONT_USE_BUILTIN_SETJMP
+@en Define this macro to 1 if the @code{setjmp}/@code{longjmp}-based scheme
+@en should use the @code{setjmp}/@code{longjmp} functions from the C library
+@en instead of the @code{__builtin_setjmp}/@code{__builtin_longjmp} machinery.
 定义该宏为1，如果基于@code{setjmp}/@code{longjmp}的框架应该使用C库中的
 @code{setjmp}/@code{longjmp}，
 而不是@code{__builtin_setjmp}/@code{__builtin_longjmp}。
 @end defmac
 
 @defmac DWARF_CIE_DATA_ALIGNMENT
+@en This macro need only be defined if the target might save registers in the
+@en function prologue at an offset to the stack pointer that is not aligned to
+@en @code{UNITS_PER_WORD}.  The definition should be the negative minimum
+@en alignment if @code{STACK_GROWS_DOWNWARD} is defined, and the positive
+@en minimum alignment otherwise.  @xref{SDB and DWARF}.  Only applicable if
+@en the target supports DWARF 2 frame unwind information.
 该宏只有当target可能会在函数序言中存储寄存器，
 并且相对栈指针的偏移量没有对齐于@code{UNITS_PER_WORD}的时候，才需要被定义。
 定义应该为负的最小对齐数，如果@code{STACK_GROWS_DOWNWARD}被定义，
@@ -11825,11 +12168,21 @@ GCC将提供缺省的定义，1。
 @end defmac
 
 @deftypevar {Target Hook} bool TARGET_TERMINATE_DW2_EH_FRAME_INFO
+@en Contains the value true if the target should add a zero word onto the
+@en end of a Dwarf-2 frame info section when used for exception handling.
+@en Default value is false if @code{EH_FRAME_SECTION_NAME} is defined, and
+@en true otherwise.
 值为真，如果target应该增加一个0字到Dwarf-2帧信息section的结尾，
 当用于异常处理时。缺省值为假，如果@code{EH_FRAME_SECTION_NAME}被定义，否则为真。
 @end deftypevar
 
 @deftypefn {Target Hook} rtx TARGET_DWARF_REGISTER_SPAN (rtx @var{reg})
+@en Given a register, this hook should return a parallel of registers to
+@en represent where to find the register pieces.  Define this hook if the
+@en register and its mode are represented in Dwarf in non-contiguous
+@en locations, or if the register should be represented in more than one
+@en register in Dwarf.  Otherwise, this hook should return @code{NULL_RTX}.
+@en If not defined, the default is to return @code{NULL_RTX}.
 给定一个寄存器，该钩子应该返回一个并行的寄存器，来表示到哪里发现寄存器块。
 定义该钩子，如果寄存器和它的机器模式在Dwarf中被表示为非连接的位置，
 或者如果在Dwarf中寄存器应该被表示为多于一个寄存器。
@@ -11837,107 +12190,180 @@ GCC将提供缺省的定义，1。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_INIT_DWARF_REG_SIZES_EXTRA (tree @var{address})
+@en If some registers are represented in Dwarf-2 unwind information in
+@en multiple pieces, define this hook to fill in information about the
+@en sizes of those pieces in the table used by the unwinder at runtime.
+@en It will be called by @code{expand_builtin_init_dwarf_reg_sizes} after
+@en filling in a single size corresponding to each hard register;
+@en @var{address} is the address of the table.
 如果一些寄存器在Dwarf-2展开信息中按照多个块来表示，
 定义该钩子在运行时来填充信息。
 其将被@code{expand_builtin_init_dwarf_reg_sizes}调用。@var{address}为表的地址。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_ASM_TTYPE (rtx @var{sym})
+@en This hook is used to output a reference from a frame unwinding table to
+@en the type_info object identified by @var{sym}.  It should return @code{true}
+@en if the reference was output.  Returning @code{false} will cause the
+@en reference to be output using the normal Dwarf2 routines.
 该钩子被用于从帧展开表中输出一个引用到由@var{sym}标识的type_info对象中。
 其应该返回@code{true}，如果引用被输出。
 返回@code{false}将会造成引用使用通常的Dwarf2例程被输出。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_ARM_EABI_UNWINDER
+@en This flag should be set to @code{true} on targets that use an ARM EABI
+@en based unwinding library, and @code{false} on other targets.  This effects
+@en the format of unwinding tables, and how the unwinder in entered after
+@en running a cleanup.  The default is @code{false}.
 该钩子应该被设为@code{true}，在使用基于ARM EABI的展开库的target上，
 并且在其它target上为@code{false}。这将影响展开表的格式。缺省为@code{false}。
 @end deftypefn
 
+@en @node Alignment Output
+@en @subsection Assembler Commands for Alignment
 @node 对齐输出
 @subsection 用于对齐的汇编命令
 
 @c prevent bad page break with this line
+@en This describes commands for alignment.
 这一节描述了用于对齐的命令。
 
 @defmac JUMP_ALIGN (@var{label})
+@en The alignment (log base 2) to put in front of @var{label}, which is
+@en a common destination of jumps and has no fallthru incoming edge.
 在@var{label}前放入的对齐数（基于2的log），
 label为跳转的普通目的地并且不具有fallthru入边。
 
+@en This macro need not be defined if you don't want any special alignment
+@en to be done at such a time.  Most machine descriptions do not currently
+@en define the macro.
 如果你目前不想做任何特殊的对齐，则不需要定义该宏。
 大多数机器描述目前都没有定义该宏。
 
+@en Unless it's necessary to inspect the @var{label} parameter, it is better
+@en to set the variable @var{align_jumps} in the target's
+@en @code{TARGET_OPTION_OVERRIDE}.  Otherwise, you should try to honor the user's
+@en selection in @var{align_jumps} in a @code{JUMP_ALIGN} implementation.
 除非需要检查@var{label}参数，
 最好在target的@code{OVERRIDE_OPTIONS}中设置变量@var{align_jumps}。
 否则应该尽量在@code{JUMP_ALIGN}实现中尊重用户在@var{align_jumps}中的选择。
 @end defmac
 
 @defmac LABEL_ALIGN_AFTER_BARRIER (@var{label})
+@en The alignment (log base 2) to put in front of @var{label}, which follows
+@en a @code{BARRIER}.
 在@var{label}前放入的对齐数（基于2的log），@var{label}后跟随一个@code{BARRIER}。
 
+@en This macro need not be defined if you don't want any special alignment
+@en to be done at such a time.  Most machine descriptions do not currently
+@en define the macro.
 如果你目前不想做任何特殊的对齐，则不需要定义该宏。
 大多数机器描述目前都没有定义该宏。
 @end defmac
 
 @defmac LABEL_ALIGN_AFTER_BARRIER_MAX_SKIP
+@en The maximum number of bytes to skip when applying
+@en @code{LABEL_ALIGN_AFTER_BARRIER}.  This works only if
+@en @code{ASM_OUTPUT_MAX_SKIP_ALIGN} is defined.
 当应用@code{LABEL_ALIGN_AFTER_BARRIER}时，要跳过的最大字节个数。
 这只在定义了@code{ASM_OUTPUT_MAX_SKIP_ALIGN}时才起作用。
 @end defmac
 
 @defmac LOOP_ALIGN (@var{label})
+@en The alignment (log base 2) to put in front of @var{label}, which follows
+@en a @code{NOTE_INSN_LOOP_BEG} note.
 在@var{label}前放入的对齐数（基于2的log），
 @var{label}后跟随一个@code{NOTE_INSN_LOOP_BEG}注解。
 
+@en This macro need not be defined if you don't want any special alignment
+@en to be done at such a time.  Most machine descriptions do not currently
+@en define the macro.
 如果你目前不想做任何特殊的对齐，则不需要定义该宏。
 大多数机器描述目前都没有定义该宏。
 
+@en Unless it's necessary to inspect the @var{label} parameter, it is better
+@en to set the variable @code{align_loops} in the target's
+@en @code{TARGET_OPTION_OVERRIDE}.  Otherwise, you should try to honor the user's
+@en selection in @code{align_loops} in a @code{LOOP_ALIGN} implementation.
 除非需要检查@var{label}参数，
 最好在target的@code{OVERRIDE_OPTIONS}中设置变量@code{align_loops}。
 否则应该尽量在@code{LOOP_ALIGN}实现中尊重用户在@code{align_loops}中的选择。
 @end defmac
 
 @defmac LOOP_ALIGN_MAX_SKIP
+@en The maximum number of bytes to skip when applying @code{LOOP_ALIGN}.
+@en This works only if @code{ASM_OUTPUT_MAX_SKIP_ALIGN} is defined.
 当应用@code{LOOP_ALIGN}时，要跳过的最大字节个数。
 这只在定义了@code{ASM_OUTPUT_MAX_SKIP_ALIGN}时才起作用。
 @end defmac
 
 @defmac LABEL_ALIGN (@var{label})
+@en The alignment (log base 2) to put in front of @var{label}.
+@en If @code{LABEL_ALIGN_AFTER_BARRIER} / @code{LOOP_ALIGN} specify a different alignment,
+@en the maximum of the specified values is used.
 在@var{label}前放入的对齐数（基于2的log），
 如果@code{LABEL_ALIGN_AFTER_BARRIER} / @code{LOOP_ALIGN}指定了不相同的对齐，
 则使用最大的值。
 
+@en Unless it's necessary to inspect the @var{label} parameter, it is better
+@en to set the variable @code{align_labels} in the target's
+@en @code{TARGET_OPTION_OVERRIDE}.  Otherwise, you should try to honor the user's
+@en selection in @code{align_labels} in a @code{LABEL_ALIGN} implementation.
 除非需要检查@var{label}参数，
 最好在target的@code{OVERRIDE_OPTIONS}中设置变量@code{align_labels}。
 否则应该尽量在@code{LABEL_ALIGN}实现中尊重用户在@code{align_labels}中的选择。
 @end defmac
 
 @defmac LABEL_ALIGN_MAX_SKIP
+@en The maximum number of bytes to skip when applying @code{LABEL_ALIGN}.
+@en This works only if @code{ASM_OUTPUT_MAX_SKIP_ALIGN} is defined.
 当应用@code{LABEL_ALIGN}时，要跳过的最大字节个数。
 这只在定义了@code{ASM_OUTPUT_MAX_SKIP_ALIGN}时才起作用。
 @end defmac
 
 @defmac ASM_OUTPUT_SKIP (@var{stream}, @var{nbytes})
+@en A C statement to output to the stdio stream @var{stream} an assembler
+@en instruction to advance the location counter by @var{nbytes} bytes.
+@en Those bytes should be zero when loaded.  @var{nbytes} will be a C
+@en expression of type @code{unsigned HOST_WIDE_INT}.
 一条C语句，将一条汇编指令输出到stdio流@var{stream}中，
 使得将位置计数器前移@var{nbytes}个字节。那些字节在加载时应该为0。
 @var{nbytes}将为@code{unsigned HOST_WIDE_INT}类型的C表达式。
 @end defmac
 
 @defmac ASM_NO_SKIP_IN_TEXT
+@en Define this macro if @code{ASM_OUTPUT_SKIP} should not be used in the
+@en text section because it fails to put zeros in the bytes that are skipped.
+@en This is true on many Unix systems, where the pseudo--op to skip bytes
+@en produces no-op instructions rather than zeros when used in the text
+@en section.
 定义该宏，如果@code{ASM_OUTPUT_SKIP}不应该在text section中使用，
 因为无法在跳过的字节中放入0。这在许多Unix系统上都为，
 当在text section中使用时，跳过字节的伪指令会产生no-op指令，而不是0。
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGN (@var{stream}, @var{power})
+@en A C statement to output to the stdio stream @var{stream} an assembler
+@en command to advance the location counter to a multiple of 2 to the
+@en @var{power} bytes.  @var{power} will be a C expression of type @code{int}.
 一条C语句，将一条汇编指令输出到stdio流@var{stream}中，
 使得将位置计数器前移2的@var{power}次幂个字节。
 @var{power}为@code{int}类型的表达式。
 @end defmac
 
 @defmac ASM_OUTPUT_ALIGN_WITH_NOP (@var{stream}, @var{power})
+@en Like @code{ASM_OUTPUT_ALIGN}, except that the ``nop'' instruction is used
+@en for padding, if necessary.
 类似@code{ASM_OUTPUT_ALIGN}，除了使用“nop”指令来填充，如果需要的话。
 @end defmac
 
 @defmac ASM_OUTPUT_MAX_SKIP_ALIGN (@var{stream}, @var{power}, @var{max_skip})
+@en A C statement to output to the stdio stream @var{stream} an assembler
+@en command to advance the location counter to a multiple of 2 to the
+@en @var{power} bytes, but only if @var{max_skip} or fewer bytes are needed to
+@en satisfy the alignment request.  @var{power} and @var{max_skip} will be
+@en a C expression of type @code{int}.
 一条C语句，将一条汇编指令输出到stdio流@var{stream}中，
 使得将位置计数器前移2的@var{power}次幂个字节，
 但只有当需要@var{max_skip}个或者更少的字节来满足对齐要求的时候才行。
@@ -11945,6 +12371,8 @@ label为跳转的普通目的地并且不具有fallthru入边。
 @end defmac
 
 @need 3000
+@en @node Debugging Info
+@en @section Controlling Debugging Information Format
 @node 调试信息
 @section 控制调试信息格式
 
