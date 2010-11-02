@@ -8271,218 +8271,462 @@ C表达式，返回真，如果条件执行断言@var{op1}，一个比较操作�
 @cindex relative costs
 @cindex speed of instructions
 
+@en These macros let you describe the relative speed of various operations
+@en on the target machine.
 这些宏让你描述target机器上各种操作的相对速度。
 
 @defmac REGISTER_MOVE_COST (@var{mode}, @var{from}, @var{to})
+@en A C expression for the cost of moving data of mode @var{mode} from a
+@en register in class @var{from} to one in class @var{to}.  The classes are
+@en expressed using the enumeration values such as @code{GENERAL_REGS}.  A
+@en value of 2 is the default; other values are interpreted relative to
+@en that.
 一个C表达式，
 为从寄存器类别@var{from}到类别@var{to}移动模式为@var{mode}的数据的代价。
 类别使用枚举值表示，例如@code{GENERAL_REGS}。缺省值为2；其它值相对于它来解析。
 
+@en It is not required that the cost always equal 2 when @var{from} is the
+@en same as @var{to}; on some machines it is expensive to move between
+@en registers if they are not general registers.
 当@var{from}与@var{to}相同时，并不要求代价总是为2；在一些机器上，
 如果不是通用寄存器，则寄存器之间的移动代价是昂贵的。
 
+@en If reload sees an insn consisting of a single @code{set} between two
+@en hard registers, and if @code{REGISTER_MOVE_COST} applied to their
+@en classes returns a value of 2, reload does not check to ensure that the
+@en constraints of the insn are met.  Setting a cost of other than 2 will
+@en allow reload to verify that the constraints are met.  You should do this
+@en if the @samp{mov@var{m}} pattern's constraints do not allow such copying.
 如果重载遇到一个insn，由两个硬件寄存器之间的单个@code{set}组成，
 并且如果@code{REGISTER_MOVE_COST}应用到它们的类别上返回2，
 则重载不检查insn的约束是否满足。将代价设为2以外的值将允许重载验证约束是否满足。
 如果@samp{mov@var{m}}模式的约束不允许这样的复制，则你应该这样做。
+
+These macros are obsolete, new ports should use the target hook
+@code{TARGET_REGISTER_MOVE_COST} instead.
 @end defmac
 
+@deftypefn {Target Hook} int TARGET_REGISTER_MOVE_COST (enum machine_mode @var{mode}, reg_class_t @var{from}, reg_class_t @var{to})
+This target hook should return the cost of moving data of mode @var{mode}
+from a register in class @var{from} to one in class @var{to}.  The classes
+are expressed using the enumeration values such as @code{GENERAL_REGS}.
+A value of 2 is the default; other values are interpreted relative to
+that.
+
+It is not required that the cost always equal 2 when @var{from} is the
+same as @var{to}; on some machines it is expensive to move between
+registers if they are not general registers.
+
+If reload sees an insn consisting of a single @code{set} between two
+hard registers, and if @code{TARGET_REGISTER_MOVE_COST} applied to their
+classes returns a value of 2, reload does not check to ensure that the
+constraints of the insn are met.  Setting a cost of other than 2 will
+allow reload to verify that the constraints are met.  You should do this
+if the @samp{mov@var{m}} pattern's constraints do not allow such copying.
+
+The default version of this function returns 2.
+@end deftypefn
+
 @defmac MEMORY_MOVE_COST (@var{mode}, @var{class}, @var{in})
+@en A C expression for the cost of moving data of mode @var{mode} between a
+@en register of class @var{class} and memory; @var{in} is zero if the value
+@en is to be written to memory, nonzero if it is to be read in.  This cost
+@en is relative to those in @code{REGISTER_MOVE_COST}.  If moving between
+@en registers and memory is more expensive than between two registers, you
+@en should define this macro to express the relative cost.
 一个C表达式，
 为在寄存器类别@var{class}和内存之间移动模式为@var{mode}的数据的代价；
 @var{in}为0，如果值要被写到内存中，非0，如果要从内存中读进。
 该代价为@code{REGISTER_MOVE_COST}的相对值。
 如果在寄存器和内存间移动比两个寄存器之间更昂贵，则应该定义该宏来表示相对代价。
 
+@en If you do not define this macro, GCC uses a default cost of 4 plus
+@en the cost of copying via a secondary reload register, if one is
+@en needed.  If your machine requires a secondary reload register to copy
+@en between memory and a register of @var{class} but the reload mechanism is
+@en more complex than copying via an intermediate, define this macro to
+@en reflect the actual cost of the move.
 如果你没有定义该宏，如果需要的话，
 则GCC使用缺省值4加上通过第二个重载寄存器复制的代价。
 如果你的机器需要第二个重载寄存器在内存和寄存器类别@var{class}直接复制，
 但是重载机制比通过中间物质复制更复杂，则定义该宏来反映move的实际代价。
 
+@en GCC defines the function @code{memory_move_secondary_cost} if
+@en secondary reloads are needed.  It computes the costs due to copying via
+@en a secondary register.  If your machine copies from memory using a
+@en secondary register in the conventional way but the default base value of
+@en 4 is not correct for your machine, define this macro to add some other
+@en value to the result of that function.  The arguments to that function
+@en are the same as to this macro.
 GCC定义函数@code{memory_move_secondary_cost}，如果需要第二次重载。
 其根据通过第二个寄存器复制来计算代价。
 如果你的机器使用第二个寄存器按照约定的方式从内存中复制，
 但是缺省值4对你的机器不正确，则定义该宏来增加某个其它值作为那个函数的结果。
 函数的参数与该宏相同。
+
+These macros are obsolete, new ports should use the target hook
+@code{TARGET_MEMORY_MOVE_COST} instead.
 @end defmac
 
+@deftypefn {Target Hook} int TARGET_MEMORY_MOVE_COST (enum machine_mode @var{mode}, reg_class_t @var{rclass}, bool @var{in})
+This target hook should return the cost of moving data of mode @var{mode}
+between a register of class @var{rclass} and memory; @var{in} is @code{false}
+if the value is to be written to memory, @code{true} if it is to be read in.
+This cost is relative to those in @code{TARGET_REGISTER_MOVE_COST}.
+If moving between registers and memory is more expensive than between two
+registers, you should add this target hook to express the relative cost.
+
+If you do not add this target hook, GCC uses a default cost of 4 plus
+the cost of copying via a secondary reload register, if one is
+needed.  If your machine requires a secondary reload register to copy
+between memory and a register of @var{rclass} but the reload mechanism is
+more complex than copying via an intermediate, use this target hook to
+reflect the actual cost of the move.
+
+GCC defines the function @code{memory_move_secondary_cost} if
+secondary reloads are needed.  It computes the costs due to copying via
+a secondary register.  If your machine copies from memory using a
+secondary register in the conventional way but the default base value of
+4 is not correct for your machine, use this target hook to add some other
+value to the result of that function.  The arguments to that function
+are the same as to this target hook.
+@end deftypefn
+
 @defmac BRANCH_COST (@var{speed_p}, @var{predictable_p})
+A C expression for the cost of a branch instruction.  A value of 1 is the
+default; other values are interpreted relative to that. Parameter @var{speed_p}
+is true when the branch in question should be optimized for speed.  When
+it is false, @code{BRANCH_COST} should be returning value optimal for code size
+rather then performance considerations.  @var{predictable_p} is true for well
+predictable branches. On many architectures the @code{BRANCH_COST} can be
+reduced then.
 一个C表达式，为分支指令的代价。缺省值为1；其它值相对于它来解析。
 @end defmac
 
+@en Here are additional macros which do not specify precise relative costs,
+@en but only that certain actions are more expensive than GCC would
+@en ordinarily expect.
 这些是额外的宏，其不指定确切的相对代价，而只是指定特定的动作比GCC通常期望的要昂贵。
 
 @defmac SLOW_BYTE_ACCESS
+@en Define this macro as a C expression which is nonzero if accessing less
+@en than a word of memory (i.e.@: a @code{char} or a @code{short}) is no
+@en faster than accessing a word of memory, i.e., if such access
+@en require more than one instruction or if there is no difference in cost
+@en between byte and (aligned) word loads.
 定义该宏为一个C表达式，如果访问小于一个字的内存
 （即@code{char}或者@code{short}）不如访问一个字的内存快，即，
 如果这样的访问需要多于一条的指令，并且如果字节和（对齐的）字加载的代价没有区别，
 则值为非零。
 
+@en When this macro is not defined, the compiler will access a field by
+@en finding the smallest containing object; when it is defined, a fullword
+@en load will be used if alignment permits.  Unless bytes accesses are
+@en faster than word accesses, using word accesses is preferable since it
+@en may eliminate subsequent memory access if subsequent accesses occur to
+@en other fields in the same word of the structure, but to different bytes.
 当该宏没有被定义，则编译器将通过找到最小的包含对象来访问一个域；当其被定义，
 如果允许对齐，则会使用全字的加载。除非字节访问比字访问快，则使用字访问比较好，
 因为其可以消除后续的内存访问，如果后续的访问发生在结构体的相同字的其它域。
 @end defmac
 
 @defmac SLOW_UNALIGNED_ACCESS (@var{mode}, @var{alignment})
+@en Define this macro to be the value 1 if memory accesses described by the
+@en @var{mode} and @var{alignment} parameters have a cost many times greater
+@en than aligned accesses, for example if they are emulated in a trap
+@en handler.
 定义该宏的值为1，
 如果由@var{mode}和@var{alignment}参数描述的内存访问比对齐的访问具有多倍的代价，
 例如如果它们在陷阱处理中被模拟。
 
+@en When this macro is nonzero, the compiler will act as if
+@en @code{STRICT_ALIGNMENT} were nonzero when generating code for block
+@en moves.  This can cause significantly more instructions to be produced.
+@en Therefore, do not set this macro nonzero if unaligned accesses only add a
+@en cycle or two to the time for a memory access.
 当该宏为非0时，编译器在为块移动生成代码时，
 将按照@code{STRICT_ALIGNMENT}为非0的方式执行。这可以引起相当多的指令被产生。
 因此如果非对齐访问只是增加一个周期或者两个，则不要设置该宏为非零。
 
+@en If the value of this macro is always zero, it need not be defined.  If
+@en this macro is defined, it should produce a nonzero value when
+@en @code{STRICT_ALIGNMENT} is nonzero.
 如果该宏的值总是0，则不需要被定义。如果该宏被定义，其应该产生一个非0值，
 当@code{STRICT_ALIGNMENT}非0时。
 @end defmac
 
 @defmac MOVE_RATIO
+@en The threshold of number of scalar memory-to-memory move insns, @emph{below}
+@en which a sequence of insns should be generated instead of a
+@en string move insn or a library call.  Increasing the value will always
+@en make code faster, but eventually incurs high cost in increased code size.
 标量的内存到内存的move insn的临界数，@emph{低于}其值的时候，
 应该生成一个insn序列，而不是字符串move insn或者库调用。
 增加值将总是使得代码更快，但是会最终由于代码大小的增加而产生高的代价。
 
+@en Note that on machines where the corresponding move insn is a
+@en @code{define_expand} that emits a sequence of insns, this macro counts
+@en the number of such sequences.
 注意在一些机器上，对应的move insn为一个@code{define_expand}，
 其产生一个insn序列，则该宏为该序列的个数。
 
+The parameter @var{speed} is true if the code is currently being
+optimized for speed rather than size.
+
+@en If you don't define this, a reasonable default is used.
 如果没有定义，则会使用一个合理的缺省值。
 @end defmac
 
 @defmac MOVE_BY_PIECES_P (@var{size}, @var{alignment})
+@en A C expression used to determine whether @code{move_by_pieces} will be used to
+@en copy a chunk of memory, or whether some other block move mechanism
+@en will be used.  Defaults to 1 if @code{move_by_pieces_ninsns} returns less
+@en than @code{MOVE_RATIO}.
 一个C表达式，用于确定是否使用@code{move_by_pieces}来复制一块内存，
 或者使用其它某种块移动机制。缺省为1，
 如果@code{move_by_pieces_ninsns}返回值小于@code{MOVE_RATIO}。
 @end defmac
 
 @defmac MOVE_MAX_PIECES
+@en A C expression used by @code{move_by_pieces} to determine the largest unit
+@en a load or store used to copy memory is.  Defaults to @code{MOVE_MAX}.
 一个C表达式，
 由@code{move_by_pieces}使用用于确定load或者store用于复制内存的最大单元。
 缺省为@code{MOVE_MAX}。
 @end defmac
 
 @defmac CLEAR_RATIO
+@en The threshold of number of scalar move insns, @emph{below} which a sequence
+@en of insns should be generated to clear memory instead of a string clear insn
+@en or a library call.  Increasing the value will always make code faster, but
+@en eventually incurs high cost in increased code size.
 标量move insn的临界数，@emph{低于}其值时，应该生成一个insn序列来清除内存，
 而不是字符串clear insn或者库调用。增加值将总是使得代码更快，
 但是会最终由于代码大小的增加而产生高的代价。
 
+The parameter @var{speed} is true if the code is currently being
+optimized for speed rather than size.
+
+@en If you don't define this, a reasonable default is used.
 如果没有定义，则会使用一个合理的缺省值。
 @end defmac
 
 @defmac CLEAR_BY_PIECES_P (@var{size}, @var{alignment})
+@en A C expression used to determine whether @code{clear_by_pieces} will be used
+@en to clear a chunk of memory, or whether some other block clear mechanism
+@en will be used.  Defaults to 1 if @code{move_by_pieces_ninsns} returns less
+@en than @code{CLEAR_RATIO}.
 一个C表达式，用于确定是否使用@code{clear_by_pieces}来清除一块内存，
 或者使用其它块清楚机制。缺省为1，
 如果@code{move_by_pieces_ninsns}返回值小于@code{CLEAR_RATIO}。
 @end defmac
 
 @defmac SET_RATIO
+@en The threshold of number of scalar move insns, @emph{below} which a sequence
+@en of insns should be generated to set memory to a constant value, instead of
+@en a block set insn or a library call.  
+@en Increasing the value will always make code faster, but
+@en eventually incurs high cost in increased code size.
 标量move insn的临界数，@emph{低于}其值时，
 应该生成一个insn序列来将内存设为一个常量值，而不是一个块设置insn或者库调用。
 增加值将总是使得代码更快，但是会最终由于代码大小的增加而产生高的代价。
 
+The parameter @var{speed} is true if the code is currently being
+optimized for speed rather than size.
+
+@en If you don't define this, it defaults to the value of @code{MOVE_RATIO}.
 如果没有定义，缺省值为@code{MOVE_RATIO}。
 @end defmac
 
 @defmac SET_BY_PIECES_P (@var{size}, @var{alignment})
+@en A C expression used to determine whether @code{store_by_pieces} will be
+@en used to set a chunk of memory to a constant value, or whether some 
+@en other mechanism will be used.  Used by @code{__builtin_memset} when 
+@en storing values other than constant zero.
+@en Defaults to 1 if @code{move_by_pieces_ninsns} returns less
+@en than @code{SET_RATIO}.
 一个C表达式用来确定是否使用@code{store_by_pieces}来设置内存块为常量值，
 或者使用其它机制。当存储非常数0的值时，由@code{__builtin_memset}使用。
 缺省为1，如果@code{move_by_pieces_ninsns}返回值小于@code{SET_RATIO}。
 @end defmac
 
 @defmac STORE_BY_PIECES_P (@var{size}, @var{alignment})
+@en A C expression used to determine whether @code{store_by_pieces} will be
+@en used to set a chunk of memory to a constant string value, or whether some
+@en other mechanism will be used.  Used by @code{__builtin_strcpy} when
+@en called with a constant source string.
+@en Defaults to 1 if @code{move_by_pieces_ninsns} returns less
+@en than @code{MOVE_RATIO}.
 一个C表达式用来确定是否使用@code{store_by_pieces}来设置内存块为常量字符串，
 或者使用其它的机制。当使用常量源字符串调用时，被@code{__builtin_strcpy}使用。
 缺省为1，如果@code{move_by_pieces_ninsns}返回值小于@code{MOVE_RATIO}。
 @end defmac
 
 @defmac USE_LOAD_POST_INCREMENT (@var{mode})
+@en A C expression used to determine whether a load postincrement is a good
+@en thing to use for a given mode.  Defaults to the value of
+@en @code{HAVE_POST_INCREMENT}.
 一个C表达式用于确定对于给定的mode，后增加载是否好。
 缺省值为@code{HAVE_POST_INCREMENT}。
 @end defmac
 
 @defmac USE_LOAD_POST_DECREMENT (@var{mode})
+@en A C expression used to determine whether a load postdecrement is a good
+@en thing to use for a given mode.  Defaults to the value of
+@en @code{HAVE_POST_DECREMENT}.
 一个C表达式用于确定对于给定的mode，后减加载是否好。
 缺省值为@code{HAVE_POST_DECREMENT}。
 @end defmac
 
 @defmac USE_LOAD_PRE_INCREMENT (@var{mode})
+@en A C expression used to determine whether a load preincrement is a good
+@en thing to use for a given mode.  Defaults to the value of
+@en @code{HAVE_PRE_INCREMENT}.
 一个C表达式用于确定对于给定的mode，前增加载是否好。
 缺省值为@code{HAVE_PRE_INCREMENT}。
 @end defmac
 
 @defmac USE_LOAD_PRE_DECREMENT (@var{mode})
+@en A C expression used to determine whether a load predecrement is a good
+@en thing to use for a given mode.  Defaults to the value of
+@en @code{HAVE_PRE_DECREMENT}.
 一个C表达式用于确定对于给定的mode，前减加载是否好。
 缺省值为@code{HAVE_PRE_DECREMENT}。
 @end defmac
 
 @defmac USE_STORE_POST_INCREMENT (@var{mode})
+@en A C expression used to determine whether a store postincrement is a good
+@en thing to use for a given mode.  Defaults to the value of
+@en @code{HAVE_POST_INCREMENT}.
 一个C表达式用于确定对于给定的mode，后增存储是否好。
 缺省值为@code{HAVE_POST_INCREMENT}。
 @end defmac
 
 @defmac USE_STORE_POST_DECREMENT (@var{mode})
+@en A C expression used to determine whether a store postdecrement is a good
+@en thing to use for a given mode.  Defaults to the value of
+@en @code{HAVE_POST_DECREMENT}.
 一个C表达式用于确定对于给定的mode，后减存储是否好。
 缺省值为@code{HAVE_POST_DECREMENT}。
 @end defmac
 
 @defmac USE_STORE_PRE_INCREMENT (@var{mode})
+@en This macro is used to determine whether a store preincrement is a good
+@en thing to use for a given mode.  Defaults to the value of
+@en @code{HAVE_PRE_INCREMENT}.
 一个C表达式用于确定对于给定的mode，前增存储是否好。
 缺省值为@code{HAVE_PRE_INCREMENT}。
 @end defmac
 
 @defmac USE_STORE_PRE_DECREMENT (@var{mode})
+@en This macro is used to determine whether a store predecrement is a good
+@en thing to use for a given mode.  Defaults to the value of
+@en @code{HAVE_PRE_DECREMENT}.
 一个C表达式用于确定对于给定的mode，前减存储是否好。
 缺省值为@code{HAVE_PRE_DECREMENT}。
 @end defmac
 
 @defmac NO_FUNCTION_CSE
+@en Define this macro if it is as good or better to call a constant
+@en function address than to call an address kept in a register.
 定义该宏，如果调用常量函数地址要比调用保存在寄存器中的地址好些。
 @end defmac
 
 @defmac RANGE_TEST_NON_SHORT_CIRCUIT
+@en Define this macro if a non-short-circuit operation produced by
+@en @samp{fold_range_test ()} is optimal.  This macro defaults to true if
+@en @code{BRANCH_COST} is greater than or equal to the value 2.
 定义该宏，如果由@samp{fold_range_test ()}产生的non-short-circuit操作为可选的。
 该宏缺省为真，如果@code{BRANCH_COST}大于或等于2。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_RTX_COSTS (rtx @var{x}, int @var{code}, int @var{outer_code}, int *@var{total})
+@en This target hook describes the relative costs of RTL expressions.
 该target钩子描述了RTL表达式的相对代价。
 
+@en The cost may depend on the precise form of the expression, which is
+@en available for examination in @var{x}, and the rtx code of the expression
+@en in which it is contained, found in @var{outer_code}.  @var{code} is the
+@en expression code---redundant, since it can be obtained with
+@en @code{GET_CODE (@var{x})}.
 代价可以依赖于表达式的确切形式，可以通过检查@var{x}来获得表达式的形式，
 表达式包含的rtx的代码为@var{outer_code}。@var{code}为表达式代码，冗余的，
 因为其可以使用@code{GET_CODE (@var{x})}获得。
 
+@en In implementing this hook, you can use the construct
+@en @code{COSTS_N_INSNS (@var{n})} to specify a cost equal to @var{n} fast
+@en instructions.
 实现该钩子时，
 你可以使用结构@code{COSTS_N_INSNS (@var{n})}来指定代价等价于@var{n}个指令。
 
+@en On entry to the hook, @code{*@var{total}} contains a default estimate
+@en for the cost of the expression.  The hook should modify this value as
+@en necessary.  Traditionally, the default costs are @code{COSTS_N_INSNS (5)}
+@en for multiplications, @code{COSTS_N_INSNS (7)} for division and modulus
+@en operations, and @code{COSTS_N_INSNS (1)} for all other operations.
 在钩子的入口处，@code{*@var{total}}包含了缺省的表达式代价的估值。需要的话，
 钩子应该修改该值。传统的，缺省代价对于乘法为@code{COSTS_N_INSNS (5)}，
 对于除法和求模为@code{COSTS_N_INSNS (7)}，
 对于其它操作为@code{COSTS_N_INSNS (1)}。
 
+@en When optimizing for code size, i.e.@: when @code{speed} is
+@en false, this target hook should be used to estimate the relative
+@en size cost of an expression, again relative to @code{COSTS_N_INSNS}.
 当优化代码大小时，即，当@code{optimize_size}非0时，
 该target钩子应该用于估计一个表达式的相对大小代价，
 同样也是相对于@code{COSTS_N_INSNS}。
 
+@en The hook returns true when all subexpressions of @var{x} have been
+@en processed, and false when @code{rtx_cost} should recurse.
 钩子返回真，当所有@var{x}的子表达式都被处理，当@code{rtx_cost}应该递归时返回假。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_ADDRESS_COST (rtx @var{address})
+@en This hook computes the cost of an addressing mode that contains
+@en @var{address}.  If not defined, the cost is computed from
+@en the @var{address} expression and the @code{TARGET_RTX_COST} hook.
 该钩子计算包含@var{address}的寻址模式的代价。如果没有定义，
 代价通过@var{address}表达式和@code{TARGET_RTX_COST}钩子来计算。
 
+@en For most CISC machines, the default cost is a good approximation of the
+@en true cost of the addressing mode.  However, on RISC machines, all
+@en instructions normally have the same length and execution time.  Hence
+@en all addresses will have equal costs.
 对于大多数CISC机器，缺省代价为寻址模式的真实代价的合理近似值。
 然而，在RISC机器上，所有指令通常具有相同的长度和执行时间。
 因此所有寻址将具有相等的代价。
 
+@en In cases where more than one form of an address is known, the form with
+@en the lowest cost will be used.  If multiple forms have the same, lowest,
+@en cost, the one that is the most complex will be used.
 对于多于一个的形式的寻址，将会使用最低代价的形式。
 如果多个形式具有相同的，最低的代价，则使用最复杂的。
 
+@en For example, suppose an address that is equal to the sum of a register
+@en and a constant is used twice in the same basic block.  When this macro
+@en is not defined, the address will be computed in a register and memory
+@en references will be indirect through that register.  On machines where
+@en the cost of the addressing mode containing the sum is no higher than
+@en that of a simple indirect reference, this will produce an additional
+@en instruction and possibly require an additional register.  Proper
+@en specification of this macro eliminates this overhead for such machines.
 例如，假设地址等于寄存器和常量的和，并在同一基本块中使用两次。
 当该宏没有被定义，地址将在寄存器中计算，并且内存引用将通过寄存器间接实现。
 在一些机器上，包含该和的寻址模式的代价不比简单的间接引用高，
 这样则会产生一条额外的指令，并且可能需要一个额外的寄存器。
 对该宏进行合适的指定，会消除这样的情况。
 
+@en This hook is never called with an invalid address.
 该钩子从不会被无效地址调用。
 
+@en On machines where an address involving more than one register is as
+@en cheap as an address computation involving only one register, defining
+@en @code{TARGET_ADDRESS_COST} to reflect this can cause two registers to
+@en be live over a region of code where only one would have been if
+@en @code{TARGET_ADDRESS_COST} were not defined in that manner.  This effect
+@en should be considered in the definition of this macro.  Equivalent costs
+@en should probably only be given to addresses with different numbers of
+@en registers on machines with lots of registers.
 在一些机器上，地址包括多于一个寄存器的代价，
 跟只包含一个寄存器的地址计算代价一样低，
 则定义@code{TARGET_ADDRESS_COST}来反映这种情况，
