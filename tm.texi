@@ -13000,103 +13000,180 @@ VMS的缺省行为是在没有@option{-g}时，生成可以回溯的最少调试
 @cindex cross compilation and floating point
 @cindex floating point and cross compilation
 
+@en While all modern machines use twos-complement representation for integers,
+@en there are a variety of representations for floating point numbers.  This
+@en means that in a cross-compiler the representation of floating point numbers
+@en in the compiled program may be different from that used in the machine
+@en doing the compilation.
 虽然所有现代机器都使用二进制补码来表示整数，但对于浮点数却有不同的表示。
 这意味着在交叉编译器中，
 被编译的程序中的浮点数的表示可能与执行编译的机器上的表示不相同。
 
+@en Because different representation systems may offer different amounts of
+@en range and precision, all floating point constants must be represented in
+@en the target machine's format.  Therefore, the cross compiler cannot
+@en safely use the host machine's floating point arithmetic; it must emulate
+@en the target's arithmetic.  To ensure consistency, GCC always uses
+@en emulation to work with floating point values, even when the host and
+@en target floating point formats are identical.
 因为不同的表示方式可能会提供不同的取值范围和精度，
 所以所有的浮点常量必须被表示成target机器的格式。
 因此，交叉编译器不能使用host机器的浮点算术；其必须模拟target的算术运算。
 为了确保一致性，GCC总是使用模拟方式来处理浮点值，
 即使host和target的浮点格式相同。
 
+@en The following macros are provided by @file{real.h} for the compiler to
+@en use.  All parts of the compiler which generate or optimize
+@en floating-point calculations must use these macros.  They may evaluate
+@en their operands more than once, so operands must not have side effects.
 下列宏由@file{real.h}提供给编译器使用。
 编译器的生成或者优化浮点计算的所有部分必须使用这些宏。
 它们可能会计算操作数多次，所以操作数一定不要有副作用。
 
 @defmac REAL_VALUE_TYPE
+@en The C data type to be used to hold a floating point value in the target
+@en machine's format.  Typically this is a @code{struct} containing an
+@en array of @code{HOST_WIDE_INT}, but all code should treat it as an opaque
+@en quantity.
 C数据类型，用于存放target机器格式的浮点值。
 通常为一个包含@code{HOST_WIDE_INT}型数组的结构体，
 但是所有的代码应该将其作为不透明的量。
 @end defmac
 
 @deftypefn Macro int REAL_VALUES_EQUAL (REAL_VALUE_TYPE @var{x}, REAL_VALUE_TYPE @var{y})
+@en Compares for equality the two values, @var{x} and @var{y}.  If the target
+@en floating point format supports negative zeroes and/or NaNs,
+@en @samp{REAL_VALUES_EQUAL (-0.0, 0.0)} is true, and
+@en @samp{REAL_VALUES_EQUAL (NaN, NaN)} is false.
 比较两个值是否相等，@var{x}和@var{y}。如果target浮点格式支持负0和/或NaN，
 则@samp{REAL_VALUES_EQUAL (-0.0, 0.0)} 为真, 
 @samp{REAL_VALUES_EQUAL (NaN, NaN)}为假。
 @end deftypefn
 
 @deftypefn Macro int REAL_VALUES_LESS (REAL_VALUE_TYPE @var{x}, REAL_VALUE_TYPE @var{y})
+@en Tests whether @var{x} is less than @var{y}.
 测试@var{x}是否小于@var{y}。
 @end deftypefn
 
 @deftypefn Macro HOST_WIDE_INT REAL_VALUE_FIX (REAL_VALUE_TYPE @var{x})
+@en Truncates @var{x} to a signed integer, rounding toward zero.
 将@var{x}截取为有符号整数，向0舍入。
 @end deftypefn
 
 @deftypefn Macro {unsigned HOST_WIDE_INT} REAL_VALUE_UNSIGNED_FIX (REAL_VALUE_TYPE @var{x})
+@en Truncates @var{x} to an unsigned integer, rounding toward zero.  If
+@en @var{x} is negative, returns zero.
 将@var{x}截取为无符号整数，向0舍入。如果@var{x}为负，则返回0。
 @end deftypefn
 
 @deftypefn Macro REAL_VALUE_TYPE REAL_VALUE_ATOF (const char *@var{string}, enum machine_mode @var{mode})
+@en Converts @var{string} into a floating point number in the target machine's
+@en representation for mode @var{mode}.  This routine can handle both
+@en decimal and hexadecimal floating point constants, using the syntax
+@en defined by the C language for both.
 将@var{string}转换为target机器模式@var{mode}所表示的浮点数。
 该程序可以处理十进制和十六进制的浮点常量，使用C语言定义的语法。
 @end deftypefn
 
 @deftypefn Macro int REAL_VALUE_NEGATIVE (REAL_VALUE_TYPE @var{x})
+@en Returns 1 if @var{x} is negative (including negative zero), 0 otherwise.
 如果@var{x}为负数（包括负零），返回1，否则0。
 @end deftypefn
 
 @deftypefn Macro int REAL_VALUE_ISINF (REAL_VALUE_TYPE @var{x})
+@en Determines whether @var{x} represents infinity (positive or negative).
 确定@var{x}是否表示无穷（正的或负的）。
 @end deftypefn
 
 @deftypefn Macro int REAL_VALUE_ISNAN (REAL_VALUE_TYPE @var{x})
+@en Determines whether @var{x} represents a ``NaN'' (not-a-number).
 确定@var{x}是否表示“NaN” (not-a-number)。
 @end deftypefn
 
 @deftypefn Macro void REAL_ARITHMETIC (REAL_VALUE_TYPE @var{output}, enum tree_code @var{code}, REAL_VALUE_TYPE @var{x}, REAL_VALUE_TYPE @var{y})
+@en Calculates an arithmetic operation on the two floating point values
+@en @var{x} and @var{y}, storing the result in @var{output} (which must be a
+@en variable).
 计算一个算术运算对浮点值@var{x}和@var{y}，将结果存到@var{output}（其必须为一个变量）中。
 
+@en The operation to be performed is specified by @var{code}.  Only the
+@en following codes are supported: @code{PLUS_EXPR}, @code{MINUS_EXPR},
+@en @code{MULT_EXPR}, @code{RDIV_EXPR}, @code{MAX_EXPR}, @code{MIN_EXPR}.
 要执行的运算由@var{code}指定。只有下列代码被支持：@code{PLUS_EXPR}, @code{MINUS_EXPR}, @code{MULT_EXPR}, @code{RDIV_EXPR}, @code{MAX_EXPR}, @code{MIN_EXPR}。
 
+If @code{REAL_ARITHMETIC} is asked to evaluate division by zero and the
+target's floating point format cannot represent infinity, it will call
+@code{abort}.  Callers should check for this situation first, using
+@en @code{MODE_HAS_INFINITIES}.  @xref{Storage Layout}.
 如果@code{REAL_ARITHMETIC}被要求计算除0，并且target的浮点格式不能表示无穷，则会调用@code{abort}。调用者应该首先检查这种情况，使用@code{MODE_HAS_INFINITIES}。@xref{存储布局}。
 @end deftypefn
 
 @deftypefn Macro REAL_VALUE_TYPE REAL_VALUE_NEGATE (REAL_VALUE_TYPE @var{x})
+@en Returns the negative of the floating point value @var{x}.
 返回浮点值@var{x}的负数。
 @end deftypefn
 
 @deftypefn Macro REAL_VALUE_TYPE REAL_VALUE_ABS (REAL_VALUE_TYPE @var{x})
+@en Returns the absolute value of @var{x}.
 返回@var{x}的绝对值。
 @end deftypefn
 
 @deftypefn Macro REAL_VALUE_TYPE REAL_VALUE_TRUNCATE (REAL_VALUE_TYPE @var{mode}, enum machine_mode @var{x})
+@en Truncates the floating point value @var{x} to fit in @var{mode}.  The
+@en return value is still a full-size @code{REAL_VALUE_TYPE}, but it has an
+@en appropriate bit pattern to be output as a floating constant whose
+@en precision accords with mode @var{mode}.
 将浮点值@var{x}截取为适合@var{mode}。返回值仍然是@code{REAL_VALUE_TYPE}，但是具有一个合适的位模式，其精度根据模式@var{mode}来输出浮点常量。
 @end deftypefn
 
 @deftypefn Macro void REAL_VALUE_TO_INT (HOST_WIDE_INT @var{low}, HOST_WIDE_INT @var{high}, REAL_VALUE_TYPE @var{x})
+@en Converts a floating point value @var{x} into a double-precision integer
+@en which is then stored into @var{low} and @var{high}.  If the value is not
+@en integral, it is truncated.
 转换浮点值@var{x}为双精度整数，存储到@var{low}和@var{high}中。如果值不是整形的，则进行截取。
 @end deftypefn
 
 @deftypefn Macro void REAL_VALUE_FROM_INT (REAL_VALUE_TYPE @var{x}, HOST_WIDE_INT @var{low}, HOST_WIDE_INT @var{high}, enum machine_mode @var{mode})
+@en Converts a double-precision integer found in @var{low} and @var{high},
+@en into a floating point value which is then stored into @var{x}.  The
+@en value is truncated to fit in mode @var{mode}.
 转换在@var{low}和@var{high}中的一个双精度整数为浮点值，其被存储在@var{x}中。值被截取以适合机器模式@var{mode}。
 @end deftypefn
 
+@en @node Mode Switching
+@en @section Mode Switching Instructions
 @node 机器模式切换
 @section 机器模式切换指令
 @cindex mode switching
+@en The following macros control mode switching optimizations:
 下列的宏用来控制模式切换优化：
 
 @defmac OPTIMIZE_MODE_SWITCHING (@var{entity})
+@en Define this macro if the port needs extra instructions inserted for mode
+@en switching in an optimizing compilation.
 定义该宏，如果在优化编译中，port需要为机器模式切换插入额外的指令。
 
+@en For an example, the SH4 can perform both single and double precision
+@en floating point operations, but to perform a single precision operation,
+@en the FPSCR PR bit has to be cleared, while for a double precision
+@en operation, this bit has to be set.  Changing the PR bit requires a general
+@en purpose register as a scratch register, hence these FPSCR sets have to
+@en be inserted before reload, i.e.@: you can't put this into instruction emitting
+@en or @code{TARGET_MACHINE_DEPENDENT_REORG}.
 例如，SH4可以执行单精度和双精度的浮点运算，但是执行单精度运算时，
 必须清除FPSCR PR位，而执行双精度运算时，必须设置该位。
 改变PR位需要一个通用寄存器来作为草稿寄存器，
 因此这些FPSCR设置必须在重载之前被插入，
 即你不能将它放在指令输出或者@code{TARGET_MACHINE_DEPENDENT_REORG}阶段。
 
+@en You can have multiple entities that are mode-switched, and select at run time
+@en which entities actually need it.  @code{OPTIMIZE_MODE_SWITCHING} should
+@en return nonzero for any @var{entity} that needs mode-switching.
+@en If you define this macro, you also have to define
+@en @code{NUM_MODES_FOR_MODE_SWITCHING}, @code{MODE_NEEDED},
+@en @code{MODE_PRIORITY_TO_MODE} and @code{EMIT_MODE_SET}.
+@en @code{MODE_AFTER}, @code{MODE_ENTRY}, and @code{MODE_EXIT}
+@en are optional.
 你可以具有多个具有模式切换的实体，并且在运行时选择哪些实体实际需要。
 对于任何需要模式切换的@var{entity}，@code{OPTIMIZE_MODE_SWITCHING}应该返回非零。
 如果你定义了该宏，你还必须定义@code{NUM_MODES_FOR_MODE_SWITCHING}, 
@@ -13105,6 +13182,16 @@ C数据类型，用于存放target机器格式的浮点值。
 @end defmac
 
 @defmac NUM_MODES_FOR_MODE_SWITCHING
+@en If you define @code{OPTIMIZE_MODE_SWITCHING}, you have to define this as
+@en initializer for an array of integers.  Each initializer element
+@en N refers to an entity that needs mode switching, and specifies the number
+@en of different modes that might need to be set for this entity.
+@en The position of the initializer in the initializer---starting counting at
+@en zero---determines the integer that is used to refer to the mode-switched
+@en entity in question.
+@en In macros that take mode arguments / yield a mode result, modes are
+@en represented as numbers 0 @dots{} N @minus{} 1.  N is used to specify that no mode
+@en switch is needed / supplied.
 如果你定义了@code{OPTIMIZE_MODE_SWITCHING}，你必须定义该宏，
 作为整数数组的初始化。每个初始化元素N引用一个需要模式切换的实体，
 并且指定了该实体可能需要被设置的不同模式的数目。
@@ -13112,6 +13199,11 @@ C数据类型，用于存放target机器格式的浮点值。
 @end defmac
 
 @defmac MODE_NEEDED (@var{entity}, @var{insn})
+@en @var{entity} is an integer specifying a mode-switched entity.  If
+@en @code{OPTIMIZE_MODE_SWITCHING} is defined, you must define this macro to
+@en return an integer value not larger than the corresponding element in
+@en @code{NUM_MODES_FOR_MODE_SWITCHING}, to denote the mode that @var{entity} must
+@en be switched into prior to the execution of @var{insn}.
 @var{entity}为一个整数指定了模式切换的实体。
 如果定义了@code{OPTIMIZE_MODE_SWITCHING}，
 则必须定义该宏来返回一个不大于在@code{NUM_MODES_FOR_MODE_SWITCHING}
@@ -13119,23 +13211,40 @@ C数据类型，用于存放target机器格式的浮点值。
 @end defmac
 
 @defmac MODE_AFTER (@var{mode}, @var{insn})
+@en If this macro is defined, it is evaluated for every @var{insn} during
+@en mode switching.  It determines the mode that an insn results in (if
+@en different from the incoming mode).
 如果定义该宏，其在模式切换过程中对于每个@var{insn}进行求值。
 其确定一个insn的结果时的模式（如果与输入时的模式不同）。
 @end defmac
 
 @defmac MODE_ENTRY (@var{entity})
+@en If this macro is defined, it is evaluated for every @var{entity} that needs
+@en mode switching.  It should evaluate to an integer, which is a mode that
+@en @var{entity} is assumed to be switched to at function entry.  If @code{MODE_ENTRY}
+@en is defined then @code{MODE_EXIT} must be defined.
 如果定义该宏，其对每个需要模式切换的@var{entity}进行求值。
 结果为一个整数，为@var{entity}在函数入口处被假定切换成的模式。
 如果定义了@code{MODE_ENTRY}，则必须定义@code{MODE_EXIT}。
 @end defmac
 
 @defmac MODE_EXIT (@var{entity})
+@en If this macro is defined, it is evaluated for every @var{entity} that needs
+@en mode switching.  It should evaluate to an integer, which is a mode that
+@en @var{entity} is assumed to be switched to at function exit.  If @code{MODE_EXIT}
+@en is defined then @code{MODE_ENTRY} must be defined.
 如果定义该宏，其对每个需要模式切换的实体进行求值。结果为一个整数，
 为实体在函数出口处被假定切换成的模式。如果定义了@code{MODE_EXIT}，
 则必须定义@code{MODE_ENTRY}。
 @end defmac
 
 @defmac MODE_PRIORITY_TO_MODE (@var{entity}, @var{n})
+@en This macro specifies the order in which modes for @var{entity} are processed.
+@en 0 is the highest priority, @code{NUM_MODES_FOR_MODE_SWITCHING[@var{entity}] - 1} the
+@en lowest.  The value of the macro should be an integer designating a mode
+@en for @var{entity}.  For any fixed @var{entity}, @code{mode_priority_to_mode}
+@en (@var{entity}, @var{n}) shall be a bijection in 0 @dots{}
+@en @code{num_modes_for_mode_switching[@var{entity}] - 1}.
 该宏指定了被处理的@var{entity}的模式顺序。0为最高优先级，
 @code{NUM_MODES_FOR_MODE_SWITCHING[@var{entity}] - 1}为最低。
 宏的值应该为一个整数，表示@var{entity}的一个模式。对于任何固定的@var{entity}，
@@ -13144,27 +13253,53 @@ C数据类型，用于存放target机器格式的浮点值。
 @end defmac
 
 @defmac EMIT_MODE_SET (@var{entity}, @var{mode}, @var{hard_regs_live})
+@en Generate one or more insns to set @var{entity} to @var{mode}.
+@en @var{hard_reg_live} is the set of hard registers live at the point where
+@en the insn(s) are to be inserted.
 生成一个或多个insn来将@var{entity}设为@var{mode}。
 @var{hard_reg_live}是在insn被插入点处的硬件寄存器活跃集。
 @end defmac
 
+@en @node Target Attributes
+@en @section Defining target-specific uses of @code{__attribute__}
 @node 目标机属性
 @section 定义目标机特定的@code{__attribute__}用法
 @cindex target attributes
 @cindex machine attributes
 @cindex attributes, target-specific
 
+@en Target-specific attributes may be defined for functions, data and types.
+@en These are described using the following target hooks; they also need to
+@en be documented in @file{extend.texi}.
 可以为函数，数据和类型定义target特定的属性。
 这些使用下列target钩子来描述；它们还需要在@file{extend.texi}中被记述。
 
 @deftypevr {Target Hook} {const struct attribute_spec *} TARGET_ATTRIBUTE_TABLE
+@en If defined, this target hook points to an array of @samp{struct
+@en attribute_spec} (defined in @file{tree.h}) specifying the machine
+@en specific attributes for this target and some of the restrictions on the
+@en entities to which these attributes are applied and the arguments they
+@en take.
 如果定义，
 该目标钩子指向一个@samp{struct attribute_spec} (在@file{tree.h}中定义) 数组，
 用来指定该目标的机器特定的属性，
 以及这些属性被应用到的实体和它们接受的参数的一些限制。
 @end deftypevr
 
+@deftypefn {Target Hook} bool TARGET_ATTRIBUTE_TAKES_IDENTIFIER_P (const_tree @var{name})
+@en If defined, this target hook is a function which returns true if the
+@en machine-specific attribute named @var{name} expects an identifier
+@en given as its first argument to be passed on as a plain identifier, not
+@en subjected to name lookup.  If this is not defined, the default is
+@en false for all machine-specific attributes.
+@end deftypefn
+
 @deftypefn {Target Hook} int TARGET_COMP_TYPE_ATTRIBUTES (tree @var{type1}, tree @var{type2})
+@en If defined, this target hook is a function which returns zero if the attributes on
+@en @var{type1} and @var{type2} are incompatible, one if they are compatible,
+@en and two if they are nearly compatible (which causes a warning to be
+@en generated).  If this is not defined, machine-specific attributes are
+@en supposed always to be compatible.
 如果定义，该目标钩子为一个函数，
 如果@var{type1}和@var{type2}的属性不匹配则返回0，匹配则返回1，
 几乎匹配则返回2（这将产生一个warning）。如果没有被定义，
@@ -13172,10 +13307,18 @@ C数据类型，用于存放target机器格式的浮点值。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SET_DEFAULT_TYPE_ATTRIBUTES (tree @var{type})
+@en If defined, this target hook is a function which assigns default attributes to
+@en the newly defined @var{type}.
 如果定义，该目标钩子为一个函数，其将缺省属性赋予新定义的类型@var{type}。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_MERGE_TYPE_ATTRIBUTES (tree @var{type1}, tree @var{type2})
+@en Define this target hook if the merging of type attributes needs special
+@en handling.  If defined, the result is a list of the combined
+@en @code{TYPE_ATTRIBUTES} of @var{type1} and @var{type2}.  It is assumed
+@en that @code{comptypes} has already been called and returned 1.  This
+@en function may call @code{merge_attributes} to handle machine-independent
+@en merging.
 定义该target钩子，如果合并类型属性需要进行特殊的处理。
 如果定义，则结果为@var{type1}和@var{type2}的组合@code{TYPE_ATTRIBUTES}列表。
 其假设@code{comptypes}总是被调用并返回1。
@@ -13183,6 +13326,13 @@ C数据类型，用于存放target机器格式的浮点值。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_MERGE_DECL_ATTRIBUTES (tree @var{olddecl}, tree @var{newdecl})
+@en Define this target hook if the merging of decl attributes needs special
+@en handling.  If defined, the result is a list of the combined
+@en @code{DECL_ATTRIBUTES} of @var{olddecl} and @var{newdecl}.
+@en @var{newdecl} is a duplicate declaration of @var{olddecl}.  Examples of
+@en when this is needed are when one attribute overrides another, or when an
+@en attribute is nullified by a subsequent definition.  This function may
+@en call @code{merge_attributes} to handle machine-independent merging.
 定义该target钩子，如果合并decl属性需要进行特殊的处理。如果定义，
 则结果为@var{olddecl}和@var{newdecl}的组合@code{DECL_ATTRIBUTES}列表。
 @var{newdecl}为@var{olddecl}的拷贝。这样的例子是当一个属性覆盖另一个，
@@ -13190,6 +13340,16 @@ C数据类型，用于存放target机器格式的浮点值。
 该函数可以调用@code{merge_attributes}来处理机器无关的合并。
 
 @findex TARGET_DLLIMPORT_DECL_ATTRIBUTES
+@en If the only target-specific handling you require is @samp{dllimport}
+@en for Microsoft Windows targets, you should define the macro
+@en @code{TARGET_DLLIMPORT_DECL_ATTRIBUTES} to @code{1}.  The compiler
+@en will then define a function called
+@en @code{merge_dllimport_decl_attributes} which can then be defined as
+@en the expansion of @code{TARGET_MERGE_DECL_ATTRIBUTES}.  You can also
+@en add @code{handle_dll_attribute} in the attribute table for your port
+@en to perform initial processing of the @samp{dllimport} and
+@en @samp{dllexport} attributes.  This is done in @file{i386/cygwin.h} and
+@en @file{i386/i386.c}, for example.
 如果唯一需要target特定的处理是Microsoft Windows target的@samp{dllimport}，
 则你应该定义宏@code{TARGET_DLLIMPORT_DECL_ATTRIBUTES}为@code{1}。
 然后编译器将会定义一个叫做@code{merge_dllimport_decl_attributes}的函数，
@@ -13200,11 +13360,18 @@ C数据类型，用于存放target机器格式的浮点值。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_VALID_DLLIMPORT_ATTRIBUTE_P (tree @var{decl})
+@en @var{decl} is a variable or function with @code{__attribute__((dllimport))} specified.  Use this hook if the target needs to add extra validation checks to @code{handle_dll_attribute}.
 @var{decl}为一个指定为@code{__attribute__((dllimport))}的变量或者函数。
 使用该钩子，如果target需要给@code{handle_dll_attribute}增加额外的有效性检查。
 @end deftypefn
 
 @defmac TARGET_DECLSPEC
+@en Define this macro to a nonzero value if you want to treat
+@en @code{__declspec(X)} as equivalent to @code{__attribute((X))}.  By
+@en default, this behavior is enabled only for targets that define
+@en @code{TARGET_DLLIMPORT_DECL_ATTRIBUTES}.  The current implementation
+@en of @code{__declspec} is via a built-in macro, but you should not rely
+@en on this implementation detail.
 定义该宏为非零，
 如果你想将@code{__declspec(X)}与@code{__attribute((X))}等同对待。
 缺省下，只有在定义了@code{TARGET_DLLIMPORT_DECL_ATTRIBUTES}的target上才可以。
@@ -13212,6 +13379,16 @@ C数据类型，用于存放target机器格式的浮点值。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_INSERT_ATTRIBUTES (tree @var{node}, tree *@var{attr_ptr})
+@en Define this target hook if you want to be able to add attributes to a decl
+@en when it is being created.  This is normally useful for back ends which
+@en wish to implement a pragma by using the attributes which correspond to
+@en the pragma's effect.  The @var{node} argument is the decl which is being
+@en created.  The @var{attr_ptr} argument is a pointer to the attribute list
+@en for this decl.  The list itself should not be modified, since it may be
+@en shared with other decls, but attributes may be chained on the head of
+@en the list and @code{*@var{attr_ptr}} modified to point to the new
+@en attributes, or a copy of the list may be made if further changes are
+@en needed.
 定义该target钩子，如果你想在decl被创建时，能够为其增加属性。
 这在后端想要实现一个pragma，并且用到与pragma相关的属性的时候，
 通常很有用。参数@var{node}是正在创建的decl。
@@ -13223,12 +13400,16 @@ C数据类型，用于存放target机器格式的浮点值。
 
 @deftypefn {Target Hook} bool TARGET_FUNCTION_ATTRIBUTE_INLINABLE_P (tree @var{fndecl})
 @cindex inlining
+@en This target hook returns @code{true} if it is ok to inline @var{fndecl}
+@en into the current function, despite its having target-specific
+@en attributes, @code{false} otherwise.  By default, if a function has a
+@en target specific attribute attached to it, it will not be inlined.
 该target钩子返回@code{true}，如果可以将@var{fndecl}内联到当前函数中，
 而不管它具有的target特定属性，否则为@code{false}。
 缺省下，如果函数具有一个target特定属性，则不会被内联。
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_VALID_OPTION_ATTRIBUTE_P (tree @var{fndecl}, tree @var{name}, tree @var{args}, int @var{flags})
+@deftypefn {Target Hook} bool TARGET_OPTION_VALID_ATTRIBUTE_P (tree @var{fndecl}, tree @var{name}, tree @var{args}, int @var{flags})
 This hook is called to parse the @code{attribute(option("..."))}, and
 it allows the function to set different target machine compile time
 options for the current function that might be different than the
@@ -13244,7 +13425,7 @@ the function declaration to hold a pointer to a target specific
 This hook is called to save any additional target specific information
 in the @var{struct cl_target_option} structure for function specific
 options.
-@xref{选项文件格式}.
+@xref{Option file format}.
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_OPTION_RESTORE (struct cl_target_option *@var{ptr})
@@ -13253,17 +13434,31 @@ information in the @var{struct cl_target_option} structure for
 function specific options.
 @end deftypefn
 
-@deftypefn {Target Hook} void TARGET_OPTION_PRINT (struct cl_target_option *@var{ptr})
+@deftypefn {Target Hook} void TARGET_OPTION_PRINT (FILE *@var{file}, int @var{indent}, struct cl_target_option *@var{ptr})
 This hook is called to print any additional target specific
 information in the @var{struct cl_target_option} structure for
 function specific options.
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_OPTION_PRAGMA_PARSE (target @var{args})
+@deftypefn {Target Hook} bool TARGET_OPTION_PRAGMA_PARSE (tree @var{args}, tree @var{pop_target})
 This target hook parses the options for @code{#pragma GCC option} to
 set the machine specific options for functions that occur later in the
 input stream.  The options should be the same as handled by the
-@code{TARGET_VALID_OPTION_ATTRIBUTE_P} hook.
+@code{TARGET_OPTION_VALID_ATTRIBUTE_P} hook.
+@end deftypefn
+
+@deftypefn {Target Hook} void TARGET_OPTION_OVERRIDE (void)
+Sometimes certain combinations of command options do not make sense on
+a particular target machine.  You can override the hook
+@code{TARGET_OPTION_OVERRIDE} to take account of this.  This hooks is called
+once just after all the command options have been parsed.
+
+Don't use this hook to turn on various extra optimizations for
+@option{-O}.  That is what @code{OPTIMIZATION_OPTIONS} is for.
+
+If you need to do something whenever the optimization level is
+changed via the optimize attribute or pragma, see
+@code{TARGET_OVERRIDE_OPTIONS_AFTER_CHANGE}
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CAN_INLINE_P (tree @var{caller}, tree @var{callee})
@@ -13273,8 +13468,8 @@ default, inlining is not allowed if the callee function has function
 specific target options and the caller does not use the same options.
 @end deftypefn
 
-@node 模拟TLS
-@section 模拟TLS
+@node Emulated TLS
+@section Emulating TLS
 @cindex Emulated TLS
 
 For targets whose psABI does not provide Thread Local Storage via
@@ -13340,21 +13535,27 @@ is the TLS object and @var{tmpl_addr} is the address of the
 initializer.  The default initializes libgcc's emulated TLS control object.
 @end deftypefn
 
-@deftypevr {Target Hook} {bool} TARGET_EMUTLS_VAR_ALIGN_FIXED
+@deftypevr {Target Hook} bool TARGET_EMUTLS_VAR_ALIGN_FIXED
 Specifies whether the alignment of TLS control variable objects is
 fixed and should not be increased as some backends may do to optimize
 single objects.  The default is false.
 @end deftypevr
 
-@deftypevr {Target Hook} {bool} TARGET_EMUTLS_DEBUG_FORM_TLS_ADDRESS
+@deftypevr {Target Hook} bool TARGET_EMUTLS_DEBUG_FORM_TLS_ADDRESS
 Specifies whether a DWARF @code{DW_OP_form_tls_address} location descriptor
 may be used to describe emulated TLS control objects.
 @end deftypevr
 
+@en @node MIPS Coprocessors
+@en @section Defining coprocessor specifics for MIPS targets.
 @node MIPS协处理器
 @section 定义MIPS target的协处理器的规范
 @cindex MIPS coprocessor-definition macros
 
+@en The MIPS specification allows MIPS implementations to have as many as 4
+@en coprocessors, each with as many as 32 private registers.  GCC supports
+@en accessing these registers and transferring values between the registers
+@en and memory using asm-ized variables.  For example:
 MIPS规范允许MIPS的实现最多具有4个协处理器，其中每个最多具有32个私有寄存器。
 GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以及内存间的传值。例如：
 
@@ -13365,70 +13566,114 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
   d = cp0count + 3;
 @end smallexample
 
+@en (``c0r1'' is the default name of register 1 in coprocessor 0; alternate
+@en names may be added as described below, or the default names may be
+@en overridden entirely in @code{SUBTARGET_CONDITIONAL_REGISTER_USAGE}.)
 (“c0r1”是协处理器0的寄存器1的缺省名；可以按照下面的描述来增加可选名字，
 或者可以通过@code{SUBTARGET_CONDITIONAL_REGISTER_USAGE}来覆写全部的缺省名字。)
 
+@en Coprocessor registers are assumed to be epilogue-used; sets to them will
+@en be preserved even if it does not appear that the register is used again
+@en later in the function.
 协处理器寄存器被假设为epilogue-used；对它们的赋值将被保存，
 即使在函数中的后面不会再使用该寄存器。
 
+@en Another note: according to the MIPS spec, coprocessor 1 (if present) is
+@en the FPU@.  One accesses COP1 registers through standard mips
+@en floating-point support; they are not included in this mechanism.
 另一个需要注意的是：根据MIPS spec，协处理器1（如果存在）为FPU。
 标准mips浮点支持的对COP1寄存器的访问，不包含在这个机制中。
 
+@en There is one macro used in defining the MIPS coprocessor interface which
+@en you may want to override in subtargets; it is described below.
 下面描述的一个宏，用于定义MIPS协处理器接口，
 可能在子目标（subtarget）中需要被覆写。
 
 @defmac ALL_COP_ADDITIONAL_REGISTER_NAMES
+@en A comma-separated list (with leading comma) of pairs describing the
+@en alternate names of coprocessor registers.  The format of each entry should be
 一个逗号分隔的列表（起始于逗号），是用于描述可选的协处理器寄存器的名字对。
 每项的格式应该为
 @smallexample
 @{ @var{alternatename}, @var{register_number}@}
 @end smallexample
+Default: empty.
 缺省情况: 空
 @end defmac
 
+@en @node PCH Target
+@en @section Parameters for Precompiled Header Validity Checking
 @node PCH Target
 @section 预编译头文件有效性检查的参数
 @cindex parameters, precompiled headers
 
 @deftypefn {Target Hook} void *TARGET_GET_PCH_VALIDITY (size_t *@var{sz})
+@en This hook returns a pointer to the data needed by
+@en @code{TARGET_PCH_VALID_P} and sets
+@en @samp{*@var{sz}} to the size of the data in bytes.
 该钩子返回@code{TARGET_PCH_VALID_P}所需要的数据，
 并且将@samp{*@var{sz}}设为以字节为单位的数据大小。
 @end deftypefn
 
 @deftypefn {Target Hook} const char *TARGET_PCH_VALID_P (const void *@var{data}, size_t @var{sz})
+@en This hook checks whether the options used to create a PCH file are
+@en compatible with the current settings.  It returns @code{NULL}
+@en if so and a suitable error message if not.  Error messages will
+@en be presented to the user and must be localized using @samp{_(@var{msg})}.
 该钩子检查用于创建PCH文件的选项是否与现在的设置兼容。
 如果是则返回@code{NULL}，否则为一个适当的错误消息。
 错误消息将会展现给用户，所以必须使用@samp{_(@var{msg})}来本地化。
 
+@en @var{data} is the data that was returned by @code{TARGET_GET_PCH_VALIDITY}
+@en when the PCH file was created and @var{sz} is the size of that data in bytes.
+@en It's safe to assume that the data was created by the same version of the
+@en compiler, so no format checking is needed.
 @var{data}为当PCH文件被创建时，@code{TARGET_GET_PCH_VALIDITY}所返回的数据，
 @var{sz}为以字节为单位的数据大小。是可以假设data由同一版本的编译器所创建的，
 所以不需要格式检查。
 
+@en The default definition of @code{default_pch_valid_p} should be
+@en suitable for most targets.
 @code{default_pch_valid_p}的缺省定义应该适合于大多数target。
 @end deftypefn
 
 @deftypefn {Target Hook} const char *TARGET_CHECK_PCH_TARGET_FLAGS (int @var{pch_flags})
+@en The default definition of @code{default_pch_valid_p} should be
+@en suitable for most targets.
 如果该钩子为非空，
 则@code{TARGET_PCH_VALID_P}的缺省实现将用它来检查@code{target_flags}的兼容值。
 @var{pch_flags}指定了当PCH文件被创建时，@code{target_flags}所具有的值。
 返回值与@code{TARGET_PCH_VALID_P}的相同。
 @end deftypefn
 
+@en @node C++ ABI
+@en @section C++ ABI parameters
 @node C++ ABI
 @section C++ ABI参数
 @cindex parameters, c++ abi
 
 @deftypefn {Target Hook} tree TARGET_CXX_GUARD_TYPE (void)
+@en Define this hook to override the integer type used for guard variables.
+@en These are used to implement one-time construction of static objects.  The
+@en default is long_long_integer_type_node.
 定义该钩子来覆盖用于guard变量的整数类型。
 这些被用于实现静态对象的一次构建。缺省为long_long_integer_type_node。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_GUARD_MASK_BIT (void)
+@en This hook determines how guard variables are used.  It should return
+@en @code{false} (the default) if the first byte should be used.  A return value of
+@en @code{true} indicates that only the least significant bit should be used.
 该钩子确定如何使用guard变量。如果第一个字节应该被使用，
 则应该返回@code{false}（缺省）。返回值为@code{true}表明应该使用最低有效位。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_CXX_GET_COOKIE_SIZE (tree @var{type})
+@en This hook returns the size of the cookie to use when allocating an array
+@en whose elements have the indicated @var{type}.  Assumes that it is already
+@en known that a cookie is needed.  The default is
+@en @code{max(sizeof (size_t), alignof(type))}, as defined in section 2.7 of the
+@en IA64/Generic C++ ABI@.
 该钩子返回cookie的大小，其中cookie为当分配一个数组其元素具有@var{type}类型，
 所使用的cookie。假设已经知道需要一个cookie。
 缺省为@code{max(sizeof (size_t), alignof(type))}，
@@ -13436,22 +13681,40 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_COOKIE_HAS_SIZE (void)
+@en This hook should return @code{true} if the element size should be stored in
+@en array cookies.  The default is to return @code{false}.
 该钩子应该返回@code{true}，如果元素大小应该被存放在数组cookie中。
 缺省为返回@code{false}。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_CXX_IMPORT_EXPORT_CLASS (tree  @var{type}, int @var{import_export})
+@en If defined by a backend this hook allows the decision made to export
+@en class @var{type} to be overruled.  Upon entry @var{import_export}
+@en will contain 1 if the class is going to be exported, @minus{}1 if it is going
+@en to be imported and 0 otherwise.  This function should return the
+@en modified value and perform any other actions necessary to support the
+@en backend's targeted operating system.
 如果后端定义了该钩子，则允许覆盖对导出类@var{type}的决定。
 @var{import_export}将包含1，如果类将被导出，@minus{}1如果其将被导入，否则为0.
 该函数应该返回修改后的值，并执行其它需要的操作来支持后端的操作系统。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_CDTOR_RETURNS_THIS (void)
+@en This hook should return @code{true} if constructors and destructors return
+@en the address of the object created/destroyed.  The default is to return
+@en @code{false}.
 该钩子应该返回@code{true}，如果构造者和析构者返回创建/销毁对象的地址。
 缺省为返回@code{false}。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_KEY_METHOD_MAY_BE_INLINE (void)
+@en This hook returns true if the key method for a class (i.e., the method
+@en which, if defined in the current translation unit, causes the virtual
+@en table to be emitted) may be an inline function.  Under the standard
+@en Itanium C++ ABI the key method may be an inline function so long as
+@en the function is not declared inline in the class definition.  Under
+@en some variants of the ABI, an inline function can never be the key
+@en method.  The default is to return @code{true}.
 该钩子返回真，如果类的关键方法（即，如果方法在当前转换单元中定义，
 其使得虚拟表被输出）可以为内联函数。对于标准的Itanium C++ ABI，
 关键方法可以为内联函数，只要函数不在类定义中声明为内联的。
@@ -13459,6 +13722,7 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_CXX_DETERMINE_CLASS_DATA_VISIBILITY (tree @var{decl})
+@en @var{decl} is a virtual table, virtual table table, typeinfo object, or other similar implicit class data object that will be emitted with external linkage in this translation unit.  No ELF visibility has been explicitly specified.  If the target needs to specify a visibility other than that of the containing class, use this hook to set @code{DECL_VISIBILITY} and @code{DECL_VISIBILITY_SPECIFIED}.
 @var{decl}为虚拟表，类型信息对象，或其它类似的隐含类数据对象，
 其将在该转换单元中作为外部链接被输出。ELF的可视性不会被显示的指定。
 如果target需要指定可视性，
@@ -13466,23 +13730,39 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT (void)
+@en This hook returns true (the default) if virtual tables and other
+@en similar implicit class data objects are always COMDAT if they have
+@en external linkage.  If this hook returns false, then class data for
+@en classes whose virtual table will be emitted in only one translation
+@en unit will not be COMDAT.
 该钩子返回真（缺省情况）如果虚拟表和其它类似的隐式类数据对象总是为COMDAT，
 如果它们具有外部连接。如果该钩子返回假，
 则只在一个转换单元中被输出的虚拟表的类的类数据将不是COMDAT。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_LIBRARY_RTTI_COMDAT (void)
+@en This hook returns true (the default) if the RTTI information for
+@en the basic types which is defined in the C++ runtime should always
+@en be COMDAT, false if it should not be COMDAT.
 该钩子返回真（缺省情况），
 如果在C++运行时定义的基本类型的RTTI信息应该总是为COMDAT，否则为假。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_USE_AEABI_ATEXIT (void)
+@en This hook returns true if @code{__aeabi_atexit} (as defined by the ARM EABI)
+@en should be used to register static destructors when @option{-fuse-cxa-atexit}
+@en is in effect.  The default is to return false to use @code{__cxa_atexit}.
 该钩子返回真，
 如果@code{__aeabi_atexit}（如被ARM EABI定义）应该用于注册静态析构者，
 当@option{-fuse-cxa-atexit}为有效时。缺省是返回假，使用@code{__cxa_atexit}。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_CXX_USE_ATEXIT_FOR_CXA_ATEXIT (void)
+@en This hook returns true if the target @code{atexit} function can be used
+@en in the same manner as @code{__cxa_atexit} to register C++ static
+@en destructors. This requires that @code{atexit}-registered functions in
+@en shared libraries are run in the correct order when the libraries are
+@en unloaded. The default is to return false.
 该钩子返回真，
 如果target的@code{atexit}函数可以跟@code{__cxa_atexit}一样被用于注册静态析构者。
 这要求在共享库中@code{atexit}注册的函数要按照正确的顺序运行，当库被卸载时。
@@ -13490,34 +13770,155 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_CXX_ADJUST_CLASS_AT_DEFINITION (tree @var{type})
+@en @var{type} is a C++ class (i.e., RECORD_TYPE or UNION_TYPE) that has just been defined.  Use this hook to make adjustments to the class (eg, tweak visibility or perform any other required target modifications).
 @var{type}为一个刚被定义的C++类（即RECORD_TYPE 或 UNION_TYPE）。
 使用该钩子来调整类（例如tweak可视性或者执行其它target需要的修改）。
 @end deftypefn
 
+@node Named Address Spaces
+@section Adding support for named address spaces
+@cindex named address spaces
+
+The draft technical report of the ISO/IEC JTC1 S22 WG14 N1275
+standards committee, @cite{Programming Languages - C - Extensions to
+support embedded processors}, specifies a syntax for embedded
+processors to specify alternate address spaces.  You can configure a
+GCC port to support section 5.1 of the draft report to add support for
+address spaces other than the default address space.  These address
+spaces are new keywords that are similar to the @code{volatile} and
+@code{const} type attributes.
+
+Pointers to named address spaces can have a different size than
+pointers to the generic address space.
+
+For example, the SPU port uses the @code{__ea} address space to refer
+to memory in the host processor, rather than memory local to the SPU
+processor.  Access to memory in the @code{__ea} address space involves
+issuing DMA operations to move data between the host processor and the
+local processor memory address space.  Pointers in the @code{__ea}
+address space are either 32 bits or 64 bits based on the
+@option{-mea32} or @option{-mea64} switches (native SPU pointers are
+always 32 bits).
+
+Internally, address spaces are represented as a small integer in the
+range 0 to 15 with address space 0 being reserved for the generic
+address space.
+
+To register a named address space qualifier keyword with the C front end,
+the target may call the @code{c_register_addr_space} routine.  For example,
+the SPU port uses the following to declare @code{__ea} as the keyword for
+named address space #1:
+@smallexample
+#define ADDR_SPACE_EA 1
+c_register_addr_space ("__ea", ADDR_SPACE_EA);
+@end smallexample
+
+@deftypefn {Target Hook} {enum machine_mode} TARGET_ADDR_SPACE_POINTER_MODE (addr_space_t @var{address_space})
+Define this to return the machine mode to use for pointers to
+@var{address_space} if the target supports named address spaces.
+The default version of this hook returns @code{ptr_mode} for the
+generic address space only.
+@end deftypefn
+
+@deftypefn {Target Hook} {enum machine_mode} TARGET_ADDR_SPACE_ADDRESS_MODE (addr_space_t @var{address_space})
+Define this to return the machine mode to use for addresses in
+@var{address_space} if the target supports named address spaces.
+The default version of this hook returns @code{Pmode} for the
+generic address space only.
+@end deftypefn
+
+@deftypefn {Target Hook} bool TARGET_ADDR_SPACE_VALID_POINTER_MODE (enum machine_mode @var{mode}, addr_space_t @var{as})
+Define this to return nonzero if the port can handle pointers
+with machine mode @var{mode} to address space @var{as}.  This target
+hook is the same as the @code{TARGET_VALID_POINTER_MODE} target hook,
+except that it includes explicit named address space support.  The default
+version of this hook returns true for the modes returned by either the
+@code{TARGET_ADDR_SPACE_POINTER_MODE} or @code{TARGET_ADDR_SPACE_ADDRESS_MODE}
+target hooks for the given address space.
+@end deftypefn
+
+@deftypefn {Target Hook} bool TARGET_ADDR_SPACE_LEGITIMATE_ADDRESS_P (enum machine_mode @var{mode}, rtx @var{exp}, bool @var{strict}, addr_space_t @var{as})
+Define this to return true if @var{exp} is a valid address for mode
+@var{mode} in the named address space @var{as}.  The @var{strict}
+parameter says whether strict addressing is in effect after reload has
+finished.  This target hook is the same as the
+@code{TARGET_LEGITIMATE_ADDRESS_P} target hook, except that it includes
+explicit named address space support.
+@end deftypefn
+
+@deftypefn {Target Hook} rtx TARGET_ADDR_SPACE_LEGITIMIZE_ADDRESS (rtx @var{x}, rtx @var{oldx}, enum machine_mode @var{mode}, addr_space_t @var{as})
+Define this to modify an invalid address @var{x} to be a valid address
+with mode @var{mode} in the named address space @var{as}.  This target
+hook is the same as the @code{TARGET_LEGITIMIZE_ADDRESS} target hook,
+except that it includes explicit named address space support.
+@end deftypefn
+
+@deftypefn {Target Hook} bool TARGET_ADDR_SPACE_SUBSET_P (addr_space_t @var{superset}, addr_space_t @var{subset})
+Define this to return whether the @var{subset} named address space is
+contained within the @var{superset} named address space.  Pointers to
+a named address space that is a subset of another named address space
+will be converted automatically without a cast if used together in
+arithmetic operations.  Pointers to a superset address space can be
+converted to pointers to a subset address space via explicit casts.
+@end deftypefn
+
+@deftypefn {Target Hook} rtx TARGET_ADDR_SPACE_CONVERT (rtx @var{op}, tree @var{from_type}, tree @var{to_type})
+Define this to convert the pointer expression represented by the RTL
+@var{op} with type @var{from_type} that points to a named address
+space to a new pointer expression with type @var{to_type} that points
+to a different named address space.  When this hook it called, it is
+guaranteed that one of the two address spaces is a subset of the other,
+as determined by the @code{TARGET_ADDR_SPACE_SUBSET_P} target hook.
+@end deftypefn
+
+@en @node Misc
+@en @section Miscellaneous Parameters
 @node 其它
 @section 其它参数
 @cindex parameters, miscellaneous
 
 @c prevent bad page break with this line
+@en Here are several miscellaneous parameters.
 这是一些其它参数。
 
 @defmac HAS_LONG_COND_BRANCH
+@en Define this boolean macro to indicate whether or not your architecture
+@en has conditional branches that can span all of memory.  It is used in
+@en conjunction with an optimization that partitions hot and cold basic
+@en blocks into separate sections of the executable.  If this macro is
+@en set to false, gcc will convert any conditional branches that attempt
+@en to cross between sections into unconditional branches or indirect jumps.
 定义该布尔值的宏用来指示你的体系结构是否具有可以跨越所有内存的条件分支。
 它用于将可执行程序hot和cold基本块分割到单独的段的优化。
 如果该宏被设为false，则gcc将任何穿越段的条件分支转换为无条件分支或间接跳转。
 @end defmac
 
 @defmac HAS_LONG_UNCOND_BRANCH
+@en Define this boolean macro to indicate whether or not your architecture
+@en has unconditional branches that can span all of memory.  It is used in
+@en conjunction with an optimization that partitions hot and cold basic
+@en blocks into separate sections of the executable.  If this macro is
+@en set to false, gcc will convert any unconditional branches that attempt
+@en to cross between sections into indirect jumps.
 定义该布尔值的宏用来指示你的体系结构是否具有可以跨越所有内存的无条件分支。
 它用于将可执行程序hot和cold基本块分割到单独的段的优化。
 如果该宏被设为false，则gcc将任何穿越段的无条件分支转换为间接跳转。
 @end defmac
 
 @defmac CASE_VECTOR_MODE
+@en An alias for a machine mode name.  This is the machine mode that
+@en elements of a jump-table should have.
 机器模式名字的一个别名。这是跳转表（jump-table）的元素应该具有的机器模式。
 @end defmac
 
 @defmac CASE_VECTOR_SHORTEN_MODE (@var{min_offset}, @var{max_offset}, @var{body})
+@en Optional: return the preferred mode for an @code{addr_diff_vec}
+@en when the minimum and maximum offset are known.  If you define this,
+@en it enables extra code in branch shortening to deal with @code{addr_diff_vec}.
+@en To make this work, you also have to define @code{INSN_ALIGN} and
+@en make the alignment for @code{addr_diff_vec} explicit.
+@en The @var{body} argument is provided so that the offset_unsigned and scale
+@en flags can be updated.
 可选的：当最小值和最大值位移已知时，返回@code{addr_diff_vec}的首选机器模式。
 如果定义了该宏，这使得在分支缩短中增加了额外的代码来处理@code{addr_diff_vec}。
 要使其工作，还必须要定义@code{INSN_ALIGN}，
@@ -13526,17 +13927,31 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
 @end defmac
 
 @defmac CASE_VECTOR_PC_RELATIVE
+@en Define this macro to be a C expression to indicate when jump-tables
+@en should contain relative addresses.  You need not define this macro if
+@en jump-tables never contain relative addresses, or jump-tables should
+@en contain relative addresses only when @option{-fPIC} or @option{-fPIC}
+@en is in effect.
 定义该宏为一个C表达式，来指示跳转表什么时候应该包含相对地址。
 你不需要定义该宏，如果跳转表从来不包含相对地址，
 或者跳转表只在@option{-fPIC}或者@option{-fPIC}有效时才包含相对地址。
 @end defmac
 
-@defmac CASE_VALUES_THRESHOLD
-定义其为一个最小差值数，用于选择是使用跳转表来替代条件分支树。
-缺省为4，对于具有@code{casesi}指令的机器，其它的为5。这对大多数机器是最好的。
-@end defmac
+@deftypefn {Target Hook} {unsigned int} TARGET_CASE_VALUES_THRESHOLD (void)
+@en This function return the smallest number of different values for which it
+@en is best to use a jump-table instead of a tree of conditional branches.
+@en The default is four for machines with a @code{casesi} instruction and
+@en five otherwise.  This is best for most machines.
+@end deftypefn
 
 @defmac CASE_USE_BIT_TESTS
+@en Define this macro to be a C expression to indicate whether C switch
+@en statements may be implemented by a sequence of bit tests.  This is
+@en advantageous on processors that can efficiently implement left shift
+@en of 1 by the number of bits held in a register, but inappropriate on
+@en targets that would require a loop.  By default, this macro returns
+@en @code{true} if the target defines an @code{ashlsi3} pattern, and
+@en @code{false} otherwise.
 定义该宏为一个C表达式，来指示C switch语句是否可以通过位测试序列来实现。
 这在可以通过寄存器中的位数来有效实现左移1位的处理器上很有利，
 但不适合需要循环的target。缺省下，该宏返回@code{true}，
@@ -13544,94 +13959,230 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
 @end defmac
 
 @defmac WORD_REGISTER_OPERATIONS
+@en Define this macro if operations between registers with integral mode
+@en smaller than a word are always performed on the entire register.
+@en Most RISC machines have this property and most CISC machines do not.
 定义该宏，如果整数机器模式的小于一个字的寄存器间的运算总是在整个寄存器中执行。
 大多数RISC机器具有这个属性，大多数CISC机器不具有。
 @end defmac
 
 @defmac LOAD_EXTEND_OP (@var{mem_mode})
+@en Define this macro to be a C expression indicating when insns that read
+@en memory in @var{mem_mode}, an integral mode narrower than a word, set the
+@en bits outside of @var{mem_mode} to be either the sign-extension or the
+@en zero-extension of the data read.  Return @code{SIGN_EXTEND} for values
+@en of @var{mem_mode} for which the
+@en insn sign-extends, @code{ZERO_EXTEND} for which it zero-extends, and
+@en @code{UNKNOWN} for other modes.
 定义该宏为一个C表达式，
 指示当insn使用比一个字窄的的整数模式的@var{mem_mode}模式读取内存时，
 将读取的数据的@var{mem_mode}外的位进行符号扩展或者零扩展。
 返回@code{SIGN_EXTEND}，对于那些要符号扩展的insn，
 返回@code{ZERO_EXTEND}对那些零扩展的，对于其它的机器模式返回@code{UNKNOWN}。
 
+@en This macro is not called with @var{mem_mode} non-integral or with a width
+@en greater than or equal to @code{BITS_PER_WORD}, so you may return any
+@en value in this case.  Do not define this macro if it would always return
+@en @code{UNKNOWN}.  On machines where this macro is defined, you will normally
+@en define it as the constant @code{SIGN_EXTEND} or @code{ZERO_EXTEND}.
 该宏不会被非整型的，或者宽度大于等于@code{BITS_PER_WORD}的@var{mem_mode}调用，
 所以对于这种情况你可以返回任何值。如果总是返回@code{UNKNOWN}，则不要定义该宏。
 在定义该宏的机器上，你通常要定义其为常量@code{SIGN_EXTEND}或者@code{ZERO_EXTEND}。
 
+@en You may return a non-@code{UNKNOWN} value even if for some hard registers
+@en the sign extension is not performed, if for the @code{REGNO_REG_CLASS}
+@en of these hard registers @code{CANNOT_CHANGE_MODE_CLASS} returns nonzero
+@en when the @var{from} mode is @var{mem_mode} and the @var{to} mode is any
+@en integral mode larger than this but not larger than @code{word_mode}.
 你可以返回一个非@code{UNKNOWN}的值，即使对于一些硬件寄存器并没有执行符号扩展，如果对于这些硬件寄存器的@code{REGNO_REG_CLASS}，当@var{from}机器模式为@var{mem_mode}，并且@var{to}机器模式为任何大于其但是不大于@code{word_mode}的整形机器模式的时候，@code{CANNOT_CHANGE_MODE_CLASS}返回非零。
 
+@en You must return @code{UNKNOWN} if for some hard registers that allow this
+@en mode, @code{CANNOT_CHANGE_MODE_CLASS} says that they cannot change to
+@en @code{word_mode}, but that they can change to another integral mode that
+@en is larger then @var{mem_mode} but still smaller than @code{word_mode}.
 你必须返回@code{UNKNOWN}，如果一些硬件寄存器允许该机器模式，@code{CANNOT_CHANGE_MODE_CLASS}说它们不能变成@code{word_mode}，但是它们可以变成其它大于@var{mem_mode}且仍然小于@code{word_mode}的整形机器模式。
 @end defmac
 
 @defmac SHORT_IMMEDIATES_SIGN_EXTEND
+@en Define this macro if loading short immediate values into registers sign
+@en extends.
 定义该宏，如果将short立即数加载到寄存器中要进行符号扩展。
 @end defmac
 
 @defmac FIXUNS_TRUNC_LIKE_FIX_TRUNC
+@en Define this macro if the same instructions that convert a floating
+@en point number to a signed fixed point number also convert validly to an
+@en unsigned one.
 定义该宏，如果将浮点数转换为有符号定点数的指令，
 同样可以有效的转换为无符号的。
 @end defmac
 
 @deftypefn {Target Hook} int TARGET_MIN_DIVISIONS_FOR_RECIP_MUL (enum machine_mode @var{mode})
+@en When @option{-ffast-math} is in effect, GCC tries to optimize
+@en divisions by the same divisor, by turning them into multiplications by
+@en the reciprocal.  This target hook specifies the minimum number of divisions
+@en that should be there for GCC to perform the optimization for a variable
+@en of mode @var{mode}.  The default implementation returns 3 if the machine
+@en has an instruction for the division, and 2 if it does not.
 当@option{-ffast-math}有效时，GCC尝试使用相同的除数来优化除法，
 通过将它们转换为乘以倒数的方式。
 缺省实现返回3，如果机器具有除法指令，否则为2。
 @end deftypefn
 
 @defmac MOVE_MAX
+@en The maximum number of bytes that a single instruction can move quickly
+@en between memory and registers or between two memory locations.
 单个指令可以在内存和寄存器间，或者两个内存位置间快速移动的最大字节数。
 @end defmac
 
 @defmac MAX_MOVE_MAX
+@en The maximum number of bytes that a single instruction can move quickly
+@en between memory and registers or between two memory locations.  If this
+@en is undefined, the default is @code{MOVE_MAX}.  Otherwise, it is the
+@en constant value that is the largest value that @code{MOVE_MAX} can have
+@en at run-time.
 单个指令可以在内存和寄存器间，或者两个内存位置间快速移动的最大字节数。
 如果没有定义，则缺省为@code{MOVE_MAX}。
 否则，其为@code{MOVE_MAX}在运行时可以具有的最大常数值。
 @end defmac
 
 @defmac SHIFT_COUNT_TRUNCATED
+@en A C expression that is nonzero if on this machine the number of bits
+@en actually used for the count of a shift operation is equal to the number
+@en of bits needed to represent the size of the object being shifted.  When
+@en this macro is nonzero, the compiler will assume that it is safe to omit
+@en a sign-extend, zero-extend, and certain bitwise `and' instructions that
+@en truncates the count of a shift operation.  On machines that have
+@en instructions that act on bit-fields at variable positions, which may
+@en include `bit test' instructions, a nonzero @code{SHIFT_COUNT_TRUNCATED}
+@en also enables deletion of truncations of the values that serve as
+@en arguments to bit-field instructions.
 一个C表达式，为非零，如果在该机器上，实际用于计算移位运算的位数等同于，用来表示被移位的对象大小的位数。当该宏为非零的时候，编译器将假设可以安全的忽略掉对移位运算的计数进行截取的有符号扩展，零扩展和按位与指令。在一些机器上，具有指令可以作用于可变位置的位域，其可能会包含‘位测试’指令，非零的@code{SHIFT_COUNT_TRUNCATED}还可以使得作为位域指令参数的值的截取运算。
 
+@en If both types of instructions truncate the count (for shifts) and
+@en position (for bit-field operations), or if no variable-position bit-field
+@en instructions exist, you should define this macro.
 如果指令会截取计数（对于位移运算）和位置（对于位域运算），或者如果没有可变位置的位域指令存在，则你应该定义该宏。
 
+@en However, on some machines, such as the 80386 and the 680x0, truncation
+@en only applies to shift operations and not the (real or pretended)
+@en bit-field operations.  Define @code{SHIFT_COUNT_TRUNCATED} to be zero on
+@en such machines.  Instead, add patterns to the @file{md} file that include
+@en the implied truncation of the shift instructions.
 然而，在一些机器上，例如80386和680x0，截取操作只应用在移位运算上，而不在位域运算上。在这样的机器上，定义@code{SHIFT_COUNT_TRUNCATED}为零。可替代的，在@file{md}文件中增加指令模式，包含对移位指令隐式的截取操作。
 
+@en You need not define this macro if it would always have the value of zero.
 如果其值总是为零，则不需要定义该宏。
 @end defmac
 
 @anchor{TARGET_SHIFT_TRUNCATION_MASK}
 @deftypefn {Target Hook} int TARGET_SHIFT_TRUNCATION_MASK (enum machine_mode @var{mode})
+@en TARGET_SHIFT_TRUNCATION_MASK (enum machine_mode @var{mode})
+@en This function describes how the standard shift patterns for @var{mode}
+@en deal with shifts by negative amounts or by more than the width of the mode.
+@en @xref{shift patterns}.
 该函数描述了标准的移位指令模式，对于@var{mode}，如何处理负的数量或者大于机器模式宽度的数量的移位。
 @xref{shift patterns}.
 
+@en On many machines, the shift patterns will apply a mask @var{m} to the
+@en shift count, meaning that a fixed-width shift of @var{x} by @var{y} is
+@en equivalent to an arbitrary-width shift of @var{x} by @var{y & m}.  If
+@en this is true for mode @var{mode}, the function should return @var{m},
+@en otherwise it should return 0.  A return value of 0 indicates that no
+@en particular behavior is guaranteed.
 在许多机器上，移位指令模式将会应用一个掩码@var{m}到移位计数上，意味着将@var{x}固定宽度移位@var{y}等价于对@var{x}任意宽度移位@var{y & m}。如果这对机器模式@var{mode}为真，则函数应该返回@var{m}，否则应该返回0。返回值0意味着不保证特定的行为。
 
+@en Note that, unlike @code{SHIFT_COUNT_TRUNCATED}, this function does
+@en @emph{not} apply to general shift rtxes; it applies only to instructions
+@en that are generated by the named shift patterns.
 注意，不像@code{SHIFT_COUNT_TRUNCATED}，该函数不应用到通用的移位rtx上；其只应用到由命名移位指令模式生成的指令上。
 
+@en The default implementation of this function returns
+@en @code{GET_MODE_BITSIZE (@var{mode}) - 1} if @code{SHIFT_COUNT_TRUNCATED}
+@en and 0 otherwise.  This definition is always safe, but if
+@en @code{SHIFT_COUNT_TRUNCATED} is false, and some shift patterns
+@en nevertheless truncate the shift count, you may get better code
+@en by overriding it.
 该函数的缺省实现返回@code{GET_MODE_BITSIZE (@var{mode}) - 1}，如果@code{SHIFT_COUNT_TRUNCATED}，否则为0。该定义总是安全的，但是如果@code{SHIFT_COUNT_TRUNCATED}为假，并且一些移位指令模式还是截取移位计数，则你可以通过重写覆盖该宏来获得更好的代码。
 @end deftypefn
 
 @defmac TRULY_NOOP_TRUNCATION (@var{outprec}, @var{inprec})
+@en A C expression which is nonzero if on this machine it is safe to
+@en ``convert'' an integer of @var{inprec} bits to one of @var{outprec}
+@en bits (where @var{outprec} is smaller than @var{inprec}) by merely
+@en operating on it as if it had only @var{outprec} bits.
 一个C表达式，其为非零，如果在该机器上，将@var{inprec}个位数的整数转换成@var{outprec}个位数（@var{outprec}比@var{inprec}小），通过简单的认为其只具有@var{outprec}个位。
 
+@en On many machines, this expression can be 1.
 在许多机器上，该表达式可以为1。
+
+@c rearranged this, removed the phrase "it is reported that".  this was
+@c to fix an overfull hbox.  --mew 10feb93
+When @code{TRULY_NOOP_TRUNCATION} returns 1 for a pair of sizes for
+modes for which @code{MODES_TIEABLE_P} is 0, suboptimal code can result.
+If this is the case, making @code{TRULY_NOOP_TRUNCATION} return 0 in
+such cases may improve things.
 @end defmac
 
 @deftypefn {Target Hook} int TARGET_MODE_REP_EXTENDED (enum machine_mode @var{mode}, enum machine_mode @var{rep_mode})
+@en The representation of an integral mode can be such that the values
+@en are always extended to a wider integral mode.  Return
+@en @code{SIGN_EXTEND} if values of @var{mode} are represented in
+@en sign-extended form to @var{rep_mode}.  Return @code{UNKNOWN}
+@en otherwise.  (Currently, none of the targets use zero-extended
+@en representation this way so unlike @code{LOAD_EXTEND_OP},
+@en @code{TARGET_MODE_REP_EXTENDED} is expected to return either
+@en @code{SIGN_EXTEND} or @code{UNKNOWN}.  Also no target extends
+@en @var{mode} to @var{rep_mode} so that @var{rep_mode} is not the next
+@en widest integral mode and currently we take advantage of this fact.)
 整型机器模式可以表示为一个值，其总是被扩展为更宽的整型模式。返回@code{SIGN_EXTEND}，如果机器模式为@var{mode}的值被表示为有符号扩展成@var{rep_mode}的形式。否则，返回@code{UNKNOWN}。（目前，没有目标机使用零扩展表示，所以不像@code{LOAD_EXTEND_OP}，@code{TARGET_MODE_REP_EXTENDED}被期望返回@code{SIGN_EXTEND}或者@code{UNKNOWN}。而且没有目标机将@var{mode}扩展为@var{mode_rep}，以至于@var{mode_rep}不是下一个最宽的整型机器模式，目前，我们利用了这个事实。）
 
+@en Similarly to @code{LOAD_EXTEND_OP} you may return a non-@code{UNKNOWN}
+@en value even if the extension is not performed on certain hard registers
+@en as long as for the @code{REGNO_REG_CLASS} of these hard registers
+@en @code{CANNOT_CHANGE_MODE_CLASS} returns nonzero.
 类似于@code{LOAD_EXTEND_OP}，你可以返回一个非@code{UNKNOWN}的值，即使扩展在特定硬件寄存器上没有被执行，只要对于这些硬件寄存器的@code{REGNO_REG_CLASS}，@code{CANNOT_CHANGE_MODE_CLASS}返回非零。
 
+@en Note that @code{TARGET_MODE_REP_EXTENDED} and @code{LOAD_EXTEND_OP}
+@en describe two related properties.  If you define
+@en @code{TARGET_MODE_REP_EXTENDED (mode, word_mode)} you probably also want
+@en to define @code{LOAD_EXTEND_OP (mode)} to return the same type of
+@en extension.
 注意，@code{TARGET_MODE_REP_EXTENDED}和@code{LOAD_EXTEND_OP}描述了两个相关联的属性。如果你定义了@code{TARGET_MODE_REP_EXTENDED (mode, word_mode)}，你可能还要定义@code{LOAD_EXTEND_OP (mode)}，来返回相同类型的扩展。
 
+@en In order to enforce the representation of @code{mode},
+@en @code{TRULY_NOOP_TRUNCATION} should return false when truncating to
+@en @code{mode}.
 为了加强@code{mode}的表示，当截取成@code{mode}时，@code{TRULY_NOOP_TRUNCATION}应该返回假。
 @end deftypefn
 
 @defmac STORE_FLAG_VALUE
+@en A C expression describing the value returned by a comparison operator
+@en with an integral mode and stored by a store-flag instruction
+@en (@samp{cstore@var{mode}4}) when the condition is true.  This description must
+@en apply to @emph{all} the @samp{cstore@var{mode}4} patterns and all the
+@en comparison operators whose results have a @code{MODE_INT} mode.
 一个C表达式，描述了整型机器模式的比较运算符返回的值，并且当条件为真时由存储标记指令(@samp{s@var{cond}})存储。该描述必须应用到所有的@samp{s@var{cond}}指令模式，并且所有比较运算的结果必须具有@code{MODE_INT}机器模式。
 
+@en A value of 1 or @minus{}1 means that the instruction implementing the
+@en comparison operator returns exactly 1 or @minus{}1 when the comparison is true
+@en and 0 when the comparison is false.  Otherwise, the value indicates
+@en which bits of the result are guaranteed to be 1 when the comparison is
+@en true.  This value is interpreted in the mode of the comparison
+@en operation, which is given by the mode of the first operand in the
+@en @samp{cstore@var{mode}4} pattern.  Either the low bit or the sign bit of
+@en @code{STORE_FLAG_VALUE} be on.  Presently, only those bits are used by
+@en the compiler.
 值为1或者-1，意味着实现比较运算的指令当比较为真时返回确切的1或者-1，当比较为假时返回0。否则，值会表示当比较为真时结果的哪些位保证为1。该值按照比较运算的机器模式来解析，其由@samp{s@var{cond}}指令模式中的第一个操作数的机器模式给出。目前，编译器只用到了@code{STORE_FLAG_VALUE}的低位或者符号位。
 
+@en If @code{STORE_FLAG_VALUE} is neither 1 or @minus{}1, the compiler will
+@en generate code that depends only on the specified bits.  It can also
+@en replace comparison operators with equivalent operations if they cause
+@en the required bits to be set, even if the remaining bits are undefined.
+@en For example, on a machine whose comparison operators return an
+@en @code{SImode} value and where @code{STORE_FLAG_VALUE} is defined as
+@en @samp{0x80000000}, saying that just the sign bit is relevant, the
+@en expression
 如果@code{STORE_FLAG_VALUE}不为1或者-1，则编译器将生成只依赖特定位的代码。其还可以用等价的运算来替换比较运算，如果它们会造成需要的位被设置，即使其它位没有被定义。例如，在比较运算返回一个@code{SImode}值的机器上，其@code{STORE_FLAG_VALUE}被定义为@samp{0x80000000}，说明只有符号位是相关的，表达式
 
 @smallexample
@@ -13639,6 +14190,7 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
 @end smallexample
 
 @noindent
+@en can be converted to
 可以被转换为
 
 @smallexample
@@ -13646,12 +14198,46 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
 @end smallexample
 
 @noindent
+@en where @var{n} is the appropriate shift count to move the bit being
+@en tested into the sign bit.
+
 其中@var{n}为适当的移位计数，用来将被测试的位移送到符号位。
 
+@en There is no way to describe a machine that always sets the low-order bit
+@en for a true value, but does not guarantee the value of any other bits,
+@en but we do not know of any machine that has such an instruction.  If you
+@en are trying to port GCC to such a machine, include an instruction to
+@en perform a logical-and of the result with 1 in the pattern for the
+@en comparison operators and let us know at @email{gcc@@gcc.gnu.org}.
 没有办法来描述，一个机器对于真值，总是设置低顺序的位，而不保证其它位的值。但是，我们不知道是否有机器具有这样的指令。如果你正在尝试将GCC移植到这样的机器上，那么可以在比较运算的指令模式中，包含一条指令来执行将结果和1进行逻辑与，并且通过@email{gcc@@gcc.gnu.org}让我们知道。
 
+@en Often, a machine will have multiple instructions that obtain a value
+@en from a comparison (or the condition codes).  Here are rules to guide the
+@en choice of value for @code{STORE_FLAG_VALUE}, and hence the instructions
+@en to be used:
 通常，机器将具有多个指令，从比较（或者条件代码）中获得一个值。这里有一些规则用来指导对@code{STORE_FLAG_VALUE}的值的选择，以及要使用的指令：
 
+@en @itemize @bullet
+@en @item
+@en Use the shortest sequence that yields a valid definition for
+@en @code{STORE_FLAG_VALUE}.  It is more efficient for the compiler to
+@en ``normalize'' the value (convert it to, e.g., 1 or 0) than for the
+@en comparison operators to do so because there may be opportunities to
+@en combine the normalization with other operations.
+@en 
+@en @item
+@en For equal-length sequences, use a value of 1 or @minus{}1, with @minus{}1 being
+@en slightly preferred on machines with expensive jumps and 1 preferred on
+@en other machines.
+@en 
+@en @item
+@en As a second choice, choose a value of @samp{0x80000001} if instructions
+@en exist that set both the sign and low-order bits but do not define the
+@en others.
+@en 
+@en @item
+@en Otherwise, use a value of @samp{0x80000000}.
+@en @end itemize
 @itemize @bullet
 @item
 使用最短的序列，产生@code{STORE_FLAG_VALUE}的有效定义。对编译器来说，将值正常化（例如，将其转成1或者0）要比进行比较运算更有效，因为可能会有一些机会来合并其它的正常化运算。
@@ -13666,71 +14252,164 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
 否则，使用值@samp{0x80000000}。
 @end itemize
 
+@en Many machines can produce both the value chosen for
+@en @code{STORE_FLAG_VALUE} and its negation in the same number of
+@en instructions.  On those machines, you should also define a pattern for
+@en those cases, e.g., one matching
 许多机器可以同时产生供@code{STORE_FLAG_VALUE}选择的值，以及同样数量指令的取反。在那些机器上，你应该还定义这些情况的指令模式，例如，
 
 @smallexample
 (set @var{A} (neg:@var{m} (ne:@var{m} @var{B} @var{C})))
 @end smallexample
 
+@en Some machines can also perform @code{and} or @code{plus} operations on
+@en condition code values with less instructions than the corresponding
+@en @samp{cstore@var{mode}4} insn followed by @code{and} or @code{plus}.  On those
+@en machines, define the appropriate patterns.  Use the names @code{incscc}
+@en and @code{decscc}, respectively, for the patterns which perform
+@en @code{plus} or @code{minus} operations on condition code values.  See
+@en @file{rs6000.md} for some examples.  The GNU Superoptizer can be used to
+@en find such instruction sequences on other machines.
 一些机器还可以在条件代码值上，执行@code{and}或者@code{plus}运算，使用少于相应的@samp{s@var{cond}} insn后跟随@code{and}或者@code{plus}的指令数目。在这些机器上，需要定义适当的指令模式。分别使用名字@code{incscc}和@code{decscc}，对于在条件代码值上执行@code{plus}或者@code{minus}运算的指令模式。参见@file{rs6000.md}中的一些例子。可以使用GNU Superoptizer来在其它机器上查找这样的指令序列。
 
+@en If this macro is not defined, the default value, 1, is used.  You need
+@en not define @code{STORE_FLAG_VALUE} if the machine has no store-flag
+@en instructions, or if the value generated by these instructions is 1.
 如果该宏没有被定义，则使用缺省的值1。你不需要定义@code{STORE_FLAG_VALUE}，如果机器没有存储标记的指令，或者如果这些指令生成的值为1。
 @end defmac
 
 @defmac FLOAT_STORE_FLAG_VALUE (@var{mode})
+@en A C expression that gives a nonzero @code{REAL_VALUE_TYPE} value that is
+@en returned when comparison operators with floating-point results are true.
+@en Define this macro on machines that have comparison operations that return
+@en floating-point values.  If there are no such operations, do not define
+@en this macro.
 一个C表达式，给出一个非零的@code{REAL_VALUE_TYPE}值，当浮点比较运算的结果为真时返回该值。在一些机器上，具有返回浮点值的比较运算，可以定义该宏。如果没有这样的运算，则不要定义该宏。
 @end defmac
 
 @defmac VECTOR_STORE_FLAG_VALUE (@var{mode})
+@en A C expression that gives a rtx representing the nonzero true element
+@en for vector comparisons.  The returned rtx should be valid for the inner
+@en mode of @var{mode} which is guaranteed to be a vector mode.  Define
+@en this macro on machines that have vector comparison operations that
+@en return a vector result.  If there are no such operations, do not define
+@en this macro.  Typically, this macro is defined as @code{const1_rtx} or
+@en @code{constm1_rtx}.  This macro may return @code{NULL_RTX} to prevent
+@en the compiler optimizing such vector comparison operations for the
+@en given mode.
 一个C表达式，给出一个rtx，表示向量比较中非零的真元素。返回的rtx应该对于@var{mode}的内部机器模式是有效的，@var{mode}为一个向量机器模式。定义该宏，在一些机器上，具有返回向量结果的向量比较运算。如果没有这样的运算，则不要定义该宏。通常，该宏被定义为@code{const1_rtx}或者@code{constm1_rtx}。该宏可以返回@code{NULL_RTX}，来阻止编译器优化给定的机器模式的向量比较运算。
 @end defmac
 
 @defmac CLZ_DEFINED_VALUE_AT_ZERO (@var{mode}, @var{value})
 @defmacx CTZ_DEFINED_VALUE_AT_ZERO (@var{mode}, @var{value})
+@en A C expression that indicates whether the architecture defines a value
+@en for @code{clz} or @code{ctz} with a zero operand.  
+@en A result of @code{0} indicates the value is undefined.
+@en If the value is defined for only the RTL expression, the macro should
+@en evaluate to @code{1}; if the value applies also to the corresponding optab
+@en entry (which is normally the case if it expands directly into
+@en the corresponding RTL), then the macro should evaluate to @code{2}.  
+@en In the cases where the value is defined, @var{value} should be set to
+@en this value.  
 一个C表达式，指示体系机构是否为@code{clz}或者@code{ctz}在操作数为零时，定义了值。结果为@code{0}，表示值未被定义。如果值只被定义为RTL表达式，则宏应该求值为@code{1}；如果还应用到相应的optab项（其通常情况为直接扩展为相应的RTL），则宏应该求值为@code{2}。在值被定义的情况下，@var{value}应该被设置为该值。
 
+@en If this macro is not defined, the value of @code{clz} or
+@en @code{ctz} at zero is assumed to be undefined.
 如果该宏没有被定义，则@code{clz}或者@code{ctz}在操作数为零时，被认为未定义。
 
+@en This macro must be defined if the target's expansion for @code{ffs}
+@en relies on a particular value to get correct results.  Otherwise it
+@en is not necessary, though it may be used to optimize some corner cases, and
+@en to provide a default expansion for the @code{ffs} optab.
 该宏必须被定义，如果目标机对@code{ffs}的扩展，依赖于特定的值，以获得正确的结果。否则，没有必要，虽然其可以用于优化一些边角的情况，并且为@code{ffs} optab提供缺省的扩展。
 
+@en Note that regardless of this macro the ``definedness'' of @code{clz}
+@en and @code{ctz} at zero do @emph{not} extend to the builtin functions
+@en visible to the user.  Thus one may be free to adjust the value at will
+@en to match the target expansion of these operations without fear of
+@en breaking the API@.
 注意，不论该宏是否定义，@code{clz}和@code{ctz}在操作数为0时的定义，都不会被扩展为用户可见的内建函数。因此，可以任意调整该值，来匹配对这些运算的目标机扩展，而无需担心会破坏API。
 @end defmac
 
 @defmac Pmode
+@en An alias for the machine mode for pointers.  On most machines, define
+@en this to be the integer mode corresponding to the width of a hardware
+@en pointer; @code{SImode} on 32-bit machine or @code{DImode} on 64-bit machines.
+@en On some machines you must define this to be one of the partial integer
+@en modes, such as @code{PSImode}.
 指针的机器模式别名。在大多数机器上，定义该宏为整型机器模式，对应于硬件指针宽度；32位机器上为@code{SImode}，64位机器上为@code{DImode}。在一些机器上，你必须定义该宏为部分整型机器模式，例如@code{PSImode}。
 
+@en The width of @code{Pmode} must be at least as large as the value of
+@en @code{POINTER_SIZE}.  If it is not equal, you must define the macro
+@en @code{POINTERS_EXTEND_UNSIGNED} to specify how pointers are extended
+@en to @code{Pmode}.
 @code{Pmode}的宽度必须至少与@code{POINTER_SIZE}的值一样大。如果不相等，你必须定义宏@code{POINTERS_EXTEND_UNSIGNED}来描述指针如何被扩展为@code{Pmode}。
 @end defmac
 
 @defmac FUNCTION_MODE
+@en An alias for the machine mode used for memory references to functions
+@en being called, in @code{call} RTL expressions.  On most CISC machines,
+@en where an instruction can begin at any byte address, this should be 
+@en @code{QImode}.  On most RISC machines, where all instructions have fixed
+@en size and alignment, this should be a mode with the same size and alignment
+@en as the machine instruction words - typically @code{SImode} or @code{HImode}.
 机器模式的别名，在@code{call} RTL表达式中，用于被调用函数的内存引用。在大多数CISC机器上，指令可以起始于任意字节地址，这应该为@code{QImode}。在大多RISC机器上，所有的指令都具有固定的大小和对齐方式，这应该为与机器指令字具有相同大小和对齐的机器模式，通常为@code{SImode}或者@code{HImode}。
 @end defmac
 
 @defmac STDC_0_IN_SYSTEM_HEADERS
+@en In normal operation, the preprocessor expands @code{__STDC__} to the
+@en constant 1, to signify that GCC conforms to ISO Standard C@.  On some
+@en hosts, like Solaris, the system compiler uses a different convention,
+@en where @code{__STDC__} is normally 0, but is 1 if the user specifies
+@en strict conformance to the C Standard.
 正常的操作中，预处理器会将@code{__STDC__}扩展为常量1，来表明GCC遵循ISO标准C。在一些主机上，例如Solaris，系统编译器使用不同的约定，@code{__STDC__}通常为0，但是如果用户指出要严格遵循C标准时为1。
 
+@en Defining @code{STDC_0_IN_SYSTEM_HEADERS} makes GNU CPP follows the host
+@en convention when processing system header files, but when processing user
+@en files @code{__STDC__} will always expand to 1.
 定义@code{STDC_0_IN_SYSTEM_HEADERS}使得GNU CPP遵循主机的约定，当处理系统头文件时，但是，当处理用户文件时@code{__STDC__}将总是被扩展为1。
 @end defmac
 
 @defmac NO_IMPLICIT_EXTERN_C
+@en Define this macro if the system header files support C++ as well as C@.
+@en This macro inhibits the usual method of using system header files in
+@en C++, which is to pretend that the file's contents are enclosed in
+@en @samp{extern "C" @{@dots{}@}}.
 定义该宏，如果系统头文件支持C++，也支持C。该宏抑制了通常在C++中使用系统头文件的方法，即假设文件的内容包含在@samp{extern "C" @{@dots{}@}}中。
 @end defmac
 
 @findex #pragma
 @findex pragma
 @defmac REGISTER_TARGET_PRAGMAS ()
+@en Define this macro if you want to implement any target-specific pragmas.
+@en If defined, it is a C expression which makes a series of calls to
+@en @code{c_register_pragma} or @code{c_register_pragma_with_expansion}
+@en for each pragma.  The macro may also do any
+@en setup required for the pragmas.
 定义该宏，如果你想实现任何目标机特定的pragma。如果被定义，其为一个C表达式，为每个pragma使用一系列的对@code{c_register_pragma}或者@code{c_register_pragma_with_expansion}调用。该宏还可以做任何pragma所要求的设置。
 
+@en The primary reason to define this macro is to provide compatibility with
+@en other compilers for the same target.  In general, we discourage
+@en definition of target-specific pragmas for GCC@.
 定义该宏的主要原因是提供相同目标机上，与其它编译器的兼容性。大体上，我们不鼓励为GCC定义目标机特定的pragma。
 
+@en If the pragma can be implemented by attributes then you should consider
+@en defining the target hook @samp{TARGET_INSERT_ATTRIBUTES} as well.
 如果pragma可以通过attribute属性来实现，则你也应该考虑定义目标机钩子@samp{TARGET_INSERT_ATTRIBUTES}。
 
+@en Preprocessor macros that appear on pragma lines are not expanded.  All
+@en @samp{#pragma} directives that do not match any registered pragma are
+@en silently ignored, unless the user specifies @option{-Wunknown-pragmas}.
 出现在pragma行中的预处理器宏不被扩展。所有不匹配被注册的@samp{#pragma}指令，将被安静的忽略，除非用户指定@option{-Wunknown-pragmas}。
 @end defmac
 
 @deftypefun void c_register_pragma (const char *@var{space}, const char *@var{name}, void (*@var{callback}) (struct cpp_reader *))
 @deftypefunx void c_register_pragma_with_expansion (const char *@var{space}, const char *@var{name}, void (*@var{callback}) (struct cpp_reader *))
 
+@en Each call to @code{c_register_pragma} or
+@en @code{c_register_pragma_with_expansion} establishes one pragma.  The
+@en @var{callback} routine will be called when the preprocessor encounters a
+@en pragma of the form
 每个对@code{c_register_pragma}或者@code{c_register_pragma_with_expansion}的调用，都建立了一个pragma。当预处理器遇到一个形式为
 
 @smallexample
@@ -13739,199 +14418,477 @@ GCC支持使用汇编形式的变量对这些寄存器的访问，寄存器以�
 
 的pragma，则@var{callback}函数将被调用。 
 
+@en @var{space} is the case-sensitive namespace of the pragma, or
+@en @code{NULL} to put the pragma in the global namespace.  The callback
+@en routine receives @var{pfile} as its first argument, which can be passed
+@en on to cpplib's functions if necessary.  You can lex tokens after the
+@en @var{name} by calling @code{pragma_lex}.  Tokens that are not read by the
+@en callback will be silently ignored.  The end of the line is indicated by
+@en a token of type @code{CPP_EOF}.  Macro expansion occurs on the
+@en arguments of pragmas registered with
+@en @code{c_register_pragma_with_expansion} but not on the arguments of
+@en pragmas registered with @code{c_register_pragma}.
 @var{space}为大小写敏感的pragma命名空间，或者为@code{NULL}，将gragma放在全局命名空间中。回调函数接受@var{pfile}作为第一个参数，如果需要其可以被传递给cpplib的函数。你可以通过调用@code{pragma_lex}，来词法分析@var{name}之后的token。没有被回调函数读入的token将被安静的忽略。行尾由类型为@code{CPP_EOF}的token来指示。宏扩展发生在使用@code{c_register_pragma_with_expansion}注册的pragma的参数上，但不在使用@code{c_register_pragma}注册的pragma的参数上。
 
+@en Note that the use of @code{pragma_lex} is specific to the C and C++
+@en compilers.  It will not work in the Java or Fortran compilers, or any
+@en other language compilers for that matter.  Thus if @code{pragma_lex} is going
+@en to be called from target-specific code, it must only be done so when
+@en building the C and C++ compilers.  This can be done by defining the
+@en variables @code{c_target_objs} and @code{cxx_target_objs} in the
+@en target entry in the @file{config.gcc} file.  These variables should name
+@en the target-specific, language-specific object file which contains the
+@en code that uses @code{pragma_lex}.  Note it will also be necessary to add a
+@en rule to the makefile fragment pointed to by @code{tmake_file} that shows
+@en how to build this object file.
 注意，使用@code{pragma_lex}是特定于C和C++编译器的。其在Java或者Fortran编译器上，或者其它语言编译器上无法工作。因此，如果@code{pragma_lex}准备从目标机特定代码中被调用，其必须只在构建C和C++编译器的时候执行。这可以通过在@file{config.gcc}文件中的目标机项中，定义变量@code{c_target_objs}和@code{cxx_target_objs}来实现。这些变量应该命名目标机特定的，语言特定的对象文件，其包含了使用@code{pragma_lex}的代码。注意，还有必要增加一个规则到由@code{tmake_file}指定的makefile片断中，来显示如何构建该目标文件。
 @end deftypefun
 
 @findex #pragma
 @findex pragma
 @defmac HANDLE_SYSV_PRAGMA
+@en Define this macro (to a value of 1) if you want the System V style
+@en pragmas @samp{#pragma pack(<n>)} and @samp{#pragma weak <name>
+@en [=<value>]} to be supported by gcc.
 定义该宏（值为1），如果你想gcc支持System V风格的pragma @samp{#pragma pack(<n>)}和@samp{#pragma weak <name> [=<value>]}。
 
+@en The pack pragma specifies the maximum alignment (in bytes) of fields
+@en within a structure, in much the same way as the @samp{__aligned__} and
+@en @samp{__packed__} @code{__attribute__}s do.  A pack value of zero resets
+@en the behavior to the default.
 pack pragma描述了结构体中域的最大对齐方式（以字节为单位），很大程度上等同于使用@samp{__aligned__}和@samp{__packed__} @code{__attribute__}。pack值为零，会将行为重置为缺省。
 
+@en A subtlety for Microsoft Visual C/C++ style bit-field packing
+@en (e.g.@: -mms-bitfields) for targets that support it:
+@en When a bit-field is inserted into a packed record, the whole size
+@en of the underlying type is used by one or more same-size adjacent
+@en bit-fields (that is, if its long:3, 32 bits is used in the record,
+@en and any additional adjacent long bit-fields are packed into the same
+@en chunk of 32 bits.  However, if the size changes, a new field of that
+@en size is allocated).
 对于目标机支持的微软Visual C/C++风格的位域打包（例如-mms-bitfields），其微妙之处在于：当位域被插入到一个打包了的记录中时，则底层类型的整个大小会被一个或多个相同大小临近的位域使用（也就是说，如果为long:3，则记录会使用32位，任何额外的临近的long位域将被打包到32位块中。然而，如果大小改变了，则会分配一个新的同样大小的域）。
 
+@en If both MS bit-fields and @samp{__attribute__((packed))} are used,
+@en the latter will take precedence.  If @samp{__attribute__((packed))} is
+@en used on a single field when MS bit-fields are in use, it will take
+@en precedence for that field, but the alignment of the rest of the structure
+@en may affect its placement.
 如果MS位域和@samp{__attribute__((packed))}都被使用，则后者优先。如果当在使用MS位域的时候，@samp{__attribute__((packed))}被用于一个单独的域，则对于该域是优先的，但是结构体的其它部分的对齐方式会影响它的放置。
 
+@en The weak pragma only works if @code{SUPPORTS_WEAK} and
+@en @code{ASM_WEAKEN_LABEL} are defined.  If enabled it allows the creation
+@en of specifically named weak labels, optionally with a value.
 weak pragma只有当@code{SUPPORTS_WEAK}和@code{ASM_WEAKEN_LABEL}被定义时，才工作。如果可用，其允许创建特殊命名的弱标号，以及可选的值。
 @end defmac
 
 @findex #pragma
 @findex pragma
 @defmac HANDLE_PRAGMA_PACK_PUSH_POP
+@en Define this macro (to a value of 1) if you want to support the Win32
+@en style pragmas @samp{#pragma pack(push[,@var{n}])} and @samp{#pragma
+@en pack(pop)}.  The @samp{pack(push,[@var{n}])} pragma specifies the maximum
+@en alignment (in bytes) of fields within a structure, in much the same way as
+@en the @samp{__aligned__} and @samp{__packed__} @code{__attribute__}s do.  A
+@en pack value of zero resets the behavior to the default.  Successive
+@en invocations of this pragma cause the previous values to be stacked, so
+@en that invocations of @samp{#pragma pack(pop)} will return to the previous
+@en value.
 定义该宏（值为1），如果你想支持Win32风格的pragmas @samp{#pragma pack(push[,@var{n}])} and @samp{#pragma pack(pop)}。@samp{pack(push,[@var{n}])} pragma指定结构体内的域的最大对齐方式（按字节），等同于使用@samp{__aligned__} 和 @samp{__packed__} @code{__attribute__}。如果pack值为0，则会将行为重置为缺省情况。连续的调用该pragma会造成先前的值被压栈，所以调用@samp{#pragma pack(pop)}会返回先前的值。
 @end defmac
 
 @defmac HANDLE_PRAGMA_PACK_WITH_EXPANSION
+@en Define this macro, as well as
+@en @code{HANDLE_SYSV_PRAGMA}, if macros should be expanded in the
+@en arguments of @samp{#pragma pack}.
 定义该宏，以及@code{HANDLE_SYSV_PRAGMA}，如果在@samp{#pragma pack}中的参数宏应该被扩展。
 @end defmac
 
+@deftypevr {Target Hook} bool TARGET_HANDLE_PRAGMA_EXTERN_PREFIX
+True if @code{#pragma extern_prefix} is to be supported.
+@end deftypevr
+
 @defmac TARGET_DEFAULT_PACK_STRUCT
+@en If your target requires a structure packing default other than 0 (meaning
+@en the machine default), define this macro to the necessary value (in bytes).
+@en This must be a value that would also be valid to use with
+@en @samp{#pragma pack()} (that is, a small power of two).
 如果你的目标机要求结构体缺省的打包方式不是0（意味着机器缺省方式），则定义该宏为必要的值（以字节为单位）。该值必须还对于@samp{#pragma pack()}有效（也就是说，2的小的幂数）。
 @end defmac
 
-@findex #pragma
-@findex pragma
-@defmac HANDLE_PRAGMA_PUSH_POP_MACRO
-定义该宏，如果你想支持Win32风格的pragmas @samp{#pragma push_macro(macro-name-as-string)}和@samp{#pragma pop_macro(macro-name-as-string)}。@samp{#pragma push_macro(macro-name-as-string)}用来保存命名的宏，并且通过@samp{#pragma pop_macro(macro-name-as-string)}来返回先前的值。
-@end defmac
-
-
 @defmac DOLLARS_IN_IDENTIFIERS
+@en Define this macro to control use of the character @samp{$} in
+@en identifier names for the C family of languages.  0 means @samp{$} is
+@en not allowed by default; 1 means it is allowed.  1 is the default;
+@en there is no need to define this macro in that case.
 定义该宏，来控制C语言家族，标识符名字中对字符@samp{$}的使用。0意味着缺省不允许使用@samp{$}；1意味着允许。缺省为1；对于这种情况，不需要定义该宏。
 @end defmac
 
 @defmac NO_DOLLAR_IN_LABEL
+@en Define this macro if the assembler does not accept the character
+@en @samp{$} in label names.  By default constructors and destructors in
+@en G++ have @samp{$} in the identifiers.  If this macro is defined,
+@en @samp{.} is used instead.
 定义该宏，如果汇编器不接受标号名字中的@samp{$}。缺省的，G++的构造函数和析构函数会在标识符中使用@samp{$}。如果该宏被定义，则使用@samp{.}来替代。
 @end defmac
 
 @defmac NO_DOT_IN_LABEL
+@en Define this macro if the assembler does not accept the character
+@en @samp{.} in label names.  By default constructors and destructors in G++
+@en have names that use @samp{.}.  If this macro is defined, these names
+@en are rewritten to avoid @samp{.}.
 定义该宏，如果汇编器不接受标号名字中的@samp{.}。缺省的，G++的构造函数和析构函数的名字会使用@samp{.}。如果该宏被定义，则这些名字被重写，以避免出现@samp{.}。
 @end defmac
 
 @defmac INSN_SETS_ARE_DELAYED (@var{insn})
+@en Define this macro as a C expression that is nonzero if it is safe for the
+@en delay slot scheduler to place instructions in the delay slot of @var{insn},
+@en even if they appear to use a resource set or clobbered in @var{insn}.
+@en @var{insn} is always a @code{jump_insn} or an @code{insn}; GCC knows that
+@en every @code{call_insn} has this behavior.  On machines where some @code{insn}
+@en or @code{jump_insn} is really a function call and hence has this behavior,
+@en you should define this macro.
 定义该宏为一个C表达式，其为非零，如果对于延迟槽调度器，将指令放在@var{insn}的延迟槽中是安全的，即使它们可能会使用@var{insn}设置或者破坏的一个资源。@var{insn}总是一个@code{jump_insn}或者@code{insn}；GCC知道每个@code{call_insn}具有这种行为。在一些机器上，一些@code{insn}或者@code{jump_insn}确实为一个函数调用，因此也具有这种行为，你应该定义该宏。
 
+@en You need not define this macro if it would always return zero.
 如果其总是返回零，则不需要定义该宏。
 @end defmac
 
 @defmac INSN_REFERENCES_ARE_DELAYED (@var{insn})
+@en Define this macro as a C expression that is nonzero if it is safe for the
+@en delay slot scheduler to place instructions in the delay slot of @var{insn},
+@en even if they appear to set or clobber a resource referenced in @var{insn}.
+@en @var{insn} is always a @code{jump_insn} or an @code{insn}.  On machines where
+@en some @code{insn} or @code{jump_insn} is really a function call and its operands
+@en are registers whose use is actually in the subroutine it calls, you should
+@en define this macro.  Doing so allows the delay slot scheduler to move
+@en instructions which copy arguments into the argument registers into the delay
+@en slot of @var{insn}.
 定义该宏为一个C表达式，其为非零，如果对于延迟槽调度器，将指令放在@var{insn}的延迟槽中是安全的，即使它们可能会设置或者破坏@var{insn}使用的一个资源。@var{insn}总是一个@code{jump_insn}或者@code{insn}。在一些机器上，一些@code{insn}或者@code{jump_insn}确实为一个函数调用，并且其操作数为寄存器，实际是在其调用的子函数中使用，你应该定义该宏。这使得延迟槽调度器将复制参数到参数寄存器的指令移送到@var{insn}的延迟槽中。
 
+@en You need not define this macro if it would always return zero.
 如果其总是返回零，则不需要定义该宏。
 @end defmac
 
 @defmac MULTIPLE_SYMBOL_SPACES
+@en Define this macro as a C expression that is nonzero if, in some cases,
+@en global symbols from one translation unit may not be bound to undefined
+@en symbols in another translation unit without user intervention.  For
+@en instance, under Microsoft Windows symbols must be explicitly imported
+@en from shared libraries (DLLs).
 定义该宏为一个C表达式，其为非零，如果对于一些情况，没有用户的介入，一个转换单元中的全局符号可能不会被发现为另一个转换单元中的未定义的符号。例如，在Microsoft Windows下，符号必须被从共享库（DLL）中显式的导入。
 
+@en You need not define this macro if it would always evaluate to zero.
 如果其总是为零，则不需要定义该宏。
 @end defmac
 
 @deftypefn {Target Hook} tree TARGET_MD_ASM_CLOBBERS (tree @var{outputs}, tree @var{inputs}, tree @var{clobbers})
+@en This target hook should add to @var{clobbers} @code{STRING_CST} trees for
+@en any hard regs the port wishes to automatically clobber for an asm.
+@en It should return the result of the last @code{tree_cons} used to add a
+@en clobber.  The @var{outputs}, @var{inputs} and @var{clobber} lists are the
+@en corresponding parameters to the asm and may be inspected to avoid
+@en clobbering a register that is an input or output of the asm.  You can use
+@en @code{tree_overlaps_hard_reg_set}, declared in @file{tree.h}, to test
+@en for overlap with regards to asm-declared registers.
 该目标钩子将移植平台希望一个asm可以自动破坏的硬件寄存器增加到@var{clobbers} @code{STRING_CST} tree中。其应该返回最后一个用于增加一个破坏者的@code{tree_cons}。@var{outputs}, @var{inputs} 和 @var{clobber}为asm的相应的参数，可以用来检查以避免破坏asm的输入或者输出寄存器。你可以使用@file{tree.h}中声明的@code{tree_overlaps_hard_reg_set}来测试是否与asm声明的寄存器有重叠。
 @end deftypefn
 
 @defmac MATH_LIBRARY
+@en Define this macro as a C string constant for the linker argument to link
+@en in the system math library, minus the initial @samp{"-l"}, or
+@en @samp{""} if the target does not have a
+@en separate math library.
 定义该宏为一个C字符串常量，为连接器的参数，作为系统数学库连接，或者@samp{""}，如果目标机没有单独的数学库。
 
+@en You need only define this macro if the default of @samp{"m"} is wrong.
 只有当缺省的@samp{"-lm"}有错误时，才需要定义该宏。
 @end defmac
 
 @defmac LIBRARY_PATH_ENV
+@en Define this macro as a C string constant for the environment variable that
+@en specifies where the linker should look for libraries.
 定义该宏为一个C字符串常量，为一个环境变量，指定了连接器应该从哪里查找库。
 
+@en You need only define this macro if the default of @samp{"LIBRARY_PATH"}
+@en is wrong.
 只有当缺省的@samp{"LIBRARY_PATH"}有错误时，才需要定义该宏。
 @end defmac
 
 @defmac TARGET_POSIX_IO
+@en Define this macro if the target supports the following POSIX@ file
+@en functions, access, mkdir and  file locking with fcntl / F_SETLKW@.
+@en Defining @code{TARGET_POSIX_IO} will enable the test coverage code
+@en to use file locking when exiting a program, which avoids race conditions
+@en if the program has forked. It will also create directories at run-time
+@en for cross-profiling.
 定义该宏，如果目标机支持下列POSIX文件函数，access, mkdir和使用fcntl / F_SETLKW的文件加锁。其还在运行时为交叉profiling创建目录。
 @end defmac
 
 @defmac MAX_CONDITIONAL_EXECUTE
+@en A C expression for the maximum number of instructions to execute via
+@en conditional execution instructions instead of a branch.  A value of
+@en @code{BRANCH_COST}+1 is the default if the machine does not use cc0, and
+@en 1 if it does use cc0.
 一个C表达式，为通过条件执行指令来替代分支的最大指令数。值@code{BRANCH_COST}+1为缺省值，如果机器没有使用cc0，如果使用了cc0，则为1。
 @end defmac
 
 @defmac IFCVT_MODIFY_TESTS (@var{ce_info}, @var{true_expr}, @var{false_expr})
+@en Used if the target needs to perform machine-dependent modifications on the
+@en conditionals used for turning basic blocks into conditionally executed code.
+@en @var{ce_info} points to a data structure, @code{struct ce_if_block}, which
+@en contains information about the currently processed blocks.  @var{true_expr}
+@en and @var{false_expr} are the tests that are used for converting the
+@en then-block and the else-block, respectively.  Set either @var{true_expr} or
+@en @var{false_expr} to a null pointer if the tests cannot be converted.
 使用该宏，如果目标机需要在将基本块转为条件执行代码时，对条件进行机器相关的修改。@var{ce_info}指向一个数据结构，@code{struct ce_if_block}，其包含了关于当前被处理的块的信息。@var{true_expr}和@var{false_expr}为测试，分别用于转换then-block和else-block。如果测试不能被转换，则将@var{true_expr}或者@var{false_expr}设置为空指针。
 @end defmac
 
 @defmac IFCVT_MODIFY_MULTIPLE_TESTS (@var{ce_info}, @var{bb}, @var{true_expr}, @var{false_expr})
+@en Like @code{IFCVT_MODIFY_TESTS}, but used when converting more complicated
+@en if-statements into conditions combined by @code{and} and @code{or} operations.
+@en @var{bb} contains the basic block that contains the test that is currently
+@en being processed and about to be turned into a condition.
 类似于@code{IFCVT_MODIFY_TESTS}，不过用于将更加复杂的if语句转换为由@code{and}和@code{or}运算组合的条件。@var{bb}包含的基本块，包含了当前被处理的测试，并将被转换为一个条件。
 @end defmac
 
 @defmac IFCVT_MODIFY_INSN (@var{ce_info}, @var{pattern}, @var{insn})
+@en A C expression to modify the @var{PATTERN} of an @var{INSN} that is to
+@en be converted to conditional execution format.  @var{ce_info} points to
+@en a data structure, @code{struct ce_if_block}, which contains information
+@en about the currently processed blocks.
 一个C表达式，来修改@var{INSN}的@var{PATTERN}，其将被转换为一个条件执行的格式。@var{ce_info}指向一个数据结构，@code{struct ce_if_block}，其包含了关于当前被处理的块的信息。
 @end defmac
 
 @defmac IFCVT_MODIFY_FINAL (@var{ce_info})
+@en A C expression to perform any final machine dependent modifications in
+@en converting code to conditional execution.  The involved basic blocks
+@en can be found in the @code{struct ce_if_block} structure that is pointed
+@en to by @var{ce_info}.
 一个C表达式，用来执行在将代码转换为条件执行时，任何最终机器相关的修改。涉及到的基本块可以在由@var{ce_info}指向的@code{struct ce_if_block}结构体中找到。
 @end defmac
 
 @defmac IFCVT_MODIFY_CANCEL (@var{ce_info})
+@en A C expression to cancel any machine dependent modifications in
+@en converting code to conditional execution.  The involved basic blocks
+@en can be found in the @code{struct ce_if_block} structure that is pointed
+@en to by @var{ce_info}.
 一个C表达式，用来取消在将代码转换为条件执行时，任何机器相关的修改。涉及到的基本块可以在由@var{ce_info}指向的@code{struct ce_if_block}结构体中找到。
 @end defmac
 
 @defmac IFCVT_INIT_EXTRA_FIELDS (@var{ce_info})
+@en A C expression to initialize any extra fields in a @code{struct ce_if_block}
+@en structure, which are defined by the @code{IFCVT_EXTRA_FIELDS} macro.
 一个C表达式，来初始化任何@code{struct ce_if_block}结构体中额外的域，其通过@code{IFCVT_EXTRA_FIELDS}宏来定义。
 @end defmac
 
 @defmac IFCVT_EXTRA_FIELDS
+@en If defined, it should expand to a set of field declarations that will be
+@en added to the @code{struct ce_if_block} structure.  These should be initialized
+@en by the @code{IFCVT_INIT_EXTRA_FIELDS} macro.
 如果被定义，其应该扩展为一个域声明集合，其将被增加到@code{struct ce_if_block}结构体中。这些应该通过@code{IFCVT_INIT_EXTRA_FIELDS}宏来初始化。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_MACHINE_DEPENDENT_REORG ()
+@en If non-null, this hook performs a target-specific pass over the
+@en instruction stream.  The compiler will run it at all optimization levels,
+@en just before the point at which it normally does delayed-branch scheduling.
 如果非空，则该钩子对指令流执行目标机特定的编译过程。编译器将在所有优化级别上执行该过程，就在其通常执行延迟分支调度之前的地方。
 
+@en The exact purpose of the hook varies from target to target.  Some use
+@en it to do transformations that are necessary for correctness, such as
+@en laying out in-function constant pools or avoiding hardware hazards.
+@en Others use it as an opportunity to do some machine-dependent optimizations.
 该钩子的确切目的因目标机不同而不同。一些用来为了正确性执行必要的转换，例如布局函数常量池，或者避免硬件冒险。其它用来作为机器相关的优化。
 
+@en You need not implement the hook if it has nothing to do.  The default
+@en definition is null.
 如果没有什么可做的，则不需要实现该钩子。缺省定义为空。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_INIT_BUILTINS ()
+@en Define this hook if you have any machine-specific built-in functions
+@en that need to be defined.  It should be a function that performs the
+@en necessary setup.
 定义该钩子，如果你有任何需要被定义的机器特定的内建函数。其应该为一个函数，执行必要的设置。
 
+@en Machine specific built-in functions can be useful to expand special machine
+@en instructions that would otherwise not normally be generated because
+@en they have no equivalent in the source language (for example, SIMD vector
+@en instructions or prefetch instructions).
 机器特定的内建函数可以用于扩展特定的机器指令，否则其通常不会被生成，因为在源语言中没有等价的对应（例如，SIMD向量指令或者预取指令）。
 
+@en To create a built-in function, call the function
+@en @code{lang_hooks.builtin_function}
+@en which is defined by the language front end.  You can use any type nodes set
+@en up by @code{build_common_tree_nodes} and @code{build_common_tree_nodes_2};
+@en only language front ends that use those two functions will call
+@en @samp{TARGET_INIT_BUILTINS}.
 要创建一个内建函数，调用函数@code{lang_hooks.builtin_function}，其由语言前端定义。你可以使用任何由@code{build_common_tree_nodes}和@code{build_common_tree_nodes_2}建立的类型节点；只有使用这两个函数的语言前端会调用@samp{TARGET_INIT_BUILTINS}。
 @end deftypefn
 
+@deftypefn {Target Hook} tree TARGET_BUILTIN_DECL (unsigned @var{code}, bool @var{initialize_p})
+Define this hook if you have any machine-specific built-in functions
+that need to be defined.  It should be a function that returns the
+builtin function declaration for the builtin function code @var{code}.
+If there is no such builtin and it cannot be initialized at this time
+if @var{initialize_p} is true the function should return @code{NULL_TREE}.
+If @var{code} is out of range the function should return
+@code{error_mark_node}.
+@end deftypefn
+
 @deftypefn {Target Hook} rtx TARGET_EXPAND_BUILTIN (tree @var{exp}, rtx @var{target}, rtx @var{subtarget}, enum machine_mode @var{mode}, int @var{ignore})
+@en Expand a call to a machine specific built-in function that was set up by
+@en @samp{TARGET_INIT_BUILTINS}.  @var{exp} is the expression for the
+@en function call; the result should go to @var{target} if that is
+@en convenient, and have mode @var{mode} if that is convenient.
+@en @var{subtarget} may be used as the target for computing one of
+@en @var{exp}'s operands.  @var{ignore} is nonzero if the value is to be
+@en ignored.  This function should return the result of the call to the
+@en built-in function.
 扩展由@samp{TARGET_INIT_BUILTINS}建立的对一个机器特定的内建函数的调用。@var{exp}为函数调用的表达式；如果方便的话，结果应该放到@var{target}，并且具有机器模式@var{mode}。@var{subtarget}可以用作目标，来计算@var{exp}的操作数。@var{ignore}为非零，如果值将被忽略。该函数应该返回调用内建函数的结果。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_RESOLVE_OVERLOADED_BUILTIN (tree @var{fndecl}, tree @var{arglist})
+@en Select a replacement for a machine specific built-in function that
+@en was set up by @samp{TARGET_INIT_BUILTINS}.  This is done
+@en @emph{before} regular type checking, and so allows the target to
+@en implement a crude form of function overloading.  @var{fndecl} is the
+@en declaration of the built-in function.  @var{arglist} is the list of
+@en arguments passed to the built-in function.  The result is a
+@en complete expression that implements the operation, usually
+@en another @code{CALL_EXPR}.
+@en @var{arglist} really has type @samp{VEC(tree,gc)*}
 为@samp{TARGET_INIT_BUILTINS}建立的机器特定内建函数选择一个替身。这发生在常规的类型检查之前，因此允许目标机来实现函数重载的粗糙形式。@var{fndecl}为内建函数的声明。@var{arglist}为传递给内建函数的参数列表。结果为一个完全表达式，实现了该运算，通常为另一个@code{CALL_EXPR}。
 @end deftypefn
 
 @deftypefn {Target Hook} tree TARGET_FOLD_BUILTIN (tree @var{fndecl}, tree @var{arglist}, bool @var{ignore})
+@en Fold a call to a machine specific built-in function that was set up by
+@en @samp{TARGET_INIT_BUILTINS}.  @var{fndecl} is the declaration of the
+@en built-in function.  @var{n_args} is the number of arguments passed to
+@en the function; the arguments themselves are pointed to by @var{argp}.
+@en The result is another tree containing a simplified expression for the
+@en call's result.  If @var{ignore} is true the value will be ignored.
 将@samp{TARGET_INIT_BUILTINS}建立的机器特定的内建函数的调用进行折叠。@var{fndecl}为内建函数的声明。@var{arglist}为传递给内建函数的参数列表。结果为另一个tree，包含了一个简化的表达式，为调用的结果。如果@var{ignore}为真，则值将被忽略。
 @end deftypefn
 
 @deftypefn {Target Hook} const char * TARGET_INVALID_WITHIN_DOLOOP (rtx @var{insn})
+@en Take an instruction in @var{insn} and return NULL if it is valid within a
+@en low-overhead loop, otherwise return a string explaining why doloop
+@en could not be applied.
 接受一个指令@var{insn}，如果其在一个低开销循环中有效，则返回NULL，否则返回一个字符串说明为什么不能应用doloop。
 
+@en Many targets use special registers for low-overhead looping. For any
+@en instruction that clobbers these this function should return a string indicating
+@en the reason why the doloop could not be applied.
+@en By default, the RTL loop optimizer does not use a present doloop pattern for
+@en loops containing function calls or branch on table instructions.
 许多目标机使用特定的寄存器，用于低开销循环。对于任何破坏这些的指令，该函数应该返回一个字符串，指出不能应用doloop的原因。缺省的，RTL循环优化不对包含函数调用或者表指令分支的循环，使用现有的doloop指令模式。
 @end deftypefn
 
 @defmac MD_CAN_REDIRECT_BRANCH (@var{branch1}, @var{branch2})
+@en Take a branch insn in @var{branch1} and another in @var{branch2}.
+@en Return true if redirecting @var{branch1} to the destination of
+@en @var{branch2} is possible.
 接受一个分支insn @var{branch1}和另一个@var{branch2}。返回真，如果将@var{branch1}重定向到@var{branch2}的目的地是可能的。
 
+@en On some targets, branches may have a limited range.  Optimizing the
+@en filling of delay slots can result in branches being redirected, and this
+@en may in turn cause a branch offset to overflow.
 在一些目标机上，分支可能具有有限的范围。优化延迟槽的填充，可以导致分支可以被重定向，反过来也可能会造成一个分支的偏移量溢出。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_COMMUTATIVE_P (rtx @var{x}, @var{outer_code})
+@en This target hook returns @code{true} if @var{x} is considered to be commutative.
+@en Usually, this is just COMMUTATIVE_P (@var{x}), but the HP PA doesn't consider
+@en PLUS to be commutative inside a MEM@.  @var{outer_code} is the rtx code
+@en of the enclosing rtl, if known, otherwise it is UNKNOWN.
 该目标钩子返回@code{true}，如果@var{x}被认为是可交换的。通常，这就是COMMUTATIVE_P (@var{x})。但是HP PA不认为PLUS在MEM中是可交换的。@var{outer_code}为包含rtl的rtx代码，如果知道，否则为UNKNOWN。
 @end deftypefn
 
 @deftypefn {Target Hook} rtx TARGET_ALLOCATE_INITIAL_VALUE (rtx @var{hard_reg})
+@en When the initial value of a hard register has been copied in a pseudo
+@en register, it is often not necessary to actually allocate another register
+@en to this pseudo register, because the original hard register or a stack slot
+@en it has been saved into can be used.  @code{TARGET_ALLOCATE_INITIAL_VALUE}
+@en is called at the start of register allocation once for each hard register
+@en that had its initial value copied by using
+@en @code{get_func_hard_reg_initial_val} or @code{get_hard_reg_initial_val}.
+@en Possible values are @code{NULL_RTX}, if you don't want
+@en to do any special allocation, a @code{REG} rtx---that would typically be
+@en the hard register itself, if it is known not to be clobbered---or a
+@en @code{MEM}.
+@en If you are returning a @code{MEM}, this is only a hint for the allocator;
+@en it might decide to use another register anyways.
+@en You may use @code{current_function_leaf_function} in the hook, functions
+@en that use @code{REG_N_SETS}, to determine if the hard
+@en register in question will not be clobbered.
+@en The default value of this hook is @code{NULL}, which disables any special
+@en allocation.
 当硬件寄存器的初始值已经被复制到伪寄存器中，通常没有必要为该伪寄存器分配另一个寄存器，因为可以使用原始的硬件寄存器或者被保存到的栈槽。在寄存器分配的起始处，@code{TARGET_ALLOCATE_INITIAL_VALUE}针对每个其初始值使用@code{get_func_hard_reg_initial_val}或者@code{get_hard_reg_initial_val}复制过的，硬件寄存器被调用一次。可能的值为，@code{NULL_RTX}如果你不想做任何特殊的分配，一个@code{REG} rtx——其通常为硬件寄存器本身，如果知道其不会被破坏——或者一个@code{MEM}。如果返回一个@code{MEM}，这只是一个给分配器的提示；其仍然有可能会决定用另一个寄存器。你可以在钩子中使用@code{current_function_leaf_function}，用来确定被询问的硬件寄存器是否会被破坏。该钩子的缺省值为@code{NULL}，其禁止了任何特殊的分配。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_UNSPEC_MAY_TRAP_P (const_rtx @var{x}, unsigned @var{flags})
+@en This target hook returns nonzero if @var{x}, an @code{unspec} or
+@en @code{unspec_volatile} operation, might cause a trap.  Targets can use
+@en this hook to enhance precision of analysis for @code{unspec} and
+@en @code{unspec_volatile} operations.  You may call @code{may_trap_p_1}
+@en to analyze inner elements of @var{x} in which case @var{flags} should be
+@en passed along.
 该目标钩子返回非零，如果@var{x}，一个@code{unspec}或者@code{unspec_volatile}运算，可能会造成一个陷阱。目标机可以使用该钩子来加强对@code{unspec}和@code{unspec_volatile}运算的分析的精确性。你可以调用@code{may_trap_p_1}来分析@var{x}的内部元素，这种情况下，也应该传递@var{flags}。
 @end deftypefn
 
 @deftypefn {Target Hook} void TARGET_SET_CURRENT_FUNCTION (tree @var{decl})
+@en The compiler invokes this hook whenever it changes its current function 
+@en context (@code{cfun}).  You can define this function if
+@en the back end needs to perform any initialization or reset actions on a
+@en per-function basis.  For example, it may be used to implement function
+@en attributes that affect register usage or code generation patterns.
+@en The argument @var{decl} is the declaration for the new function context,
+@en and may be null to indicate that the compiler has left a function context
+@en and is returning to processing at the top level.
+@en The default hook function does nothing.
 编译器每当改变当前函数上下文(@code{cfun})时，便会调用该钩子。你可以定义该函数，如果后端需要基于每个函数执行任何初始化或者重置行为。例如，其可以用来实现函数属性，影响寄存器的使用或者代码生成指令模式。参数@var{decl}为新的函数上下文的声明，可以为空，表示编译器已经离开函数上下文，要返回顶层去处理。缺省钩子函数不做任何事情。
 
+@en GCC sets @code{cfun} to a dummy function context during initialization of
+@en some parts of the back end.  The hook function is not invoked in this
+@en situation; you need not worry about the hook being invoked recursively,
+@en or when the back end is in a partially-initialized state.
+@en @code{cfun} might be @code{NULL} to indicate processing at top level,
+@en outside of any function scope.
 GCC将@code{cfun}设置为一个哑的函数上下文，在初始化后端一些部分的时候。钩子函数在这种情况下不会被调用；你不需要担心钩子函数被递归调用，或者当后端处于部分初始化的状态。
 @end deftypefn
 
 @defmac TARGET_OBJECT_SUFFIX
+@en Define this macro to be a C string representing the suffix for object
+@en files on your target machine.  If you do not define this macro, GCC will
+@en use @samp{.o} as the suffix for object files.
 定义该宏为C字符串，表示在你的目标机器上，对象文件的后缀。如果没有定义该宏，则GCC会使用@samp{.o}作为目标文件的后缀。
 @end defmac
 
 @defmac TARGET_EXECUTABLE_SUFFIX
+@en Define this macro to be a C string representing the suffix to be
+@en automatically added to executable files on your target machine.  If you
+@en do not define this macro, GCC will use the null string as the suffix for
+@en executable files.
 定义该宏为C字符串，表示在你的目标机器上，为可执行文件自动增加的后缀。如果没有定义该宏，GCC将为可执行文件使用空字符串作为后缀。
 @end defmac
 
 @defmac COLLECT_EXPORT_LIST
+@en If defined, @code{collect2} will scan the individual object files
+@en specified on its command line and create an export list for the linker.
+@en Define this macro for systems like AIX, where the linker discards
+@en object files that are not referenced from @code{main} and uses export
+@en lists.
 如果被定义，@code{collect2}将在其命令行中扫描单独的目标文件，并为连接器创建一个导出列表。为AIX这样的系统定义该宏，并使用导出列表，其连接器会丢弃没有从@code{main}中引用的对象文件。
 @end defmac
 
 @defmac MODIFY_JNI_METHOD_CALL (@var{mdecl})
+@en Define this macro to a C expression representing a variant of the
+@en method call @var{mdecl}, if Java Native Interface (JNI) methods
+@en must be invoked differently from other methods on your target.
+@en For example, on 32-bit Microsoft Windows, JNI methods must be invoked using
+@en the @code{stdcall} calling convention and this macro is then
+@en defined as this expression:
 定义该宏为一个C表达式，表示方法调用@var{mdecl}的一个变种，如果Java Native Interface (JNI)方法必须通过你目标机上其它方法来调用。例如，在32位Microsoft Windows上，JNI方法必须使用@code{stdcall}调用约定来调用，该宏则被定义为如下表达式：
 
 @smallexample
@@ -13943,6 +14900,10 @@ build_type_attribute_variant (@var{mdecl},
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_CANNOT_MODIFY_JUMPS_P (void)
+@en This target hook returns @code{true} past the point in which new jump
+@en instructions could be created.  On machines that require a register for
+@en every jump such as the SHmedia ISA of SH5, this point would typically be
+@en reload, so this target hook should be defined to a function such as:
 该目标钩子在一个点之后返回@code{true}，该处应该创建新的跳转指令。在一些机器上，对每个跳转都要求使用寄存器，例如SH5的SHmedia ISA，该点通常为重载，所以该目标钩子应该被定义为这样的函数：
 
 @smallexample
@@ -13955,93 +14916,257 @@ cannot_modify_jumps_past_reload_p ()
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_BRANCH_TARGET_REGISTER_CLASS (void)
+@en This target hook returns a register class for which branch target register
+@en optimizations should be applied.  All registers in this class should be
+@en usable interchangeably.  After reload, registers in this class will be
+@en re-allocated and loads will be hoisted out of loops and be subjected
+@en to inter-block scheduling.
 该目标钩子返回一个寄存器类，分支目标寄存器优化将会应用在该类别上。该类别中的所有寄存器应该是可以互换使用的。重载之后，该类别中的寄存器将被重新分配，并且加载将被悬挂在循环之外，从属于块间调度。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_BRANCH_TARGET_REGISTER_CALLEE_SAVED (bool @var{after_prologue_epilogue_gen})
+@en Branch target register optimization will by default exclude callee-saved
+@en registers
+@en that are not already live during the current function; if this target hook
+@en returns true, they will be included.  The target code must than make sure
+@en that all target registers in the class returned by
+@en @samp{TARGET_BRANCH_TARGET_REGISTER_CLASS} that might need saving are
+@en saved.  @var{after_prologue_epilogue_gen} indicates if prologues and
+@en epilogues have already been generated.  Note, even if you only return
+@en true when @var{after_prologue_epilogue_gen} is false, you still are likely
+@en to have to make special provisions in @code{INITIAL_ELIMINATION_OFFSET}
+@en to reserve space for caller-saved target registers.
 分支目标寄存器优化，缺省的会将，被调用者保存的寄存器排除在外，其在当前函数中已经是不活跃的。如果目标钩子返回真，它们将被包含进来。目标代码必须确保在由@samp{TARGET_BRANCH_TARGET_REGISTER_CLASS}返回的类别中的所有寄存器，如果需要保存的，会被保存。@var{after_prologue_epilogue_gen}指出是否序言和尾声已经被生成。注意，即使你只当@var{after_prologue_epilogue_gen}为假时返回真，你还可能要在@code{INITIAL_ELIMINATION_OFFSET}做出特定的预防，来为调用者保存的目标寄存器保留空间。
 @end deftypefn
 
+@deftypefn {Target Hook} bool TARGET_HAVE_CONDITIONAL_EXECUTION (void)
+This target hook returns true if the target supports conditional execution.
+This target hook is required only when the target has several different
+modes and they have different conditional execution capability, such as ARM.
+@end deftypefn
+
+@deftypefn {Target Hook} unsigned TARGET_LOOP_UNROLL_ADJUST (unsigned @var{nunroll}, struct loop *@var{loop})
+This target hook returns a new value for the number of times @var{loop}
+should be unrolled. The parameter @var{nunroll} is the number of times
+the loop is to be unrolled. The parameter @var{loop} is a pointer to
+the loop, which is going to be checked for unrolling. This target hook
+is required only when the target has special constraints like maximum
+number of memory accesses.
+@end deftypefn
+
 @defmac POWI_MAX_MULTS
+If defined, this macro is interpreted as a signed integer C expression
+that specifies the maximum number of floating point multiplications
+that should be emitted when expanding exponentiation by an integer
+constant inline.  When this value is defined, exponentiation requiring
+more than this number of multiplications is implemented by calling the
+system library's @code{pow}, @code{powf} or @code{powl} routines.
+The default value places no upper bound on the multiplication count.
 如果被定义，该宏被解析为一个有符号整型C表达式，描述了浮点乘法的最大数。
 @end defmac
 
 @deftypefn Macro void TARGET_EXTRA_INCLUDES (const char *@var{sysroot}, const char *@var{iprefix}, int @var{stdinc})
+@en This target hook should register any extra include files for the
+@en target.  The parameter @var{stdinc} indicates if normal include files
+@en are present.  The parameter @var{sysroot} is the system root directory.
+@en The parameter @var{iprefix} is the prefix for the gcc directory.
 该钩子用于记录目标机的任何额外的include文件。参数@var{stdinc}指示是否存在通常的include文件。参数@var{sysroot}为系统根目录。参数@var{iprefix}为gcc目录的前缀。
 @end deftypefn
 
 @deftypefn Macro void TARGET_EXTRA_PRE_INCLUDES (const char *@var{sysroot}, const char *@var{iprefix}, int @var{stdinc})
+@en This target hook should register any extra include files for the
+@en target before any standard headers.  The parameter @var{stdinc}
+@en indicates if normal include files are present.  The parameter
+@en @var{sysroot} is the system root directory.  The parameter
+@en @var{iprefix} is the prefix for the gcc directory.
 该钩子用于记录目标机的任何先于标准头文件之前的include文件。参数@var{stdinc}指示是否存在通常的include文件。参数@var{sysroot}为系统根目录。参数@var{iprefix}为gcc目录的前缀。
 @end deftypefn
 
 @deftypefn Macro void TARGET_OPTF (char *@var{path})
+@en This target hook should register special include paths for the target.
+@en The parameter @var{path} is the include to register.  On Darwin
+@en systems, this is used for Framework includes, which have semantics
+@en that are different from @option{-I}.
 该目标机钩子用来记录目标机特殊的include路径。参数@var{path}为要记录的include。在Darwin系统上，被用于Framework include，其语义与@option{-I}有所不同。
 @end deftypefn
 
 @deftypefn {Target Hook} bool TARGET_USE_LOCAL_THUNK_ALIAS_P (tree @var{fndecl})
+@en This target macro returns @code{true} if it is safe to use a local alias
+@en for a virtual function @var{fndecl} when constructing thunks,
+@en @code{false} otherwise.  By default, the macro returns @code{true} for all
+@en functions, if a target supports aliases (i.e.@: defines
+@en @code{ASM_OUTPUT_DEF}), @code{false} otherwise,
 该目标机钩子返回@code{true}，如果当为虚函数构造thunk时，使用局部别名是安全的，否则为@code{false}。缺省的，钩子对所有函数返回@code{true}，如果目标机支持别名（即：定义了@code{ASM_OUTPUT_DEF}），否则@code{false}。
 @end deftypefn
 
 @defmac TARGET_FORMAT_TYPES
+@en If defined, this macro is the name of a global variable containing
+@en target-specific format checking information for the @option{-Wformat}
+@en option.  The default is to have no target-specific format checks.
 如果被定义，则该宏为全局变量的名字，其包含了目标机特定的格式检查信息，针对@option{-Wformat}选项。缺省为没有目标机特定的格式检查。
 @end defmac
 
 @defmac TARGET_N_FORMAT_TYPES
+@en If defined, this macro is the number of entries in
+@en @code{TARGET_FORMAT_TYPES}.
 如果被定义，则该宏为@code{TARGET_FORMAT_TYPES}中的项数。
 @end defmac
 
 @defmac TARGET_OVERRIDES_FORMAT_ATTRIBUTES
+@en If defined, this macro is the name of a global variable containing
+@en target-specific format overrides for the @option{-Wformat} option. The
+@en default is to have no target-specific format overrides. If defined,
+@en @code{TARGET_FORMAT_TYPES} must be defined, too.
 如果被定义，则该宏为全局变量的名字，其包含了目标机特定的格式，用来覆盖@option{-Wformat}选项。缺省为没有目标机特定的格式覆盖。如果被定义，则@code{TARGET_FORMAT_TYPES}也必须被定义。
 @end defmac
 
 @defmac TARGET_OVERRIDES_FORMAT_ATTRIBUTES_COUNT
+@en If defined, this macro specifies the number of entries in
+@en @code{TARGET_OVERRIDES_FORMAT_ATTRIBUTES}.
 如果被定义，该宏描述@code{TARGET_OVERRIDES_FORMAT_ATTRIBUTES}中的项数。
 @end defmac
 
 @defmac TARGET_OVERRIDES_FORMAT_INIT
+@en If defined, this macro specifies the optional initialization
+@en routine for target specific customizations of the system printf
+@en and scanf formatter settings.
 如果被定义，则该宏描述可选的初始化程序，用于目标机特定的系统printf和scanf格式设置。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_RELAXED_ORDERING
+@en If set to @code{true}, means that the target's memory model does not
+@en guarantee that loads which do not depend on one another will access
+@en main memory in the order of the instruction stream; if ordering is
+@en important, an explicit memory barrier must be used.  This is true of
+@en many recent processors which implement a policy of ``relaxed,''
+@en ``weak,'' or ``release'' memory consistency, such as Alpha, PowerPC,
+@en and ia64.  The default is @code{false}.
 如果设置为@code{true}，则意味着目标机的内存模型不保证，没有依赖关系的加载操作会按照指令流的顺序来访问主存；如果顺序很重要，那么必须使用显式的内存栅栏。这对许多现在的处理器是这样的，例如Alpha, PowerPC和ia64，其实现了关于内存一致性的``relaxed,'' ``weak,'' 或 ``release''策略。缺省为@code{false}。
 @end deftypefn
 
 @deftypefn {Target Hook} const char *TARGET_INVALID_ARG_FOR_UNPROTOTYPED_FN (tree @var{typelist}, tree @var{funcdecl}, tree @var{val})
+@en TARGET_INVALID_ARG_FOR_UNPROTOTYPED_FN (const_tree @var{typelist}, const_tree @var{funcdecl}, const_tree @var{val})
+@en If defined, this macro returns the diagnostic message when it is
+@en illegal to pass argument @var{val} to function @var{funcdecl}
+@en with prototype @var{typelist}.
 如果被定义，则当传递参数@var{val}给函数原型为@var{typelist}的函数@var{funcdecl}是非法的时候，该宏会返回诊断信息。
 @end deftypefn
 
 @deftypefn {Target Hook} {const char *} TARGET_INVALID_CONVERSION (tree @var{fromtype}, tree @var{totype})
+@en If defined, this macro returns the diagnostic message when it is
+@en invalid to convert from @var{fromtype} to @var{totype}, or @code{NULL}
+@en if validity should be determined by the front end.
 如果被定义，则当从@var{fromtype}转换成@var{totype}是无效的时候，该宏会返回诊断信息，或者返回@code{NULL}，如果有效性应该由前端来确定。
 @end deftypefn
 
 @deftypefn {Target Hook} {const char *} TARGET_INVALID_UNARY_OP (int @var{op}, tree @var{type})
+@en If defined, this macro returns the diagnostic message when it is
+@en invalid to apply operation @var{op} (where unary plus is denoted by
+@en @code{CONVERT_EXPR}) to an operand of type @var{type}, or @code{NULL}
+@en if validity should be determined by the front end.
 如果被定义，则当在类型为@var{type}的操作数上执行@var{op}（一元的加号通过@code{CONVERT_EXPR}来表示）是无效的时候，该宏会返回诊断信息，或者返回@code{NULL}，如果有效性应该由前端来确定。
 @end deftypefn
 
 @deftypefn {Target Hook} {const char *} TARGET_INVALID_BINARY_OP (int @var{op}, tree @var{type1}, tree @var{type2})
+@en If defined, this macro returns the diagnostic message when it is
+@en invalid to apply operation @var{op} to operands of types @var{type1}
+@en and @var{type2}, or @code{NULL} if validity should be determined by
+@en the front end.
 如果被定义，则当在类型为@var{type1}和@var{type2}的操作数上执行@var{op}是无效的时候，该宏会返回诊断信息，或者返回@code{NULL}，如果有效性应该由前端来确定。
 @end deftypefn
 
+@deftypefn {Target Hook} {const char *} TARGET_INVALID_PARAMETER_TYPE (const_tree @var{type})
+If defined, this macro returns the diagnostic message when it is
+invalid for functions to include parameters of type @var{type}, 
+or @code{NULL} if validity should be determined by
+the front end.  This is currently used only by the C and C++ front ends.
+@end deftypefn
+
+@deftypefn {Target Hook} {const char *} TARGET_INVALID_RETURN_TYPE (const_tree @var{type})
+If defined, this macro returns the diagnostic message when it is
+invalid for functions to have return type @var{type}, 
+or @code{NULL} if validity should be determined by
+the front end.  This is currently used only by the C and C++ front ends.
+@end deftypefn
+
+@deftypefn {Target Hook} tree TARGET_PROMOTED_TYPE (const_tree @var{type})
+If defined, this target hook returns the type to which values of 
+@var{type} should be promoted when they appear in expressions, 
+analogous to the integer promotions, or @code{NULL_TREE} to use the
+front end's normal promotion rules.  This hook is useful when there are
+target-specific types with special promotion rules.
+This is currently used only by the C and C++ front ends.
+@end deftypefn
+
+@deftypefn {Target Hook} tree TARGET_CONVERT_TO_TYPE (tree @var{type}, tree @var{expr})
+If defined, this hook returns the result of converting @var{expr} to 
+@var{type}.  It should return the converted expression, 
+or @code{NULL_TREE} to apply the front end's normal conversion rules.
+This hook is useful when there are target-specific types with special 
+conversion rules.
+This is currently used only by the C and C++ front ends.
+@end deftypefn
+
 @defmac TARGET_USE_JCR_SECTION
+@en This macro determines whether to use the JCR section to register Java
+@en classes. By default, TARGET_USE_JCR_SECTION is defined to 1 if both
+@en SUPPORTS_WEAK and TARGET_HAVE_NAMED_SECTIONS are true, else 0.
 该宏定义是否使用JCR段来记录Java类。缺省的，如果SUPPORTS_WEAK和TARGET_HAVE_NAMED_SECTIONS都为真，则TARGET_USE_JCR_SECTION被定义为1，否则为0。
 @end defmac
 
 @defmac OBJC_JBLEN
+@en This macro determines the size of the objective C jump buffer for the
+@en NeXT runtime. By default, OBJC_JBLEN is defined to an innocuous value.
 该宏为NeXT运行时，确定objective C跳转缓存的大小。缺省的，OBJC_JBLEN被定义为一个无害的值。
 @end defmac
 
 @defmac LIBGCC2_UNWIND_ATTRIBUTE
+@en Define this macro if any target-specific attributes need to be attached
+@en to the functions in @file{libgcc} that provide low-level support for 
+@en call stack unwinding.  It is used in declarations in @file{unwind-generic.h}
+@en and the associated definitions of those functions.
 定义该宏，如果对于@file{libgcc}中那些为调用栈展开（call stack unwinding）提供低级别支持的函数上，需要附加目标机特定的属性时。其被用在@file{unwind-generic.h}中的声明和那些函数相关的定义中。
 @end defmac
 
 @deftypefn {Target Hook} void TARGET_UPDATE_STACK_BOUNDARY (void)
+@en Define this macro to update the current function stack boundary if
+@en necessary.
 如果需要，定义该宏来更新当前函数栈边界。
 @end deftypefn
 
 @deftypefn {Target Hook} rtx TARGET_GET_DRAP_RTX (void)
+@en This hook should return an rtx for Dynamic Realign Argument Pointer (DRAP) if a
+@en different argument pointer register is needed to access the function's
+@en argument list due to stack realignment.  Return @code{NULL} if no DRAP
+@en is needed.
 定义该宏为动态重对齐参数指针（Dynamic Realign Argument Pointer）的rtx，如果当栈被对齐时，需要用不同的参数指针寄存器来访问函数的参数列表。
 @end deftypefn
 
 @deftypefn {Target Hook} {bool} TARGET_ALLOCATE_STACK_SLOTS_FOR_ARGS (void)
+@en When optimization is disabled, this hook indicates whether or not
+@en arguments should be allocated to stack slots.  Normally, GCC allocates
+@en stacks slots for arguments when not optimizing in order to make
+@en debugging easier.  However, when a function is declared with
+@en @code{__attribute__((naked))}, there is no stack frame, and the compiler
+@en cannot safely move arguments from the registers in which they are passed
+@en to the stack.  Therefore, this hook should return true in general, but
+@en false for naked functions.  The default implementation always returns true.
 当优化被禁止时，该钩子用来指示参数是否应该被分配到栈槽中。通常，GCC当不做优化时，会为参数分配栈槽，以便于调试。然而，当函数使用@code{__attribute__((naked))}声明时，将没有栈帧，因此编译器不能安全的将参数从用来传递它们的寄存器中移送到栈上。因此，该钩子通常应该返回真，但是对于裸露的函数应该返回假。缺省的实现总是返回真。
 @end deftypefn
+
+@deftypevr {Target Hook} {unsigned HOST_WIDE_INT} TARGET_CONST_ANCHOR
+On some architectures it can take multiple instructions to synthesize
+a constant.  If there is another constant already in a register that
+is close enough in value then it is preferable that the new constant
+is computed from this register using immediate addition or
+subtraction.  We accomplish this through CSE.  Besides the value of
+the constant we also add a lower and an upper constant anchor to the
+available expressions.  These are then queried when encountering new
+constants.  The anchors are computed by rounding the constant up and
+down to a multiple of the value of @code{TARGET_CONST_ANCHOR}.
+@code{TARGET_CONST_ANCHOR} should be the maximum positive value
+accepted by immediate-add plus one.  We currently assume that the
+value of @code{TARGET_CONST_ANCHOR} is a power of 2.  For example, on
+MIPS, where add-immediate takes a 16-bit signed value,
+@code{TARGET_CONST_ANCHOR} is set to @samp{0x8000}.  The default value
+is zero, which disables this optimization.  @end deftypevr
