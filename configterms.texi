@@ -2,23 +2,51 @@
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
-@node 配置术语
+@en @node Configure Terms
+@en @section Configure Terms and History
+@node Configure Terms
 @section 配置术语和历史
 @cindex configure terms
 @cindex canadian
 
+@en The configure and build process has a long and colorful history, and can
+@en be confusing to anyone who doesn't know why things are the way they are.
+@en While there are other documents which describe the configuration process
+@en in detail, here are a few things that everyone working on GCC should
+@en know.
 配置和构建过程有着悠久灿烂的历史，如果不清楚其缘由，很容易使人迷惑不解。
 虽然有另外的文献详细描述了配置过程，这里还是给出了一些从事GCC工作都应该
 了解的内容。
 
+@en There are three system names that the build knows about: the machine you
+@en are building on (@dfn{build}), the machine that you are building for
+@en (@dfn{host}), and the machine that GCC will produce code for
+@en (@dfn{target}).  When you configure GCC, you specify these with
+@en @option{--build=}, @option{--host=}, and @option{--target=}.
 构建程序要知道三个系统名称：构建时所使用的机器（@dfn{build}），构建完成
 后将使用的机器（@dfn{host}），以及GCC未来生成代码所要运行的机器（@dfn{target}）。
 在配置GCC时，通过 @option{--build=}, @option{--host=}, @option{--target=}
 来指定这些系统名称。
 
+@en Specifying the host without specifying the build should be avoided, as
+@en @command{configure} may (and once did) assume that the host you specify
+@en is also the build, which may not be true.
 要避免只指定host而不指定build，因为 @command{configure} 程序可能会认为
 你所指定的host和build相同（曾经发生过），而实际上可能并非如此。
 
+@en If build, host, and target are all the same, this is called a
+@en @dfn{native}.  If build and host are the same but target is different,
+@en this is called a @dfn{cross}.  If build, host, and target are all
+@en different this is called a @dfn{canadian} (for obscure reasons dealing
+@en with Canada's political party and the background of the person working
+@en on the build at that time).  If host and target are the same, but build
+@en is different, you are using a cross-compiler to build a native for a
+@en different system.  Some people call this a @dfn{host-x-host},
+@en @dfn{crossed native}, or @dfn{cross-built native}.  If build and target
+@en are the same, but host is different, you are using a cross compiler to
+@en build a cross compiler that produces code for the machine you're
+@en building on.  This is rare, so there is no common way of describing it.
+@en There is a proposal to call this a @dfn{crossback}.
 我们把build, host和target都相同的情况叫做 @dfn{native}（本地的）。如果
 build和host相同，但target不同，就叫做 @dfn{cross}（交叉的）。 build, 
 host和target都不同的情况则被称为 @dfn{canadian} （加拿大的——用来暗指加
@@ -30,11 +58,26 @@ host和target都不同的情况则被称为 @dfn{canadian} （加拿大的——
 交叉编译器。这种情况很少见，所以没有通用的方式来描述它。有人建议称之为
 @dfn{crossback}。
 
+@en If build and host are the same, the GCC you are building will also be
+@en used to build the target libraries (like @code{libstdc++}).  If build and host
+@en are different, you must have already built and installed a cross
+@en compiler that will be used to build the target libraries (if you
+@en configured with @option{--target=foo-bar}, this compiler will be called
+@en @command{foo-bar-gcc}).
 如果build和host相同，则正要构建的GCC还会被用于构建目标库（比如 
 @code{libstdc++}）。如果build和host不同，那么必须事先构建和安装一个交叉
 编译器，用于构建目标库（如果使用的配置为 @option{--target=foo-bar}，这个
 编译器就叫做 @command{foo-bar-gcc}）。
 
+@en In the case of target libraries, the machine you're building for is the
+@en machine you specified with @option{--target}.  So, build is the machine
+@en you're building on (no change there), host is the machine you're
+@en building for (the target libraries are built for the target, so host is
+@en the target you specified), and target doesn't apply (because you're not
+@en building a compiler, you're building libraries).  The configure/make
+@en process will adjust these variables as needed.  It also sets
+@en @code{$with_cross_host} to the original @option{--host} value in case you
+@en need it.
 对于目标库的情况，你所构建的目标机器就是通过 @option{--target} 指定的
 机器。所以，build就是在上面进行构建的机器（这没有什么不同），host就是
 为其构建的机器（目标库是为target构建的，所以host也就是所指定的target），
@@ -42,6 +85,11 @@ host和target都不同的情况则被称为 @dfn{canadian} （加拿大的——
 过程会在必要时调整这些变量。它还会把 @code{$with_cross_host} 设置成 
 @option{--host} 的初始值，以供不时之需。
 
+@en The @code{libiberty} support library is built up to three times: once
+@en for the host, once for the target (even if they are the same), and once
+@en for the build if build and host are different.  This allows it to be
+@en used by all programs which are generated in the course of the build
+@en process.
 支持库 @code{libiberty} 最多会被构建三次：一次针对host，一次针对target
 （即使二者相同），如果build和host不同，还会针对build再构建一次。这样支
 持库libiberty就可以被构建过程中生成的所有程序使用了。
