@@ -72,41 +72,42 @@
 @en * Misc::                Everything else.
 @en @end menu
 @menu
-* 目标机结构::      @code{targetm}变量
-* 驱动器::          控制驱动程序如何运行编译过程
-* 运行时目标机::    定义像@option{-m68000}和@option{-m68020}这样的@samp{-m}选项
-* 每个函数的数据::  定义每个函数的信息的数据结构体
-* 存储布局::        定义数据的大小和对齐方式
-* 类型布局::        定义基本用户数据类型的大小和属性
-* 寄存器::          命名和描述硬件寄存器
-* 寄存器类别::      定义硬件寄存器的类别
-* 旧式约束::        定义机器特定约束的旧方式
-* 栈和调用::        定义栈增长的方式和数量
-* Varargs::         定义varargs宏
-* Trampolines::     运行时建立的进入嵌套函数的代码
-* 库调用::          控制库函数如何被隐式调用
-* 寻址模式::        定义对内存操作数有效的寻址方式
-* Anchored地址::    定义@option{-fsection-anchors}如何工作
-* 条件代码::        定义insns如何更新条件代码
-* 代价::            定义不同操作的相对开销
-* 调度::            调整指令调度器的行为
-* 段::              将存储拆分到代码，数据和其它的段
-* PIC::             位置无关代码的宏
-* 汇编格式::        定义如何输出insns和伪操作
-* 调试信息::        定义调试输出的格式
-* 浮点::            处理交叉编译器的浮点
-* 机器模式切换::    插入模式切换指令
-* 目标机属性::      定义目标机特定的@code{__attribute__}用法
-* 模拟TLS::         模拟对TLS的支持
-* MIPS协处理器::    对MIPS协处理器的支持，以及如何自定义
-* PCH Target::      对预编译头文件的有效性检查
-* C++ ABI::         控制C++ ABI的变动
-* 其它::            其它
+* Target Structure::	@code{targetm}变量
+* Driver::		控制驱动程序如何运行编译过程
+* Run-time Target::	定义像@option{-m68000}和@option{-m68020}这样的@samp{-m}选项
+* Per-Function Data::	定义每个函数的信息的数据结构体
+* Storage Layout::	定义数据的大小和对齐方式
+* Type Layout::		定义基本用户数据类型的大小和属性
+* Registers::		命名和描述硬件寄存器
+* Register Classes::	定义硬件寄存器的类别
+* Old Constraints::	定义机器特定约束的旧方式
+* Stack and Calling::	定义栈增长的方式和数量
+* Varargs::		定义varargs宏
+* Trampolines::		运行时建立的进入嵌套函数的代码
+* Library Calls::	控制库函数如何被隐式调用
+* Addressing Modes::	定义对内存操作数有效的寻址方式
+* Anchored Addresses::	定义@option{-fsection-anchors}如何工作
+* Condition Code::	定义insns如何更新条件代码
+* Costs::		定义不同操作的相对开销
+* Scheduling::		调整指令调度器的行为
+* Sections::		将存储拆分到代码，数据和其它的段
+* PIC::			位置无关代码的宏
+* Assembler Format::	定义如何输出insns和伪操作
+* Debugging Info::	定义调试输出的格式
+* Floating Point::	处理交叉编译器的浮点
+* Mode Switching::	插入模式切换指令
+* Target Attributes::	定义目标机特定的@code{__attribute__}用法
+* Emulated TLS::	模拟对TLS的支持
+* MIPS Coprocessors::	对MIPS协处理器的支持，以及如何自定义
+* PCH Target::		对预编译头文件的有效性检查
+* C++ ABI::		控制C++ ABI的变动
+* Named Address Spaces:: Adding support for named address spaces
+* Misc::		其它
 @end menu
 
 @en @node Target Structure
 @en @section The Global @code{targetm} Variable
-@node 目标机结构
+@node Target Structure
 @section 全局变量@code{targetm}
 @cindex target hooks
 @cindex target functions
@@ -148,7 +149,7 @@ struct gcc_target targetm = TARGET_INITIALIZER;
 
 @en @node Driver
 @en @section Controlling the Compilation Driver, @file{gcc}
-@node 驱动器
+@node Driver
 @section 控制编译驱动器，@file{gcc}
 @cindex driver
 @cindex controlling the compilation driver
@@ -651,7 +652,7 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 @en @xref{Target Fragment}.
 如果在target makefile片段中没有定义@code{MULTILIB_OPTIONS}，
 或者如果在@code{MULTILIB_OPTIONS}中列出的选项中没有被设为缺省的，
-则不要定义该宏。@xref{目标机片段}。
+则不要定义该宏。@xref{Target Fragment}。
 @end defmac
 
 @defmac RELATIVE_PREFIX_NOT_LINKDIR
@@ -983,7 +984,7 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 
 @en @node Run-time Target
 @en @section Run-time Target Specification
-@node 运行时目标机
+@node Run-time Target
 @section 运行时的target指定
 @cindex run-time target specification
 @cindex predefined macros
@@ -1083,7 +1084,7 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 @en (@pxref{Options}).  It has the opportunity to do some option-specific
 @en processing and should return true if the option is valid.  The default
 @en definition does nothing but return true.
-该宏当用户指定了在@file{.opt}定义文件（参见@ref{选项}）中描述的target特定选项
+该宏当用户指定了在@file{.opt}定义文件(@pxref{Options})中描述的target特定选项
 时被调用。其可以做一些选项特定的处理，并且如果选项有效时应该返回真。
 缺省的定义不做任何事情，只是返回真。
 
@@ -1252,7 +1253,7 @@ is 0.
 
 @en @node Per-Function Data
 @en @section Defining data structures for per-function information.
-@node 每个函数的数据
+@node Per-Function Data
 @section 为基于每个函数的信息定义数据结构
 @cindex per-function data
 @cindex data structures
@@ -1339,7 +1340,7 @@ GCC曾经提供名为@code{save_machine_status}和@code{restore_machine_status}
 
 @en @node Storage Layout
 @en @section Storage Layout
-@node 存储布局
+@node Storage Layout
 @section 存储布局
 @cindex storage layout
 
@@ -1349,7 +1350,7 @@ GCC曾经提供名为@code{save_machine_status}和@code{restore_machine_status}
 @en @xref{Run-time Target}.
 注意该表格中的宏定义中，对于以bit为单位的大小或对齐，不需要为常量。
 它们可以为引用了静态变量的C表达式，例如@code{target_flags}。
-参见@ref{运行时目标机}。
+@xref{Run-time Target}。
 
 @defmac BITS_BIG_ENDIAN
 @en Define this macro to have the value 1 if the most significant bit in a
@@ -2104,7 +2105,7 @@ types.
 
 @en @node Type Layout
 @en @section Layout of Source Language Data Types
-@node 类型布局
+@node Type Layout
 @section 源语言的数据类型布局
 
 @en These macros define the sizes and other characteristics of the standard
@@ -2589,7 +2590,7 @@ of words in each data entry.
 
 @en @node Registers
 @en @section Register Usage
-@node 寄存器
+@node Registers
 @section 寄存器的用法
 @cindex register usage
 
@@ -2604,10 +2605,10 @@ of words in each data entry.
 @en For passing values in registers, see @ref{Register Arguments}.
 @en For returning values in registers, see @ref{Scalar Return}.
 寄存器类别用来描述一个特定指令可以使用哪些寄存器；
-参见 @ref{寄存器类别}。
-关于使用寄存器来访问栈帧的信息，参见 @ref{帧寄存器}。
-关于使用寄存器来传值，参见 @ref{寄存器参数}。
-关于使用寄存器来返回值，参见 @ref{标量返回}。
+参见@ref{Register Classes}。
+关于使用寄存器来访问栈帧的信息，参见@ref{Frame Registers}。
+关于使用寄存器来传值，参见@ref{Register Arguments}。
+关于使用寄存器来返回值，参见@ref{Scalar Return}。
 
 @en @menu
 @en * Register Basics::             Number and kinds of registers.
@@ -2617,16 +2618,16 @@ of words in each data entry.
 @en * Stack Registers::             Handling a register stack such as 80387.
 @en @end menu
 @menu
-* 寄存器基础::          寄存器编号和种类
-* 分配顺序::            寄存器按照什么顺序分配
-* 寄存器中的值::        每个寄存器可以存放什么类型的值
-* 叶子函数::            为叶子函数重编号寄存器
-* 栈寄存器::            处理像80387这样的寄存器栈
+* Register Basics::	寄存器编号和种类
+* Allocation Order::	寄存器按照什么顺序分配
+* Values in Registers::	每个寄存器可以存放什么类型的值
+* Leaf Functions::	为叶子函数重编号寄存器
+* Stack Registers::	处理像80387这样的寄存器栈
 @end menu
 
 @en @node Register Basics
 @en @subsection Basic Characteristics of Registers
-@node 寄存器基础
+@node Register Basics
 @subsection 寄存器的基本特征
 
 @c prevent bad page break with this line
@@ -2826,7 +2827,7 @@ of words in each data entry.
 
 @en @node Allocation Order
 @en @subsection Order of Allocation of Registers
-@node 分配顺序
+@node Allocation Order
 @subsection 寄存器的分配顺序
 @cindex order of register allocation
 @cindex register allocation order
@@ -2896,7 +2897,7 @@ to having it always return @code{0.0}.
 
 @en @node Values in Registers
 @en @subsection How Values Fit in Registers
-@node 寄存器中的值
+@node Values in Registers
 @subsection 如何使值适合寄存器
 
 @en This section discusses the macros that describe which kinds of values
@@ -3134,7 +3135,7 @@ The default version of this hook always returns @code{true}.
 
 @en @node Leaf Functions
 @en @subsection Handling Leaf Functions
-@node 叶子函数
+@node Leaf Functions
 @subsection 处理叶子函数
 
 @cindex leaf functions
@@ -3213,7 +3214,7 @@ GCC是在它知道函数是否适合作为叶子函数来对待之前，分配�
 
 @en @node Stack Registers
 @en @subsection Registers That Form a Stack
-@node 栈寄存器
+@node Stack Registers
 @subsection 形成栈的寄存器
 
 @en There are special features to handle computers where some of the
@@ -3260,7 +3261,7 @@ the machine has any stack-like registers.
 
 @en @node Register Classes
 @en @section Register Classes
-@node 寄存器类别
+@node Register Classes
 @section 寄存器类别
 @cindex register class definitions
 @cindex class definitions, register
@@ -4032,7 +4033,7 @@ See the documentation for @code{TARGET_IRA_COVER_CLASSES}.
 
 @en @node Old Constraints
 @en @section Obsolete Macros for Defining Constraints
-@node 旧式约束
+@node Old Constraints
 @section 废弃的定义约束的宏
 @cindex defining constraints, obsolete method
 @cindex constraints, defining, obsolete method
@@ -4245,7 +4246,7 @@ See the documentation for @code{TARGET_IRA_COVER_CLASSES}.
 
 @en @node Stack and Calling
 @en @section Stack Layout and Calling Conventions
-@node 栈和调用
+@node Stack and Calling
 @section 栈布局和调用约定
 @cindex calling conventions
 
@@ -4253,42 +4254,26 @@ See the documentation for @code{TARGET_IRA_COVER_CLASSES}.
 @en This describes the stack layout and calling conventions.
 这一节描述了栈的布局和调用约定。
 
-@en @menu
-@en * Frame Layout::
-@en * Exception Handling::
-@en * Stack Checking::
-@en * Frame Registers::
-@en * Elimination::
-@en * Stack Arguments::
-@en * Register Arguments::
-@en * Scalar Return::
-@en * Aggregate Return::
-@en * Caller Saves::
-@en * Function Entry::
-@en * Profiling::
-@en * Tail Calls::
-@en * Stack Smashing Protection::
-@en @end menu
 @menu
-* 帧布局::
-* 异常处理::
-* 栈检查::
-* 帧寄存器::
-* 消除::
-* 栈参数::
-* 寄存器参数::
-* 标量返回::
-* 聚合返回::
-* 调用者保存::
-* 函数入口::
+* Frame Layout::
+* Exception Handling::
+* Stack Checking::
+* Frame Registers::
+* Elimination::
+* Stack Arguments::
+* Register Arguments::
+* Scalar Return::
+* Aggregate Return::
+* Caller Saves::
+* Function Entry::
 * Profiling::
-* 尾调用::
-* 栈冲突保护::
+* Tail Calls::
+* Stack Smashing Protection::
 @end menu
 
 @en @node Frame Layout
 @en @subsection Basic Stack Layout
-@node 帧布局
+@node Frame Layout
 @subsection 基本的帧布局
 @cindex stack frame layout
 @cindex frame layout
@@ -4636,7 +4621,7 @@ DWARF2调用帧调试信息引擎将会按照如下的形式来调用它
 
 @en @node Exception Handling
 @en @subsection Exception Handling Support
-@node 异常处理
+@node Exception Handling
 @subsection 对异常处理的支持
 @cindex exception handling
 
@@ -4829,7 +4814,7 @@ DWARF2调用帧调试信息引擎将会按照如下的形式来调用它
 
 @en @node Stack Checking
 @en @subsection Specifying How Stack Checking is Done
-@node 栈检查
+@node Stack Checking
 @subsection 指定如何进行栈检查
 
 @en GCC will check that stack references are within the boundaries of the
@@ -4953,7 +4938,7 @@ GCC使用该值来生成上面的警告消息。其表示函数使用的固定�
 @need 2000
 @en @node Frame Registers
 @en @subsection Registers That Address the Stack Frame
-@node 帧寄存器
+@node Frame Registers
 @subsection 用于栈帧寻址的寄存器
 
 @c prevent bad page break with this line
@@ -5024,7 +5009,7 @@ arg指针寄存器的寄存器编号，其用于访问函数的参数列表。�
 这与帧指针寄存器相同。在一些机器上，硬件决定了其为那个寄存器。在其它机器上，
 你可以选择任意的寄存器。如果这与帧指针寄存器不同，
 则你必须标记其为一个固定寄存器，
-根据@code{FIXED_REGISTERS}或者设法能够消除它（参见@ref{消除}）。
+根据@code{FIXED_REGISTERS}或者设法能够消除它(@pxref{Elimination})。
 @end defmac
 
 @defmac RETURN_ADDRESS_POINTER_REGNUM
@@ -5156,7 +5141,7 @@ will be at an offset from the frame pointer.
 
 @en @node Elimination
 @en @subsection Eliminating Frame Pointer and Arg Pointer
-@node 消除
+@node Elimination
 @subsection 消除帧指针和参数指针
 
 @c prevent bad page break with this line
@@ -5268,7 +5253,7 @@ Default return value is @code{true}.
 
 @en @node Stack Arguments
 @en @subsection Passing Function Arguments on the Stack
-@node 栈参数
+@node Stack Arguments
 @subsection 在栈上传递函数参数
 @cindex arguments on stack
 @cindex stack arguments
@@ -5470,7 +5455,7 @@ number of arguments.
 
 @en @node Register Arguments
 @en @subsection Passing Arguments in Registers
-@node 寄存器参数
+@node Register Arguments
 @subsection 在寄存器中传递参数
 @cindex arguments in registers
 @cindex registers arguments
@@ -5966,7 +5951,7 @@ of spill registers and print a fatal error message.
 
 @en @node Scalar Return
 @en @subsection How Scalar Function Values Are Returned
-@node 标量返回
+@node Scalar Return
 @subsection 标量函数值如何被返回
 @cindex return values in registers
 @cindex values, returned by functions
@@ -6140,7 +6125,7 @@ saving and restoring an arbitrary return value.
 
 @en @node Aggregate Return
 @en @subsection How Large Values Are Returned
-@node 聚合返回
+@node Aggregate Return
 @subsection 如何返回大的值
 @cindex aggregates as return values
 @cindex large return values
@@ -6154,7 +6139,7 @@ saving and restoring an arbitrary return value.
 @en should be stored.  This address is called the @dfn{structure value
 @en address}.
 当函数值的机器模式为@code{BLKmode}（并且在一些其它情况下），
-值不根据@code{TARGET_FUNCTION_VALUE}来返回（参见 @ref{标量返回}）。
+值不根据@code{TARGET_FUNCTION_VALUE}来返回(@pxref{Scalar Return})。
 替代的，调用者传递内存块的地址。
 该地址被称为结构体地址（@dfn{structure value address}）。
 
@@ -6263,7 +6248,7 @@ saving and restoring an arbitrary return value.
 
 @en @node Caller Saves
 @en @subsection Caller-Saves Register Allocation
-@node 调用者保存
+@node Caller Saves
 @subsection 调用者保存的寄存器分配
 
 @en If you enable it, GCC can save registers around function calls.  This
@@ -6299,7 +6284,7 @@ saving and restoring an arbitrary return value.
 
 @en @node Function Entry
 @en @subsection Function Entry and Exit
-@node 函数入口
+@node Function Entry
 @subsection 函数入口和出口
 @cindex function entry and exit
 @cindex prologue
@@ -6357,7 +6342,7 @@ saving and restoring an arbitrary return value.
 在一些机器上，函数可以有帧指针，也可以没有，则函数入口代码必须相应的有所不同；
 如果需要则其必须建立帧指针，否则不建立。要确定是否想要帧指针，
 宏可以引用变量@code{frame_pointer_needed}。在运行时，如果函数需要帧指针，
-则变量的值将被设为1。参见@ref{消除}。
+则变量的值将被设为1。@xref{Elimination}。
 
 @en The function entry code is responsible for allocating any stack space
 @en required for the function.  This stack space consists of the regions
@@ -6448,7 +6433,7 @@ saving and restoring an arbitrary return value.
 @en function.  @xref{Leaf Functions}.
 通常，@code{TARGET_ASM_FUNCTION_PROLOGUE}和@code{TARGET_ASM_FUNCTION_EPILOGUE}
 必须单独处理叶子函数。对于这样的函数，C变量@code{current_function_is_leaf}为
-非零。参见@ref{叶子函数}。
+非零。@xref{Leaf Functions}。
 
 @en On some machines, some functions pop their arguments on exit while
 @en others leave that for the caller to do.  For example, the 68020 when
@@ -6466,7 +6451,7 @@ saving and restoring an arbitrary return value.
 你对宏的定义决定了哪些函数弹出它们的自己的参数。
 @code{TARGET_ASM_FUNCTION_EPILOGUE}需要知道这些。
 称作@code{current_function_pops_args}的变量为函数应该弹出的参数的字节个数。
-参见@ref{标量返回}。
+@xref{Scalar Return}。
 @end deftypefn
 
 @itemize @bullet
@@ -6515,7 +6500,7 @@ saving and restoring an arbitrary return value.
 @en argument lists of the function.  @xref{Stack Arguments}.
 可选的，当@code{ACCUMULATE_OUTGOING_ARGS}被定义时，
 还有一块@code{current_function_outgoing_args_size}字节大小的区域用于函数的传出
-的参数列表。参见@ref{栈参数}。
+的参数列表。@xref{Stack Arguments}。
 @end itemize
 
 @defmac EXIT_IGNORE_STACK
@@ -6730,7 +6715,7 @@ thunk函数输出汇编代码，否则为假。在后一种情况下，C++前端
 
 @en @node Tail Calls
 @en @subsection Permitting tail calls
-@node 尾调用
+@node Tail Calls
 @subsection 允许尾调用
 @cindex tail calls
 
@@ -6769,7 +6754,7 @@ ARG_POINTER_REGNUM和PIC_OFFSET_TABLE_REGNUM来发现的寄存器。
 
 @en @node Stack Smashing Protection
 @en @subsection Stack smashing protection
-@node 栈冲突保护
+@node Stack Smashing Protection
 @subsection 栈冲突保护
 @cindex stack smashing protection
 
@@ -7049,7 +7034,7 @@ to generate it on the spot.
 @defmac TRAMPOLINE_SECTION
 @en Return the section into which the trampoline template is to be placed
 @en (@pxref{Sections}).  The default value is @code{readonly_data_section}.
-返回蹦床模版被放入的section（参见@ref{段}）。
+返回蹦床模版被放入的section(@pxref{Sections})。
 缺省值为@code{readonly_data_section}。
 @end defmac
 
@@ -7176,7 +7161,7 @@ If this hook is not defined, @var{addr} will be used for function calls.
 
 @en @node Library Calls
 @en @section Implicit Calls to Library Routines
-@node 库调用
+@node Library Calls
 @section 库例程的隐式调用
 @cindex library subroutine names
 @cindex @file{libgcc.a}
@@ -7346,7 +7331,7 @@ void sincosl(long double x, long double *sin, long double *cos);
 
 @en @node Addressing Modes
 @en @section Addressing Modes
-@node 寻址模式
+@node Addressing Modes
 @section 寻址模式
 @cindex addressing modes
 
@@ -7840,7 +7825,7 @@ parameter is true if the memory access is defined in a packed struct.
 
 @en @node Anchored Addresses
 @en @section Anchored Addresses
-@node Anchored地址
+@node Anchored Addresses
 @section 锚定的地址
 @cindex anchored addresses
 @cindex @option{-fsection-anchors}
@@ -7938,7 +7923,7 @@ int foo (void)
 
 @en @node Condition Code
 @en @section Condition Code Status
-@node 条件代码
+@node Condition Code
 @section 条件代码状态
 @cindex condition code status
 
@@ -8265,7 +8250,7 @@ C表达式，返回真，如果条件执行断言@var{op1}，一个比较操作�
 
 @en @node Costs
 @en @section Describing Relative Costs of Operations
-@node 代价
+@node Costs
 @section 描述操作的相对代价
 @cindex costs of instructions
 @cindex relative costs
@@ -8737,7 +8722,7 @@ optimized for speed rather than size.
 
 @en @node Scheduling
 @en @section Adjusting the Instruction Scheduler
-@node 调度
+@node Scheduling
 @section 调整指令调度器
 
 @en The instruction scheduler may need a fair amount of machine-specific
@@ -9208,7 +9193,7 @@ target后端可以使用@var{g}来计算这个边界。如果没有实现该钩�
 
 @en @node Sections
 @en @section Dividing the Output into Sections (Texts, Data, @dots{})
-@node 段
+@node Sections
 @section 将输出划分到section中（Texts, Data, @dots{}）
 @c the above section title is WAY too long.  maybe cut the part between
 @c the (...)?  --mew 10feb93
@@ -9761,7 +9746,7 @@ The default version of this hook use the target macro
 
 @en @node Assembler Format
 @en @section Defining the Output Assembler Language
-@node 汇编格式
+@node Assembler Format
 @section 定义汇编语言输出
 
 @en This section describes macros whose principal purpose is to describe how
@@ -9785,21 +9770,21 @@ The default version of this hook use the target macro
 @en * Alignment Output::     Pseudo ops for alignment and skipping data.
 @en @end menu
 @menu
-* 文件框架::                   汇编文件的结构化信息  
-* 数据输出::                   常量（数目，字符串，地址）的输出
-* 未初始化的数据::             未初始化变量的输出
-* 标号输出::                   标号的输出和生成
-* 初始化::                     初始化程序和终止程序的通用原则
-* 用于初始化的宏::             控制处理初始化程序和终止程序的特定宏
-* 指令输出::                   实际指令的输出
-* 派遣表::                     跳转表的输出
-* 异常区域输出::               异常区域代码的输出
-* 对齐输出::                   用于对齐和跳过数据的伪操作
+* File Framework::		汇编文件的结构化信息  
+* Data Output::			常量（数目，字符串，地址）的输出
+* Uninitialized Data::		未初始化变量的输出
+* Label Output::		标号的输出和生成
+* Initialization::		初始化程序和终止程序的通用原则
+* Macros for Initialization::	控制处理初始化程序和终止程序的特定宏
+* Instruction Output::		实际指令的输出
+* Dispatch Tables::		跳转表的输出
+* Exception Region Output::	异常区域代码的输出
+* Alignment Output::		用于对齐和跳过数据的伪操作
 @end menu
 
 @en @node File Framework
 @en @subsection The Overall Framework of an Assembler File
-@node 文件框架
+@node File Framework
 @subsection 汇编文件的总体框架
 @cindex assembler format
 @cindex output of assembler code
@@ -10092,7 +10077,7 @@ Output COFF information or DWARF debugging information which indicates that file
 @need 2000
 @en @node Data Output
 @en @subsection Output of Data
-@node 数据输出
+@node Data Output
 @subsection 数据的输出
 
 
@@ -10341,7 +10326,7 @@ GCC将在函数前输出常量池。
 
 @en @node Uninitialized Data
 @en @subsection Output of Uninitialized Variables
-@node 未初始化的数据
+@node Uninitialized Data
 @subsection 未初始化变量的输出
 
 @en Each of the macros in this section is used to do the whole job of
@@ -10502,7 +10487,7 @@ GCC将替换@code{ASM_OUTPUT_DECL}和@code{ASM_OUTPUT_ALIGNED_DECL}。
 
 @en @node Label Output
 @en @subsection Output and Generation of Labels
-@node 标号输出
+@node Label Output
 @subsection 标号的生成和输出
 
 @c prevent bad page break with this line
@@ -11202,7 +11187,7 @@ with the same @var{prefix} and @var{num}.
 
 @en @node Initialization
 @en @subsection How Initialization Functions Are Handled
-@node 初始化
+@node Initialization
 @subsection 如何处理初始化函数
 @cindex initialization routines
 @cindex termination routines
@@ -11396,7 +11381,7 @@ customize the handling of initialization and termination functions.
 
 @en @node Macros for Initialization
 @en @subsection Macros Controlling Initialization Routines
-@node 用于初始化的宏
+@node Macros for Initialization
 @subsection 控制初始化例程的宏
 
 @en Here are the macros that control how the compiler handles initialization
@@ -11600,7 +11585,7 @@ GCC将假设这样的section不存在。当你使用用于初始化和终止函�
 
 @en @node Instruction Output
 @en @subsection Output of Assembler Instructions
-@node 指令输出
+@node Instruction Output
 @subsection 汇编指令的输出
 
 @c prevent bad page break with this line
@@ -11773,7 +11758,7 @@ C复合语句，用来将指令操作数为内存引用，其地址为@var{x}的
 @en Format}.
 在一些机器上，符号地址的语法取决于地址所引用的section。在这些机器上，
 定义钩子@code{TARGET_ENCODE_SECTION_INFO}来将信息存储到@code{symbol_ref}，
-并在这里进行检查。参见 @ref{汇编格式}。
+并在这里进行检查。@xref{Assembler Format}。
 @end defmac
 
 @findex dbr_sequence_length
@@ -11906,7 +11891,7 @@ C表达式，向@var{stream}中输出汇编代码，用于将硬件寄存器编�
 
 @en @node Dispatch Tables
 @en @subsection Output of Dispatch Tables
-@node 派遣表
+@node Dispatch Tables
 @subsection 派遣表的输出
 
 @c prevent bad page break with this line
@@ -12041,7 +12026,7 @@ True if the @code{TARGET_ASM_UNWIND_EMIT} hook should be called before the assem
 
 @en @node Exception Region Output
 @en @subsection Assembler Commands for Exception Regions
-@node 异常区域输出
+@node Exception Region Output
 @subsection 用于异常区域的汇编命令
 
 @c prevent bad page break with this line
@@ -12163,7 +12148,7 @@ GCC将提供缺省的定义，1。
 该宏只有当target可能会在函数序言中存储寄存器，
 并且相对栈指针的偏移量没有对齐于@code{UNITS_PER_WORD}的时候，才需要被定义。
 定义应该为负的最小对齐数，如果@code{STACK_GROWS_DOWNWARD}被定义，
-否则为正的最小对齐数。参见 @ref{SDB和DWARF}。
+否则为正的最小对齐数。@xref{SDB and DWARF}。
 只有当target支持DWARF2帧展开信息的时候才有用。
 @end defmac
 
@@ -12222,7 +12207,7 @@ GCC将提供缺省的定义，1。
 
 @en @node Alignment Output
 @en @subsection Assembler Commands for Alignment
-@node 对齐输出
+@node Alignment Output
 @subsection 用于对齐的汇编命令
 
 @c prevent bad page break with this line
@@ -12373,7 +12358,7 @@ label为跳转的普通目的地并且不具有fallthru入边。
 @need 3000
 @en @node Debugging Info
 @en @section Controlling Debugging Information Format
-@node 调试信息
+@node Debugging Info
 @section 控制调试信息格式
 
 @c prevent bad page break with this line
@@ -12389,17 +12374,17 @@ label为跳转的普通目的地并且不具有fallthru入边。
 @en * VMS Debug::          Macros for VMS debug format.
 @en @end menu
 @menu
-* 所有调试器::  影响所有调试信息的宏   
-* DBX选项::     启用DBX格式的特定选项的宏  
-* DBX钩子::     变更DBX格式的钩子宏 
-* 文件名和DBX:: 控制DBX格式中文件名的输出
-* SDB和DWARF::  用于SDB（COFF）和DWARF格式的宏
-* VMS调试::     用于VMS调试格式的宏
+* All Debuggers::	影响所有调试信息的宏   
+* DBX Options::		启用DBX格式的特定选项的宏  
+* DBX Hooks::		变更DBX格式的钩子宏 
+* File Names and DBX::	控制DBX格式中文件名的输出
+* SDB and DWARF::	用于SDB（COFF）和DWARF格式的宏
+* VMS Debug::		用于VMS调试格式的宏
 @end menu
 
 @en @node All Debuggers
 @en @subsection Macros Affecting All Debugging Formats
-@node 所有调试器
+@node All Debuggers
 @subsection 影响所有调试格式的宏
 
 @c prevent bad page break with this line
@@ -12494,7 +12479,7 @@ GCC应该产生的调试输出类型。
 
 @en @node DBX Options
 @en @subsection Specific Options for DBX Output
-@node DBX选项
+@node DBX Options
 @subsection 用于DBX输出的特定选项
 
 @c prevent bad page break with this line
@@ -12682,7 +12667,7 @@ DBX格式目前没有提供任何这样做的方式。缺省为@code{'P'}。
 
 @en @node DBX Hooks
 @en @subsection Open-Ended Hooks for DBX Format
-@node DBX钩子 
+@node DBX Hooks
 @subsection 针对DBX格式的钩子
 
 @c prevent bad page break with this line
@@ -12749,7 +12734,7 @@ DBX格式目前没有提供任何这样做的方式。缺省为@code{'P'}。
 
 @en @node File Names and DBX
 @en @subsection File Names in DBX Format
-@node 文件名和DBX
+@node File Names and DBX
 @subsection DBX格式的文件名
 
 @c prevent bad page break with this line
@@ -12823,7 +12808,7 @@ DBX格式目前没有提供任何这样做的方式。缺省为@code{'P'}。
 @need 2000
 @en @node SDB and DWARF
 @en @subsection Macros for SDB and DWARF Output
-@node SDB和DWARF
+@node SDB and DWARF
 @subsection 用于SDB和DWARF输出的宏
 
 @c prevent bad page break with this line
@@ -12867,7 +12852,7 @@ DBX格式目前没有提供任何这样做的方式。缺省为@code{'P'}。
 @en (@pxref{Exception Region Output} is nonzero, GCC will output this
 @en information not matter how you define @code{DWARF2_FRAME_INFO}.
 定义该宏为非0值，如果GCC应该总是输出Dwarf2帧信息。
-如果@code{DWARF2_UNWIND_INFO}（参见 @ref{异常区域输出}）为非0，
+如果@code{DWARF2_UNWIND_INFO}(@pxref{Exception Region Output})为非0，
 则GCC将不管你如何定义@code{DWARF2_FRAME_INFO}，都会输出该信息。
 @end defmac
 
@@ -12973,7 +12958,7 @@ is referenced by a function.
 @need 2000
 @en @node VMS Debug
 @en @subsection Macros for VMS Debug Format
-@node VMS调试
+@node VMS Debug
 @subsection 用于VMS调试格式的宏
 
 @c prevent bad page break with this line
@@ -12995,7 +12980,7 @@ VMS的缺省行为是在没有@option{-g}时，生成可以回溯的最少调试
 
 @en @node Floating Point
 @en @section Cross Compilation and Floating Point
-@node 浮点
+@node Floating Point
 @section 交叉编译和浮点
 @cindex cross compilation and floating point
 @cindex floating point and cross compilation
@@ -13101,11 +13086,11 @@ C数据类型，用于存放target机器格式的浮点值。
 @en @code{MULT_EXPR}, @code{RDIV_EXPR}, @code{MAX_EXPR}, @code{MIN_EXPR}.
 要执行的运算由@var{code}指定。只有下列代码被支持：@code{PLUS_EXPR}, @code{MINUS_EXPR}, @code{MULT_EXPR}, @code{RDIV_EXPR}, @code{MAX_EXPR}, @code{MIN_EXPR}。
 
-If @code{REAL_ARITHMETIC} is asked to evaluate division by zero and the
-target's floating point format cannot represent infinity, it will call
-@code{abort}.  Callers should check for this situation first, using
+@en If @code{REAL_ARITHMETIC} is asked to evaluate division by zero and the
+@en target's floating point format cannot represent infinity, it will call
+@en @code{abort}.  Callers should check for this situation first, using
 @en @code{MODE_HAS_INFINITIES}.  @xref{Storage Layout}.
-如果@code{REAL_ARITHMETIC}被要求计算除0，并且target的浮点格式不能表示无穷，则会调用@code{abort}。调用者应该首先检查这种情况，使用@code{MODE_HAS_INFINITIES}。@xref{存储布局}。
+如果@code{REAL_ARITHMETIC}被要求计算除0，并且target的浮点格式不能表示无穷，则会调用@code{abort}。调用者应该首先检查这种情况，使用@code{MODE_HAS_INFINITIES}。@xref{Storage Layout}。
 @end deftypefn
 
 @deftypefn Macro REAL_VALUE_TYPE REAL_VALUE_NEGATE (REAL_VALUE_TYPE @var{x})
@@ -13142,7 +13127,7 @@ target's floating point format cannot represent infinity, it will call
 
 @en @node Mode Switching
 @en @section Mode Switching Instructions
-@node 机器模式切换
+@node Mode Switching
 @section 机器模式切换指令
 @cindex mode switching
 @en The following macros control mode switching optimizations:
@@ -13262,7 +13247,7 @@ target's floating point format cannot represent infinity, it will call
 
 @en @node Target Attributes
 @en @section Defining target-specific uses of @code{__attribute__}
-@node 目标机属性
+@node Target Attributes
 @section 定义目标机特定的@code{__attribute__}用法
 @cindex target attributes
 @cindex machine attributes
@@ -13548,7 +13533,7 @@ may be used to describe emulated TLS control objects.
 
 @en @node MIPS Coprocessors
 @en @section Defining coprocessor specifics for MIPS targets.
-@node MIPS协处理器
+@node MIPS Coprocessors
 @section 定义MIPS target的协处理器的规范
 @cindex MIPS coprocessor-definition macros
 
@@ -13873,7 +13858,7 @@ as determined by the @code{TARGET_ADDR_SPACE_SUBSET_P} target hook.
 
 @en @node Misc
 @en @section Miscellaneous Parameters
-@node 其它
+@node Misc
 @section 其它参数
 @cindex parameters, miscellaneous
 

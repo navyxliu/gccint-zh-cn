@@ -780,7 +780,7 @@ insn的操作数，不具有任何constraint，因为它从来不作为一个整
 @en of the form @samp{@{option0|option1|option2@}} in the templates.  These
 @en describe multiple variants of assembler language syntax.
 @en @xref{Instruction Output}.
-如果宏@code{ASSEMBLER_DIALECT}被定义，你可以在模板中使用形如@samp{@{option0|option1|option2@}}的结构。这些描述了多个汇编语言语法的变体。@xref{指令输出}.
+如果宏@code{ASSEMBLER_DIALECT}被定义，你可以在模板中使用形如@samp{@{option0|option1|option2@}}的结构。这些描述了多个汇编语言语法的变体。@xref{Instruction Output}。
 
 @en @node Output Statement
 @en @section C Statements for Assembler Output
@@ -1120,7 +1120,7 @@ constraint选择的序号（0为第一个，1位第二个选择，以此类推�
 
 @noindent
 将具有完全相同的含义。不幸的是，这样不行，应为Pmode是其它机器模式的别名，
-并且可能随着机器特定选项的不同而改变。参见@ref{其它}。
+并且可能随着机器特定选项的不同而改变。@xref{Misc}。
 @end defun
 
 @en @defun scratch_operand
@@ -1145,7 +1145,7 @@ constraint选择的序号（0为第一个，1位第二个选择，以此类推�
 @en @end defun
 @defun memory_operand
 该predicate允许任何对内存中机器模式@var{mode}的一定数量的有效引用，
-并通过@code{GO_IF_LEGITIMATE_ADDRESS}的弱形式来确定（参见@ref{寻址模式}）。
+并通过@code{GO_IF_LEGITIMATE_ADDRESS}的弱形式来确定(@pxref{Addressing Modes})。
 @end defun
 
 @en @defun address_operand
@@ -1196,7 +1196,7 @@ constraint选择的序号（0为第一个，1位第二个选择，以此类推�
 @defun push_operand
 该predicate允许适合将值压入栈中的内存引用。这将为一个@code{MEM}，
 其引用@code{stack_pointer_rtx}，且在其地址表达式中具有一个副作用
-（参见@ref{Incdec}）；其由宏@code{STACK_PUSH_CODE}来确定（参见@ref{帧布局}）。
+(@pxref{Incdec})；其由宏@code{STACK_PUSH_CODE}来确定(@pxref{Frame Layout}。
 @end defun
 
 @en @defun pop_operand
@@ -5542,7 +5542,7 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 
 为了避免操作数约束字符串的混淆，约束的名字不能起始于任何其它约束的名字。 例如，如果@code{x}被定义为一个约束名，则不可以定义@code{xy}，反之依然。 按照这个规则，所有约束都不能起始于通用约束字母：@samp{E F V X g i m n o p r s}。
 
-寄存器约束直接对应于寄存器类别。参见@ref{寄存器类别}。 因此它们的定义没有太多的灵活性。
+寄存器约束直接对应于寄存器类别。@xref{Register Classes}。 因此它们的定义没有太多的灵活性。
 
 @en @deffn {MD Expression} define_register_constraint name regclass docstring
 @en All three arguments are string constants.
@@ -5561,7 +5561,7 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @en constraint.  Docstrings are explained further below.
 @en @end deffn
 @deffn {MD Expression} define_register_constraint name regclass docstring
-这三个参数都是字符串常量。@var{name}为约束的名字， 将在@code{match_operand}表达式中出现。如果@var{name}为多个字母的约束， 则它的长度应该与所有起始与同一字母的约束相同。 @var{regclass}可以为相应的寄存器类别的名字（参见@ref{寄存器类别}）， 或者一个C表达式，其值为合适的寄存器类别。如果为表达式，其必须不具有副作用， 并且不能查看操作数。通常使用表达式是为了当寄存器类别对于给定的子体系结构无效时， 将一些寄存器约束映射为@code{NO_REGS}。
+这三个参数都是字符串常量。@var{name}为约束的名字， 将在@code{match_operand}表达式中出现。如果@var{name}为多个字母的约束， 则它的长度应该与所有起始与同一字母的约束相同。 @var{regclass}可以为相应的寄存器类别的名字(@pxref{Register Classes})， 或者一个C表达式，其值为合适的寄存器类别。如果为表达式，其必须不具有副作用， 并且不能查看操作数。通常使用表达式是为了当寄存器类别对于给定的子体系结构无效时， 将一些寄存器约束映射为@code{NO_REGS}。
 
 @var{docstring}为一条语句，介绍了约束的含义。这将在下面做进一步的解释。
 @end deffn
@@ -5656,7 +5656,7 @@ C表达式@code{match_test}，可以访问下列变量：
 @en @code{define_constraint}.
 @en @end deffn
 @deffn {MD Expression} define_memory_constraint name docstring exp
-使用该表达式来定义匹配所有内存操作数的子集的约束：也就是， @code{reload}能够通过将操作数转换为@samp{@w{(mem (reg @var{X}))}}的形式使得它们 匹配。其中@var{X}为基址寄存器（通过@code{BASE_REG_CLASS}指定的寄存器类别，@pxref{寄存器类别}）。
+使用该表达式来定义匹配所有内存操作数的子集的约束：也就是， @code{reload}能够通过将操作数转换为@samp{@w{(mem (reg @var{X}))}}的形式使得它们 匹配。其中@var{X}为基址寄存器（通过@code{BASE_REG_CLASS}指定的寄存器类别，@pxref{Register Classes}）。
 
 例如，在S/390上，一些指令不接受任意的内存引用，只接受那些不使用索引寄存器的。 约束字母@samp{Q}被定义用来表示这个类型的内存地址。 如果@samp{Q}使用@code{define_memory_constraint}定义， 则@samp{Q}约束可以处理任意内存操作数，因为@code{reload}知道在需要的时候， 它可以简单的将内存地址复制到基址寄存器中。 这与@samp{o}约束可以处理任意内存操作数的方式类似。
 
@@ -6064,7 +6064,7 @@ C表达式@code{match_test}，可以访问下列变量：
 @itemx @samp{reload_out@var{m}}
 这些命名指令模式已经被目标钩子@code{secondary_reload}废弃。
 
-类似@samp{mov@var{m}}，不过用于当需要使用scratch寄存器在操作数0和操作数1之间移送的时候。操作数2描述scratch寄存器。参见在@pxref{寄存器类别}中对@code{SECONDARY_RELOAD_CLASS}宏的讨论。
+类似@samp{mov@var{m}}，不过用于当需要使用scratch寄存器在操作数0和操作数1之间移送的时候。操作数2描述scratch寄存器。@pxref{Register Classes}中对@code{SECONDARY_RELOAD_CLASS}宏的讨论。
 
 这些指令模式中的@code{match_operand}的形式，有一些特殊的限制。首先，只有重载操作数的断言才被检查，即@code{reload_in}检查操作数1，而不检查操作数0和2。第二，在约束中只能有一个可选项。第三，约束只能使用单个寄存器类别字母；后续的约束字母都被忽略。一个例外是，空的约束字符串匹配@code{ALL_REGS}寄存器类别。这可以减轻后端为这些指令模式定义@code{ALL_REGS}约束字母的负担。
 
@@ -7066,11 +7066,11 @@ C表达式@code{match_test}，可以访问下列变量：
 @en operand to that mode before generating the instruction.
 @cindex @code{clz@var{m}2} instruction pattern
 @item @samp{clz@var{m}2}
-将@var{x}中，从最高有效位开始，起始处置0的位的数目，存放在操作数0中。如果@var{x}为0，则@code{CLZ_DEFINED_VALUE_AT_ZERO} (@pxref{其它})宏定义了结果是否为未定义或者一个有用的值。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+将@var{x}中，从最高有效位开始，起始处置0的位的数目，存放在操作数0中。如果@var{x}为0，则@code{CLZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc})宏定义了结果是否为未定义或者一个有用的值。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
 
 @cindex @code{ctz@var{m}2} instruction pattern
 @item @samp{ctz@var{m}2}
-将@var{x}中，从最小有效位开始，结尾处置0的位的数目，存放在操作数0中。如果@var{x}为0，则@code{CTZ_DEFINED_VALUE_AT_ZERO} (@pxref{其它})宏定义了结果是否为未定义或者一个有用的值。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+将@var{x}中，从最小有效位开始，结尾处置0的位的数目，存放在操作数0中。如果@var{x}为0，则@code{CTZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc})宏定义了结果是否为未定义或者一个有用的值。@var{m}为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
 
 @en @cindex @code{popcount@var{m}2} instruction pattern
 @en @item @samp{popcount@var{m}2}
@@ -7511,7 +7511,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 
 当书写@code{match_operand}表达式的时候，你来指定操作数必须具有的机器模式。编译器自动的查看你使用的机器模式，并提供那个机器模式的操作数。
 
-对于条件为真时所存储的值，其低位必须为1，不然必须为负。否则，指令就不适合，你应该从机器描述中将其去掉。你可以通过定义宏@code{STORE_FLAG_VALUE} (@pxref{其它})，来描述哪个值被存放。如果不能找到一个用于所有@samp{s@var{cond}}指令模式的描述，则你应该从机器描述中去掉这些操作。
+对于条件为真时所存储的值，其低位必须为1，不然必须为负。否则，指令就不适合，你应该从机器描述中将其去掉。你可以通过定义宏@code{STORE_FLAG_VALUE} (@pxref{Misc})，来描述哪个值被存放。如果不能找到一个用于所有@samp{s@var{cond}}指令模式的描述，则你应该从机器描述中去掉这些操作。
 
 这些操作可以失败，但应该只在相对不常见的情况下这样做；如果它们对于常见的情况，包括整数比较，会失败，则最好去掉这些指令模式。
 
@@ -8005,7 +8005,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @en A save area is a @code{mem} that is at a constant offset from
 @en @code{virtual_stack_vars_rtx} when the stack pointer is saved for use by
 @en nonlocal gotos and a @code{reg} in the other two cases.
-当保存栈指针时，操作数0是保存区域，操作数1是栈指针。用于分配保存区域的机器模式缺省为@code{Pmode}，不过你可以通过定义@code{STACK_SAVEAREA_MODE}宏(@pxref{存储布局})来覆盖该选择。你必须指定一个整数机器模式，或者@code{VOIDmode}，如果对于特定的类型不需要保存区域（或者因为没有需要保存的，或者因为可以使用机器特定的保存区域）。操作数0为栈指针，操作数1为用于恢复操作的保存区域。如果@samp{save_stack_block}被定义，则操作数0一定不能为@code{VOIDmode}，因为这些保存操作数可以被任意的嵌套。
+当保存栈指针时，操作数0是保存区域，操作数1是栈指针。用于分配保存区域的机器模式缺省为@code{Pmode}，不过你可以通过定义@code{STACK_SAVEAREA_MODE}宏(@pxref{Storage Layout})来覆盖该选择。你必须指定一个整数机器模式，或者@code{VOIDmode}，如果对于特定的类型不需要保存区域（或者因为没有需要保存的，或者因为可以使用机器特定的保存区域）。操作数0为栈指针，操作数1为用于恢复操作的保存区域。如果@samp{save_stack_block}被定义，则操作数0一定不能为@code{VOIDmode}，因为这些保存操作数可以被任意的嵌套。
 
 当栈指针被保存，是用于非局部goto，则保存区域为一个@code{mem}，为一个相对于@code{virtual_stack_vars_rtx}的常量偏移，其它两种情况下，保存区域为一个@code{reg}。
 
@@ -8051,7 +8051,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 
 @cindex @code{check_stack} instruction pattern
 @item @samp{check_stack}
-如果在你的系统上，不能通过使用加载或者存储指令(@pxref{栈检查})探测栈，从而进行栈检查，则定义该指令模式来执行所需要的检查，并且如果栈已经溢出则产生一个错误信号。有单个操作数，为栈中从当前栈指针开始，最远的栈位置。通常，在需要该指令模式的机器上，你将从一个全局的或者线程特定的变量或者寄存器中获得栈的限制。
+如果在你的系统上，不能通过使用加载或者存储指令(@pxref{Stack Checking})探测栈，从而进行栈检查，则定义该指令模式来执行所需要的检查，并且如果栈已经溢出则产生一个错误信号。有单个操作数，为栈中从当前栈指针开始，最远的栈位置。通常，在需要该指令模式的机器上，你将从一个全局的或者线程特定的变量或者寄存器中获得栈的限制。
 
 @en @cindex @code{nonlocal_goto} instruction pattern
 @en @item @samp{nonlocal_goto}
@@ -11977,7 +11977,7 @@ GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟�
 在基于自动机的流水线描述中，给定的延迟时间只用于真依赖。
 反依赖的代价总为0，并且输出依赖的代价是生产者insn和消费者insn的延迟时间之差
 （如果差为负数，则代价被认为为0）。
-你可以通过使用目标机钩子@code{TARGET_SCHED_ADJUST_COST}（参见@ref{调度}），
+你可以通过使用目标机钩子@code{TARGET_SCHED_ADJUST_COST}（@pxref{Scheduling}），
 来改变任何描述的缺省代价。
 
 @var{insn-name}为一个字符串，给出了insn的内部名字。
