@@ -3,10 +3,20 @@
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
-@node 片段
+@en @node Fragments
+@en @chapter Makefile Fragments
+@node Fragments
 @chapter Makefile片段
 @cindex makefile fragment
 
+@en When you configure GCC using the @file{configure} script, it will
+@en construct the file @file{Makefile} from the template file
+@en @file{Makefile.in}.  When it does this, it can incorporate makefile
+@en fragments from the @file{config} directory.  These are used to set
+@en Makefile parameters that are not amenable to being calculated by
+@en autoconf.  The list of fragments to incorporate is set by
+@en @file{config.gcc} (and occasionally @file{config.build}
+@en and @file{config.host}); @xref{System Config}.
 当使用 @file{configure} 脚本配置GCC时，将会从模版文件 
 @file{Makefile.in} 中构建 @file{Makefile} 文件。这个时候，会将 
 @file{config} 目录下的makefile片段合在一起。这些片段用来设置不
@@ -14,28 +24,183 @@
 @file{config.gcc}（以及偶尔由 @file{config.build} 和 
 @file{config.host}）设置；参见 @ref{系统配置}。
 
+@en Fragments are named either @file{t-@var{target}} or @file{x-@var{host}},
+@en depending on whether they are relevant to configuring GCC to produce
+@en code for a particular target, or to configuring GCC to run on a
+@en particular host.  Here @var{target} and @var{host} are mnemonics
+@en which usually have some relationship to the canonical system name, but
+@en no formal connection.
 片段命名为 @file{t-@var{target}} 或者 @file{x-@var{host}}，取决
 于它们是否与配置GCC来产生特定目标代码相关，或者配置GCC来运行在
 特定主机。这里的 @var{target} 和 @var{host} 是（Here target and 
 host are mnemonics which usually have some relationship to the 
 canonical system name, but no formal connection.）
 
+@en If these files do not exist, it means nothing needs to be added for a
+@en given target or host.  Most targets need a few @file{t-@var{target}}
+@en fragments, but needing @file{x-@var{host}} fragments is rare.
 如果不存在这些文件，则意味着不需要对给定目标或主机添加什么。大多
 数目标机需要一些 @file{t-@var{target}} 片段，不过需要 
 @file{x-@var{host}} 片段的很少。
 
+@en @menu
+@en * Target Fragment:: Writing @file{t-@var{target}} files.
+@en * Host Fragment::   Writing @file{x-@var{host}} files.
+@en @end menu
 @menu
-* 目标机片段:: 写 @file{t-@var{target}} 文件。
-* 主机片段::   写 @file{x-@var{host}} 文件。
+* Target Fragment:: 写 @file{t-@var{target}} 文件。
+* Host Fragment::   写 @file{x-@var{host}} 文件。
 @end menu
 
-@node 目标机片段
+@en @node Target Fragment
+@en @section Target Makefile Fragments
+@node Target Fragment
 @section 目标机Makefile片段
 @cindex target makefile fragment
 @cindex @file{t-@var{target}}
 
+@en Target makefile fragments can set these Makefile variables.
 目标makefile片段能够设置这些Makefile变量。
 
+@en @table @code
+@en @findex LIBGCC2_CFLAGS
+@en @item LIBGCC2_CFLAGS
+@en Compiler flags to use when compiling @file{libgcc2.c}.
+@en 
+@en @findex LIB2FUNCS_EXTRA
+@en @item LIB2FUNCS_EXTRA
+@en A list of source file names to be compiled or assembled and inserted
+@en into @file{libgcc.a}.
+@en 
+@en @findex Floating Point Emulation
+@en @item Floating Point Emulation
+@en To have GCC include software floating point libraries in @file{libgcc.a}
+@en define @code{FPBIT} and @code{DPBIT} along with a few rules as follows:
+@en @smallexample
+@en # We want fine grained libraries, so use the new code
+@en # to build the floating point emulation libraries.
+@en FPBIT = fp-bit.c
+@en DPBIT = dp-bit.c
+@en 
+@en 
+@en fp-bit.c: $(srcdir)/config/fp-bit.c
+@en         echo '#define FLOAT' > fp-bit.c
+@en         cat $(srcdir)/config/fp-bit.c >> fp-bit.c
+@en 
+@en dp-bit.c: $(srcdir)/config/fp-bit.c
+@en         cat $(srcdir)/config/fp-bit.c > dp-bit.c
+@en @end smallexample
+@en 
+@en You may need to provide additional #defines at the beginning of @file{fp-bit.c}
+@en and @file{dp-bit.c} to control target endianness and other options.
+@en 
+@en 
+@en @findex CRTSTUFF_T_CFLAGS
+@en @item CRTSTUFF_T_CFLAGS
+@en Special flags used when compiling @file{crtstuff.c}.
+@en @xref{Initialization}.
+@en 
+@en @findex CRTSTUFF_T_CFLAGS_S
+@en @item CRTSTUFF_T_CFLAGS_S
+@en Special flags used when compiling @file{crtstuff.c} for shared
+@en linking.  Used if you use @file{crtbeginS.o} and @file{crtendS.o}
+@en in @code{EXTRA-PARTS}.
+@en @xref{Initialization}.
+@en 
+@en @findex MULTILIB_OPTIONS
+@en @item MULTILIB_OPTIONS
+@en For some targets, invoking GCC in different ways produces objects
+@en that can not be linked together.  For example, for some targets GCC
+@en produces both big and little endian code.  For these targets, you must
+@en arrange for multiple versions of @file{libgcc.a} to be compiled, one for
+@en each set of incompatible options.  When GCC invokes the linker, it
+@en arranges to link in the right version of @file{libgcc.a}, based on
+@en the command line options used.
+@en 
+@en The @code{MULTILIB_OPTIONS} macro lists the set of options for which
+@en special versions of @file{libgcc.a} must be built.  Write options that
+@en are mutually incompatible side by side, separated by a slash.  Write
+@en options that may be used together separated by a space.  The build
+@en procedure will build all combinations of compatible options.
+@en 
+@en For example, if you set @code{MULTILIB_OPTIONS} to @samp{m68000/m68020
+@en msoft-float}, @file{Makefile} will build special versions of
+@en @file{libgcc.a} using the following sets of options:  @option{-m68000},
+@en @option{-m68020}, @option{-msoft-float}, @samp{-m68000 -msoft-float}, and
+@en @samp{-m68020 -msoft-float}.
+@en 
+@en @findex MULTILIB_DIRNAMES
+@en @item MULTILIB_DIRNAMES
+@en If @code{MULTILIB_OPTIONS} is used, this variable specifies the
+@en directory names that should be used to hold the various libraries.
+@en Write one element in @code{MULTILIB_DIRNAMES} for each element in
+@en @code{MULTILIB_OPTIONS}.  If @code{MULTILIB_DIRNAMES} is not used, the
+@en default value will be @code{MULTILIB_OPTIONS}, with all slashes treated
+@en as spaces.
+@en 
+@en For example, if @code{MULTILIB_OPTIONS} is set to @samp{m68000/m68020
+@en msoft-float}, then the default value of @code{MULTILIB_DIRNAMES} is
+@en @samp{m68000 m68020 msoft-float}.  You may specify a different value if
+@en you desire a different set of directory names.
+@en 
+@en @findex MULTILIB_MATCHES
+@en @item MULTILIB_MATCHES
+@en Sometimes the same option may be written in two different ways.  If an
+@en option is listed in @code{MULTILIB_OPTIONS}, GCC needs to know about
+@en any synonyms.  In that case, set @code{MULTILIB_MATCHES} to a list of
+@en items of the form @samp{option=option} to describe all relevant
+@en synonyms.  For example, @samp{m68000=mc68000 m68020=mc68020}.
+@en 
+@en @findex MULTILIB_EXCEPTIONS
+@en @item MULTILIB_EXCEPTIONS
+@en Sometimes when there are multiple sets of @code{MULTILIB_OPTIONS} being
+@en specified, there are combinations that should not be built.  In that
+@en case, set @code{MULTILIB_EXCEPTIONS} to be all of the switch exceptions
+@en in shell case syntax that should not be built.
+@en 
+@en For example the ARM processor cannot execute both hardware floating
+@en point instructions and the reduced size THUMB instructions at the same
+@en time, so there is no need to build libraries with both of these
+@en options enabled.  Therefore @code{MULTILIB_EXCEPTIONS} is set to:
+@en @smallexample
+@en *mthumb/*mhard-float*
+@en @end smallexample
+@en 
+@en @findex MULTILIB_EXTRA_OPTS
+@en @item MULTILIB_EXTRA_OPTS
+@en Sometimes it is desirable that when building multiple versions of
+@en @file{libgcc.a} certain options should always be passed on to the
+@en compiler.  In that case, set @code{MULTILIB_EXTRA_OPTS} to be the list
+@en of options to be used for all builds.  If you set this, you should
+@en probably set @code{CRTSTUFF_T_CFLAGS} to a dash followed by it.
+@en 
+@en @findex NATIVE_SYSTEM_HEADER_DIR
+@en @item NATIVE_SYSTEM_HEADER_DIR
+@en If the default location for system headers is not @file{/usr/include},
+@en you must set this to the directory containing the headers.  This value
+@en should match the value of the @code{SYSTEM_INCLUDE_DIR} macro.
+@en 
+@en @findex SPECS
+@en @item SPECS
+@en Unfortunately, setting @code{MULTILIB_EXTRA_OPTS} is not enough, since
+@en it does not affect the build of target libraries, at least not the
+@en build of the default multilib.  One possible work-around is to use
+@en @code{DRIVER_SELF_SPECS} to bring options from the @file{specs} file
+@en as if they had been passed in the compiler driver command line.
+@en However, you don't want to be adding these options after the toolchain
+@en is installed, so you can instead tweak the @file{specs} file that will
+@en be used during the toolchain build, while you still install the
+@en original, built-in @file{specs}.  The trick is to set @code{SPECS} to
+@en some other filename (say @file{specs.install}), that will then be
+@en created out of the built-in specs, and introduce a @file{Makefile}
+@en rule to generate the @file{specs} file that's going to be used at
+@en build time out of your @file{specs.install}.
+@en 
+@en @item T_CFLAGS
+@en These are extra flags to pass to the C compiler.  They are used both
+@en when building GCC, and when compiling things with the just-built GCC@.
+@en This variable is deprecated and should not be used.
+@en @end table
 @table @code
 @findex LIBGCC2_CFLAGS
 @item LIBGCC2_CFLAGS
@@ -142,10 +307,14 @@ when building GCC, and when compiling things with the just-built GCC@.
 This variable is deprecated and should not be used.
 @end table
 
-@node 主机片段
+@en @node Host Fragment
+@en @section Host Makefile Fragments
+@node Host Fragment
 @section 主机Makefile片段
 @cindex host makefile fragment
 @cindex @file{x-@var{host}}
 
+@en The use of @file{x-@var{host}} fragments is discouraged.  You should only
+@en use it for makefile dependencies.
 不鼓励使用 @file{x-@var{host}} 片段。应该只在没有其它机制可以获得所需要的时候
 才使用。
