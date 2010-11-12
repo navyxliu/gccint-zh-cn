@@ -49,33 +49,33 @@ RTL的灵感来自Lisp列表。它同时具有一个内部形式，由指向结�
 @en * Reading RTL::       Reading textual RTL from a file.
 @en @end menu
 @menu
-* RTL对象::       表达式、向量、字符串、整数 
-* RTL类别::       RTL表达式对象的类别，以及它们的结构 
-* 访问方式::      用来访问表达式操作数和向量成员的宏
-* 访问特殊操作数::  用来访问RTL中的特殊注解
-* 标记::          RTL表达式中的其它标记
-* 机器模式::      描述一个数据的大小和格式
-* 常数::          常数值表达式
-* 寄存器和内存::  表示寄存器内容或内存的表达式
-* 算术运算::      表示算术运算的表达式 
-* 比较运算::      表示比较运算的表达式
-* 位域运算::      表示内存或寄存器中位域的表达式
-* 向量运算::      关于向量数据类型的表达式
-* 转换运算::      扩展，截断，浮点化或者定点化
-* RTL声明::       声明为volatile的，constant的，等等
+* RTL Objects::       表达式、向量、字符串、整数 
+* RTL Classes::       RTL表达式对象的类别，以及它们的结构 
+* Accessors::      用来访问表达式操作数和向量成员的宏
+* Special Accessors:: ::  用来访问RTL中的特殊注解
+* Flags::          RTL表达式中的其它标记
+* Machine Modes::      描述一个数据的大小和格式
+* Constants::          常数值表达式
+* Regs and Memory::  表示寄存器内容或内存的表达式
+* Arithmetic::      表示算术运算的表达式 
+* Comparisons::      表示比较运算的表达式
+* Bit-Fields::      表示内存或寄存器中位域的表达式
+* Vector Operations::      关于向量数据类型的表达式
+* Conversions::      扩展，截断，浮点化或者定点化
+* RTL Declarations::       声明为volatile的，constant的，等等
 * Side Effects::        存储到寄存器的表达式，等
 * Incdec::        自动增量寻址的嵌入的副作用
-* 汇编::          表示带有操作数的asm
+* Assembler::          表示带有操作数的asm
 * Debug Information:: Expressions representing debugging information.
 * Insns::         整个insn的表达式类型
-* 函数调用::      函数call insn的RTL表示
-* 共享::          一些表达式是唯一的；其它的必须要被复制
-* 读取RTL::       从文件中读取文本的RTL
+* Calls::      函数call insn的RTL表示
+* Sharing::          一些表达式是唯一的；其它的必须要被复制
+* Reading RTL::       从文件中读取文本的RTL
 @end menu
 
 @en @node RTL Objects
 @en @section RTL Object Types
-@node RTL对象
+@node RTL Objects
 @section RTL对象类型
 @cindex RTL object types
 
@@ -171,7 +171,7 @@ makes the machine description easier to read.
 
 @en @node RTL Classes
 @en @section RTL Classes and Formats
-@node RTL类别
+@node RTL Classes
 @section RTL类别和格式
 @cindex RTL classes
 @cindex classes of RTX codes
@@ -270,7 +270,7 @@ makes the machine description easier to read.
 一个RTX代码，针对不可交换的二元运算，例如@code{MINUS}，@code{DIV}或者@code{ASHIFTRT}。
 
 @item RTX_BITFIELD_OPS
-一个RTX代码，针对位域运算。当前只有@code{ZERO_EXTRACT}和@code{SIGN_EXTRACT}。这些有三个输入，并且为左值。@xref{位域运算}。
+一个RTX代码，针对位域运算。当前只有@code{ZERO_EXTRACT}和@code{SIGN_EXTRACT}。这些有三个输入，并且为左值。@xref{Bit-Fields}。
 
 @item RTX_TERNARY
 一个RTX代码，针对其它有三个输入的运算。当前只有@code{IF_THEN_ELSE}和@code{VEC_MERGE}。
@@ -462,7 +462,7 @@ makes the machine description easier to read.
 
 @en @node Accessors
 @en @section Access to Operands
-@node 访问方式
+@node Accessors
 @section 访问操作数
 @cindex accessors
 @cindex access to operands
@@ -578,7 +578,7 @@ XINT (@var{x}, 2)
 
 @en @node Special Accessors
 @en @section Access to Special Operands
-@node 访问特殊操作数
+@node Special Accessors
 @section 访问特殊操作数
 @cindex access to special operands
 
@@ -773,7 +773,7 @@ for the generic address space.
 
 @en @node Flags
 @en @section Flags in an RTL Expression
-@node 标记
+@node Flags
 @section RTL表达式中的标记
 @cindex flags in RTL expression
 
@@ -1320,7 +1320,7 @@ in this kind of use.
 @en generation for a function, to count the number of times an expression
 @en appears in insns.  Expressions that appear more than once are copied,
 @en according to the rules for shared structure (@pxref{Sharing}).
-该标记在函数的RTL生成阶段的结尾被直接使用（不通过访问宏），来计数表达式在insns中出现的次数。出现次数大于一的表达式，根据共享结构的规则（@pxref{共享}），被复制。
+该标记在函数的RTL生成阶段的结尾被直接使用（不通过访问宏），来计数表达式在insns中出现的次数。出现次数大于一的表达式，根据共享结构的规则（@pxref{Sharing}），被复制。
 
 @en For a @code{reg}, it is used directly (without an access macro) by the
 @en leaf register renumbering code to ensure that each register is only
@@ -1365,7 +1365,7 @@ scheduling barrier.
 
 @en @node Machine Modes
 @en @section Machine Modes
-@node 机器模式
+@node Machine Modes
 @section 机器模式
 @cindex machine modes
 
@@ -1879,7 +1879,7 @@ Algol或者Pascal函数变量，包括一个静态链。（这些目前还没有
 
 @en @node Constants
 @en @section Constant Expression Types
-@node 常数
+@node Constants
 @section 常量表达式类型
 @cindex RTL constants
 @cindex RTL constant expression types
@@ -2054,7 +2054,7 @@ Algol或者Pascal函数变量，包括一个静态链。（这些目前还没有
 
 @en @node Regs and Memory
 @en @section Registers and Memory
-@node 寄存器和内存
+@node Regs and Memory
 @section 寄存器和内存
 @cindex RTL register expressions
 @cindex RTL memory expressions
@@ -2587,7 +2587,7 @@ CANNOT_CHANGE_MODE_CLASS (@var{m2}, @var{m1}, @var{class})
 
 @en @node Arithmetic
 @en @section RTL Expressions for Arithmetic
-@node 算术运算
+@node Arithmetic
 @section RTL算术运算表达式
 @cindex arithmetic, in RTL
 @cindex math, in RTL
@@ -2630,7 +2630,7 @@ CANNOT_CHANGE_MODE_CLASS (@var{m2}, @var{m1}, @var{class})
 @en of @var{y}.  It is used with @code{high} (@pxref{Constants}) to
 @en represent the typical two-instruction sequence used in RISC machines
 @en to reference a global memory location.
-该表达式表示@var{x}与@var{y}低位的和。其跟@code{high} (@pxref{常数})一起使用，来表示在RISC机器中通常使用的两个指令序列，来引用一个全局内存位置。
+该表达式表示@var{x}与@var{y}低位的和。其跟@code{high} (@pxref{Constants})一起使用，来表示在RISC机器中通常使用的两个指令序列，来引用一个全局内存位置。
 
 @en The number of low order bits is machine-dependent but is
 @en normally the number of bits in a @code{Pmode} item minus the number of
@@ -2670,7 +2670,7 @@ CANNOT_CHANGE_MODE_CLASS (@var{m2}, @var{m1}, @var{class})
 @en code.  And that is the @emph{only} way this kind of expression may
 @en validly be used: as a value to be stored in the condition codes, either
 @en @code{(cc0)} or a register.  @xref{Comparisons}.
-当然，机器不会真的进行无限精度的减法。然而，它们可以假定这样做，当只使用结果的正负符号时，这样情况下，结果被存放在条件代码中。并且，这是这种表达式唯一可以被使用的方式：作为值存储在条件代码中，或者@code{(cc0)}，或者一个寄存器。@xref{比较运算}.
+当然，机器不会真的进行无限精度的减法。然而，它们可以假定这样做，当只使用结果的正负符号时，这样情况下，结果被存放在条件代码中。并且，这是这种表达式唯一可以被使用的方式：作为值存储在条件代码中，或者@code{(cc0)}，或者一个寄存器。@xref{Comparisons}.
 
 @en The mode @var{m} is not related to the modes of @var{x} and @var{y}, but
 @en instead is the mode of the condition code value.  If @code{(cc0)} is
@@ -2969,7 +2969,7 @@ CANNOT_CHANGE_MODE_CLASS (@var{m2}, @var{m1}, @var{class})
 
 @en @node Comparisons
 @en @section Comparison Operations
-@node 比较运算
+@node Comparisons
 @section 比较运算
 @cindex RTL comparison operations
 
@@ -3115,7 +3115,7 @@ CANNOT_CHANGE_MODE_CLASS (@var{m2}, @var{m1}, @var{class})
 
 @en @node Bit-Fields
 @en @section Bit-Fields
-@node 位域运算
+@node Bit-Fields
 @section 位域
 @cindex bit-fields
 
@@ -3168,7 +3168,7 @@ CANNOT_CHANGE_MODE_CLASS (@var{m2}, @var{m1}, @var{class})
 
 @en @node Vector Operations
 @en @section Vector Operations
-@node 向量运算
+@node Vector Operations
 @section 向量运算
 @cindex vector operations
 
@@ -3219,7 +3219,7 @@ CANNOT_CHANGE_MODE_CLASS (@var{m2}, @var{m1}, @var{class})
 
 @en @node Conversions
 @en @section Conversions
-@node 转换运算
+@node Conversions
 @section 转换
 @cindex conversions
 @cindex machine mode conversions
@@ -3374,7 +3374,7 @@ CANNOT_CHANGE_MODE_CLASS (@var{m2}, @var{m1}, @var{class})
 
 @en @node RTL Declarations
 @en @section Declarations
-@node RTL声明
+@node RTL Declarations
 @section 声明
 @cindex RTL declarations
 @cindex declarations, RTL
@@ -3929,7 +3929,7 @@ an undefined way.
 
 @en @node Assembler
 @en @section Assembler Instructions as Expressions
-@node 汇编
+@node Assembler
 @section 作为表达式的汇编指令
 @cindex assembler instructions in RTL
 
@@ -4733,7 +4733,7 @@ insn的@code{REG_NOTES}域是一个类似于@code{LOG_LINKS}域的链，不过�
 
 @en @node Calls
 @en @section RTL Representation of Function-Call Insns
-@node 函数调用
+@node Calls
 @section 函数调用insns的RTL表示
 @cindex calling functions in RTL
 @cindex RTL function-call insns
@@ -4813,7 +4813,7 @@ insn的@code{REG_NOTES}域是一个类似于@code{LOG_LINKS}域的链，不过�
 
 @en @node Sharing
 @en @section Structure Sharing Assumptions
-@node 共享
+@node Sharing
 @section 结构共享假设
 @cindex sharing of RTL components
 @cindex RTL structure sharing assumptions
@@ -4928,7 +4928,7 @@ T只有一个@code{pc}表达式。
 
 @en @node Reading RTL
 @en @section Reading RTL
-@node 读取RTL
+@node Reading RTL
 @section 读取RTL
 
 @en To read an RTL object from a file, call @code{read_rtx}.  It takes one
