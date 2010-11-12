@@ -58,33 +58,33 @@
 @en @end menu
 
 @menu
-* 概述::                如何使用机器描述。
-* 指令模式::            如何写指令模式。
-* 例子::                一个 @code{define_insn} 模式的例子说明。
-* RTL模板::             RTL模板定义了什么样的insn与一个模式匹配。
-* 输出模板::            输出模板说明了如何从这样一个insn来生成汇编代码。
-* 输出语句::            更一般的情况, 编写C代码来输出汇编代码。
-* 断言::          	控制一个insn可以使用什么类型的操作数。
-* 约束::         	对操作数的选择进行微调。
-* 标准名字::            代码生成时使用的模式名字。
-* 指令模式顺序::        不同模式顺序所产生的作用。
-* 依赖指令模式::        拥有一个指令模式，可能还会需要另一个。
-* 跳转指令模式::        针对跳转insn的指令模式的特殊考虑。
-* 循环指令模式::        如何为特定的循环insn定义模式。
-* Insn规范化::          指令的规范化。
-* 定义扩展::            为一个标准操作生成一个RTL insn序列。
-* Insn拆分::            拆分指令为多条指令。
-* 包含指令模式::        在机器描述中包含模式。
-* 窥孔定义::            定义机器特定的窥孔优化。
-* Insn属性::            为生成的insn指定属性值。
-* 条件执行::            为预测（predication）生成 @code{define_insn} 模式。
-* 常量定义::            定义可以用在md文件中的符号常量。
-* 迭代器::              使用迭代器从模板中生成模式。
+* Overview::                如何使用机器描述。
+* Patterns::            如何写指令模式。
+* Example::                一个 @code{define_insn} 模式的例子说明。
+* RTL Template::             RTL模板定义了什么样的insn与一个模式匹配。
+* Output Template::            输出模板说明了如何从这样一个insn来生成汇编代码。
+* Output Statement::            更一般的情况, 编写C代码来输出汇编代码。
+* Predicates::          	控制一个insn可以使用什么类型的操作数。
+* Constraints::         	对操作数的选择进行微调。
+* Standard Names::            代码生成时使用的模式名字。
+* Pattern Ordering::        不同模式顺序所产生的作用。
+* Dependent Patterns::        拥有一个指令模式，可能还会需要另一个。
+* Jump Patterns::        针对跳转insn的指令模式的特殊考虑。
+* Looping Patterns::        如何为特定的循环insn定义模式。
+* Insn Canonicalizations::          指令的规范化。
+* Expander Definitions::            为一个标准操作生成一个RTL insn序列。
+* Insn Splitting::            拆分指令为多条指令。
+* Including Patterns::        在机器描述中包含模式。
+* Peephole Definitions::            定义机器特定的窥孔优化。
+* Insn Attributes::            为生成的insn指定属性值。
+* Conditional Execution::            为预测（predication）生成 @code{define_insn} 模式。
+* Constant Definitions::            定义可以用在md文件中的符号常量。
+* Iterators::              使用迭代器从模板中生成模式。
 @end menu
 
 @en @node Overview
 @en @section Overview of How the Machine Description is Used
-@node 概述
+@node Overview
 @section 概述机器描述是如何被使用的
 
 @en There are three main conversions that happen in the compiler:
@@ -144,7 +144,7 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @en @section Everything about Instruction Patterns
 @en @cindex patterns
 @en @cindex instruction patterns
-@node 指令模式
+@node Patterns
 @section 指令模式的方方面面
 @cindex patterns
 @cindex instruction patterns
@@ -196,7 +196,7 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @en incomplete because it may contain @code{match_operand},
 @en @code{match_operator}, and @code{match_dup} expressions that stand for
 @en operands of the instruction.
-@dfn{RTL template}（@pxref{RTL模板}）是一个不完全的RTL表达式向量，展示了这
+@dfn{RTL template}（@pxref{RTL Template}）是一个不完全的RTL表达式向量，展示了这
 条指令的样子。所谓不完全是因为它可以包含 @code{match_operand}, 
 @code{match_operator} 和 @code{match_dup} 表达式，用来表示指令的操作数。
 
@@ -239,23 +239,23 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @en insns as assembler code.  @samp{%} in this string specifies where
 @en to substitute the value of an operand.  @xref{Output Template}.
 @dfn{output template}：一个字符串，说明了如何将匹配的insn输出为汇编代码。字符串
-中的 @samp{%} 指定了替换一个操作数值的地方。@pxref{输出模板}。
+中的 @samp{%} 指定了替换一个操作数值的地方。@pxref{Output Template}。
  
 @en When simple substitution isn't general enough, you can specify a piece
 @en of C code to compute the output.  @xref{Output Statement}.
 当简单替换无法满足需求的时候，你可以指定一块C代码来计算输出。
-@pxref{输出语句}。
+@xref{Output Statement}。
 
 @item
 @en Optionally, a vector containing the values of attributes for insns matching
 @en this pattern.  @xref{Insn Attributes}.
-一个可选的向量，包含了匹配该模式的insn的属性值。@pxref{Insn属性}。
+一个可选的向量，包含了匹配该模式的insn的属性值。@xref{Insn Attributes}。
 @end enumerate
 
 @en @node Example
 @en @section Example of @code{define_insn}
 @en @cindex @code{define_insn} example
-@node 例子
+@node Example
 @section 有关@code{define_insn}的例子
 @cindex @code{define_insn} example
 
@@ -317,7 +317,7 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @en @cindex insns, generating
 @en @cindex recognizing insns
 @en @cindex insns, recognizing
-@node RTL模板
+@node RTL Template
 @section RTL模板
 @cindex RTL insn template
 @cindex generating insns
@@ -376,7 +376,7 @@ RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们�
 @en @var{predicate} may be an empty string; then it means no test is to be
 @en done on the operand, so anything which occurs in this position is
 @en valid.
-@var{predicate} 为一个字符串，为一个函数的名字，其接受两个参数，一个表达式和一个 机器模式。@pxref{断言}。在匹配过程中，函数将会被调用，使用假定的操作数作为 表达式并且 @var{m} 作为机器模式参数（如果 @var{m} 没有被指定，则使用 @code{VOIDmode}，这通常会使得 @var{predicate} 可以接受任何机器模式）。如果其返 回0，则该指令模式匹配失败。@var{predicate} 可以为一个空字符串；这意味着不对操作 数作测试，这样出现在该位置的任何都是有效的。
+@var{predicate} 为一个字符串，为一个函数的名字，其接受两个参数，一个表达式和一个 机器模式。@xref{Predicates}。在匹配过程中，函数将会被调用，使用假定的操作数作为 表达式并且 @var{m} 作为机器模式参数（如果 @var{m} 没有被指定，则使用 @code{VOIDmode}，这通常会使得 @var{predicate} 可以接受任何机器模式）。如果其返 回0，则该指令模式匹配失败。@var{predicate} 可以为一个空字符串；这意味着不对操作 数作测试，这样出现在该位置的任何都是有效的。
 
 @en Most of the time, @var{predicate} will reject modes other than @var{m}---but
 @en not always.  For example, the predicate @code{address_operand} uses
@@ -388,7 +388,7 @@ RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们�
 @en @var{constraint} controls reloading and the choice of the best register
 @en class to use for a value, as explained later (@pxref{Constraints}).
 @en If the constraint would be an empty string, it can be omitted.
-@var{constraint} 控制重载以及针对一个值选择最好的寄存器类别来使用，将在后面解释 （@pxref{约束}）。如果constraint为空字符串，则可以忽略掉。
+@var{constraint} 控制重载以及针对一个值选择最好的寄存器类别来使用，将在后面解释 （@pxref{Constraints}）。如果constraint为空字符串，则可以忽略掉。
 
 @en People are often unclear on the difference between the constraint and the
 @en predicate.  The predicate helps decide whether a given insn matches the
@@ -423,7 +423,7 @@ RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们�
 @en necessary.  @xref{Side Effects}.
 如果在一个 @code{parallel} 中的最后几个表达式为 @code{clobber} 表达式，其操作数
 为一个硬寄存器或者 @code{match_scratch}，则组合器可以在需要的时候增加或删除它
-们。@pxref{副作用}。
+们。@xref{Side Effects}。
 
 @en @findex match_dup
 @en @item (match_dup @var{n})
@@ -457,7 +457,7 @@ RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们�
 @en twice; once for the quotient pattern and once for the remainder pattern.
 注意 @code{match_dup} 不要用来告诉编译器特定寄存器被用于两个操作数（例如：
 @code{add} 将一个寄存器加到另一个之上；第二个寄存器即为输入操作数，同样也为输
-出操作数）。可以为此使用匹配constraint（@pxref{简单约束}）。@code{match_dup}
+出操作数）。可以为此使用匹配constraint（@pxref{Simple Constraints}）。@code{match_dup}
 是用于一个操作数在模板中的两个地方被使用的情况，例如一条指令同时计算商和余数，
 其中操作码接受两个输入操作数，但是RTL模板不得不引用它们两次；一次用于求商指令
 模式，一次用于求余数指令模式。
@@ -662,7 +662,7 @@ insn的操作数，不具有任何constraint，因为它从来不作为一个整
 @en @section Output Templates and Operand Substitution
 @en @cindex output templates
 @en @cindex operand substitution
-@node 输出模板
+@node Output Template
 @section 输出模板和操作数替换
 @cindex output templates
 @cindex operand substitution
@@ -793,7 +793,7 @@ insn的操作数，不具有任何constraint，因为它从来不作为一个整
 @en instruction pattern.  For example, the opcodes may depend on the kinds of
 @en operands; or some unfortunate combinations of operands may require extra
 @en machine instructions.
-@node 输出语句
+@node Output Statement
 @section 用于汇编输出的C语句
 @cindex output statements
 @cindex C statements for assembler output
@@ -812,7 +812,7 @@ insn的操作数，不具有任何constraint，因为它从来不作为一个整
 @en might write this pattern:
 如果输出控制字符串起始于 @samp{@@}，则其实际为一系列模板，每一个单独一行。
 （空行，以及开头的空格和tab被忽略掉。）这些模板对应于模式的各个constraint
-（@pxref{多个可选项}）。例如，如果一个目标机有一个二址（two-address）
+（@pxref{Multi-Alternative}）。例如，如果一个目标机有一个二址（two-address）
 加法指令 @samp{addr}相加到寄存器中，另外还有一个 @samp{addm} 将寄存器的值相加
 到内存中，你可能会这样写模式：
 
@@ -929,7 +929,7 @@ constraint选择的序号（0为第一个，1位第二个选择，以此类推�
 @en @cindex predicates
 @en @cindex operand predicates
 @en @cindex operator predicates
-@node 断言
+@node Predicates
 @section 断言
 @cindex 断言
 @cindex 操作数断言
@@ -963,7 +963,7 @@ constraint选择的序号（0为第一个，1位第二个选择，以此类推�
 @en that must be constants (``immediate operands''); you must use a
 @en predicate that allows only constants, or else enforce the requirement
 @en in the extra condition.
-操作数断言可以允许硬件实际上无法接受的操作数， 只要约束能够为reload提供能力，来修复它们（@pxref{约束}）。 然而，只要断言指定的机器指令需求尽可能的严密， GCC通常便会生成更好的代码。reload不能修复必须为常量的操作数（立即数）； 你必须使用只允许常量的断言，或者使用额外的条件来加强必要条件。
+操作数断言可以允许硬件实际上无法接受的操作数， 只要约束能够为reload提供能力，来修复它们（@pxref{Constraints}）。 然而，只要断言指定的机器指令需求尽可能的严密， GCC通常便会生成更好的代码。reload不能修复必须为常量的操作数（立即数）； 你必须使用只允许常量的断言，或者使用额外的条件来加强必要条件。
 
 @en @cindex predicates and machine modes
 @en @cindex normal predicates
@@ -1015,15 +1015,15 @@ constraint选择的序号（0为第一个，1位第二个选择，以此类推�
 @en                                     functions.
 @en @end menu
 @menu
-* 机器无关的@term{predicate}:: 所有后端都可用的@term{predicate}。 
-* 定义predicate::       如何写机器特定的predicate函数。
+* Machine-Independent Predicates:: 所有后端都可用的@term{predicate}。 
+* Defining Predicates::       如何写机器特定的predicate函数。
 @end menu
 
 @en @node Machine-Independent Predicates
 @en @subsection Machine-Independent Predicates
 @en @cindex machine-independent predicates
 @en @cindex generic predicates
-@node 机器无关的@term{predicate}
+@node Machine-Independent Predicates
 @subsection 机器无关的@term{predicate}
 @cindex machine-independent predicates
 @cindex generic predicates
@@ -1274,7 +1274,7 @@ modes; that is, the expression code will be one of @code{eq}, @code{ne},
 @en @cindex defining predicates
 @en @findex define_predicate
 @en @findex define_special_predicate
-@node 定义predicate
+@node Defining Predicates
 @subsection 定义机器特定的predicate
 @cindex defining predicates
 @findex define_predicate
@@ -1501,7 +1501,7 @@ RTL表达式被首先求值，不要重复检查代码块中的在RTL表达式�
 @en @section Operand Constraints
 @en @cindex operand constraints
 @en @cindex constraints
-@node 约束
+@node Constraints
 @section 操作数的约束
 @cindex 操作数的约束
 @cindex 约束
@@ -1519,7 +1519,7 @@ RTL表达式被首先求值，不要重复检查代码块中的在RTL表达式�
 @en @cindex operand constraints, @code{asm}
 @en @cindex constraints, @code{asm}
 @en @cindex @code{asm} constraints
-@node 约束
+@node Constraints
 @section @code{asm}操作数的constraint条件
 @cindex 操作数的约束, @code{asm}
 @cindex 约束, @code{asm}
@@ -1558,14 +1558,14 @@ Here are specific details on what constraint letters you can use with
 @en @end ifset
 @ifset INTERNALS
 @menu
-* 简单约束::       约束的基本用法
-* 多个可选项::     当insn具有两个可选的约束模式
-* 类别优先选择::   约束可以指导用哪个硬件寄存器来存放事物
-* 修饰符::         对约束效果更精确的控制
-* 禁止Insn可选项:: 使用@code{enabled}属性来禁止insn可选项
-* 机器约束::       一些特定机器现有的约束
-* 定义约束::       如何定义机器特定的约束
-* C 约束接口::     如何测试C代码的约束
+* Simple Constraints::       约束的基本用法
+* Multi-Alternative::     当insn具有两个可选的约束模式
+* Class Preferences::   约束可以指导用哪个硬件寄存器来存放事物
+* Modifiers::         对约束效果更精确的控制
+* Disable Insn Alternatives:: 使用@code{enabled}属性来禁止insn可选项
+* Machine Constraints::       一些特定机器现有的约束
+* Define Constraints::       如何定义机器特定的约束
+* C Constraint Interface::     如何测试C代码的约束
 @end menu
 @end ifset
 
@@ -1589,7 +1589,7 @@ Here are specific details on what constraint letters you can use with
 @en @node Simple Constraints
 @en @subsection Simple Constraints
 @en @cindex simple constraints
-@node 简单约束
+@node Simple Constraints
 @subsection 简单约束
 @cindex 简单约束
 
@@ -2058,7 +2058,7 @@ addl #35,r12
 @en @node Multi-Alternative
 @en @subsection Multiple Alternative Constraints
 @en @cindex multiple alternative constraints
-@node 多个可选项
+@node Multi-Alternative
 @subsection 多个可选的约束
 @cindex 多个可选的约束
 
@@ -2099,7 +2099,7 @@ addl #35,r12
 @en @samp{0} for operand 1, and @samp{dmKs} for operand 2.  The @samp{=} and
 @en @samp{%} in the constraints apply to all the alternatives; their
 @en meaning is explained in the next section (@pxref{Class Preferences}).
-第一个可选项具有操作数0的@samp{m} (memory)，操作数1的@samp{0}（意味着其必须匹配 操作数0）和操作数2的@samp{dKs}。第二个可选项具有操作数0的@samp{d} (data register)，操作数1的@samp{0}和操作数2的@samp{dmKs}。 约束中的@samp{=}和@samp{%}应用于所有的可选项； 它们的含义在下一节介绍（@pxref{类别优先选择}）。
+第一个可选项具有操作数0的@samp{m} (memory)，操作数1的@samp{0}（意味着其必须匹配 操作数0）和操作数2的@samp{dKs}。第二个可选项具有操作数0的@samp{d} (data register)，操作数1的@samp{0}和操作数2的@samp{dmKs}。 约束中的@samp{=}和@samp{%}应用于所有的可选项； 它们的含义在下一节介绍（@pxref{Class Preferences}）。
 @end ifset
 
 @en @c FIXME Is this ? and ! stuff of use in asm()?  If not, hide unless INTERNAL
@@ -2151,7 +2151,7 @@ addl #35,r12
 @en the first, 1 for the second alternative, etc.).  @xref{Output Statement}.
 @en @end ifset
 @ifset INTERNALS
-当insn指令模式在其约束中具有多个可选项时， 经常会出现通过哪个可选项被匹配而决定使用使用什么汇编代码的情况。这时， 输写汇编代码的C代码可以使用变量@code{which_alternative}， 其为实际被满足的可选项的顺序编号（0对应第一个，1对应第二个，等等）。@xref{输出语句}。
+当insn指令模式在其约束中具有多个可选项时， 经常会出现通过哪个可选项被匹配而决定使用使用什么汇编代码的情况。这时， 输写汇编代码的C代码可以使用变量@code{which_alternative}， 其为实际被满足的可选项的顺序编号（0对应第一个，1对应第二个，等等）。@xref{Output Statement}。
 @end ifset
 
 @en @ifset INTERNALS
@@ -2160,7 +2160,7 @@ addl #35,r12
 @en @cindex class preference constraints
 @en @cindex register class preference constraints
 @ifset INTERNALS
-@node 类别优先选择
+@node Class Preferences
 @subsection 寄存器类别优先选择
 @cindex class preference constraints
 @cindex register class preference constraints
@@ -2193,7 +2193,7 @@ addl #35,r12
 @en @subsection Constraint Modifier Characters
 @en @cindex modifiers in constraints
 @en @cindex constraint modifier characters
-@node 修饰符
+@node Modifiers
 @subsection constraint修饰符
 @cindex modifiers in constraints
 @cindex constraint modifier characters
@@ -2378,7 +2378,7 @@ GCC只能处理在asm中的一个可交换对；如果你有更多的，编译�
 @en @subsection Constraints for Particular Machines
 @en @cindex machine specific constraints
 @en @cindex constraints, machine specific
-@node 机器约束
+@node Machine Constraints
 @subsection 机器特定的约束
 @cindex 机器特定的约束
 @cindex constraints, machine specific
@@ -2401,7 +2401,7 @@ GCC只能处理在asm中的一个可交换对；如果你有更多的，编译�
 @en constraints that aren't.  The compiler source file mentioned in the
 @en table heading for each architecture is the definitive reference for
 @en the meanings of that architecture's constraints.
-只要可能，就应该在@code{asm}参数中使用通用目的的约束字母， 因为它们可以向阅读你的代码的人们传达更加可读的意思。如果无法做到， 则使用在不同体系结构中通常具有非常相似的意思的约束字母。 最通用的约束为@samp{m}和@samp{r}（分别用于内存和通用寄存器； @pxref{简单约束}“）， 以及@samp{I}，通常用于指示最常见的立即数常量格式。
+只要可能，就应该在@code{asm}参数中使用通用目的的约束字母， 因为它们可以向阅读你的代码的人们传达更加可读的意思。如果无法做到， 则使用在不同体系结构中通常具有非常相似的意思的约束字母。 最通用的约束为@samp{m}和@samp{r}（分别用于内存和通用寄存器； @pxref{Simple Constraints}， 以及@samp{I}，通常用于指示最常见的立即数常量格式。
 
 每个体系结构定义了额外的约束。这些约束被编译器本身使用，用于指令生成， 同时也用于@code{asm}语句；因此，一些约束对于@code{asm}并不是很有用处。 这里有一个总结，关于在一些特定机器上使用的机器相关的约束； 包括对@code{asm}有用处的和没有用处的。 在表中提到的针对每个体系结构的编译器原文件，是该体系结构的约束的定义参考。
 
@@ -5371,7 +5371,7 @@ MAC16 40位累加器
 @en In order to make use of the @code{enabled} attribute a back end has to add
 @en in the machine description files:
 @ifset INTERNALS
-@node 禁止Insn可选项
+@node Disable Insn Alternatives
 @subsection 使用@code{enabled}属性来禁止insn可选项
 @cindex enabled
 
@@ -5511,7 +5511,7 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @en @cindex defining constraints
 @en @cindex constraints, defining
 @ifset INTERNALS
-@node 定义约束
+@node Define Constraints
 @subsection 定义机器特定的约束
 @cindex 定义约束
 @cindex constraints, defining
@@ -5607,7 +5607,7 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @en object.
 @en @end deffn
 @deffn {MD Expression} define_constraint name docstring exp
-@var{name}和@var{docstring}参数与@code{define_register_constraint}的相同， 但是注意docstring直接跟随name之后。@var{exp}为一个RTL表达式， 遵循在断言定义中相同的规则。详情参见@ref{定义predicate}。如果求得为真， 则约束匹配；如果求得为假，则不匹配。约束表达式应该指示出它们可能匹配的RTL， 就像断言表达式一样。
+@var{name}和@var{docstring}参数与@code{define_register_constraint}的相同， 但是注意docstring直接跟随name之后。@var{exp}为一个RTL表达式， 遵循在断言定义中相同的规则。详情参见@ref{Defining Predicates}。如果求得为真， 则约束匹配；如果求得为假，则不匹配。约束表达式应该指示出它们可能匹配的RTL， 就像断言表达式一样。
 
 C表达式@code{match_test}，可以访问下列变量：
 
@@ -5752,7 +5752,7 @@ C表达式@code{match_test}，可以访问下列变量：
 @en @subsection Testing constraints from C
 @en @cindex testing constraints
 @en @cindex constraints, testing
-@node C 约束接口
+@node C Constraint Interface
 @subsection 从C中测试约束
 @cindex testing constraints
 @cindex constraints, testing
@@ -5776,7 +5776,7 @@ C表达式@code{match_test}，可以访问下列变量：
 @en do not contain angle brackets or underscores are left unchanged.
 @en Underscores are doubled, each @samp{<} is replaced with @samp{_l}, and
 @en each @samp{>} with @samp{_g}.  Here are some examples:
-有时从C代码中测试约束要比隐式的通过@code{match_operand}中的约束字符串有用处。 生成文件@file{tm_p.h}声明了一些接口，用于机器特定的约束。 这些接口都没有用于在@ref{简单约束}中描述的通用约束。 这在将来可能会有所改变。
+有时从C代码中测试约束要比隐式的通过@code{match_operand}中的约束字符串有用处。 生成文件@file{tm_p.h}声明了一些接口，用于机器特定的约束。 这些接口都没有用于在@ref{Simple Constraints}中描述的通用约束。 这在将来可能会有所改变。
 
 警告：@file{tm_p.h}可能声明了其它操作约束的函数，除了在这里列的以外。 不要在机器独立的代码中使用那些函数。它们只是为了实现旧的约束接口。 它们在将来将会有变动或者消失。
 
@@ -5881,7 +5881,7 @@ C表达式@code{match_test}，可以访问下列变量：
 @en 
 @en   "")
 @en @end smallexample
-这里有一个使用@code{satisfies_constraint_@var{m}}的例子。 在窥孔优化（参见@ref{窥孔定义}）中，操作数约束字符串将被忽略， 所以如果有相应的约束，它们必须在C条件中被测试。在例子中，如果操作数2不满足@samp{K}约束，优化将被采用。 （这是从 i386机器描述中的窥孔定义简化的版本。）
+这里有一个使用@code{satisfies_constraint_@var{m}}的例子。 在窥孔优化（@pxref{Peephole Definitions}）中，操作数约束字符串将被忽略， 所以如果有相应的约束，它们必须在C条件中被测试。在例子中，如果操作数2不满足@samp{K}约束，优化将被采用。 （这是从 i386机器描述中的窥孔定义简化的版本。）
 
 @smallexample
 (define_peephole2
@@ -5903,7 +5903,7 @@ C表达式@code{match_test}，可以访问下列变量：
 @en @cindex standard pattern names
 @en @cindex pattern names
 @en @cindex names, pattern
-@node 标准名字
+@node Standard Names
 @section 用于生成的标准指令模式名
 @cindex standard pattern names
 @cindex pattern names
@@ -6122,9 +6122,9 @@ C表达式@code{match_test}，可以访问下列变量：
 
 只有当目标机器确实具有这样指令的时候才定义该指令模式；如果将内存加载到连续寄存器的最有效的方式，是每次加载一个，则 不用定义该指令模式。
 
-在一些机器上，对于哪些连续寄存器可以存储到内存中，会有一些限制，例如特定的起始寄存器或者结尾寄存器的编号，或者一个有效范围。对于那些机器，使用@code{define_expand} (@pxref{定义扩展})，并当不符合限制的时候，将指令模式变成失败。
+在一些机器上，对于哪些连续寄存器可以存储到内存中，会有一些限制，例如特定的起始寄存器或者结尾寄存器的编号，或者一个有效范围。对于那些机器，使用@code{define_expand} (@pxref{Expander Definitions})，并当不符合限制的时候，将指令模式变成失败。
 
-将生成的insn写成一个@code{parallel}，其元素为一个从适当内存位置到寄存器的@code{set}（可能还需要@code{use}或元素@code{clobber}）。使用@code{match_parallel} (@pxref{RTL模板})来识别insn。关于使用该insn模式的例子，可以参见@file{rs6000.md}。
+将生成的insn写成一个@code{parallel}，其元素为一个从适当内存位置到寄存器的@code{set}（可能还需要@code{use}或元素@code{clobber}）。使用@code{match_parallel} (@pxref{RTL Template})来识别insn。关于使用该insn模式的例子，可以参见@file{rs6000.md}。
 
 @en @cindex @samp{store_multiple} instruction pattern
 @en @item @samp{store_multiple}
@@ -7521,9 +7521,9 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @item @samp{b@var{cond}}
 条件分支指令。操作数0为一个@code{label_ref}指出要跳转到的标号。如果条件码符合条件@var{cond}则跳转。
 
-一些机器不遵循这里假设的模型，即一个比较指令，跟随一个条件跳转指令。那种情况下，@samp{cmp@var{m}} (和 @samp{tst@var{m}})指令模式，应该简单的将操作数存放开，并在@code{define_expand} (@pxref{定义扩展})中为条件分支操作，生成所有需要的insn。所有对扩展@samp{b@var{cond}}指令模式的调用，都会立即优先执行对扩展@samp{cmp@var{m}}或者@samp{tst@var{m}}的调用。
+一些机器不遵循这里假设的模型，即一个比较指令，跟随一个条件跳转指令。那种情况下，@samp{cmp@var{m}} (和 @samp{tst@var{m}})指令模式，应该简单的将操作数存放开，并在@code{define_expand} (@pxref{Expander Definitions})中为条件分支操作，生成所有需要的insn。所有对扩展@samp{b@var{cond}}指令模式的调用，都会立即优先执行对扩展@samp{cmp@var{m}}或者@samp{tst@var{m}}的调用。
 
-对条件代码值使用伪寄存器的，或者用于比较的机器模式取决于被测试的条件的机器，也应该使用上面的机制。@xref{跳转指令模式}.
+对条件代码值使用伪寄存器的，或者用于比较的机器模式取决于被测试的条件的机器，也应该使用上面的机制。@xref{Jump Patterns}.
 
 上面的讨论也应用在@samp{mov@var{mode}cc}和@samp{s@var{cond}}指令模式上。
 
@@ -7609,7 +7609,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 
 在大多机器上，操作数2没有被实际存放在RTL模式中。提供它是出于安全考虑，一些RISC机器需要将该信息放到汇编代码中；它们可以将其放在RTL中，而不是操作数1中。
 
-操作数0应该为一个@code{mem} RTX，其地址为函数的地址。然而注意，该地址可以为一个@code{symbol_ref}表达式，即使其在目标机器上可能不是一个合法的内存地址。如果其也不是调用指令的有效参数，则该操作的指令模式应该为一个@code{define_expand} (@pxref{定义扩展})，其将地址放入寄存器中，并在调用指令中使用寄存器。
+操作数0应该为一个@code{mem} RTX，其地址为函数的地址。然而注意，该地址可以为一个@code{symbol_ref}表达式，即使其在目标机器上可能不是一个合法的内存地址。如果其也不是调用指令的有效参数，则该操作的指令模式应该为一个@code{define_expand} (@pxref{Expander Definitions})，其将地址放入寄存器中，并在调用指令中使用寄存器。
 
 @en @cindex @code{call_value} instruction pattern
 @en @item @samp{call_value}
@@ -7850,7 +7850,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @en reduction is enabled.
 @cindex @code{decrement_and_branch_until_zero} instruction pattern
 @item @samp{decrement_and_branch_until_zero}
-条件分支指令，递减一个寄存器并且如果寄存器非零则跳转。操作数0为递减并测试的寄存器；操作数1为如果寄存器非零，则跳转的标号。@xref{循环指令模式}.
+条件分支指令，递减一个寄存器并且如果寄存器非零则跳转。操作数0为递减并测试的寄存器；操作数1为如果寄存器非零，则跳转的标号。@xref{Looping Patterns}.
 
 该可选的指令模式只用于合并器，通常被循环优化器使用，当启动强度消减的时候。
 
@@ -7884,15 +7884,15 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @en 
 @cindex @code{doloop_end} instruction pattern
 @item @samp{doloop_end}
-条件分支指令，递减一个寄存器，并且如果寄存器非零则跳转。该指令接受五个操作数：操作数0是用来递减和测试的寄存器；操作数1是循环迭代的次数，为一个@code{const_int}，或者如果直到运行时才能确定，则为@code{const0_rtx}；操作数2为实际的或者估算的最大迭代数，为一个@code{const_int}；操作数3为被包含的循环数，为一个@code{const_int}（最内层循环的值为1）；操作数4为如果寄存器非零，要跳转的标号。@xref{循环指令模式}.
+条件分支指令，递减一个寄存器，并且如果寄存器非零则跳转。该指令接受五个操作数：操作数0是用来递减和测试的寄存器；操作数1是循环迭代的次数，为一个@code{const_int}，或者如果直到运行时才能确定，则为@code{const0_rtx}；操作数2为实际的或者估算的最大迭代数，为一个@code{const_int}；操作数3为被包含的循环数，为一个@code{const_int}（最内层循环的值为1）；操作数4为如果寄存器非零，要跳转的标号。@xref{Looping Patterns}.
 
 
-该可选的指令模式应该为，具有低开销循环指令的机器定义，循环优化器会尝试修改合适的循环来利用它。如果不支持嵌套的低开销循环，则使用@code{define_expand} (@pxref{定义扩展})，并如果操作数3不为@code{const1_rtx}，则使得指令模式失败。类似的，如果实际的或者估算的最大迭代数目对于该指令来说太大，则使其失败。
+该可选的指令模式应该为，具有低开销循环指令的机器定义，循环优化器会尝试修改合适的循环来利用它。如果不支持嵌套的低开销循环，则使用@code{define_expand} (@pxref{Expander Definitions})，并如果操作数3不为@code{const1_rtx}，则使得指令模式失败。类似的，如果实际的或者估算的最大迭代数目对于该指令来说太大，则使其失败。
 
 @cindex @code{doloop_begin} instruction pattern
 @item @samp{doloop_begin}
 与@code{doloop_end}成套的指令，被用于需要执行一些初始化的机器，例如加载用于低开销循环指令中的特定寄存器。如果初始化insn不总是需要被生成，则使用@code{define_expand}
-(@pxref{定义扩展})，并使其失败。
+(@pxref{Expander Definitions})，并使其失败。
 
 @en @cindex @code{canonicalize_funcptr_for_compare} instruction pattern
 @en @item @samp{canonicalize_funcptr_for_compare}
@@ -7955,7 +7955,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @itemx @samp{restore_stack_nonlocal}
 大多数机器用来保存和恢复栈指针的方式，是通过将其复制到一个机器模式为@code{Pmode}的对象。不要在这样的机器上定义这些指令模式。
 
-一些机器要求对栈指针的保存和恢复，进行特殊的处理。在那些机器上，根据非标准的情况来定义指令模式，使用@code{define_expand} (@pxref{定义扩展})来产生要求的insn。三种保存和恢复类型：
+一些机器要求对栈指针的保存和恢复，进行特殊的处理。在那些机器上，根据非标准的情况来定义指令模式，使用@code{define_expand} (@pxref{Expander Definitions})来产生要求的insn。三种保存和恢复类型：
 
 @en @enumerate
 @en @item
@@ -8594,7 +8594,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @en configuration in older tetex distributions.  Known to not work:
 @en tetex-1.0.7, known to work: tetex-2.0.2.
 @ifset INTERNALS
-@node 指令模式顺序
+@node Pattern Ordering
 @section 指令模式的顺序问题
 @cindex Pattern Ordering
 @cindex Ordering of Patterns
@@ -8637,7 +8637,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @en @cindex Interdependence of Patterns
 @end ifset
 @ifset INTERNALS
-@node 依赖指令模式
+@node Dependent Patterns
 @section 指令模式的相互依赖性
 @cindex Dependent Patterns
 @cindex Interdependence of Patterns
@@ -8747,7 +8747,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @en @cindex defining jump instruction patterns
 @end ifset
 @ifset INTERNALS
-@node 跳转指令模式
+@node Jump Patterns
 @section 定义跳转指令模式
 @cindex jump instruction patterns
 @cindex defining jump instruction patterns
@@ -8884,7 +8884,7 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @en following for its @code{dbra} instruction:
 @end ifset
 @ifset INTERNALS
-@node 循环指令模式
+@node Looping Patterns
 @section 定义循环指令模式
 @cindex looping instruction patterns
 @cindex defining looping instruction patterns
@@ -9050,7 +9050,7 @@ GCC具有三个特定的命名指令模式，来支持低开销循环。
 @en @cindex insn canonicalization
 @end ifset
 @ifset INTERNALS
-@node Insn规范化
+@node Insn Canonicalizations
 @section 指令规范化
 @cindex canonicalization of instructions
 @cindex insn canonicalization
@@ -9140,7 +9140,7 @@ GCC具有三个特定的命名指令模式，来支持低开销循环。
 @en above.
 @cindex @code{compare}, canonicalization of
 @item
-对于@code{compare}运算符，在使用@code{cc0}（参见@ref{跳转指令模式}）的机器上，
+对于@code{compare}运算符，在使用@code{cc0}（参见@ref{Jump Patterns}）的机器上，
 常量总是为第二个操作数。 在其它机器上，极少的情况下，
 编译器可能想使用常量作为第一个操作数来构建@code{compare}。但是，
 这些情况并不常见，所以不值得来提供匹配常量作为第一个操作数的指令模式，
@@ -9300,7 +9300,7 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 @en @cindex defining RTL sequences for code generation
 @end ifset
 @ifset INTERNALS
-@node 定义扩展
+@node Expander Definitions
 @section 为代码生成定义RTL序列
 @cindex expander definitions
 @cindex code generation RTL sequences
@@ -9674,7 +9674,7 @@ RTL模板不用于匹配，只是用于生成最初的insn列表。
 @en @cindex splitting instructions
 @end ifset
 @ifset INTERNALS
-@node Insn拆分
+@node Insn Splitting
 @section 定义如何拆分指令
 @cindex insn splitting
 @cindex instruction splitting
@@ -9706,8 +9706,8 @@ RTL模板不用于匹配，只是用于生成最初的insn列表。
 @en addition of a large constant in two insns on a RISC machine, the way to
 @en split the addition into two insns is machine-dependent.
 有两种情况，你应该指定如何将一个指令模式拆分为多个insn。在一些机器上，
-指令需要延迟槽（参见@ref{延迟槽}）或者指令的输出对于多周期
-（参见@ref{处理器流水线描述}）不可用，
+指令需要延迟槽（@pxref{Delay Slots}）或者指令的输出对于多周期
+（@pxref{Processor pipeline description}）不可用，
 则优化这些情况的编译器过程需要能够将insn移入延迟槽中。但是，
 一些insn可能会生成不止一条机器指令。这些insn则不能被放入延迟槽。
 
@@ -9783,7 +9783,7 @@ insn组合器阶段还拆分putative insns。
 并且满足条件@var{condition}，则它由insn列表@var{new-insn-pattern-1},
 @var{new-insn-pattern-2}等来替换。
 
-@var{preparation-statements}与那些为@code{define_expand}（参见@ref{定义扩展}）
+@var{preparation-statements}与那些为@code{define_expand}（@pxref{Expander Definitions}）
 指定的语句类似，并且在生成新RTL之前被执行。
 与@code{define_expand}中的不同之处为，这些语句不能生成任何新的伪寄存器。
 一旦完成重载，它们则不能在栈帧中分配任何空间。
@@ -10011,7 +10011,7 @@ insn组合器阶段还拆分putative insns。
 @en It looks like:
 @end ifset
 @ifset INTERNALS
-@node 包含指令模式
+@node Including Patterns
 @section 在机器描述中包含指令模式
 @cindex insn includes
 
@@ -10118,7 +10118,7 @@ genrecog -I/p1/abc/proc1 -I/p2/abcd/pro2 target.md
 @en @cindex defining peephole optimizers
 @end ifset
 @ifset INTERNALS
-@node 窥孔定义
+@node Peephole Definitions
 @section 机器特定的窥孔优化
 @cindex peephole optimizer definitions
 @cindex defining peephole optimizers
@@ -10505,7 +10505,7 @@ fmoved sp@@+,fp0
 @en It is possible to request additional scratch registers for use in the
 @en output template.  If appropriate registers are not free, the pattern
 @en will simply not match.
-定义几乎与@code{define_split}（参见 @ref{Insn拆分}）相同，
+定义几乎与@code{define_split}（@pxref{Insn Splitting}）相同，
 除了要匹配的指令模式不是一个单个指令，而是一个指令序列。
 
 在输出模板中有可能需要用到额外的scratch寄存器。
@@ -10599,7 +10599,7 @@ fmoved sp@@+,fp0
 @en to track the condition codes.
 @end ifset
 @ifset INTERNALS
-@node Insn属性
+@node Insn Attributes
 @section 指令属性
 @cindex insn attributes
 @cindex instruction attributes
@@ -10620,14 +10620,14 @@ fmoved sp@@+,fp0
 @en * Processor pipeline description:: Specifying information for insn scheduling.
 @en @end menu
 @menu
-* 定义属性::         指定属性以及它们的值。
-* 表达式::           属性值的有效表达式。
-* 给Insns打标签::    为insns赋予属性值。
-* 属性例子::       一个设置属性的例子。
-* Insn长度::         计算insns的长度。
-* 常量属性::         定义值为常量的属性。
-* 延迟槽::           定义机器所需要的延迟槽。
-* 处理器流水线描述:: 为insn调度指定信息。
+* Defining Attributes::         指定属性以及它们的值。
+* Expressions::           属性值的有效表达式。
+* Tagging Insns::    为insns赋予属性值。
+* Attr Example::       一个设置属性的例子。
+* Insn Lengths::         计算insns的长度。
+* Constant Attributes::         定义值为常量的属性。
+* Delay Slots::           定义机器所需要的延迟槽。
+* Processor pipeline description:: 为insn调度指定信息。
 @end menu
 
 @en @end ifset
@@ -10642,7 +10642,7 @@ fmoved sp@@+,fp0
 @en by the target machine.  It looks like:
 @end ifset
 @ifset INTERNALS
-@node 定义属性
+@node Defining Attributes
 @subsection 定义属性以及它们的值
 @cindex defining attributes and their values
 @cindex attributes, defining
@@ -10672,8 +10672,8 @@ fmoved sp@@+,fp0
 
 @var{default} 为一个属性表达式，给出了匹配指令模式，但指令模式定义中
 没有显式包含该属性值的insns，所应具有的属性值。关于更多处理缺省值的
-信息，@pxref{属性例子}。关于不依赖于任何特定insn的属性，
-@pxref{常量属性}。
+信息，@xref{Attr Example}。关于不依赖于任何特定insn的属性，
+@xref{Constant Attributes}。
 
 @en @findex insn-attr.h
 @en For each defined attribute, a number of definitions are written to the
@@ -10752,10 +10752,10 @@ extern enum attr_type get_attr_type ();
 @en @end table
 @table @code
 @item length
-@code{length}属性用于计算每输出的代码块的长度。这尤其在验证分支距离的时候特别重要。@xref{Insn长度}.
+@code{length}属性用于计算每输出的代码块的长度。这尤其在验证分支距离的时候特别重要。@xref{Insn Lengths}.
 
 @item enabled
-@code{enabled}属性可以被定义，用来在代码生成过程中，阻止insn定义中的特定的可选项。@xref{禁止Insn可选项}.
+@code{enabled}属性可以被定义，用来在代码生成过程中，阻止insn定义中的特定的可选项。@xref{Disable Insn Alternatives}.
 
 @end table
 
@@ -10804,7 +10804,7 @@ extern enum attr_type get_attr_type ();
 @en @cindex attribute expressions
 @end ifset
 @ifset INTERNALS
-@node 表达式
+@node Expressions
 @subsection 属性表达式
 @cindex attribute expressions
 
@@ -10833,7 +10833,7 @@ extern enum attr_type get_attr_type ();
 数字属性的值可以被指定为一个 @code{const_int}，或者一个在
 @code{const_string}, @code{eq_attr} (参见下面), @code{attr}, 
 @code{symbol_ref}, 简单算术表达式, 和特定指令上的 @code{set_attr} 
-(@pxref{给Insns打标签})中，作为字符串来表示的整数，
+(@pxref{Tagging Insns})中，作为字符串来表示的整数，
 
 @en @cindex @code{const_string} and attributes
 @en @item (const_string @var{value})
@@ -11017,7 +11017,7 @@ extern enum attr_type get_attr_type ();
 @en 
 @en For example,
 @findex get_attr
-@code{const_int}和@code{symbol_ref}总为有效（其它的形式，@pxref{Insn长度}）。@code{symbol_ref}为一个字符串，表示当使用@samp{get_attr_@dots{}}程序求解时，可以生成一个@code{int}的C表达式。其通常应该为一个全局变量。
+@code{const_int}和@code{symbol_ref}总为有效（其它的形式，@pxref{Insn Lengths}）。@code{symbol_ref}为一个字符串，表示当使用@samp{get_attr_@dots{}}程序求解时，可以生成一个@code{int}的C表达式。其通常应该为一个全局变量。
 
 @findex eq_attr
 @item (eq_attr @var{name} @var{value})
@@ -11053,7 +11053,7 @@ extern enum attr_type get_attr_type ();
 @en value of the compiler variable @code{which_alternative}
 @en (@pxref{Output Statement}) and the values must be small integers.  For
 @en example,
-如果@var{name}指定了属性@samp{alternative}，则它是指的编译器变量@code{which_alternative}的值（@pxref{输出语句}），并且值必须为小整数。例如，
+如果@var{name}指定了属性@samp{alternative}，则它是指的编译器变量@code{which_alternative}的值（@pxref{Output Statement}），并且值必须为小整数。例如，
 
 @en @smallexample
 @en (eq_attr "alternative" "2,3")
@@ -11159,7 +11159,7 @@ extern enum attr_type get_attr_type ();
 @en @cindex assigning attribute values to insns
 @end ifset
 @ifset INTERNALS
-@node 给Insns打标签
+@node Tagging Insns
 @subsection 给Insns赋予属性值
 @cindex tagging insns
 @cindex assigning attribute values to insns
@@ -11197,7 +11197,7 @@ extern enum attr_type get_attr_type ();
 可选的@code{define_insn}和@code{define_peephole}最后的参数，为一个表达式向量，
 每个元素定义了单个属性的值。赋属性值的最通用方式是使用@code{set}表达式，
 其第一个操作数为一个@code{attr}表达式，给出了要设置的属性名。
-第二个操作数为一个属性表达式（参见@ref{表达式}），给出了属性值。
+第二个操作数为一个属性表达式（@pxref{Expressions}），给出了属性值。
 
 当属性值依赖于可选（@samp{alternative}）属性，
 则可以使用@code{set_attr_alternative}表达式。其允许指定属性表达式向量，
@@ -11327,7 +11327,7 @@ extern enum attr_type get_attr_type ();
 @en @cindex attribute specifications
 @end ifset
 @ifset INTERNALS
-@node 属性例子
+@node Attr Example
 @subsection 关于属性说明的例子
 @cindex attribute specifications example
 @cindex attribute specifications
@@ -11404,7 +11404,7 @@ extern enum attr_type get_attr_type ();
 @en @cindex computing the length of an insn
 @end ifset
 @ifset INTERNALS
-@node Insn长度
+@node Insn Lengths
 @subsection 计算一个Insn的长度
 @cindex insn lengths, computing
 @cindex computing the length of an insn
@@ -11540,7 +11540,7 @@ extern enum attr_type get_attr_type ();
 @en @cindex constant attributes
 @end ifset
 @ifset INTERNALS
-@node 常量属性
+@node Constant Attributes
 @subsection 常量属性
 @cindex constant attributes
 
@@ -11582,7 +11582,7 @@ extern enum attr_type get_attr_type ();
 @en @cindex delay slots, defining
 @end ifset
 @ifset INTERNALS
-@node 延迟槽
+@node Delay Slots
 @subsection 延迟槽调度
 @cindex delay slots, defining
 
@@ -11717,7 +11717,7 @@ extern enum attr_type get_attr_type ();
 @en @cindex VLIW
 @end ifset
 @ifset INTERNALS
-@node 处理器流水线描述
+@node Processor pipeline description
 @subsection 处理器流水线描述
 @cindex processor pipeline description
 @cindex processor functional units
@@ -12488,7 +12488,7 @@ GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟�
 @en @cindex predication
 @end ifset
 @ifset INTERNALS
-@node 条件执行
+@node Conditional Execution
 @section 条件执行
 @cindex conditional execution
 @cindex predication
@@ -12558,13 +12558,13 @@ GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟�
 @en For example,
 @findex current_insn_predicate
 @var{output-template} 为一个类似于 @code{define_insn} 输出模板
-（@pxref{输出模板}）的字符串，除了不应用 @samp{*} 和 @samp{@@}
+（@pxref{Output Template}）的字符串，除了不应用 @samp{*} 和 @samp{@@}
 的特殊情况。这只在针对predicate的汇编文本为一个主insn的简单前缀时有用。为了
 处理通用的情况，有一个全局变量 @code{current_insn_predicate}，在当前
 insn被predicate时其将包含整个predicate，否则将为 @code{NULL}。
 
 当使用 @code{define_cond_exec} 时，将会创建一个对 @code{predicable} 指
-令属性的隐式引用。@pxref{Insn属性}。该属性并须为布尔的（即在它的
+令属性的隐式引用。@pxref{Insn Attributes}。该属性并须为布尔的（即在它的
 @var{list-of-values} 中具有确切的两个元素）。甚至，其必须不能使用复杂
 表达式。也就是，insn中的缺省的和所有的使用都必须为一个简单常量，不能依
 赖于可选项或其它。
@@ -12611,7 +12611,7 @@ insn被predicate时其将包含整个predicate，否则将为 @code{NULL}。
 @en @findex define_constants
 @end ifset
 @ifset INTERNALS
-@node 常量定义
+@node Constant Definitions
 @section 常量定义
 @cindex constant definitions
 @findex define_constants
@@ -12826,7 +12826,7 @@ insn被predicate时其将包含整个predicate，否则将为 @code{NULL}。
 @en @cindex iterators in @file{.md} files
 @end ifset
 @ifset INTERNALS
-@node 迭代器
+@node Iterators
 @section 迭代器
 @cindex iterators in @file{.md} files
 
@@ -12842,14 +12842,14 @@ insn被predicate时其将包含整个predicate，否则将为 @code{NULL}。
 GCC提供了一些简单的迭代机制使得该处理变的很容易。
 
 @menu
-* 机器模式迭代器::     为不同的机器模式生成指令模式的变种
-* 代码迭代器::         为代码做同样的事
+* Mode Iterators::     为不同的机器模式生成指令模式的变种
+* Code Iterators::         为代码做同样的事
 @end menu
 
 @en @node Mode Iterators
 @en @subsection Mode Iterators
 @en @cindex mode iterators in @file{.md} files
-@node 机器模式迭代器
+@node Mode Iterators
 @subsection 机器模式迭代器
 @cindex mode iterators in @file{.md} files
 
@@ -12893,15 +12893,15 @@ GCC提供了一些简单的迭代机制使得该处理变的很容易。
 @en * Examples::                Examples
 @en @end menu
 @menu
-* 定义机器模式迭代器:: 定义一个新的机器模式迭代器
-* 替换::               使用替换来合成机器模式迭代器
-* 有关机器模式迭代器的例子::               例子
+* Defining Mode Iterators:: 定义一个新的机器模式迭代器
+* Substitutions::               使用替换来合成机器模式迭代器
+* Examples::               例子
 @end menu
 
 @en @node Defining Mode Iterators
 @en @subsubsection Defining Mode Iterators
 @en @findex define_mode_iterator
-@node 定义机器模式迭代器
+@node Defining Mode Iterators
 @subsubsection 定义机器模式迭代器
 @findex define_mode_iterator
 
@@ -12979,9 +12979,9 @@ GCC提供了一些简单的迭代机制使得该处理变的很容易。
 扩展却没有这样的限制。
 
 迭代器按照它们定义的顺序被应用。这在当两个迭代器用于一个结构中需要替换时
-会变的很重要。@xref{替换}。
+会变的很重要。@xref{Substitutions}。
 
-@node 替换
+@node Substitutions
 @subsubsection 机器模式迭代器中的替换
 @findex define_mode_attr
 如果一个 @file{.md} 文件结构使用了机器模式迭代器，则结构的每个版本将通常
@@ -13005,7 +13005,7 @@ GCC提供了一些简单的迭代机制使得该处理变的很容易。
 @itemize @bullet
 @item
 当一个 @code{define_expand} 定义了多个 @code{add@var{m}3} 指令模式时
-（@pxref{标准名字}），每个扩展将需要针对 @var{m} 的适当的机器模式。
+（@pxref{Standard Names}），每个扩展将需要针对 @var{m} 的适当的机器模式。
 
 @item
 当一个 @code{define_insn} 定义了多个指令模式时，每条指令将通常需要一个不
@@ -13108,7 +13108,7 @@ GCC通过“机器模式属性”系统来支持这样的变种。有两种标�
 @en 
 @en and uses the following template to define both @code{subsi3}
 @en and @code{subdi3}:
-@node 有关机器模式迭代器的例子
+@node Examples
 @subsubsection 有关机器模式迭代器的例子
 
 这里有一个来自MIPS后端的一个例子。其定义了下列机器模式和属性（除了别的以外）：
@@ -13194,13 +13194,13 @@ GCC通过“机器模式属性”系统来支持这样的变种。有两种标�
 @en Code iterators operate in a similar way to mode iterators.  @xref{Mode Iterators}.
 @en 
 @en The construct:
-@node 代码迭代器
+@node Code Iterators
 @subsection 代码迭代器
 @cindex code iterators in @file{.md} files
 @findex define_code_iterator
 @findex define_code_attr
 
-代码迭代器使用与机器模式迭代器类似的方法来操作。@pxref{机器模式迭代器}。
+代码迭代器使用与机器模式迭代器类似的方法来操作。@xref{Mode Iterators}。
 
 结构：
 
@@ -13227,7 +13227,7 @@ GCC通过“机器模式属性”系统来支持这样的变种。有两种标�
 
 跟机器模式迭代器一样，每个使用 @var{name} 的指令模式将被扩展 @var{n} 次，
 一次使用 @var{code1} 来替换，一次使用 @var{code2}，等等。
-@xref{定义机器模式迭代器}.
+@xref{Defining Mode Iterators}。
 
 跟机器模式一样可以为代码定义属性。有两种标准代码属性：@code{code}，代码
 的小写形式名字，以及 @code{CODE}，代码的大写形式名字。其它属性使用下列
