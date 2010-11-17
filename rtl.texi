@@ -4330,36 +4330,39 @@ PREV_INSN (NEXT_INSN (@var{insn})) == @var{insn}
 @findex debug_insn
 @findex INSN_VAR_LOCATION
 @item debug_insn
-The expression code @code{debug_insn} is used for pseudo-instructions
-that hold debugging information for variable tracking at assignments
-(see @option{-fvar-tracking-assignments} option).  They are the RTL
-representation of @code{GIMPLE_DEBUG} statements
-(@ref{@code{GIMPLE_DEBUG}}), with a @code{VAR_LOCATION} operand that
-binds a user variable tree to an RTL representation of the
-@code{value} in the corresponding statement.  A @code{DEBUG_EXPR} in
-it stands for the value bound to the corresponding
-@code{DEBUG_EXPR_DECL}.
+@en The expression code @code{debug_insn} is used for pseudo-instructions
+@en that hold debugging information for variable tracking at assignments
+@en (see @option{-fvar-tracking-assignments} option).  They are the RTL
+@en representation of @code{GIMPLE_DEBUG} statements
+@en (@ref{@code{GIMPLE_DEBUG}}), with a @code{VAR_LOCATION} operand that
+@en binds a user variable tree to an RTL representation of the
+@en @code{value} in the corresponding statement.  A @code{DEBUG_EXPR} in
+@en it stands for the value bound to the corresponding
+@en @code{DEBUG_EXPR_DECL}.
+表达式代码@code{debug_insn}用于存放赋值中变量跟踪（variable tracking）调试信息的伪指令（参见@option{-fvar-tracking-assignments}选项）。它们是@code{GIMPLE_DEBUG}语句的RTL表示（@ref{@code{GIMPLE_DEBUG}}），使用@code{VAR_LOCATION}操作数将用户变量tree与相应语句中@code{value}的RTL表示绑定在一起。其中的@code{DEBUG_EXPR}表示绑定到相应@code{DEBUG_EXPR_DECL}的值。
 
-Throughout optimization passes, binding information is kept in
-pseudo-instruction form, so that, unlike notes, it gets the same
-treatment and adjustments that regular instructions would.  It is the
-variable tracking pass that turns these pseudo-instructions into var
-location notes, analyzing control flow, value equivalences and changes
-to registers and memory referenced in value expressions, propagating
-the values of debug temporaries and determining expressions that can
-be used to compute the value of each user variable at as many points
-(ranges, actually) in the program as possible.
+@en Throughout optimization passes, binding information is kept in
+@en pseudo-instruction form, so that, unlike notes, it gets the same
+@en treatment and adjustments that regular instructions would.  It is the
+@en variable tracking pass that turns these pseudo-instructions into var
+@en location notes, analyzing control flow, value equivalences and changes
+@en to registers and memory referenced in value expressions, propagating
+@en the values of debug temporaries and determining expressions that can
+@en be used to compute the value of each user variable at as many points
+@en (ranges, actually) in the program as possible.
+在整个优化passes中，绑定信息是按照伪指令的形式进行保存，所以，不像注解（notes），它与常规指令具有相同的待遇。变量跟踪pass会将这些伪指令转换为变量位置注解，会分析控制流，分析值等价信息和值表达式中引用的寄存器和内存的变化，传播调试临时变量的值，并确定可以用来计算程序中尽可能多的点（实际上是域）上的每个用户变量的值的表达式。
 
-Unlike @code{NOTE_INSN_VAR_LOCATION}, the value expression in an
-@code{INSN_VAR_LOCATION} denotes a value at that specific point in the
-program, rather than an expression that can be evaluated at any later
-point before an overriding @code{VAR_LOCATION} is encountered.  E.g.,
-if a user variable is bound to a @code{REG} and then a subsequent insn
-modifies the @code{REG}, the note location would keep mapping the user
-variable to the register across the insn, whereas the insn location
-would keep the variable bound to the value, so that the variable
-tracking pass would emit another location note for the variable at the
-point in which the register is modified.
+@en Unlike @code{NOTE_INSN_VAR_LOCATION}, the value expression in an
+@en @code{INSN_VAR_LOCATION} denotes a value at that specific point in the
+@en program, rather than an expression that can be evaluated at any later
+@en point before an overriding @code{VAR_LOCATION} is encountered.  E.g.,
+@en if a user variable is bound to a @code{REG} and then a subsequent insn
+@en modifies the @code{REG}, the note location would keep mapping the user
+@en variable to the register across the insn, whereas the insn location
+@en would keep the variable bound to the value, so that the variable
+@en tracking pass would emit another location note for the variable at the
+@en point in which the register is modified.
+不像@code{NOTE_INSN_VAR_LOCATION}，@code{INSN_VAR_LOCATION}中的值表达式是表示程序中指定点的值，不可以在该点之后，@code{VAR_LOCATION}之前的任意点上进行求值。例如，如果一个用户变量绑定到一个@code{REG}，然后后续的insn修改了@code{REG}，则注解位置会继续将用户变量映射到寄存器，而insn位置则会继续将变量绑定到值上，所以，变量跟踪pass会为变量产成另一个位置注解，指定寄存器被修改的点。
 @end table
 
 @cindex @code{TImode}, in @code{insn}
