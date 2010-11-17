@@ -49,28 +49,28 @@ RTL的灵感来自Lisp列表。它同时具有一个内部形式，由指向结�
 @en * Reading RTL::       Reading textual RTL from a file.
 @en @end menu
 @menu
-* RTL Objects::       表达式、向量、字符串、整数 
-* RTL Classes::       RTL表达式对象的类别，以及它们的结构 
-* Accessors::      用来访问表达式操作数和向量成员的宏
-* Special Accessors:: ::  用来访问RTL中的特殊注解
-* Flags::          RTL表达式中的其它标记
-* Machine Modes::      描述一个数据的大小和格式
-* Constants::          常数值表达式
-* Regs and Memory::  表示寄存器内容或内存的表达式
-* Arithmetic::      表示算术运算的表达式 
-* Comparisons::      表示比较运算的表达式
-* Bit-Fields::      表示内存或寄存器中位域的表达式
-* Vector Operations::      关于向量数据类型的表达式
-* Conversions::      扩展，截断，浮点化或者定点化
-* RTL Declarations::       声明为volatile的，constant的，等等
-* Side Effects::        存储到寄存器的表达式，等
-* Incdec::        自动增量寻址的嵌入的副作用
-* Assembler::          表示带有操作数的asm
-* Debug Information:: Expressions representing debugging information.
-* Insns::         整个insn的表达式类型
-* Calls::      函数call insn的RTL表示
-* Sharing::          一些表达式是唯一的；其它的必须要被复制
-* Reading RTL::       从文件中读取文本的RTL
+* RTL Objects::		表达式、向量、字符串、整数 
+* RTL Classes::		RTL表达式对象的类别，以及它们的结构 
+* Accessors::		用来访问表达式操作数和向量成员的宏
+* Special Accessors::	用来访问RTL中的特殊注解
+* Flags::		RTL表达式中的其它标记
+* Machine Modes::	描述一个数据的大小和格式
+* Constants::		常数值表达式
+* Regs and Memory::	表示寄存器内容或内存的表达式
+* Arithmetic::		表示算术运算的表达式 
+* Comparisons::		表示比较运算的表达式
+* Bit-Fields::		表示内存或寄存器中位域的表达式
+* Vector Operations::	关于向量数据类型的表达式
+* Conversions::		扩展，截断，浮点化或者定点化
+* RTL Declarations::	声明为volatile的，constant的，等等
+* Side Effects::	存储到寄存器的表达式，等
+* Incdec::		自动增量寻址的嵌入的副作用
+* Assembler::		表示带有操作数的asm
+* Debug Information::	表示调试信息的表达式
+* Insns::		整个insn的表达式类型
+* Calls::		函数call insn的RTL表示
+* Sharing::		一些表达式是唯一的；其它的必须要被复制
+* Reading RTL::		从文件中读取文本的RTL
 @end menu
 
 @en @node RTL Objects
@@ -3974,35 +3974,41 @@ asm ("foo %1,%2,%0" : "=a" (outputvar) : "g" (x + y), "di" (*z));
 @en number, which is 0, 1, @dots{} for successive output operands.
 当@code{asm}语句具有多个输出值时，它的insn具有多个这样的@code{set} RTX，并位于一个@code{parallel}中。每个@code{set}包括了一个@code{asm_operands}；所有这些共享相同的汇编模板和向量，但是每个包含了相应的输出操作数的约束。它们也是通过输出操作数索引编号来区分的，即0，1@dots{}连续的输出操作数。
 
+@en @node Debug Information
+@en @section Variable Location Debug Information in RTL
 @node Debug Information
-@section Variable Location Debug Information in RTL
+@section RTL中的变量位置调试信息
 @cindex Variable Location Debug Information in RTL
 
-Variable tracking relies on @code{MEM_EXPR} and @code{REG_EXPR}
-annotations to determine what user variables memory and register
-references refer to.
+@en Variable tracking relies on @code{MEM_EXPR} and @code{REG_EXPR}
+@en annotations to determine what user variables memory and register
+@en references refer to.
+变量跟踪（Variable tracking）依靠@code{MEM_EXPR}和@code{REG_EXPR}注解来确定所引用的用户变量内存和寄存器。
 
-Variable tracking at assignments uses these notes only when they refer
-to variables that live at fixed locations (e.g., addressable
-variables, global non-automatic variables).  For variables whose
-location may vary, it relies on the following types of notes.
+@en Variable tracking at assignments uses these notes only when they refer
+@en to variables that live at fixed locations (e.g., addressable
+@en variables, global non-automatic variables).  For variables whose
+@en location may vary, it relies on the following types of notes.
+赋值语句中的变量跟踪只有当它们引用了在固定点活跃的变量（例如，可寻址变量，全局非自动变量）时，才使用这些注解。对于位置有变化的变量，其依靠下列类型的注解。
 
 @table @code
 @findex var_location
 @item (var_location:@var{mode} @var{var} @var{exp} @var{stat})
-Binds variable @code{var}, a tree, to value @var{exp}, an RTL
-expression.  It appears only in @code{NOTE_INSN_VAR_LOCATION} and
-@code{DEBUG_INSN}s, with slightly different meanings.  @var{mode}, if
-present, represents the mode of @var{exp}, which is useful if it is a
-modeless expression.  @var{stat} is only meaningful in notes,
-indicating whether the variable is known to be initialized or
-uninitialized.
+@en Binds variable @code{var}, a tree, to value @var{exp}, an RTL
+@en expression.  It appears only in @code{NOTE_INSN_VAR_LOCATION} and
+@en @code{DEBUG_INSN}s, with slightly different meanings.  @var{mode}, if
+@en present, represents the mode of @var{exp}, which is useful if it is a
+@en modeless expression.  @var{stat} is only meaningful in notes,
+@en indicating whether the variable is known to be initialized or
+@en uninitialized.
+绑定变量@code{var}，一个tree，到值@var{exp}，一个RTL表达式。其只出现在@code{NOTE_INSN_VAR_LOCATION}和@code{DEBUG_INSN}中，并且含义有些细微的差别。@var{mode}，如果存在，则表示@var{exp}的机器模式，这用于当其为一个无机器模式的表达式时。@var{stat}只在注解中有含义，表示变量是否已知为被初始化或者未被初始化。
 
 @findex debug_expr
 @item (debug_expr:@var{mode} @var{decl})
-Stands for the value bound to the @code{DEBUG_EXPR_DECL} @var{decl},
-that points back to it, within value expressions in
-@code{VAR_LOCATION} nodes.
+@en Stands for the value bound to the @code{DEBUG_EXPR_DECL} @var{decl},
+@en that points back to it, within value expressions in
+@en @code{VAR_LOCATION} nodes.
+表示绑定到@code{DEBUG_EXPR_DECL} @var{decl}上的值。
 
 @end table
 
