@@ -112,11 +112,13 @@ struct plugin_name_args
 @}
 @end smallexample
 
-If initialization fails, @code{plugin_init} must return a non-zero
-value.  Otherwise, it should return 0.
+@en If initialization fails, @code{plugin_init} must return a non-zero
+@en value.  Otherwise, it should return 0.
+如果初始化失败，@code{plugin_init}必须翻译一个非零的值。否则，其应该返回0。
 
-The version of the GCC compiler loading the plugin is described by the
-following structure:
+@en The version of the GCC compiler loading the plugin is described by the
+@en following structure:
+加载插件的GCC编译器的版本使用如下结构体来描述：
 
 @smallexample
 struct plugin_gcc_version
@@ -129,13 +131,15 @@ struct plugin_gcc_version
 @};
 @end smallexample
 
-The function @code{plugin_default_version_check} takes two pointers to
-such structure and compare them field by field. It can be used by the
-plugin's @code{plugin_init} function.
+@en The function @code{plugin_default_version_check} takes two pointers to
+@en such structure and compare them field by field. It can be used by the
+@en plugin's @code{plugin_init} function.
+函数@code{plugin_default_version_check}接受两个指向该结构的指针，并按照域来进行比较。其可以在插件的@code{plugin_init}函数中使用。
 
-The version of GCC used to compile the plugin can be found in the symbol
-@code{gcc_version} defined in the header @file{plugin-version.h}. The
-recommended version check to perform looks like
+@en The version of GCC used to compile the plugin can be found in the symbol
+@en @code{gcc_version} defined in the header @file{plugin-version.h}. The
+@en recommended version check to perform looks like
+用来编译插件的GCC版本可以在符号@code{gcc_version}中找到，该符号在头文件@file{plugin-version.h}中定义。推荐使用如下的方式来进行版本检查：
 
 @smallexample
 #include "plugin-version.h"
@@ -151,11 +155,14 @@ plugin_init (struct plugin_name_args *plugin_info,
 @}
 @end smallexample
 
-but you can also check the individual fields if you want a less strict check.
+@en but you can also check the individual fields if you want a less strict check.
+不过，如果你想进行不太严格的检查，你还可以只检查单独的域。
 
-@subsection Plugin callbacks
+@en @subsection Plugin callbacks
+@subsection 插件回调
 
-Callback functions have the following prototype:
+@en Callback functions have the following prototype:
+回调函数具有如下的函数原型：
 
 @smallexample
 /* The prototype for a plugin callback function.
@@ -164,8 +171,8 @@ Callback functions have the following prototype:
 typedef void (*plugin_callback_func)(void *gcc_data, void *user_data);
 @end smallexample
 
-Callbacks can be invoked at the following pre-determined events:
-
+@en Callbacks can be invoked at the following pre-determined events:
+回调函数可以在如下预定义的事件上被调用：
 
 @smallexample
 enum plugin_event
@@ -210,39 +217,50 @@ enum plugin_event
 @};
 @end smallexample
 
-In addition, plugins can also look up the enumerator of a named event,
-and / or generate new events dynamically, by calling the function
-@code{get_named_event_id}.
+@en In addition, plugins can also look up the enumerator of a named event,
+@en and / or generate new events dynamically, by calling the function
+@en @code{get_named_event_id}.
+除此之外，插件还可以查找命名事件的枚举变量，并且/或者通过调用函数@code{get_named_event_id}来动态生成新的事件。
 
-To register a callback, the plugin calls @code{register_callback} with
-the arguments:
+@en To register a callback, the plugin calls @code{register_callback} with
+@en the arguments:
+要注册一个回调，插件使用如下参数来调用@code{register_callback}：
 
 @itemize
-@item @code{char *name}: Plugin name.
-@item @code{int event}: The event code.
-@item @code{plugin_callback_func callback}: The function that handles @code{event}.
-@item @code{void *user_data}: Pointer to plugin-specific data.
+@en @item @code{char *name}: Plugin name.
+@item @code{char *name}: 插件的名字。
+@en @item @code{int event}: The event code.
+@item @code{int event}: 事件代码。
+@en @item @code{plugin_callback_func callback}: The function that handles @code{event}.
+@item @code{plugin_callback_func callback}: 处理@code{event}的函数。
+@en @item @code{void *user_data}: Pointer to plugin-specific data.
+@item @code{void *user_data}: 指向插件特定数据的指针。
 @end itemize
 
-For the PLUGIN_PASS_MANAGER_SETUP, PLUGIN_INFO, PLUGIN_REGISTER_GGC_ROOTS
-and PLUGIN_REGISTER_GGC_CACHES pseudo-events the @code{callback} should be
-null, and the @code{user_data} is specific.
+@en For the PLUGIN_PASS_MANAGER_SETUP, PLUGIN_INFO, PLUGIN_REGISTER_GGC_ROOTS
+@en and PLUGIN_REGISTER_GGC_CACHES pseudo-events the @code{callback} should be
+@en null, and the @code{user_data} is specific.
+对于PLUGIN_PASS_MANAGER_SETUP，PLUGIN_INFO，PLUGIN_REGISTER_GGC_ROOTS和PLUGIN_REGISTER_GGC_CACHES这些伪事件，@code{callback}应该为空，@code{user_data}为特定的。
 
-When the PLUGIN_PRAGMAS event is triggered (with a null
-pointer as data from GCC), plugins may register their own pragmas
-using functions like @code{c_register_pragma} or
-@code{c_register_pragma_with_expansion}.
+@en When the PLUGIN_PRAGMAS event is triggered (with a null
+@en pointer as data from GCC), plugins may register their own pragmas
+@en using functions like @code{c_register_pragma} or
+@en @code{c_register_pragma_with_expansion}.
+当PLUGIN_PRAGMAS事件被触发（使用一个空指针，作为来自GCC的数据），插件可以使用函数，像@code{c_register_pragma}或者@code{c_register_pragma_with_expansion}，来注册它们自己的pragma。
 
-@section Interacting with the pass manager
+@en @section Interacting with the pass manager
+@section 与pass manager进行交互
 
-There needs to be a way to add/reorder/remove passes dynamically. This
-is useful for both analysis plugins (plugging in after a certain pass
-such as CFG or an IPA pass) and optimization plugins.
+@en There needs to be a way to add/reorder/remove passes dynamically. This
+@en is useful for both analysis plugins (plugging in after a certain pass
+@en such as CFG or an IPA pass) and optimization plugins.
+需要有一种方法来动态增加/重排序/移除pass。这对分析插件（位于特定pass之后的插件，例如CFG或者IPA pass）和优化插件都很有帮助。
 
-Basic support for inserting new passes or replacing existing passes is
-provided. A plugin registers a new pass with GCC by calling
-@code{register_callback} with the @code{PLUGIN_PASS_MANAGER_SETUP}
-event and a pointer to a @code{struct register_pass_info} object defined as follows
+@en Basic support for inserting new passes or replacing existing passes is
+@en provided. A plugin registers a new pass with GCC by calling
+@en @code{register_callback} with the @code{PLUGIN_PASS_MANAGER_SETUP}
+@en event and a pointer to a @code{struct register_pass_info} object defined as follows
+现在已经提供了对插入新的pass或者替换现有pass的基本支持。要注册一个新的pass，插件可以通过使用@code{PLUGIN_PASS_MANAGER_SETUP}事件和指向如下定义的@code{struct register_pass_info}对象的指针，来调用@code{register_callback}：
 
 @smallexample
 enum pass_positioning_ops
