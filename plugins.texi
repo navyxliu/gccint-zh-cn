@@ -3,46 +3,60 @@
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
+@en @node Plugins
+@en @chapter Plugins
 @node Plugins
-@chapter Plugins
+@chapter 插件
 @cindex Plugins
 
-@section Loading Plugins
+@en @section Loading Plugins
+@section 加载插件
 
-Plugins are supported on platforms that support @option{-ldl
--rdynamic}.  They are loaded by the compiler using @code{dlopen}
-and invoked at pre-determined locations in the compilation
-process.
+@en Plugins are supported on platforms that support @option{-ldl
+@en -rdynamic}.  They are loaded by the compiler using @code{dlopen}
+@en and invoked at pre-determined locations in the compilation
+@en process.
+在支持@option{-ldl -rdynamic}的平台上，插件才被支持。它们由编译器使用@code{dlopen}来加载，并在编译过程中预先确定的位置进行调用。
 
-Plugins are loaded with 
+@en Plugins are loaded with 
+使用
 
 @option{-fplugin=/path/to/NAME.so} @option{-fplugin-arg-NAME-<key1>[=<value1>]}
 
-The plugin arguments are parsed by GCC and passed to respective
-plugins as key-value pairs. Multiple plugins can be invoked by
-specifying multiple @option{-fplugin} arguments.
+来加载插件。
 
-A plugin can be simply given by its short name (no dots or
-slashes). When simply passing @option{-fplugin=NAME}, the plugin is
-loaded from the @file{plugin} directory, so @option{-fplugin=NAME} is
-the same as @option{-fplugin=`gcc -print-file-name=plugin`/NAME.so},
-using backquote shell syntax to query the @file{plugin} directory.
+@en The plugin arguments are parsed by GCC and passed to respective
+@en plugins as key-value pairs. Multiple plugins can be invoked by
+@en specifying multiple @option{-fplugin} arguments.
+插件的参数由GCC解析，并按照“关键字-值”（key-value pairs）的方式传递给相应的插件。可以通过指定多个@option{-fplugin}参数来调用多个插件。
 
-@section Plugin API
+@en A plugin can be simply given by its short name (no dots or
+@en slashes). When simply passing @option{-fplugin=NAME}, the plugin is
+@en loaded from the @file{plugin} directory, so @option{-fplugin=NAME} is
+@en the same as @option{-fplugin=`gcc -print-file-name=plugin`/NAME.so},
+@en using backquote shell syntax to query the @file{plugin} directory.
+可以直接使用简短的名字（没有点和斜杠）来指定一个插件。当简单的是传递@option{-fplugin=NAME}时，插件会从@file{plugin}目录下被加载，所以@option{-fplugin=NAME}等同于@option{-fplugin=`gcc -print-file-name=plugin`/NAME.so}，使用反引号shell语法来查询@file{plugin}目录。
 
-Plugins are activated by the compiler at specific events as defined in
-@file{gcc-plugin.h}.  For each event of interest, the plugin should
-call @code{register_callback} specifying the name of the event and
-address of the callback function that will handle that event.
+@en @section Plugin API
+@section 插件的API
 
-The header @file{gcc-plugin.h} must be the first gcc header to be included.
+@en Plugins are activated by the compiler at specific events as defined in
+@en @file{gcc-plugin.h}.  For each event of interest, the plugin should
+@en call @code{register_callback} specifying the name of the event and
+@en address of the callback function that will handle that event.
+插件由编译器在特定的事件上激活，这些事件在@file{gcc-plugin.h}中定义。对于每个感兴趣的事件，插件应该调用@code{register_callback}来指定事件的名字，以及将要处理该事件的回调函数的地址。
 
-@subsection Plugin license check
+@en The header @file{gcc-plugin.h} must be the first gcc header to be included.
+头文件@file{gcc-plugin.h}必须为第一个包含的gcc头文件。
 
-Every plugin should define the global symbol @code{plugin_is_GPL_compatible}
-to assert that it has been licensed under a GPL-compatible license.
-If this symbol does not exist, the compiler will emit a fatal error
-and exit with the error message:
+@en @subsection Plugin license check
+@subsection 插件的版权检查
+
+@en Every plugin should define the global symbol @code{plugin_is_GPL_compatible}
+@en to assert that it has been licensed under a GPL-compatible license.
+@en If this symbol does not exist, the compiler will emit a fatal error
+@en and exit with the error message:
+每个插件应该定义全局符号@code{plugin_is_GPL_compatible}来宣称其具有GPL兼容的版权。如果该符号不存在，则编译器会产生一个致命错误，并带着如下错误信息退出：
 
 @smallexample
 fatal error: plugin <name> is not licensed under a GPL-compatible license
@@ -50,31 +64,38 @@ fatal error: plugin <name> is not licensed under a GPL-compatible license
 compilation terminated
 @end smallexample
 
-The declared type of the symbol should be int, to match a forward declaration
-in @file{gcc-plugin.h} that suppresses C++ mangling.  It does not need to be in
-any allocated section, though.  The compiler merely asserts that
-the symbol exists in the global scope.  Something like this is enough:
+@en The declared type of the symbol should be int, to match a forward declaration
+@en in @file{gcc-plugin.h} that suppresses C++ mangling.  It does not need to be in
+@en any allocated section, though.  The compiler merely asserts that
+@en the symbol exists in the global scope.  Something like this is enough:
+该符号的声明类型应该为int，从而匹配在@file{gcc-plugin.h}中为了抑制C++ mangling的前向声明。它其实并不需要位于任何分配的section中。编译器仅仅是使用断言来确保该符号在全局作用域中存在。类似于这样的就可以：
 
 @smallexample
 int plugin_is_GPL_compatible;
 @end smallexample
 
-@subsection Plugin initialization
+@en @subsection Plugin initialization
+@subsection 插件的初始化
 
-Every plugin should export a function called @code{plugin_init} that
-is called right after the plugin is loaded. This function is
-responsible for registering all the callbacks required by the plugin
-and do any other required initialization.
+@en Every plugin should export a function called @code{plugin_init} that
+@en is called right after the plugin is loaded. This function is
+@en responsible for registering all the callbacks required by the plugin
+@en and do any other required initialization.
+每个插件都应该导出一个叫做@code{plugin_init}的函数，其在插件刚被加载之后调用。该函数负责注册插件需要的所有回调，并做其它所需要的初始化。
 
-This function is called from @code{compile_file} right before invoking
-the parser.  The arguments to @code{plugin_init} are:
+@en This function is called from @code{compile_file} right before invoking
+@en the parser.  The arguments to @code{plugin_init} are:
+该函数就在调用语法分析器之前，由@code{compile_file}来调用。@code{plugin_init}的参数为：
 
 @itemize @bullet
-@item @code{plugin_info}: Plugin invocation information.
-@item @code{version}: GCC version.
+@en @item @code{plugin_info}: Plugin invocation information.
+@item @code{plugin_info}: 插件调用信息。
+@en @item @code{version}: GCC version.
+@item @code{version}: GCC版本。
 @end itemize
 
-The @code{plugin_info} struct is defined as follows:
+@en The @code{plugin_info} struct is defined as follows:
+@code{plugin_info}结构体的定义如下：
 
 @smallexample
 struct plugin_name_args
