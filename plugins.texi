@@ -431,10 +431,11 @@ register_my_pragma (void *event_data, void *data)
 @en @code{PLUGIN_ALL_IPA_PASSES_END}, @code{PLUGIN_EARLY_GIMPLE_PASSES_START},
 @en and/or @code{PLUGIN_EARLY_GIMPLE_PASSES_END} to manipulate global state
 @en in your plugin(s) in order to get context for the pass execution.
+事件PLUGIN_PASS_EXECUTION将指向被执行的pass的指针，作为@code{gcc_data}传递给回调函数。你还可以通过检查cfun来找到该pass所执行的函数。注意，该事件只有当入口检查（gate check）成功时，才会被调用。你可以在你的插件中使用其它钩子，像@code{PLUGIN_ALL_PASSES_START}，@code{PLUGIN_ALL_PASSES_END}，@code{PLUGIN_ALL_IPA_PASSES_START}，@code{PLUGIN_ALL_IPA_PASSES_END}，@code{PLUGIN_EARLY_GIMPLE_PASSES_START}，和/或@code{PLUGIN_EARLY_GIMPLE_PASSES_END}}来操纵全局状态，以便获得pass执行的上下文。
 
 
 @en @section Controlling which passes are being run
-@section Controlling which passes are being run
+@section 控制将要执行的pass
 
 @en After the original gate function for a pass is called, its result
 @en - the gate status - is stored as an integer.
@@ -442,10 +443,10 @@ register_my_pragma (void *event_data, void *data)
 @en to the gate status in the @code{gcc_data} parameter to the callback function.
 @en A nonzero value of the gate status means that the pass is to be executed.
 @en You can both read and write the gate status via the passed pointer.
-
+在pass的原始的入口函数被调用之后，其结果，入口状态，作为整数被存储。然后事件@code{PLUGIN_OVERRIDE_GATE}被激起，在回调函数的@code{gcc_data}参数中使用一个指向入口状态的指针。一个非零值的入口状态意味着该pass将被执行。你可以同时通过传递的指针读取和改写入口状态。
 
 @en @section Keeping track of available passes
-@section Keeping track of available passes
+@section 跟踪可用的pass
 
 @en When your plugin is loaded, you can inspect the various
 @en pass lists to determine what passes are available.  However, other
@@ -454,24 +455,29 @@ register_my_pragma (void *event_data, void *data)
 @en When a pass is first added to one of the pass lists, the event
 @en @code{PLUGIN_NEW_PASS} is invoked, with the callback parameter
 @en @code{gcc_data} pointing to the new pass.
+当你的插件被加载时，你可以检查各种pass列表来确定哪些pass是可用的。但是，其它插件可能会加入新的pass。而且，GCC将来可能会改成在插件加载之后添加通用的pass。当一个pass首次被增加到一个pass列表时，事件@code{PLUGIN_NEW_PASS}被激起，使用回调参数@code{gcc_data}指向新pass。
 
 
 @en @section Building GCC plugins
-@section Building GCC plugins
+@section 构建GCC插件
 
 @en If plugins are enabled, GCC installs the headers needed to build a
 @en plugin (somewhere in the installation tree, e.g. under
 @en @file{/usr/local}).  In particular a @file{plugin/include} directory
 @en is installed, containing all the header files needed to build plugins.
+如果启用了插件技术，GCC会安装需要构建插件的头文件（在安装路径中的某个地方，例如，位于@file{/usr/local}）。特别的，@file{plugin/include}目录会被安装，其包含了构建插件需要的所有头文件。
 
 @en On most systems, you can query this @code{plugin} directory by
 @en invoking @command{gcc -print-file-name=plugin} (replace if needed
 @en @command{gcc} with the appropriate program path).
+在大多系统上，你可以通过命令@command{gcc -print-file-name=plugin}（如果需要，将@command{gcc}替换为合适的程序路径）来查询该@code{plugin}目录。
 
 @en Inside plugins, this @code{plugin} directory name can be queried by
 @en calling @code{default_plugin_dir_name ()}.
+在插件内部，该@code{plugin}目录名可以通过调用@code{default_plugin_dir_name ()}来查询。
 
 @en The following GNU Makefile excerpt shows how to build a simple plugin:
+下列GNU Makefile摘抄片段展示了如何构建一个简单的插件：
 
 @smallexample
 GCC=gcc
@@ -488,7 +494,9 @@ plugin.so: $(PLUGIN_OBJECT_FILES)
 @en -print-file-name=plugin`/include -fPIC -shared -O2 plugin.c -o
 @en plugin.so}, using backquote shell syntax to query the @file{plugin}
 @en directory.
+单个文件的插件可以使用@code{gcc -I`gcc -print-file-name=plugin`/include -fPIC -shared -O2 plugin.c -o plugin.so}来构建，使用反引号shell语法来查询@file{plugin}目录。
 
 @en Plugins needing to use @command{gengtype} require a GCC build
 @en directory for the same version of GCC that they will be linked
 @en against.
+需要使用@command{gengtype}的插件需要一个GCC的构建目录，其必须是与将要链接的GCC具有相同的版本。
