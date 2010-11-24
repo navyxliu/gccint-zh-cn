@@ -14,88 +14,105 @@
 
 @section Design Overview
 
-Link time optimization is implemented as a GCC front end for a
-bytecode representation of GIMPLE that is emitted in special sections
-of @code{.o} files.  Currently, LTO support is enabled in most
-ELF-based systems, as well as darwin, cygwin and mingw systems.
+@en Link time optimization is implemented as a GCC front end for a
+@en bytecode representation of GIMPLE that is emitted in special sections
+@en of @code{.o} files.  Currently, LTO support is enabled in most
+@en ELF-based systems, as well as darwin, cygwin and mingw systems.
+链接时优化是作为一个GIMPLE字节码表示的前段实现的，这些字节码就存在于@code{.o}文件的特殊section。目前，LTO已经支持大多数基于ELF文件格式的系统，也支持darwin，cygwin和mingw这样的系统。
 
-Since GIMPLE bytecode is saved alongside final object code, object
-files generated with LTO support are larger than regular object files.
-This ``fat'' object format makes it easy to integrate LTO into
-existing build systems, as one can, for instance, produce archives of
-the files.  Additionally, one might be able to ship one set of fat
-objects which could be used both for development and the production of
-optimized builds.  A, perhaps surprising, side effect of this feature
-is that any mistake in the toolchain that leads to LTO information not
-being used (e.g. an older @code{libtool} calling @code{ld} directly).
-This is both an advantage, as the system is more robust, and a
-disadvantage, as the user is not informed that the optimization has
-been disabled.
+@en Since GIMPLE bytecode is saved alongside final object code, object
+@en files generated with LTO support are larger than regular object files.
+@en This ``fat'' object format makes it easy to integrate LTO into
+@en existing build systems, as one can, for instance, produce archives of
+@en the files.  Additionally, one might be able to ship one set of fat
+@en objects which could be used both for development and the production of
+@en optimized builds.  A, perhaps surprising, side effect of this feature
+@en is that any mistake in the toolchain that leads to LTO information not
+@en being used (e.g. an older @code{libtool} calling @code{ld} directly).
+@en This is both an advantage, as the system is more robust, and a
+@en disadvantage, as the user is not informed that the optimization has
+@en been disabled.
+由于GIMPLE字节码保存在最后的目标文件中，所以支持LTO的目标文件比一般的目标文件大一些。采用这样“大”目标文件格式，LTO功能容易被集成到现有的编译器构建系统中，例如，在构建文件的档案时。
 
-The current implementation only produces ``fat'' objects, effectively
-doubling compilation time and increasing file sizes up to 5x the
-original size.  This hides the problem that some tools, such as
-@code{ar} and @code{nm}, need to understand symbol tables of LTO
-sections.  These tools were extended to use the plugin infrastructure,
-and with these problems solved, GCC will also support ``slim'' objects
-consisting of the intermediate code alone.
+@en The current implementation only produces ``fat'' objects, effectively
+@en doubling compilation time and increasing file sizes up to 5x the
+@en original size.  This hides the problem that some tools, such as
+@en @code{ar} and @code{nm}, need to understand symbol tables of LTO
+@en sections.  These tools were extended to use the plugin infrastructure,
+@en and with these problems solved, GCC will also support ``slim'' objects
+@en consisting of the intermediate code alone.
 
-At the highest level, LTO splits the compiler in two.  The first half
-(the ``writer'') produces a streaming representation of all the
-internal data structures needed to optimize and generate code.  This
-includes declarations, types, the callgraph and the GIMPLE representation
-of function bodies.
+现在的实现方式只有一种，就是是产生"肥胖"对象文件，虽然这样不仅会让编译时间翻倍，而且会让文件大小增长五倍，但是这样的实现方式掩盖了一个问题，就是一些工具比如@code{ar} 和 @code{nm}需要理解LTO section的符号表。这些工具可以被扩展以使用插件功能，而且，随着这些问题的解决，GCC会支持仅由中间代码组成的"苗条"对象文件。
 
-When @option{-flto} is given during compilation of a source file, the
-pass manager executes all the passes in @code{all_lto_gen_passes}.
-Currently, this phase is composed of two IPA passes:
+@en At the highest level, LTO splits the compiler in two.  The first half
+@en (the ``writer'') produces a streaming representation of all the
+@en internal data structures needed to optimize and generate code.  This
+@en includes declarations, types, the callgraph and the GIMPLE representation
+@en of function bodies.
+
+从高层次来看，LTO把编译器分割为两个部分。前半部分("写者")产生以流形式表达的所有代码优化和生成需要的内部数据结构。这其中包括函数的声明，类型，调用图和GIMPLE表达。
+
+@en When @option{-flto} is given during compilation of a source file, the
+@en pass manager executes all the passes in @code{all_lto_gen_passes}.
+@en Currently, this phase is composed of two IPA passes:
+
+当编译源文件使用了选项@option{-flto}，pass管理器在@code{all_lto_gen_passes}中执行所有的pass。现在，这个阶段有两个IPA pass组成:
 
 @itemize @bullet
 @item @code{pass_ipa_lto_gimple_out}
-This pass executes the function @code{lto_output} in
-@file{lto-streamer-out.c}, which traverses the call graph encoding
-every reachable declaration, type and function. This generates a
-memory representation of all the file sections described below.
+@en This pass executes the function @code{lto_output} in
+@en @file{lto-streamer-out.c}, which traverses the call graph encoding
+@en every reachable declaration, type and function. This generates a
+@en memory representation of all the file sections described below.
+这个pass执行了@file{lto-streamer-out.c}的函数@code{lto_output}。这个函数遍历调用图中的每一个可达的声明，类型和函数。这样就生成了所有如下所述的文件段的内存表示。
 
 @item @code{pass_ipa_lto_finish_out}
-This pass executes the function @code{produce_asm_for_decls} in
-@file{lto-streamer-out.c}, which takes the memory image built in the
-previous pass and encodes it in the corresponding ELF file sections.
+@en This pass executes the function @code{produce_asm_for_decls} in
+@en @file{lto-streamer-out.c}, which takes the memory image built in the
+@en previous pass and encodes it in the corresponding ELF file sections.
+这个pass执行{lto-streamer-out.c}中的@code{produce_asm_for_decls}函数，这个函数把上一个pass构建的内存表示编码保存到相应的ELF的文件段中。
 @end itemize
 
-The second half of LTO support is the ``reader''.  This is implemented
-as the GCC front end @file{lto1} in @file{lto/lto.c}.  When
-@file{collect2} detects a link set of @code{.o}/@code{.a} files with
-LTO information and the @option{-flto} is enabled, it invokes
-@file{lto1} which reads the set of files and aggregates them into a
-single translation unit for optimization.  The main entry point for
-the reader is @file{lto/lto.c}:@code{lto_main}.
+@en The second half of LTO support is the ``reader''.  This is implemented
+@en as the GCC front end @file{lto1} in @file{lto/lto.c}.  When
+@en @file{collect2} detects a link set of @code{.o}/@code{.a} files with
+@en LTO information and the @option{-flto} is enabled, it invokes
+@en @file{lto1} which reads the set of files and aggregates them into a
+@en single translation unit for optimization.  The main entry point for
+@en the reader is @file{lto/lto.c}:@code{lto_main}.
+
+LTO的下半个部分是"读者"。这个部分是作为GCC的前端@file{lto/lto.c}文件@file{lto1}实现的。当@file{collect2}检查出链接文件集合@code{.o}/@code{.a}具有LTO信息，而且选项@option{-flto}被打开，它就调用@file{lto1}，@file{lto1}读入一些文件，把它们聚集成为一个单独的为优化的翻译单元。这个读入功能的主入口点是@file{lto/lto.c}文件的@code{lto_main}函数。
 
 @subsection LTO modes of operation
 
-One of the main goals of the GCC link-time infrastructure was to allow
-effective compilation of large programs.  For this reason GCC implements two
-link-time compilation modes.
+@en One of the main goals of the GCC link-time infrastructure was to allow
+@en effective compilation of large programs.  For this reason GCC implements two
+@en link-time compilation modes.
 
+GCC的链接时基础设施的一个主要目标就是能够有效地编译大程序。由于这个原因，GCC实现了两种链接时编译的模式
 @enumerate
-@item	@emph{LTO mode}, in which the whole program is read into the
-compiler at link-time and optimized in a similar way as if it
-were a single source-level compilation unit.
+@en @item	@emph{LTO mode}, in which the whole program is read into the
+@en compiler at link-time and optimized in a similar way as if it
+@en were a single source-level compilation unit.
+@item   @emph{LTO 模式},在这种模式下，整个程序在链接时刻被读入编译器，然后就像对一个源代码级别的编译单元，进行优化。
 
-@item	@emph{WHOPR or partitioned mode}, designed to utilize multiple
-CPUs and/or a distributed compilation environment to quickly link
-large applications.  WHOPR stands for WHOle Program optimizeR (not to
-be confused with the semantics of @option{-fwhole-program}).  It
-partitions the aggregated callgraph from many different @code{.o}
-files and distributes the compilation of the sub-graphs to different
-CPUs.
+@en @item	@emph{WHOPR or partitioned mode}, designed to utilize multiple
+@en CPUs and/or a distributed compilation environment to quickly link
+@en large applications.  WHOPR stands for WHOle Program optimizeR (not to
+@en be confused with the semantics of @option{-fwhole-program}).  It
+@en partitions the aggregated callgraph from many different @code{.o}
+@en files and distributes the compilation of the sub-graphs to different
+@en CPUs.
+@item  @emph{WHOPR 或分区模式}，这样的设计是为了利用多个CPU和/或分布式编译环境来链接大的应用程序。WHOPR代表"全部程序优化"(不要被@option{-fwhole-program}的语义所疑惑)。  它对从许多不同的@code{.o}文件中产生聚集的调用图进行分块，然后把这些分块后的子图分布到不同的CPU进行编译。
 
-Note that distributed compilation is not implemented yet, but since
-the parallelism is facilitated via generating a @code{Makefile}, it
-would be easy to implement.
+@en Note that distributed compilation is not implemented yet, but since
+@en the parallelism is facilitated via generating a @code{Makefile}, it
+@en would be easy to implement.
+注意分布式编译现在还没有实现，但是由于并行化只是利用生成的一个@code{Makefile}，所以并行编译容易实现。
 @end enumerate
 
-WHOPR splits LTO into three main stages:
+@en WHOPR splits LTO into three main stages:\
+WHOPR 把LTO分成了三个主要阶段:\
 @enumerate
 @item Local generation (LGEN)
 This stage executes in parallel. Every file in the program is compiled
