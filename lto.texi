@@ -114,61 +114,71 @@ GCC的链接时基础设施的一个主要目标就是能够有效地编译大�
 @en WHOPR splits LTO into three main stages:\
 WHOPR 把LTO分成了三个主要阶段:\
 @enumerate
-@item Local generation (LGEN)
-This stage executes in parallel. Every file in the program is compiled
-into the intermediate language and packaged together with the local
-call-graph and summary information.  This stage is the same for both
-the LTO and WHOPR compilation mode.
+@en @item Local generation (LGEN)
+@item 局部生成 (LGEN)
+@en This stage executes in parallel. Every file in the program is compiled
+@en into the intermediate language and packaged together with the local
+@en call-graph and summary information.  This stage is the same for both
+@en the LTO and WHOPR compilation mode.
+这个阶段是并行执行的。程序中的每一个文件被编译成为一种中间表达语言，并且和局部的调用图和总计信息包装在一起。这个阶段对于LTO和WHOPR编译模式是相同的。
 
-@item Whole Program Analysis (WPA)
-WPA is performed sequentially. The global call-graph is generated, and
-a global analysis procedure makes transformation decisions. The global
-call-graph is partitioned to facilitate parallel optimization during
-phase 3. The results of the WPA stage are stored into new object files
-which contain the partitions of program expressed in the intermediate
-language and the optimization decisions.
+@en @item Whole Program Analysis (WPA)
+@item 全程序分析 (WPA)
+@en WPA is performed sequentially. The global call-graph is generated, and
+@en a global analysis procedure makes transformation decisions. The global
+@en call-graph is partitioned to facilitate parallel optimization during
+@en phase 3. The results of the WPA stage are stored into new object files
+@en which contain the partitions of program expressed in the intermediate
+@en language and the optimization decisions.
+WPA是顺序执行的，生成一个全局调用图，并且有一个全局分析过程来做转换的决定。在第三阶段，全局调用图被分块，以方便并行优化。WPA阶段的结果保存在新的目标文件中，这些新的文件包含用中间语言表示的分块程序和一些优化的决定。
 
-@item Local transformations (LTRANS)
-This stage executes in parallel. All the decisions made during phase 2
-are implemented locally in each partitioned object file, and the final
-object code is generated. Optimizations which cannot be decided
-efficiently during the phase 2 may be performed on the local
-call-graph partitions.
+@en @item Local transformations (LTRANS)
+@item 局部转换 (LTRANS)
+@en This stage executes in parallel. All the decisions made during phase 2
+@en are implemented locally in each partitioned object file, and the final
+@en object code is generated. Optimizations which cannot be decided
+@en efficiently during the phase 2 may be performed on the local
+@en call-graph partitions.
+这个阶段也是并行执行的。所有在阶段二做的决定在每个分块目标文件上实现，并且生成最后的目标代码。无法在第二阶段高效进行的优化可能会在局部分块调用图上进行。
 @end enumerate
 
-WHOPR can be seen as an extension of the usual LTO mode of
-compilation.  In LTO, WPA and LTRANS and are executed within a single
-execution of the compiler, after the whole program has been read into
-memory.
+@en WHOPR can be seen as an extension of the usual LTO mode of
+@en compilation.  In LTO, WPA and LTRANS and are executed within a single
+@en execution of the compiler, after the whole program has been read into
+@en memory.
+WHOPR可以被看作为普通LTO编译模式的扩展。在LTO模式，当所有程序被读进内存后，WPA和LTRANS在一次编译器运行中运行。
 
-When compiling in WHOPR mode the callgraph is partitioned during
-the WPA stage.  The whole program is split into a given number of
-partitions of roughly the same size.  The compiler tries to
-minimize the number of references which cross partition boundaries.
-The main advantage of WHOPR is to allow the parallel execution of
-LTRANS stages, which are the most time-consuming part of the
-compilation process.  Additionally, it avoids the need to load the
-whole program into memory.
-
+@en When compiling in WHOPR mode the callgraph is partitioned during
+@en the WPA stage.  The whole program is split into a given number of
+@en partitions of roughly the same size.  The compiler tries to
+@en minimize the number of references which cross partition boundaries.
+@en The main advantage of WHOPR is to allow the parallel execution of
+@en LTRANS stages, which are the most time-consuming part of the
+@en compilation process.  Additionally, it avoids the need to load the
+@en whole program into memory.
+当在WHOPR编译模式中时，在WPA阶段，调用图被分块。整个程序被分割为大小基本一致的若干分块。编译器尽量减少跨越分块边缘的引用。WHOPR的主要有点是允许并行执行LTRANS阶段，而这个阶段有恰恰是整个编译过程中最耗时的部分。例外，它也避免了把整个程序全部加载到内存。
 
 @section LTO file sections
 
-LTO information is stored in several ELF sections inside object files.
-Data structures and enum codes for sections are defined in
-@file{lto-streamer.h}.
+@en LTO information is stored in several ELF sections inside object files.
+@en Data structures and enum codes for sections are defined in
+@en @file{lto-streamer.h}.
+LTO的信息保存在目标文件的几个段里边。这些段相关的数据结构和枚举代码定义在文件@file{lto-streamer.h}。
 
-These sections are emitted from @file{lto-streamer-out.c} and mapped
-in all at once from @file{lto/lto.c}:@code{lto_file_read}.  The
-individual functions dealing with the reading/writing of each section
-are described below.
+@en These sections are emitted from @file{lto-streamer-out.c} and mapped
+@en in all at once from @file{lto/lto.c}:@code{lto_file_read}.  The
+@en individual functions dealing with the reading/writing of each section
+@en are described below.
+这些段从@file{lto-streamer-out.c}中生成，并且从@file{lto/lto.c}的函数@code{lto_file_read}一次性映射。处理每个段的读写的单个函数，在下边描述。
 
 @itemize @bullet
-@item Command line options (@code{.gnu.lto_.opts})
-
-This section contains the command line options used to generate the
-object files.  This is used at link-time to determine the optimization
-level and other settings when they are not explicitly specified at the
-linker command line.
+@en @item Command line options (@code{.gnu.lto_.opts})
+@item 命令行选项 (@code{.gnu.lto_.opts})
+@en This section contains the command line options used to generate the
+@en object files.  This is used at link-time to determine the optimization
+@en level and other settings when they are not explicitly specified at the
+@en linker command line.
+这个段包含了用来生成目标文件的命令行选项。这个段被用来在链接时刻决定优化级别和其他的设置，当这些信息都没有在连接器的命令行中显示地设置。
 
 Currently, GCC does not support combining LTO object files compiled
 with different set of the command line options into a single binary.
