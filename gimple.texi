@@ -253,13 +253,12 @@ GIMPLE指令的主要标识
 @en is then inherited from the other two tuples.
 另一方面，该元组中的一些域需要与@code{gimple_statement_with_memory_ops}元组共享。所以，这些公共域被放在@code{gimple_statement_with_ops_base}中，然后由其它两个元组来继承。
 
-@multitable {@code{addresses_taken}}	{56 + 8 * @code{num_ops} bytes}
+@multitable {@code{def_ops}}	{48 + 8 * @code{num_ops} bytes}
 @item	@code{gsbase}		@tab 256	
-@item	@code{addresses_taken}	@tab 64	
 @item	@code{def_ops}		@tab 64	
 @item	@code{use_ops}		@tab 64	
 @item	@code{op}		@tab @code{num_ops} * 64	
-@item	Total size		@tab 56 + 8 * @code{num_ops} bytes
+@item	Total size		@tab 48 + 8 * @code{num_ops} bytes
 @end multitable
 
 @itemize @bullet
@@ -294,18 +293,17 @@ GIMPLE指令的主要标识
 @en @code{gimple_statement_with_memory_ops}).
 该元组本质上等同于@code{gimple_statement_with_ops}，除了其包含4个额外的域，来存放与内存存储和加载相关的向量。类似于先前的情况，结构体被分成两部分，用来容纳操作数向量(@code{gimple_statement_with_memory_ops_base}和@code{gimple_statement_with_memory_ops})。
 
-@multitable {@code{addresses_taken}}	{88 + 8 * @code{num_ops} bytes}
-@item Field				@tab Size (bits)
-@item @code{gsbase}			@tab 256
-@item @code{addresses_taken}		@tab 64
-@item @code{def_ops}			@tab 64
-@item @code{use_ops}			@tab 64
-@item @code{vdef_ops}			@tab 64
-@item @code{vuse_ops}			@tab 64
-@item @code{stores}			@tab 64	
-@item @code{loads}			@tab 64	
-@item @code{op}				@tab @code{num_ops} * 64	
-@item Total size			@tab 88 + 8 * @code{num_ops} bytes
+@multitable {@code{vdef_ops}}	{80 + 8 * @code{num_ops} bytes}
+@item Field			@tab Size (bits)
+@item @code{gsbase}		@tab 256
+@item @code{def_ops}		@tab 64
+@item @code{use_ops}		@tab 64
+@item @code{vdef_ops}		@tab 64
+@item @code{vuse_ops}		@tab 64
+@item @code{stores}		@tab 64	
+@item @code{loads}		@tab 64	
+@item @code{op}			@tab @code{num_ops} * 64	
+@item Total size		@tab 80 + 8 * @code{num_ops} bytes
 @end multitable
 
 @itemize @bullet
@@ -372,7 +370,7 @@ union gimple_statement_d
 @end smallexample
 
 @en @node GIMPLE instruction set
-@en @section GIMPLE instruction set 
+@en @section GIMPLE instruction set
 @node GIMPLE instruction set
 @section GIMPLE指令集
 @cindex GIMPLE instruction set
@@ -380,7 +378,7 @@ union gimple_statement_d
 @en The following table briefly describes the GIMPLE instruction set.
 下面的表格简短地描述了GIMPLE指令集。
 
-@multitable {@code{GIMPLE_CHANGE_DYNAMIC_TYPE}} {High GIMPLE} {Low GIMPLE}
+@multitable {@code{GIMPLE_OMP_SECTIONS_SWITCH}} {High GIMPLE} {Low GIMPLE}
 @en @item Instruction			@tab High GIMPLE	@tab Low GIMPLE
 @item 指令			@tab 高层GIMPLE	    @tab 低层GIMPLE
 @item @code{GIMPLE_ASM}			@tab x			@tab x
@@ -390,6 +388,7 @@ union gimple_statement_d
 @item @code{GIMPLE_CATCH}		@tab x			@tab
 @item @code{GIMPLE_CHANGE_DYNAMIC_TYPE}	@tab x			@tab x
 @item @code{GIMPLE_COND}		@tab x			@tab x
+@item @code{GIMPLE_DEBUG}		@tab x			@tab x
 @item @code{GIMPLE_EH_FILTER}		@tab x			@tab
 @item @code{GIMPLE_GOTO}		@tab x			@tab x
 @item @code{GIMPLE_LABEL}		@tab x			@tab x
@@ -1369,6 +1368,7 @@ unsigned index, tree out_op)
 
 @deftypefn {GIMPLE function} void gimple_bind_add_seq (gimple gs, gimple_seq seq)
 @en Append a sequence of statements to the end of a @code{GIMPLE_BIND}'s
+@en body.
 追加一个语句序列到@code{GIMPLE_BIND}的主体的结尾。
 @end deftypefn
 

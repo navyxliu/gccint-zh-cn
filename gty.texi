@@ -57,12 +57,12 @@ GTY (([@var{option}] [(@var{param})], [@var{option}] [(@var{param})] @dots{}))
 这里有一些标记简单数据结构和全局变量的例子。
 
 @smallexample
-struct @var{tag} GTY(())
+struct GTY(()) @var{tag}
 @{
   @var{fields}@dots{}
 @};
 
-typedef struct @var{tag} GTY(())
+typedef struct GTY(()) @var{tag}
 @{
   @var{fields}@dots{}
 @} *@var{typename};
@@ -88,6 +88,7 @@ static GTY(()) int @var{counter};        /* @r{save counter in a PCH} */
 * GGC Roots::        标记全局变量GGC roots。
 * Files::             生成的文件如何工作。
 * Invoking the garbage collector::   如何调用垃圾收集器。
+* Troubleshooting::     When something does not work as expected.
 @end menu
 
 @en @node GTY Options
@@ -168,7 +169,7 @@ GTY ((chain_next ("TREE_CODE (&%h.generic) == INTEGER_TYPE"
 @en variable-length array, like this:
 有两个地方需要显示的告诉类型机构一个数组的长度。第一种情况是当一个结构体结束于一个可变长度数组，像这样： 
 @smallexample
-struct rtvec_def GTY(()) @{
+struct GTY(()) rtvec_def @{
   int num_elem;         /* @r{number of elements} */
   rtx GTY ((length ("%h.num_elem"))) elem[1];
 @};
@@ -183,25 +184,21 @@ struct rtvec_def GTY(()) @{
 @en The second case is when a structure or a global variable contains a
 @en pointer to an array, like this:
 第二种情况是当一个结构体或者全局变量包含一个指向数组的指针，像这样：
-
 @smallexample
-tree *
-  GTY ((length ("%h.regno_pointer_align_length"))) regno_decl;
+struct gimple_omp_for_iter * GTY((length ("%h.collapse"))) iter;
 @end smallexample
-@en In this case, @code{regno_decl} has been allocated by writing something like
-在这种情况下，@code{regno_decl}已经通过类似下面的方式被分配：
+@en In this case, @code{iter} has been allocated by writing something like
+在这种情况下，@code{iter}已经通过类似下面的方式被分配：
 @smallexample
-  x->regno_decl =
-    ggc_alloc (x->regno_pointer_align_length * sizeof (tree));
+  x->iter = ggc_alloc_cleared_vec_gimple_omp_for_iter (collapse);
 @end smallexample
-@en and the @code{length} provides the length of the field.
-并且 @code{length} 提供了指定域的长度。
+@en and the @code{collapse} provides the length of the field.
+并且 @code{collapse} 提供了指定域的长度。
 
 @en This second use of @code{length} also works on global variables, like:
 @code{lenght} 的第二种用法还包括在全局变量上，像这样：
 @verbatim
-  static GTY((length ("reg_base_value_size")))
-    rtx *reg_base_value;
+static GTY((length("reg_known_value_size"))) rtx *reg_known_value;
 @end verbatim
 
 @findex skip
@@ -240,7 +237,7 @@ tree *
 例如,
 
 @smallexample
-struct tree_binding GTY(())
+struct GTY(()) tree_binding
 @{
   struct tree_common common;
   union tree_binding_u @{
@@ -417,6 +414,38 @@ typedef struct GTY(()) @{
 @en number or the hash of a string instead.
 PCH无法处理依赖于指针绝对值得数据结构。@code{reorder}函数代价很高。在可能的情况下，最好依赖于数据的属性，像ID号或者字符串的哈希值。
 
+@findex variable_size
+@item variable_size
+
+The type machinery expects the types to be of constant size.  When this
+is not true, for example, with structs that have array fields or unions,
+the type machinery cannot tell how many bytes need to be allocated at
+each allocation.  The @code{variable_size} is used to mark such types.
+The type machinery then provides allocators that take a parameter
+indicating an exact size of object being allocated.  Note that the size
+must be provided in bytes whereas the @code{length} option works with
+array lengths in number of elements.
+
+For example,
+@smallexample
+struct GTY((variable_size)) sorted_fields_type @{
+  int len;
+  tree GTY((length ("%h.len"))) elts[1];
+@};
+@end smallexample
+
+Then the objects of @code{struct sorted_fields_type} are allocated in GC 
+memory as follows:
+@smallexample
+  field_vec = ggc_alloc_sorted_fields_type (size);
+@end smallexample
+
+If @var{field_vec->elts} stores @var{n} elements, then @var{size}
+could be calculated as follows:
+@smallexample
+  size_t size = sizeof (struct sorted_fields_type) + n * sizeof (tree);
+@end smallexample
+
 @findex special
 @item special ("@var{name}")
 
@@ -549,12 +578,43 @@ The GCC garbage collector GGC is only invoked explicitly. In contrast
 with many other garbage collectors, it is not implicitly invoked by
 allocation routines when a lot of memory has been consumed. So the
 only way to have GGC reclaim storage it to call the @code{ggc_collect}
-function explicitly. This call is an expensive operation, as it may
-have to scan the entire heap. Beware that local variables (on the GCC
+function explicitly.  This call is an expensive operation, as it may
+have to scan the entire heap.  Beware that local variables (on the GCC
 call stack) are not followed by such an invocation (as many other
 garbage collectors do): you should reference all your data from static
 or external @code{GTY}-ed variables, and it is advised to call
-@code{ggc_collect} with a shallow call stack. The GGC is an exact mark
+@code{ggc_collect} with a shallow call stack.  The GGC is an exact mark
 and sweep garbage collector (so it does not scan the call stack for
-pointers). In practice GCC passes don't often call @code{ggc_collect}
+pointers).  In practice GCC passes don't often call @code{ggc_collect}
 themselves, because it is called by the pass manager between passes.
+
+At the time of the @code{ggc_collect} call all pointers in the GC-marked
+structures must be valid or @code{NULL}.  In practice this means that
+there should not be uninitialized pointer fields in the structures even
+if your code never reads or writes those fields at a particular
+instance.  One way to ensure this is to use cleared versions of
+allocators unless all the fields are initialized manually immediately
+after allocation.
+
+@node Troubleshooting
+@section Troubleshooting the garbage collector
+@cindex garbage collector, troubleshooting
+
+With the current garbage collector implementation, most issues should
+show up as GCC compilation errors.  Some of the most commonly
+encountered issues are described below.
+
+@itemize @bullet
+@item Gengtype does not produce allocators for a @code{GTY}-marked type.
+Gengtype checks if there is at least one possible path from GC roots to
+at least one instance of each type before outputting allocators.  If
+there is no such path, the @code{GTY} markers will be ignored and no
+allocators will be output.  Solve this by making sure that there exists
+at least one such path.  If creating it is unfeasible or raises a ``code
+smell'', consider if you really must use GC for allocating such type.
+
+@item Link-time errors about undefined @code{gt_ggc_r_foo_bar} and
+similarly-named symbols.  Check if your @file{foo_bar} source file has
+@code{#include "gt-foo_bar.h"} as its very last line.
+
+@end itemize

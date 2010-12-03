@@ -1,66 +1,96 @@
-@c Copyright (C) 2001, 2002, 2003, 2004, 2006, 2008
+@c Copyright (C) 2001, 2002, 2003, 2004, 2006, 2008, 2010
 @c Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
+@en @node Makefile
+@en @subsection Makefile Targets
 @node Makefile
 @subsection Makefile工作目标 
 @cindex makefile targets
 @cindex targets, makefile
 
+@en These targets are available from the @samp{gcc} directory:
 这些工作目标可以从@samp{gcc}目录下获得：
 
 @table @code
 @item all
+@en This is the default target.  Depending on what your build/host/target
+@en configuration is, it coordinates all the things that need to be built.
 这是缺省工作目标。它会根据你对build/host/target的配置，
 来协调构建所有需要的事物。 
 
 @item doc
+@en Produce info-formatted documentation and man pages.  Essentially it
+@en calls @samp{make man} and @samp{make info}.
 生成info格式的文档和man页。实质上它是调用了@samp{make man}和@samp{make info}。 
 
 @item dvi
+@en Produce DVI-formatted documentation.
 生成DVI格式的文档。 
 
 @item pdf
+@en Produce PDF-formatted documentation.
 生成PDF格式的文档。 
 
 @item html
+@en Produce HTML-formatted documentation.
 生成HTML格式的文档。 
 
 @item man
+@en Generate man pages.
 生成man页。 
 
 @item info
+@en Generate info-formatted pages.
 生成info格式的页。 
 
 @item mostlyclean
+@en Delete the files made while building the compiler.
 删除构建编译器中创建的文件。 
 
 @item clean
+@en That, and all the other files built by @samp{make all}.
 由@samp{make all}创建的所有其它文件。 
 
 @item distclean
+@en That, and all the files created by @command{configure}.
 由@command{configure}创建的所有文件。 
 
 @item maintainer-clean
+@en Distclean plus any file that can be generated from other files.  Note
+@en that additional tools may be required beyond what is normally needed to
+@en build GCC.
 Distclean，以及任何由其它文件生成的文件。
 注意可能会需要，除了构建gcc所需的，额外的工具。 
 
 @item srcextra
+@en Generates files in the source directory that are not version-controlled but
+@en should go into a release tarball.
 在源目录生成不在CVS中存在的，但是属于发行tar包的文件。
 由CVS源文件@file{gcc/java/parse.y}生成的@file{gcc/java/parse.c}是一个例子。 
 
 @item srcinfo
 @itemx srcman
+@en Copies the info-formatted and manpage documentation into the source
+@en directory usually for the purpose of generating a release tarball.
 将info格式的和manpage文档复制到源目录，用于生成发行tar包。 
 
 @item install
+@en Installs GCC.
 安装gcc。 
 
 @item uninstall
+@en Deletes installed files, though this is not supported.
 删除安装的文件。 
 
 @item check
+@en Run the testsuite.  This creates a @file{testsuite} subdirectory that
+@en has various @file{.sum} and @file{.log} files containing the results of
+@en the testing.  You can run subsets with, for example, @samp{make check-gcc}.
+@en You can specify specific tests by setting @env{RUNTESTFLAGS} to be the name
+@en of the @file{.exp} file, optionally followed by (for some tests) an equals
+@en and a file wildcard, like:
 运行测试包。这将创建一个@file{testsuite}子目录，
 其中具有各种包含测试结果的@file{.sum}和@file{.log}文件。
 可以使用，例如@samp{make check-gcc}的方式，来运行一个测试子集。
@@ -71,11 +101,25 @@ Distclean，以及任何由其它文件生成的文件。
 make check-gcc RUNTESTFLAGS="execute.exp=19980413-*"
 @end smallexample
 
+@en Note that running the testsuite may require additional tools be
+@en installed, such as Tcl or DejaGnu.
 注意可能需要安装额外的工具，像TCL或dejagnu，来运行测试包。
 @end table
 
+@en The toplevel tree from which you start GCC compilation is not
+@en the GCC directory, but rather a complex Makefile that coordinates
+@en the various steps of the build, including bootstrapping the compiler
+@en and using the new compiler to build target libraries.
 开始编译GCC的顶层树不是GCC目录，而是使用一个复杂的Makefile来协调构建的各个步骤，包括自举（bootstrap）编译器，以及使用新的编译器来构建目标库。
 
+@en When GCC is configured for a native configuration, the default action
+@en for @command{make} is to do a full three-stage bootstrap.  This means
+@en that GCC is built three times---once with the native compiler, once with
+@en the native-built compiler it just built, and once with the compiler it
+@en built the second time.  In theory, the last two should produce the same
+@en results, which @samp{make compare} can check.  Each stage is configured
+@en separately and compiled into a separate directory, to minimize problems
+@en due to ABI incompatibilities between the native compiler and GCC.
 当GCC被配置为本地配置时，@command{make}的缺省动作是执行完整的三阶段自举。
 这意味着GCC将被构建三次，一次是使用本地编译器，
 一次是使用刚由本地编译器构建的编译器，一次是使用第二次构建的编译器。
@@ -83,6 +127,18 @@ make check-gcc RUNTESTFLAGS="execute.exp=19980413-*"
 每个阶段都被单独的配置和编译到独立的目录里，
 以尽可能减少由于本地编译器和GCC之间的ABI不兼容所带来的问题。
 
+@en If you do a change, rebuilding will also start from the first stage
+@en and ``bubble'' up the change through the three stages.  Each stage
+@en is taken from its build directory (if it had been built previously),
+@en rebuilt, and copied to its subdirectory.  This will allow you to, for
+@en example, continue a bootstrap after fixing a bug which causes the
+@en stage2 build to crash.  It does not provide as good coverage of the
+@en compiler as bootstrapping from scratch, but it ensures that the new
+@en code is syntactically correct (e.g., that you did not use GCC extensions
+@en by mistake), and avoids spurious bootstrap comparison
+@en failures@footnote{Except if the compiler was buggy and miscompiled
+@en some of the files that were not modified.  In this case, it's best
+@en to use @command{make restrap}.}.
 如果做了改动，重建工作将还会从第一阶段开始，并且将改动贯穿三个阶段。
 每个阶段都在它的构建目录下开始（如果先前曾被构建过），
 重建，并且复制到它的子目录。这将允许你，在修订了引起第二阶段构建崩溃的bug之后，
@@ -92,41 +148,72 @@ make check-gcc RUNTESTFLAGS="execute.exp=19980413-*"
 @footnote{除非编译器有bug，以及一些没有被修改的文件被错误编译了。
 在这种情况下，最好使用@command{make restrap}。}。
 
+@en Other targets available from the top level include:
 其它由顶层可以获得的目标包括：
 
 @table @code
 @item bootstrap-lean
+@en Like @code{bootstrap}, except that the various stages are removed once
+@en they're no longer needed.  This saves disk space.
 类似@code{bootstrap}，除了各个阶段当不再需要的时候，将被移除。
 这可以节省磁盘空间。 
 
 @item bootstrap2
 @itemx bootstrap2-lean
+@en Performs only the first two stages of bootstrap.  Unlike a three-stage
+@en bootstrap, this does not perform a comparison to test that the compiler
+@en is running properly.  Note that the disk space required by a ``lean''
+@en bootstrap is approximately independent of the number of stages.
 只执行前两个阶段的自举。不像三阶段自举，这将不执行测试编译器运行正常的比较。
 注意使用“lean”的自举所需要的磁盘空间几乎是与阶段数目无关的。 
 
-@item stage@var{N}-bubble (@var{N} = 1@dots{}4)
+@item stage@var{N}-bubble (@var{N} = 1@dots{}4, profile, feedback)
+@en Rebuild all the stages up to @var{N}, with the appropriate flags,
+@en ``bubbling'' the changes as described above.
 使用适当的标记，来重建所有的阶段，只到@var{N}，并将按照上面描述的来传播改动。
 
-@item all-stage@var{N} (@var{N} = 1@dots{}4)
+@item all-stage@var{N} (@var{N} = 1@dots{}4, profile, feedback)
+@en Assuming that stage @var{N} has already been built, rebuild it with the
+@en appropriate flags.  This is rarely needed.
 假设阶段@var{N}已经被构建，使用适当的标记来重建它。这个很少用到。 
 
 @item cleanstrap
+@en Remove everything (@samp{make clean}) and rebuilds (@samp{make bootstrap}).
 移除所有（@samp{make clean}）并重建（@samp{make bootstrap}）。
 
 @item compare
+@en Compares the results of stages 2 and 3.  This ensures that the compiler
+@en is running properly, since it should produce the same object files
+@en regardless of how it itself was compiled.
 比较阶段2和3的结果。这用于确保编译器运行正常，因为不管它本身是如何被编译的，都应该产生相同的目标文件。 
 
 @item profiledbootstrap
+@en Builds a compiler with profiling feedback information.  In this case,
+@en the second and third stages are named @samp{profile} and @samp{feedback},
+@en respectively.  For more information, see
+@en @ref{Building,,Building with profile feedback,gccinstall,Installing GCC}.
 构建带有profile反馈信息的编译器。更多信息，参见 
 @ref{Building,,Building with profile feedback,gccinstall,Installing GCC}。 
 
 @item restrap
+@en Restart a bootstrap, so that everything that was not built with
+@en the system compiler is rebuilt.
 重新启动自举，使得任何没有使用系统编译器构建的将被重建。 
 
-@item stage@var{N}-start (@var{N} = 1@dots{}4)
+@item stage@var{N}-start (@var{N} = 1@dots{}4, profile, feedback)
+@en For each package that is bootstrapped, rename directories so that,
+@en for example, @file{gcc} points to the stage@var{N} GCC, compiled
+@en with the stage@var{N-1} GCC@footnote{Customarily, the system compiler
+@en is also termed the @file{stage0} GCC.}.
 对于被自举的每个package，重命名目录，使得例如，
 当使用@var{N-1}阶段的（stageN-1）GCC编译时，gcc指向@var{N}阶段的（stageN）GCC。
 
+@en You will invoke this target if you need to test or debug the
+@en stage@var{N} GCC@.  If you only need to execute GCC (but you need
+@en not run @samp{make} either to rebuild it or to run test suites),
+@en you should be able to work directly in the @file{stage@var{N}-gcc}
+@en directory.  This makes it easier to debug multiple stages in
+@en parallel.
 如果需要测试或调试@var{N}阶段的GCC时，你将使用该目标。
 如果只需要执行GCC（但不需要运行@samp{make}，也不需要重建或运行测试包），
 你应该能够在@file{stage@var{N}-gcc}目录下工作。
@@ -134,20 +221,36 @@ make check-gcc RUNTESTFLAGS="execute.exp=19980413-*"
 @footnote{习惯上，系统编译器也被称为0阶段（@file{stage0}）GCC。}。
 
 @item stage
+@en For each package that is bootstrapped, relocate its build directory
+@en to indicate its stage.  For example, if the @file{gcc} directory
+@en points to the stage2 GCC, after invoking this target it will be
+@en renamed to @file{stage2-gcc}.
 对于被自举的每个package，重定位它的构建目录来指示它的阶段。
 例如，如果@file{gcc}目录指向阶段2的GCC，则执行该目标之后，
 将被重命名为@file{stage2-gcc}。 
 
 @end table
 
+@en If you wish to use non-default GCC flags when compiling the stage2 and
+@en stage3 compilers, set @code{BOOT_CFLAGS} on the command line when doing
+@en @samp{make}.
 如果在编译阶段2和阶段3的编译器时，想使用非缺省的GCC标记，
 则在执行@samp{make}时，在命令行上设置@code{BOOT_CFLAGS}。
 
+@en Usually, the first stage only builds the languages that the compiler
+@en is written in: typically, C and maybe Ada.  If you are debugging a
+@en miscompilation of a different stage2 front-end (for example, of the
+@en Fortran front-end), you may want to have front-ends for other languages
+@en in the first stage as well.  To do so, set @code{STAGE1_LANGUAGES}
+@en on the command line when doing @samp{make}.
 通常，第一阶段只构建编写编译器的语言：通常是C，以及可能会有Ada。
 如果你在调试一个其它的阶段2前端的错误编译（例如，Fortran前端），
 你可能想要在第一阶段也有其它语言的前端。如果这样，
 在执行@samp{make}时在命令行中设置@code{STAGE1_LANGUAGES}。
 
+@en For example, in the aforementioned scenario of debugging a Fortran
+@en front-end miscompilation caused by the stage1 compiler, you may need a
+@en command like
 例如，在前述情况中，要调试由阶段1编译器造成的Fortran前端的错误编译，
 可能需要一个命令如
 
@@ -155,5 +258,9 @@ make check-gcc RUNTESTFLAGS="execute.exp=19980413-*"
 make stage2-bubble STAGE1_LANGUAGES=c,fortran
 @end example
 
+@en Alternatively, you can use per-language targets to build and test
+@en languages that are not enabled by default in stage1.  For example,
+@en @command{make f951} will build a Fortran compiler even in the stage1
+@en build directory.
 另外，可以使用每个语言的目标，来构建和测试没有在阶段1启用的语言。
 例如，@command{make f951}将在stage1构建目录下构建一个Fortran编译器。
