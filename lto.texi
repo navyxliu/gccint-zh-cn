@@ -189,59 +189,69 @@ usual validation done by option processing).  This is implemented in
 @file{lto/lto.c}:@code{lto_read_all_file_options}.
 
 
-@item Symbol table (@code{.gnu.lto_.symtab})
+@en @item Symbol table (@code{.gnu.lto_.symtab})
+@item 符号表 (@code{.gnu.lto_.symtab})
 
-This table replaces the ELF symbol table for functions and variables
-represented in the LTO IL. Symbols used and exported by the optimized
-assembly code of ``fat'' objects might not match the ones used and
-exported by the intermediate code.  This table is necessary because
-the intermediate code is less optimized and thus requires a separate
-symbol table.
+@en This table replaces the ELF symbol table for functions and variables
+@en represented in the LTO IL. Symbols used and exported by the optimized
+@en assembly code of ``fat'' objects might not match the ones used and
+@en exported by the intermediate code.  This table is necessary because
+@en the intermediate code is less optimized and thus requires a separate
+@en symbol table.
+这个表替换了LTO中间语言表示的函数和变量的ELF符号表。被"肥胖"对象的优化的汇编代码使用和导出的符号也许并不能匹配由中间代码使用和导出的符号。这个表已经足够了因为中间代码还没有充分优化，所以需要一个单独的符号表。
 
-Additionally, the binary code in the ``fat'' object will lack a call
-to a function, since the call was optimized out at compilation time
-after the intermediate language was streamed out.  In some special
-cases, the same optimization may not happen  during link-time
-optimization.  This would lead to an undefined symbol if only one
-symbol table was used.
+@en Additionally, the binary code in the ``fat'' object will lack a call
+@en to a function, since the call was optimized out at compilation time
+@en after the intermediate language was streamed out.  In some special
+@en cases, the same optimization may not happen  during link-time
+@en optimization.  This would lead to an undefined symbol if only one
+@en symbol table was used.
+另外，"肥胖"对象中的二进制代码缺少对一个函数的调用，因为在中间代码被序列化后，调用在编译时间优化掉了。在一些特殊情况下，同样的优化可能在链接时优化不会发生。如果使用一个符号表，会导致一个未定义的符号。
 
-The symbol table is emitted in
+@en The symbol table is emitted in
+这个符号表产生于
 @file{lto-streamer-out.c}:@code{produce_symtab}.
 
 
-@item Global declarations and types (@code{.gnu.lto_.decls})
+@en @item Global declarations and types (@code{.gnu.lto_.decls})
+@item 全局声明和类型 (@code{.gnu.lto_.decls})
 
-This section contains an intermediate language dump of all
-declarations and types required to represent the callgraph, static
-variables and top-level debug info.
+@en This section contains an intermediate language dump of all
+@en declarations and types required to represent the callgraph, static
+@en variables and top-level debug info.
+这个段包括了中间语言表示的所有声明和类型，这些都是需要表示调用图，静态变量和顶级的调试信息。
 
-The contents of this section are emitted in
-@file{lto-streamer-out.c}:@code{produce_asm_for_decls}.  Types and
-symbols are emitted in a topological order that preserves the sharing
-of pointers when the file is read back in
-(@file{lto.c}:@code{read_cgraph_and_symbols}).
+@en The contents of this section are emitted in
+@en @file{lto-streamer-out.c}:@code{produce_asm_for_decls}.  Types and
+@en symbols are emitted in a topological order that preserves the sharing
+@en of pointers when the file is read back in
+@en (@file{lto.c}:@code{read_cgraph_and_symbols}).
+这个段的内容由@file{lto-streamer-out.c}:@code{produce_asm_for_decls}产生。类型和符号按照拓扑顺序生成，为了在文件被再次读入的时候，共享指针。
 
+@en @item The callgraph (@code{.gnu.lto_.cgraph})
+@item 调用图 (@code{.gnu.lto_.cgraph})
 
-@item The callgraph (@code{.gnu.lto_.cgraph})
+@en This section contains the basic data structure used by the GCC
+@en inter-procedural optimization infrastructure. This section stores an
+@en annotated multi-graph which represents the functions and call sites as
+@en well as the variables, aliases and top-level @code{asm} statements.
+这个段包含了GCC过程间优化基础设施所使用的数据结构。这个段存储了一个有注释的多图，来表示函数和调用位置，以及变量，别名和顶级@code{asm}语句。
 
-This section contains the basic data structure used by the GCC
-inter-procedural optimization infrastructure. This section stores an
-annotated multi-graph which represents the functions and call sites as
-well as the variables, aliases and top-level @code{asm} statements.
+@en This section is emitted in
+@en @file{lto-streamer-out.c}:@code{output_cgraph} and read in
+@en @file{lto-cgraph.c}:@code{input_cgraph}.
+这个段由@file{lto-streamer-out.c}:@code{output_cgraph}生成，由@file{lto-cgraph.c}:@code{input_cgraph}读入。
 
-This section is emitted in
-@file{lto-streamer-out.c}:@code{output_cgraph} and read in
-@file{lto-cgraph.c}:@code{input_cgraph}.
+@en @item IPA references (@code{.gnu.lto_.refs})
+@item IPA 引用 (@code{.gnu.lto_.refs})
 
+@en This section contains references between function and static
+@en variables.  It is emitted by @file{lto-cgraph.c}:@code{output_refs}
+@en and read by @file{lto-cgraph.c}:@code{input_refs}.
+这个段包含函数和静态变量之间的引用。这个段由@file{lto-cgraph.c}:@code{output_refs}产生，被@file{lto-cgraph.c}:@code{input_refs}读入。
 
-@item IPA references (@code{.gnu.lto_.refs})
-
-This section contains references between function and static
-variables.  It is emitted by @file{lto-cgraph.c}:@code{output_refs}
-and read by @file{lto-cgraph.c}:@code{input_refs}.
-
-
-@item Function bodies (@code{.gnu.lto_.function_body.<name>})
+@en @item Function bodies (@code{.gnu.lto_.function_body.<name>})
+@item 函数体 (@code{.gnu.lto_.function_body.<name>})
 
 This section contains function bodies in the intermediate language
 representation. Every function body is in a separate section to allow
