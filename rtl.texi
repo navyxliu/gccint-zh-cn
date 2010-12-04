@@ -185,109 +185,82 @@ RTL使用五种对象：表达式、整数、宽整数、字符串和向量。�
 @en Currently, @file{rtl.def} defines these classes:
 不同的表达式代码被分为几个类别（@dfn{classes}），其有单个字符表示。你可以使用宏@code{GET_RTX_CLASS (@var{code})}来确定RTX代码的类别。当前，@file{rtl.def}定义了这些类别：
 
-@en @table @code
-@en @item RTX_OBJ
+@table @code
+@item RTX_OBJ
 @en An RTX code that represents an actual object, such as a register
 @en (@code{REG}) or a memory location (@code{MEM}, @code{SYMBOL_REF}).
 @en @code{LO_SUM}) is also included; instead, @code{SUBREG} and
 @en @code{STRICT_LOW_PART} are not in this class, but in class @code{x}.
-@en 
-@en @item RTX_CONST_OBJ
+一个RTX代码，表示一个实际的对象，例如一个寄存器(@code{REG})或者一个内存位置(@code{MEM}, @code{SYMBOL_REF})。也包括@code{LO_SUM})；但是，@code{SUBREG}和@code{STRICT_LOW_PART}不在这个类别中，而是在@code{x}类别中。
+
+@item RTX_CONST_OBJ
 @en An RTX code that represents a constant object.  @code{HIGH} is also
 @en included in this class.
-@en 
-@en @item RTX_COMPARE
+一个RTX代码，表示一个常量对象。@code{HIGH}也包含在该类别中。
+
+@item RTX_COMPARE
 @en An RTX code for a non-symmetric comparison, such as @code{GEU} or
 @en @code{LT}.
-@en 
-@en @item RTX_COMM_COMPARE
+一个RTX代码，针对一个非对称的比较，例如@code{GEU}或@code{LT}。
+
+@item RTX_COMM_COMPARE
 @en An RTX code for a symmetric (commutative) comparison, such as @code{EQ}
 @en or @code{ORDERED}.
-@en 
-@en @item RTX_UNARY
+一个RTX代码，针对一个对称（可交换）比较，例如，例如@code{EQ}或@code{ORDERED}。
+
+@item RTX_UNARY
 @en An RTX code for a unary arithmetic operation, such as @code{NEG},
 @en @code{NOT}, or @code{ABS}.  This category also includes value extension
 @en (sign or zero) and conversions between integer and floating point.
-@en 
-@en @item RTX_COMM_ARITH
+一个RTX代码，针对一元算术运算，例如@code{NEG}，@code{NOT}或者@code{ABS}。这个类别还包括值扩展（符号扩展或者零扩展），以及整数和浮点之间的转换。
+
+@item RTX_COMM_ARITH
 @en An RTX code for a commutative binary operation, such as @code{PLUS} or
 @en @code{AND}.  @code{NE} and @code{EQ} are comparisons, so they have class
 @en @code{<}.
-@en 
-@en @item RTX_BIN_ARITH
+一个RTX代码，针对可交换的二元运算，例如@code{PLUS}或者@code{AND}。@code{NE}和@code{EQ}为比较运算，所以它们具有类别@code{<}。
+
+@item RTX_BIN_ARITH
 @en An RTX code for a non-commutative binary operation, such as @code{MINUS},
 @en @code{DIV}, or @code{ASHIFTRT}.
-@en 
-@en @item RTX_BITFIELD_OPS
+一个RTX代码，针对不可交换的二元运算，例如@code{MINUS}，@code{DIV}或者@code{ASHIFTRT}。
+
+@item RTX_BITFIELD_OPS
 @en An RTX code for a bit-field operation.  Currently only
 @en @code{ZERO_EXTRACT} and @code{SIGN_EXTRACT}.  These have three inputs
 @en and are lvalues (so they can be used for insertion as well).
 @en @xref{Bit-Fields}.
-@en 
-@en @item RTX_TERNARY
+一个RTX代码，针对位域运算。当前只有@code{ZERO_EXTRACT}和@code{SIGN_EXTRACT}。这些有三个输入，并且为左值。@xref{Bit-Fields}。
+
+@item RTX_TERNARY
 @en An RTX code for other three input operations.  Currently only
-@en @code{IF_THEN_ELSE} and @code{VEC_MERGE}.
-@en 
-@en @item RTX_INSN
+@en @code{IF_THEN_ELSE},  @code{VEC_MERGE}, @code{SIGN_EXTRACT},
+@en @code{ZERO_EXTRACT}, and @code{FMA}.
+一个RTX代码，针对其它有三个输入的运算。当前只有@code{IF_THEN_ELSE}，@code{VEC_MERGE}，@code{SIGN_EXTRACT}，@code{ZERO_EXTRACT}和@code{FMA}。
+
+@item RTX_INSN
 @en An RTX code for an entire instruction:  @code{INSN}, @code{JUMP_INSN}, and
 @en @code{CALL_INSN}.  @xref{Insns}.
-@en 
-@en @item RTX_MATCH
+一个RTX代码，针对整个指令：@code{INSN}，@code{JUMP_INSN}和@code{CALL_INSN}。@xref{Insns}。
+
+@item RTX_MATCH
 @en An RTX code for something that matches in insns, such as
 @en @code{MATCH_DUP}.  These only occur in machine descriptions.
-@en 
-@en @item RTX_AUTOINC
+一个RTX代码，针对在insn中的一些匹配，例如@code{MATCH_DUP}。这些只出现在机器描述中。
+
+@item RTX_AUTOINC
 @en An RTX code for an auto-increment addressing mode, such as
 @en @code{POST_INC}.
-@en 
-@en @item RTX_EXTRA
+一个RTX代码，针对一个自动增量寻址模式，例如@code{POST_INC}。
+
+@item RTX_EXTRA
 @en All other RTX codes.  This category includes the remaining codes used
 @en only in machine descriptions (@code{DEFINE_*}, etc.).  It also includes
 @en all the codes describing side effects (@code{SET}, @code{USE},
 @en @code{CLOBBER}, etc.) and the non-insns that may appear on an insn
 @en chain, such as @code{NOTE}, @code{BARRIER}, and @code{CODE_LABEL}.
 @en @code{SUBREG} is also part of this class.
-@en @end table
-@table @code
-@item RTX_OBJ
-一个RTX代码，表示一个实际的对象，例如一个寄存器(@code{REG})或者一个内存位置(@code{MEM}, @code{SYMBOL_REF})。也包括@code{LO_SUM})；但是，@code{SUBREG}和@code{STRICT_LOW_PART}不在这个类别中，而是在@code{x}类别中。
-
-@item RTX_CONST_OBJ
-一个RTX代码，表示一个常量对象。@code{HIGH}也包含在该类别中。
-
-@item RTX_COMPARE
-一个RTX代码，针对一个非对称的比较，例如@code{GEU}或@code{LT}。
-
-@item RTX_COMM_COMPARE
-一个RTX代码，针对一个对称（可交换）比较，例如，例如@code{EQ}或@code{ORDERED}。
-
-@item RTX_UNARY
-一个RTX代码，针对一元算术运算，例如@code{NEG}，@code{NOT}或者@code{ABS}。这个类别还包括值扩展（符号扩展或者零扩展），以及整数和浮点之间的转换。
-
-@item RTX_COMM_ARITH
-一个RTX代码，针对可交换的二元运算，例如@code{PLUS}或者@code{AND}。@code{NE}和@code{EQ}为比较运算，所以它们具有类别@code{<}。
-
-@item RTX_BIN_ARITH
-一个RTX代码，针对不可交换的二元运算，例如@code{MINUS}，@code{DIV}或者@code{ASHIFTRT}。
-
-@item RTX_BITFIELD_OPS
-一个RTX代码，针对位域运算。当前只有@code{ZERO_EXTRACT}和@code{SIGN_EXTRACT}。这些有三个输入，并且为左值。@xref{Bit-Fields}。
-
-@item RTX_TERNARY
-一个RTX代码，针对其它有三个输入的运算。当前只有@code{IF_THEN_ELSE}和@code{VEC_MERGE}。
-
-@item RTX_INSN
-一个RTX代码，针对整个指令：@code{INSN}，@code{JUMP_INSN}和@code{CALL_INSN}。@xref{Insns}。
-
-@item RTX_MATCH
-一个RTX代码，针对在insn中的一些匹配，例如@code{MATCH_DUP}。这些只出现在机器描述中。
-
-@item RTX_AUTOINC
-一个RTX代码，针对一个自动增量寻址模式，例如@code{POST_INC}。
-
-@item RTX_EXTRA
 所有其它的RTX代码。这个类别包括只在机器描述(@code{DEFINE_*}等)中使用的其它RTX代码。其还表示所有表述副作用的RTX代码（@code{SET}，@code{USE}，@code{CLOBBER}等），以及在insn链中可能出现的非insn，例如@code{NOTE}，@code{BARRIER}和@code{CODE_LABEL}。@code{SUBREG}也属于该类。
-
 @end table
 
 @cindex RTL format
@@ -763,11 +736,11 @@ for the generic address space.
 如果@samp{SYMBOL_REF_HAS_BLOCK_INFO_P (@var{x})}，则其为该符号所属的@samp{object_block}结构体， 或者如果其没有被分配给一个块，则为@code{NULL}。
 
 @findex SYMBOL_REF_BLOCK_OFFSET
+@item SYMBOL_REF_BLOCK_OFFSET (@var{x})
 @en If @samp{SYMBOL_REF_HAS_BLOCK_INFO_P (@var{x})}, this is the offset of @var{x}
 @en from the first object in @samp{SYMBOL_REF_BLOCK (@var{x})}.  The value is
 @en negative if @var{x} has not yet been assigned to a block, or it has not
 @en been given an offset within that block.
-@en @item SYMBOL_REF_BLOCK_OFFSET (@var{x})
 如果@samp{SYMBOL_REF_HAS_BLOCK_INFO_P (@var{x})}，则其为@var{x}的偏移量，从@samp{SYMBOL_REF_BLOCK (@var{x})}中的第一个对象开始。如果@var{x}还没有被分配给一个块，或者其还没有在那个块中给定一个偏移量，则值为负数。
 
 @end table
@@ -2753,6 +2726,12 @@ CANNOT_CHANGE_MODE_CLASS (@var{m2}, @var{m1}, @var{class})
 @en @code{zero_extend} instead of @code{sign_extend}.
 对于无符号的加宽的乘法，使用相同的语句，只不过把@code{sign_extend}替换成@code{zero_extend}。
 
+@findex fma
+@item (fma:@var{m} @var{x} @var{y} @var{z})
+Represents the @code{fma}, @code{fmaf}, and @code{fmal} builtin
+functions that do a combined multiply of @var{x} and @var{y} and then
+adding to@var{z} without doing an intermediate rounding step.
+
 @findex div
 @findex ss_div
 @cindex division
@@ -2903,8 +2882,10 @@ CANNOT_CHANGE_MODE_CLASS (@var{m2}, @var{m1}, @var{class})
 类似的，只不过是表示向左和向右旋转。如果@var{c}为常量，则使用@code{rotate}。
 
 @findex abs
+@findex ss_abs
 @cindex absolute value
 @item (abs:@var{m} @var{x})
+@item (ss_abs:@var{m} @var{x})
 @en Represents the absolute value of @var{x}, computed in mode @var{m}.
 @en @code{ss_abs} ensures that an out-of-bounds result saturates to the
 @en maximum signed value.

@@ -53,6 +53,100 @@ records have two fields: the string @samp{TargetSave}, and a
 declaration type to go in the @code{cl_target_option} structure.
 
 @item
+A variable record to define a variable used to store option
+information.  These records have two fields: the string
+@samp{Variable}, and a declaration of the type and name of the
+variable, optionally with an initializer (but without any trailing
+@samp{;}).  These records may be used for variables used for many
+options where declaring the initializer in a single option definition
+record, or duplicating it in many records, would be inappropriate, or
+for variables set in option handlers rather than referenced by
+@code{Var} properties.
+
+@item
+A variable record to define a variable used to store option
+information.  These records have two fields: the string
+@samp{TargetVariable}, and a declaration of the type and name of the
+variable, optionally with an initializer (but without any trailing
+@samp{;}).  @samp{TargetVariable} is a combination of @samp{Variable}
+and @samp{TargetSave} records in that the variable is defined in the
+@code{gcc_options} structure, but these variables are also stored in
+the @code{cl_target_option} structure.  The variables are saved in the
+target save code and restored in the target restore code.
+
+@item
+A variable record to record any additional files that the
+@file{options.h} file should include.  This is useful to provide
+enumeration or structure definitions needed for target variables.
+These records have two fields: the string @samp{HeaderInclude} and the
+name of the include file.
+
+@item
+A variable record to record any additional files that the
+@file{options.c} file should include.  This is useful to provide
+inline functions needed for target variables and/or @code{#ifdef}
+sequences to properly set up the initialization.  These records have
+two fields: the string @samp{SourceInclude} and the name of the
+include file.
+
+@item
+An enumeration record to define a set of strings that may be used as
+arguments to an option or options.  These records have three fields:
+the string @samp{Enum}, a space-separated list of properties and help
+text used to describe the set of strings in @option{--help} output.
+Properties use the same format as option properties; the following are
+valid:
+@table @code
+@item Name(@var{name})
+This property is required; @var{name} must be a name (suitable for use
+in C identifiers) used to identify the set of strings in @code{Enum}
+option properties.
+
+@item Type(@var{type})
+This property is required; @var{type} is the C type for variables set
+by options using this enumeration together with @code{Var}.
+
+@item UnknownError(@var{message})
+The message @var{message} will be used as an error message if the
+argument is invalid; for enumerations without @code{UnknownError}, a
+generic error message is used.  @var{message} should contain a single
+@samp{%qs} format, which will be used to format the invalid argument.
+@end table
+
+@item
+An enumeration value record to define one of the strings in a set
+given in an @samp{Enum} record.  These records have two fields: the
+string @samp{EnumValue} and a space-separated list of properties.
+Properties use the same format as option properties; the following are
+valid:
+@table @code
+@item Enum(@var{name})
+This property is required; @var{name} says which @samp{Enum} record
+this @samp{EnumValue} record corresponds to.
+
+@item String(@var{string})
+This property is required; @var{string} is the string option argument
+being described by this record.
+
+@item Value(@var{value})
+This property is required; it says what value (representable as
+@code{int}) should be used for the given string.
+
+@item Canonical
+This property is optional.  If present, it says the present string is
+the canonical one among all those with the given value.  Other strings
+yielding that value will be mapped to this one so specs do not need to
+handle them.
+
+@item DriverOnly
+This property is optional.  If present, the present string will only
+be accepted by the driver.  This is used for cases such as
+@option{-march=native} that are processed by the driver so that
+@samp{gcc -v} shows how the options chosen depended on the system on
+which the compiler was run.
+@end table
+
+@item
 @en An option definition record.  These records have the following fields:
 选项定义记录。这些记录有如下域： 
 @enumerate
@@ -186,6 +280,10 @@ and should not be accepted by the driver.
 @en @samp{%qs} format, which will be used to format the name of the option
 @en passed.
 
+@item Args(@var{n})
+For an option marked @code{Separate}, indicate that it takes @var{n}
+arguments.  The default is 1.
+
 @item UInteger
 @en The option's argument is a non-negative integer.  The option parser
 @en will check and convert the argument before passing it to the relevant
@@ -202,9 +300,10 @@ compatibility with existing options that are used both directly and
 via @option{-Wp,}; new options should not have this property.
 
 @item Var(@var{var})
-@en The state of this option should be stored in variable @var{var}.
+@en The state of this option should be stored in variable @var{var}
+@en (actually a macro for @code{global_options.x_@var{var}}).
 @en The way that the state is stored depends on the type of option:
-该选项的状态将被存储在变量@var{var}中。存储状态的方式取决于选项的类型：
+该选项的状态将被存储在变量@var{var}(actually a macro for @code{global_options.x_@var{var}})中。存储状态的方式取决于选项的类型：
 
 @itemize @bullet
 @item
@@ -226,16 +325,27 @@ mask的整数变量。
 如果选项接受一个参数，并且具有@code{UInteger}属性，则@var{var}为整数变量，并且存储了参数的值。
 
 @item
+If the option takes an argument and has the @code{Enum} property,
+@var{var} is a variable (type given in the @code{Type} property of the
+@samp{Enum} record whose @code{Name} property has the same argument as
+the @code{Enum} property of this option) that stores the value of the
+argument.
+
+@item
+If the option has the @code{Defer} property, @var{var} is a pointer to
+a @code{VEC(cl_deferred_option,heap)} that stores the option for later
+processing.  (@var{var} is declared with type @code{void *} and needs
+to be cast to @code{VEC(cl_deferred_option,heap)} before use.)
+
+@item
 @en Otherwise, if the option takes an argument, @var{var} is a pointer to
 @en the argument string.  The pointer will be null if the argument is optional
 @en and wasn't given.
 否则，如果选项接受一个参数，则@var{var}为指向参数字符串的指针。如果参数是可选的并且没有给出，则该指针将为null。
 @end itemize
 
-@en The option-processing script will usually declare @var{var} in
-@en @file{options.c} and leave it to be zero-initialized at start-up time.
-@en You can modify this behavior using @code{VarExists} and @code{Init}.
-选项处理脚本通常会在@file{options.c}中声明@var{var}，并且在起动时间将其初始化为0。你可以使用@code{VarExists}和@code{Init}来修改这种行为。
+The option-processing script will usually zero-initialize @var{var}.
+You can modify this behavior using @code{Init}.
 
 @item Var(@var{var}, @var{set})
 @en The option controls an integer variable @var{var} and is active when
@@ -248,19 +358,10 @@ mask的整数变量。
 @en described above.
 @var{var}的声明方式与上面描述的单一参数形式的具有相同的方式。
 
-@item VarExists
-@en The variable specified by the @code{Var} property already exists.
-@en No definition should be added to @file{options.c} in response to
-@en this option record.
-由@var{Var}属性指定的变量已经存在。这样，就不会有任何定义被增加到@file{options.c}中。
-
-@en You should use this property only if the variable is declared outside
-@en @file{options.c}.
-应该只有在@file{options.c}之外声明了该变量的时候，才使用这个属性。
-
 @item Init(@var{value})
 @en The variable specified by the @code{Var} property should be statically
-@en initialized to @var{value}.
+@en initialized to @var{value}.  If more than one option using the same
+@en variable specifies @code{Init}, all must specify the same initializer.
 由属性@code{Var}指定的变量应该被静态初始化为@var{value}。
 
 @item Mask(@var{name})
@@ -300,6 +401,16 @@ mask的整数变量。
 @en The first option should use @samp{Mask(@var{name})} and the others
 @en should use @samp{Mask(@var{name}) MaskExists}.
 该属性的主要目的用来支持同义选项。第一个选项应该使用@samp{Mask(@var{name})}并且其它的应该使用@samp{Mask(@var{name}) MaskExists}。
+
+@item Enum(@var{name})
+The option's argument is a string from the set of strings associated
+with the corresponding @samp{Enum} record.  The string is checked and
+converted to the integer specified in the corresponding
+@samp{EnumValue} record before being passed to option handlers.
+
+@item Defer
+The option should be stored in a vector, specified with @code{Var},
+for later processing.
 
 @item Alias(@var{opt})
 @itemx Alias(@var{opt}, @var{arg})
@@ -350,6 +461,17 @@ is marked @code{Warn}, the target of the alias must not also be marked
 @item Report
 @en The state of the option should be printed by @option{-fverbose-asm}.
 选项的说明应该通过@option{-fverbose-asm}来打印。 
+
+@item Warning
+This is a warning option and should be shown as such in
+@option{--help} output.  This flag does not currently affect anything
+other than @option{--help}.
+
+@item Optimization
+This is an optimization option.  It should be shown as such in
+@option{--help} output, and any associated variable named using
+@code{Var} should be saved and restored when the optimization level is
+changed with @code{optimize} attributes.
 
 @item Undocumented
 @en The option is deliberately missing documentation and should not
