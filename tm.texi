@@ -1069,11 +1069,11 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 该变量在@file{options.h}中声明，其在任何target特定的头文件之前被包含进来。
 @end deftypevar
 
-@deftypevar {Target Hook} int TARGET_DEFAULT_TARGET_FLAGS
+@deftypevr {Target Hook} int TARGET_DEFAULT_TARGET_FLAGS
 @en This variable specifies the initial value of @code{target_flags}.
 @en Its default setting is 0.
 该变量指定了@code{target_flags}的初始值。其缺省设置为0。
-@end deftypevar
+@end deftypevr
 
 @cindex optional hardware or system features
 @cindex features, optional, in system conventions
@@ -1122,6 +1122,18 @@ GCC @code{-v}将会打印GCC被配置使用的线程模式。然而，在有些�
 通常，你应该使用@code{TARGET_HANDLE_OPTION}来处理选项。然而，
 如果选项处理只需要在C（和相关语言）前端中有效时，
 你再使用@code{TARGET_HANDLE_C_OPTION}。
+@end deftypefn
+
+@deftypefn {Target Hook} tree TARGET_OBJC_CONSTRUCT_STRING_OBJECT (tree @var{string})
+Targets may provide a string object type that can be used within and between C, C++ and their respective Objective-C dialects. A string object might, for example, embed encoding and length information. These objects are considered opaque to the compiler and handled as references. An ideal implementation makes the composition of the string object match that of the Objective-C @code{NSString} (@code{NXString} for GNUStep), allowing efficient interworking between C-only and Objective-C code. If a target implements string objects then this hook should return a reference to such an object constructed from the normal `C' string representation provided in @var{string}. At present, the hook is used by Objective-C only, to obtain a common-format string object when the target provides one.
+@end deftypefn
+
+@deftypefn {Target Hook} bool TARGET_STRING_OBJECT_REF_TYPE_P (const_tree @var{stringref})
+If a target implements string objects then this hook should return @code{true} if @var{stringref} is a valid reference to such an object.
+@end deftypefn
+
+@deftypefn {Target Hook} void TARGET_CHECK_STRING_OBJECT_FORMAT_ARG (tree @var{format_arg}, tree @var{args_list})
+If a target implements string objects then this hook should should  provide a facility to check the function arguments in @var{args_list}  against the format specifiers in @var{format_arg} where the type of  @var{format_arg} is one recognized as a valid string reference type.
 @end deftypefn
 
 @defmac TARGET_VERSION
@@ -1176,46 +1188,38 @@ actions then, you should have @code{TARGET_OPTION_OVERRIDE} call
 @end deftypefn
 
 @defmac C_COMMON_OVERRIDE_OPTIONS
-@en This is similar to @code{OVERRIDE_OPTIONS} but is only used in the C
+@en This is similar to the @code{TARGET_OPTION_OVERRIDE} hook
+@en but is only used in the C
 @en language frontends (C, Objective-C, C++, Objective-C++) and so can be
 @en used to alter option flag variables which only exist in those
 @en frontends.
-类似于@code{OVERRIDE_OPTIONS}，但只用于C语言的前端（C, Objective-C, C++, 
+类似于@code{TARGET_OPTION_OVERRIDE}钩子，但只用于C语言的前端（C, Objective-C, C++, 
 Objective-C++），所以可以用于修改只存在于那些前端中的选项标志变量。
 @end defmac
 
-@defmac OPTIMIZATION_OPTIONS (@var{level}, @var{size})
-@en Some machines may desire to change what optimizations are performed for
-@en various optimization levels.   This macro, if defined, is executed once
-@en just after the optimization level is determined and before the remainder
-@en of the command options have been parsed.  Values set in this macro are
-@en used as the default values for the other command line options.
-一些机器可能需要改变不同优化级别所做的优化。该宏，如果定义，
-将在优化级别被确定后，剩余命令选项被解析前执行。
-该宏中设定的值将被作为其它命令行选项的缺省值。
+@deftypevr {Target Hook} {const struct default_options *} TARGET_OPTION_OPTIMIZATION_TABLE
+Some machines may desire to change what optimizations are performed for
+various optimization levels.   This variable, if defined, describes
+options to enable at particular sets of optimization levels.  These
+options are processed once
+just after the optimization level is determined and before the remainder
+of the command options have been parsed, so may be overridden by other
+options passed explicily.
 
-@en @var{level} is the optimization level specified; 2 if @option{-O2} is
-@en specified, 1 if @option{-O} is specified, and 0 if neither is specified.
-@var{level}为指定的优化级别；如果指定@option{-O2}则为2，
-如果指定@option{-O}则为1，如果都没指定则为0。
+This processing is run once at program startup and when the optimization
+options are changed via @code{#pragma GCC optimize} or by using the
+@code{optimize} attribute.
+@end deftypevr
 
-@en @var{size} is nonzero if @option{-Os} is specified and zero otherwise.
-如果指定@option{-Os}则@var{size}为非零，否则为0。
+@deftypefn {Target Hook} void TARGET_OPTION_INIT_STRUCT (struct gcc_options *@var{opts})
+Set target-dependent initial values of fields in @var{opts}.
+@end deftypefn
 
-@en This macro is run once at program startup and when the optimization
-@en options are changed via @code{#pragma GCC optimize} or by using the
-@en @code{optimize} attribute.
-不要使用该宏来改变不是机器特定的选项。
-这些应该在所有支持的机器上的相同优化级别上被统一选择。
-使用该宏来打开机器特定的优化。
+@deftypefn {Target Hook} void TARGET_OPTION_DEFAULT_PARAMS (void)
+Set target-dependent default values for @option{--param} settings, using calls to @code{set_default_param_value}.
+@end deftypefn
 
-@en @strong{Do not examine @code{write_symbols} in
-@en this macro!} The debugging options are not supposed to alter the
-@en generated code.
-不要在该宏中检查@code{write_symbols}！
-@end defmac
-
-@deftypefn {Target Hook} bool TARGET_HELP (void)
+@deftypefn {Target Hook} void TARGET_HELP (void)
 @en This hook is called in response to the user invoking
 @en @option{--target-help} on the command line.  It gives the target a
 @en chance to display extra information on the target specific command
@@ -1713,6 +1717,8 @@ If not defined, the default value is @code{STACK_BOUNDARY}.
 @en One use of this macro is to increase alignment of medium-size data to
 @en make it all fit in fewer cache lines.
 该宏的一种用法是增加中等大小数据的对齐，使得可以放在最少的cache line中。
+
+It the value of this macro has a type, it should be an unsigned type.
 @end defmac
 
 @defmac STACK_SLOT_ALIGNMENT (@var{type}, @var{mode}, @var{basic-align})
