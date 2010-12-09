@@ -1718,7 +1718,7 @@ If not defined, the default value is @code{STACK_BOUNDARY}.
 @en make it all fit in fewer cache lines.
 该宏的一种用法是增加中等大小数据的对齐，使得可以放在最少的cache line中。
 
-It the value of this macro has a type, it should be an unsigned type.
+If the value of this macro has a type, it should be an unsigned type.
 @end defmac
 
 @defmac STACK_SLOT_ALIGNMENT (@var{type}, @var{mode}, @var{basic-align})
@@ -1734,6 +1734,8 @@ be used.
 
 This macro is to set alignment of stack slot to the maximum alignment
 of all possible modes which the slot may have.
+
+If the value of this macro has a type, it should be an unsigned type.
 @end defmac
 
 @defmac LOCAL_DECL_ALIGNMENT (@var{decl})
@@ -1746,6 +1748,8 @@ is used.
 
 One use of this macro is to increase alignment of medium-size data to
 make it all fit in fewer cache lines.
+
+If the value of this macro has a type, it should be an unsigned type.
 @end defmac
 
 @defmac MINIMUM_ALIGNMENT (@var{exp}, @var{mode}, @var{align})
@@ -1968,7 +1972,7 @@ main ()
 如果@code{allocate_stack}指令模式需要同时支持32和64位机器模式。
 @end defmac
 
-@deftypefn {Target Hook} {enum machine_mode} TARGET_LIBGCC_CMP_RETURN_MODE ()
+@deftypefn {Target Hook} {enum machine_mode} TARGET_LIBGCC_CMP_RETURN_MODE (void)
 @en This target hook should return the mode to be used for the return value
 @en of compare instructions expanded to libgcc calls.  If not defined
 @en @code{word_mode} is returned which is the right choice for a majority of
@@ -1977,7 +1981,7 @@ main ()
 如果没有定义，则返回@code{word_mode}，其对于大多数target是正确的。
 @end deftypefn
 
-@deftypefn {Target Hook} {enum machine_mode} TARGET_LIBGCC_SHIFT_COUNT_MODE ()
+@deftypefn {Target Hook} {enum machine_mode} TARGET_LIBGCC_SHIFT_COUNT_MODE (void)
 @en This target hook should return the mode to be used for the shift count operand
 @en of shift instructions expanded to libgcc calls.  If not defined
 @en @code{word_mode} is returned which is the right choice for a majority of
@@ -2047,12 +2051,12 @@ precedence for that field, but the alignment of the rest of the structure
 may affect its placement.
 @end deftypefn
 
-@deftypefn {Target Hook} {bool} TARGET_DECIMAL_FLOAT_SUPPORTED_P (void)
+@deftypefn {Target Hook} bool TARGET_DECIMAL_FLOAT_SUPPORTED_P (void)
 @en Returns true if the target supports decimal floating point.
 返回真，如果target支持十进制浮点。
 @end deftypefn
 
-@deftypefn {Target Hook} {bool} TARGET_FIXED_POINT_SUPPORTED_P (void)
+@deftypefn {Target Hook} bool TARGET_FIXED_POINT_SUPPORTED_P (void)
 @en Returns true if the target supports fixed-point arithmetic.
 返回真，如果target支持定点算术。
 @end deftypefn
@@ -2279,16 +2283,16 @@ types.
 @end defmac
 
 @defmac LIBGCC2_HAS_DF_MODE
-@en Define this macro if neither @code{LIBGCC2_DOUBLE_TYPE_SIZE} nor
+@en Define this macro if neither @code{DOUBLE_TYPE_SIZE} nor
 @en @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is
 @en @code{DFmode} but you want @code{DFmode} routines in @file{libgcc2.a}
-@en anyway.  If you don't define this and either @code{LIBGCC2_DOUBLE_TYPE_SIZE}
+@en anyway.  If you don't define this and either @code{DOUBLE_TYPE_SIZE}
 @en or @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is 64 then the default is 1,
 @en otherwise it is 0.
-定义该宏，如果@code{LIBGCC2_DOUBLE_TYPE_SIZE}和
+定义该宏，如果@code{DOUBLE_TYPE_SIZE}和
 @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}都不是@code{DFmode}，
 但是你还想让@file{libgcc2.a}中具有@code{DFmode}的程序。如果没有定义，
-并且@code{LIBGCC2_DOUBLE_TYPE_SIZE}或@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}为64，
+并且@code{DOUBLE_TYPE_SIZE}或@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}为64，
 则缺省为1，否则为0。
 @end defmac
 
@@ -2322,13 +2326,13 @@ types.
 @en @code{FLT_MANT_DIG} is used for @code{SF_SIZE}, @code{LDBL_MANT_DIG}
 @en for @code{XF_SIZE} and @code{TF_SIZE}, and @code{DBL_MANT_DIG} or
 @en @code{LDBL_MANT_DIG} for @code{DF_SIZE} according to whether
-@en @code{LIBGCC2_DOUBLE_TYPE_SIZE} or
+@en @code{DOUBLE_TYPE_SIZE} or
 @en @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is 64.
 定义这些宏为@code{SFmode}, @code{DFmode}, @code{XFmode}和@code{TFmode}值的尾数
 位大小，如果在@file{libgcc2.h}中的缺省定义不合适。缺省的，
 @code{FLT_MANT_DIG}用于@code{SF_SIZE}, @code{LDBL_MANT_DIG}用于@code{XF_SIZE}和
 @code{TF_SIZE}，并且@code{DBL_MANT_DIG}或@code{LDBL_MANT_DIG}用于
-@code{DF_SIZE}，根据@code{LIBGCC2_DOUBLE_TYPE_SIZE}或
+@code{DF_SIZE}，根据@code{DOUBLE_TYPE_SIZE}或
 @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}是否为64。
 @end defmac
 
@@ -2736,8 +2740,8 @@ of words in each data entry.
 @findex global_regs
 @findex reg_names
 @findex reg_class_contents
-@defmac CONDITIONAL_REGISTER_USAGE
-@en Zero or more C statements that may conditionally modify five variables
+@deftypefn {Target Hook} void TARGET_CONDITIONAL_REGISTER_USAGE (void)
+@en This hook may conditionally modify five variables
 @en @code{fixed_regs}, @code{call_used_regs}, @code{global_regs},
 @en @code{reg_names}, and @code{reg_class_contents}, to take into account
 @en any dependence of these register sets on target flags.  The first three
@@ -2751,7 +2755,7 @@ of words in each data entry.
 @en @code{global_regs} has been cleared, and any @option{-ffixed-@var{reg}},
 @en @option{-fcall-used-@var{reg}} and @option{-fcall-saved-@var{reg}}
 @en command options have been applied.
-0条或者多条C语句，其可以条件修改5个变量@code{fixed_regs}, 
+该钩子可以条件修改5个变量@code{fixed_regs}, 
 @code{call_used_rehs}, @code{global_regs}, @code{reg_names} 和
 @code{reg_class_contents}，来考虑这些寄存器集对target标号的任何依赖。
 前3个为@code{char []}类型（作为布尔向量来解析）。
@@ -2788,7 +2792,7 @@ of words in each data entry.
 （然而，如果该类没有包含在@code{GENERAL_REGS}中，
 并且所有的insn指令模式的约束允许该类通过target开关来控制，
 则GCC将自动避免使用这些寄存器，当target开关与它们相反时。）
-@end defmac
+@end deftypefn
 
 @defmac INCOMING_REGNO (@var{out})
 @en Define this macro if the target machine has register windows.  This C
@@ -3203,7 +3207,8 @@ GCC是在它知道函数是否适合作为叶子函数来对待之前，分配�
 
 @findex current_function_is_leaf
 @findex current_function_uses_only_leaf_regs
-@en functions
+@en @code{TARGET_ASM_FUNCTION_PROLOGUE} and
+@en @code{TARGET_ASM_FUNCTION_EPILOGUE} must usually treat leaf functions
 @en specially.  They can test the C variable @code{current_function_is_leaf}
 @en which is nonzero for leaf functions.  @code{current_function_is_leaf} is
 @en set prior to local register allocation and is valid for the remaining
@@ -3582,9 +3587,41 @@ This macro also has strict and non-strict variants.
 则一个可以被标签为“base” 另一个为“index”；但是使用哪个标签，
 必须要适合机器的约束。编译器将尝试两种标签方式，来查找有效的一种，
 并且当两种方式都无法工作时，重载一个或两个寄存器。
-
-This macro also has strict and non-strict variants.
 @end defmac
+
+@deftypefn {Target Hook} reg_class_t TARGET_PREFERRED_RELOAD_CLASS (rtx @var{x}, reg_class_t @var{rclass})
+A target hook that places additional restrictions on the register class
+to use when it is necessary to copy value @var{x} into a register in class
+@var{rclass}.  The value is a register class; perhaps @var{rclass}, or perhaps
+another, smaller class.
+
+The default version of this hook always returns value of @code{rclass} argument.
+
+Sometimes returning a more restrictive class makes better code.  For
+example, on the 68000, when @var{x} is an integer constant that is in range
+for a @samp{moveq} instruction, the value of this macro is always
+@code{DATA_REGS} as long as @var{rclass} includes the data registers.
+Requiring a data register guarantees that a @samp{moveq} will be used.
+
+One case where @code{TARGET_PREFERRED_RELOAD_CLASS} must not return
+@var{rclass} is if @var{x} is a legitimate constant which cannot be
+loaded into some register class.  By returning @code{NO_REGS} you can
+force @var{x} into a memory location.  For example, rs6000 can load
+immediate values into general-purpose registers, but does not have an
+instruction for loading an immediate value into a floating-point
+register, so @code{TARGET_PREFERRED_RELOAD_CLASS} returns @code{NO_REGS} when
+@var{x} is a floating-point constant.  If the constant can't be loaded
+into any kind of register, code generation will be better if
+@code{LEGITIMATE_CONSTANT_P} makes the constant illegitimate instead
+of using @code{TARGET_PREFERRED_RELOAD_CLASS}.
+
+If an insn has pseudos in it after register allocation, reload will go
+through the alternatives and call repeatedly @code{TARGET_PREFERRED_RELOAD_CLASS}
+to find the best one.  Returning @code{NO_REGS}, in this case, makes
+reload add a @code{!} in front of the constraint: the x86 back-end uses
+this feature to discourage usage of 387 registers when math is done in
+the SSE registers (and vice versa).
+@end deftypefn
 
 @defmac PREFERRED_RELOAD_CLASS (@var{x}, @var{class})
 @en A C expression that places additional restrictions on the register class
@@ -3657,6 +3694,17 @@ x86后端使用该特征来劝阻使用387寄存器，当算术在SSE寄存器�
 类似于@code{PREFERRED_RELOAD_CLASS}。
 @end defmac
 
+@deftypefn {Target Hook} reg_class_t TARGET_PREFERRED_OUTPUT_RELOAD_CLASS (rtx @var{x}, reg_class_t @var{rclass})
+Like @code{TARGET_PREFERRED_RELOAD_CLASS}, but for output reloads instead of
+input reloads.
+
+The default version of this hook always returns value of @code{rclass}
+argument.
+
+You can also use @code{TARGET_PREFERRED_OUTPUT_RELOAD_CLASS} to discourage
+reload from using some alternatives, like @code{TARGET_PREFERRED_RELOAD_CLASS}.
+@end deftypefn
+
 @defmac LIMIT_RELOAD_CLASS (@var{mode}, @var{class})
 @en A C expression that places additional restrictions on the register class
 @en to use when it is necessary to be able to hold a value of mode
@@ -3679,7 +3727,7 @@ x86后端使用该特征来劝阻使用387寄存器，当算术在SSE寄存器�
 不要定义该宏，除非target机器具有一些限制，使得宏需要做一些事情。
 @end defmac
 
-@deftypefn {Target Hook} {enum reg_class} TARGET_SECONDARY_RELOAD (bool @var{in_p}, rtx @var{x}, enum reg_class @var{reload_class}, enum machine_mode @var{reload_mode}, secondary_reload_info *@var{sri})
+@deftypefn {Target Hook} reg_class_t TARGET_SECONDARY_RELOAD (bool @var{in_p}, rtx @var{x}, reg_class_t @var{reload_class}, enum machine_mode @var{reload_mode}, secondary_reload_info *@var{sri})
 @en Many machines have some registers that cannot be copied directly to or
 @en from memory or even from other types of registers.  An example is the
 @en @samp{MQ} register, which on most machines, can only be copied to or
@@ -4031,6 +4079,9 @@ otherwise there is no default implementation.  You must define either this
 macro or @code{IRA_COVER_CLASSES} in order to use the integrated register
 allocator with Chaitin-Briggs coloring. If the macro is not defined,
 the only available coloring algorithm is Chow's priority coloring.
+
+This hook must not be modified from @code{NULL} to non-@code{NULL} or
+vice versa by command-line option processing.
 @end deftypefn
 
 @defmac IRA_COVER_CLASSES
@@ -4441,7 +4492,7 @@ See the documentation for @code{TARGET_IRA_COVER_CLASSES}.
 你很少会需要定义该宏。
 @end defmac
 
-@deftypefn {Target Hook} bool TARGET_BUILTIN_SETJMP_FRAME_VALUE ()
+@deftypefn {Target Hook} rtx TARGET_BUILTIN_SETJMP_FRAME_VALUE (void)
 @en This target hook should return an rtx that is used to store
 @en the address of the current frame into the built in @code{setjmp} buffer.
 @en The default value, @code{virtual_stack_vars_rtx}, is correct for most
@@ -5018,6 +5069,22 @@ arg指针寄存器的寄存器编号，其用于访问函数的参数列表。�
 根据@code{FIXED_REGISTERS}或者设法能够消除它(@pxref{Elimination})。
 @end defmac
 
+@defmac HARD_FRAME_POINTER_IS_FRAME_POINTER
+Define this to a preprocessor constant that is nonzero if
+@code{hard_frame_pointer_rtx} and @code{frame_pointer_rtx} should be
+the same.  The default definition is @samp{(HARD_FRAME_POINTER_REGNUM
+== FRAME_POINTER_REGNUM)}; you only need to define this macro if that
+definition is not suitable for use in preprocessor conditionals.
+@end defmac
+
+@defmac HARD_FRAME_POINTER_IS_ARG_POINTER
+Define this to a preprocessor constant that is nonzero if
+@code{hard_frame_pointer_rtx} and @code{arg_pointer_rtx} should be the
+same.  The default definition is @samp{(HARD_FRAME_POINTER_REGNUM ==
+ARG_POINTER_REGNUM)}; you only need to define this macro if that
+definition is not suitable for use in preprocessor conditionals.
+@end defmac
+
 @defmac RETURN_ADDRESS_POINTER_REGNUM
 @en The register number of the return address pointer register, which is used to
 @en access the current function's return address from the stack.  On some
@@ -5270,7 +5337,7 @@ Default return value is @code{true}.
 该节的宏控制如何在栈上传递参数。关于控制在寄存器中传递特定参数的其它宏，
 参见后续的章节。
 
-@deftypefn {Target Hook} bool TARGET_PROMOTE_PROTOTYPES (tree @var{fntype})
+@deftypefn {Target Hook} bool TARGET_PROMOTE_PROTOTYPES (const_tree @var{fntype})
 @en This target hook returns @code{true} if an argument declared in a
 @en prototype as an integral type smaller than @code{int} should actually be
 @en passed as an @code{int}.  In addition to avoiding errors in certain
@@ -5554,7 +5621,7 @@ number of arguments.
 如果@code{REG_PARM_STACK_SPACE}被定义，则参数会在栈中计算并且然后加载到寄存器中。
 @end defmac
 
-@deftypefn {Target Hook} bool TARGET_MUST_PASS_IN_STACK (enum machine_mode @var{mode}, tree @var{type})
+@deftypefn {Target Hook} bool TARGET_MUST_PASS_IN_STACK (enum machine_mode @var{mode}, const_tree @var{type})
 @en This target hook should return @code{true} if we should not pass @var{type}
 @en solely in registers.  The file @file{expr.h} defines a
 @en definition that is usually appropriate, refer to @file{expr.h} for additional
@@ -5612,7 +5679,7 @@ number of arguments.
 通常@code{FUNCTION_INCOMING_ARG}用于被调用的函数。
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_PASS_BY_REFERENCE (CUMULATIVE_ARGS *@var{cum}, enum machine_mode @var{mode}, tree @var{type}, bool @var{named})
+@deftypefn {Target Hook} bool TARGET_PASS_BY_REFERENCE (CUMULATIVE_ARGS *@var{cum}, enum machine_mode @var{mode}, const_tree @var{type}, bool @var{named})
 @en This target hook should return @code{true} if an argument at the
 @en position indicated by @var{cum} should be passed by reference.  This
 @en predicate is queried after target independent reasons for being
@@ -5628,7 +5695,7 @@ number of arguments.
 指针按照传递该类型的指针的方式来传递。
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_CALLEE_COPIES (CUMULATIVE_ARGS *@var{cum}, enum machine_mode @var{mode}, tree @var{type}, bool @var{named})
+@deftypefn {Target Hook} bool TARGET_CALLEE_COPIES (CUMULATIVE_ARGS *@var{cum}, enum machine_mode @var{mode}, const_tree @var{type}, bool @var{named})
 @en The function argument described by the parameters to this hook is
 @en known to be passed by reference.  The hook should return true if the
 @en function argument should be copied by the callee instead of copied
@@ -5772,9 +5839,9 @@ top.
 向上填补参数，@code{downward}向下，或者@code{none}不进行填补。
 
 @en The @emph{amount} of padding is always just enough to reach the next
-@en multiple of @code{FUNCTION_ARG_BOUNDARY}; this macro does not control
-@en it.
-填补的数目总是刚足够达到下一个@code{FUNCTION_ARG_BOUNDARY}的倍数；
+@en multiple of @code{TARGET_FUNCTION_ARG_BOUNDARY}; this macro does not
+@en control it.
+填补的数目总是刚足够达到下一个@code{TARGET_FUNCTION_ARG_BOUNDARY}的倍数；
 该宏不进行控制。
 
 @en This macro has a default definition which is right for most systems.
@@ -5822,6 +5889,12 @@ top.
 如果没有定义，则@code{PARM_BOUNDARY}用于所有参数。
 @end defmac
 
+@deftypefn {Target Hook} {unsigned int} TARGET_FUNCTION_ARG_BOUNDARY (enum machine_mode @var{mode}, const_tree @var{type})
+This hook returns the the alignment boundary, in bits, of an argument
+with the specified mode and type.  The default hook returns
+@code{PARM_BOUNDARY} for all arguments.
+@end deftypefn
+
 @defmac FUNCTION_ARG_REGNO_P (@var{regno})
 @en A C expression that is nonzero if @var{regno} is the number of a hard
 @en register in which function arguments are sometimes passed.  This does
@@ -5834,7 +5907,7 @@ top.
 在许多机器上，没有寄存器可以用于此目的，因为所有函数参数都被压到栈上。
 @end defmac
 
-@deftypefn {Target Hook} bool TARGET_SPLIT_COMPLEX_ARG (tree @var{type})
+@deftypefn {Target Hook} bool TARGET_SPLIT_COMPLEX_ARG (const_tree @var{type})
 @en This hook should return true if parameter of type @var{type} are passed
 @en as two scalar parameters.  By default, GCC will attempt to pack complex
 @en arguments into the target's word size.  Some ABIs require complex arguments
@@ -5858,6 +5931,20 @@ GCC将尝试将复数参数打包成target的字大小。
 该钩子返回一个target的@code{va_list}的类型节点。缺省版本返回@code{void*}。
 @end deftypefn
 
+@deftypefn {Target Hook} int TARGET_ENUM_VA_LIST_P (int @var{idx}, const char **@var{pname}, tree *@var{ptree})
+This target hook is used in function @code{c_common_nodes_and_builtins}
+to iterate through the target specific builtin types for va_list. The
+variable @var{idx} is used as iterator. @var{pname} has to be a pointer
+to a @code{const char *} and @var{ptree} a pointer to a @code{tree} typed
+variable.
+The arguments @var{pname} and @var{ptree} are used to store the result of
+this macro and are set to the name of the va_list builtin type and its
+internal type.
+If the return value of this macro is zero, then there is no more element.
+Otherwise the @var{IDX} should be increased for the next call of this
+macro to iterate through all types.
+@end deftypefn
+
 @deftypefn {Target Hook} tree TARGET_FN_ABI_VA_LIST (tree @var{fndecl})
 This hook returns the va_list type of the calling convention specified by
 @var{fndecl}.
@@ -5882,7 +5969,7 @@ type of @var{type}. If @var{type} is not a valid va_list type, it returns
 @code{NULL_TREE}.
 @end deftypefn
 
-@deftypefn {Target Hook} tree TARGET_GIMPLIFY_VA_ARG_EXPR (tree @var{valist}, tree @var{type}, tree *@var{pre_p}, tree *@var{post_p})
+@deftypefn {Target Hook} tree TARGET_GIMPLIFY_VA_ARG_EXPR (tree @var{valist}, tree @var{type}, gimple_seq *@var{pre_p}, gimple_seq *@var{post_p})
 @en This hook performs target-specific gimplification of
 @en @code{VA_ARG_EXPR}.  The first two parameters correspond to the
 @en arguments to @code{va_arg}; the latter two are as in
@@ -5967,7 +6054,7 @@ of spill registers and print a fatal error message.
 @en values---values that can fit in registers.
 这节讨论了控制返回标量值的宏，值可以放在寄存器中。
 
-@deftypefn {Target Hook} rtx TARGET_FUNCTION_VALUE (tree @var{ret_type}, tree @var{fn_decl_or_type}, bool @var{outgoing})
+@deftypefn {Target Hook} rtx TARGET_FUNCTION_VALUE (const_tree @var{ret_type}, const_tree @var{fn_decl_or_type}, bool @var{outgoing})
 @en Define this to return an RTX representing the place where a function
 @en returns or receives a value of data type @var{ret_type}, a tree node
 @en representing a data type.  @var{fn_decl_or_type} is a tree node
@@ -6110,7 +6197,7 @@ saving and restoring an arbitrary return value.
 @en @code{FUNCTION_VALUE_REGNO_P}用于保存和恢复一个任意返回地址所用的更多的空间。
 @end defmac
 
-@deftypefn {Target Hook} bool TARGET_RETURN_IN_MSB (tree @var{type})
+@deftypefn {Target Hook} bool TARGET_RETURN_IN_MSB (const_tree @var{type})
 @en This hook should return true if values of type @var{type} are returned
 @en at the most significant end of a register (in other words, if they are
 @en padded at the least significant end).  You can assume that @var{type}
@@ -6153,7 +6240,7 @@ saving and restoring an arbitrary return value.
 @en memory.
 这一节描述了如何控制在内存中返回结构体值。
 
-@deftypefn {Target Hook} bool TARGET_RETURN_IN_MEMORY (tree @var{type}, tree @var{fntype})
+@deftypefn {Target Hook} bool TARGET_RETURN_IN_MEMORY (const_tree @var{type}, const_tree @var{fntype})
 @en This target hook should return a nonzero value to say to return the
 @en function value in memory, just as large structures are always returned.
 @en Here @var{type} will be the data type of the value, and @var{fntype}
@@ -6251,6 +6338,14 @@ saving and restoring an arbitrary return value.
 该宏具有@option{-fpcc-struct-return}模式下的效果，
 但是当你使用@option{-freg-struct-return}模式时，其将不做任何事。
 @end defmac
+
+@deftypefn {Target Hook} {enum machine_mode} TARGET_GET_RAW_RESULT_MODE (int @var{regno})
+This target hook returns the mode to be used when accessing raw return registers in @code{__builtin_return}.  Define this macro if the value in @var{reg_raw_mode} is not correct.
+@end deftypefn
+
+@deftypefn {Target Hook} {enum machine_mode} TARGET_GET_RAW_ARG_MODE (int @var{regno})
+This target hook returns the mode to be used when accessing raw argument registers in @code{__builtin_apply_args}.  Define this macro if the value in @var{reg_raw_mode} is not correct.
+@end deftypefn
 
 @en @node Caller Saves
 @en @subsection Caller-Saves Register Allocation
@@ -6648,7 +6743,7 @@ p += (*((ptrdiff_t **)p))[vcall_offset/sizeof(ptrdiff_t)]
 thunk，其调用@var{function}而不是直接跳转过去。普通的方法不支持varargs。
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_ASM_CAN_OUTPUT_MI_THUNK (tree @var{thunk_fndecl}, HOST_WIDE_INT @var{delta}, HOST_WIDE_INT @var{vcall_offset}, tree @var{function})
+@deftypefn {Target Hook} bool TARGET_ASM_CAN_OUTPUT_MI_THUNK (const_tree @var{thunk_fndecl}, HOST_WIDE_INT @var{delta}, HOST_WIDE_INT @var{vcall_offset}, const_tree @var{function})
 @en A function that returns true if TARGET_ASM_OUTPUT_MI_THUNK would be able
 @en to output the assembler code for the thunk function specified by the
 @en arguments it is passed, and false otherwise.  In the latter case, the
@@ -6743,7 +6838,7 @@ thunk函数输出汇编代码，否则为假。在后一种情况下，C++前端
 成功的sibling call优化的标准可能在不同的体系结构上有很大的差别。
 @end deftypefn
 
-@deftypefn {Target Hook} void TARGET_EXTRA_LIVE_ON_ENTRY (bitmap *@var{regs})
+@deftypefn {Target Hook} void TARGET_EXTRA_LIVE_ON_ENTRY (bitmap @var{regs})
 @en Add any hard registers to @var{regs} that are live on entry to the
 @en function.  This hook only needs to be defined to provide registers that
 @en cannot be found by examination of FUNCTION_ARG_REGNO_P, the callee saved
@@ -6793,6 +6888,10 @@ ARG_POINTER_REGNUM和PIC_OFFSET_TABLE_REGNUM来发现的寄存器。
 @en normally defined in @file{libgcc2.c}.
 该钩子的缺省版本调用一个叫做@samp{__stack_chk_fail}的函数，
 不接受任何参数。该函数通常在@file{libgcc2.c}中被定义。
+@end deftypefn
+
+@deftypefn {Target Hook} bool TARGET_SUPPORTS_SPLIT_STACK (bool @var{report}, struct gcc_options *@var{opts})
+Whether this target supports splitting the stack when the options described in @var{opts} have been passed.  This is called after options have been parsed, so the target may reject splitting the stack in some configurations.  The default version of this hook returns false.  If @var{report} is true, this function may issue a warning or error; if @var{report} is false, it must simply return a value
 @end deftypefn
 
 @en @node Varargs
@@ -6978,7 +7077,7 @@ ISO的实现接受额外的第二个参数。用户应该将函数的最后一�
 如果其总是返回0，则不需要定义该钩子。
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_PRETEND_OUTGOING_VARARGS_NAMED
+@deftypefn {Target Hook} bool TARGET_PRETEND_OUTGOING_VARARGS_NAMED (CUMULATIVE_ARGS *@var{ca})
 @en If you need to conditionally change ABIs so that one works with
 @en @code{TARGET_SETUP_INCOMING_VARARGS}, but the other works like neither
 @en @code{TARGET_SETUP_INCOMING_VARARGS} nor @code{TARGET_STRICT_ARGUMENT_NAMING} was
@@ -12282,12 +12381,13 @@ label为跳转的普通目的地并且不具有fallthru入边。
 否则应该尽量在@code{LOOP_ALIGN}实现中尊重用户在@code{align_loops}中的选择。
 @end defmac
 
-@defmac LOOP_ALIGN_MAX_SKIP
-@en The maximum number of bytes to skip when applying @code{LOOP_ALIGN}.
-@en This works only if @code{ASM_OUTPUT_MAX_SKIP_ALIGN} is defined.
-当应用@code{LOOP_ALIGN}时，要跳过的最大字节个数。
+@deftypefn {Target Hook} int TARGET_ASM_LOOP_ALIGN_MAX_SKIP (rtx @var{label})
+@en The maximum number of bytes to skip when applying @code{LOOP_ALIGN} to
+@en @var{label}.  This works only if @code{ASM_OUTPUT_MAX_SKIP_ALIGN} is
+@en defined.
+当对@var{label}应用@code{LOOP_ALIGN}时，要跳过的最大字节个数。
 这只在定义了@code{ASM_OUTPUT_MAX_SKIP_ALIGN}时才起作用。
-@end defmac
+@end deftypefn
 
 @defmac LABEL_ALIGN (@var{label})
 @en The alignment (log base 2) to put in front of @var{label}.
@@ -12306,12 +12406,13 @@ label为跳转的普通目的地并且不具有fallthru入边。
 否则应该尽量在@code{LABEL_ALIGN}实现中尊重用户在@code{align_labels}中的选择。
 @end defmac
 
-@defmac LABEL_ALIGN_MAX_SKIP
-@en The maximum number of bytes to skip when applying @code{LABEL_ALIGN}.
-@en This works only if @code{ASM_OUTPUT_MAX_SKIP_ALIGN} is defined.
-当应用@code{LABEL_ALIGN}时，要跳过的最大字节个数。
+@deftypefn {Target Hook} int TARGET_ASM_LABEL_ALIGN_MAX_SKIP (rtx @var{label})
+@en The maximum number of bytes to skip when applying @code{LABEL_ALIGN}
+@en to @var{label}.  This works only if @code{ASM_OUTPUT_MAX_SKIP_ALIGN}
+@en is defined.
+当对@var{label}应用@code{LABEL_ALIGN}时，要跳过的最大字节个数。
 这只在定义了@code{ASM_OUTPUT_MAX_SKIP_ALIGN}时才起作用。
-@end defmac
+@end deftypefn
 
 @defmac ASM_OUTPUT_SKIP (@var{stream}, @var{nbytes})
 @en A C statement to output to the stdio stream @var{stream} an assembler
@@ -12832,7 +12933,7 @@ DBX格式目前没有提供任何这样做的方式。缺省为@code{'P'}。
 @en debugging output in response to the @option{-g} option.
 定义该宏，如果对于@option{-g}选项，GCC应该产生dwarf本版2格式的调试输出。
 
-@deftypefn {Target Hook} int TARGET_DWARF_CALLING_CONVENTION (tree @var{function})
+@deftypefn {Target Hook} int TARGET_DWARF_CALLING_CONVENTION (const_tree @var{function})
 @en Define this to enable the dwarf attribute @code{DW_AT_calling_convention} to
 @en be emitted for each function.  Instead of an integer return the enum
 @en value for the @code{DW_CC_} tag.
@@ -12853,14 +12954,25 @@ DBX格式目前没有提供任何这样做的方式。缺省为@code{'P'}。
 @end defmac
 
 @defmac DWARF2_FRAME_INFO
-@en Define this macro to a nonzero value if GCC should always output
-@en Dwarf 2 frame information.  If @code{DWARF2_UNWIND_INFO}
-@en (@pxref{Exception Region Output} is nonzero, GCC will output this
-@en information not matter how you define @code{DWARF2_FRAME_INFO}.
-定义该宏为非0值，如果GCC应该总是输出Dwarf2帧信息。
-如果@code{DWARF2_UNWIND_INFO}(@pxref{Exception Region Output})为非0，
-则GCC将不管你如何定义@code{DWARF2_FRAME_INFO}，都会输出该信息。
+Define this macro to a nonzero value if GCC should always output
+Dwarf 2 frame information.  If @code{TARGET_EXCEPT_UNWIND_INFO}
+(@pxref{Exception Region Output}) returns @code{UI_DWARF2}, and
+exceptions are enabled, GCC will output this information not matter
+how you define @code{DWARF2_FRAME_INFO}.
 @end defmac
+
+@deftypefn {Target Hook} {enum unwind_info_type} TARGET_DEBUG_UNWIND_INFO (void)
+This hook defines the mechanism that will be used for describing frame
+unwind information to the debugger.  Normally the hook will return
+@code{UI_DWARF2} if DWARF 2 debug information is enabled, and
+return @code{UI_NONE} otherwise.
+
+A target may return @code{UI_DWARF2} even when DWARF 2 debug information
+is disabled in order to always output DWARF 2 frame information.
+
+A target may return @code{UI_TARGET} if it has ABI specified unwind tables.
+This will suppress generation of the normal debug frame unwind information.
+@end deftypefn
 
 @defmac DWARF2_ASM_LINE_DEBUG_INFO
 @en Define this macro to be a nonzero value if the assembler can generate Dwarf 2
@@ -12909,7 +13021,7 @@ is used on some systems to avoid garbage collecting a DWARF table which
 is referenced by a function.
 @end defmac
 
-@deftypefn {Target Hook} void TARGET_ASM_OUTPUT_DWARF_DTPREL (FILE *@var{FILE}, int @var{size}, rtx @var{x})
+@deftypefn {Target Hook} void TARGET_ASM_OUTPUT_DWARF_DTPREL (FILE *@var{file}, int @var{size}, rtx @var{x})
 @en If defined, this target hook is a function which outputs a DTP-relative
 @en reference to the given TLS symbol of the specified size.
 如果定义，该target钩子为一个函数，其输出一个相对DTP的引用，对给定的TLS符号。
@@ -12976,12 +13088,12 @@ is referenced by a function.
 @en in response to the @option{-g} option.  The default behavior for VMS
 @en is to generate minimal debug info for a traceback in the absence of
 @en @option{-g} unless explicitly overridden with @option{-g0}.  This
-@en behavior is controlled by @code{OPTIMIZATION_OPTIONS} and
+@en behavior is controlled by @code{TARGET_OPTION_OPTIMIZATION} and
 @en @code{TARGET_OPTION_OVERRIDE}.
 定义该宏，如果GCC应该为@option{-g}选项产生VMS调试输出。
 VMS的缺省行为是在没有@option{-g}时，生成可以回溯的最少调试信息，
 除非使用@option{-g0}显示的覆盖。
-该行为由@code{OPTIMIZATION_OPTIONS}和@code{OVERRIDE_OPTIONS}控制。
+该行为由@code{TARGET_OPTION_OPTIMIZATION}和@code{TARGET_OPTION_OVERRIDE}控制。
 @end defmac
 
 @en @node Floating Point
@@ -13285,7 +13397,7 @@ C数据类型，用于存放target机器格式的浮点值。
 @en false for all machine-specific attributes.
 @end deftypefn
 
-@deftypefn {Target Hook} int TARGET_COMP_TYPE_ATTRIBUTES (tree @var{type1}, tree @var{type2})
+@deftypefn {Target Hook} int TARGET_COMP_TYPE_ATTRIBUTES (const_tree @var{type1}, const_tree @var{type2})
 @en If defined, this target hook is a function which returns zero if the attributes on
 @en @var{type1} and @var{type2} are incompatible, one if they are compatible,
 @en and two if they are nearly compatible (which causes a warning to be
@@ -13350,7 +13462,7 @@ C数据类型，用于存放target机器格式的浮点值。
 例如，在@file{i386/cygwin.h}和@file{i386/i386.c}中。
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_VALID_DLLIMPORT_ATTRIBUTE_P (tree @var{decl})
+@deftypefn {Target Hook} bool TARGET_VALID_DLLIMPORT_ATTRIBUTE_P (const_tree @var{decl})
 @en @var{decl} is a variable or function with @code{__attribute__((dllimport))} specified.  Use this hook if the target needs to add extra validation checks to @code{handle_dll_attribute}.
 @var{decl}为一个指定为@code{__attribute__((dllimport))}的变量或者函数。
 使用该钩子，如果target需要给@code{handle_dll_attribute}增加额外的有效性检查。
@@ -13389,7 +13501,7 @@ C数据类型，用于存放target机器格式的浮点值。
 创建一个列表的拷贝。
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_FUNCTION_ATTRIBUTE_INLINABLE_P (tree @var{fndecl})
+@deftypefn {Target Hook} bool TARGET_FUNCTION_ATTRIBUTE_INLINABLE_P (const_tree @var{fndecl})
 @cindex inlining
 @en This target hook returns @code{true} if it is ok to inline @var{fndecl}
 @en into the current function, despite its having target-specific
@@ -13445,7 +13557,7 @@ a particular target machine.  You can override the hook
 once just after all the command options have been parsed.
 
 Don't use this hook to turn on various extra optimizations for
-@option{-O}.  That is what @code{OPTIMIZATION_OPTIONS} is for.
+@option{-O}.  That is what @code{TARGET_OPTION_OPTIMIZATION} is for.
 
 If you need to do something whenever the optimization level is
 changed via the optimize attribute or pragma, see
@@ -13598,7 +13710,7 @@ Default: empty.
 @section 预编译头文件有效性检查的参数
 @cindex parameters, precompiled headers
 
-@deftypefn {Target Hook} void *TARGET_GET_PCH_VALIDITY (size_t *@var{sz})
+@deftypefn {Target Hook} {void *} TARGET_GET_PCH_VALIDITY (size_t *@var{sz})
 @en This hook returns a pointer to the data needed by
 @en @code{TARGET_PCH_VALID_P} and sets
 @en @samp{*@var{sz}} to the size of the data in bytes.
@@ -13606,7 +13718,7 @@ Default: empty.
 并且将@samp{*@var{sz}}设为以字节为单位的数据大小。
 @end deftypefn
 
-@deftypefn {Target Hook} const char *TARGET_PCH_VALID_P (const void *@var{data}, size_t @var{sz})
+@deftypefn {Target Hook} {const char *} TARGET_PCH_VALID_P (const void *@var{data}, size_t @var{sz})
 @en This hook checks whether the options used to create a PCH file are
 @en compatible with the current settings.  It returns @code{NULL}
 @en if so and a suitable error message if not.  Error messages will
@@ -13635,6 +13747,14 @@ Default: empty.
 则@code{TARGET_PCH_VALID_P}的缺省实现将用它来检查@code{target_flags}的兼容值。
 @var{pch_flags}指定了当PCH文件被创建时，@code{target_flags}所具有的值。
 返回值与@code{TARGET_PCH_VALID_P}的相同。
+@end deftypefn
+
+@deftypefn {Target Hook} {const char *} TARGET_CHECK_PCH_TARGET_FLAGS (int @var{pch_flags})
+If this hook is nonnull, the default implementation of
+@code{TARGET_PCH_VALID_P} will use it to check for compatible values
+of @code{target_flags}.  @var{pch_flags} specifies the value that
+@code{target_flags} had when the PCH file was created.  The return
+value is the same as for @code{TARGET_PCH_VALID_P}.
 @end deftypefn
 
 @en @node C++ ABI
@@ -13678,7 +13798,7 @@ Default: empty.
 缺省为返回@code{false}。
 @end deftypefn
 
-@deftypefn {Target Hook} int TARGET_CXX_IMPORT_EXPORT_CLASS (tree  @var{type}, int @var{import_export})
+@deftypefn {Target Hook} int TARGET_CXX_IMPORT_EXPORT_CLASS (tree @var{type}, int @var{import_export})
 @en If defined by a backend this hook allows the decision made to export
 @en class @var{type} to be overruled.  Upon entry @var{import_export}
 @en will contain 1 if the class is going to be exported, @minus{}1 if it is going
@@ -14008,7 +14128,7 @@ as determined by the @code{TARGET_ADDR_SPACE_SUBSET_P} target hook.
 同样可以有效的转换为无符号的。
 @end defmac
 
-@deftypefn {Target Hook} int TARGET_MIN_DIVISIONS_FOR_RECIP_MUL (enum machine_mode @var{mode})
+@deftypefn {Target Hook} {unsigned int} TARGET_MIN_DIVISIONS_FOR_RECIP_MUL (enum machine_mode @var{mode})
 @en When @option{-ffast-math} is in effect, GCC tries to optimize
 @en divisions by the same divisor, by turning them into multiplications by
 @en the reciprocal.  This target hook specifies the minimum number of divisions
@@ -14067,7 +14187,7 @@ as determined by the @code{TARGET_ADDR_SPACE_SUBSET_P} target hook.
 @end defmac
 
 @anchor{TARGET_SHIFT_TRUNCATION_MASK}
-@deftypefn {Target Hook} int TARGET_SHIFT_TRUNCATION_MASK (enum machine_mode @var{mode})
+@deftypefn {Target Hook} {unsigned HOST_WIDE_INT} TARGET_SHIFT_TRUNCATION_MASK (enum machine_mode @var{mode})
 @en TARGET_SHIFT_TRUNCATION_MASK (enum machine_mode @var{mode})
 @en This function describes how the standard shift patterns for @var{mode}
 @en deal with shifts by negative amounts or by more than the width of the mode.
@@ -14488,10 +14608,9 @@ weak pragma只有当@code{SUPPORTS_WEAK}和@code{ASM_WEAKEN_LABEL}被定义时�
 @end defmac
 
 @defmac HANDLE_PRAGMA_PACK_WITH_EXPANSION
-@en Define this macro, as well as
-@en @code{HANDLE_SYSV_PRAGMA}, if macros should be expanded in the
+@en Define this macro if macros should be expanded in the
 @en arguments of @samp{#pragma pack}.
-定义该宏，以及@code{HANDLE_SYSV_PRAGMA}，如果在@samp{#pragma pack}中的参数宏应该被扩展。
+定义该宏，如果在@samp{#pragma pack}中的参数宏应该被扩展。
 @end defmac
 
 @deftypevr {Target Hook} bool TARGET_HANDLE_PRAGMA_EXTERN_PREFIX
@@ -14679,7 +14798,7 @@ True if @code{#pragma extern_prefix} is to be supported.
 如果被定义，其应该扩展为一个域声明集合，其将被增加到@code{struct ce_if_block}结构体中。这些应该通过@code{IFCVT_INIT_EXTRA_FIELDS}宏来初始化。
 @end defmac
 
-@deftypefn {Target Hook} void TARGET_MACHINE_DEPENDENT_REORG ()
+@deftypefn {Target Hook} void TARGET_MACHINE_DEPENDENT_REORG (void)
 @en If non-null, this hook performs a target-specific pass over the
 @en instruction stream.  The compiler will run it at all optimization levels,
 @en just before the point at which it normally does delayed-branch scheduling.
@@ -14696,7 +14815,7 @@ True if @code{#pragma extern_prefix} is to be supported.
 如果没有什么可做的，则不需要实现该钩子。缺省定义为空。
 @end deftypefn
 
-@deftypefn {Target Hook} void TARGET_INIT_BUILTINS ()
+@deftypefn {Target Hook} void TARGET_INIT_BUILTINS (void)
 @en Define this hook if you have any machine-specific built-in functions
 @en that need to be defined.  It should be a function that performs the
 @en necessary setup.
@@ -14739,7 +14858,7 @@ If @var{code} is out of range the function should return
 扩展由@samp{TARGET_INIT_BUILTINS}建立的对一个机器特定的内建函数的调用。@var{exp}为函数调用的表达式；如果方便的话，结果应该放到@var{target}，并且具有机器模式@var{mode}。@var{subtarget}可以用作目标，来计算@var{exp}的操作数。@var{ignore}为非零，如果值将被忽略。该函数应该返回调用内建函数的结果。
 @end deftypefn
 
-@deftypefn {Target Hook} tree TARGET_RESOLVE_OVERLOADED_BUILTIN (tree @var{fndecl}, tree @var{arglist})
+@deftypefn {Target Hook} tree TARGET_RESOLVE_OVERLOADED_BUILTIN (unsigned int @var{loc}, tree @var{fndecl}, void *@var{arglist})
 @en Select a replacement for a machine specific built-in function that
 @en was set up by @samp{TARGET_INIT_BUILTINS}.  This is done
 @en @emph{before} regular type checking, and so allows the target to
@@ -14752,7 +14871,7 @@ If @var{code} is out of range the function should return
 为@samp{TARGET_INIT_BUILTINS}建立的机器特定内建函数选择一个替身。这发生在常规的类型检查之前，因此允许目标机来实现函数重载的粗糙形式。@var{fndecl}为内建函数的声明。@var{arglist}为传递给内建函数的参数列表。结果为一个完全表达式，实现了该运算，通常为另一个@code{CALL_EXPR}。
 @end deftypefn
 
-@deftypefn {Target Hook} tree TARGET_FOLD_BUILTIN (tree @var{fndecl}, tree @var{arglist}, bool @var{ignore})
+@deftypefn {Target Hook} tree TARGET_FOLD_BUILTIN (tree @var{fndecl}, int @var{n_args}, tree *@var{argp}, bool @var{ignore})
 @en Fold a call to a machine specific built-in function that was set up by
 @en @samp{TARGET_INIT_BUILTINS}.  @var{fndecl} is the declaration of the
 @en built-in function.  @var{n_args} is the number of arguments passed to
@@ -14762,7 +14881,7 @@ If @var{code} is out of range the function should return
 将@samp{TARGET_INIT_BUILTINS}建立的机器特定的内建函数的调用进行折叠。@var{fndecl}为内建函数的声明。@var{arglist}为传递给内建函数的参数列表。结果为另一个tree，包含了一个简化的表达式，为调用的结果。如果@var{ignore}为真，则值将被忽略。
 @end deftypefn
 
-@deftypefn {Target Hook} const char * TARGET_INVALID_WITHIN_DOLOOP (rtx @var{insn})
+@deftypefn {Target Hook} {const char *} TARGET_INVALID_WITHIN_DOLOOP (const_rtx @var{insn})
 @en Take an instruction in @var{insn} and return NULL if it is valid within a
 @en low-overhead loop, otherwise return a string explaining why doloop
 @en could not be applied.
@@ -14788,7 +14907,7 @@ If @var{code} is out of range the function should return
 在一些目标机上，分支可能具有有限的范围。优化延迟槽的填充，可以导致分支可以被重定向，反过来也可能会造成一个分支的偏移量溢出。
 @end defmac
 
-@deftypefn {Target Hook} bool TARGET_COMMUTATIVE_P (rtx @var{x}, @var{outer_code})
+@deftypefn {Target Hook} bool TARGET_COMMUTATIVE_P (const_rtx @var{x}, int @var{outer_code})
 @en This target hook returns @code{true} if @var{x} is considered to be commutative.
 @en Usually, this is just COMMUTATIVE_P (@var{x}), but the HP PA doesn't consider
 @en PLUS to be commutative inside a MEM@.  @var{outer_code} is the rtx code
@@ -14906,7 +15025,7 @@ cannot_modify_jumps_past_reload_p ()
 @end smallexample
 @end deftypefn
 
-@deftypefn {Target Hook} int TARGET_BRANCH_TARGET_REGISTER_CLASS (void)
+@deftypefn {Target Hook} reg_class_t TARGET_BRANCH_TARGET_REGISTER_CLASS (void)
 @en This target hook returns a register class for which branch target register
 @en optimizations should be applied.  All registers in this class should be
 @en usable interchangeably.  After reload, registers in this class will be
@@ -14981,14 +15100,14 @@ The default value places no upper bound on the multiplication count.
 该目标机钩子用来记录目标机特殊的include路径。参数@var{path}为要记录的include。在Darwin系统上，被用于Framework include，其语义与@option{-I}有所不同。
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_USE_LOCAL_THUNK_ALIAS_P (tree @var{fndecl})
+@defmac bool TARGET_USE_LOCAL_THUNK_ALIAS_P (tree @var{fndecl})
 @en This target macro returns @code{true} if it is safe to use a local alias
 @en for a virtual function @var{fndecl} when constructing thunks,
 @en @code{false} otherwise.  By default, the macro returns @code{true} for all
 @en functions, if a target supports aliases (i.e.@: defines
 @en @code{ASM_OUTPUT_DEF}), @code{false} otherwise,
 该目标机钩子返回@code{true}，如果当为虚函数构造thunk时，使用局部别名是安全的，否则为@code{false}。缺省的，钩子对所有函数返回@code{true}，如果目标机支持别名（即：定义了@code{ASM_OUTPUT_DEF}），否则@code{false}。
-@end deftypefn
+@end defmac
 
 @defmac TARGET_FORMAT_TYPES
 @en If defined, this macro is the name of a global variable containing
@@ -15024,7 +15143,7 @@ The default value places no upper bound on the multiplication count.
 如果被定义，则该宏描述可选的初始化程序，用于目标机特定的系统printf和scanf格式设置。
 @end defmac
 
-@deftypefn {Target Hook} bool TARGET_RELAXED_ORDERING
+@deftypevr {Target Hook} bool TARGET_RELAXED_ORDERING
 @en If set to @code{true}, means that the target's memory model does not
 @en guarantee that loads which do not depend on one another will access
 @en main memory in the order of the instruction stream; if ordering is
@@ -15033,9 +15152,9 @@ The default value places no upper bound on the multiplication count.
 @en ``weak,'' or ``release'' memory consistency, such as Alpha, PowerPC,
 @en and ia64.  The default is @code{false}.
 如果设置为@code{true}，则意味着目标机的内存模型不保证，没有依赖关系的加载操作会按照指令流的顺序来访问主存；如果顺序很重要，那么必须使用显式的内存栅栏。这对许多现在的处理器是这样的，例如Alpha, PowerPC和ia64，其实现了关于内存一致性的``relaxed,'' ``weak,'' 或 ``release''策略。缺省为@code{false}。
-@end deftypefn
+@end deftypevr
 
-@deftypefn {Target Hook} const char *TARGET_INVALID_ARG_FOR_UNPROTOTYPED_FN (tree @var{typelist}, tree @var{funcdecl}, tree @var{val})
+@deftypefn {Target Hook} {const char *} TARGET_INVALID_ARG_FOR_UNPROTOTYPED_FN (const_tree @var{typelist}, const_tree @var{funcdecl}, const_tree @var{val})
 @en TARGET_INVALID_ARG_FOR_UNPROTOTYPED_FN (const_tree @var{typelist}, const_tree @var{funcdecl}, const_tree @var{val})
 @en If defined, this macro returns the diagnostic message when it is
 @en illegal to pass argument @var{val} to function @var{funcdecl}
@@ -15043,14 +15162,14 @@ The default value places no upper bound on the multiplication count.
 如果被定义，则当传递参数@var{val}给函数原型为@var{typelist}的函数@var{funcdecl}是非法的时候，该宏会返回诊断信息。
 @end deftypefn
 
-@deftypefn {Target Hook} {const char *} TARGET_INVALID_CONVERSION (tree @var{fromtype}, tree @var{totype})
+@deftypefn {Target Hook} {const char *} TARGET_INVALID_CONVERSION (const_tree @var{fromtype}, const_tree @var{totype})
 @en If defined, this macro returns the diagnostic message when it is
 @en invalid to convert from @var{fromtype} to @var{totype}, or @code{NULL}
 @en if validity should be determined by the front end.
 如果被定义，则当从@var{fromtype}转换成@var{totype}是无效的时候，该宏会返回诊断信息，或者返回@code{NULL}，如果有效性应该由前端来确定。
 @end deftypefn
 
-@deftypefn {Target Hook} {const char *} TARGET_INVALID_UNARY_OP (int @var{op}, tree @var{type})
+@deftypefn {Target Hook} {const char *} TARGET_INVALID_UNARY_OP (int @var{op}, const_tree @var{type})
 @en If defined, this macro returns the diagnostic message when it is
 @en invalid to apply operation @var{op} (where unary plus is denoted by
 @en @code{CONVERT_EXPR}) to an operand of type @var{type}, or @code{NULL}
@@ -15058,7 +15177,7 @@ The default value places no upper bound on the multiplication count.
 如果被定义，则当在类型为@var{type}的操作数上执行@var{op}（一元的加号通过@code{CONVERT_EXPR}来表示）是无效的时候，该宏会返回诊断信息，或者返回@code{NULL}，如果有效性应该由前端来确定。
 @end deftypefn
 
-@deftypefn {Target Hook} {const char *} TARGET_INVALID_BINARY_OP (int @var{op}, tree @var{type1}, tree @var{type2})
+@deftypefn {Target Hook} {const char *} TARGET_INVALID_BINARY_OP (int @var{op}, const_tree @var{type1}, const_tree @var{type2})
 @en If defined, this macro returns the diagnostic message when it is
 @en invalid to apply operation @var{op} to operands of types @var{type1}
 @en and @var{type2}, or @code{NULL} if validity should be determined by
@@ -15133,7 +15252,7 @@ This is currently used only by the C and C++ front ends.
 定义该宏为动态重对齐参数指针（Dynamic Realign Argument Pointer）的rtx，如果当栈被对齐时，需要用不同的参数指针寄存器来访问函数的参数列表。
 @end deftypefn
 
-@deftypefn {Target Hook} {bool} TARGET_ALLOCATE_STACK_SLOTS_FOR_ARGS (void)
+@deftypefn {Target Hook} bool TARGET_ALLOCATE_STACK_SLOTS_FOR_ARGS (void)
 @en When optimization is disabled, this hook indicates whether or not
 @en arguments should be allocated to stack slots.  Normally, GCC allocates
 @en stacks slots for arguments when not optimizing in order to make
