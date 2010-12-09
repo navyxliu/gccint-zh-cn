@@ -3499,12 +3499,6 @@ the machine has any stack-like registers.
 一个C表达式，其为非0，
 如果寄存器编号@var{num}适合在操作数地址中作为基址寄存器使用。
 其可以为一个合适的硬件寄存器，或者一个已经被分配了这样的硬件寄存器的伪寄存器。
-
-@findex REG_OK_STRICT
-Compiler source files that want to use the strict variant of this and
-other macros define the macro @code{REG_OK_STRICT}.  You should use an
-@code{#ifdef REG_OK_STRICT} conditional to define the strict variant in
-that case and the non-strict variant otherwise.
 @end defmac
 
 @defmac REGNO_MODE_OK_FOR_BASE_P (@var{num}, @var{mode})
@@ -5394,6 +5388,8 @@ Default return value is @code{true}.
 @smallexample
 #define PUSH_ROUNDING(BYTES) (((BYTES) + 1) & ~1)
 @end smallexample
+
+If the value of this macro has a type, it should be an unsigned type.
 @end defmac
 
 @findex current_function_outgoing_args_size
@@ -7555,8 +7551,13 @@ has this syntax:
 @noindent
 and should @code{goto @var{label}} if the address @var{x} is a valid
 address on the target machine for a memory operand of mode @var{mode}.
-Whether the strict or non-strict variants are desired is defined by
-the @code{REG_OK_STRICT} macro introduced earlier in this section.
+
+@findex REG_OK_STRICT
+Compiler source files that want to use the strict variant of this
+macro define the macro @code{REG_OK_STRICT}.  You should use an
+@code{#ifdef REG_OK_STRICT} conditional to define the strict variant in
+that case and the non-strict variant otherwise.
+
 Using the hook is usually simpler because it limits the number of
 files that are recompiled when changes are made.
 @end deftypefn
@@ -7565,7 +7566,7 @@ files that are recompiled when changes are made.
 A single character to be used instead of the default @code{'m'}
 character for general memory addresses.  This defines the constraint
 letter which matches the memory addresses accepted by
-@code{GO_IF_LEGITIMATE_ADDRESS_P}.  Define this macro if you want to
+@code{TARGET_LEGITIMATE_ADDRESS_P}.  Define this macro if you want to
 support new address formats in your back end without changing the
 semantics of the @code{'m'} constraint.  This is necessary in order to
 preserve functionality of inline assembly constructs using the
@@ -7763,7 +7764,7 @@ These are obsolete macros, replaced by the
 该限制对于TLS符号的地址常常是真。
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_USE_BLOCKS_FOR_CONSTANT_P (enum machine_mode @var{mode}, rtx @var{x})
+@deftypefn {Target Hook} bool TARGET_USE_BLOCKS_FOR_CONSTANT_P (enum machine_mode @var{mode}, const_rtx @var{x})
 @en This hook should return true if pool entries for constant @var{x} can
 @en be placed in an @code{object_block} structure.  @var{mode} is the mode
 @en of @var{x}.
@@ -7775,7 +7776,7 @@ These are obsolete macros, replaced by the
 缺省版本为所有的常量返回假。
 @end deftypefn
 
-@deftypefn {Target Hook} tree TARGET_BUILTIN_RECIPROCAL (enum tree_code @var{fn}, bool @var{tm_fn}, bool @var{sqrt})
+@deftypefn {Target Hook} tree TARGET_BUILTIN_RECIPROCAL (unsigned @var{fn}, bool @var{md_fn}, bool @var{sqrt})
 @en This hook should return the DECL of a function that implements reciprocal of
 @en the builtin function with builtin function code @var{fn}, or
 @en @code{NULL_TREE} if such a function is not available.  @var{md_fn} is true
@@ -7887,7 +7888,7 @@ Target builtin that implements vector permute.
 Return true if a vector created for @code{builtin_vec_perm} is valid.
 @end deftypefn
 
-@deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_CONVERSION (enum tree_code @var{code}, tree @var{type})
+@deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_CONVERSION (unsigned @var{code}, tree @var{dest_type}, tree @var{src_type})
 @en This hook should return the DECL of a function that implements conversion of the
 @en input vector of type @var{src_type} to type @var{dest_type}.
 @en The value of @var{code} is one of the enumerators in @code{enum tree_code} and
@@ -7906,7 +7907,7 @@ Return true if a vector created for @code{builtin_vec_perm} is valid.
 否则，其应该返回@code{NULL_TREE}。
 @end deftypefn
 
-@deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_VECTORIZED_FUNCTION (enum built_in_function @var{code}, tree @var{vec_type_out}, tree @var{vec_type_in})
+@deftypefn {Target Hook} tree TARGET_VECTORIZE_BUILTIN_VECTORIZED_FUNCTION (tree @var{fndecl}, tree @var{vec_type_out}, tree @var{vec_type_in})
 @en This hook should return the decl of a function that implements the
 @en vectorized variant of the builtin function with builtin function code
 @en @var{code} or @code{NULL_TREE} if such a function is not available.
@@ -7926,6 +7927,20 @@ store/load of a specific factor denoted in the @var{misalignment}
 parameter.  The vector store/load should be of machine mode @var{mode} and
 the elements in the vectors should be of type @var{type}.  @var{is_packed}
 parameter is true if the memory access is defined in a packed struct.
+@end deftypefn
+
+@deftypefn {Target Hook} {enum machine_mode} TARGET_VECTORIZE_PREFERRED_SIMD_MODE (enum machine_mode @var{mode})
+This hook should return the preferred mode for vectorizing scalar
+mode @var{mode}.  The default is
+equal to @code{word_mode}, because the vectorizer can do some
+transformations even in absence of specialized @acronym{SIMD} hardware.
+@end deftypefn
+
+@deftypefn {Target Hook} {unsigned int} TARGET_VECTORIZE_AUTOVECTORIZE_VECTOR_SIZES (void)
+This hook should return a mask of sizes that should be iterated over
+after trying to autovectorize using the vector size derived from the
+mode returned by @code{TARGET_VECTORIZE_PREFERRED_SIMD_MODE}.
+The default is zero which means to not iterate over other vector sizes.
 @end deftypefn
 
 @en @node Anchored Addresses
@@ -7974,7 +7989,7 @@ int foo (void)
 除非@code{TARGET_MIN_ANCHOR_OFFSET}或@code{TARGET_MAX_ANCHOR_OFFSET}
 被设为一个非0的值，否则section anchors根本不会被使用。
 
-@deftypevar {Target Hook} HOST_WIDE_INT TARGET_MIN_ANCHOR_OFFSET
+@deftypevr {Target Hook} HOST_WIDE_INT TARGET_MIN_ANCHOR_OFFSET
 @en The minimum offset that should be applied to a section anchor.
 @en On most targets, it should be the smallest offset that can be
 @en applied to a base register while still giving a legitimate address
@@ -7982,15 +7997,15 @@ int foo (void)
 应该应用到section anchor的最小偏移量。在大多数target上，
 其应该为可以应用到基址寄存器并且对每种机器模式都可以给出合法地址的最小偏移量。
 缺省值为0。
-@end deftypevar
+@end deftypevr
 
-@deftypevar {Target Hook} HOST_WIDE_INT TARGET_MAX_ANCHOR_OFFSET
+@deftypevr {Target Hook} HOST_WIDE_INT TARGET_MAX_ANCHOR_OFFSET
 @en Like @code{TARGET_MIN_ANCHOR_OFFSET}, but the maximum (inclusive)
 @en offset that should be applied to section anchors.  The default
 @en value is 0.
 类似@code{TARGET_MIN_ANCHOR_OFFSET}，
 但是为可以应用到section anchors的最大(包括)偏移量。缺省为0。
-@end deftypevar
+@end deftypevr
 
 @deftypefn {Target Hook} void TARGET_ASM_OUTPUT_ANCHOR (rtx @var{x})
 @en Write the assembly code to define section anchor @var{x}, which is a
@@ -8011,7 +8026,7 @@ int foo (void)
 其禁止了section anchors的使用。
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_USE_ANCHORS_FOR_SYMBOL_P (rtx @var{x})
+@deftypefn {Target Hook} bool TARGET_USE_ANCHORS_FOR_SYMBOL_P (const_rtx @var{x})
 @en Return true if GCC should attempt to use anchors to access @code{SYMBOL_REF}
 @en @var{x}.  You can assume @samp{SYMBOL_REF_HAS_BLOCK_INFO_P (@var{x})} and
 @en @samp{!SYMBOL_REF_ANCHOR_P (@var{x})}.
@@ -8067,7 +8082,7 @@ interested in most macros in this section.
 @menu
 * CC0 Condition Codes::      Old style representation of condition codes.
 * MODE_CC Condition Codes::  Modern representation of condition codes.
-* Cond. Exec. Macros::       Macros to control conditional execution.
+* Cond Exec Macros::         Macros to control conditional execution.
 @end menu
 
 @node CC0 Condition Codes
@@ -8327,7 +8342,7 @@ same.  If they are, it returns that mode.  If they are different, it
 returns @code{VOIDmode}.
 @end deftypefn
 
-@node Cond. Exec. Macros
+@node Cond Exec Macros
 @subsection Macros to control conditional execution
 @findex conditional execution
 @findex predication
@@ -8545,7 +8560,7 @@ reduced then.
 当@code{STRICT_ALIGNMENT}非0时。
 @end defmac
 
-@defmac MOVE_RATIO
+@defmac MOVE_RATIO (@var{speed})
 @en The threshold of number of scalar memory-to-memory move insns, @emph{below}
 @en which a sequence of insns should be generated instead of a
 @en string move insn or a library call.  Increasing the value will always
@@ -8585,7 +8600,7 @@ optimized for speed rather than size.
 缺省为@code{MOVE_MAX}。
 @end defmac
 
-@defmac CLEAR_RATIO
+@defmac CLEAR_RATIO (@var{speed})
 @en The threshold of number of scalar move insns, @emph{below} which a sequence
 @en of insns should be generated to clear memory instead of a string clear insn
 @en or a library call.  Increasing the value will always make code faster, but
@@ -8611,7 +8626,7 @@ optimized for speed rather than size.
 如果@code{move_by_pieces_ninsns}返回值小于@code{CLEAR_RATIO}。
 @end defmac
 
-@defmac SET_RATIO
+@defmac SET_RATIO (@var{speed})
 @en The threshold of number of scalar move insns, @emph{below} which a sequence
 @en of insns should be generated to set memory to a constant value, instead of
 @en a block set insn or a library call.  
@@ -8730,7 +8745,7 @@ optimized for speed rather than size.
 该宏缺省为真，如果@code{BRANCH_COST}大于或等于2。
 @end defmac
 
-@deftypefn {Target Hook} bool TARGET_RTX_COSTS (rtx @var{x}, int @var{code}, int @var{outer_code}, int *@var{total})
+@deftypefn {Target Hook} bool TARGET_RTX_COSTS (rtx @var{x}, int @var{code}, int @var{outer_code}, int *@var{total}, bool @var{speed})
 @en This target hook describes the relative costs of RTL expressions.
 该target钩子描述了RTL表达式的相对代价。
 
@@ -8771,7 +8786,7 @@ optimized for speed rather than size.
 钩子返回真，当所有@var{x}的子表达式都被处理，当@code{rtx_cost}应该递归时返回假。
 @end deftypefn
 
-@deftypefn {Target Hook} int TARGET_ADDRESS_COST (rtx @var{address})
+@deftypefn {Target Hook} int TARGET_ADDRESS_COST (rtx @var{address}, bool @var{speed})
 @en This hook computes the cost of an addressing mode that contains
 @en @var{address}.  If not defined, the cost is computed from
 @en the @var{address} expression and the @code{TARGET_RTX_COST} hook.
@@ -8937,7 +8952,7 @@ optimized for speed rather than size.
 参见@samp{TARGET_SCHED_REORDER2}。
 @end deftypefn
 
-@deftypefn {Target Hook} int TARGET_SCHED_REORDER2 (FILE *@var{file}, int @var{verbose}, rtx *@var{ready}, int *@var{n_ready}, @var{clock})
+@deftypefn {Target Hook} int TARGET_SCHED_REORDER2 (FILE *@var{file}, int @var{verbose}, rtx *@var{ready}, int *@var{n_readyp}, int @var{clock})
 @en Like @samp{TARGET_SCHED_REORDER}, but called at a different time.  That
 @en function is called whenever the scheduler starts a new cycle.  This one
 @en is called once per iteration over a cycle, immediately after
@@ -9016,7 +9031,7 @@ optimized for speed rather than size.
 @var{verbose}为@option{-fsched-verbose-@var{n}}提供的详细级别。
 @end deftypefn
 
-@deftypefn {Target Hook} int TARGET_SCHED_DFA_PRE_CYCLE_INSN (void)
+@deftypefn {Target Hook} rtx TARGET_SCHED_DFA_PRE_CYCLE_INSN (void)
 @en The hook returns an RTL insn.  The automaton state used in the
 @en pipeline hazard recognizer is changed as if the insn were scheduled
 @en when the new simulated processor cycle starts.  Usage of the hook may
@@ -9036,7 +9051,7 @@ optimized for speed rather than size.
 该钩子可以用于初始化先前的钩子所使用的数据。
 @end deftypefn
 
-@deftypefn {Target Hook} int TARGET_SCHED_DFA_POST_CYCLE_INSN (void)
+@deftypefn {Target Hook} rtx TARGET_SCHED_DFA_POST_CYCLE_INSN (void)
 @en The hook is analogous to @samp{TARGET_SCHED_DFA_PRE_CYCLE_INSN} but used
 @en to changed the state as if the insn were scheduled when the new
 @en simulated processor cycle finishes.
@@ -9051,7 +9066,7 @@ optimized for speed rather than size.
 但用于初始化先前的钩子所使用的数据。
 @end deftypefn
 
-@deftypefn {Target Hook} void TARGET_SCHED_DFA_PRE_CYCLE_ADVANCE (void)
+@deftypefn {Target Hook} void TARGET_SCHED_DFA_PRE_ADVANCE_CYCLE (void)
 @en The hook to notify target that the current simulated cycle is about to finish.
 @en The hook is analogous to @samp{TARGET_SCHED_DFA_PRE_CYCLE_INSN} but used
 @en to change the state in more complicated situations - e.g., when advancing
@@ -9061,7 +9076,7 @@ optimized for speed rather than size.
 但用于在更复杂的情况下改变状态，例如当在一个单独的insn上前移一个状态并不足够时。
 @end deftypefn
 
-@deftypefn {Target Hook} void TARGET_SCHED_DFA_POST_CYCLE_ADVANCE (void)
+@deftypefn {Target Hook} void TARGET_SCHED_DFA_POST_ADVANCE_CYCLE (void)
 @en The hook to notify target that new simulated cycle has just started.
 @en The hook is analogous to @samp{TARGET_SCHED_DFA_POST_CYCLE_INSN} but used
 @en to change the state in more complicated situations - e.g., when advancing
@@ -9129,6 +9144,33 @@ optimized for speed rather than size.
 缺省为所有的就绪insn都可以被选择发射。
 @end deftypefn
 
+@deftypefn {Target Hook} void TARGET_SCHED_FIRST_CYCLE_MULTIPASS_BEGIN (void *@var{data}, char *@var{ready_try}, int @var{n_ready}, bool @var{first_cycle_insn_p})
+This hook prepares the target backend for a new round of multipass
+scheduling.
+@end deftypefn
+
+@deftypefn {Target Hook} void TARGET_SCHED_FIRST_CYCLE_MULTIPASS_ISSUE (void *@var{data}, char *@var{ready_try}, int @var{n_ready}, rtx @var{insn}, const void *@var{prev_data})
+This hook is called when multipass scheduling evaluates instruction INSN.
+@end deftypefn
+
+@deftypefn {Target Hook} void TARGET_SCHED_FIRST_CYCLE_MULTIPASS_BACKTRACK (const void *@var{data}, char *@var{ready_try}, int @var{n_ready})
+This is called when multipass scheduling backtracks from evaluation of
+an instruction.
+@end deftypefn
+
+@deftypefn {Target Hook} void TARGET_SCHED_FIRST_CYCLE_MULTIPASS_END (const void *@var{data})
+This hook notifies the target about the result of the concluded current
+round of multipass scheduling.
+@end deftypefn
+
+@deftypefn {Target Hook} void TARGET_SCHED_FIRST_CYCLE_MULTIPASS_INIT (void *@var{data})
+This hook initilizes target-specific data used in multipass scheduling.
+@end deftypefn
+
+@deftypefn {Target Hook} void TARGET_SCHED_FIRST_CYCLE_MULTIPASS_FINI (void *@var{data})
+This hook finilizes target-specific data used in multipass scheduling.
+@end deftypefn
+
 @deftypefn {Target Hook} int TARGET_SCHED_DFA_NEW_CYCLE (FILE *@var{dump}, int @var{verbose}, rtx @var{insn}, int @var{last_clock}, int @var{clock}, int *@var{sort_p})
 @en This hook is called by the insn scheduler before issuing @var{insn}
 @en on cycle @var{clock}.  If the hook returns nonzero,
@@ -9148,7 +9190,7 @@ optimized for speed rather than size.
 第四个和第五个参数值分别对应于之前insn被发射的处理器周期，以及当前处理器周期。
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_SCHED_IS_COSTLY_DEPENDENCE (struct dep_def *@var{_dep}, int @var{cost}, int @var{distance})
+@deftypefn {Target Hook} bool TARGET_SCHED_IS_COSTLY_DEPENDENCE (struct _dep *@var{_dep}, int @var{cost}, int @var{distance})
 @en This hook is used to define which dependences are considered costly by
 @en the target, so costly that it is not advisable to schedule the insns that
 @en are involved in the dependence too close to one another.  The parameters
@@ -9227,15 +9269,15 @@ Deallocate a store for target scheduling context pointed to by @var{tc}.
 则@var{new_pat}被赋值为生成的投机指令模式。
 @end deftypefn
 
-@deftypefn {Target Hook} int TARGET_SCHED_NEEDS_BLOCK_P (rtx @var{insn})
+@deftypefn {Target Hook} bool TARGET_SCHED_NEEDS_BLOCK_P (int @var{dep_status})
 @en This hook is called by the insn scheduler during generation of recovery code
 @en for @var{insn}.  It should return @code{true}, if the corresponding check
 @en instruction should branch to recovery code, or @code{false} otherwise.
-该钩子在为@var{insn}生成恢复代码时，被insn调度器调用。其应该返回非零，
-如果相应的检查指令应该分支跳转到回复代码，否则为0.
+该钩子在为@var{insn}生成恢复代码时，被insn调度器调用。其应该返回@code{true}，
+如果相应的检查指令应该分支跳转到回复代码，否则为@code{false}.
 @end deftypefn
 
-@deftypefn {Target Hook} rtx TARGET_SCHED_GEN_CHECK (rtx @var{insn}, rtx @var{label}, int @var{mutate_p})
+@deftypefn {Target Hook} rtx TARGET_SCHED_GEN_SPEC_CHECK (rtx @var{insn}, rtx @var{label}, int @var{mutate_p})
 @en This hook is called by the insn scheduler to generate a pattern for recovery
 @en check instruction.  If @var{mutate_p} is zero, then @var{insn} is a
 @en speculative instruction for which the check should be generated.
@@ -9253,7 +9295,7 @@ Deallocate a store for target scheduling context pointed to by @var{tc}.
 这种情况下，@var{label}不能为null。
 @end deftypefn
 
-@deftypefn {Target Hook} int TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD_GUARD_SPEC (rtx @var{insn})
+@deftypefn {Target Hook} bool TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD_GUARD_SPEC (const_rtx @var{insn})
 @en This hook is used as a workaround for
 @en @samp{TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD_GUARD} not being
 @en called on the first instruction of the ready list.  The hook is used to
