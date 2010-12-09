@@ -9270,17 +9270,12 @@ Deallocate a store for target scheduling context pointed to by @var{tc}.
 当ALAT表将满时。
 @end deftypefn
 
-@deftypefn {Target Hook} void TARGET_SCHED_SET_SCHED_FLAGS (unsigned int *@var{flags}, spec_info_t @var{spec_info})
+@deftypefn {Target Hook} void TARGET_SCHED_SET_SCHED_FLAGS (struct spec_info_def *@var{spec_info})
 @en This hook is used by the insn scheduler to find out what features should be
 @en enabled/used.
 @en The structure *@var{spec_info} should be filled in by the target.
 @en The structure describes speculation types that can be used in the scheduler.
-该钩子被insn调度器用于查找什么特点应该被启用。
-@var{flags}初始时可以设置了SCHED_RGN或SCHED_EBB位。这指示调度器过程，
-应该提供什么数据。target后端应该修改@var{flags}，通过修改对应于下列特点的位：
-USE_DEPS_LIST, USE_GLAT, DETACH_LIFE_INFO和DO_SPECULATION。
-对于DO_SPECULATION特点，一个额外的结构体@var{spec_info}应该由target来填充。
-该结构体描述了调度器中可以使用的投机类型。
+该钩子被insn调度器用于查找什么特点应该被启用。结构体@var{spec_info}应该由target来填充。该结构体描述了调度器中可以使用的投机类型。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_SMS_RES_MII (struct ddg *@var{g})
@@ -9294,6 +9289,16 @@ USE_DEPS_LIST, USE_GLAT, DETACH_LIFE_INFO和DO_SPECULATION。
 其基于在机器上可用的资源以及每个指令要求的资源。
 target后端可以使用@var{g}来计算这个边界。如果没有实现该钩子，
 则会使用一个非常简单的下界：指令总数除以发射率。
+@end deftypefn
+
+@deftypefn {Target Hook} bool TARGET_SCHED_DISPATCH (rtx @var{insn}, int @var{x})
+This hook is called by Haifa Scheduler.  It returns true if dispatch scheduling
+is supported in hardware and the condition specified in the parameter is true.
+@end deftypefn
+
+@deftypefn {Target Hook} void TARGET_SCHED_DISPATCH_DO (rtx @var{insn}, int @var{x})
+This hook is called by Haifa Scheduler.  It performs the operation specified
+in its second parameter.
 @end deftypefn
 
 @en @node Sections
@@ -9563,7 +9568,7 @@ GCC在处理完命令行之后，在写任何汇编代码之前，
 并在调用任何下面描述的返回section的钩子之前调用该钩子。
 @end deftypefn
 
-@deftypefn {Target Hook} TARGET_ASM_RELOC_RW_MASK (void)
+@deftypefn {Target Hook} int TARGET_ASM_RELOC_RW_MASK (void)
 @en Return a mask describing how relocations should be treated when
 @en selecting sections.  Bit 1 should be set if global relocations
 @en should be placed in a read-write section; bit 0 should be set if
@@ -9665,7 +9670,7 @@ GCC在处理完命令行之后，在写任何汇编代码之前，
 其它放在@code{readonly_data_section}中。
 @end deftypefn
 
-@deftypefn {Target Hook} void TARGET_MANGLE_DECL_ASSEMBLER_NAME (tree @var{decl}, tree @var{id})
+@deftypefn {Target Hook} tree TARGET_MANGLE_DECL_ASSEMBLER_NAME (tree @var{decl}, tree @var{id})
 @en Define this hook if you need to postprocess the assembler name generated
 @en by target-independent code.  The @var{id} provided to this hook will be
 @en the computed name (e.g., the macro @code{DECL_NAME} of the @var{decl} in C,
@@ -9749,11 +9754,11 @@ GCC在处理完命令行之后，在写任何汇编代码之前，
 返回真，如果@var{exp}应该被放到“小数据”section中。该钩子的缺省版本总是返回假。
 @end deftypefn
 
-@deftypevar {Target Hook} bool TARGET_HAVE_SRODATA_SECTION
+@deftypevr {Target Hook} bool TARGET_HAVE_SRODATA_SECTION
 @en Contains the value true if the target places read-only
 @en ``small data'' into a separate section.  The default value is false.
 如果target将只读“小数据”放到单独的section中，则包含值为真。缺省值为假。
-@end deftypevar
+@end deftypevr
 
 @deftypefn {Target Hook} bool TARGET_PROFILE_BEFORE_PROLOGUE (void)
 It returns true if target wants profile code emitted before prologue.
@@ -9762,7 +9767,7 @@ The default version of this hook use the target macro
 @code{PROFILE_BEFORE_PROLOGUE}.
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_BINDS_LOCAL_P (tree @var{exp})
+@deftypefn {Target Hook} bool TARGET_BINDS_LOCAL_P (const_tree @var{exp})
 @en Returns true if @var{exp} names an object for which name resolution
 @en rules must resolve to the current ``module'' (dynamic shared library
 @en or executable image).
@@ -9775,11 +9780,11 @@ The default version of this hook use the target macro
 其具有一个比目前支持的其它目标文件格式较松散的全局名字绑定模型。
 @end deftypefn
 
-@deftypevar {Target Hook} bool TARGET_HAVE_TLS
+@deftypevr {Target Hook} bool TARGET_HAVE_TLS
 @en Contains the value true if the target supports thread-local storage.
 @en The default value is false.
 如果target支持thread-local storage，则包含值为真。缺省值为假。
-@end deftypevar
+@end deftypevr
 
 @en @node PIC
 @en @section Position Independent Code
@@ -9805,7 +9810,7 @@ The default version of this hook use the target macro
 当源操作数包含一个符号地址时来做一些适当的处理。
 还可能需要修改switch语句的处理，使得它们使用相对地址。
 
-@c i rearranged the order of the macros above to try to force one of
+@c i rearranged the order of the macros above to try to force one of 
 @c them to the next line, to eliminate an overfull hbox. --mew 10feb93
 
 @defmac PIC_OFFSET_TABLE_REGNUM
@@ -9898,8 +9903,8 @@ The default version of this hook use the target macro
 @en This describes the overall framework of an assembly file.
 这章描述了汇编文件的总体框架。
 
-@deftypefn {Target Hook} void TARGET_ASM_FILE_START ()
 @findex default_file_start
+@deftypefn {Target Hook} void TARGET_ASM_FILE_START (void)
 @en Output to @code{asm_out_file} any text which the assembler expects to
 @en find at the beginning of a file.  The default behavior is controlled
 @en by two flags, documented below.  Unless your target's assembler is
@@ -9943,7 +9948,7 @@ The default version of this hook use the target macro
 大多数ELF汇编器期望做这件事。缺省为假。
 @end deftypevr
 
-@deftypefn {Target Hook} void TARGET_ASM_FILE_END ()
+@deftypefn {Target Hook} void TARGET_ASM_FILE_END (void)
 @en Output to @code{asm_out_file} any text which the assembler expects
 @en to find at the end of a file.  The default is to output nothing.
 将汇编器期望在文件结尾发现的任何文本输出到中。缺省为什么也不输出。
@@ -10050,7 +10055,7 @@ Output COFF information or DWARF debugging information which indicates that file
 对于@samp{#ident}伪指令，将不输出任何东西。
 @end defmac
 
-@deftypefn {Target Hook} void TARGET_ASM_NAMED_SECTION (const char *@var{name}, unsigned int @var{flags}, unsigned int @var{align})
+@deftypefn {Target Hook} void TARGET_ASM_NAMED_SECTION (const char *@var{name}, unsigned int @var{flags}, tree @var{decl})
 @en Output assembly directives to switch to section @var{name}.  The section
 @en should have attributes as specified by @var{flags}, which is a bit mask
 @en of the @code{SECTION_*} flags defined in @file{output.h}.  If @var{decl}
@@ -10063,19 +10068,30 @@ Output COFF information or DWARF debugging information which indicates that file
  — 我们仍然使用@code{ASM_OUTPUT_ALIGN}。
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_HAVE_NAMED_SECTIONS
-@en This flag is true if the target supports @code{TARGET_ASM_NAMED_SECTION}.
-该标记为真，如果target支持@code{TARGET_ASM_NAMED_SECTION}。
+@deftypefn {Target Hook} {section *} TARGET_ASM_FUNCTION_SECTION (tree @var{decl}, enum node_frequency @var{freq}, bool @var{startup}, bool @var{exit})
+Return preferred text (sub)section for function @var{decl}.
+Main purpose of this function is to separate cold, normal and hot
+functions. @var{startup} is true when function is known to be used only 
+at startup (from static constructors or it is @code{main()}).
+@var{exit} is true when function is known to be used only at exit
+(from static destructors).
+Return NULL if function should go to default text section.
 @end deftypefn
 
+@deftypevr {Target Hook} bool TARGET_HAVE_NAMED_SECTIONS
+@en This flag is true if the target supports @code{TARGET_ASM_NAMED_SECTION}.
+@en It must not be modified by command-line option processing.
+该标记为真，如果target支持@code{TARGET_ASM_NAMED_SECTION}。不要在命令行选项处理的时候来修改它。
+@end deftypevr
+
 @anchor{TARGET_HAVE_SWITCHABLE_BSS_SECTIONS}
-@deftypefn {Target Hook} bool TARGET_HAVE_SWITCHABLE_BSS_SECTIONS
+@deftypevr {Target Hook} bool TARGET_HAVE_SWITCHABLE_BSS_SECTIONS
 @en This flag is true if we can create zeroed data by switching to a BSS
 @en section and then using @code{ASM_OUTPUT_SKIP} to allocate the space.
 @en This is true on most ELF targets.
 该标记为真，如果我们能够通过切换到BSS section来创建初始化为0的数据，
 并且使用@code{ASM_OUTPUT_SKIP}来分配空间。这在大多数ELF target上为真。
-@end deftypefn
+@end deftypevr
 
 @deftypefn {Target Hook} {unsigned int} TARGET_SECTION_TYPE_FLAGS (tree @var{decl}, const char *@var{name}, int @var{reloc})
 @en Choose a set of section attributes for use by @code{TARGET_ASM_NAMED_SECTION}
@@ -10096,7 +10112,7 @@ Output COFF information or DWARF debugging information which indicates that file
 才需要覆盖该函数。
 @end deftypefn
 
-@deftypefn {Target Hook} {int} TARGET_ASM_RECORD_GCC_SWITCHES (print_switch_type @var{type}, const char * @var{text})
+@deftypefn {Target Hook} int TARGET_ASM_RECORD_GCC_SWITCHES (print_switch_type @var{type}, const char *@var{text})
 @en Provides the target with the ability to record the gcc command line
 @en switches that have been passed to the compiler, and options that are
 @en enabled.  The @var{type} argument specifies what is being recorded.
@@ -10171,13 +10187,12 @@ Output COFF information or DWARF debugging information which indicates that file
 新section的名字由target钩子@code{TARGET_ASM_RECORD_GCC_SWITCHES_SECTION}提供。
 @end deftypefn
 
-@deftypefn {Target Hook} {const char *} 
-@en TARGET_ASM_RECORD_GCC_SWITCHES_SECTION
+@deftypevr {Target Hook} {const char *} TARGET_ASM_RECORD_GCC_SWITCHES_SECTION
 @en This is the name of the section that will be created by the example
 @en ELF implementation of the @code{TARGET_ASM_RECORD_GCC_SWITCHES} target
 @en hook.
 这是@code{TARGET_ASM_RECORD_GCC_SWITCHES} target钩子的ELF实现的例子所创建的section名字。
-@end deftypefn
+@end deftypevr
 
 @need 2000
 @en @node Data Output
@@ -10925,18 +10940,25 @@ GCC将不支持弱符号并且你不要定义宏@code{SUPPORTS_WEAK}。
 @end defmac
 
 @defmac SUPPORTS_WEAK
-@en A C expression which evaluates to true if the target supports weak symbols.
-一个C表达式，如果target支持弱符号，则求值为真。
+@en A preprocessor constant expression which evaluates to true if the target
+@en supports weak symbols.
+一个预处理常量表达式，如果target支持弱符号，则求值为真。
 
 @en If you don't define this macro, @file{defaults.h} provides a default
 @en definition.  If either @code{ASM_WEAKEN_LABEL} or @code{ASM_WEAKEN_DECL}
-@en is defined, the default definition is @samp{1}; otherwise, it is
-@en @samp{0}.  Define this macro if you want to control weak symbol support
-@en with a compiler flag such as @option{-melf}.
+@en is defined, the default definition is @samp{1}; otherwise, it is @samp{0}.
 如果你没有定义该宏，@file{defaults.h}会提供一个缺省的定义。
 如果@code{ASM_WEAKEN_LABEL}或者@code{ASM_WEAKEN_DECL}被定义，
-则缺省定义为@samp{1}；否则为@samp{0}。如果你想使用编译器标记，
-例如@option{-melf}，来控制弱符号的支持，则定义该宏。
+则缺省定义为@samp{1}；否则为@samp{0}。
+@end defmac
+
+@defmac TARGET_SUPPORTS_WEAK
+A C expression which evaluates to true if the target supports weak symbols.
+
+If you don't define this macro, @file{defaults.h} provides a default
+definition.  The default definition is @samp{(SUPPORTS_WEAK)}.  Define
+this macro if you want to control weak symbol support with a compiler
+flag such as @option{-melf}.
 @end defmac
 
 @defmac MAKE_DECL_ONE_ONLY (@var{decl})
@@ -10971,7 +10993,7 @@ GCC将不支持弱符号并且你不要定义宏@code{SUPPORTS_WEAK}。
 定义该宏。
 @end defmac
 
-@deftypefn {Target Hook} void TARGET_ASM_ASSEMBLE_VISIBILITY (tree @var{decl}, const char *@var{visibility})
+@deftypefn {Target Hook} void TARGET_ASM_ASSEMBLE_VISIBILITY (tree @var{decl}, int @var{visibility})
 @en This target hook is a function to output to @var{asm_out_file} some
 @en commands that will make the symbol(s) associated with @var{decl} have
 @en hidden, protected or internal visibility as specified by @var{visibility}.
@@ -11031,7 +11053,7 @@ GNU汇编器和大多数Unix汇编器不需要做任何事情。
 @var{symref}为一个@code{symbol_ref}。
 @end deftypefn
 
-@deftypefn {Target Hook} void TARGET_ASM_MARK_DECL_PRESERVED (tree @var{decl})
+@deftypefn {Target Hook} void TARGET_ASM_MARK_DECL_PRESERVED (const char *@var{symbol})
 @en This target hook is a function to output to @var{asm_out_file} an assembler
 @en directive to annotate @var{symbol} as used.  The Darwin target uses the
 @en .no_dead_code_strip directive.
@@ -11576,13 +11598,13 @@ GCC将假设这样的section不存在。当你使用用于初始化和终止函�
 如果为0，编译器遇到@code{init_priority}属性时，将产生一条错误信息。
 @end defmac
 
-@deftypefn {Target Hook} bool TARGET_HAVE_CTORS_DTORS
+@deftypevr {Target Hook} bool TARGET_HAVE_CTORS_DTORS
 @en This value is true if the target supports some ``native'' method of
 @en collecting constructors and destructors to be run at startup and exit.
 @en It is false if we must use @command{collect2}.
 该值为真，如果target支持一些搜集构造者和析构者在起始和退出时运行的本地方法。
 如果我们必须使用@command{collect2}，则为假。
-@end deftypefn
+@end deftypevr
 
 @deftypefn {Target Hook} void TARGET_ASM_CONSTRUCTOR (rtx @var{symbol}, int @var{priority})
 @en If defined, a function that outputs assembler code to arrange to call
@@ -11648,20 +11670,28 @@ GCC将假设这样的section不存在。当你使用用于初始化和终止函�
 @en @command{nm}.
 定义该宏为一个C字符串常量，包含用来执行@command{nm}的文件名。
 缺省为搜索通常的路径。
+@end defmac
+
+@defmac NM_FLAGS
+@command{collect2} calls @command{nm} to scan object files for static
+constructors and destructors and LTO info.  By default, @option{-n} is
+passed.  Define @code{NM_FLAGS} to a C string constant if other options
+are needed to get the same output formut as GNU @command{nm -n}
+produces.
+@end defmac
 
 @en If your system supports shared libraries and has a program to list the
 @en dynamic dependencies of a given library or executable, you can define
 @en these macros to enable support for running initialization and
 @en termination functions in shared libraries:
 如果你的系统支持共享库，并具有一个程序能够列出给定库或可执行程序的动态依赖，
-你可以定义这些宏使得能够运行共享库中的初始化和终止函数。
-@end defmac
+你可以定义这些宏使得能够运行共享库中的初始化和终止函数：
 
 @defmac LDD_SUFFIX
 @en Define this macro to a C string constant containing the name of the program
-@en which lists dynamic dependencies, like @command{"ldd"} under SunOS 4.
+@en which lists dynamic dependencies, like @command{ldd} under SunOS 4.
 定义该宏为一个C字符串常量，包含程序的名字，其可以列出动态依赖，
-像SunOS 4中的@command{"ldd"}。
+像SunOS 4中的@command{ldd}。
 @end defmac
 
 @defmac PARSE_LDD_OUTPUT (@var{ptr})
@@ -11713,6 +11743,22 @@ GCC将假设这样的section不存在。当你使用用于初始化和终止函�
 如果定义，则为结构体数组的初始化程序，结构体包含了名字和寄存器编号。
 该宏定义了硬件寄存器的附加名字，这样就可以允许在声明中的@code{asm}选项，
 来使用附加名引用寄存器。
+@end defmac
+
+@defmac OVERLAPPING_REGISTER_NAMES
+If defined, a C initializer for an array of structures containing a
+name, a register number and a count of the number of consecutive
+machine registers the name overlaps.  This macro defines additional
+names for hard registers, thus allowing the @code{asm} option in
+declarations to refer to registers using alternate names.  Unlike
+@code{ADDITIONAL_REGISTER_NAMES}, this macro should be used when the
+register name implies multiple underlying registers.
+
+This macro should be used when it is important that a clobber in an
+@code{asm} statement clobbers all the underlying values implied by the
+register name.  For example, on ARM, clobbering the double-precision
+VFP register ``d0'' implies clobbering both single-precision registers
+``s0'' and ``s1''.
 @end defmac
 
 @defmac ASM_OUTPUT_OPCODE (@var{stream}, @var{ptr})
@@ -12086,7 +12132,7 @@ fprintf (@var{stream}, "\t.word L%d\n", @var{value})
 如果没有定义该宏，在跳转表的结尾不输出任何特殊的东西。
 @end defmac
 
-@deftypefn {Target Hook} void TARGET_ASM_EMIT_UNWIND_LABEL (@var{stream}, @var{decl}, @var{for_eh}, @var{empty})
+@deftypefn {Target Hook} void TARGET_ASM_EMIT_UNWIND_LABEL (FILE *@var{stream}, tree @var{decl}, int @var{for_eh}, int @var{empty})
 @en This target hook emits a label at the beginning of each FDE@.  It
 @en should be defined on targets where FDEs need special labels, and it
 @en should write the appropriate label, for the FDE associated with the
@@ -12103,7 +12149,7 @@ fprintf (@var{stream}, "\t.word L%d\n", @var{value})
 缺省为FDE不给出非局部标号。
 @end deftypefn
 
-@deftypefn {Target Hook} void TARGET_ASM_EMIT_EXCEPT_TABLE_LABEL (@var{stream})
+@deftypefn {Target Hook} void TARGET_ASM_EMIT_EXCEPT_TABLE_LABEL (FILE *@var{stream})
 @en This target hook emits a label at the beginning of the exception table.
 @en It should be defined on targets where it is desirable for the table
 @en to be broken up according to function.
@@ -12118,11 +12164,11 @@ The default is that no label is emitted.
 If the target implements @code{TARGET_ASM_UNWIND_EMIT}, this hook may be used to emit a directive to install a personality hook into the unwind info.  This hook should not be used if dwarf2 unwind info is used.
 @end deftypefn
 
-@deftypefn {Target Hook} void TARGET_UNWIND_EMIT (FILE * @var{stream}, rtx @var{insn})
+@deftypefn {Target Hook} void TARGET_ASM_UNWIND_EMIT (FILE *@var{stream}, rtx @var{insn})
 @en This target hook emits assembly directives required to unwind the
-@en given instruction.  This is only used when TARGET_UNWIND_INFO is set.
-该target钩子生成需要展开给定指定的汇编伪指令。
-这只在设置了TARGET_UNWIND_INFO的时候才被使用。
+@en given instruction.  This is only used when @code{TARGET_EXCEPT_UNWIND_INFO}
+@en returns @code{UI_TARGET}.
+该target钩子生成需要展开给定指定的汇编伪指令。这只在当@code{TARGET_EXCEPT_UNWIND_INFO}返回@code{UI_TARGET}的时候才被使用。
 @end deftypefn
 
 @deftypevr {Target Hook} bool TARGET_ASM_UNWIND_EMIT_BEFORE_INSN
@@ -12188,12 +12234,12 @@ True if the @code{TARGET_ASM_UNWIND_EMIT} hook should be called before the assem
 @en Define this macro to 0 if your target supports DWARF 2 frame unwind
 @en information, but it does not yet work with exception handling.
 @en Otherwise, if your target supports this information (if it defines
-@en @samp{INCOMING_RETURN_ADDR_RTX} and either @samp{UNALIGNED_INT_ASM_OP}
-@en or @samp{OBJECT_FORMAT_ELF}), GCC will provide a default definition of 1.
+@en @code{INCOMING_RETURN_ADDR_RTX} and either @code{UNALIGNED_INT_ASM_OP}
+@en or @code{OBJECT_FORMAT_ELF}), GCC will provide a default definition of 1.
 定义该宏为0，如果你的target支持DWARF2帧展开信息，
 但是其还不能与异常处理一起工作。否则，
-如果你的target支持这样的信息（如果定义了@samp{INCOMING_RETURN_ADDR_RTX}，
-并且@samp{UNALIGNED_INT_ASM_OP}和@samp{OBJECT_FORMAT_ELF}之一），
+如果你的target支持这样的信息（如果定义了@code{INCOMING_RETURN_ADDR_RTX}，
+并且@code{UNALIGNED_INT_ASM_OP}和@code{OBJECT_FORMAT_ELF}之一），
 GCC将提供缺省的定义，1。
 
 @en If @code{TARGET_UNWIND_INFO} is defined, the target specific unwinder
@@ -12211,12 +12257,31 @@ GCC将提供缺省的定义，1。
 否则基于@code{setjmp}/@code{longjmp}的框架将被缺省使用。
 @end defmac
 
-@defmac TARGET_UNWIND_INFO
-@en Define this macro if your target has ABI specified unwind tables.  Usually
-@en these will be output by @code{TARGET_ASM_UNWIND_EMIT}.
-定义该宏，如果你的target具有ABI指定的unwind表。
-通常这些将由@code{TARGET_UNWIND_EMIT}输出。
-@end defmac
+@deftypefn {Target Hook} {enum unwind_info_type} TARGET_EXCEPT_UNWIND_INFO (struct gcc_options *@var{opts})
+This hook defines the mechanism that will be used for exception handling
+by the target.  If the target has ABI specified unwind tables, the hook
+should return @code{UI_TARGET}.  If the target is to use the
+@code{setjmp}/@code{longjmp}-based exception handling scheme, the hook
+should return @code{UI_SJLJ}.  If the target supports DWARF 2 frame unwind
+information, the hook should return @code{UI_DWARF2}.
+
+A target may, if exceptions are disabled, choose to return @code{UI_NONE}.
+This may end up simplifying other parts of target-specific code.  The
+default implementation of this hook never returns @code{UI_NONE}.
+
+Note that the value returned by this hook should be constant.  It should
+not depend on anything except the command-line switches described by
+@var{opts}.  In particular, the
+setting @code{UI_SJLJ} must be fixed at compiler start-up as C pre-processor
+macros and builtin functions related to exception handling are set up
+depending on this setting.
+
+The default implementation of the hook first honors the
+@option{--enable-sjlj-exceptions} configure option, then
+@code{DWARF2_UNWIND_INFO}, and finally defaults to @code{UI_SJLJ}.  If
+@code{DWARF2_UNWIND_INFO} depends on command-line options, the target
+must define this hook so that @var{opts} is used correctly.
+@end deftypefn
 
 @deftypevar {Target Hook} bool TARGET_UNWIND_TABLES_DEFAULT
 @en This variable should be set to @code{true} if the target ABI requires unwinding
@@ -12224,15 +12289,11 @@ GCC将提供缺省的定义，1。
 该变量应该被设为@code{true}，如果target ABI即使不使用异常的时候也要求展开表。
 @end deftypevar
 
-@defmac MUST_USE_SJLJ_EXCEPTIONS
-@en This macro need only be defined if @code{DWARF2_UNWIND_INFO} is
-@en runtime-variable.  In that case, @file{except.h} cannot correctly
-@en determine the corresponding definition of @code{MUST_USE_SJLJ_EXCEPTIONS},
-@en so the target must provide it directly.
-该宏只有当@code{DWARF2_UNWIND_INFO}为运行时变量时才需要被定义。那种情况下，
-@file{except.h}不能正确的确定@code{MUST_USE_SJLJ_EXCEPTIONS}的相应定义，
-所以target必须直接提供。
-@end defmac
+@deftypevr {Target Hook} bool TARGET_UNWIND_TABLES_DEFAULT
+This variable should be set to @code{true} if the target ABI requires unwinding
+tables even when exceptions are not used.  It must not be modified by
+command-line option processing.
+@end deftypevr
 
 @defmac DONT_USE_BUILTIN_SETJMP
 @en Define this macro to 1 if the @code{setjmp}/@code{longjmp}-based scheme
@@ -12257,14 +12318,14 @@ GCC将提供缺省的定义，1。
 只有当target支持DWARF2帧展开信息的时候才有用。
 @end defmac
 
-@deftypevar {Target Hook} bool TARGET_TERMINATE_DW2_EH_FRAME_INFO
+@deftypevr {Target Hook} bool TARGET_TERMINATE_DW2_EH_FRAME_INFO
 @en Contains the value true if the target should add a zero word onto the
 @en end of a Dwarf-2 frame info section when used for exception handling.
 @en Default value is false if @code{EH_FRAME_SECTION_NAME} is defined, and
 @en true otherwise.
 值为真，如果target应该增加一个0字到Dwarf-2帧信息section的结尾，
 当用于异常处理时。缺省值为假，如果@code{EH_FRAME_SECTION_NAME}被定义，否则为真。
-@end deftypevar
+@end deftypevr
 
 @deftypefn {Target Hook} rtx TARGET_DWARF_REGISTER_SPAN (rtx @var{reg})
 @en Given a register, this hook should return a parallel of registers to
@@ -12301,14 +12362,14 @@ GCC将提供缺省的定义，1。
 返回@code{false}将会造成引用使用通常的Dwarf2例程被输出。
 @end deftypefn
 
-@deftypefn {Target Hook} bool TARGET_ARM_EABI_UNWINDER
+@deftypevr {Target Hook} bool TARGET_ARM_EABI_UNWINDER
 @en This flag should be set to @code{true} on targets that use an ARM EABI
 @en based unwinding library, and @code{false} on other targets.  This effects
 @en the format of unwinding tables, and how the unwinder in entered after
 @en running a cleanup.  The default is @code{false}.
 该钩子应该被设为@code{true}，在使用基于ARM EABI的展开库的target上，
 并且在其它target上为@code{false}。这将影响展开表的格式。缺省为@code{false}。
-@end deftypefn
+@end deftypevr
 
 @en @node Alignment Output
 @en @subsection Assembler Commands for Alignment
@@ -12340,6 +12401,12 @@ label为跳转的普通目的地并且不具有fallthru入边。
 否则应该尽量在@code{JUMP_ALIGN}实现中尊重用户在@var{align_jumps}中的选择。
 @end defmac
 
+@deftypefn {Target Hook} int TARGET_ASM_JUMP_ALIGN_MAX_SKIP (rtx @var{label})
+The maximum number of bytes to skip before @var{label} when applying
+@code{JUMP_ALIGN}.  This works only if
+@code{ASM_OUTPUT_MAX_SKIP_ALIGN} is defined.
+@end deftypefn
+
 @defmac LABEL_ALIGN_AFTER_BARRIER (@var{label})
 @en The alignment (log base 2) to put in front of @var{label}, which follows
 @en a @code{BARRIER}.
@@ -12352,13 +12419,13 @@ label为跳转的普通目的地并且不具有fallthru入边。
 大多数机器描述目前都没有定义该宏。
 @end defmac
 
-@defmac LABEL_ALIGN_AFTER_BARRIER_MAX_SKIP
-@en The maximum number of bytes to skip when applying
+@deftypefn {Target Hook} int TARGET_ASM_LABEL_ALIGN_AFTER_BARRIER_MAX_SKIP (rtx @var{label})
+@en The maximum number of bytes to skip before @var{label} when applying
 @en @code{LABEL_ALIGN_AFTER_BARRIER}.  This works only if
 @en @code{ASM_OUTPUT_MAX_SKIP_ALIGN} is defined.
-当应用@code{LABEL_ALIGN_AFTER_BARRIER}时，要跳过的最大字节个数。
+当应用@code{LABEL_ALIGN_AFTER_BARRIER}时，在@var{label}之前要跳过的最大字节个数。
 这只在定义了@code{ASM_OUTPUT_MAX_SKIP_ALIGN}时才起作用。
-@end defmac
+@end deftypefn
 
 @defmac LOOP_ALIGN (@var{label})
 @en The alignment (log base 2) to put in front of @var{label}, which follows
