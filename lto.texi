@@ -253,42 +253,51 @@ usual validation done by option processing).  This is implemented in
 @en @item Function bodies (@code{.gnu.lto_.function_body.<name>})
 @item 函数体 (@code{.gnu.lto_.function_body.<name>})
 
-This section contains function bodies in the intermediate language
-representation. Every function body is in a separate section to allow
-copying of the section independently to different object files or
-reading the function on demand.
+@en This section contains function bodies in the intermediate language
+@en representation. Every function body is in a separate section to allow
+@en copying of the section independently to different object files or
+@en reading the function on demand.
+这个段包含了在中间语言表示的函数体。没一个函数体都在一个单独的段，这样可以独立地拷贝这个段到不同的目标文件，或者随需地读入函数。
 
-Functions are emitted in
-@file{lto-streamer-out.c}:@code{output_function} and read in
-@file{lto-streamer-in.c}:@code{input_function}.
+@en Functions are emitted in
+@en @file{lto-streamer-out.c}:@code{output_function} and read in
+@en @file{lto-streamer-in.c}:@code{input_function}.
+函数由@file{lto-streamer-out.c}:@code{output_function}生成，由@file{lto-streamer-in.c}:@code{input_function}读入。
 
+@en @item Static variable initializers (@code{.gnu.lto_.vars})
+@item 静态变量初始化 (@code{.gnu.lto_.vars})
 
-@item Static variable initializers (@code{.gnu.lto_.vars})
+@en This section contains all the symbols in the global variable pool.  It
+@en is emitted by @file{lto-cgraph.c}:@code{output_varpool} and read in
+@en @file{lto-cgraph.c}:@code{input_cgraph}.
+这个段包含了全局变量池的所有的符号。由@file{lto-cgraph.c}:@code{output_varpool} 产生，并由@file{lto-cgraph.c}:@code{input_cgraph}读入。
 
-This section contains all the symbols in the global variable pool.  It
-is emitted by @file{lto-cgraph.c}:@code{output_varpool} and read in
-@file{lto-cgraph.c}:@code{input_cgraph}.
+@en @item Summaries and optimization summaries used by IPA passes
+@en (@code{.gnu.lto_.<xxx>}, where @code{<xxx>} is one of @code{jmpfuncs},
+@en @code{pureconst} or @code{reference})
+@item IPA遍用到的总计信息和优化总计信息
+(@code{.gnu.lto_.<xxx>}，这里@code{<xxx>}是@code{jmpfuncs}，@code{pureconst}，或@code{reference}其中的一种。
 
-@item Summaries and optimization summaries used by IPA passes
-(@code{.gnu.lto_.<xxx>}, where @code{<xxx>} is one of @code{jmpfuncs},
-@code{pureconst} or @code{reference})
+@en These sections are used by IPA passes that need to emit summary
+@en information during LTO generation to be read and aggregated at
+@en link time.  Each pass is responsible for implementing two pass manager
+@en hooks: one for writing the summary and another for reading it in.  The
+@en format of these sections is entirely up to each individual pass.  The
+@en only requirement is that the writer and reader hooks agree on the
+@en format.
+这些段都会被IPA使用，生成总计信息，在LTO生成阶段读入，最后在链接时间整合。每一遍都负责实现两个遍管理器钩子函数:一个用来写总计信息，一个用来读入总计信息。信息格式完全由每个遍来决定。唯一的要求就是写部分和读部分在格式上保持一致。
 
-These sections are used by IPA passes that need to emit summary
-information during LTO generation to be read and aggregated at
-link time.  Each pass is responsible for implementing two pass manager
-hooks: one for writing the summary and another for reading it in.  The
-format of these sections is entirely up to each individual pass.  The
-only requirement is that the writer and reader hooks agree on the
-format.
 @end itemize
 
 
-@section Using summary information in IPA passes
+@en @section Using summary information in IPA passes
+@section 在IPA遍中使用总计信息
 
-Programs are represented internally as a @emph{callgraph} (a
-multi-graph where nodes are functions and edges are call sites)
-and a @emph{varpool} (a list of static and external variables in
-the program).
+@en Programs are represented internally as a @emph{callgraph} (a
+@en multi-graph where nodes are functions and edges are call sites)
+@en and a @emph{varpool} (a list of static and external variables in
+@en the program).
+程序在内部表示为@emph{调用图} (一种多图，节点代表函数，边代表函数调用位置)和一个@emph{变量池} (一个程序静态变量和外部变量的列表)。
 
 The inter-procedural optimization is organized as a sequence of
 individual passes, which operate on the callgraph and the
