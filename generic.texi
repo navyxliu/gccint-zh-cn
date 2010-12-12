@@ -1196,8 +1196,10 @@ TREE_OPERAND (expr, 0)
 * Vectors::
 @end menu
 
+@en @node Constant expressions
+@en @subsection Constant expressions
 @node Constant expressions
-@subsection Constant expressions
+@subsection 常量表达式
 @tindex INTEGER_CST
 @findex TREE_INT_CST_HIGH
 @findex TREE_INT_CST_LOW
@@ -1211,96 +1213,111 @@ TREE_OPERAND (expr, 0)
 @findex TREE_STRING_LENGTH
 @findex TREE_STRING_POINTER
 
-The table below begins with constants, moves on to unary expressions,
-then proceeds to binary expressions, and concludes with various other
-kinds of expressions:
+@en The table below begins with constants, moves on to unary expressions,
+@en then proceeds to binary expressions, and concludes with various other
+@en kinds of expressions:
+下面的列表格首先介绍了常数，接着是一元表达式，然后是二元表达式，以及各种其它类型的表达式：
 
 @table @code
 @item INTEGER_CST
-These nodes represent integer constants.  Note that the type of these
-constants is obtained with @code{TREE_TYPE}; they are not always of type
-@code{int}.  In particular, @code{char} constants are represented with
-@code{INTEGER_CST} nodes.  The value of the integer constant @code{e} is
-given by
+@en These nodes represent integer constants.  Note that the type of these
+@en constants is obtained with @code{TREE_TYPE}; they are not always of type
+@en @code{int}.  In particular, @code{char} constants are represented with
+@en @code{INTEGER_CST} nodes.  The value of the integer constant @code{e} is
+@en given by
+这些节点表示整数常量。注意这些常量的类型通过@code{TREE_TYPE}来获得；并不总是@code{int}型的。特别是，
+@code{char}型常量使用@code{INTEGER_CST}节点表示。整数常量@code{e}的值通过下面的方式给出
 @smallexample
 ((TREE_INT_CST_HIGH (e) << HOST_BITS_PER_WIDE_INT)
 + TREE_INST_CST_LOW (e))
 @end smallexample
 @noindent
-HOST_BITS_PER_WIDE_INT is at least thirty-two on all platforms.  Both
-@code{TREE_INT_CST_HIGH} and @code{TREE_INT_CST_LOW} return a
-@code{HOST_WIDE_INT}.  The value of an @code{INTEGER_CST} is interpreted
-as a signed or unsigned quantity depending on the type of the constant.
-In general, the expression given above will overflow, so it should not
-be used to calculate the value of the constant.
+@en HOST_BITS_PER_WIDE_INT is at least thirty-two on all platforms.  Both
+@en @code{TREE_INT_CST_HIGH} and @code{TREE_INT_CST_LOW} return a
+@en @code{HOST_WIDE_INT}.  The value of an @code{INTEGER_CST} is interpreted
+@en as a signed or unsigned quantity depending on the type of the constant.
+@en In general, the expression given above will overflow, so it should not
+@en be used to calculate the value of the constant.
+HOST_BITS_PER_WIDE_INT在所有的平台上最少为32。@code{TREE_INT_CST_HIGH}和@code{TREE_INT_CST_LOW}都返回一个@code{HOST_WIDE_INT}。一个@code{INTEGER_CST}的值根据常量的类型而被解析为有符号或无符号的数。一般来说，上面给出的表达式将会溢出，因此不要用来计算常量的值。
 
-The variable @code{integer_zero_node} is an integer constant with value
-zero.  Similarly, @code{integer_one_node} is an integer constant with
-value one.  The @code{size_zero_node} and @code{size_one_node} variables
-are analogous, but have type @code{size_t} rather than @code{int}.
+@en The variable @code{integer_zero_node} is an integer constant with value
+@en zero.  Similarly, @code{integer_one_node} is an integer constant with
+@en value one.  The @code{size_zero_node} and @code{size_one_node} variables
+@en are analogous, but have type @code{size_t} rather than @code{int}.
+变量@code{integer_zero_node}是一个值为0的整数常量。类似的，@code{integer_one_node}是值为1的整数常量。变量@code{size_zero_node}和@code{size_one_node}比较类似，只是具有@code{size_t}类型，而不是@code{int}。
 
-The function @code{tree_int_cst_lt} is a predicate which holds if its
-first argument is less than its second.  Both constants are assumed to
-have the same signedness (i.e., either both should be signed or both
-should be unsigned.)  The full width of the constant is used when doing
-the comparison; the usual rules about promotions and conversions are
-ignored.  Similarly, @code{tree_int_cst_equal} holds if the two
-constants are equal.  The @code{tree_int_cst_sgn} function returns the
-sign of a constant.  The value is @code{1}, @code{0}, or @code{-1}
-according on whether the constant is greater than, equal to, or less
-than zero.  Again, the signedness of the constant's type is taken into
-account; an unsigned constant is never less than zero, no matter what
-its bit-pattern.
+@en The function @code{tree_int_cst_lt} is a predicate which holds if its
+@en first argument is less than its second.  Both constants are assumed to
+@en have the same signedness (i.e., either both should be signed or both
+@en should be unsigned.)  The full width of the constant is used when doing
+@en the comparison; the usual rules about promotions and conversions are
+@en ignored.  Similarly, @code{tree_int_cst_equal} holds if the two
+@en constants are equal.  The @code{tree_int_cst_sgn} function returns the
+@en sign of a constant.  The value is @code{1}, @code{0}, or @code{-1}
+@en according on whether the constant is greater than, equal to, or less
+@en than zero.  Again, the signedness of the constant's type is taken into
+@en account; an unsigned constant is never less than zero, no matter what
+@en its bit-pattern.
+函数@code{tree_int_cst_lt}是一个断言，当第一个参数小于第二个时有效。两个常量被假设为具有相同的符号性（即，要么都是有符号的，要么都是无符号的。）在作比较时，使用常量的全部宽度；并忽略掉通常的类型提升和转换规则。类似的，@code{tree_int_cst_equal}在两个常熟相等时有效。函数@code{tree_int_cst_sgn}返回常数的符号。根据常数是大于，等于，或小于0，而返回值@code{1}, @code{0}或@code{-1}。此外，会顾及到常数类型的符号性；无符号常数是永远小于0的，不论它的位模式如何。
 
 @item REAL_CST
 
-FIXME: Talk about how to obtain representations of this constant, do
-comparisons, and so forth.
+@en FIXME: Talk about how to obtain representations of this constant, do
+@en comparisons, and so forth.
+FIXME: 讨论如何获得该常量的表示，如何进行比较等等。
 
 @item FIXED_CST
 
-These nodes represent fixed-point constants.  The type of these constants
-is obtained with @code{TREE_TYPE}.  @code{TREE_FIXED_CST_PTR} points to
-a @code{struct fixed_value};  @code{TREE_FIXED_CST} returns the structure
-itself.  @code{struct fixed_value} contains @code{data} with the size of two
-@code{HOST_BITS_PER_WIDE_INT} and @code{mode} as the associated fixed-point
-machine mode for @code{data}.
+@en These nodes represent fixed-point constants.  The type of these constants
+@en is obtained with @code{TREE_TYPE}.  @code{TREE_FIXED_CST_PTR} points to
+@en a @code{struct fixed_value};  @code{TREE_FIXED_CST} returns the structure
+@en itself.  @code{struct fixed_value} contains @code{data} with the size of two
+@en @code{HOST_BITS_PER_WIDE_INT} and @code{mode} as the associated fixed-point
+@en machine mode for @code{data}.
+这些节点表示定点常数。这些常量的类型通过@code{TREE_TYPE}获得。@code{TREE_FIXED_CST_PTR}指向struct fixed_value；@code{TREE_FIXED_CST}返回结构体本身。Struct fixed_value包含了具有2个HOST_BITS_PER_WIDE_INT大小的@code{data}，以及与@code{data}关联的定点机器模式@code{mode}。
 
 @item COMPLEX_CST
-These nodes are used to represent complex number constants, that is a
-@code{__complex__} whose parts are constant nodes.  The
-@code{TREE_REALPART} and @code{TREE_IMAGPART} return the real and the
-imaginary parts respectively.
+@en These nodes are used to represent complex number constants, that is a
+@en @code{__complex__} whose parts are constant nodes.  The
+@en @code{TREE_REALPART} and @code{TREE_IMAGPART} return the real and the
+@en imaginary parts respectively.
+这些节点用于表示复数常量，即@code{__complex__} ，其组成部分为常数节点。@code{TREE_REALPART}和@code{TREE_IMAGPART}返回相应的实部和虚部。
 
 @item VECTOR_CST
-These nodes are used to represent vector constants, whose parts are
-constant nodes.  Each individual constant node is either an integer or a
-double constant node.  The first operand is a @code{TREE_LIST} of the
-constant nodes and is accessed through @code{TREE_VECTOR_CST_ELTS}.
+@en These nodes are used to represent vector constants, whose parts are
+@en constant nodes.  Each individual constant node is either an integer or a
+@en double constant node.  The first operand is a @code{TREE_LIST} of the
+@en constant nodes and is accessed through @code{TREE_VECTOR_CST_ELTS}.
+这些节点用于表示向量常数，其组成部分为常量节点。每个单独的常量节点或者是一个常整数节点，或者是一个双精度的常数节点。第一个操作数为常数节点的@code{TREE_LIST}，并可以通过@code{TREE_VECTOR_CST_ELTS}来访问。
 
 @item STRING_CST
-These nodes represent string-constants.  The @code{TREE_STRING_LENGTH}
-returns the length of the string, as an @code{int}.  The
-@code{TREE_STRING_POINTER} is a @code{char*} containing the string
-itself.  The string may not be @code{NUL}-terminated, and it may contain
-embedded @code{NUL} characters.  Therefore, the
-@code{TREE_STRING_LENGTH} includes the trailing @code{NUL} if it is
-present.
+@en These nodes represent string-constants.  The @code{TREE_STRING_LENGTH}
+@en returns the length of the string, as an @code{int}.  The
+@en @code{TREE_STRING_POINTER} is a @code{char*} containing the string
+@en itself.  The string may not be @code{NUL}-terminated, and it may contain
+@en embedded @code{NUL} characters.  Therefore, the
+@en @code{TREE_STRING_LENGTH} includes the trailing @code{NUL} if it is
+@en present.
+这些节点表示字符串常量。@code{TREE_STRING_LENGTH}返回@code{int}型的字符串长度。@code{TREE_STRING_POINTER}是一个@code{char*}型，包含了字符串本身。字符串可以不是@code{NUL}结尾的，并且可以包含嵌入的@code{NUL}字符。因此，如果字符串的结尾存在@code{NUL}，则@code{TREE_STRING_LENGTH}也包括了结尾的NUL。
 
-For wide string constants, the @code{TREE_STRING_LENGTH} is the number
-of bytes in the string, and the @code{TREE_STRING_POINTER}
-points to an array of the bytes of the string, as represented on the
-target system (that is, as integers in the target endianness).  Wide and
-non-wide string constants are distinguished only by the @code{TREE_TYPE}
-of the @code{STRING_CST}.
+@en For wide string constants, the @code{TREE_STRING_LENGTH} is the number
+@en of bytes in the string, and the @code{TREE_STRING_POINTER}
+@en points to an array of the bytes of the string, as represented on the
+@en target system (that is, as integers in the target endianness).  Wide and
+@en non-wide string constants are distinguished only by the @code{TREE_TYPE}
+@en of the @code{STRING_CST}.
+对于宽字符串常量，@code{TREE_STRING_LENGTH}为字符串的字节数，并且@code{TREE_STRING_POINTER}指向在目标系统上表示的，字符串的字节数组（即，符合目标大小端的整数系列）。宽字符串和非宽字符串常量，只区别于@code{STRING_CST}的@code{TREE_TYPE}。
 
-FIXME: The formats of string constants are not well-defined when the
-target system bytes are not the same width as host system bytes.
+@en FIXME: The formats of string constants are not well-defined when the
+@en target system bytes are not the same width as host system bytes.
+FIXME: 当目标系统的字节与主机系统的字节宽度不同时，字符串的格式没有被很好的定义。
 
 @end table
 
+@en @node Storage References
+@en @subsection References to storage
 @node Storage References
-@subsection References to storage
+@subsection 存储引用
 @tindex ADDR_EXPR
 @tindex INDIRECT_REF
 @tindex MEM_REF
@@ -1381,8 +1398,10 @@ the byte offset of the field, but should not be used directly; call
 
 @end table
 
+@en @node Unary and Binary Expressions
+@en @subsection Unary and Binary Expressions
 @node Unary and Binary Expressions
-@subsection Unary and Binary Expressions
+@subsection 一元和二元表达式
 @tindex NEGATE_EXPR
 @tindex ABS_EXPR
 @tindex BIT_NOT_EXPR
@@ -1458,196 +1477,224 @@ the byte offset of the field, but should not be used directly; call
 
 @table @code
 @item NEGATE_EXPR
-These nodes represent unary negation of the single operand, for both
-integer and floating-point types.  The type of negation can be
-determined by looking at the type of the expression.
+@en These nodes represent unary negation of the single operand, for both
+@en integer and floating-point types.  The type of negation can be
+@en determined by looking at the type of the expression.
+这些节点表示对单个,整数或浮点类型的操作数，进行一元取负运算。取负运算结果的类型可以通过查看表达式的类型来决定。
 
-The behavior of this operation on signed arithmetic overflow is
-controlled by the @code{flag_wrapv} and @code{flag_trapv} variables.
+@en The behavior of this operation on signed arithmetic overflow is
+@en controlled by the @code{flag_wrapv} and @code{flag_trapv} variables.
+该操作在有符号算术溢出时的行为，由@code{flag_wrapv}和@code{flag_trapv}变量来控制。
 
 @item ABS_EXPR
-These nodes represent the absolute value of the single operand, for
-both integer and floating-point types.  This is typically used to
-implement the @code{abs}, @code{labs} and @code{llabs} builtins for
-integer types, and the @code{fabs}, @code{fabsf} and @code{fabsl}
-builtins for floating point types.  The type of abs operation can
-be determined by looking at the type of the expression.
+@en These nodes represent the absolute value of the single operand, for
+@en both integer and floating-point types.  This is typically used to
+@en implement the @code{abs}, @code{labs} and @code{llabs} builtins for
+@en integer types, and the @code{fabs}, @code{fabsf} and @code{fabsl}
+@en builtins for floating point types.  The type of abs operation can
+@en be determined by looking at the type of the expression.
+这些节点表示单个操作数，整数和浮点类型的，的绝对值。这通常用于实现整数类型的内建@code{abs}，@code{labs}和@code{llabs}，以及浮点类型的@code{fabs}，@code{fabsf}和@code{fabsl}。abs操作的类型可以通过查看表达式的类型来决定。
 
-This node is not used for complex types.  To represent the modulus
-or complex abs of a complex value, use the @code{BUILT_IN_CABS},
-@code{BUILT_IN_CABSF} or @code{BUILT_IN_CABSL} builtins, as used
-to implement the C99 @code{cabs}, @code{cabsf} and @code{cabsl}
-built-in functions.
+@en This node is not used for complex types.  To represent the modulus
+@en or complex abs of a complex value, use the @code{BUILT_IN_CABS},
+@en @code{BUILT_IN_CABSF} or @code{BUILT_IN_CABSL} builtins, as used
+@en to implement the C99 @code{cabs}, @code{cabsf} and @code{cabsl}
+@en built-in functions.
+该节点不用于复数类型。要表示复数的模或者复数abs，使用内建的@code{BUILT_IN_CABS}, @code{BUILT_IN_CABSF}或@code{BUILT_IN_CABSL}，这些被用于实现C99的内建函数@code{cabs}, @code{cabsf}和@code{cabsl}。
 
 @item BIT_NOT_EXPR
-These nodes represent bitwise complement, and will always have integral
-type.  The only operand is the value to be complemented.
+@en These nodes represent bitwise complement, and will always have integral
+@en type.  The only operand is the value to be complemented.
+这些节点表示按位求补运算，并总是具有整数型。唯一的操作数是要被求补的值。
 
 @item TRUTH_NOT_EXPR
-These nodes represent logical negation, and will always have integral
-(or boolean) type.  The operand is the value being negated.  The type
-of the operand and that of the result are always of @code{BOOLEAN_TYPE}
-or @code{INTEGER_TYPE}.
+@en These nodes represent logical negation, and will always have integral
+@en (or boolean) type.  The operand is the value being negated.  The type
+@en of the operand and that of the result are always of @code{BOOLEAN_TYPE}
+@en or @code{INTEGER_TYPE}.
+这些节点表示逻辑非，并总是具有整数（或布尔）类型。操作数是要求非的值。操作数的，以及结果的类型总是@code{BOOLEAN_TYPE}或@code{INTEGER_TYPE}。 
 
 @item PREDECREMENT_EXPR
 @itemx PREINCREMENT_EXPR
 @itemx POSTDECREMENT_EXPR
 @itemx POSTINCREMENT_EXPR
-These nodes represent increment and decrement expressions.  The value of
-the single operand is computed, and the operand incremented or
-decremented.  In the case of @code{PREDECREMENT_EXPR} and
-@code{PREINCREMENT_EXPR}, the value of the expression is the value
-resulting after the increment or decrement; in the case of
-@code{POSTDECREMENT_EXPR} and @code{POSTINCREMENT_EXPR} is the value
-before the increment or decrement occurs.  The type of the operand, like
-that of the result, will be either integral, boolean, or floating-point.
+@en These nodes represent increment and decrement expressions.  The value of
+@en the single operand is computed, and the operand incremented or
+@en decremented.  In the case of @code{PREDECREMENT_EXPR} and
+@en @code{PREINCREMENT_EXPR}, the value of the expression is the value
+@en resulting after the increment or decrement; in the case of
+@en @code{POSTDECREMENT_EXPR} and @code{POSTINCREMENT_EXPR} is the value
+@en before the increment or decrement occurs.  The type of the operand, like
+@en that of the result, will be either integral, boolean, or floating-point.
+这些节点表示递增和递减表达式。单操作数的值将被计算，并且操作数递增或递减。在@code{PREDECREMENT_EXPR}和@code{PREINCREMENT_EXPR}的情况下，表达式的值是递增或递减之后的结果；在@code{POSTDECREMENT_EXPR}和@code{POSTINCREMENT_EXPR}的情况下，表达式的值是递增或递减发生前的值。操作数的值，跟结果的一样，将会是整数，布尔，或浮点的。
 
 @item FIX_TRUNC_EXPR
-These nodes represent conversion of a floating-point value to an
-integer.  The single operand will have a floating-point type, while
-the complete expression will have an integral (or boolean) type.  The
-operand is rounded towards zero.
+@en These nodes represent conversion of a floating-point value to an
+@en integer.  The single operand will have a floating-point type, while
+@en the complete expression will have an integral (or boolean) type.  The
+@en operand is rounded towards zero.
+这些节点表示浮点值到整数的转换。单操作数将具有一个浮点类型，完整的表达式将具有整数（或布尔）类型。操作数向0方向舍入。
 
 @item FLOAT_EXPR
-These nodes represent conversion of an integral (or boolean) value to a
-floating-point value.  The single operand will have integral type, while
-the complete expression will have a floating-point type.
+@en These nodes represent conversion of an integral (or boolean) value to a
+@en floating-point value.  The single operand will have integral type, while
+@en the complete expression will have a floating-point type.
+这些节点表示整数（或布尔）值向浮点值的转换。单操作数将具有整数类型，而完整的表达式将具有浮点类型。
 
-FIXME: How is the operand supposed to be rounded?  Is this dependent on
-@option{-mieee}?
+@en FIXME: How is the operand supposed to be rounded?  Is this dependent on
+@en @option{-mieee}?
+FIXME: 操作数是如何被舍入的？这是不是取决于@option{-mieee}？
 
 @item COMPLEX_EXPR
-These nodes are used to represent complex numbers constructed from two
-expressions of the same (integer or real) type.  The first operand is the
-real part and the second operand is the imaginary part.
+@en These nodes are used to represent complex numbers constructed from two
+@en expressions of the same (integer or real) type.  The first operand is the
+@en real part and the second operand is the imaginary part.
+这些节点用于表示通过两个相同类型（整数或实数）的表达式构造的复数。第一个操作数是实部，第二个操作数是虚部。
 
 @item CONJ_EXPR
-These nodes represent the conjugate of their operand.
+@en These nodes represent the conjugate of their operand.
+这些节点表示它们的操作数的共轭（conjugate）。 
 
 @item REALPART_EXPR
 @itemx IMAGPART_EXPR
-These nodes represent respectively the real and the imaginary parts
-of complex numbers (their sole argument).
+@en These nodes represent respectively the real and the imaginary parts
+@en of complex numbers (their sole argument).
+这些节点表示复数的相应实数和虚数部分。
 
 @item NON_LVALUE_EXPR
-These nodes indicate that their one and only operand is not an lvalue.
-A back end can treat these identically to the single operand.
+@en These nodes indicate that their one and only operand is not an lvalue.
+@en A back end can treat these identically to the single operand.
+这些节点指示它们有且仅有的一个操作数不是左值的。后端可以将其作为单操作数来对待。
 
 @item NOP_EXPR
-These nodes are used to represent conversions that do not require any
-code-generation.  For example, conversion of a @code{char*} to an
-@code{int*} does not require any code be generated; such a conversion is
-represented by a @code{NOP_EXPR}.  The single operand is the expression
-to be converted.  The conversion from a pointer to a reference is also
-represented with a @code{NOP_EXPR}.
+@en These nodes are used to represent conversions that do not require any
+@en code-generation.  For example, conversion of a @code{char*} to an
+@en @code{int*} does not require any code be generated; such a conversion is
+@en represented by a @code{NOP_EXPR}.  The single operand is the expression
+@en to be converted.  The conversion from a pointer to a reference is also
+@en represented with a @code{NOP_EXPR}.
+这些节点用于表示不需要任何代码生成的转换。例如，由@code{char*}到@code{int*}不需要任何代码生成；这样的转换被表示为一个@code{NOP_EXPR}。单操作数为要转换的表达式。从指针到引用的转换也被表示为@code{NOP_EXPR}。
 
 @item CONVERT_EXPR
-These nodes are similar to @code{NOP_EXPR}s, but are used in those
-situations where code may need to be generated.  For example, if an
-@code{int*} is converted to an @code{int} code may need to be generated
-on some platforms.  These nodes are never used for C++-specific
-conversions, like conversions between pointers to different classes in
-an inheritance hierarchy.  Any adjustments that need to be made in such
-cases are always indicated explicitly.  Similarly, a user-defined
-conversion is never represented by a @code{CONVERT_EXPR}; instead, the
-function calls are made explicit.
+@en These nodes are similar to @code{NOP_EXPR}s, but are used in those
+@en situations where code may need to be generated.  For example, if an
+@en @code{int*} is converted to an @code{int} code may need to be generated
+@en on some platforms.  These nodes are never used for C++-specific
+@en conversions, like conversions between pointers to different classes in
+@en an inheritance hierarchy.  Any adjustments that need to be made in such
+@en cases are always indicated explicitly.  Similarly, a user-defined
+@en conversion is never represented by a @code{CONVERT_EXPR}; instead, the
+@en function calls are made explicit.
+这些节点类似于@code{NOP_EXPR}，不过用于可能会有代码生成的情况。例如，如果@code{int*}被转换为@code{int}，则可能会在一些平台上需要生成代码。这些节点从来不被用于C++特定的转换，例如在一个继承体系中不同的类的指针间的转换。这种情况下的任何调整，总是需要被显式的指出。类似的，用户定义的转换也不使用@code{CONVERT_EXPR}表示；相反的，而是显式的调用函数。
 
 @item FIXED_CONVERT_EXPR
-These nodes are used to represent conversions that involve fixed-point
-values.  For example, from a fixed-point value to another fixed-point value,
-from an integer to a fixed-point value, from a fixed-point value to an
-integer, from a floating-point value to a fixed-point value, or from
-a fixed-point value to a floating-point value.
+@en These nodes are used to represent conversions that involve fixed-point
+@en values.  For example, from a fixed-point value to another fixed-point value,
+@en from an integer to a fixed-point value, from a fixed-point value to an
+@en integer, from a floating-point value to a fixed-point value, or from
+@en a fixed-point value to a floating-point value.
+这些节点用于表示涉及定点值的转换。例如，从一个定点值到另一个定点值，从一个整数到一个定点值，从一个定点值到一个整数，从一个浮点值到一个定点值，或者从一个定点值到一个浮点值。
 
 @item LSHIFT_EXPR
 @itemx RSHIFT_EXPR
-These nodes represent left and right shifts, respectively.  The first
-operand is the value to shift; it will always be of integral type.  The
-second operand is an expression for the number of bits by which to
-shift.  Right shift should be treated as arithmetic, i.e., the
-high-order bits should be zero-filled when the expression has unsigned
-type and filled with the sign bit when the expression has signed type.
-Note that the result is undefined if the second operand is larger
-than or equal to the first operand's type size.
-
+@en These nodes represent left and right shifts, respectively.  The first
+@en operand is the value to shift; it will always be of integral type.  The
+@en second operand is an expression for the number of bits by which to
+@en shift.  Right shift should be treated as arithmetic, i.e., the
+@en high-order bits should be zero-filled when the expression has unsigned
+@en type and filled with the sign bit when the expression has signed type.
+@en Note that the result is undefined if the second operand is larger
+@en than or equal to the first operand's type size.
+这些节点分别表示左移和右移。第一个操作数为要移动的值；其将总是为整数类型。第二个操作数为表示移动位数的表达式。右移将作为算术移动，即，当表达式具有无符号类型则高位填充0，当表达式具有有符号类型则高位填充符号位。注意如果第二个操作数大于或等于第一个操作数的类型大小，则结果无定义。
 
 @item BIT_IOR_EXPR
 @itemx BIT_XOR_EXPR
 @itemx BIT_AND_EXPR
-These nodes represent bitwise inclusive or, bitwise exclusive or, and
-bitwise and, respectively.  Both operands will always have integral
-type.
+@en These nodes represent bitwise inclusive or, bitwise exclusive or, and
+@en bitwise and, respectively.  Both operands will always have integral
+@en type.
+这些节点分别表示位运算符“或”，“异或”，和“与”。所有操作数将总是为整数类型。 
 
 @item TRUTH_ANDIF_EXPR
 @itemx TRUTH_ORIF_EXPR
-These nodes represent logical ``and'' and logical ``or'', respectively.
-These operators are not strict; i.e., the second operand is evaluated
-only if the value of the expression is not determined by evaluation of
-the first operand.  The type of the operands and that of the result are
-always of @code{BOOLEAN_TYPE} or @code{INTEGER_TYPE}.
+@en These nodes represent logical ``and'' and logical ``or'', respectively.
+@en These operators are not strict; i.e., the second operand is evaluated
+@en only if the value of the expression is not determined by evaluation of
+@en the first operand.  The type of the operands and that of the result are
+@en always of @code{BOOLEAN_TYPE} or @code{INTEGER_TYPE}.
+这些节点分别表示逻辑“与”和“或”。这些操作符不是严格的；即第二个操作数只在通过求值第一个操作数无法确定表达式的值的时候，才被计算求值。操作数和结果的类型总是为@code{BOOLEAN_TYPE}或@code{INTEGER_TYPE}。
 
 @item TRUTH_AND_EXPR
 @itemx TRUTH_OR_EXPR
 @itemx TRUTH_XOR_EXPR
-These nodes represent logical and, logical or, and logical exclusive or.
-They are strict; both arguments are always evaluated.  There are no
-corresponding operators in C or C++, but the front end will sometimes
-generate these expressions anyhow, if it can tell that strictness does
-not matter.  The type of the operands and that of the result are
-always of @code{BOOLEAN_TYPE} or @code{INTEGER_TYPE}.
+@en These nodes represent logical and, logical or, and logical exclusive or.
+@en They are strict; both arguments are always evaluated.  There are no
+@en corresponding operators in C or C++, but the front end will sometimes
+@en generate these expressions anyhow, if it can tell that strictness does
+@en not matter.  The type of the operands and that of the result are
+@en always of @code{BOOLEAN_TYPE} or @code{INTEGER_TYPE}.
+这些节点表示逻辑与，或和异或。它们为严格的方式；所有参数都总是被计算求值。这在C或C++中没有对应的运算符，但是前端如果可以断定严格的方式没关系，则有时将会生成这些表达式。操作数和结果的类型总是为@code{BOOLEAN_TYPE}或@code{INTEGER_TYPE}。 
 
 @itemx POINTER_PLUS_EXPR
-This node represents pointer arithmetic.  The first operand is always
-a pointer/reference type.  The second operand is always an unsigned
-integer type compatible with sizetype.  This is the only binary
-arithmetic operand that can operate on pointer types.
+@en This node represents pointer arithmetic.  The first operand is always
+@en a pointer/reference type.  The second operand is always an unsigned
+@en integer type compatible with sizetype.  This is the only binary
+@en arithmetic operand that can operate on pointer types.
+该节点表示指针算术运算。第一个操作数总是为一个指针/引用类型。第二个操作数总是为一个与sizetype兼容的无符号整数类型。这是唯一的可以操作指针类型的二元算术运算。 
 
 @itemx PLUS_EXPR
 @itemx MINUS_EXPR
 @itemx MULT_EXPR
-These nodes represent various binary arithmetic operations.
-Respectively, these operations are addition, subtraction (of the second
-operand from the first) and multiplication.  Their operands may have
-either integral or floating type, but there will never be case in which
-one operand is of floating type and the other is of integral type.
+@en These nodes represent various binary arithmetic operations.
+@en Respectively, these operations are addition, subtraction (of the second
+@en operand from the first) and multiplication.  Their operands may have
+@en either integral or floating type, but there will never be case in which
+@en one operand is of floating type and the other is of integral type.
+这些节点表示不同的二元算术运算。分别为加法，减法和乘法。它们的操作数可以为整数或者浮点类型，但不会为一个是浮点类型的，而另一个是整数类型。
 
-The behavior of these operations on signed arithmetic overflow is
-controlled by the @code{flag_wrapv} and @code{flag_trapv} variables.
+@en The behavior of these operations on signed arithmetic overflow is
+@en controlled by the @code{flag_wrapv} and @code{flag_trapv} variables.
+这些运算在有符号算术溢出时的行为，由变量@code{flag_wrapv}和@code{flag_trapv}来控制。
 
 @item RDIV_EXPR
-This node represents a floating point division operation.
+@en This node represents a floating point division operation.
+该节点表示一个浮点除法运算。
 
 @item TRUNC_DIV_EXPR
 @itemx FLOOR_DIV_EXPR
 @itemx CEIL_DIV_EXPR
 @itemx ROUND_DIV_EXPR
-These nodes represent integer division operations that return an integer
-result.  @code{TRUNC_DIV_EXPR} rounds towards zero, @code{FLOOR_DIV_EXPR}
-rounds towards negative infinity, @code{CEIL_DIV_EXPR} rounds towards
-positive infinity and @code{ROUND_DIV_EXPR} rounds to the closest integer.
-Integer division in C and C++ is truncating, i.e.@: @code{TRUNC_DIV_EXPR}.
+@en These nodes represent integer division operations that return an integer
+@en result.  @code{TRUNC_DIV_EXPR} rounds towards zero, @code{FLOOR_DIV_EXPR}
+@en rounds towards negative infinity, @code{CEIL_DIV_EXPR} rounds towards
+@en positive infinity and @code{ROUND_DIV_EXPR} rounds to the closest integer.
+@en Integer division in C and C++ is truncating, i.e.@: @code{TRUNC_DIV_EXPR}.
+这些节点表示返回整数结果的整数除法运算。@code{TRUNC_DIV_EXPR}向0方向舍入，@code{FLOOR_DIV_EXPR}向负无穷大舍入，@code{CEIL_DIV_EXPR}向正无穷大舍入，@code{ROUND_DIV_EXPR}向最近的整数舍入。C和C++中的整数除法为截断方式，即@code{TRUNC_DIV_EXPR}。
 
-The behavior of these operations on signed arithmetic overflow, when
-dividing the minimum signed integer by minus one, is controlled by the
-@code{flag_wrapv} and @code{flag_trapv} variables.
+@en The behavior of these operations on signed arithmetic overflow, when
+@en dividing the minimum signed integer by minus one, is controlled by the
+@en @code{flag_wrapv} and @code{flag_trapv} variables.
+这些运算在有符号算术溢出时的行为，由变量@code{flag_wrapv}和@code{flag_trapv}来控制。
 
 @item TRUNC_MOD_EXPR
 @itemx FLOOR_MOD_EXPR
 @itemx CEIL_MOD_EXPR
 @itemx ROUND_MOD_EXPR
-These nodes represent the integer remainder or modulus operation.
-The integer modulus of two operands @code{a} and @code{b} is
-defined as @code{a - (a/b)*b} where the division calculated using
-the corresponding division operator.  Hence for @code{TRUNC_MOD_EXPR}
-this definition assumes division using truncation towards zero, i.e.@:
-@code{TRUNC_DIV_EXPR}.  Integer remainder in C and C++ uses truncating
-division, i.e.@: @code{TRUNC_MOD_EXPR}.
+@en These nodes represent the integer remainder or modulus operation.
+@en The integer modulus of two operands @code{a} and @code{b} is
+@en defined as @code{a - (a/b)*b} where the division calculated using
+@en the corresponding division operator.  Hence for @code{TRUNC_MOD_EXPR}
+@en this definition assumes division using truncation towards zero, i.e.@:
+@en @code{TRUNC_DIV_EXPR}.  Integer remainder in C and C++ uses truncating
+@en division, i.e.@: @code{TRUNC_MOD_EXPR}.
+这些节点表示整数类型的求余或求模运算。两个操作数@code{a}和@code{b}的整型的模被定义为@code{a - (a/b)*b}，其中使用相应的除法操作符进行除法运算。因此，对于@code{TRUNC_MOD_EXPR}的定义，是假设使用了向零方向舍去的除法，即@code{TRUNC_DIV_EXPR}。C和C++中的整型求余，使用了舍去除法，即@code{TRUNC_MOD_EXPR}。
 
 @item EXACT_DIV_EXPR
-The @code{EXACT_DIV_EXPR} code is used to represent integer divisions where
-the numerator is known to be an exact multiple of the denominator.  This
-allows the backend to choose between the faster of @code{TRUNC_DIV_EXPR},
-@code{CEIL_DIV_EXPR} and @code{FLOOR_DIV_EXPR} for the current target.
+@en The @code{EXACT_DIV_EXPR} code is used to represent integer divisions where
+@en the numerator is known to be an exact multiple of the denominator.  This
+@en allows the backend to choose between the faster of @code{TRUNC_DIV_EXPR},
+@en @code{CEIL_DIV_EXPR} and @code{FLOOR_DIV_EXPR} for the current target.
+@code{EXACT_DIV_EXPR}用来表示整数除法，即分子已知为分母的确切的倍数。这使得后端可以从@code{TRUNC_DIV_EXPR}，@code{CEIL_DIV_EXPR}和@code{FLOOR_DIV_EXPR}中，为当前的目标机选择更快的运算。
 
 @item LT_EXPR
 @itemx LE_EXPR
@@ -1655,29 +1702,32 @@ allows the backend to choose between the faster of @code{TRUNC_DIV_EXPR},
 @itemx GE_EXPR
 @itemx EQ_EXPR
 @itemx NE_EXPR
-These nodes represent the less than, less than or equal to, greater
-than, greater than or equal to, equal, and not equal comparison
-operators.  The first and second operand with either be both of integral
-type or both of floating type.  The result type of these expressions
-will always be of integral or boolean type.  These operations return
-the result type's zero value for false, and the result type's one value
-for true.
+@en These nodes represent the less than, less than or equal to, greater
+@en than, greater than or equal to, equal, and not equal comparison
+@en operators.  The first and second operand with either be both of integral
+@en type or both of floating type.  The result type of these expressions
+@en will always be of integral or boolean type.  These operations return
+@en the result type's zero value for false, and the result type's one value
+@en for true.
+这些节点表示小于，小于或等于，大于，大于或等于，等于，和不等于的比较运算符。第一个和第二个操作数或者都为整数类型，或者都为浮点类型。这些表达式的结果类型将总是为整数或布尔类型。如果为假，则这些运算返回值0，如果为真，则返回值1。
 
-For floating point comparisons, if we honor IEEE NaNs and either operand
-is NaN, then @code{NE_EXPR} always returns true and the remaining operators
-always return false.  On some targets, comparisons against an IEEE NaN,
-other than equality and inequality, may generate a floating point exception.
+@en For floating point comparisons, if we honor IEEE NaNs and either operand
+@en is NaN, then @code{NE_EXPR} always returns true and the remaining operators
+@en always return false.  On some targets, comparisons against an IEEE NaN,
+@en other than equality and inequality, may generate a floating point exception.
+对于浮点类型比较运算，如果我们使用了IEEE NaN，并且任意一个操作数为NaN，则@code{NE_EXPR}总是返回真，而其余的运算符总是返回假。在一些目标机上，对于IEEE NaN，除了等于和不等于以外的其它比较运算，可能会生成一个浮点异常。
 
 @item ORDERED_EXPR
 @itemx UNORDERED_EXPR
-These nodes represent non-trapping ordered and unordered comparison
-operators.  These operations take two floating point operands and
-determine whether they are ordered or unordered relative to each other.
-If either operand is an IEEE NaN, their comparison is defined to be
-unordered, otherwise the comparison is defined to be ordered.  The
-result type of these expressions will always be of integral or boolean
-type.  These operations return the result type's zero value for false,
-and the result type's one value for true.
+@en These nodes represent non-trapping ordered and unordered comparison
+@en operators.  These operations take two floating point operands and
+@en determine whether they are ordered or unordered relative to each other.
+@en If either operand is an IEEE NaN, their comparison is defined to be
+@en unordered, otherwise the comparison is defined to be ordered.  The
+@en result type of these expressions will always be of integral or boolean
+@en type.  These operations return the result type's zero value for false,
+@en and the result type's one value for true.
+这些节点表示non-trapping的有序和无序的比较运算。这些运算接受两个浮点操作数，并确定它们之间是有序的，还是无序的。如果有一个操作数为IEEE NaN，则它们的比较被定以为无序的，否则为有序的。这些表达式的结果类型将总是为整数或者布尔类型。如果为假，则这些运算返回值0，如果为真，则返回值1。
 
 @item UNLT_EXPR
 @itemx UNLE_EXPR
@@ -1685,79 +1735,90 @@ and the result type's one value for true.
 @itemx UNGE_EXPR
 @itemx UNEQ_EXPR
 @itemx LTGT_EXPR
-These nodes represent the unordered comparison operators.
-These operations take two floating point operands and determine whether
-the operands are unordered or are less than, less than or equal to,
-greater than, greater than or equal to, or equal respectively.  For
-example, @code{UNLT_EXPR} returns true if either operand is an IEEE
-NaN or the first operand is less than the second.  With the possible
-exception of @code{LTGT_EXPR}, all of these operations are guaranteed
-not to generate a floating point exception.  The result
-type of these expressions will always be of integral or boolean type.
-These operations return the result type's zero value for false,
-and the result type's one value for true.
+@en These nodes represent the unordered comparison operators.
+@en These operations take two floating point operands and determine whether
+@en the operands are unordered or are less than, less than or equal to,
+@en greater than, greater than or equal to, or equal respectively.  For
+@en example, @code{UNLT_EXPR} returns true if either operand is an IEEE
+@en NaN or the first operand is less than the second.  With the possible
+@en exception of @code{LTGT_EXPR}, all of these operations are guaranteed
+@en not to generate a floating point exception.  The result
+@en type of these expressions will always be of integral or boolean type.
+@en These operations return the result type's zero value for false,
+@en and the result type's one value for true.
+这些节点表示无序比较运算符。这些运算接受两个浮点操作数，并分别确定它们之间是否为无序的，小于，小于或等于，大于，大于或等于，或者等于。例如，如果一个操作数为IEEE NaN，或者第一个操作数小于第二个，则@code{UNLT_EXPR}返回真。除了@code{LTGT_EXPR}可能会产生异常，其它的运算都保证不会产生浮点异常。这些表达式的结果类型将总是为整数或者布尔类型。如果为假，则这些运算返回值0，如果为真，则返回值1。
 
 @item MODIFY_EXPR
-These nodes represent assignment.  The left-hand side is the first
-operand; the right-hand side is the second operand.  The left-hand side
-will be a @code{VAR_DECL}, @code{INDIRECT_REF}, @code{COMPONENT_REF}, or
-other lvalue.
+@en These nodes represent assignment.  The left-hand side is the first
+@en operand; the right-hand side is the second operand.  The left-hand side
+@en will be a @code{VAR_DECL}, @code{INDIRECT_REF}, @code{COMPONENT_REF}, or
+@en other lvalue.
+这些节点表示赋值。左手边为第一个操作数，右手边为第二个操作数。左手边为一个@code{VAR_DECL}, @code{INDIRECT_REF}, @code{COMPONENT_REF}，或者其它左值。
 
-These nodes are used to represent not only assignment with @samp{=} but
-also compound assignments (like @samp{+=}), by reduction to @samp{=}
-assignment.  In other words, the representation for @samp{i += 3} looks
-just like that for @samp{i = i + 3}.
+@en These nodes are used to represent not only assignment with @samp{=} but
+@en also compound assignments (like @samp{+=}), by reduction to @samp{=}
+@en assignment.  In other words, the representation for @samp{i += 3} looks
+@en just like that for @samp{i = i + 3}.
+这些节点不仅用来表示使用@samp{=}进行赋值，也用来表示复合赋值（像@samp{+=}），并将其转换成@samp{=}赋值。换句话说，对@samp{i += 3}的表示，看起来就像是对@samp{i = i + 3}的表示。
 
 @item INIT_EXPR
-These nodes are just like @code{MODIFY_EXPR}, but are used only when a
-variable is initialized, rather than assigned to subsequently.  This
-means that we can assume that the target of the initialization is not
-used in computing its own value; any reference to the lhs in computing
-the rhs is undefined.
+@en These nodes are just like @code{MODIFY_EXPR}, but are used only when a
+@en variable is initialized, rather than assigned to subsequently.  This
+@en means that we can assume that the target of the initialization is not
+@en used in computing its own value; any reference to the lhs in computing
+@en the rhs is undefined.
+这些节点就像@code{MODIFY_EXPR}一样，只不过用于一个变量被初始化的时候，而不是后续的赋值。这意味着，我们可以假设初始化的目标，没有在右手边被用于计算它自己的值；任何在右手边的计算中，对左手边的引用，其行为将是未定义。
 
 @item COMPOUND_EXPR
-These nodes represent comma-expressions.  The first operand is an
-expression whose value is computed and thrown away prior to the
-evaluation of the second operand.  The value of the entire expression is
-the value of the second operand.
+@en These nodes represent comma-expressions.  The first operand is an
+@en expression whose value is computed and thrown away prior to the
+@en evaluation of the second operand.  The value of the entire expression is
+@en the value of the second operand.
+这些节点表示逗号表达式。第一个操作数为表达式，其值被计算，并在求出第二个操作数的值之前丢掉。整个表达式的值为第二个操作数的值。
 
 @item COND_EXPR
-These nodes represent @code{?:} expressions.  The first operand
-is of boolean or integral type.  If it evaluates to a nonzero value,
-the second operand should be evaluated, and returned as the value of the
-expression.  Otherwise, the third operand is evaluated, and returned as
-the value of the expression.
+@en These nodes represent @code{?:} expressions.  The first operand
+@en is of boolean or integral type.  If it evaluates to a nonzero value,
+@en the second operand should be evaluated, and returned as the value of the
+@en expression.  Otherwise, the third operand is evaluated, and returned as
+@en the value of the expression.
+这些节点表示@code{?:}表达式。第一个操作数是布尔或者整数类型。如果其求解为非零值，则第二个操作数将被求值，并返回表达式的值。否则，第三个操作数将被求值，并将表达式的值返回。
 
-The second operand must have the same type as the entire expression,
-unless it unconditionally throws an exception or calls a noreturn
-function, in which case it should have void type.  The same constraints
-apply to the third operand.  This allows array bounds checks to be
-represented conveniently as @code{(i >= 0 && i < 10) ? i : abort()}.
+@en The second operand must have the same type as the entire expression,
+@en unless it unconditionally throws an exception or calls a noreturn
+@en function, in which case it should have void type.  The same constraints
+@en apply to the third operand.  This allows array bounds checks to be
+@en represented conveniently as @code{(i >= 0 && i < 10) ? i : abort()}.
+第二个操作数必须与整个表达式具有相同的类型，除非它是要无条件的抛出一个异常或者调用一个不返回的函数，这种情况下，其将是void类型。第三个操作数也具有同样的约束。这使得数组的边界检查可以被方便的表示为@code{(i >= 0 && i < 10) ? i : abort()}。
 
-As a GNU extension, the C language front-ends allow the second
-operand of the @code{?:} operator may be omitted in the source.
-For example, @code{x ? : 3} is equivalent to @code{x ? x : 3},
-assuming that @code{x} is an expression without side-effects.
-In the tree representation, however, the second operand is always
-present, possibly protected by @code{SAVE_EXPR} if the first
-argument does cause side-effects.
+@en As a GNU extension, the C language front-ends allow the second
+@en operand of the @code{?:} operator may be omitted in the source.
+@en For example, @code{x ? : 3} is equivalent to @code{x ? x : 3},
+@en assuming that @code{x} is an expression without side-effects.
+@en In the tree representation, however, the second operand is always
+@en present, possibly protected by @code{SAVE_EXPR} if the first
+@en argument does cause side-effects.
+作为GNU扩展，C语言前端允许@code{?:}运算符的第二个操作数可以在源程序中省略掉。例如，@code{x ? : 3}等价于@code{x ? x : 3}，假设@code{x}是一个没有副作用的表达式。但是，在tree的表示中，第二个操作数总是存在的，并且，如果第一个参数确实产生副作用的话，则其可能通过@code{SAVE_EXPR}来保护。
 
 @item CALL_EXPR
-These nodes are used to represent calls to functions, including
-non-static member functions.  @code{CALL_EXPR}s are implemented as
-expression nodes with a variable number of operands.  Rather than using
-@code{TREE_OPERAND} to extract them, it is preferable to use the
-specialized accessor macros and functions that operate specifically on
-@code{CALL_EXPR} nodes.
+@en These nodes are used to represent calls to functions, including
+@en non-static member functions.  @code{CALL_EXPR}s are implemented as
+@en expression nodes with a variable number of operands.  Rather than using
+@en @code{TREE_OPERAND} to extract them, it is preferable to use the
+@en specialized accessor macros and functions that operate specifically on
+@en @code{CALL_EXPR} nodes.
+这些节点用来表示对函数的调用，包括non-static成员函数。@code{CALL_EXPR}被实现为一个具有可变数目操作数的表达式节点。不要用@code{TREE_OPERAND}来获取这些操作数，最好是用针对@code{CALL_EXPR}节点的特定的访问宏和函数。
 
-@code{CALL_EXPR_FN} returns a pointer to the
-function to call; it is always an expression whose type is a
-@code{POINTER_TYPE}.
+@en @code{CALL_EXPR_FN} returns a pointer to the
+@en function to call; it is always an expression whose type is a
+@en @code{POINTER_TYPE}.
+@code{CALL_EXPR_FN}返回一个调用函数的指针；其总是一个类型为@code{POINTER_TYPE}的表达式。
 
-The number of arguments to the call is returned by @code{call_expr_nargs},
-while the arguments themselves can be accessed with the @code{CALL_EXPR_ARG} 
-macro.  The arguments are zero-indexed and numbered left-to-right.  
-You can iterate over the arguments using @code{FOR_EACH_CALL_EXPR_ARG}, as in:
+@en The number of arguments to the call is returned by @code{call_expr_nargs},
+@en while the arguments themselves can be accessed with the @code{CALL_EXPR_ARG} 
+@en macro.  The arguments are zero-indexed and numbered left-to-right.  
+@en You can iterate over the arguments using @code{FOR_EACH_CALL_EXPR_ARG}, as in:
+调用函数的参数数目由@code{call_expr_nargs}来返回，而参数本身可以使用@code{CALL_EXPR_ARG}宏来访问。参数从零开始，从左向右进行索引。你可以使用@code{FOR_EACH_CALL_EXPR_ARG}来迭代参数，例如：
 
 @smallexample
 tree call, arg;
@@ -1767,104 +1828,116 @@ FOR_EACH_CALL_EXPR_ARG (arg, iter, call)
   @dots{};
 @end smallexample
 
-For non-static
-member functions, there will be an operand corresponding to the
-@code{this} pointer.  There will always be expressions corresponding to
-all of the arguments, even if the function is declared with default
-arguments and some arguments are not explicitly provided at the call
-sites.
+@en For non-static
+@en member functions, there will be an operand corresponding to the
+@en @code{this} pointer.  There will always be expressions corresponding to
+@en all of the arguments, even if the function is declared with default
+@en arguments and some arguments are not explicitly provided at the call
+@en sites.
+对于non-static成员函数，将会有一个对应于@code{this}指针的操作数。所有的参数都会有相应的表达式，即使函数使用缺省的参数声明，并且在调用的地方，一些参数没有被显式的提供。
 
-@code{CALL_EXPR}s also have a @code{CALL_EXPR_STATIC_CHAIN} operand that
-is used to implement nested functions.  This operand is otherwise null.
+@en @code{CALL_EXPR}s also have a @code{CALL_EXPR_STATIC_CHAIN} operand that
+@en is used to implement nested functions.  This operand is otherwise null.
+@code{CALL_EXPR}还有一个@code{CALL_EXPR_STATIC_CHAIN}操作数，用于实现嵌套函数。如果没有嵌套函数，则为null。
 
 @item CLEANUP_POINT_EXPR
-These nodes represent full-expressions.  The single operand is an
-expression to evaluate.  Any destructor calls engendered by the creation
-of temporaries during the evaluation of that expression should be
-performed immediately after the expression is evaluated.
+@en These nodes represent full-expressions.  The single operand is an
+@en expression to evaluate.  Any destructor calls engendered by the creation
+@en of temporaries during the evaluation of that expression should be
+@en performed immediately after the expression is evaluated.
+这些节点表示full-expression。单个操作数为被求值的表达式。任何在表达式求值中通过创建临时对象所引起的析构调用，都应该在表达式求值之后立刻执行。
 
 @item CONSTRUCTOR
-These nodes represent the brace-enclosed initializers for a structure or
-array.  The first operand is reserved for use by the back end.  The
-second operand is a @code{TREE_LIST}.  If the @code{TREE_TYPE} of the
-@code{CONSTRUCTOR} is a @code{RECORD_TYPE} or @code{UNION_TYPE}, then
-the @code{TREE_PURPOSE} of each node in the @code{TREE_LIST} will be a
-@code{FIELD_DECL} and the @code{TREE_VALUE} of each node will be the
-expression used to initialize that field.
+@en These nodes represent the brace-enclosed initializers for a structure or
+@en array.  The first operand is reserved for use by the back end.  The
+@en second operand is a @code{TREE_LIST}.  If the @code{TREE_TYPE} of the
+@en @code{CONSTRUCTOR} is a @code{RECORD_TYPE} or @code{UNION_TYPE}, then
+@en the @code{TREE_PURPOSE} of each node in the @code{TREE_LIST} will be a
+@en @code{FIELD_DECL} and the @code{TREE_VALUE} of each node will be the
+@en expression used to initialize that field.
+这些节点表示大括号括起的，对结构体或者数组的初始化。第一个操作数被保留，用于后端。第二个操作数为@code{TREE_LIST}。如果@code{CONSTRUCTOR}的@code{TREE_TYPE}为一个@code{RECORD_TYPE}或者@code{UNION_TYPE}，则@code{TREE_LIST}中每个节点的@code{TREE_PURPOSE}将为一个@code{FIELD_DECL}，并且每个节点的@code{TREE_VALUE}将为初始化该域的表达式。
 
-If the @code{TREE_TYPE} of the @code{CONSTRUCTOR} is an
-@code{ARRAY_TYPE}, then the @code{TREE_PURPOSE} of each element in the
-@code{TREE_LIST} will be an @code{INTEGER_CST} or a @code{RANGE_EXPR} of
-two @code{INTEGER_CST}s.  A single @code{INTEGER_CST} indicates which
-element of the array (indexed from zero) is being assigned to.  A
-@code{RANGE_EXPR} indicates an inclusive range of elements to
-initialize.  In both cases the @code{TREE_VALUE} is the corresponding
-initializer.  It is re-evaluated for each element of a
-@code{RANGE_EXPR}.  If the @code{TREE_PURPOSE} is @code{NULL_TREE}, then
-the initializer is for the next available array element.
+@en If the @code{TREE_TYPE} of the @code{CONSTRUCTOR} is an
+@en @code{ARRAY_TYPE}, then the @code{TREE_PURPOSE} of each element in the
+@en @code{TREE_LIST} will be an @code{INTEGER_CST} or a @code{RANGE_EXPR} of
+@en two @code{INTEGER_CST}s.  A single @code{INTEGER_CST} indicates which
+@en element of the array (indexed from zero) is being assigned to.  A
+@en @code{RANGE_EXPR} indicates an inclusive range of elements to
+@en initialize.  In both cases the @code{TREE_VALUE} is the corresponding
+@en initializer.  It is re-evaluated for each element of a
+@en @code{RANGE_EXPR}.  If the @code{TREE_PURPOSE} is @code{NULL_TREE}, then
+@en the initializer is for the next available array element.
+如果@code{CONSTRUCTOR}的@code{TREE_TYPE}为一个@code{ARRAY_TYPE}，则@code{TREE_LIST}中每个节点的@code{TREE_PURPOSE}将为一个@code{INTEGER_CST}，或者两个@code{INTEGER_CST}的@code{RANGE_EXPR}。单个@code{INTEGER_CST}指出了数组（从0开始索引）的哪个元素将被赋值。@code{RANGE_EXPR}指出了包含端点元素的一个范围将被初始化。这两种情况下，@code{TREE_VALUE}都对应初始化者。其值将对于@code{RANGE_EXPR}的每个元素都重新计算一次。如果@code{TREE_PURPOSE}是@code{NULL_TREE}，则初始化是针对下一个可用的数组元素。
 
-In the front end, you should not depend on the fields appearing in any
-particular order.  However, in the middle end, fields must appear in
-declaration order.  You should not assume that all fields will be
-represented.  Unrepresented fields will be set to zero.
+@en In the front end, you should not depend on the fields appearing in any
+@en particular order.  However, in the middle end, fields must appear in
+@en declaration order.  You should not assume that all fields will be
+@en represented.  Unrepresented fields will be set to zero.
+在前端，你不要认为域是按照特定的顺序出现。但是，在中端，域必须按照声明的顺序出现。你不应该假设所有的域都被表示了。没有表示的域将被设置为0。
 
 @item COMPOUND_LITERAL_EXPR
 @findex COMPOUND_LITERAL_EXPR_DECL_EXPR
 @findex COMPOUND_LITERAL_EXPR_DECL
-These nodes represent ISO C99 compound literals.  The
-@code{COMPOUND_LITERAL_EXPR_DECL_EXPR} is a @code{DECL_EXPR}
-containing an anonymous @code{VAR_DECL} for
-the unnamed object represented by the compound literal; the
-@code{DECL_INITIAL} of that @code{VAR_DECL} is a @code{CONSTRUCTOR}
-representing the brace-enclosed list of initializers in the compound
-literal.  That anonymous @code{VAR_DECL} can also be accessed directly
-by the @code{COMPOUND_LITERAL_EXPR_DECL} macro.
+@en These nodes represent ISO C99 compound literals.  The
+@en @code{COMPOUND_LITERAL_EXPR_DECL_EXPR} is a @code{DECL_EXPR}
+@en containing an anonymous @code{VAR_DECL} for
+@en the unnamed object represented by the compound literal; the
+@en @code{DECL_INITIAL} of that @code{VAR_DECL} is a @code{CONSTRUCTOR}
+@en representing the brace-enclosed list of initializers in the compound
+@en literal.  That anonymous @code{VAR_DECL} can also be accessed directly
+@en by the @code{COMPOUND_LITERAL_EXPR_DECL} macro.
+这些节点表示复合文字。@code{COMPOUND_LITERAL_EXPR_DECL_STMT}为一个@code{DECL_STMT}，包含了一个由复合文字表示的未命名对象的匿名@code{VAR_DECL}；@code{VAR_DECL}的@code{DECL_INITIAL}是一个@code{CONSTRUCTOR}用来表示在复合文字中大括号包围的初始值列表。匿名的@code{VAR_DECL}还可以通过@code{COMPOUND_LITERAL_EXPR_DECL}宏直接访问。
 
 @item SAVE_EXPR
-
-A @code{SAVE_EXPR} represents an expression (possibly involving
-side-effects) that is used more than once.  The side-effects should
-occur only the first time the expression is evaluated.  Subsequent uses
-should just reuse the computed value.  The first operand to the
-@code{SAVE_EXPR} is the expression to evaluate.  The side-effects should
-be executed where the @code{SAVE_EXPR} is first encountered in a
-depth-first preorder traversal of the expression tree.
+@en A @code{SAVE_EXPR} represents an expression (possibly involving
+@en side-effects) that is used more than once.  The side-effects should
+@en occur only the first time the expression is evaluated.  Subsequent uses
+@en should just reuse the computed value.  The first operand to the
+@en @code{SAVE_EXPR} is the expression to evaluate.  The side-effects should
+@en be executed where the @code{SAVE_EXPR} is first encountered in a
+@en depth-first preorder traversal of the expression tree.
+@code{SAVE_EXPR}表示一个被多次使用的表达式（可能会有副作用）。副作用应该只在表达式第一次被求值时发生。后续的使用应该只是重用计算所得的值。@code{SAVE_EXPR}的第一个操作数是要求值的表达式。副作用应该在深度优先前续遍历表达式树，第一次遇到@code{SAVE_EXPR}时被执行。 
 
 @item TARGET_EXPR
-A @code{TARGET_EXPR} represents a temporary object.  The first operand
-is a @code{VAR_DECL} for the temporary variable.  The second operand is
-the initializer for the temporary.  The initializer is evaluated and,
-if non-void, copied (bitwise) into the temporary.  If the initializer
-is void, that means that it will perform the initialization itself.
+@en A @code{TARGET_EXPR} represents a temporary object.  The first operand
+@en is a @code{VAR_DECL} for the temporary variable.  The second operand is
+@en the initializer for the temporary.  The initializer is evaluated and,
+@en if non-void, copied (bitwise) into the temporary.  If the initializer
+@en is void, that means that it will perform the initialization itself.
+@code{TARGET_EXPR}表示一个临时对象。第一个操作数是临时变量@code{VAR_DECL}。第二个操作数是临时变量的初始值。初始值将被求值，并且如果不是void型的，则（按位）复制到临时变量中。如果初始值是void的，意味着将会自己执行初始化。
 
-Often, a @code{TARGET_EXPR} occurs on the right-hand side of an
-assignment, or as the second operand to a comma-expression which is
-itself the right-hand side of an assignment, etc.  In this case, we say
-that the @code{TARGET_EXPR} is ``normal''; otherwise, we say it is
-``orphaned''.  For a normal @code{TARGET_EXPR} the temporary variable
-should be treated as an alias for the left-hand side of the assignment,
-rather than as a new temporary variable.
+@en Often, a @code{TARGET_EXPR} occurs on the right-hand side of an
+@en assignment, or as the second operand to a comma-expression which is
+@en itself the right-hand side of an assignment, etc.  In this case, we say
+@en that the @code{TARGET_EXPR} is ``normal''; otherwise, we say it is
+@en ``orphaned''.  For a normal @code{TARGET_EXPR} the temporary variable
+@en should be treated as an alias for the left-hand side of the assignment,
+@en rather than as a new temporary variable.
+很多时候，@code{TARGET_EXPR}会出现在赋值的右边，或者作为逗号表达式的第二个操作数。 这种情况下，我们说@code{TARGET_EXPR}是“normal”的；否则，我们说它是“orphaned”。对于一个正常的@code{TARGET_EXPR}，临时变量应被视为赋值的左端的一个别名，而不是一个新的临时变量。
 
-The third operand to the @code{TARGET_EXPR}, if present, is a
-cleanup-expression (i.e., destructor call) for the temporary.  If this
-expression is orphaned, then this expression must be executed when the
-statement containing this expression is complete.  These cleanups must
-always be executed in the order opposite to that in which they were
-encountered.  Note that if a temporary is created on one branch of a
-conditional operator (i.e., in the second or third operand to a
-@code{COND_EXPR}), the cleanup must be run only if that branch is
-actually executed.
+@en The third operand to the @code{TARGET_EXPR}, if present, is a
+@en cleanup-expression (i.e., destructor call) for the temporary.  If this
+@en expression is orphaned, then this expression must be executed when the
+@en statement containing this expression is complete.  These cleanups must
+@en always be executed in the order opposite to that in which they were
+@en encountered.  Note that if a temporary is created on one branch of a
+@en conditional operator (i.e., in the second or third operand to a
+@en @code{COND_EXPR}), the cleanup must be run only if that branch is
+@en actually executed.
+@code{TARGET_EXPR}的第三个操作数，如果存在的话，是临时变量的清理表达式（即析构调用）。如果该表达式是孤儿的，则该表达式必须当包含它的语句是完整的时候被执行。这些清理必须总是按照相反的顺序执行。注意如果临时变量是在条件操作符的分支上创建的（即，@code{COND_EXPR}的第二个或第三个操作数），则清理必须只有在该分支实际被执行时才运行。
 
 @item VA_ARG_EXPR
-This node is used to implement support for the C/C++ variable argument-list
-mechanism.  It represents expressions like @code{va_arg (ap, type)}.
-Its @code{TREE_TYPE} yields the tree representation for @code{type} and
-its sole argument yields the representation for @code{ap}.
-
+@en This node is used to implement support for the C/C++ variable argument-list
+@en mechanism.  It represents expressions like @code{va_arg (ap, type)}.
+@en Its @code{TREE_TYPE} yields the tree representation for @code{type} and
+@en its sole argument yields the representation for @code{ap}.
+该节点用来实现对C/C++可变参数列表机制的支持。它表示了像@code{va_arg (ap, type)}这样的表达式。它的@code{TREE_TYPE}用来产生@code{type}的树表示，唯一的参数用来产生对@code{ap}的表示。
 @end table
 
+@en @node Vectors
+@en @subsection Vectors
 @node Vectors
-@subsection Vectors
+@subsection 向量
 @tindex VEC_LSHIFT_EXPR
 @tindex VEC_RSHIFT_EXPR
 @tindex VEC_WIDEN_MULT_HI_EXPR
@@ -1884,88 +1957,97 @@ its sole argument yields the representation for @code{ap}.
 @table @code
 @item VEC_LSHIFT_EXPR
 @itemx VEC_RSHIFT_EXPR
-These nodes represent whole vector left and right shifts, respectively.  
-The first operand is the vector to shift; it will always be of vector type.  
-The second operand is an expression for the number of bits by which to
-shift.  Note that the result is undefined if the second operand is larger
-than or equal to the first operand's type size.
+@en These nodes represent whole vector left and right shifts, respectively.  
+@en The first operand is the vector to shift; it will always be of vector type.  
+@en The second operand is an expression for the number of bits by which to
+@en shift.  Note that the result is undefined if the second operand is larger
+@en than or equal to the first operand's type size.
+这些节点相应的表示整个向量的左移和右移。第一个操作数为要移动的向量；其将总是为向量类型。第二个操作数是一个表达式，表示要移动的位数。注意如果第二个操作数大于或等于第一个操作数的类型大小，则结果未定义。
 
 @item VEC_WIDEN_MULT_HI_EXPR
 @itemx VEC_WIDEN_MULT_LO_EXPR
-These nodes represent widening vector multiplication of the high and low
-parts of the two input vectors, respectively.  Their operands are vectors 
-that contain the same number of elements (@code{N}) of the same integral type.  
-The result is a vector that contains half as many elements, of an integral type 
-whose size is twice as wide.  In the case of @code{VEC_WIDEN_MULT_HI_EXPR} the
-high @code{N/2} elements of the two vector are multiplied to produce the
-vector of @code{N/2} products. In the case of @code{VEC_WIDEN_MULT_LO_EXPR} the
-low @code{N/2} elements of the two vector are multiplied to produce the
-vector of @code{N/2} products.
+@en These nodes represent widening vector multiplication of the high and low
+@en parts of the two input vectors, respectively.  Their operands are vectors 
+@en that contain the same number of elements (@code{N}) of the same integral type.  
+@en The result is a vector that contains half as many elements, of an integral type 
+@en whose size is twice as wide.  In the case of @code{VEC_WIDEN_MULT_HI_EXPR} the
+@en high @code{N/2} elements of the two vector are multiplied to produce the
+@en vector of @code{N/2} products. In the case of @code{VEC_WIDEN_MULT_LO_EXPR} the
+@en low @code{N/2} elements of the two vector are multiplied to produce the
+@en vector of @code{N/2} products.
+这些节点分别表示两个输入向量的高部和低部的加宽向量乘法。它们的操作数为包含同一整数类型的同一数目（@code{N}）元素的向量。结果为一个包含整数类型的元素大小为两倍宽数目为一半的向量。对于@code{VEC_WIDEN_MULT_HI_EXPR}，两个向量的高@code{N/2}个元素相乘得到@code{N/2}个积的向量。对于@code{VEC_WIDEN_MULT_LO_EXPR}，两个向量的低@code{N/2}个元素相乘得到@code{N/2}个积的向量。
 
 @item VEC_UNPACK_HI_EXPR
 @itemx VEC_UNPACK_LO_EXPR
-These nodes represent unpacking of the high and low parts of the input vector,
-respectively.  The single operand is a vector that contains @code{N} elements 
-of the same integral or floating point type.  The result is a vector
-that contains half as many elements, of an integral or floating point type
-whose size is twice as wide.  In the case of @code{VEC_UNPACK_HI_EXPR} the
-high @code{N/2} elements of the vector are extracted and widened (promoted).
-In the case of @code{VEC_UNPACK_LO_EXPR} the low @code{N/2} elements of the
-vector are extracted and widened (promoted).
+@en These nodes represent unpacking of the high and low parts of the input vector,
+@en respectively.  The single operand is a vector that contains @code{N} elements 
+@en of the same integral or floating point type.  The result is a vector
+@en that contains half as many elements, of an integral or floating point type
+@en whose size is twice as wide.  In the case of @code{VEC_UNPACK_HI_EXPR} the
+@en high @code{N/2} elements of the vector are extracted and widened (promoted).
+@en In the case of @code{VEC_UNPACK_LO_EXPR} the low @code{N/2} elements of the
+@en vector are extracted and widened (promoted).
+这些节点分别表示拆分输入向量的高部和低部。单操作数为一个包含同一整数或浮点类型的@code{N}个元素的向量。
+结果为包含整数或者浮点类型的元素大小为两倍宽数目为一半的向量。对于@code{VEC_UNPACK_HI_EXPR}，向量的高@code{N/2}个元素被提取并扩展（提升）。对于@code{VEC_UNPACK_LO_EXPR}，向量的低@code{N/2}个元素被提取并扩展（提升）。
 
 @item VEC_UNPACK_FLOAT_HI_EXPR
 @itemx VEC_UNPACK_FLOAT_LO_EXPR
-These nodes represent unpacking of the high and low parts of the input vector,
-where the values are converted from fixed point to floating point.  The
-single operand is a vector that contains @code{N} elements of the same
-integral type.  The result is a vector that contains half as many elements
-of a floating point type whose size is twice as wide.  In the case of
-@code{VEC_UNPACK_HI_EXPR} the high @code{N/2} elements of the vector are
-extracted, converted and widened.  In the case of @code{VEC_UNPACK_LO_EXPR}
-the low @code{N/2} elements of the vector are extracted, converted and widened.
+@en These nodes represent unpacking of the high and low parts of the input vector,
+@en where the values are converted from fixed point to floating point.  The
+@en single operand is a vector that contains @code{N} elements of the same
+@en integral type.  The result is a vector that contains half as many elements
+@en of a floating point type whose size is twice as wide.  In the case of
+@en @code{VEC_UNPACK_HI_EXPR} the high @code{N/2} elements of the vector are
+@en extracted, converted and widened.  In the case of @code{VEC_UNPACK_LO_EXPR}
+@en the low @code{N/2} elements of the vector are extracted, converted and widened.
+单操作数为包含同一整数类型的@code{N}个元素的向量。结果为包含浮点类型的元素大小为两倍宽数目为一半的向量。对于@code{VEC_UNPACK_HI_EXPR}，向量的高@code{N/2}个元素被提取，转换并扩展。对于@code{VEC_UNPACK_LO_EXPR}，向量的低@code{N/2}个元素被提取，转换并扩展。
 
 @item VEC_PACK_TRUNC_EXPR
-This node represents packing of truncated elements of the two input vectors
-into the output vector.  Input operands are vectors that contain the same
-number of elements of the same integral or floating point type.  The result
-is a vector that contains twice as many elements of an integral or floating
-point type whose size is half as wide. The elements of the two vectors are
-demoted and merged (concatenated) to form the output vector.
+@en This node represents packing of truncated elements of the two input vectors
+@en into the output vector.  Input operands are vectors that contain the same
+@en number of elements of the same integral or floating point type.  The result
+@en is a vector that contains twice as many elements of an integral or floating
+@en point type whose size is half as wide. The elements of the two vectors are
+@en demoted and merged (concatenated) to form the output vector.
+该节点表示将两个输入向量的截断元素打包成输出向量。输入操作数是包含同一整数或者浮点类型的相同数目元素的向量。结果为包含整数或者浮点类型的元素大小为一半数目为两倍的向量。两个向量的元素合并成输出向量。
 
 @item VEC_PACK_SAT_EXPR
-This node represents packing of elements of the two input vectors into the
-output vector using saturation.  Input operands are vectors that contain
-the same number of elements of the same integral type.  The result is a
-vector that contains twice as many elements of an integral type whose size
-is half as wide.  The elements of the two vectors are demoted and merged
-(concatenated) to form the output vector.
+@en This node represents packing of elements of the two input vectors into the
+@en output vector using saturation.  Input operands are vectors that contain
+@en the same number of elements of the same integral type.  The result is a
+@en vector that contains twice as many elements of an integral type whose size
+@en is half as wide.  The elements of the two vectors are demoted and merged
+@en (concatenated) to form the output vector.
+该节点表示使用饱和方式（saturation）将两个输入向量的元素打包成输出向量。输入操作数是包含了同一整数类型的相同数目元素的向量。结果为一个包含整数类型的元素大小为一半数目为两倍的向量。两个向量的元素合并成输出向量。 
 
 @item VEC_PACK_FIX_TRUNC_EXPR
-This node represents packing of elements of the two input vectors into the
-output vector, where the values are converted from floating point
-to fixed point.  Input operands are vectors that contain the same number
-of elements of a floating point type.  The result is a vector that contains
-twice as many elements of an integral type whose size is half as wide.  The
-elements of the two vectors are merged (concatenated) to form the output
-vector.
+@en This node represents packing of elements of the two input vectors into the
+@en output vector, where the values are converted from floating point
+@en to fixed point.  Input operands are vectors that contain the same number
+@en of elements of a floating point type.  The result is a vector that contains
+@en twice as many elements of an integral type whose size is half as wide.  The
+@en elements of the two vectors are merged (concatenated) to form the output
+@en vector.
+该节点表示将将两个输入向量的元素打包成输出向量，并将值由浮点转换为定点。输入操作数是包含浮点类型的相同数目元素的向量。结果为包含整数类型元素大小一半数目为两倍的向量。两个向量的元素合并成输出向量。
 
 @item VEC_EXTRACT_EVEN_EXPR
 @itemx VEC_EXTRACT_ODD_EXPR
-These nodes represent extracting of the even/odd elements of the two input 
-vectors, respectively. Their operands and result are vectors that contain the 
-same number of elements of the same type.
+@en These nodes represent extracting of the even/odd elements of the two input 
+@en vectors, respectively. Their operands and result are vectors that contain the 
+@en same number of elements of the same type.
+这些节点分别表示提取两个输入向量的偶数/奇数个元素。它们的操作数和结果为包含同一类型的相同数目元素的向量。
 
 @item VEC_INTERLEAVE_HIGH_EXPR
 @itemx VEC_INTERLEAVE_LOW_EXPR
-These nodes represent merging and interleaving of the high/low elements of the
-two input vectors, respectively. The operands and the result are vectors that 
-contain the same number of elements (@code{N}) of the same type.
-In the case of @code{VEC_INTERLEAVE_HIGH_EXPR}, the high @code{N/2} elements of 
-the first input vector are interleaved with the high @code{N/2} elements of the
-second input vector. In the case of @code{VEC_INTERLEAVE_LOW_EXPR}, the low
-@code{N/2} elements of the first input vector are interleaved with the low 
-@code{N/2} elements of the second input vector.
-
+@en These nodes represent merging and interleaving of the high/low elements of the
+@en two input vectors, respectively. The operands and the result are vectors that 
+@en contain the same number of elements (@code{N}) of the same type.
+@en In the case of @code{VEC_INTERLEAVE_HIGH_EXPR}, the high @code{N/2} elements of 
+@en the first input vector are interleaved with the high @code{N/2} elements of the
+@en second input vector. In the case of @code{VEC_INTERLEAVE_LOW_EXPR}, the low
+@en @code{N/2} elements of the first input vector are interleaved with the low 
+@en @code{N/2} elements of the second input vector.
+这些节点分别表示交错合并两个输入向量的高/低元素。操作数和结果为包含同一类型的相同数目（@code{N}）元素的向量。对于@code{VEC_INTERLEAVE_HIGH_EXPR}，第一个输入向量的高@code{N/2}个元素被第二个输入向量的高@code{N/2}个元素替换。对于@code{VEC_INTERLEAVE_LOW_EXPR}，第一个输入向量的低@code{N/2}个元素被第二个输入向量的低@code{N/2}个元素替换。 
 @end table
 
 
