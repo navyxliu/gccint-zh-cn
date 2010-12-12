@@ -51,25 +51,27 @@ GENERIC的目的是简单的提供一个使用tree来表示整个函数的语言
 @en @end menu
 
 @menu
-* Deficiencies::                Topics net yet covered in this document.
-* Tree overview::               All about @code{tree}s.
-* Types::                       Fundamental and aggregate types.
-* Declarations::                Type declarations and variables.
-* Attributes::                  Declaration and type attributes.
-* Expressions: Expression trees.            Operating on data.
-* Statements::                  Control flow and related trees.
-* Functions::           	Function bodies, linkage, and other aspects.
-* Language-dependent trees::    Topics and trees specific to language front ends.
-* C and C++ Trees::     	Trees specific to C and C++.
-* Java Trees:: 	                Trees specific to Java.
+* Deficiencies::                在该文档中没有涵盖的专题
+* Tree overview::               所有关于@code{tree}的
+* Types::                       基本类型和聚合类型
+* Declarations::                类型声明和变量
+* Attributes::                  声明和类型属性
+* Expressions: Expression trees.            数据操作
+* Statements::                  控制流和相关的tree。
+* Functions::           	函数体，链接，以及其它方面
+* Language-dependent trees::    语言前端特定的话题和tree
+* C and C++ Trees::     	C和C++特定的tree
+* Java Trees:: 	                Java特定的tree
 @end menu
 
 @c ---------------------------------------------------------------------
 @c Deficiencies
 @c ---------------------------------------------------------------------
 
+@en @node Deficiencies
+@en @section Deficiencies
 @node Deficiencies
-@section Deficiencies
+@section 不足之处
 
 @en There are many places in which this document is incomplet and incorrekt.
 @en It is, as of yet, only @emph{preliminary} documentation.
@@ -79,8 +81,10 @@ GENERIC的目的是简单的提供一个使用tree来表示整个函数的语言
 @c Overview
 @c ---------------------------------------------------------------------
 
+@en @node Tree overview
+@en @section Overview
 @node Tree overview
-@section Overview
+@section 概述
 @cindex tree
 @findex TREE_CODE
 
@@ -232,8 +236,10 @@ operands, each of which is also a tree.
 @c Identifiers
 @c ---------------------------------------------------------------------
 
+@en @node Identifiers
+@en @subsection Identifiers
 @node Identifiers
-@subsection Identifiers
+@subsection 标识符
 @cindex identifier
 @cindex name
 @tindex IDENTIFIER_NODE
@@ -287,8 +293,10 @@ operands, each of which is also a tree.
 @c Containers
 @c ---------------------------------------------------------------------
 
+@en @node Containers
+@en @subsection Containers
 @node Containers
-@subsection Containers
+@subsection 容器
 @cindex container
 @cindex list
 @cindex vector
@@ -324,8 +332,10 @@ operands, each of which is also a tree.
 @c Types
 @c ---------------------------------------------------------------------
 
+@en @node Types
+@en @section Types
 @node Types
-@section Types
+@section 类型
 @cindex type
 @cindex pointer
 @cindex reference
@@ -415,8 +425,7 @@ operands, each of which is also a tree.
 @en actual name of the type.  The @code{TYPE_NAME} will be @code{NULL_TREE}
 @en for a type that is not a built-in type, the result of a typedef, or a
 @en named class type.
-该宏返回类型的一个声明（按照@code{TYPE_DECL}的型式）。（注意该宏不返回@code{IDENTIFIER_NODE}）你可以查看@code{TYPE_DECL}的@code{DECL_NAME}来获得类型的实际的名字。
-@code{TYPE_NAME}将为@code{NULL_TREE}，对于不是内建类型的，typedef的，或者命名的class类型。
+该宏返回类型的一个声明（按照@code{TYPE_DECL}的型式）。（注意该宏不返回@code{IDENTIFIER_NODE}）你可以查看@code{TYPE_DECL}的@code{DECL_NAME}来获得类型的实际的名字。@code{TYPE_NAME}将为@code{NULL_TREE}，对于不是内建类型的，typedef的，或者命名的class类型。
 
 @item TYPE_CANONICAL
 @en This macro returns the ``canonical'' type for the given type
@@ -561,107 +570,126 @@ operands, each of which is also a tree.
 用来表示@code{bool}类型。
 
 @item POINTER_TYPE
-Used to represent pointer types, and pointer to data member types.  The
-@code{TREE_TYPE} gives the type to which this type points.
+@en Used to represent pointer types, and pointer to data member types.  The
+@en @code{TREE_TYPE} gives the type to which this type points.
+用来表示指针类型，以及指向数据成员的指针类型。@code{TREE_TYPE}给出了所指向的类型。如果类型为一个指向数据成员的指针，则@code{TYPE_PTRMEM_P}成立。对于一个指向@samp{T X::*}形式的数据成员类型的指针，@code{TYPE_PTRMEM_CLASS_TYPE}将为类型@code{X}，而@code{TYPE_PTRMEM_POINTED_TO_TYPE}为类型@code{T}。
 
 @item REFERENCE_TYPE
-Used to represent reference types.  The @code{TREE_TYPE} gives the type
-to which this type refers.
+@en Used to represent reference types.  The @code{TREE_TYPE} gives the type
+@en to which this type refers.
+用来表示引用类型。@code{TREE_TYPE}给出了所引用的类型。
 
 @item FUNCTION_TYPE
-Used to represent the type of non-member functions and of static member
-functions.  The @code{TREE_TYPE} gives the return type of the function.
-The @code{TYPE_ARG_TYPES} are a @code{TREE_LIST} of the argument types.
-The @code{TREE_VALUE} of each node in this list is the type of the
-corresponding argument; the @code{TREE_PURPOSE} is an expression for the
-default argument value, if any.  If the last node in the list is
-@code{void_list_node} (a @code{TREE_LIST} node whose @code{TREE_VALUE}
-is the @code{void_type_node}), then functions of this type do not take
-variable arguments.  Otherwise, they do take a variable number of
-arguments.
+@en Used to represent the type of non-member functions and of static member
+@en functions.  The @code{TREE_TYPE} gives the return type of the function.
+@en The @code{TYPE_ARG_TYPES} are a @code{TREE_LIST} of the argument types.
+@en The @code{TREE_VALUE} of each node in this list is the type of the
+@en corresponding argument; the @code{TREE_PURPOSE} is an expression for the
+@en default argument value, if any.  If the last node in the list is
+@en @code{void_list_node} (a @code{TREE_LIST} node whose @code{TREE_VALUE}
+@en is the @code{void_type_node}), then functions of this type do not take
+@en variable arguments.  Otherwise, they do take a variable number of
+@en arguments.
+用来表示非成员函数和静态成员函数的类型。@code{TREE_TYPE}给出了函数的返回值类型。@code{TYPE_ARG_TYPES}为一个@code{TREE_LIST}，参数类型列表。该列表上的每个节点的@code{TREE_VALUE}为相应参数的类型；@code{TREE_PURPOSE}如果存在，则为缺省参数值的表达式。如果列表中的最后一个节点为@code{void_list_node}（一个@code{TREE_LIST}节点，其@code{TREE_VALUE}为@code{void_type_node}），则该类型的函数不接受可变参数。否则，它们是接受可变数目的参数。
 
-Note that in C (but not in C++) a function declared like @code{void f()}
-is an unprototyped function taking a variable number of arguments; the
-@code{TYPE_ARG_TYPES} of such a function will be @code{NULL}.
+@en Note that in C (but not in C++) a function declared like @code{void f()}
+@en is an unprototyped function taking a variable number of arguments; the
+@en @code{TYPE_ARG_TYPES} of such a function will be @code{NULL}.
+注意，在C（而不是C++）中，一个声明如@code{void f()}的函数，为一个无函数原型的函数，其接受可变数目的参数；这样的函数的@code{TYPE_ARG_TYPES}将为@code{NULL}。
 
 @item METHOD_TYPE
-Used to represent the type of a non-static member function.  Like a
-@code{FUNCTION_TYPE}, the return type is given by the @code{TREE_TYPE}.
-The type of @code{*this}, i.e., the class of which functions of this
-type are a member, is given by the @code{TYPE_METHOD_BASETYPE}.  The
-@code{TYPE_ARG_TYPES} is the parameter list, as for a
-@code{FUNCTION_TYPE}, and includes the @code{this} argument.
+@en Used to represent the type of a non-static member function.  Like a
+@en @code{FUNCTION_TYPE}, the return type is given by the @code{TREE_TYPE}.
+@en The type of @code{*this}, i.e., the class of which functions of this
+@en type are a member, is given by the @code{TYPE_METHOD_BASETYPE}.  The
+@en @code{TYPE_ARG_TYPES} is the parameter list, as for a
+@en @code{FUNCTION_TYPE}, and includes the @code{this} argument.
+用来表示非静态成员函数的类型。像@code{FUNCTION_TYPE}一样，返回值由@code{TREE_TYPE}给出。@code{*this}的类型，即，这个函数成员所在的类的类型，由@code{TYPE_METHOD_BASETYPE}给出。@code{TYPE_ARG_TYPES}为参数列表，就像@code{FUNCTION_TYPE}一样，包含@code{this}参数。
 
 @item ARRAY_TYPE
-Used to represent array types.  The @code{TREE_TYPE} gives the type of
-the elements in the array.  If the array-bound is present in the type,
-the @code{TYPE_DOMAIN} is an @code{INTEGER_TYPE} whose
-@code{TYPE_MIN_VALUE} and @code{TYPE_MAX_VALUE} will be the lower and
-upper bounds of the array, respectively.  The @code{TYPE_MIN_VALUE} will
-always be an @code{INTEGER_CST} for zero, while the
-@code{TYPE_MAX_VALUE} will be one less than the number of elements in
-the array, i.e., the highest value which may be used to index an element
-in the array.
+@en Used to represent array types.  The @code{TREE_TYPE} gives the type of
+@en the elements in the array.  If the array-bound is present in the type,
+@en the @code{TYPE_DOMAIN} is an @code{INTEGER_TYPE} whose
+@en @code{TYPE_MIN_VALUE} and @code{TYPE_MAX_VALUE} will be the lower and
+@en upper bounds of the array, respectively.  The @code{TYPE_MIN_VALUE} will
+@en always be an @code{INTEGER_CST} for zero, while the
+@en @code{TYPE_MAX_VALUE} will be one less than the number of elements in
+@en the array, i.e., the highest value which may be used to index an element
+@en in the array.
+用于表示数组类型，@code{TREE_TYPE}给出了数组元素的类型。如果数组边界在类型中存在，则@code{TYPE_DOMAIN}为一个@code{INTEGER_TYPE}，它的@code{TYPE_MIN_VALUE}和@code{TYPE_MAX_VALUE}将分别为数组的下界和上界。@code{TYPE_MIN_VALUE}将总是为@code{INTEGER_CST}，0，而@code{TYPE_MAX_VALUE}将为数组元素数目减1，即可以用来索引数组元素的最大值。
 
 @item RECORD_TYPE
-Used to represent @code{struct} and @code{class} types, as well as
-pointers to member functions and similar constructs in other languages.
-@code{TYPE_FIELDS} contains the items contained in this type, each of
-which can be a @code{FIELD_DECL}, @code{VAR_DECL}, @code{CONST_DECL}, or
-@code{TYPE_DECL}.  You may not make any assumptions about the ordering
-of the fields in the type or whether one or more of them overlap.
+@en Used to represent @code{struct} and @code{class} types, as well as
+@en pointers to member functions and similar constructs in other languages.
+@en @code{TYPE_FIELDS} contains the items contained in this type, each of
+@en which can be a @code{FIELD_DECL}, @code{VAR_DECL}, @code{CONST_DECL}, or
+@en @code{TYPE_DECL}.  You may not make any assumptions about the ordering
+@en of the fields in the type or whether one or more of them overlap.
+用来表示@code{struct}和@code{class}类型，以及指向成员函数和其它语言中类似结构的指针。@code{TYPE_FIELDS}包含了该类型中包含的项，其可以为@code{FIELD_DECL}, @code{VAR_DECL}, @code{CONST_DECL}或@code{TYPE_DECL}。你不能假设类型中的域之间的顺序，以及它们是否有重叠。
 
 @item UNION_TYPE
-Used to represent @code{union} types.  Similar to @code{RECORD_TYPE}
-except that all @code{FIELD_DECL} nodes in @code{TYPE_FIELD} start at
-bit position zero.
+@en Used to represent @code{union} types.  Similar to @code{RECORD_TYPE}
+@en except that all @code{FIELD_DECL} nodes in @code{TYPE_FIELD} start at
+@en bit position zero.
+用来表示@code{union}类型。类似于@code{RECORD_TYPE}，只不过在@code{TYPE_FIELD}中的所有@code{FIELD_DECL}起始于0位。
 
 @item QUAL_UNION_TYPE
-Used to represent part of a variant record in Ada.  Similar to
-@code{UNION_TYPE} except that each @code{FIELD_DECL} has a
-@code{DECL_QUALIFIER} field, which contains a boolean expression that
-indicates whether the field is present in the object.  The type will only
-have one field, so each field's @code{DECL_QUALIFIER} is only evaluated
-if none of the expressions in the previous fields in @code{TYPE_FIELDS}
-are nonzero.  Normally these expressions will reference a field in the
-outer object using a @code{PLACEHOLDER_EXPR}.
+@en Used to represent part of a variant record in Ada.  Similar to
+@en @code{UNION_TYPE} except that each @code{FIELD_DECL} has a
+@en @code{DECL_QUALIFIER} field, which contains a boolean expression that
+@en indicates whether the field is present in the object.  The type will only
+@en have one field, so each field's @code{DECL_QUALIFIER} is only evaluated
+@en if none of the expressions in the previous fields in @code{TYPE_FIELDS}
+@en are nonzero.  Normally these expressions will reference a field in the
+@en outer object using a @code{PLACEHOLDER_EXPR}.
+用来表示Ada中的可变记录（variant record）的一部分。类似于@code{UNION_TYPE}，只不过每个@code{FIELD_DECL}具有一个@code{DECL_QUALIFIER}域，其包含了一个布尔表达式，用来指示该域是否在对象中存在。该类型将只有一个域，所以只有当@code{TYPE_FIELDS}中，先前的域中的表达式都不为零时，每个域的@code{DECL_QUALIFIER}才被求值。通常，这些表达式将使用@code{PLACEHOLDER_EXPR}引用外部对象的一个域。
 
 @item LANG_TYPE
-This node is used to represent a language-specific type.  The front
-end must handle it.
+@en This node is used to represent a language-specific type.  The front
+@en end must handle it.
+该节点用来表示一个语言特定的类型。前端必须对它进行处理。
 
 @item OFFSET_TYPE
-This node is used to represent a pointer-to-data member.  For a data
-member @code{X::m} the @code{TYPE_OFFSET_BASETYPE} is @code{X} and the
-@code{TREE_TYPE} is the type of @code{m}.
+@en This node is used to represent a pointer-to-data member.  For a data
+@en member @code{X::m} the @code{TYPE_OFFSET_BASETYPE} is @code{X} and the
+@en @code{TREE_TYPE} is the type of @code{m}.
+该节点用于表示一个pointer-to-data成员。对于一个数据成员@code{X::m}，则@code{TYPE_OFFSET_BASETYPE}为@code{X}，@code{TREE_TYPE}为 @code{m}类型.
 
 @end table
 
-There are variables whose values represent some of the basic types.
-These include:
+@en There are variables whose values represent some of the basic types.
+@en These include:
+有些变量，它们的值表示基本的类型。这包括：
 @table @code
 @item void_type_node
-A node for @code{void}.
+@en A node for @code{void}.
+@code{void}节点。
 
 @item integer_type_node
-A node for @code{int}.
+@en A node for @code{int}.
+@code{int}节点。
 
 @item unsigned_type_node.
-A node for @code{unsigned int}.
+@en A node for @code{unsigned int}.
+@code{unsigned int}节点。
 
 @item char_type_node.
-A node for @code{char}.
+@en A node for @code{char}.
+@code{char}节点。
 @end table
 @noindent
-It may sometimes be useful to compare one of these variables with a type
-in hand, using @code{same_type_p}.
+@en It may sometimes be useful to compare one of these variables with a type
+@en in hand, using @code{same_type_p}.
+有时使用@code{same_type_p}将这些变量和手头的类型进行比较会很有帮助。 
 
 @c ---------------------------------------------------------------------
 @c Declarations
 @c ---------------------------------------------------------------------
 
+@en @node Declarations
+@en @section Declarations
 @node Declarations
-@section Declarations
+@section 声明
 @cindex declaration
 @cindex variable
 @cindex type declaration
@@ -682,119 +710,144 @@ in hand, using @code{same_type_p}.
 @findex DECL_ALIGN
 @findex DECL_EXTERNAL
 
-This section covers the various kinds of declarations that appear in the
-internal representation, except for declarations of functions
-(represented by @code{FUNCTION_DECL} nodes), which are described in
-@ref{Functions}.
+@en This section covers the various kinds of declarations that appear in the
+@en internal representation, except for declarations of functions
+@en (represented by @code{FUNCTION_DECL} nodes), which are described in
+@en @ref{Functions}.
+这一节涵盖了出现在内部表示中的各种声明。函数声明（由@code{FUNCTION_DECL}节点表示）除外，其在@ref{Functions}一节中描述。
 
+@en @menu
+@en * Working with declarations::  Macros and functions that work on
+@en declarations.
+@en * Internal structure:: How declaration nodes are represented. 
+@en @end menu
 @menu
-* Working with declarations::  Macros and functions that work on
-declarations.
-* Internal structure:: How declaration nodes are represented. 
+* Working with declarations:: 作用于声明的宏和函数
+* Internal structure:: 声明节点是如何表示的 
 @end menu
 
+@en @node Working with declarations
+@en @subsection Working with declarations
 @node Working with declarations
-@subsection Working with declarations
+@subsection 关于声明的操作
 
-Some macros can be used with any kind of declaration.  These include:
+@en Some macros can be used with any kind of declaration.  These include:
+一些宏可以用于任何种类的声明。这包括：
 @ftable @code
 @item DECL_NAME
-This macro returns an @code{IDENTIFIER_NODE} giving the name of the
-entity.
+@en This macro returns an @code{IDENTIFIER_NODE} giving the name of the
+@en entity.
+该宏返回一个@code{IDENTIFIER_NODE}，给出了实体的名字。
 
 @item TREE_TYPE
-This macro returns the type of the entity declared.
+@en This macro returns the type of the entity declared.
+该宏返回被声明的实体的类型。
 
 @item EXPR_FILENAME
-This macro returns the name of the file in which the entity was
-declared, as a @code{char*}.  For an entity declared implicitly by the
-compiler (like @code{__builtin_memcpy}), this will be the string
-@code{"<internal>"}.
+@en This macro returns the name of the file in which the entity was
+@en declared, as a @code{char*}.  For an entity declared implicitly by the
+@en compiler (like @code{__builtin_memcpy}), this will be the string
+@en @code{"<internal>"}.
+该宏返回被声明的实体所在的文件的名字，作为一个@code{char*}。对于由编译器隐式声明的实体（比如@code{__builtin_memcpy}），这将为字符串@code{"<internal>"}。
 
 @item EXPR_LINENO
-This macro returns the line number at which the entity was declared, as
-an @code{int}.
+@en This macro returns the line number at which the entity was declared, as
+@en an @code{int}.
+该宏返回被声明的实体所在的行号，作为一个@code{int}。
 
 @item DECL_ARTIFICIAL
-This predicate holds if the declaration was implicitly generated by the
-compiler.  For example, this predicate will hold of an implicitly
-declared member function, or of the @code{TYPE_DECL} implicitly
-generated for a class type.  Recall that in C++ code like:
+@en This predicate holds if the declaration was implicitly generated by the
+@en compiler.  For example, this predicate will hold of an implicitly
+@en declared member function, or of the @code{TYPE_DECL} implicitly
+@en generated for a class type.  Recall that in C++ code like:
+该断言用来表示声明是否为编译器隐式产生的。例如，该断言可以用来存放一个隐式声明的成员函数，或者为一个class类型隐式生成的@code{TYPE_DECL}。回想一下在C++代码中：
 @smallexample
 struct S @{@};
 @end smallexample
 @noindent
-is roughly equivalent to C code like:
+@en is roughly equivalent to C code like:
+大体上等价于C代码：
 @smallexample
 struct S @{@};
 typedef struct S S;
 @end smallexample
-The implicitly generated @code{typedef} declaration is represented by a
-@code{TYPE_DECL} for which @code{DECL_ARTIFICIAL} holds.
+@en The implicitly generated @code{typedef} declaration is represented by a
+@en @code{TYPE_DECL} for which @code{DECL_ARTIFICIAL} holds.
+隐式生成的@code{typedef}声明由@code{TYPE_DECL}表示，在@code{DECL_ARTIFICIAL}中存放。
 
 @end ftable
 
-The various kinds of declarations include:
+@en The various kinds of declarations include:
+各种类型的声明：
 @table @code
 @item LABEL_DECL
-These nodes are used to represent labels in function bodies.  For more
-information, see @ref{Functions}.  These nodes only appear in block
-scopes.
+@en These nodes are used to represent labels in function bodies.  For more
+@en information, see @ref{Functions}.  These nodes only appear in block
+@en scopes.
+这些节点用于表示函数体内的标号。更多信息，可以参考@ref{Functions}。这些节点只出现在块作用域（block scope）。
 
 @item CONST_DECL
-These nodes are used to represent enumeration constants.  The value of
-the constant is given by @code{DECL_INITIAL} which will be an
-@code{INTEGER_CST} with the same type as the @code{TREE_TYPE} of the
-@code{CONST_DECL}, i.e., an @code{ENUMERAL_TYPE}.
+@en These nodes are used to represent enumeration constants.  The value of
+@en the constant is given by @code{DECL_INITIAL} which will be an
+@en @code{INTEGER_CST} with the same type as the @code{TREE_TYPE} of the
+@en @code{CONST_DECL}, i.e., an @code{ENUMERAL_TYPE}.
+这些节点用于表示枚举常量。常量的值由@code{DECL_INITIAL}给出，为一个@code{INTEGER_CST}，并且和@code{CONST_DECL}的@code{TREE_TYPE}具有相同的类型，即@code{ENUMERAL_TYPE}。 
 
 @item RESULT_DECL
-These nodes represent the value returned by a function.  When a value is
-assigned to a @code{RESULT_DECL}, that indicates that the value should
-be returned, via bitwise copy, by the function.  You can use
-@code{DECL_SIZE} and @code{DECL_ALIGN} on a @code{RESULT_DECL}, just as
-with a @code{VAR_DECL}.
+@en These nodes represent the value returned by a function.  When a value is
+@en assigned to a @code{RESULT_DECL}, that indicates that the value should
+@en be returned, via bitwise copy, by the function.  You can use
+@en @code{DECL_SIZE} and @code{DECL_ALIGN} on a @code{RESULT_DECL}, just as
+@en with a @code{VAR_DECL}.
+这些节点表示函数的返回值。当@code{RESULT_DECL}被赋予一个值的时候，这表明该值将被函数通过按位拷贝的方式返回。就像对于@code{VAR_DECL}一样，你可以在@code{RESULT_DECL}上使用@code{DECL_SIZE}和@code{DECL_ALIGN}。
 
 @item TYPE_DECL
-These nodes represent @code{typedef} declarations.  The @code{TREE_TYPE}
-is the type declared to have the name given by @code{DECL_NAME}.  In
-some cases, there is no associated name.
+@en These nodes represent @code{typedef} declarations.  The @code{TREE_TYPE}
+@en is the type declared to have the name given by @code{DECL_NAME}.  In
+@en some cases, there is no associated name.
+这些节点表示@code{typedef}声明。@code{TREE_TYPE}为被声明的类型，其名字由@code{DECL_NAME}给出。有些情况下，没有相关联的名字。
 
 @item VAR_DECL
-These nodes represent variables with namespace or block scope, as well
-as static data members.  The @code{DECL_SIZE} and @code{DECL_ALIGN} are
-analogous to @code{TYPE_SIZE} and @code{TYPE_ALIGN}.  For a declaration,
-you should always use the @code{DECL_SIZE} and @code{DECL_ALIGN} rather
-than the @code{TYPE_SIZE} and @code{TYPE_ALIGN} given by the
-@code{TREE_TYPE}, since special attributes may have been applied to the
-variable to give it a particular size and alignment.  You may use the
-predicates @code{DECL_THIS_STATIC} or @code{DECL_THIS_EXTERN} to test
-whether the storage class specifiers @code{static} or @code{extern} were
-used to declare a variable.
+@en These nodes represent variables with namespace or block scope, as well
+@en as static data members.  The @code{DECL_SIZE} and @code{DECL_ALIGN} are
+@en analogous to @code{TYPE_SIZE} and @code{TYPE_ALIGN}.  For a declaration,
+@en you should always use the @code{DECL_SIZE} and @code{DECL_ALIGN} rather
+@en than the @code{TYPE_SIZE} and @code{TYPE_ALIGN} given by the
+@en @code{TREE_TYPE}, since special attributes may have been applied to the
+@en variable to give it a particular size and alignment.  You may use the
+@en predicates @code{DECL_THIS_STATIC} or @code{DECL_THIS_EXTERN} to test
+@en whether the storage class specifiers @code{static} or @code{extern} were
+@en used to declare a variable.
+这些节点表示具有命名空间或者块作用域的变量，以及静态数据成员。@code{DECL_SIZE}和@code{DECL_ALIGN}，类似于@code{TYPE_SIZE}和@code{TYPE_ALIGN}。对于声明，你应该总是使用@code{DECL_SIZE}和@code{DECL_ALIGN}，而不是由@code{TREE_TYPE}给定的@code{TYPE_SIZE}和@code{TYPE_ALIGN}，因为，可能会对变量应用了特定的属性，使其具有特定的大小和对齐方式。你可以使用断言@code{DECL_THIS_STATIC}或@code{DECL_THIS_EXTERN}来测试是否使用了存储类别说明符@code{static}或@code{extern}来声明一个变量。
 
-If this variable is initialized (but does not require a constructor),
-the @code{DECL_INITIAL} will be an expression for the initializer.  The
-initializer should be evaluated, and a bitwise copy into the variable
-performed.  If the @code{DECL_INITIAL} is the @code{error_mark_node},
-there is an initializer, but it is given by an explicit statement later
-in the code; no bitwise copy is required.
+@en If this variable is initialized (but does not require a constructor),
+@en the @code{DECL_INITIAL} will be an expression for the initializer.  The
+@en initializer should be evaluated, and a bitwise copy into the variable
+@en performed.  If the @code{DECL_INITIAL} is the @code{error_mark_node},
+@en there is an initializer, but it is given by an explicit statement later
+@en in the code; no bitwise copy is required.
+如果该变量被初始化（并需要一个构造者），则@code{DECL_INITIAL}将为初始化者的表达式。初始化者将被求值，并按位复制到变量中。如果@code{DECL_INITIAL}为@code{error_mark_node}，则表明存在一个初始化者，只不过它由之后代码中的显式的语句给出；这将不需要进行按位复制。
 
-GCC provides an extension that allows either automatic variables, or
-global variables, to be placed in particular registers.  This extension
-is being used for a particular @code{VAR_DECL} if @code{DECL_REGISTER}
-holds for the @code{VAR_DECL}, and if @code{DECL_ASSEMBLER_NAME} is not
-equal to @code{DECL_NAME}.  In that case, @code{DECL_ASSEMBLER_NAME} is
-the name of the register into which the variable will be placed.
+@en GCC provides an extension that allows either automatic variables, or
+@en global variables, to be placed in particular registers.  This extension
+@en is being used for a particular @code{VAR_DECL} if @code{DECL_REGISTER}
+@en holds for the @code{VAR_DECL}, and if @code{DECL_ASSEMBLER_NAME} is not
+@en equal to @code{DECL_NAME}.  In that case, @code{DECL_ASSEMBLER_NAME} is
+@en the name of the register into which the variable will be placed.
+GCC提供了一个扩展，允许自动变量或者全局变量，被放到特定的寄存器中。如果@code{DECL_REGISTER}存放了@code{VAR_DECL}，并且@code{DECL_ASSEMBLER_NAME}不等于@code{DECL_NAME}，则@code{VAR_DECL}是使用了该扩展。这种情况下，@code{DECL_ASSEMBLER_NAME}为存放变量的寄存器的名字。
 
 @item PARM_DECL
-Used to represent a parameter to a function.  Treat these nodes
-similarly to @code{VAR_DECL} nodes.  These nodes only appear in the
-@code{DECL_ARGUMENTS} for a @code{FUNCTION_DECL}.
+@en Used to represent a parameter to a function.  Treat these nodes
+@en similarly to @code{VAR_DECL} nodes.  These nodes only appear in the
+@en @code{DECL_ARGUMENTS} for a @code{FUNCTION_DECL}.
+用于表示一个函数的参数。这些节点可以作为@code{VAR_DECL}节点来看待。这些节点只出现在@code{FUNCTION_DECL}的@code{DECL_ARGUMENTS}中。
 
-The @code{DECL_ARG_TYPE} for a @code{PARM_DECL} is the type that will
-actually be used when a value is passed to this function.  It may be a
-wider type than the @code{TREE_TYPE} of the parameter; for example, the
-ordinary type might be @code{short} while the @code{DECL_ARG_TYPE} is
-@code{int}.
+@en The @code{DECL_ARG_TYPE} for a @code{PARM_DECL} is the type that will
+@en actually be used when a value is passed to this function.  It may be a
+@en wider type than the @code{TREE_TYPE} of the parameter; for example, the
+@en ordinary type might be @code{short} while the @code{DECL_ARG_TYPE} is
+@en @code{int}.
+@code{PARM_DECL}的@code{DECL_ARG_TYPE}为，当值传给函数时实际使用的类型。其可以为一个比参数的@code{TREE_TYPE}更宽的类型；例如，原始类型可能为@code{short}，而@code{DECL_ARG_TYPE}为@code{int}。
 
 @item DEBUG_EXPR_DECL
 Used to represent an anonymous debug-information temporary created to
@@ -802,21 +855,23 @@ hold an expression as it is optimized away, so that its value can be
 referenced in debug bind statements.
 
 @item FIELD_DECL
-These nodes represent non-static data members.  The @code{DECL_SIZE} and
-@code{DECL_ALIGN} behave as for @code{VAR_DECL} nodes.  
-The position of the field within the parent record is specified by a 
-combination of three attributes.  @code{DECL_FIELD_OFFSET} is the position,
-counting in bytes, of the @code{DECL_OFFSET_ALIGN}-bit sized word containing
-the bit of the field closest to the beginning of the structure.  
-@code{DECL_FIELD_BIT_OFFSET} is the bit offset of the first bit of the field
-within this word; this may be nonzero even for fields that are not bit-fields,
-since @code{DECL_OFFSET_ALIGN} may be greater than the natural alignment
-of the field's type.
+@en These nodes represent non-static data members.  The @code{DECL_SIZE} and
+@en @code{DECL_ALIGN} behave as for @code{VAR_DECL} nodes.  
+@en The position of the field within the parent record is specified by a 
+@en combination of three attributes.  @code{DECL_FIELD_OFFSET} is the position,
+@en counting in bytes, of the @code{DECL_OFFSET_ALIGN}-bit sized word containing
+@en the bit of the field closest to the beginning of the structure.  
+@en @code{DECL_FIELD_BIT_OFFSET} is the bit offset of the first bit of the field
+@en within this word; this may be nonzero even for fields that are not bit-fields,
+@en since @code{DECL_OFFSET_ALIGN} may be greater than the natural alignment
+@en of the field's type.
+这些节点表示非静态数据成员。@code{DECL_SIZE}和@code{DECL_ALIGN}的行为，跟@code{VAR_DECL}节点的一样。在父记录（parent record）中的域的位置，由三个属性组合指定。@code{DECL_FIELD_OFFSET}为按字节计数的位置，
 
-If @code{DECL_C_BIT_FIELD} holds, this field is a bit-field.  In a bit-field,
-@code{DECL_BIT_FIELD_TYPE} also contains the type that was originally
-specified for it, while DECL_TYPE may be a modified type with lesser precision,
-according to the size of the bit field.
+@en If @code{DECL_C_BIT_FIELD} holds, this field is a bit-field.  In a bit-field,
+@en @code{DECL_BIT_FIELD_TYPE} also contains the type that was originally
+@en specified for it, while DECL_TYPE may be a modified type with lesser precision,
+@en according to the size of the bit field.
+如果DECL_C_BIT_FIELD有效，则该域是一个位域。在位域中，DECL_BIT_FIELD_TYPE还包含了原始指定的类型，而DECL_TYPE可能是根据位域的大小，修改后具有更少精度的类型。
 
 @item NAMESPACE_DECL
 Namespaces provide a name hierarchy for other declarations.  They
@@ -824,93 +879,121 @@ appear in the @code{DECL_CONTEXT} of other @code{_DECL} nodes.
 
 @end table
 
+@en @node Internal structure
+@en @subsection Internal structure
 @node Internal structure
-@subsection Internal structure
+@subsection 内部结构
 
-@code{DECL} nodes are represented internally as a hierarchy of
-structures.
+@en @code{DECL} nodes are represented internally as a hierarchy of
+@en structures.
+@code{DECL}节点在内部被表示为层次结构体。
 
+@en @menu
+@en * Current structure hierarchy::  The current DECL node structure
+@en hierarchy.
+@en * Adding new DECL node types:: How to add a new DECL node to a
+@en frontend.
+@en @end menu
 @menu
-* Current structure hierarchy::  The current DECL node structure
-hierarchy.
-* Adding new DECL node types:: How to add a new DECL node to a
-frontend.
+* Current structure hierarchy:: 目前DECL节点的结构层次
+* Adding new DECL node types:: 如何给前端添加一个新的DECL节点
 @end menu
 
+@en @node Current structure hierarchy
+@en @subsubsection Current structure hierarchy
 @node Current structure hierarchy
-@subsubsection Current structure hierarchy
+@subsubsection 目前的结构层次
 
 @table @code
 
 @item struct tree_decl_minimal
-This is the minimal structure to inherit from in order for common
-@code{DECL} macros to work.  The fields it contains are a unique ID,
-source location, context, and name.
+@en This is the minimal structure to inherit from in order for common
+@en @code{DECL} macros to work.  The fields it contains are a unique ID,
+@en source location, context, and name.
+这是用于继承的最小结构体，从而使得@code{DECL}宏更加通用。所包含的域为一个唯一的ID，源位置，上下文和名字。 
 
 @item struct tree_decl_common
-This structure inherits from @code{struct tree_decl_minimal}.  It
-contains fields that most @code{DECL} nodes need, such as a field to
-store alignment, machine mode, size, and attributes.
+@en This structure inherits from @code{struct tree_decl_minimal}.  It
+@en contains fields that most @code{DECL} nodes need, such as a field to
+@en store alignment, machine mode, size, and attributes.
+该结构体继承于@code{struct tree_decl_minimal}。包含了大多@code{DECL}节点需要的域，像存储对齐信息，机器模式，大小和属性的域。 
 
 @item struct tree_field_decl
-This structure inherits from @code{struct tree_decl_common}.  It is
-used to represent @code{FIELD_DECL}.
+@en This structure inherits from @code{struct tree_decl_common}.  It is
+@en used to represent @code{FIELD_DECL}.
+该结构体继承于@code{struct tree_decl_common}。用于表示@code{FIELD_DECL}。
 
 @item struct tree_label_decl
-This structure inherits from @code{struct tree_decl_common}.  It is
-used to represent @code{LABEL_DECL}.
+@en This structure inherits from @code{struct tree_decl_common}.  It is
+@en used to represent @code{LABEL_DECL}.
+该结构体继承于@code{struct tree_decl_common}。用于表示@code{LABEL_DECL}。 
 
 @item struct tree_translation_unit_decl
-This structure inherits from @code{struct tree_decl_common}.  It is
-used to represent @code{TRANSLATION_UNIT_DECL}.
+@en This structure inherits from @code{struct tree_decl_common}.  It is
+@en used to represent @code{TRANSLATION_UNIT_DECL}.
+该结构体继承于@code{struct tree_decl_common}。用于表示@code{TRANSLATION_UNIT_DECL}。 
 
 @item struct tree_decl_with_rtl
-This structure inherits from @code{struct tree_decl_common}.  It
-contains a field to store the low-level RTL associated with a
-@code{DECL} node.
+@en This structure inherits from @code{struct tree_decl_common}.  It
+@en contains a field to store the low-level RTL associated with a
+@en @code{DECL} node.
+该结构体继承于@code{struct tree_decl_common}。包含了一个存储与@code{DECL}节点相关的低层次RTL。
 
 @item struct tree_result_decl
-This structure inherits from @code{struct tree_decl_with_rtl}.  It is
-used to represent @code{RESULT_DECL}.
+@en This structure inherits from @code{struct tree_decl_with_rtl}.  It is
+@en used to represent @code{RESULT_DECL}.
+该结构体继承于@code{struct tree_decl_with_rtl}。用于表示@code{RESULT_DECL}。 
 
 @item struct tree_const_decl
-This structure inherits from @code{struct tree_decl_with_rtl}.  It is
-used to represent @code{CONST_DECL}.
+@en This structure inherits from @code{struct tree_decl_with_rtl}.  It is
+@en used to represent @code{CONST_DECL}.
+该结构体继承于@code{struct tree_decl_with_rtl}。用于表示@code{CONST_DECL}。 
 
 @item struct tree_parm_decl
-This structure inherits from @code{struct tree_decl_with_rtl}.  It is
-used to represent @code{PARM_DECL}.  
+@en This structure inherits from @code{struct tree_decl_with_rtl}.  It is
+@en used to represent @code{PARM_DECL}.  
+该结构体继承于@code{struct tree_decl_with_rtl}。用于表示@code{PARM_DECL}。 
 
 @item struct tree_decl_with_vis
-This structure inherits from @code{struct tree_decl_with_rtl}.  It
-contains fields necessary to store visibility information, as well as
-a section name and assembler name.
+@en This structure inherits from @code{struct tree_decl_with_rtl}.  It
+@en contains fields necessary to store visibility information, as well as
+@en a section name and assembler name.
+该结构体继承于@code{struct tree_decl_with_rtl}。包含了存储可视性信息所需要的域，还有一个section名和汇编名。 
 
 @item struct tree_var_decl
-This structure inherits from @code{struct tree_decl_with_vis}.  It is
-used to represent @code{VAR_DECL}.  
+@en This structure inherits from @code{struct tree_decl_with_vis}.  It is
+@en used to represent @code{VAR_DECL}.  
+该结构体继承于@code{struct tree_decl_with_vis}。用于表示@code{VAR_DECL}。
 
 @item struct tree_function_decl
-This structure inherits from @code{struct tree_decl_with_vis}.  It is
-used to represent @code{FUNCTION_DECL}.  
+@en This structure inherits from @code{struct tree_decl_with_vis}.  It is
+@en used to represent @code{FUNCTION_DECL}.  
+该结构体继承于@code{struct tree_decl_with_vis}。用于表示@code{FUNCTION_DECL}。
 
 @end table
+@en @node Adding new DECL node types
+@en @subsubsection Adding new DECL node types
 @node Adding new DECL node types
-@subsubsection Adding new DECL node types
+@subsubsection 添加新的DECL节点类型
 
-Adding a new @code{DECL} tree consists of the following steps
+@en Adding a new @code{DECL} tree consists of the following steps
+增加一个新的@code{DECL}树包含下列步骤
 
 @table @asis
 
-@item Add a new tree code for the @code{DECL} node
-For language specific @code{DECL} nodes, there is a @file{.def} file
-in each frontend directory where the tree code should be added.
-For @code{DECL} nodes that are part of the middle-end, the code should
-be added to @file{tree.def}.
+@en @item Add a new tree code for the @code{DECL} node
+@en For language specific @code{DECL} nodes, there is a @file{.def} file
+@en in each frontend directory where the tree code should be added.
+@en For @code{DECL} nodes that are part of the middle-end, the code should
+@en be added to @file{tree.def}.
+@item 为@code{DECL}节点增加一个新的树代码
+对于语言特定的@code{DECL}节点，在每个前端目录下有一个@file{.def}文件，用来添加树代码。对于属于中端一部分的@code{DECL}节点，代码应该添加到@file{tree.def}中。
 
-@item Create a new structure type for the @code{DECL} node
-These structures should inherit from one of the existing structures in
-the language hierarchy by using that structure as the first member.
+@en @item Create a new structure type for the @code{DECL} node
+@en These structures should inherit from one of the existing structures in
+@en the language hierarchy by using that structure as the first member.
+@item 为@code{DECL}节点创建一个新的结构体类型
+这些结构体应该继承于现有的层次结构体，方法是使用该结构体作为第一个成员。
 
 @smallexample
 struct tree_foo_decl
@@ -919,53 +1002,64 @@ struct tree_foo_decl
 @}
 @end smallexample
 
-Would create a structure name @code{tree_foo_decl} that inherits from
-@code{struct tree_decl_with_vis}.
+@en Would create a structure name @code{tree_foo_decl} that inherits from
+@en @code{struct tree_decl_with_vis}.
+将会创建一个名为@code{tree_foo_decl}的结构体，继承于@code{struct tree_decl_with_vis}。
 
-For language specific @code{DECL} nodes, this new structure type
-should go in the appropriate @file{.h} file.
-For @code{DECL} nodes that are part of the middle-end, the structure
-type should go in @file{tree.h}.
+@en For language specific @code{DECL} nodes, this new structure type
+@en should go in the appropriate @file{.h} file.
+@en For @code{DECL} nodes that are part of the middle-end, the structure
+@en type should go in @file{tree.h}.
+对于语言特定的@code{DECL}节点，这个新的结构体类型应该放在合适的@file{.h}文件中。对于属于中端一部分的@code{DECL}节点，结构体类型应该在@file{tree.h}中。
 
-@item Add a member to the tree structure enumerator for the node
-For garbage collection and dynamic checking purposes, each @code{DECL}
-node structure type is required to have a unique enumerator value
-specified with it.
-For language specific @code{DECL} nodes, this new enumerator value
-should go in the appropriate @file{.def} file.
-For @code{DECL} nodes that are part of the middle-end, the enumerator
-values are specified in @file{treestruct.def}.
+@en @item Add a member to the tree structure enumerator for the node
+@en For garbage collection and dynamic checking purposes, each @code{DECL}
+@en node structure type is required to have a unique enumerator value
+@en specified with it.
+@en For language specific @code{DECL} nodes, this new enumerator value
+@en should go in the appropriate @file{.def} file.
+@en For @code{DECL} nodes that are part of the middle-end, the enumerator
+@en values are specified in @file{treestruct.def}.
+@item 向树结构枚举中增加一个节点成员
+出于垃圾搜集和动态检查的目的，每个@code{DECL}节点结构体类型需要具有一个唯一的枚举值用来指定它。对于语言特定的@code{DECL}节点，该新的枚举值应该在合适的.def文中。对于属于中端的@code{DECL}节点，枚举值在@file{treestruct.def}中指定。
 
-@item Update @code{union tree_node}
-In order to make your new structure type usable, it must be added to
-@code{union tree_node}.
-For language specific @code{DECL} nodes, a new entry should be added
-to the appropriate @file{.h} file of the form
+@en @item Update @code{union tree_node}
+@en In order to make your new structure type usable, it must be added to
+@en @code{union tree_node}.
+@en For language specific @code{DECL} nodes, a new entry should be added
+@en to the appropriate @file{.h} file of the form
+@item 更新@code{union tree_node}
+为了使得新的结构体类型可用，其必须被添加到@code{union tree_node}中。对于语言特定的@code{DECL}节点，一个新的项应该被添加到合适的@file{.h}文件中，形式如下 
 @smallexample
   struct tree_foo_decl GTY ((tag ("TS_VAR_DECL"))) foo_decl;
 @end smallexample
+@en For @code{DECL} nodes that are part of the middle-end, the additional
+@en member goes directly into @code{union tree_node} in @file{tree.h}.
+对于属于中端的@code{DECL}节点，额外的成员直接放在@file{tree.h}里的@code{union tree_node}中。
 For @code{DECL} nodes that are part of the middle-end, the additional
-member goes directly into @code{union tree_node} in @file{tree.h}.
 
-@item Update dynamic checking info
-In order to be able to check whether accessing a named portion of
-@code{union tree_node} is legal, and whether a certain @code{DECL} node
-contains one of the enumerated @code{DECL} node structures in the
-hierarchy, a simple lookup table is used.
-This lookup table needs to be kept up to date with the tree structure
-hierarchy, or else checking and containment macros will fail
-inappropriately.
+@en @item Update dynamic checking info
+@en In order to be able to check whether accessing a named portion of
+@en @code{union tree_node} is legal, and whether a certain @code{DECL} node
+@en contains one of the enumerated @code{DECL} node structures in the
+@en hierarchy, a simple lookup table is used.
+@en This lookup table needs to be kept up to date with the tree structure
+@en hierarchy, or else checking and containment macros will fail
+@en inappropriately.
+@item 更新动态检查信息
+为了能够检查访问@code{union tree_node}的一个命名部分是否合法，以及特定的@code{DECL}节点是否包含了枚举的@code{DECL}节点结构体，我们使用了一个简单的查找表。该查找表需要随着树结构层次一起更新，否则用于检查和包含的宏将会失败。
 
-For language specific @code{DECL} nodes, their is an @code{init_ts}
-function in an appropriate @file{.c} file, which initializes the lookup
-table.
-Code setting up the table for new @code{DECL} nodes should be added
-there.
-For each @code{DECL} tree code and enumerator value representing a
-member of the inheritance  hierarchy, the table should contain 1 if
-that tree code inherits (directly or indirectly) from that member.
-Thus, a @code{FOO_DECL} node derived from @code{struct decl_with_rtl},
-and enumerator value @code{TS_FOO_DECL}, would be set up as follows
+@en For language specific @code{DECL} nodes, their is an @code{init_ts}
+@en function in an appropriate @file{.c} file, which initializes the lookup
+@en table.
+@en Code setting up the table for new @code{DECL} nodes should be added
+@en there.
+@en For each @code{DECL} tree code and enumerator value representing a
+@en member of the inheritance  hierarchy, the table should contain 1 if
+@en that tree code inherits (directly or indirectly) from that member.
+@en Thus, a @code{FOO_DECL} node derived from @code{struct decl_with_rtl},
+@en and enumerator value @code{TS_FOO_DECL}, would be set up as follows
+对于语言特定的@code{DECL}节点，它们是在合适的@file{.c}文件中的@code{init_ts}函数，用于初始化查找表。为新的@code{DECL}节点建立表格的代码应该添加到这里。对于每个表示继承层次的成员的@code{DECL}树代码和枚举值，如果树代码（直接或间接）继承于那个成员，则表应该包含1。因此，一个源于@code{struct decl_with_rtl}的，枚举值为@code{TS_FOO_DECL}的@code{FOO_DECL}节点，会使用下列方式来建立。
 @smallexample
 tree_contains_struct[FOO_DECL][TS_FOO_DECL] = 1;
 tree_contains_struct[FOO_DECL][TS_DECL_WRTL] = 1;
@@ -973,16 +1067,20 @@ tree_contains_struct[FOO_DECL][TS_DECL_COMMON] = 1;
 tree_contains_struct[FOO_DECL][TS_DECL_MINIMAL] = 1;
 @end smallexample
 
-For @code{DECL} nodes that are part of the middle-end, the setup code
-goes into @file{tree.c}.
+@en For @code{DECL} nodes that are part of the middle-end, the setup code
+@en goes into @file{tree.c}.
+对于属于中端的@code{DECL}节点，建表代码在@file{tree.c}中。
 
-@item Add macros to access any new fields and flags
+@en @item Add macros to access any new fields and flags
+@item 增加访问任何新的域和标识的宏 
 
-Each added field or flag should have a macro that is used to access
-it, that performs appropriate checking to ensure only the right type of
-@code{DECL} nodes access the field.
+@en Each added field or flag should have a macro that is used to access
+@en it, that performs appropriate checking to ensure only the right type of
+@en @code{DECL} nodes access the field.
+每个增加的域或标识，都应有一个宏用来访问它，并且执行适当的检查以保证访问的是正确类型的@code{DECL}。
 
-These macros generally take the following form
+@en These macros generally take the following form
+这些宏通常采用下面的形式
 @smallexample
 #define FOO_DECL_FIELDNAME(NODE) FOO_DECL_CHECK(NODE)->foo_decl.fieldname
 @end smallexample
@@ -1000,32 +1098,38 @@ structures, something like the following should be used
 @c ---------------------------------------------------------------------
 @c Attributes
 @c ---------------------------------------------------------------------
+@en @node Attributes
+@en @section Attributes in trees
 @node Attributes
-@section Attributes in trees
+@section 树中的属性
 @cindex attributes
 
-Attributes, as specified using the @code{__attribute__} keyword, are
-represented internally as a @code{TREE_LIST}.  The @code{TREE_PURPOSE}
-is the name of the attribute, as an @code{IDENTIFIER_NODE}.  The
-@code{TREE_VALUE} is a @code{TREE_LIST} of the arguments of the
-attribute, if any, or @code{NULL_TREE} if there are no arguments; the
-arguments are stored as the @code{TREE_VALUE} of successive entries in
-the list, and may be identifiers or expressions.  The @code{TREE_CHAIN}
-of the attribute is the next attribute in a list of attributes applying
-to the same declaration or type, or @code{NULL_TREE} if there are no
-further attributes in the list.
+@en Attributes, as specified using the @code{__attribute__} keyword, are
+@en represented internally as a @code{TREE_LIST}.  The @code{TREE_PURPOSE}
+@en is the name of the attribute, as an @code{IDENTIFIER_NODE}.  The
+@en @code{TREE_VALUE} is a @code{TREE_LIST} of the arguments of the
+@en attribute, if any, or @code{NULL_TREE} if there are no arguments; the
+@en arguments are stored as the @code{TREE_VALUE} of successive entries in
+@en the list, and may be identifiers or expressions.  The @code{TREE_CHAIN}
+@en of the attribute is the next attribute in a list of attributes applying
+@en to the same declaration or type, or @code{NULL_TREE} if there are no
+@en further attributes in the list.
+使用关键字@code{__attribute__}指定的属性，在内部作为@code{TREE_LIST}来表示。@code{TREE_PURPOSE} ，作为一个@code{IDENTIFIER_NODE}，是属性的名字。如果有参数的话，@code{TREE_VALUE}是一个属性参数的@code{TREE_LIST}，或者在没有参数时，为@code{NULL_TREE}。参数作为列表中的@code{TREE_VALUE}后继项存储，并且可以为标识符或者表达式。属性的@code{TREE_CHAIN}是在属性列表中应用到同一声明或类型的下一个属性，或者为@code{NULL_TREE}如果列表中没有更多的属性。
 
-Attributes may be attached to declarations and to types; these
-attributes may be accessed with the following macros.  All attributes
-are stored in this way, and many also cause other changes to the
-declaration or type or to other internal compiler data structures.
+@en Attributes may be attached to declarations and to types; these
+@en attributes may be accessed with the following macros.  All attributes
+@en are stored in this way, and many also cause other changes to the
+@en declaration or type or to other internal compiler data structures.
+属性可以附加到声明和类型上；这些属性可以通过下列宏来访问。所有的属性都通过这种方式存储，并且许多还对声明和类型，或者其它内部编译器数据结构体，引起其它的变化。
 
 @deftypefn {Tree Macro} tree DECL_ATTRIBUTES (tree @var{decl})
-This macro returns the attributes on the declaration @var{decl}.
+@en This macro returns the attributes on the declaration @var{decl}.
+该宏返回声明@var{decl}上的属性。
 @end deftypefn
 
 @deftypefn {Tree Macro} tree TYPE_ATTRIBUTES (tree @var{type})
-This macro returns the attributes on the type @var{type}.
+@en This macro returns the attributes on the type @var{type}.
+该宏返回类型@var{type}上的属性。
 @end deftypefn
 
 
