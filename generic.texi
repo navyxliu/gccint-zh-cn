@@ -2360,126 +2360,168 @@ clauses used by the OpenMP API @w{@uref{http://www.openmp.org/}}.
 @table @code
 @item OMP_PARALLEL
 
-Represents @code{#pragma omp parallel [clause1 @dots{} clauseN]}. It
-has four operands:
+@en Represents @code{#pragma omp parallel [clause1 @dots{} clauseN]}. It
+@en has four operands:
+表示@code{#pragma omp parallel [clause1 @dots{} clauseN]}。具有四个操作数：
 
-Operand @code{OMP_PARALLEL_BODY} is valid while in GENERIC and
-High GIMPLE forms.  It contains the body of code to be executed
-by all the threads.  During GIMPLE lowering, this operand becomes
-@code{NULL} and the body is emitted linearly after
-@code{OMP_PARALLEL}.
+@en Operand @code{OMP_PARALLEL_BODY} is valid while in GENERIC and
+@en High GIMPLE forms.  It contains the body of code to be executed
+@en by all the threads.  During GIMPLE lowering, this operand becomes
+@en @code{NULL} and the body is emitted linearly after
+@en @code{OMP_PARALLEL}.
+操作数@code{OMP_PARALLEL_BODY}在GENERIC和High GIMPLE形式中是有效的。
+它包含了被所有线程执行的代码体。在GIMPLE下降过程中，
+这个操作数变为@code{NULL}并且代码体被线性的输出在@code{OMP_PARALLEL}之后。
 
-Operand @code{OMP_PARALLEL_CLAUSES} is the list of clauses
-associated with the directive.
+@en Operand @code{OMP_PARALLEL_CLAUSES} is the list of clauses
+@en associated with the directive.
+操作数@code{OMP_PARALLEL_CLAUSES}为与指令相关的子句列表。
 
-Operand @code{OMP_PARALLEL_FN} is created by
-@code{pass_lower_omp}, it contains the @code{FUNCTION_DECL}
-for the function that will contain the body of the parallel
-region.
+@en Operand @code{OMP_PARALLEL_FN} is created by
+@en @code{pass_lower_omp}, it contains the @code{FUNCTION_DECL}
+@en for the function that will contain the body of the parallel
+@en region.
+操作数@code{OMP_PARALLEL_FN}由@code{pass_lower_omp}创建，
+它包含了将要包含并行区域体的函数@code{FUNCTION_DECL}。
 
-Operand @code{OMP_PARALLEL_DATA_ARG} is also created by
-@code{pass_lower_omp}. If there are shared variables to be
-communicated to the children threads, this operand will contain
-the @code{VAR_DECL} that contains all the shared values and
-variables.
+@en Operand @code{OMP_PARALLEL_DATA_ARG} is also created by
+@en @code{pass_lower_omp}. If there are shared variables to be
+@en communicated to the children threads, this operand will contain
+@en the @code{VAR_DECL} that contains all the shared values and
+@en variables.
+操作数@code{OMP_PARALLEL_DATA_ARG}也由@code{pass_lower_omp}创建。
+如果有共享变量用于子线程间通讯，则该操作数将包含@code{VAR_DECL}，
+其包含了所有共享的值和变量。
 
 @item OMP_FOR
 
-Represents @code{#pragma omp for [clause1 @dots{} clauseN]}.  It
-has 5 operands:
+@en Represents @code{#pragma omp for [clause1 @dots{} clauseN]}.  It
+@en has 5 operands:
+表示@code{#pragma omp for [clause1 @dots{} clauseN]}. 其具有5个操作数：
 
-Operand @code{OMP_FOR_BODY} contains the loop body.
+@en Operand @code{OMP_FOR_BODY} contains the loop body.
+操作数OMP_FOR_BODY包含了循环体。
 
-Operand @code{OMP_FOR_CLAUSES} is the list of clauses
-associated with the directive.
+@en Operand @code{OMP_FOR_CLAUSES} is the list of clauses
+@en associated with the directive.
+操作数OMP_FOR_CLAUSES为与指令相关的子句列表。
 
-Operand @code{OMP_FOR_INIT} is the loop initialization code of
-the form @code{VAR = N1}.
+@en Operand @code{OMP_FOR_INIT} is the loop initialization code of
+@en the form @code{VAR = N1}.
+操作数OMP_FOR_INIT为VAR = N1形式的循环初始化代码。
 
-Operand @code{OMP_FOR_COND} is the loop conditional expression
-of the form @code{VAR @{<,>,<=,>=@} N2}.
+@en Operand @code{OMP_FOR_COND} is the loop conditional expression
+@en of the form @code{VAR @{<,>,<=,>=@} N2}.
+操作数OMP_FOR_COND为@code{VAR @{<,>,<=,>=@} N2}形式的循环条件表达式。
 
-Operand @code{OMP_FOR_INCR} is the loop index increment of the
-form @code{VAR @{+=,-=@} INCR}.
+@en Operand @code{OMP_FOR_INCR} is the loop index increment of the
+@en form @code{VAR @{+=,-=@} INCR}.
+操作数OMP_FOR_INCR为@code{VAR @{+=,-=@} INCR}形式的循环索引增量。
 
-Operand @code{OMP_FOR_PRE_BODY} contains side-effect code from
-operands @code{OMP_FOR_INIT}, @code{OMP_FOR_COND} and
-@code{OMP_FOR_INC}.  These side-effects are part of the
-@code{OMP_FOR} block but must be evaluated before the start of
-loop body.
+@en Operand @code{OMP_FOR_PRE_BODY} contains side-effect code from
+@en operands @code{OMP_FOR_INIT}, @code{OMP_FOR_COND} and
+@en @code{OMP_FOR_INC}.  These side-effects are part of the
+@en @code{OMP_FOR} block but must be evaluated before the start of
+@en loop body.
+操作数OMP_FOR_PRE_BODY包含了来自操作数OMP_FOR_INIT, OMP_FOR_COND和OMP_FOR_INC的副作用代码。这些副作用为OMP_FOR块的一部分，但是必须在开始循环体之前被计算求值。
 
-The loop index variable @code{VAR} must be a signed integer variable,
-which is implicitly private to each thread.  Bounds
-@code{N1} and @code{N2} and the increment expression
-@code{INCR} are required to be loop invariant integer
-expressions that are evaluated without any synchronization. The
-evaluation order, frequency of evaluation and side-effects are
-unspecified by the standard.
+@en The loop index variable @code{VAR} must be a signed integer variable,
+@en which is implicitly private to each thread.  Bounds
+@en @code{N1} and @code{N2} and the increment expression
+@en @code{INCR} are required to be loop invariant integer
+@en expressions that are evaluated without any synchronization. The
+@en evaluation order, frequency of evaluation and side-effects are
+@en unspecified by the standard.
+循环索引变量VAR必须为单个整数变量，其隐式的归每个线程私有。边界N1和N2，以及增量表达式INCR需要为循环不变量整数表达式，其不需要同步就可以被计算求值。按照标准，计算求值的顺序，频率和副作用都没有被指定。
 
 @item OMP_SECTIONS
 
-Represents @code{#pragma omp sections [clause1 @dots{} clauseN]}.
+@en Represents @code{#pragma omp sections [clause1 @dots{} clauseN]}.
+表示@code{#pragma omp sections [clause1 @dots{} clauseN]}。
 
-Operand @code{OMP_SECTIONS_BODY} contains the sections body,
-which in turn contains a set of @code{OMP_SECTION} nodes for
-each of the concurrent sections delimited by @code{#pragma omp
-section}.
+@en Operand @code{OMP_SECTIONS_BODY} contains the sections body,
+@en which in turn contains a set of @code{OMP_SECTION} nodes for
+@en each of the concurrent sections delimited by @code{#pragma omp
+@en section}.
+操作数@code{OMP_SECTIONS_BODY}包含了section主体，
+其依次包含了一个@code{OMP_SECTION}节点集合，
+每个并发的section通过@code{#pragma omp section}来划分。
 
-Operand @code{OMP_SECTIONS_CLAUSES} is the list of clauses
-associated with the directive.
+@en Operand @code{OMP_SECTIONS_CLAUSES} is the list of clauses
+@en associated with the directive.
+操作数@code{OMP_SECTIONS_CLAUSES}为与指令相关的子句列表。
 
 @item OMP_SECTION
 
-Section delimiter for @code{OMP_SECTIONS}.
+@en Section delimiter for @code{OMP_SECTIONS}.
+@code{OMP_SECTIONS}的Section定界符。
 
 @item OMP_SINGLE
 
-Represents @code{#pragma omp single}.
+@en Represents @code{#pragma omp single}.
+表示@code{#pragma omp single}
 
-Operand @code{OMP_SINGLE_BODY} contains the body of code to be
-executed by a single thread.
+@en Operand @code{OMP_SINGLE_BODY} contains the body of code to be
+@en executed by a single thread.
+操作数@code{OMP_SINGLE_BODY}包含了被单个线程执行的代码体。
 
-Operand @code{OMP_SINGLE_CLAUSES} is the list of clauses
-associated with the directive.
+@en Operand @code{OMP_SINGLE_CLAUSES} is the list of clauses
+@en associated with the directive.
+操作数@code{OMP_SINGLE_CLAUSES}为与指令相关的子句列表。
 
 @item OMP_MASTER
 
-Represents @code{#pragma omp master}.
+@en Represents @code{#pragma omp master}.
+表示@code{#pragma omp master}。
 
-Operand @code{OMP_MASTER_BODY} contains the body of code to be
-executed by the master thread.
+@en Operand @code{OMP_MASTER_BODY} contains the body of code to be
+@en executed by the master thread.
+操作数@code{OMP_MASTER_BODY}包含了被主控线程执行的代码体。
 
 @item OMP_ORDERED
 
-Represents @code{#pragma omp ordered}.
+@en Represents @code{#pragma omp ordered}.
+表示@code{#pragma omp ordered}。
 
-Operand @code{OMP_ORDERED_BODY} contains the body of code to be
-executed in the sequential order dictated by the loop index
-variable.
+@en Operand @code{OMP_ORDERED_BODY} contains the body of code to be
+@en executed in the sequential order dictated by the loop index
+@en variable.
+操作数@code{OMP_ORDERED_BODY}包含了按照由循环索引变量所指示的顺序序列来执行的代码体。
 
 @item OMP_CRITICAL
 
-Represents @code{#pragma omp critical [name]}.
+@en Represents @code{#pragma omp critical [name]}.
+表示@code{#pragma omp critical [name]}。
 
-Operand @code{OMP_CRITICAL_BODY} is the critical section.
+@en Operand @code{OMP_CRITICAL_BODY} is the critical section.
+操作数@code{OMP_CRITICAL_BODY}为临界section。
 
-Operand @code{OMP_CRITICAL_NAME} is an optional identifier to
-label the critical section.
+@en Operand @code{OMP_CRITICAL_NAME} is an optional identifier to
+@en label the critical section.
+操作数@code{OMP_CRITICAL_NAME}为可选的用来标记临界section的标识符。
 
 @item OMP_RETURN
 
-This does not represent any OpenMP directive, it is an artificial
-marker to indicate the end of the body of an OpenMP@. It is used
-by the flow graph (@code{tree-cfg.c}) and OpenMP region
-building code (@code{omp-low.c}).
+@en This does not represent any OpenMP directive, it is an artificial
+@en marker to indicate the end of the body of an OpenMP@. It is used
+@en by the flow graph (@code{tree-cfg.c}) and OpenMP region
+@en building code (@code{omp-low.c}).
+这个并不表示任何OpenMP指令，它为一个人为标记用来指示OpenMP主体的结束。
+其被用于流图（@code{tree-cfg.c}）和OpenMP区域构建代码（@code{omp-low.c}）。
 
 @item OMP_CONTINUE
 
-Similarly, this instruction does not represent an OpenMP
-directive, it is used by @code{OMP_FOR} and
-@code{OMP_SECTIONS} to mark the place where the code needs to
-loop to the next iteration (in the case of @code{OMP_FOR}) or
-the next section (in the case of @code{OMP_SECTIONS}).
+@en Similarly, this instruction does not represent an OpenMP
+@en directive, it is used by @code{OMP_FOR} and
+@en @code{OMP_SECTIONS} to mark the place where the code needs to
+@en loop to the next iteration (in the case of @code{OMP_FOR}) or
+@en the next section (in the case of @code{OMP_SECTIONS}).
+类似的，该指令不表示OpenMP指令，它被@code{OMP_FOR}和@code{OMP_SECTIONS}用于
+标记代码需要循环到下一个迭代（例如@code{OMP_FOR}）或者下一个section
+（例如@code{OMP_SECTIONS}）的地方。有一些情况，
+@code{OMP_CONTINUE}被放在紧挨着@code{OMP_RETURN}之前。
+但是，如果在循环体之后需要出现cleanups，
+则它将被生成在@code{OMP_CONTINUE}和@code{OMP_RETURN}之间。
 
 In some cases, @code{OMP_CONTINUE} is placed right before
 @code{OMP_RETURN}.  But if there are cleanups that need to
@@ -2488,39 +2530,50 @@ occur right after the looping body, it will be emitted between
 
 @item OMP_ATOMIC
 
-Represents @code{#pragma omp atomic}.
+@en Represents @code{#pragma omp atomic}.
+表示@code{#pragma omp atomic}。
 
-Operand 0 is the address at which the atomic operation is to be
-performed.
+@en Operand 0 is the address at which the atomic operation is to be
+@en performed.
+操作数0是要被执行的原子操作的地址。
 
-Operand 1 is the expression to evaluate.  The gimplifier tries
-three alternative code generation strategies.  Whenever possible,
-an atomic update built-in is used.  If that fails, a
-compare-and-swap loop is attempted.  If that also fails, a
-regular critical section around the expression is used.
+@en Operand 1 is the expression to evaluate.  The gimplifier tries
+@en three alternative code generation strategies.  Whenever possible,
+@en an atomic update built-in is used.  If that fails, a
+@en compare-and-swap loop is attempted.  If that also fails, a
+@en regular critical section around the expression is used.
+操作数1是要计算求值的表达式。gimplifier会尝试三种可供选择的代码生成策略。
+只要可能，则会使用内建的原子更新。如果失败，
+则会尝试进行比较-交换（compare-and-swap）循环。如果还是失败，
+则会使用表达式附近的一个常规临界section。
 
 @item OMP_CLAUSE
 
-Represents clauses associated with one of the @code{OMP_} directives.
-Clauses are represented by separate sub-codes defined in
-@file{tree.h}.  Clauses codes can be one of:
-@code{OMP_CLAUSE_PRIVATE}, @code{OMP_CLAUSE_SHARED},
-@code{OMP_CLAUSE_FIRSTPRIVATE},
-@code{OMP_CLAUSE_LASTPRIVATE}, @code{OMP_CLAUSE_COPYIN},
-@code{OMP_CLAUSE_COPYPRIVATE}, @code{OMP_CLAUSE_IF},
-@code{OMP_CLAUSE_NUM_THREADS}, @code{OMP_CLAUSE_SCHEDULE},
-@code{OMP_CLAUSE_NOWAIT}, @code{OMP_CLAUSE_ORDERED},
-@code{OMP_CLAUSE_DEFAULT}, and @code{OMP_CLAUSE_REDUCTION}.  Each code
-represents the corresponding OpenMP clause.
+@en Represents clauses associated with one of the @code{OMP_} directives.
+@en Clauses are represented by separate sub-codes defined in
+@en @file{tree.h}.  Clauses codes can be one of:
+@en @code{OMP_CLAUSE_PRIVATE}, @code{OMP_CLAUSE_SHARED},
+@en @code{OMP_CLAUSE_FIRSTPRIVATE},
+@en @code{OMP_CLAUSE_LASTPRIVATE}, @code{OMP_CLAUSE_COPYIN},
+@en @code{OMP_CLAUSE_COPYPRIVATE}, @code{OMP_CLAUSE_IF},
+@en @code{OMP_CLAUSE_NUM_THREADS}, @code{OMP_CLAUSE_SCHEDULE},
+@en @code{OMP_CLAUSE_NOWAIT}, @code{OMP_CLAUSE_ORDERED},
+@en @code{OMP_CLAUSE_DEFAULT}, and @code{OMP_CLAUSE_REDUCTION}.  Each code
+@en represents the corresponding OpenMP clause.
+表示与@code{OMP_}指令相关的子句。子句使用@file{tree.h}中定义的子代码单独表示。
+子句代码可以为：OMP_CLAUSE_PRIVATE, OMP_CLAUSE_SHARED, OMP_CLAUSE_FIRSTPRIVATE, OMP_CLAUSE_LASTPRIVATE, OMP_CLAUSE_COPYIN, OMP_CLAUSE_COPYPRIVATE, OMP_CLAUSE_IF, OMP_CLAUSE_NUM_THREADS, OMP_CLAUSE_SCHEDULE, OMP_CLAUSE_NOWAIT, OMP_CLAUSE_ORDERED, OMP_CLAUSE_DEFAULT, 和OMP_CLAUSE_REDUCTION。每个代码表示了相应的OpenMP子句。
 
-Clauses associated with the same directive are chained together
-via @code{OMP_CLAUSE_CHAIN}. Those clauses that accept a list
-of variables are restricted to exactly one, accessed with
-@code{OMP_CLAUSE_VAR}.  Therefore, multiple variables under the
-same clause @code{C} need to be represented as multiple @code{C} clauses
-chained together.  This facilitates adding new clauses during
-compilation.
-
+@en Clauses associated with the same directive are chained together
+@en via @code{OMP_CLAUSE_CHAIN}. Those clauses that accept a list
+@en of variables are restricted to exactly one, accessed with
+@en @code{OMP_CLAUSE_VAR}.  Therefore, multiple variables under the
+@en same clause @code{C} need to be represented as multiple @code{C} clauses
+@en chained together.  This facilitates adding new clauses during
+@en compilation.
+与同一指令相关的子句通过@code{OMP_CLAUSE_CHAIN}链接在一起。
+那些接受一个变量列表的子句被限制为只有一个，使用@code{OMP_CLAUSE_VAR}来访问。
+因此，同一子句@code{C}下的多个变量需要被多个链接在一起的@code{C}子句表示。
+这样可以有助于在编译过程中增加新的子句。
 @end table
 
 @c ---------------------------------------------------------------------
