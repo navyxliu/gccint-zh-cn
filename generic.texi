@@ -2089,39 +2089,45 @@ FOR_EACH_CALL_EXPR_ARG (arg, iter, call)
 * OpenMP::
 @end menu
 
+@en @node Basic Statements
+@en @subsection Basic Statements
 @node Basic Statements
-@subsection Basic Statements
+@subsection 基本语句
 @cindex Basic Statements
 
 @table @code
 @item ASM_EXPR
 
-Used to represent an inline assembly statement.  For an inline assembly
-statement like:
+@en Used to represent an inline assembly statement.  For an inline assembly
+@en statement like:
+用来表示一条内联的汇编语句。一条内联汇编语句形如： 
 @smallexample
 asm ("mov x, y");
 @end smallexample
-The @code{ASM_STRING} macro will return a @code{STRING_CST} node for
-@code{"mov x, y"}.  If the original statement made use of the
-extended-assembly syntax, then @code{ASM_OUTPUTS},
-@code{ASM_INPUTS}, and @code{ASM_CLOBBERS} will be the outputs, inputs,
-and clobbers for the statement, represented as @code{STRING_CST} nodes.
-The extended-assembly syntax looks like:
+@en The @code{ASM_STRING} macro will return a @code{STRING_CST} node for
+@en @code{"mov x, y"}.  If the original statement made use of the
+@en extended-assembly syntax, then @code{ASM_OUTPUTS},
+@en @code{ASM_INPUTS}, and @code{ASM_CLOBBERS} will be the outputs, inputs,
+@en and clobbers for the statement, represented as @code{STRING_CST} nodes.
+@en The extended-assembly syntax looks like:
+@code{ASM_STRING}宏将会为@code{"mov x, y"}返回一个@code{STRING_CST}节点。如果原始的语句使用了扩展汇编语法，则@code{ASM_OUTPUTS}，@code{ASM_INPUTS}和@code{ASM_CLOBBERS}为用@code{STRING_CST}表示的语句的输出，输入和clobber。扩展汇编语法形如：
 @smallexample
 asm ("fsinx %1,%0" : "=f" (result) : "f" (angle));
 @end smallexample
-The first string is the @code{ASM_STRING}, containing the instruction
-template.  The next two strings are the output and inputs, respectively;
-this statement has no clobbers.  As this example indicates, ``plain''
-assembly statements are merely a special case of extended assembly
-statements; they have no cv-qualifiers, outputs, inputs, or clobbers.
-All of the strings will be @code{NUL}-terminated, and will contain no
-embedded @code{NUL}-characters.
+@en The first string is the @code{ASM_STRING}, containing the instruction
+@en template.  The next two strings are the output and inputs, respectively;
+@en this statement has no clobbers.  As this example indicates, ``plain''
+@en assembly statements are merely a special case of extended assembly
+@en statements; they have no cv-qualifiers, outputs, inputs, or clobbers.
+@en All of the strings will be @code{NUL}-terminated, and will contain no
+@en embedded @code{NUL}-characters.
+第一个字符串是@code{ASM_STRING}，包含指令模板。接下来的两个字符串分别是输出和输入。该语句没有clobbers。这个例子表明，普通的汇编语句只是扩展汇编语句的一个特例；它们没有限定符，输出，输入或者clobbers。所有的字符串都为@code{NUL}结尾，并且不包含嵌入的@code{NUL}字符。
 
-If the assembly statement is declared @code{volatile}, or if the
-statement was not an extended assembly statement, and is therefore
-implicitly volatile, then the predicate @code{ASM_VOLATILE_P} will hold
-of the @code{ASM_EXPR}.
+@en If the assembly statement is declared @code{volatile}, or if the
+@en statement was not an extended assembly statement, and is therefore
+@en implicitly volatile, then the predicate @code{ASM_VOLATILE_P} will hold
+@en of the @code{ASM_EXPR}.
+如果汇编语句被声明为@code{volatile}，或者语句不是扩展汇编语句，因此是一个隐式的@code{volatile}，则断言@code{ASM_VOLATILE_P}将会保存@code{ASM_EXPR}。
 
 @item DECL_EXPR
 
@@ -2135,17 +2141,22 @@ use of the GCC nested function extension.  For more information,
 
 @item LABEL_EXPR
 
-Used to represent a label.  The @code{LABEL_DECL} declared by this
-statement can be obtained with the @code{LABEL_EXPR_LABEL} macro.  The
-@code{IDENTIFIER_NODE} giving the name of the label can be obtained from
-the @code{LABEL_DECL} with @code{DECL_NAME}.
+@en Used to represent a label.  The @code{LABEL_DECL} declared by this
+@en statement can be obtained with the @code{LABEL_EXPR_LABEL} macro.  The
+@en @code{IDENTIFIER_NODE} giving the name of the label can be obtained from
+@en the @code{LABEL_DECL} with @code{DECL_NAME}.
+用来表示一个标号。可以通过@code{LABEL_EXPR_LABEL}宏获得该语句声明的@code{LABEL_DECL}。可以通过@code{LABEL_DECL}的@code{DECL_NAME}获得@code{IDENTIFIER_NODE}给出的标号名字。
 
 @item GOTO_EXPR
 
-Used to represent a @code{goto} statement.  The @code{GOTO_DESTINATION} will
-usually be a @code{LABEL_DECL}.  However, if the ``computed goto'' extension
-has been used, the @code{GOTO_DESTINATION} will be an arbitrary expression
-indicating the destination.  This expression will always have pointer type.
+@en Used to represent a @code{goto} statement.  The @code{GOTO_DESTINATION} will
+@en usually be a @code{LABEL_DECL}.  However, if the ``computed goto'' extension
+@en has been used, the @code{GOTO_DESTINATION} will be an arbitrary expression
+@en indicating the destination.  This expression will always have pointer type.
+用来表示一条@code{goto}语句。
+@code{GOTO_DESTINATION}通常为一个@code{LABEL_DECL}。
+然而，如果使用了扩展的“computed goto”，将为一个随机表达式用来指示目的地。
+该表达式总是具有一个指针类型。 
 
 @item RETURN_EXPR
 
@@ -2159,43 +2170,49 @@ return;
 @end smallexample
 
 @item LOOP_EXPR
-These nodes represent ``infinite'' loops.  The @code{LOOP_EXPR_BODY}
-represents the body of the loop.  It should be executed forever, unless
-an @code{EXIT_EXPR} is encountered.
+@en These nodes represent ``infinite'' loops.  The @code{LOOP_EXPR_BODY}
+@en represents the body of the loop.  It should be executed forever, unless
+@en an @code{EXIT_EXPR} is encountered.
+这些节点表示“无限”循环。@code{LOOP_EXPR_BODY}表示循环体。其将被永远执行，除非遇到@code{EXIT_EXPR}。
 
 @item EXIT_EXPR
-These nodes represent conditional exits from the nearest enclosing
-@code{LOOP_EXPR}.  The single operand is the condition; if it is
-nonzero, then the loop should be exited.  An @code{EXIT_EXPR} will only
-appear within a @code{LOOP_EXPR}.
+@en These nodes represent conditional exits from the nearest enclosing
+@en @code{LOOP_EXPR}.  The single operand is the condition; if it is
+@en nonzero, then the loop should be exited.  An @code{EXIT_EXPR} will only
+@en appear within a @code{LOOP_EXPR}.
+这些节点表示从最近包含的@code{LOOP_EXPR}中条件退出。单个操作数为条件；如果非零，则循环将被退出。@code{EXIT_EXPR}将只是出现在@code{LOOP_EXPR}中。
 
 @item SWITCH_STMT
 
-Used to represent a @code{switch} statement.  The @code{SWITCH_STMT_COND}
-is the expression on which the switch is occurring.  See the documentation
-for an @code{IF_STMT} for more information on the representation used
-for the condition.  The @code{SWITCH_STMT_BODY} is the body of the switch
-statement.   The @code{SWITCH_STMT_TYPE} is the original type of switch
-expression as given in the source, before any compiler conversions.
+@en Used to represent a @code{switch} statement.  The @code{SWITCH_STMT_COND}
+@en is the expression on which the switch is occurring.  See the documentation
+@en for an @code{IF_STMT} for more information on the representation used
+@en for the condition.  The @code{SWITCH_STMT_BODY} is the body of the switch
+@en statement.   The @code{SWITCH_STMT_TYPE} is the original type of switch
+@en expression as given in the source, before any compiler conversions.
+用来表示一个@code{switch}语句。@code{SWITCH_STMT_COND}是发生@code{switch}的表达式。更多关于条件表示的信息，参见@code{IF_STMT}文档。@code{SWITCH_STMT_BODY}是@code{switch}语句主体。@code{SWITCH_STMT_TYPE}是源代码中给出的@code{switch}表达式的，在任何编译器转换之前的原始类型。
 
 @item CASE_LABEL_EXPR
 
-Use to represent a @code{case} label, range of @code{case} labels, or a
-@code{default} label.  If @code{CASE_LOW} is @code{NULL_TREE}, then this is a
-@code{default} label.  Otherwise, if @code{CASE_HIGH} is @code{NULL_TREE}, then
-this is an ordinary @code{case} label.  In this case, @code{CASE_LOW} is
-an expression giving the value of the label.  Both @code{CASE_LOW} and
-@code{CASE_HIGH} are @code{INTEGER_CST} nodes.  These values will have
-the same type as the condition expression in the switch statement.
+@en Use to represent a @code{case} label, range of @code{case} labels, or a
+@en @code{default} label.  If @code{CASE_LOW} is @code{NULL_TREE}, then this is a
+@en @code{default} label.  Otherwise, if @code{CASE_HIGH} is @code{NULL_TREE}, then
+@en this is an ordinary @code{case} label.  In this case, @code{CASE_LOW} is
+@en an expression giving the value of the label.  Both @code{CASE_LOW} and
+@en @code{CASE_HIGH} are @code{INTEGER_CST} nodes.  These values will have
+@en the same type as the condition expression in the switch statement.
+用来表示一个@code{case}标号，@code{case}标号的范围或者一个@code{default}标号。如果@code{CASE_LOW}是@code{NULL_TREE}，则为一个@code{default}标号。否则，如果@code{CASE_HIGH}是@code{NULL_TREE}，则为一个普通的@code{case}标号。这种情况下，@code{CASE_LOW}是一个表达式，给出了标号的值。@code{CASE_LOW}和@code{CASE_HIGH}都是@code{INTEGER_CST}节点。这些值跟在@code{switch}语句中的条件表达式具有相同的类型。 
 
-Otherwise, if both @code{CASE_LOW} and @code{CASE_HIGH} are defined, the
-statement is a range of case labels.  Such statements originate with the
-extension that allows users to write things of the form:
+@en Otherwise, if both @code{CASE_LOW} and @code{CASE_HIGH} are defined, the
+@en statement is a range of case labels.  Such statements originate with the
+@en extension that allows users to write things of the form:
+否则，如果同时定义了@code{CASE_LOW}和@code{CASE_HIGH}，则语句为一个@code{case}标号的范围。这样的语句源于允许用户使用如下形式的扩展：
 @smallexample
 case 2 ... 5:
 @end smallexample
-The first value will be @code{CASE_LOW}, while the second will be
-@code{CASE_HIGH}.
+@en The first value will be @code{CASE_LOW}, while the second will be
+@en @code{CASE_HIGH}.
+第一个值为@code{CASE_LOW}，第二个为@code{CASE_HIGH}。
 
 @end table
 
@@ -2580,27 +2597,36 @@ occur right after the looping body, it will be emitted between
 @c Functions
 @c ---------------------------------------------------------------------
 
+@en @node Functions
+@en @section Functions
 @node Functions
-@section Functions
+@section 函数
 @cindex function
 @tindex FUNCTION_DECL
 
-A function is represented by a @code{FUNCTION_DECL} node.  It stores
-the basic pieces of the function such as body, parameters, and return
-type as well as information on the surrounding context, visibility,
-and linkage.
+@en A function is represented by a @code{FUNCTION_DECL} node.  It stores
+@en the basic pieces of the function such as body, parameters, and return
+@en type as well as information on the surrounding context, visibility,
+@en and linkage.
+函数由@code{FUNCTION_DECL}节点表示。其存储了函数的基本情况，例如函数体，参数和返回类型，以及上下文，可见性和链接性的信息。
 
+@en @menu
+@en * Function Basics::     Function names, body, and parameters.
+@en * Function Properties:: Context, linkage, etc.
+@en @end menu
 @menu
-* Function Basics::     Function names, body, and parameters.
-* Function Properties:: Context, linkage, etc.
+* Function Basics::     函数名，函数体和参数
+* Function Properties:: 上下文，链接性等等
 @end menu
 
 @c ---------------------------------------------------------------------
 @c Function Basics
 @c ---------------------------------------------------------------------
 
+@en @node Function Basics
+@en @subsection Function Basics
 @node Function Basics
-@subsection Function Basics
+@subsection 函数基础
 @findex DECL_NAME
 @findex DECL_ASSEMBLER_NAME
 @findex TREE_PUBLIC
@@ -2608,56 +2634,69 @@ and linkage.
 @findex DECL_FUNCTION_SPECIFIC_TARGET
 @findex DECL_FUNCTION_SPECIFIC_OPTIMIZATION
 
-A function has four core parts: the name, the parameters, the result,
-and the body.  The following macros and functions access these parts
-of a @code{FUNCTION_DECL} as well as other basic features:
+@en A function has four core parts: the name, the parameters, the result,
+@en and the body.  The following macros and functions access these parts
+@en of a @code{FUNCTION_DECL} as well as other basic features:
+函数具有四个核心部分：名字，参数，结果和函数体。下列宏和函数用来访问一个@code{FUNCTION_DECL}的这些部分，以及其它基本特性：
 @ftable @code
 @item DECL_NAME
-This macro returns the unqualified name of the function, as an
-@code{IDENTIFIER_NODE}.  For an instantiation of a function template,
-the @code{DECL_NAME} is the unqualified name of the template, not
-something like @code{f<int>}.  The value of @code{DECL_NAME} is
-undefined when used on a constructor, destructor, overloaded operator,
-or type-conversion operator, or any function that is implicitly
-generated by the compiler.  See below for macros that can be used to
-distinguish these cases.
+@en This macro returns the unqualified name of the function, as an
+@en @code{IDENTIFIER_NODE}.  For an instantiation of a function template,
+@en the @code{DECL_NAME} is the unqualified name of the template, not
+@en something like @code{f<int>}.  The value of @code{DECL_NAME} is
+@en undefined when used on a constructor, destructor, overloaded operator,
+@en or type-conversion operator, or any function that is implicitly
+@en generated by the compiler.  See below for macros that can be used to
+@en distinguish these cases.
+该宏返回函数未限定的名字，为一个@code{IDENTIFIER_NODE}。
+对于一个函数模版的实例，@code{DECL_NAME}为模版的未限定名字，
+而不是类似@code{f<int>}的东西。当用在编译器隐式生成的构造函数，
+析构函数，重载操作符，或者类型转换符，或者任何函数时，
+@code{DECL_NAME}的值未定义。关于可以用来区分这些情况的宏，参见下面。 
 
 @item DECL_ASSEMBLER_NAME
-This macro returns the mangled name of the function, also an
-@code{IDENTIFIER_NODE}.  This name does not contain leading underscores
-on systems that prefix all identifiers with underscores.  The mangled
-name is computed in the same way on all platforms; if special processing
-is required to deal with the object file format used on a particular
-platform, it is the responsibility of the back end to perform those
-modifications.  (Of course, the back end should not modify
-@code{DECL_ASSEMBLER_NAME} itself.)
-
-Using @code{DECL_ASSEMBLER_NAME} will cause additional memory to be
-allocated (for the mangled name of the entity) so it should be used
-only when emitting assembly code.  It should not be used within the
-optimizers to determine whether or not two declarations are the same,
-even though some of the existing optimizers do use it in that way.
-These uses will be removed over time.
+@en This macro returns the mangled name of the function, also an
+@en @code{IDENTIFIER_NODE}.  This name does not contain leading underscores
+@en on systems that prefix all identifiers with underscores.  The mangled
+@en name is computed in the same way on all platforms; if special processing
+@en is required to deal with the object file format used on a particular
+@en platform, it is the responsibility of the back end to perform those
+@en modifications.  (Of course, the back end should not modify
+@en @code{DECL_ASSEMBLER_NAME} itself.)
+该宏返回函数的mangled名字，也是一个@code{IDENTIFIER_NODE}。该名字没有包含前导的下划线。mangled名字在所有平台上按照相同的方式来计算；如果在特定的平台上，需要对目标文件格式进行特殊的处理，则后端需要负责执行那些修改。（当然，后端不应该修改@code{DECL_ASSEMBLER_NAME}）
+ 
+@en Using @code{DECL_ASSEMBLER_NAME} will cause additional memory to be
+@en allocated (for the mangled name of the entity) so it should be used
+@en only when emitting assembly code.  It should not be used within the
+@en optimizers to determine whether or not two declarations are the same,
+@en even though some of the existing optimizers do use it in that way.
+@en These uses will be removed over time.
+使用@code{DECL_ASSEMBLER_NAME}将使得额外的内存被分配（用于实体的mangled名字），所以其应该只当生成汇编代码时被使用。其不应该在优化器中被使用，用于确定两个声明是否相同，即使一些现有的优化器确实采用了这种方式。这些使用将随着时间被移除。
 
 @item DECL_ARGUMENTS
-This macro returns the @code{PARM_DECL} for the first argument to the
-function.  Subsequent @code{PARM_DECL} nodes can be obtained by
-following the @code{TREE_CHAIN} links.
+@en This macro returns the @code{PARM_DECL} for the first argument to the
+@en function.  Subsequent @code{PARM_DECL} nodes can be obtained by
+@en following the @code{TREE_CHAIN} links.
+该宏返回函数第一个参数的@code{PARM_DECL}。后续的@code{PARM_DECL}节点可以通过@code{TREE_CHAIN}来获得。
 
 @item DECL_RESULT
-This macro returns the @code{RESULT_DECL} for the function.
+@en This macro returns the @code{RESULT_DECL} for the function.
+该函数返回函数的@code{RESULT_DECL}。
 
 @item DECL_SAVED_TREE
-This macro returns the complete body of the function.
+@en This macro returns the complete body of the function.
+该宏返回整个函数体。
 
 @item TREE_TYPE
-This macro returns the @code{FUNCTION_TYPE} or @code{METHOD_TYPE} for
-the function.
+@en This macro returns the @code{FUNCTION_TYPE} or @code{METHOD_TYPE} for
+@en the function.
+该宏返回函数的@code{FUNCTION_TYPE}或@code{METHOD_TYPE}。
 
 @item DECL_INITIAL
-A function that has a definition in the current translation unit will
-have a non-@code{NULL} @code{DECL_INITIAL}.  However, back ends should not make
-use of the particular value given by @code{DECL_INITIAL}.
+@en A function that has a definition in the current translation unit will
+@en have a non-@code{NULL} @code{DECL_INITIAL}.  However, back ends should not make
+@en use of the particular value given by @code{DECL_INITIAL}.
+在当前转换单元中定义的函数将会有一个非@code{NULL}的@code{DECL_INITIAL}。但是，后端不应该使用@code{DECL_INITIAL}给出的该特定值。
 
 It should contain a tree of @code{BLOCK} nodes that mirrors the scopes
 that variables are bound in the function.  Each block contains a list
@@ -2704,82 +2743,88 @@ DECL_INITIAL(foo) = block_a;
 @c Function Properties
 @c ---------------------------------------------------------------------
 
+@en @node Function Properties
+@en @subsection Function Properties
 @node Function Properties
-@subsection Function Properties
+@subsection 函数属性
 @cindex function properties
 @cindex statements
 
-To determine the scope of a function, you can use the
-@code{DECL_CONTEXT} macro.  This macro will return the class
-(either a @code{RECORD_TYPE} or a @code{UNION_TYPE}) or namespace (a
-@code{NAMESPACE_DECL}) of which the function is a member.  For a virtual
-function, this macro returns the class in which the function was
-actually defined, not the base class in which the virtual declaration
-occurred.
+@en To determine the scope of a function, you can use the
+@en @code{DECL_CONTEXT} macro.  This macro will return the class
+@en (either a @code{RECORD_TYPE} or a @code{UNION_TYPE}) or namespace (a
+@en @code{NAMESPACE_DECL}) of which the function is a member.  For a virtual
+@en function, this macro returns the class in which the function was
+@en actually defined, not the base class in which the virtual declaration
+@en occurred.
+要确定函数的作用域，可以使用@code{DECL_CONTEXT}宏。该宏将返回函数作为其成员的类（或者@code{RECORD_TYPE}或者@code{UNION_TYPE}）或命名空间（@code{NAMESPACE_DECL}）。对于虚函数，该宏返回函数被实际定义的类，而不是其声明所在的基类。
 
-In C, the @code{DECL_CONTEXT} for a function maybe another function.
-This representation indicates that the GNU nested function extension
-is in use.  For details on the semantics of nested functions, see the
-GCC Manual.  The nested function can refer to local variables in its
-containing function.  Such references are not explicitly marked in the
-tree structure; back ends must look at the @code{DECL_CONTEXT} for the
-referenced @code{VAR_DECL}.  If the @code{DECL_CONTEXT} for the
-referenced @code{VAR_DECL} is not the same as the function currently
-being processed, and neither @code{DECL_EXTERNAL} nor
-@code{TREE_STATIC} hold, then the reference is to a local variable in
-a containing function, and the back end must take appropriate action.
+@en In C, the @code{DECL_CONTEXT} for a function maybe another function.
+@en This representation indicates that the GNU nested function extension
+@en is in use.  For details on the semantics of nested functions, see the
+@en GCC Manual.  The nested function can refer to local variables in its
+@en containing function.  Such references are not explicitly marked in the
+@en tree structure; back ends must look at the @code{DECL_CONTEXT} for the
+@en referenced @code{VAR_DECL}.  If the @code{DECL_CONTEXT} for the
+@en referenced @code{VAR_DECL} is not the same as the function currently
+@en being processed, and neither @code{DECL_EXTERNAL} nor
+@en @code{TREE_STATIC} hold, then the reference is to a local variable in
+@en a containing function, and the back end must take appropriate action.
+在C中，函数的@code{DECL_CONTEXT}可能为另一个函数。这表示正在使用GNU嵌套函数扩展功能。关于嵌套函数语法的详细内容，参见GCC手册。嵌套函数可以引用其所包含的函数的局部变量。这样的引用没有在树结构体里被显示的标记。如果被引用@code{VAR_DECL}的@code{DECL_CONTEXT}与当前被处理的函数不相同，并且@code{DECL_EXTERNAL}和@code{DECL_STATIC}都没有持有内容，则该引用是针对包含的函数的局部变量，后端必须采取合适的行为。
 
 @ftable @code
 @item DECL_EXTERNAL
-This predicate holds if the function is undefined.
+@en This predicate holds if the function is undefined.
+该断言判断函数是否未定义。 
 
 @item TREE_PUBLIC
-This predicate holds if the function has external linkage.
+@en This predicate holds if the function has external linkage.
+该断言判断函数是否具有外部连接。 
 
 @item TREE_STATIC
-This predicate holds if the function has been defined.
+@en This predicate holds if the function has been defined.
+该断言判断函数是否已经被定义。 
 
 @item TREE_THIS_VOLATILE
-This predicate holds if the function does not return normally.
+@en This predicate holds if the function does not return normally.
+该断言判断函数是否不进行正常的返回。 
 
 @item TREE_READONLY
-This predicate holds if the function can only read its arguments.
+@en This predicate holds if the function can only read its arguments.
+该断言判断函数是否只能对参数进行读操作。 
 
 @item DECL_PURE_P
-This predicate holds if the function can only read its arguments, but
-may also read global memory.
+@en This predicate holds if the function can only read its arguments, but
+@en may also read global memory.
+该断言判断函数是否只能对参数进行读操作，但是还可以读全局内存。 
 
 @item DECL_VIRTUAL_P
-This predicate holds if the function is virtual.
+@en This predicate holds if the function is virtual.
+该断言判断函数是否为虚函数。 
 
 @item DECL_ARTIFICIAL
-This macro holds if the function was implicitly generated by the
-compiler, rather than explicitly declared.  In addition to implicitly
-generated class member functions, this macro holds for the special
-functions created to implement static initialization and destruction, to
-compute run-time type information, and so forth.
+@en This macro holds if the function was implicitly generated by the
+@en compiler, rather than explicitly declared.  In addition to implicitly
+@en generated class member functions, this macro holds for the special
+@en functions created to implement static initialization and destruction, to
+@en compute run-time type information, and so forth.
+该宏保存了函数是否由编译器隐式的生成，而不是被显式的生成。除了隐式的生成的类成员函数以外，该宏还保存了创建的特定函数，用来实现静态初始化和析构，来计算运行时信息等等。 
 
 @item DECL_FUNCTION_SPECIFIC_TARGET
-This macro returns a tree node that holds the target options that are
-to be used to compile this particular function or @code{NULL_TREE} if
-the function is to be compiled with the target options specified on
-the command line.
+@en This macro returns a tree node that holds the target options that are
+@en to be used to compile this particular function or @code{NULL_TREE} if
+@en the function is to be compiled with the target options specified on
+@en the command line.
+该宏返回一个tree节点，存放了用于编译该特定函数的目标机选项，或者为@code{NULL_TREE}，如果是使用命令行中指定的目标机选项来编译该函数。
 
 @item DECL_FUNCTION_SPECIFIC_OPTIMIZATION
-This macro returns a tree node that holds the optimization options
-that are to be used to compile this particular function or
-@code{NULL_TREE} if the function is to be compiled with the
-optimization options specified on the command line.
+@en This macro returns a tree node that holds the optimization options
+@en that are to be used to compile this particular function or
+@en @code{NULL_TREE} if the function is to be compiled with the
+@en optimization options specified on the command line.
+该宏返回一个tree节点，存放了用于编译该特定函数的优化选项，或者为@code{NULL_TREE}，如果是使用命令行中指定的优化选项来编译该函数。
 
 @end ftable
-
-@subsubsection Statements
-
-There are tree nodes corresponding to all of the source-level
-statement constructs, used within the C and C++ frontends.  These are
-enumerated here, together with a list of the various macros that can
-be used to obtain information about them.  There are a few macros that
-can be used with all statements:
 
 @c ---------------------------------------------------------------------
 @c Language-dependent trees
@@ -2858,8 +2903,10 @@ should submit your patches for inclusion in GCC@.
 * C++ Expressions::    From @code{typeid} to @code{throw}.
 @end menu
 
+@en @node Types for C++
+@en @subsection Types for C++
 @node Types for C++
-@subsection Types for C++
+@subsection C++类型
 @tindex UNKNOWN_TYPE
 @tindex TYPENAME_TYPE
 @tindex TYPEOF_TYPE
@@ -2884,89 +2931,109 @@ should submit your patches for inclusion in GCC@.
 @findex TYPE_FIELDS
 @findex TYPE_PTROBV_P
 
-In C++, an array type is not qualified; rather the type of the array
-elements is qualified.  This situation is reflected in the intermediate
-representation.  The macros described here will always examine the
-qualification of the underlying element type when applied to an array
-type.  (If the element type is itself an array, then the recursion
-continues until a non-array type is found, and the qualification of this
-type is examined.)  So, for example, @code{CP_TYPE_CONST_P} will hold of
-the type @code{const int ()[7]}, denoting an array of seven @code{int}s.
+@en In C++, an array type is not qualified; rather the type of the array
+@en elements is qualified.  This situation is reflected in the intermediate
+@en representation.  The macros described here will always examine the
+@en qualification of the underlying element type when applied to an array
+@en type.  (If the element type is itself an array, then the recursion
+@en continues until a non-array type is found, and the qualification of this
+@en type is examined.)  So, for example, @code{CP_TYPE_CONST_P} will hold of
+@en the type @code{const int ()[7]}, denoting an array of seven @code{int}s.
+在C++中，数组类型没有被限定，而是数组元素的类型被限定。这种情况反映在中间表示中。这里描述的宏在应用到数组类型时，将总是检验元素类型的限定符。（如果元素类型本身是一个数组，则会递归执行只到找到非数组类型，并检验该类型的限定符）所以，例如，@code{CP_TYPE_CONST_P}当表示具有七个@code{int}的数组时，将持有@code{const int ()[7]}类型。
 
-The following functions and macros deal with cv-qualification of types:
+@en The following functions and macros deal with cv-qualification of types:
+下列函数和宏处理cv-qualification的类型：
 @ftable @code
 @item CP_TYPE_QUALS
-This macro returns the set of type qualifiers applied to this type.
-This value is @code{TYPE_UNQUALIFIED} if no qualifiers have been
-applied.  The @code{TYPE_QUAL_CONST} bit is set if the type is
-@code{const}-qualified.  The @code{TYPE_QUAL_VOLATILE} bit is set if the
-type is @code{volatile}-qualified.  The @code{TYPE_QUAL_RESTRICT} bit is
-set if the type is @code{restrict}-qualified.
+@en This macro returns the set of type qualifiers applied to this type.
+@en This value is @code{TYPE_UNQUALIFIED} if no qualifiers have been
+@en applied.  The @code{TYPE_QUAL_CONST} bit is set if the type is
+@en @code{const}-qualified.  The @code{TYPE_QUAL_VOLATILE} bit is set if the
+@en type is @code{volatile}-qualified.  The @code{TYPE_QUAL_RESTRICT} bit is
+@en set if the type is @code{restrict}-qualified.
+该宏返回应用到该类型的类型限定符集。如果没有应用限定符则该值为@code{TYPE_UNQUALIFIED}。如果类型是@code{const}的，则会设置@code{TYPE_QUAL_CONST}位。如果类型是@code{volatile}的，则会设置@code{TYPE_QUAL_VOLATILE}位。如果类型是@code{restrict}的，则会设置@code{TYPE_QUAL_RESTRICT}位。 
 
 @item CP_TYPE_CONST_P
-This macro holds if the type is @code{const}-qualified.
+@en This macro holds if the type is @code{const}-qualified.
+该宏当类型是@code{const}时有效。
 
 @item CP_TYPE_VOLATILE_P
-This macro holds if the type is @code{volatile}-qualified.
+@en This macro holds if the type is @code{volatile}-qualified.
+该宏当类型是@code{volatile}时有效。 
 
 @item CP_TYPE_RESTRICT_P
-This macro holds if the type is @code{restrict}-qualified.
+@en This macro holds if the type is @code{restrict}-qualified.
+该宏当类型是@code{restrict}时有效。 
 
 @item CP_TYPE_CONST_NON_VOLATILE_P
-This predicate holds for a type that is @code{const}-qualified, but
-@emph{not} @code{volatile}-qualified; other cv-qualifiers are ignored as
-well: only the @code{const}-ness is tested.
+@en This predicate holds for a type that is @code{const}-qualified, but
+@en @emph{not} @code{volatile}-qualified; other cv-qualifiers are ignored as
+@en well: only the @code{const}-ness is tested.
+该断言当类型是@code{const}的，但@emph{不是}@code{volatile}的时有效。
+其它cv-qualifiers会被忽略，只测试@code{const}。 
 
 @end ftable
 
-A few other macros and functions are usable with all types:
+@en A few other macros and functions are usable with all types:
+一些其它的宏和函数可用于所有的类型：
 @ftable @code
 @item TYPE_SIZE
-The number of bits required to represent the type, represented as an
-@code{INTEGER_CST}.  For an incomplete type, @code{TYPE_SIZE} will be
-@code{NULL_TREE}.
+@en The number of bits required to represent the type, represented as an
+@en @code{INTEGER_CST}.  For an incomplete type, @code{TYPE_SIZE} will be
+@en @code{NULL_TREE}.
+类型表示所需要的位数，为一个@code{INTEGER_CST}。对于不完全类型，@code{TYPE_SIZE}将为@code{NULL_TREE}。 
 
 @item TYPE_ALIGN
-The alignment of the type, in bits, represented as an @code{int}.
+@en The alignment of the type, in bits, represented as an @code{int}.
+类型的对齐位数，为一个@code{int}。 
 
 @item TYPE_NAME
-This macro returns a declaration (in the form of a @code{TYPE_DECL}) for
-the type.  (Note this macro does @emph{not} return an
-@code{IDENTIFIER_NODE}, as you might expect, given its name!)  You can
-look at the @code{DECL_NAME} of the @code{TYPE_DECL} to obtain the
-actual name of the type.  The @code{TYPE_NAME} will be @code{NULL_TREE}
-for a type that is not a built-in type, the result of a typedef, or a
-named class type.
+@en This macro returns a declaration (in the form of a @code{TYPE_DECL}) for
+@en the type.  (Note this macro does @emph{not} return an
+@en @code{IDENTIFIER_NODE}, as you might expect, given its name!)  You can
+@en look at the @code{DECL_NAME} of the @code{TYPE_DECL} to obtain the
+@en actual name of the type.  The @code{TYPE_NAME} will be @code{NULL_TREE}
+@en for a type that is not a built-in type, the result of a typedef, or a
+@en named class type.
+该宏返回类型的一个声明（按照@code{TYPE_DECL}的型式）。（注意该宏不返回@code{IDENTIFIER_NODE}）你可以查看@code{TYPE_DECL}的@code{DECL_NAME}来获得类型的实际的名字。@code{TYPE_NAME}将为@code{NULL_TREE}，对于不是内建类型的，typedef的，或者命名的class类型。
 
 @item CP_INTEGRAL_TYPE
-This predicate holds if the type is an integral type.  Notice that in
-C++, enumerations are @emph{not} integral types.
+@en This predicate holds if the type is an integral type.  Notice that in
+@en C++, enumerations are @emph{not} integral types.
+该断言有效，如果类型为一个整数类型。注意在C++中，枚举@emph{不是}整数类型。 
 
 @item ARITHMETIC_TYPE_P
-This predicate holds if the type is an integral type (in the C++ sense)
-or a floating point type.
+@en This predicate holds if the type is an integral type (in the C++ sense)
+@en or a floating point type.
+该断言有效，如果类型为一个整数类型（按照c++的观点）或者一个浮点类型。 
 
 @item CLASS_TYPE_P
-This predicate holds for a class-type.
+@en This predicate holds for a class-type.
+该断言有效，对于一个class类型。 
 
 @item TYPE_BUILT_IN
-This predicate holds for a built-in type.
+@en This predicate holds for a built-in type.
+该断言有效，对于一个内建类型。 
 
 @item TYPE_PTRMEM_P
-This predicate holds if the type is a pointer to data member.
+@en This predicate holds if the type is a pointer to data member.
+该断言有效，如果类型为一个指向数据成员的指针。 
 
 @item TYPE_PTR_P
-This predicate holds if the type is a pointer type, and the pointee is
-not a data member.
+@en This predicate holds if the type is a pointer type, and the pointee is
+@en not a data member.
+该断言有效，如果类型为一个指针，而指向者不是一个数据成员。 
 
 @item TYPE_PTRFN_P
-This predicate holds for a pointer to function type.
+@en This predicate holds for a pointer to function type.
+该断言有效，对于一个执行函数类型的指针。 
 
 @item TYPE_PTROB_P
-This predicate holds for a pointer to object type.  Note however that it
-does not hold for the generic pointer to object type @code{void *}.  You
-may use @code{TYPE_PTROBV_P} to test for a pointer to object type as
-well as @code{void *}.
+@en This predicate holds for a pointer to object type.  Note however that it
+@en does not hold for the generic pointer to object type @code{void *}.  You
+@en may use @code{TYPE_PTROBV_P} to test for a pointer to object type as
+@en well as @code{void *}.
+该断言有效，对于一个指向object类型的指针。注意其对于指向object类型@code{void *}的通用指针无效。你可以使用@code{TYPE_PTROBV_P}来测试指针是指向object类型，同时也是@code{void *}。 
 
 @end ftable
 
@@ -2976,21 +3043,23 @@ language-dependent info about GENERIC types.
 @table @code
 
 @item POINTER_TYPE
-Used to represent pointer types, and pointer to data member types.  If
-@code{TREE_TYPE} 
-is a pointer to data member type, then @code{TYPE_PTRMEM_P} will hold.
-For a pointer to data member type of the form @samp{T X::*},
-@code{TYPE_PTRMEM_CLASS_TYPE} will be the type @code{X}, while
-@code{TYPE_PTRMEM_POINTED_TO_TYPE} will be the type @code{T}.
+@en Used to represent pointer types, and pointer to data member types.  If
+@en @code{TREE_TYPE} 
+@en is a pointer to data member type, then @code{TYPE_PTRMEM_P} will hold.
+@en For a pointer to data member type of the form @samp{T X::*},
+@en @code{TYPE_PTRMEM_CLASS_TYPE} will be the type @code{X}, while
+@en @code{TYPE_PTRMEM_POINTED_TO_TYPE} will be the type @code{T}.
+用来表示指针类型，以及指向数据成员的指针类型。@code{TREE_TYPE}给出了所指向的类型。如果类型为一个指向数据成员的指针，则@code{TYPE_PTRMEM_P}成立。对于一个指向@samp{T X::*}形式的数据成员类型的指针，@code{TYPE_PTRMEM_CLASS_TYPE}将为类型@code{X}，而@code{TYPE_PTRMEM_POINTED_TO_TYPE}为类型@code{T}。
 
 @item RECORD_TYPE
-Used to represent @code{struct} and @code{class} types in C and C++.  If
-@code{TYPE_PTRMEMFUNC_P} holds, then this type is a pointer-to-member
-type.  In that case, the @code{TYPE_PTRMEMFUNC_FN_TYPE} is a
-@code{POINTER_TYPE} pointing to a @code{METHOD_TYPE}.  The
-@code{METHOD_TYPE} is the type of a function pointed to by the
-pointer-to-member function.  If @code{TYPE_PTRMEMFUNC_P} does not hold,
-this type is a class type.  For more information, see @pxref{Classes}.
+@en Used to represent @code{struct} and @code{class} types in C and C++.  If
+@en @code{TYPE_PTRMEMFUNC_P} holds, then this type is a pointer-to-member
+@en type.  In that case, the @code{TYPE_PTRMEMFUNC_FN_TYPE} is a
+@en @code{POINTER_TYPE} pointing to a @code{METHOD_TYPE}.  The
+@en @code{METHOD_TYPE} is the type of a function pointed to by the
+@en pointer-to-member function.  If @code{TYPE_PTRMEMFUNC_P} does not hold,
+@en this type is a class type.  For more information, see @pxref{Classes}.
+用来表示@code{struct}和@code{class}类型，以及指向成员函数和其它语言中类似结构的指针。@code{TYPE_FIELDS}包含了该类型中包含的项，其可以为@code{FIELD_DECL}, @code{VAR_DECL}, @code{CONST_DECL}或@code{TYPE_DECL}。你不能假设类型中的域之间的顺序，以及它们是否有重叠。如果@code{TYPE_PTRMEMFUNC_P}成立，则该类型为一个指向成员（pointer-to-member）的类型。这种情况下，@code{TYPE_PTRMEMFUNC_FN_TYPE}为一个@code{POINTER_TYPE}，指向一个@code{METHOD_TYPE}。@code{METHOD_TYPE}为由pointer-to-member函数指向的函数的类型。如果@code{TYPE_PTRMEMFUNC_P}不成立，则该类型为一个class类型。更多信息，@pxref{Classes}。
 
 @item UNKNOWN_TYPE
 This node is used to represent a type the knowledge of which is
