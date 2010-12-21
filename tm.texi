@@ -9097,13 +9097,7 @@ optimized for speed rather than size.
 @en @acronym{VLIW} processor, the code could actually solve the problem of
 @en packing simple insns into the @acronym{VLIW} insn.  Of course, if the
 @en rules of @acronym{VLIW} packing are described in the automaton.
-该钩子控制基于@acronym{DFA}的insn调度器来更好的选择一个insn，
-从就绪insn队列中。通常调度器从队列中选择第一个insn。如果钩子返回一个正值，
-则会有额外的调度器代码来尝试所有的@samp{TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD ()}的排列组合，
-来选择一个insn，使得发射该insn将在同一周期产生最大的insn发射数。
-对于@acronym{VLIW}处理器，
-代码实际上解决了将简单insn打包成@acronym{VLIW} insn的问题。
-当然，如果@acronym{VLIW}打包规则在自动机中有描述。
+对于基于@acronym{DFA}的insn调度器，该钩子可以用来控制从insn就绪队列中，更好的选择一个insn。通常，调度器是从队列中选择第一个insn。但是，如果该钩子返回一个正值，则会有额外的调度器代码来尝试@samp{TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD ()}的所有排列组合，来选择一个insn，使得发射该insn将在同一周期产生最大的insn发射数。对于@acronym{VLIW}处理器，该代码实际上能够解决将简单insn打包成@acronym{VLIW} insn的问题。当然，@acronym{VLIW}打包规则需要在自动机中有描述。
 
 @en This code also could be used for superscalar @acronym{RISC}
 @en processors.  Let us consider a superscalar @acronym{RISC} processor
@@ -9114,22 +9108,15 @@ optimized for speed rather than size.
 @en @var{B}.  In this case, the 3rd insn will wait for freeing @var{B}
 @en until the next cycle.  If the scheduler issues the 3rd insn the first,
 @en the processor could issue all 3 insns per cycle.
-该代码还能用于超标量@acronym{RISC}处理器。
-让我们考虑一个具有3级流水的超标量@acronym{RISC}处理器。
-一些insn可以在流水线@var{A}或@var{B}中被执行，
-一些insn只能在流水线@var{B}或@var{C}中执行，
-并且有一个insn可以在流水线@var{B}中被执行。处理器可以发射第一个insn到@var{A}，
-第二个到@var{B}。这种情况下，第三个insn将会等待释放@var{B}，直到下一个周期。
-如果调度器先发射第三个insn，则处理器可以一个周期发射所有的3个insn。
+该代码还能用于超标量@acronym{RISC}处理器。让我们考虑一个具有3级流水线的超标量@acronym{RISC}处理器。一些insn可以在流水线@var{A}或@var{B}中被执行，一些insn只能在流水线@var{B}或@var{C}中执行，并且有一个insn可以在流水线@var{B}中被执行。处理器可以发射第一个insn到@var{A}，第二个到@var{B}。这种情况下，第三个insn将会等待释放@var{B}，直到下一个周期。如果调度器先发射第三个insn，则处理器可以一个周期发射所有的3个insn。
 
 @en Actually this code demonstrates advantages of the automaton based
 @en pipeline hazard recognizer.  We try quickly and easy many insn
 @en schedules to choose the best one.
-实际上该代码证明了基于自动机的流水线冒险识别器的优点。
-我们最快且最容易的尝试许多insn调度，并选择最好的一种。
+实际上该代码证明了基于自动机的流水线冒险识别器的优点。我们最快且最容易的尝试许多种insn调度，并选择最好的一种。
 
 @en The default is no multipass scheduling.
-缺省为不进行多遍的调度。
+缺省为不进行多遍指令调度。
 @end deftypefn
 
 @deftypefn {Target Hook} int TARGET_SCHED_FIRST_CYCLE_MULTIPASS_DFA_LOOKAHEAD_GUARD (rtx @var{insn})
