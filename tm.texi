@@ -3125,15 +3125,16 @@ of words in each data entry.
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_HARD_REGNO_SCRATCH_OK (unsigned int @var{regno})
-This target hook should return @code{true} if it is OK to use a hard register
-@var{regno} as scratch reg in peephole2.
-This target hook should return @code{true} if it is OK to use a hard register
-@var{regno} as scratch reg in peephole2.
+@en This target hook should return @code{true} if it is OK to use a hard register
+@en @var{regno} as scratch reg in peephole2.
+如果在peephole2中可以使用硬件寄存器@var{regno}来作为临时寄存器，则该目标钩子应该返回@code{true}。
 
-One common use of this macro is to prevent using of a register that
-is not saved by a prologue in an interrupt handler.
+@en One common use of this macro is to prevent using of a register that
+@en is not saved by a prologue in an interrupt handler.
+该宏的一种通常用法为阻止在中断处理中，对函数起始处没有保存的寄存器的使用。
 
-The default version of this hook always returns @code{true}.
+@en The default version of this hook always returns @code{true}.
+该钩子的缺省版本总是返回@code{true}。
 @end deftypefn
 
 @defmac AVOID_CCMODE_COPIES
@@ -3282,15 +3283,12 @@ the machine has any stack-like registers.
 @en For example, certain registers may not be allowed for indexed addressing;
 @en certain registers may not be allowed in some instructions.  These machine
 @en restrictions are described to the compiler using @dfn{register classes}.
-在许多机器上，编号寄存器并不都是等价的。例如，一些寄存器不可以用作索引寻址；
-一些寄存器不可以用于某些指令。
-这些机器限制使用寄存器类别(@dfn{register classes})来描述给编译器。
+在许多机器上，编号寄存器并不都是等价的。例如，一些寄存器不可以用作索引寻址；一些寄存器不可以用于某些指令。这些机器限制使用寄存器类别(@dfn{register classes})来描述给编译器。
 
 @en You define a number of register classes, giving each one a name and saying
 @en which of the registers belong to it.  Then you can specify register classes
 @en that are allowed as operands to particular instruction patterns.
-你定义一些寄存器类别，给出每个类别的名字并指名哪些寄存器属于它。然后，
-你可以指定哪些寄存器类别对于特定的指令模式可以用作操作数。
+你定义一些寄存器类别，给出每个类别的名字并指名哪些寄存器属于它。然后，你可以指定哪些寄存器类别对于特定的指令模式可以用作操作数。
 
 @findex ALL_REGS
 @findex NO_REGS
@@ -3298,10 +3296,7 @@ the machine has any stack-like registers.
 @en class must be named @code{ALL_REGS} and contain all the registers.  Another
 @en class must be named @code{NO_REGS} and contain no registers.  Often the
 @en union of two classes will be another class; however, this is not required.
-总的来说，每个寄存器将属于多个类别。实际上，
-必须有一个名为@code{ALL_REGS}的类别，包含所有的寄存器。
-另外必须有一个名为@code{NO_REGS}的类别，不包含寄存器。
-通常两个类别的并集将成为另一个类别；但并不这么要求。
+总的来说，每个寄存器将属于多个类别。实际上，必须有一个名为@code{ALL_REGS}的类别，包含所有的寄存器。另外必须有一个名为@code{NO_REGS}的类别，不包含寄存器。通常两个类别的并集将成为另一个类别；但并不这么要求。
 
 @findex GENERAL_REGS
 @en One of the classes must be named @code{GENERAL_REGS}.  There is nothing
@@ -3309,52 +3304,37 @@ the machine has any stack-like registers.
 @en @samp{r} and @samp{g} specify this class.  If @code{GENERAL_REGS} is
 @en the same as @code{ALL_REGS}, just define it as a macro which expands
 @en to @code{ALL_REGS}.
-其中一个类别必须名为@code{GENERAL_REGS}。该名字没有什么特殊的，
-但是操作数约束字母@samp{r}和@samp{g}专门指定该类。
-如果@code{GENERAL_REGS}与@code{ALL_REGS}相同，
-则可以将其定义为扩展成@code{ALL_REGS}的宏。
+其中一个类别必须名为@code{GENERAL_REGS}。该名字没有什么特殊的，但是操作数约束字母@samp{r}和@samp{g}专门指定该类。如果@code{GENERAL_REGS}与@code{ALL_REGS}相同，则可以将其定义为扩展成@code{ALL_REGS}的宏。
 
 @en Order the classes so that if class @var{x} is contained in class @var{y}
 @en then @var{x} has a lower class number than @var{y}.
-对类别进行排序，使得如果类@var{x}包含在类@var{y}中，
-则@var{x}具有比@var{y}更低的类别编号。
+对类别进行排序，使得如果类@var{x}包含在类@var{y}中，则@var{x}具有比@var{y}更低的类别编号。
 
 @en The way classes other than @code{GENERAL_REGS} are specified in operand
 @en constraints is through machine-dependent operand constraint letters.
 @en You can define such letters to correspond to various classes, then use
 @en them in operand constraints.
-在操作数约束中指定@code{GENERAL_REGS}之外的类别的方法，
-是通过机器相关的约束字母。你可以定义该字母来对应于不同的类别，
-然后在操作数约束中使用它们。
+在操作数约束中指定@code{GENERAL_REGS}之外的类别的方法，是通过机器相关的约束字母。你可以定义该字母来对应于不同的类别，然后在操作数约束中使用它们。
 
 @en You should define a class for the union of two classes whenever some
 @en instruction allows both classes.  For example, if an instruction allows
 @en either a floating point (coprocessor) register or a general register for a
 @en certain operand, you should define a class @code{FLOAT_OR_GENERAL_REGS}
 @en which includes both of them.  Otherwise you will get suboptimal code.
-只要有指令同时允许两个类别，就应该定义一个它们的并集的类别。
-例如，如果对于一个特定的操作数，
-有一条指令允许一个浮点（协处理器）寄存器或者一个通用寄存器，
-则应该定义一个类别@code{FLOAT_OR_GENERAL_REGS}，其包含它们两。
-否则你不会得到最优的代码。
+只要有指令同时允许两个类别，就应该定义一个它们的并集的类别。例如，如果对于一个特定的操作数，有一条指令允许一个浮点（协处理器）寄存器或者一个通用寄存器，则应该定义一个类别@code{FLOAT_OR_GENERAL_REGS}，其包含它们两。否则你不会得到最优的代码。
 
 @en You must also specify certain redundant information about the register
 @en classes: for each class, which classes contain it and which ones are
 @en contained in it; for each pair of classes, the largest class contained
 @en in their union.
-你还必须指定关于寄存器类别的冗余信息：对于每个类别，
-有哪些类别包含它以及哪些被它包含；
-对于每个类别对，最大的类包含在它们的并集中。
+你还必须指定关于寄存器类别的冗余信息：对于每个类别，有哪些类别包含它以及哪些被它包含；对于每个类别对，最大的类包含在它们的并集中。
 
 @en When a value occupying several consecutive registers is expected in a
 @en certain class, all the registers used must belong to that class.
 @en Therefore, register classes cannot be used to enforce a requirement for
 @en a register pair to start with an even-numbered register.  The way to
 @en specify this requirement is with @code{HARD_REGNO_MODE_OK}.
-当一个值占用多个连续的位于特定类别的寄存器时，
-所有被使用的寄存器必须属于那个类别。因此，
-寄存器类别不能用于要求寄存器对起始于偶数编号的寄存器。
-用来指定该要求的方法是使用@code{HARD_REGNO_MODE_OK}。
+当一个值占用多个连续的位于特定类别的寄存器时，所有被使用的寄存器必须属于那个类别。因此，寄存器类别不能用于要求寄存器对起始于偶数编号的寄存器。用来指定该要求的方法是使用@code{HARD_REGNO_MODE_OK}。
 
 @en Register classes used for input-operands of bitwise-and or shift
 @en instructions have a special requirement: each such class must have, for
@@ -3365,13 +3345,7 @@ the machine has any stack-like registers.
 @en instruction must have a subclass consisting of registers from which
 @en single-byte values can be loaded or stored.  This is so that
 @en @code{PREFERRED_RELOAD_CLASS} can always have a possible value to return.
-用于按位与或者移位指令的操作数的寄存器类别具有特殊的要求：
-对于每个定点机器模式，每个这样的类必须具有一个子类，
-它的寄存器可以按照该机器模式与内存进行传送值。例如，在一些机器上，
-对于单字节值的操作（@code{QImode}）被限制为特定的寄存器。这样的话，
-每个用于按位与或者移位指令的寄存器类别必须具有一个子类，
-组成它的寄存器可以用来加载或存储单字节值。
-这使得@code{PREFERRED_RELOAD_CLASS}总是具有一个可以返回的值。
+用于按位与或者移位指令的操作数的寄存器类别具有特殊的要求：对于每个定点机器模式，每个这样的类必须具有一个子类，它的寄存器可以按照该机器模式与内存进行传送值。例如，在一些机器上，对于单字节值的操作（@code{QImode}）被限制为特定的寄存器。这样的话，每个用于按位与或者移位指令的寄存器类别必须具有一个子类，组成它的寄存器可以用来加载或存储单字节值。这使得@code{PREFERRED_RELOAD_CLASS}总是具有一个可以返回的值。
 
 @deftp {Data type} {enum reg_class}
 @en An enumerated type that must be defined with all the register class names
@@ -3379,16 +3353,12 @@ the machine has any stack-like registers.
 @en must be the last register class, followed by one more enumerated value,
 @en @code{LIM_REG_CLASSES}, which is not a register class but rather
 @en tells how many classes there are.
-一个枚举类型，必须使用所有的寄存器类别名作为枚举值来定义。
-@code{NO_REGS}必须位于最前面。@code{ALL_REGS}必须为最后一个寄存器类别，
-后面再跟随一个枚举值，@code{LIM_REG_CLASSES}，其不是一个寄存器类别，
-但是用来告诉有多少个类别。
+一个枚举类型，必须使用所有的寄存器类别名作为枚举值来定义。@code{NO_REGS}必须位于最前面。@code{ALL_REGS}必须为最后一个寄存器类别，后面再跟随一个枚举值，@code{LIM_REG_CLASSES}，其不是一个寄存器类别，但是用来告诉有多少个类别。
 
 @en Each register class has a number, which is the value of casting
 @en the class name to type @code{int}.  The number serves as an index
 @en in many of the tables described below.
-每个寄存器类别具有一个编号，其为将类别名映射到@code{int}类型的值。
-编号在下面描述的许多表中用作索引。
+每个寄存器类别具有一个编号，其为将类别名映射到@code{int}类型的值。编号在下面描述的许多表中用作索引。
 @end deftp
 
 @defmac N_REG_CLASSES
@@ -3403,8 +3373,7 @@ the machine has any stack-like registers.
 @defmac REG_CLASS_NAMES
 @en An initializer containing the names of the register classes as C string
 @en constants.  These names are used in writing some of the debugging dumps.
-一个初始化值，包含了作为C字符串常量的寄存器类别的名字。
-这些名字用于书写一些调试转储。
+一个初始化值，包含了作为C字符串常量的寄存器类别的名字。这些名字用于书写一些调试转储。
 @end defmac
 
 @defmac REG_CLASS_CONTENTS
@@ -3412,9 +3381,7 @@ the machine has any stack-like registers.
 @en which are bit masks.  The @var{n}th integer specifies the contents of class
 @en @var{n}.  The way the integer @var{mask} is interpreted is that
 @en register @var{r} is in the class if @code{@var{mask} & (1 << @var{r})} is 1.
-一个初始化值，包含了寄存器类别的内容，作为位掩码的整数。
-第@var{n}个整数指定了类别@var{n}的内容。整数掩码的解析方式为，
-寄存器@var{r}在类别中，如果@code{@var{mask} & (1 << @var{r})}为1。
+一个初始化值，包含了寄存器类别的内容，作为位掩码的整数。第@var{n}个整数指定了类别@var{n}的内容。整数掩码的解析方式为，寄存器@var{r}在类别中，如果@code{@var{mask} & (1 << @var{r})}为1。
 
 @en When the machine has more than 32 registers, an integer does not suffice.
 @en Then the integers are replaced by sub-initializers, braced groupings containing
@@ -3423,10 +3390,7 @@ the machine has any stack-like registers.
 @en In this situation, the first integer in each sub-initializer corresponds to
 @en registers 0 through 31, the second integer to registers 32 through 63, and
 @en so on.
-当机器具有多于32个寄存器的时候，一个整数还不能满足。这时整数被替换为子初始化值，
-为括号包裹的多个整数。每个子初始化值必须适合类型@code{HARD_REG_SET}的初始化值，
-其在@file{hard-reg-set.h}中定义。这种情况下，
-每个子初始化值的第一个整数对应于寄存器0到31，第二个对应于32到63，等等。
+当机器具有多于32个寄存器的时候，一个整数还不能满足。这时整数被替换为子初始化值，为括号包裹的多个整数。每个子初始化值必须适合类型@code{HARD_REG_SET}的初始化值，其在@file{hard-reg-set.h}中定义。这种情况下，每个子初始化值的第一个整数对应于寄存器0到31，第二个对应于32到63，等等。
 @end defmac
 
 @defmac REGNO_REG_CLASS (@var{regno})
@@ -3434,16 +3398,14 @@ the machine has any stack-like registers.
 @en @var{regno}.  In general there is more than one such class; choose a class
 @en which is @dfn{minimal}, meaning that no smaller class also contains the
 @en register.
-一个C表达式，其值为包含了硬件寄存器@var{regno}的寄存器类别。总的来说，
-会有不止一个这样的类别；选择最小的那个，这意味着没有更小的类别包含该寄存器。
+一个C表达式，其值为包含了硬件寄存器@var{regno}的寄存器类别。总的来说，会有不止一个这样的类别；选择最小的那个，这意味着没有更小的类别包含该寄存器。
 @end defmac
 
 @defmac BASE_REG_CLASS
 @en A macro whose definition is the name of the class to which a valid
 @en base register must belong.  A base register is one used in an address
 @en which is the register value plus a displacement.
-一个宏，它的定义为有效的基址寄存器必须属于的类别名字。
-基址寄存器用于由寄存器的值加上一个偏移量来表示的地址中。
+一个宏，它的定义为有效的基址寄存器必须属于的类别名字。基址寄存器用于由寄存器的值加上一个偏移量来表示的地址中。
 @end defmac
 
 @defmac MODE_BASE_REG_CLASS (@var{mode})
@@ -3451,8 +3413,7 @@ the machine has any stack-like registers.
 @en the selection of a base register in a mode dependent manner.  If
 @en @var{mode} is VOIDmode then it should return the same value as
 @en @code{BASE_REG_CLASS}.
-这是宏@code{BASE_REG_CLASS}的变体，其允许在机器模式相关的方式下选择基址寄存器。
-如果@var{mode}为VOIDmode，则其应该返回根@code{BASE_REG_CLASS}同样的值。
+这是宏@code{BASE_REG_CLASS}的变体，其允许在机器模式相关的方式下选择基址寄存器。如果@var{mode}为VOIDmode，则其应该返回根@code{BASE_REG_CLASS}同样的值。
 @end defmac
 
 @defmac MODE_BASE_REG_REG_CLASS (@var{mode})
@@ -3460,9 +3421,7 @@ the machine has any stack-like registers.
 @en base register must belong in order to be used in a base plus index
 @en register address.  You should define this macro if base plus index
 @en addresses have different requirements than other base register uses.
-一个C表达式，其值为有效的基址寄存器必须属于的类别名字，
-且用于一个基址寄存器加上索引寄存器的地址中。你应该定义该宏，
-如果表示为基址寄存器加上索引寄存器的地址具有不同于其它基址寄存器的用法要求时。
+一个C表达式，其值为有效的基址寄存器必须属于的类别名字，且用于一个基址寄存器加上索引寄存器的地址中。你应该定义该宏，如果表示为基址寄存器加上索引寄存器的地址具有不同于其它基址寄存器的用法要求时。
 @end defmac
 
 @defmac MODE_CODE_BASE_REG_CLASS (@var{mode}, @var{outer_code}, @var{index_code})
@@ -3473,10 +3432,7 @@ the machine has any stack-like registers.
 @en address, @code{ADDRESS} for something that occurs in an
 @en @code{address_operand}).  @var{index_code} is the code of the corresponding
 @en index expression if @var{outer_code} is @code{PLUS}; @code{SCRATCH} otherwise.
-一个C表达式，其值为有效的基址寄存器必须属于的类别名字。
-@var{outer_code}和@var{index_code}定义了基址寄存器出现的上下文。
-@var{outer_code}为。@var{index_code}为相应的索引表达式的代码，
-如果@var{outer_code}为@code{PLUS}；否则为@code{SCRATCH}。
+一个C表达式，其值为有效的基址寄存器必须属于的类别名字。@var{outer_code}和@var{index_code}定义了基址寄存器出现的上下文。@var{outer_code}为。@var{index_code}为相应的索引表达式的代码，如果@var{outer_code}为@code{PLUS}；否则为@code{SCRATCH}。
 @end defmac
 
 @defmac INDEX_REG_CLASS
@@ -3484,9 +3440,7 @@ the machine has any stack-like registers.
 @en index register must belong.  An index register is one used in an
 @en address where its value is either multiplied by a scale factor or
 @en added to another register (as well as added to a displacement).
-一个C表达式，其值为有效的索引寄存器必须属于的类别名字。
-索引寄存器为一个用于地址中的寄存器，
-它的值用于乘于一个标量因子或者加上另一个寄存器（也可以加上一个偏移量）。
+一个C表达式，其值为有效的索引寄存器必须属于的类别名字。索引寄存器为一个用于地址中的寄存器，它的值用于乘于一个标量因子或者加上另一个寄存器（也可以加上一个偏移量）。
 @end defmac
 
 @defmac REGNO_OK_FOR_BASE_P (@var{num})
@@ -3497,9 +3451,7 @@ the machine has any stack-like registers.
 @en the same for hard register; for pseudos, the strict variant will
 @en pass only those that have been allocated to a valid hard registers,
 @en while the non-strict variant will pass all pseudos.
-一个C表达式，其为非0，
-如果寄存器编号@var{num}适合在操作数地址中作为基址寄存器使用。
-其可以为一个合适的硬件寄存器，或者一个已经被分配了这样的硬件寄存器的伪寄存器。
+一个C表达式，其为非0，如果寄存器编号@var{num}适合在操作数地址中作为基址寄存器使用。其可以为一个合适的硬件寄存器，或者一个已经被分配了这样的硬件寄存器的伪寄存器。
 @end defmac
 
 @defmac REGNO_MODE_OK_FOR_BASE_P (@var{num}, @var{mode})
@@ -3511,14 +3463,10 @@ the machine has any stack-like registers.
 @en @code{REGNO_OK_FOR_BASE_P}.  The mode may be @code{VOIDmode} for
 @en addresses that appear outside a @code{MEM}, i.e., as an
 @en @code{address_operand}.
-一个C表达式，类似于@code{REGNO_OK_FOR_BASE_P}，
-除了表达式可以检查内存引用的机器模式@var{mode}。你应该定义该宏，
-如果内存引用的机器模式影响了一个寄存器是否可以作为基址寄存器使用。
-如果你定义了该宏，则编译器将使用它来替代@code{REGNO_OK_FOR_BASE_P}。
-对于出现在@code{MEM}之外的地址，即作为一个@code{address_operand}，
-mode可以为@code{VOIDmode}。
+一个C表达式，类似于@code{REGNO_OK_FOR_BASE_P}，除了表达式可以检查内存引用的机器模式@var{mode}。你应该定义该宏，如果内存引用的机器模式影响了一个寄存器是否可以作为基址寄存器使用。如果你定义了该宏，则编译器将使用它来替代@code{REGNO_OK_FOR_BASE_P}。对于出现在@code{MEM}之外的地址，即作为一个@code{address_operand}，mode可以为@code{VOIDmode}。
 
-This macro also has strict and non-strict variants.
+@en This macro also has strict and non-strict variants.
+该宏具有strict和non-strict两个变型。
 @end defmac
 
 @defmac REGNO_MODE_OK_FOR_REG_BASE_P (@var{num}, @var{mode})
@@ -3528,17 +3476,14 @@ This macro also has strict and non-strict variants.
 @en pseudo register that has been allocated such a hard register.  You should
 @en define this macro if base plus index addresses have different requirements
 @en than other base register uses.
-一个C表达式，其为非0，
-如果寄存器编号@var{num}适合在表示为基址加索引的地址中作为一个基址寄存器使用，
-并通过模式@var{mode}来访问。其可以为一个合适的硬件寄存器，
-或者一个已经被分配了这样的硬件寄存器的伪寄存器。你应该定义该宏，
-如果表示为基址寄存器加上索引寄存器的地址具有不同于其它基址寄存器的用法要求时。
+一个C表达式，其为非0，如果寄存器编号@var{num}适合在表示为基址加索引的地址中作为一个基址寄存器使用，并通过模式@var{mode}来访问。其可以为一个合适的硬件寄存器，或者一个已经被分配了这样的硬件寄存器的伪寄存器。你应该定义该宏，如果表示为基址寄存器加上索引寄存器的地址具有不同于其它基址寄存器的用法要求时。
 
 @en Use of this macro is deprecated; please use the more general
 @en @code{REGNO_MODE_CODE_OK_FOR_BASE_P}.
 不赞成使用该宏；请使用更加通用的@code{REGNO_MODE_CODE_OK_FOR_BASE_P}。
 
-This macro also has strict and non-strict variants.
+@en This macro also has strict and non-strict variants.
+该宏具有strict和non-strict两个变型。
 @end defmac
 
 @defmac REGNO_MODE_CODE_OK_FOR_BASE_P (@var{num}, @var{mode}, @var{outer_code}, @var{index_code})
@@ -3551,13 +3496,10 @@ This macro also has strict and non-strict variants.
 @en corresponding index expression if @var{outer_code} is @code{PLUS};
 @en @code{SCRATCH} otherwise.  The mode may be @code{VOIDmode} for addresses
 @en that appear outside a @code{MEM}, i.e., as an @code{address_operand}.
-一个C表达式，类似于@code{REGNO_MODE_OK_FOR_BASE_P}，
-除了表达式可以检查寄存器出现内存引用中的上下文。@var{outer_code}为。
-@var{index_code}为相应的索引表达式的代码，如果@var{outer_code}为@code{PLUS}；
-否则为@code{SCRATCH}。对于出现在@code{MEM}之外的地址，
-即作为一个@code{address_operand}，mode可以为@code{VOIDmode}。
+一个C表达式，类似于@code{REGNO_MODE_OK_FOR_BASE_P}，除了表达式可以检查寄存器出现内存引用中的上下文。@var{outer_code}为。@var{index_code}为相应的索引表达式的代码，如果@var{outer_code}为@code{PLUS}；否则为@code{SCRATCH}。对于出现在@code{MEM}之外的地址，即作为一个@code{address_operand}，mode可以为@code{VOIDmode}。
 
-This macro also has strict and non-strict variants.
+@en This macro also has strict and non-strict variants.
+该宏具有strict和non-strict两个变型。
 @end defmac
 
 @defmac REGNO_OK_FOR_INDEX_P (@var{num})
@@ -3565,9 +3507,7 @@ This macro also has strict and non-strict variants.
 @en suitable for use as an index register in operand addresses.  It may be
 @en either a suitable hard register or a pseudo register that has been
 @en allocated such a hard register.
-一个C表达式，其为非0，
-如果寄存器编号@var{num}适合作为索引寄存器用于操作数地址中。
-其可以为一个合适的硬件寄存器或者一个已经被分配了这样的硬件寄存器的伪寄存器。
+一个C表达式，其为非0，如果寄存器编号@var{num}适合作为索引寄存器用于操作数地址中。其可以为一个合适的硬件寄存器或者一个已经被分配了这样的硬件寄存器的伪寄存器。
 
 @en The difference between an index register and a base register is that
 @en the index register may be scaled.  If an address involves the sum of
@@ -3577,11 +3517,7 @@ This macro also has strict and non-strict variants.
 @en may serve in each capacity.  The compiler will try both labelings,
 @en looking for one that is valid, and will reload one or both registers
 @en only if neither labeling works.
-索引寄存器和基址寄存器的区别是，索引寄存器可以被标量化。
-如果一个地址包含了两个寄存器的和，并且都不被标量化，
-则一个可以被标签为“base” 另一个为“index”；但是使用哪个标签，
-必须要适合机器的约束。编译器将尝试两种标签方式，来查找有效的一种，
-并且当两种方式都无法工作时，重载一个或两个寄存器。
+索引寄存器和基址寄存器的区别是，索引寄存器可以被标量化。如果一个地址包含了两个寄存器的和，并且都不被标量化，则一个可以被标签为“base” 另一个为“index”；但是使用哪个标签，必须要适合机器的约束。编译器将尝试两种标签方式，来查找有效的一种，并且当两种方式都无法工作时，重载一个或两个寄存器。
 @end defmac
 
 @deftypefn {Target Hook} reg_class_t TARGET_PREFERRED_RELOAD_CLASS (rtx @var{x}, reg_class_t @var{rclass})
@@ -4054,33 +3990,39 @@ allocation.
 @end defmac
 
 @deftypefn {Target Hook} {const reg_class_t *} TARGET_IRA_COVER_CLASSES (void)
-Return an array of cover classes for the Integrated Register Allocator
-(@acronym{IRA}).  Cover classes are a set of non-intersecting register
-classes covering all hard registers used for register allocation
-purposes.  If a move between two registers in the same cover class is
-possible, it should be cheaper than a load or store of the registers.
-The array is terminated by a @code{LIM_REG_CLASSES} element.
+@en Return an array of cover classes for the Integrated Register Allocator
+@en (@acronym{IRA}).  Cover classes are a set of non-intersecting register
+@en classes covering all hard registers used for register allocation
+@en purposes.  If a move between two registers in the same cover class is
+@en possible, it should be cheaper than a load or store of the registers.
+@en The array is terminated by a @code{LIM_REG_CLASSES} element.
+为集成寄存器分配器（@acronym{IRA}）返回一个cover classes数组。Cover classes为一个不相交的寄存器类的集合，覆盖了用于寄存器分配的所有硬件寄存器。如果在相同cover class中的两个寄存器之间可以进行move，则其代价应该比寄存器加载或者存储要低。该数组由元素@code{LIM_REG_CLASSES}来结束。
 
-The order of cover classes in the array is important.  If two classes
-have the same cost of usage for a pseudo, the class occurred first in
-the array is chosen for the pseudo.
+@en The order of cover classes in the array is important.  If two classes
+@en have the same cost of usage for a pseudo, the class occurred first in
+@en the array is chosen for the pseudo.
+数组中cover classes的顺序很重要。如果对于一个伪寄存器的使用，两个类具有相同代价，则先出现在数组中的类将被选择用于该伪寄存器。
 
-This hook is called once at compiler startup, after the command-line
-options have been processed. It is then re-examined by every call to
-@code{target_reinit}.
+@en This hook is called once at compiler startup, after the command-line
+@en options have been processed. It is then re-examined by every call to
+@en @code{target_reinit}.
+该钩子在编译器启动时，命令行选项被处理之后，被调用一次。然后，每次调用@code{target_reinit}的时候，都会重新被检查。
 
-The default implementation returns @code{IRA_COVER_CLASSES}, if defined,
-otherwise there is no default implementation.  You must define either this
-macro or @code{IRA_COVER_CLASSES} in order to use the integrated register
-allocator with Chaitin-Briggs coloring. If the macro is not defined,
-the only available coloring algorithm is Chow's priority coloring.
+@en The default implementation returns @code{IRA_COVER_CLASSES}, if defined,
+@en otherwise there is no default implementation.  You must define either this
+@en macro or @code{IRA_COVER_CLASSES} in order to use the integrated register
+@en allocator with Chaitin-Briggs coloring. If the macro is not defined,
+@en the only available coloring algorithm is Chow's priority coloring.
+如果定义，则缺省的实现会返回@code{IRA_COVER_CLASSES}，否则，没有缺省实现。为了能够使用Chaitin-Briggs图着色的集成寄存器分配器，你必须定义该宏或者@code{IRA_COVER_CLASSES}。如果没有定义，则只有Chow的优先级图着色算法可用。
 
-This hook must not be modified from @code{NULL} to non-@code{NULL} or
-vice versa by command-line option processing.
+@en This hook must not be modified from @code{NULL} to non-@code{NULL} or
+@en vice versa by command-line option processing.
+该钩子一定不要通过命令行选项处理，来将@code{NULL}修改为non-@code{NULL}，反之依然。
 @end deftypefn
 
 @defmac IRA_COVER_CLASSES
-See the documentation for @code{TARGET_IRA_COVER_CLASSES}.
+@en See the documentation for @code{TARGET_IRA_COVER_CLASSES}.
+参见对@code{TARGET_IRA_COVER_CLASSES}的介绍。
 @end defmac
 
 @en @node Old Constraints
