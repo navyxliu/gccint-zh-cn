@@ -336,38 +336,48 @@ usual validation done by option processing).  This is implemented in
 @en pass-specific information in exactly the same order that it was
 @en written by @code{write_summary}.
 @item @emph{读入总计信息} (@code{struct ipa_opt_pass_d}中的@code{read_summary})。这个阶段读入所有的与该遍有关的信息，顺序和通过@code{write_summary}写入的顺序一致。
-@item @emph{Execute} (@code{execute} in @code{struct
-opt_pass}).  This performs inter-procedural propagation.  This
-must be done without actual access to the individual function
-bodies or variable initializers.  Typically, this results in a
-transitive closure operation over the summary information of all
-the nodes in the callgraph.
+@en @item @emph{Execute} (@code{execute} in @code{struct
+@en opt_pass}).  This performs inter-procedural propagation.  This
+@en must be done without actual access to the individual function
+@en bodies or variable initializers.  Typically, this results in a
+@en transitive closure operation over the summary information of all
+@en the nodes in the callgraph.
+@item @emph{执行} (@code{execute} in @code{struct opt_pass})。这个步骤做了过程间的信息繁殖。这个操作必须不能有对单个函数体或者变量初始化函数的实际访问。典型地，这个导致了一个在调用图的所有节点的总计信息的传递闭包操作。
 
-@item @emph{Write optimization summary}
-(@code{write_optimization_summary} in @code{struct
-ipa_opt_pass_d}).  This writes the result of the inter-procedural
-propagation into the object file.  This can use the same data
-structures and helper routines used in @code{write_summary}.
+@en @item @emph{Write optimization summary}
+@en (@code{write_optimization_summary} in @code{struct
+@en ipa_opt_pass_d}).  This writes the result of the inter-procedural
+@en propagation into the object file.  This can use the same data
+@en structures and helper routines used in @code{write_summary}.
+@item @emph{记录优化总计信息}
+(@code{write_optimization_summary} 在@code{struct ipa_opt_pass_d})。它把过程间繁殖信息记录到目标文件。它和@code{write_summary}使用了同样的数据结构和函数。
 @end enumerate
 
 @item LTRANS time
 @enumerate
-@item @emph{Read optimization summary}
-(@code{read_optimization_summary} in @code{struct
-ipa_opt_pass_d}).  The counterpart to
-@code{write_optimization_summary}.  This reads the interprocedural
-optimization decisions in exactly the same format emitted by
-@code{write_optimization_summary}.
+@en @item @emph{Read optimization summary}
+@en (@code{read_optimization_summary} in @code{struct
+@en ipa_opt_pass_d}).  The counterpart to
+@en @code{write_optimization_summary}.  This reads the interprocedural
+@en optimization decisions in exactly the same format emitted by
+@en @code{write_optimization_summary}.
+@item @emph{读入优化总计信息}
+(@code{read_optimization_summary} in @code{struct ipa_opt_pass_d})。对应于@code{write_optimization_summary}。它读入@code{write_optimization_summary}输出的过程间优化决定。
 
 @item @emph{Transform} (@code{function_transform} and
 @code{variable_transform} in @code{struct ipa_opt_pass_d}).
 The actual function bodies and variable initializers are updated
 based on the information passed down from the @emph{Execute} stage.
+
+@item @emph{Transform} (@code{struct ipa_opt_pass_d} 中的@code{function_transform} 和 @code{variable_transform})。
+实际的函数体和变量初始化函数根据从@emph{执行}阶段专递下来的信息来更新。
+
 @end enumerate
 @end itemize
 
-The implementation of the inter-procedural passes are shared
-between LTO, WHOPR and classic non-LTO compilation.
+@en The implementation of the inter-procedural passes are shared
+@en between LTO, WHOPR and classic non-LTO compilation.
+过程间的多遍优化是在LTO, WHOPR 和典型的非LTO编译之间共享的。
 
 @itemize
 @item During the traditional file-by-file mode every pass executes its
