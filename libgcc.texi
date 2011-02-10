@@ -24,7 +24,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者@
 @en Some of these routines can be defined in mostly machine-independent C@.
 @en Others must be hand-written in assembly language for each processor
 @en that needs them.
-这些例程中有一些能够用机器独立的C来定义。其它的必须为需要它们的处理器使用汇编语言手写。
+这些例程中有一些能够用机器独立的C来定义。其余的只能用汇编为每个需要它们的处理器手写了。
 
 @en GCC will also generate calls to C library routines, such as
 @en @code{memcpy} and @code{memset}, in some cases.  The set of routines
@@ -694,7 +694,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者@
 @deftypefnx {Runtime Function} _Decimal64 __bid_trunctfdd ({long double} @var{a})
 @en These functions convert the value of @var{a} from a binary floating type
 @en to a decimal floating type of a different size.
-这些函数将的值从@var{a}二进制浮点类型转换为不同大小（size）的十进制浮点类型。
+这些函数将@var{a}的值从二进制浮点类型转换为不同大小（size）的十进制浮点类型。
 @end deftypefn
 
 @deftypefn {Runtime Function} float __dpd_truncddsf (_Decimal64 @var{a})
@@ -836,8 +836,8 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者@
 @en semantics for floating-point comparisons, taking NaN into account.
 @en Pay careful attention to the return values defined for each set.
 @en Under the hood, all of these routines are implemented as
-还有一个直接对应于比较运算符的高级函数的完备群。它们按照ISO C语义实现了浮点数比较运算，将NaN考虑了进来。要仔细注意每组函数的返回值定义。究
-其原因，所有这些函数都采用以下方式实现：
+还有一组完整的高级函数直接对应于比较运算符。它们按照ISO C语义实现了浮点数比较运算，将NaN考虑了进来。要仔细注意每组函数的返回值定义。原因是所有这些函数都采用以下方式实现：
+
 
 @smallexample
   if (__bid_unord@var{X}d2 (a, b))
@@ -850,7 +850,7 @@ GCC在一些平台上提供了一个低级运行时库，@file{libgcc.a} 或者@
 @en NaN@.  Thus, the meaning of the return value is different for each set.
 @en Do not rely on this implementation; only the semantics documented
 @en below are guaranteed.
-其中@var{E}是一个常数，被选来给出针对NaN的适当行为。因此，对于每组函数的返回值其意义都有所不同。所以不要依赖于这些函数实现；只有在下文
+其中@var{E}是一个挑选出来的常数，用来适当地处理NaN时用的。因此每组函数的返回值的意义有所不同。不要依赖于这些函数实现；只有在下文
 明确说明的语义才是可以保证的。
 
 @deftypefn {Runtime Function} int __dpd_eqsd2 (_Decimal32 @var{a}, _Decimal32 @var{b})
@@ -1780,6 +1780,8 @@ These functions return the sum of @var{a} and @var{b}.
 @deftypefnx {Runtime Function} {unsigned accum} __fractdfusa (double @var{a})
 @deftypefnx {Runtime Function} {unsigned long accum} __fractdfuda (double @var{a})
 @deftypefnx {Runtime Function} {unsigned long long accum} __fractdfuta (double @var{a})
+@en These functions convert from fractional and signed non-fractionals to
+@en fractionals and signed non-fractionals, without saturation.
 These functions convert from fractional and signed non-fractionals to
 fractionals and signed non-fractionals, without saturation.
 @end deftypefn
@@ -2391,7 +2393,7 @@ with saturation.
 
 @en @node Exception handling routines
 @en @section Language-independent routines for exception handling
-@node Exception handling routines
+@node 异常处理例程
 @section 语言无关的异常处理例程
 
 document me!
@@ -2439,12 +2441,14 @@ document me!
 该函数清除@var{beg}和@var{end}之间的指令缓存。
 @end deftypefn
 
-@subsection Split stack functions and variables
+@en @subsection Split stack functions and variables
+@subsection 分离栈函数和变量
 @deftypefn {Runtime Function} {void *} __splitstack_find (void *@var{segment_arg}, @
 void *@var{sp}, size_t @var{len}, void **@var{next_segment}, @
 void **@var{next_sp}, void **@var{initial_sp})
-When using @option{-fsplit-stack}, this call may be used to iterate
-over the stack segments.  It may be called like this:
+@en When using @option{-fsplit-stack}, this call may be used to iterate
+@en over the stack segments.  It may be called like this:
+当指定参数@option{-fsplit-stack}时，调用这个函数可以迭代栈段。可以像这样调用它：
 @smallexample
   void *next_segment = NULL;
   void *next_sp = NULL;
@@ -2456,25 +2460,28 @@ over the stack segments.  It may be called like this:
                                      &next_sp, &initial_sp))
          != NULL)
     @{
-      /* Stack segment starts at stack and is
-         stack_size bytes long.  */
+@en      /* Stack segment starts at stack and is
+@en         stack_size bytes long.  */
+      /* 栈段从stack起始，长度为 stack_size 字节。 */
     @}
 @end smallexample
 
-There is no way to iterate over the stack segments of a different
-thread.  However, what is permitted is for one thread to call this
-with the @var{segment_arg} and @var{sp} arguments NULL, to pass
-@var{next_segment}, @var{next_sp}, and @var{initial_sp} to a different
-thread, and then to suspend one way or another.  A different thread
-may run the subsequent @code{__splitstack_find} iterations.  Of
-course, this will only work if the first thread is suspended while the
-second thread is calling @code{__splitstack_find}.  If not, the second
-thread could be looking at the stack while it is changing, and
-anything could happen.
+@en There is no way to iterate over the stack segments of a different
+@en thread.  However, what is permitted is for one thread to call this
+@en with the @var{segment_arg} and @var{sp} arguments NULL, to pass
+@en @var{next_segment}, @var{next_sp}, and @var{initial_sp} to a different
+@en thread, and then to suspend one way or another.  A different thread
+@en may run the subsequent @code{__splitstack_find} iterations.  Of
+@en course, this will only work if the first thread is suspended while the
+@en second thread is calling @code{__splitstack_find}.  If not, the second
+@en thread could be looking at the stack while it is changing, and
+@en anything could happen.
+无法迭代不同线程的栈段。但是有件事是可以做的，那就是一个线程调用此函数时指定参数 @var{segment_arg} 和 @var{sp} 为 NULL，并且传递参数  @var{next_segment}, @var{next_sp}, 以及 @var{initial_sp} 至一个不同的线程，然后以不论什么方式挂起（suspend）。这时那个不同的线程就可以运行 @code{__splitstack_find} 迭代了。只有在第一个线程已经被挂起（suspend）的情况下，第二个线程去调用  @code{__splitstack_find} 才能正常工作，否则当第二个线程去查看一个变化中的栈时，什么事都是有可能发生的。
 @end deftypefn
 
 @defvar __morestack_segments
 @defvarx __morestack_current_segment
 @defvarx __morestack_initial_sp
-Internal variables used by the @option{-fsplit-stack} implementation.
+@en Internal variables used by the @option{-fsplit-stack} implementation.
+参数 @option{-fsplit-stack} 的具体实现用到的内部变量。
 @end defvar
