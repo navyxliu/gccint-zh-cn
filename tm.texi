@@ -2606,19 +2606,14 @@ of words in each data entry.
 
 @en This section explains how to describe what registers the target machine
 @en has, and how (in general) they can be used.
-这一节说明了如何描述目标机器具有什么寄存器，
-以及它们（通常）可以被如何使用。
+本章讲解如何描述目标机器的寄存器，以及（通常）如何使用它们。
 
 @en The description of which registers a specific instruction can use is
 @en done with register classes; see @ref{Register Classes}.  For information
 @en on using registers to access a stack frame, see @ref{Frame Registers}.
 @en For passing values in registers, see @ref{Register Arguments}.
 @en For returning values in registers, see @ref{Scalar Return}.
-寄存器类别用来描述一个特定指令可以使用哪些寄存器；
-参见@ref{Register Classes}。
-关于使用寄存器来访问栈帧的信息，参见@ref{Frame Registers}。
-关于使用寄存器来传值，参见@ref{Register Arguments}。
-关于使用寄存器来返回值，参见@ref{Scalar Return}。
+寄存器类别用来描述一个特定指令可以使用哪些寄存器，参见@ref{Register Classes}。使用寄存器来访问栈帧的信息，参见@ref{Frame Registers}。使用寄存器来传值，参见@ref{Register Arguments}。使用寄存器来返回值，参见@ref{Scalar Return}。
 
 @en @menu
 @en * Register Basics::             Number and kinds of registers.
@@ -2642,15 +2637,14 @@ of words in each data entry.
 
 @c prevent bad page break with this line
 @en Registers have various characteristics.
-寄存器具有不同的特征。
+寄存器具有多种特征。
 
 @defmac FIRST_PSEUDO_REGISTER
 @en Number of hardware registers known to the compiler.  They receive
 @en numbers 0 through @code{FIRST_PSEUDO_REGISTER-1}; thus, the first
 @en pseudo register's number really is assigned the number
 @en @code{FIRST_PSEUDO_REGISTER}.
-编译器知道的硬件寄存器个数。它们包括编号0到@code{FIRST_PSEUDO_REGISTER-1}；
-因此，第一个伪寄存器的编号实际被赋值为@code{FIRST_PSEUDO_REGISTER}。
+编译器所知道的硬件寄存器个数。它们包括编号0到@code{FIRST_PSEUDO_REGISTER-1}；因此，第一个伪寄存器的编号实际被赋值为@code{FIRST_PSEUDO_REGISTER}。
 @end defmac
 
 @defmac FIXED_REGISTERS
@@ -2662,27 +2656,19 @@ of words in each data entry.
 @en register when no frame pointer is needed), the program counter on
 @en machines where that is considered one of the addressable registers,
 @en and any other numbered register with a standard use.
-一个初始化，说明哪些寄存器在整个编译代码中都用于固定用途，
-因此不能用于通用分配。这些将包括栈指针，帧指针（在当不需要帧指针时，
-可以用于通用寄存器的机器上除外），
-在一些机器上被认为是可寻址的寄存器的程序计数器，
-以及其它具有标准用法的编号寄存器。
+一个初始化，用来说明哪些寄存器在整个被编译的代码中都具有固定用途，因此不能用于通用分配。这些将包括栈指针，帧指针（在一些机器上，当不需要帧指针时，其可以作为通用寄存器来使用），在一些机器上被认为是寻址寄存器的程序计数器，以及其它具有标准用法的编号寄存器。
 
 @en This information is expressed as a sequence of numbers, separated by
 @en commas and surrounded by braces.  The @var{n}th number is 1 if
 @en register @var{n} is fixed, 0 otherwise.
-这些信息作为一个序列编号来表示，由逗号分隔并由大括号包括。
-第@var{n}个编号为1，如果寄存器@var{n}为固定的，否则为0。
+这些信息通过一个逗号分隔，大括号包裹的编号序列来表示。如果寄存器@var{n}为固定的，则第@var{n}个编号为1，否则为0。
 
 @en The table initialized from this macro, and the table initialized by
 @en the following one, may be overridden at run time either automatically,
 @en by the actions of the macro @code{CONDITIONAL_REGISTER_USAGE}, or by
 @en the user with the command options @option{-ffixed-@var{reg}},
 @en @option{-fcall-used-@var{reg}} and @option{-fcall-saved-@var{reg}}.
-从该宏初始化的表，以及由下面的初始化的表，都可以在运行时被覆盖，
-或者通过执行宏@code{CONDITIONAL_REGISTER_USAGE}自动完成，
-或者通过用户使用命令选项@option{-ffixed-@var{reg}}, 
-@option{-fcall-used-@var{reg}}和@option{-fcall-saved-@var{reg}}。
+通过该宏初始化的表格，以及通过下面的宏初始化的表格，其内容都可以在运行时，通过执行宏@code{CONDITIONAL_REGISTER_USAGE}，或者通过用户命令选项@option{-ffixed-@var{reg}}，@option{-fcall-used-@var{reg}}和@option{-fcall-saved-@var{reg}}来覆盖。
 @end defmac
 
 @defmac CALL_USED_REGISTERS
@@ -2694,16 +2680,12 @@ of words in each data entry.
 @en registers.  This macro therefore identifies the registers that are not
 @en available for general allocation of values that must live across
 @en function calls.
-类似@code{FIXED_REGISTERS}，但是对于被函数调用破坏的每个寄存器，
-以及固定寄存器，值为1。因此，
-该宏标识了哪些寄存器不适合用于必须活跃于整个函数调用的值的通用分配。
+类似于@code{FIXED_REGISTERS}，对于被函数调用破坏的寄存器，以及固定寄存器，其值为1。因此，该宏标识了哪些寄存器不适合用于活跃信息跨函数调用的值的通用分配。
 
 @en If a register has 0 in @code{CALL_USED_REGISTERS}, the compiler
 @en automatically saves it on function entry and restores it on function
 @en exit, if the register is used within the function.
-如果寄存器在@code{CALL_USED_REGISTERS}中具有值0，
-如果寄存器在函数中被使用，则编译器会自动的在函数入口保存它，
-并在函数出口恢复它。
+如果寄存器在@code{CALL_USED_REGISTERS}中的值为0，则当寄存器在函数中被使用时，编译器会自动在函数入口保存它，并在函数出口恢复它。
 @end defmac
 
 @defmac CALL_REALLY_USED_REGISTERS
@@ -2715,9 +2697,7 @@ of words in each data entry.
 @en (@code{CALL_USED_REGISTERS} must be a superset of @code{FIXED_REGISTERS}).
 @en This macro is optional.  If not specified, it defaults to the value
 @en of @code{CALL_USED_REGISTERS}.
-类似@code{CALL_USED_REGISTERS}，除了该宏不需要包含整个@code{FIXED_REGISTERS}集。
-（@code{CALL_USED_REGISTERS}必须为@code{FIXED_REGISTERS}的超集）。
-该宏为可选的。如果没有被指定，其缺省为@code{CALL_USED_REGISTERS}的值。
+类似于@code{CALL_USED_REGISTERS}，但是该宏不需要包含整个@code{FIXED_REGISTERS}集。（@code{CALL_USED_REGISTERS}必须为@code{FIXED_REGISTERS}的超集）。该宏为可选的。如果没有被定义，其缺省值为@code{CALL_USED_REGISTERS}。
 @end defmac
 
 @defmac HARD_REGNO_CALL_PART_CLOBBERED (@var{regno}, @var{mode})
@@ -2729,10 +2709,7 @@ of words in each data entry.
 @en call without some part of it being clobbered.  For most machines this
 @en macro need not be defined.  It is only required for machines that do not
 @en preserve the entire contents of a register across a call.
-一个C表达式，值为非0，
-如果不允许将机器模式为@var{mode}的值存储在编号为@var{regno}的硬件寄存器中，
-并且整个调用中没有破坏其某个部分。对于大多数机器，该宏不需要被定义。
-其只用于一些在调用中不保护寄存器的整个内容的机器上。
+一个C表达式，如果不允许将机器模式为@var{mode}的值存储在编号为@var{regno}的硬件寄存器中，并且整个调用中没有破坏其某个部分，则值为非0。对于大多数机器，该宏不需要被定义。其只用于一些在调用中不保留寄存器的整个内容的机器上。
 @end defmac
 
 @findex fixed_regs
@@ -2755,17 +2732,7 @@ of words in each data entry.
 @en @code{global_regs} has been cleared, and any @option{-ffixed-@var{reg}},
 @en @option{-fcall-used-@var{reg}} and @option{-fcall-saved-@var{reg}}
 @en command options have been applied.
-该钩子可以条件修改5个变量@code{fixed_regs}, 
-@code{call_used_rehs}, @code{global_regs}, @code{reg_names} 和
-@code{reg_class_contents}，来考虑这些寄存器集对target标号的任何依赖。
-前3个为@code{char []}类型（作为布尔向量来解析）。
-@code{global_regs}为一个@code{const char *[]}，
-@code{reg_class_contents}为一个@code{HARD_REG_SET}。
-在宏被调用之前，@code{fixed_regs}, @code{call_used_regs}, 
-@code{reg_class_contents}和@code{reg_names}已经分别通过@code{FIXED_REGISTERS},
-@code{CALL_USED_REGISTERS}, @code{REG_CLASS_CONTENTS}和@code{REGISTER_NAMES}被初始化。
-@code{global_regs}已经被清除，并且任何@option{-ffixed-@var{reg}}, 
-@option{-fcall-used-@var{reg}}和@option{-fcall-saved-@var{reg}}选项已经被应用。
+该钩子可以条件修改@code{fixed_regs}，@code{call_used_rehs}，@code{global_regs}，@code{reg_names}和@code{reg_class_contents}这5个变量，用于当这些寄存器集对目标机标记（target flags）有任何依赖的情况下。前3个为@code{char []}类型（作为布尔向量来解析）。@code{global_regs}为一个@code{const char *[]}，@code{reg_class_contents}为一个@code{HARD_REG_SET}。在宏被调用之前，@code{fixed_regs}, @code{call_used_regs}, @code{reg_class_contents}和@code{reg_names}已经分别通过@code{FIXED_REGISTERS}, @code{CALL_USED_REGISTERS}, @code{REG_CLASS_CONTENTS}和@code{REGISTER_NAMES}被初始化。@code{global_regs}已经被清除，并且所有@option{-ffixed-@var{reg}}, @option{-fcall-used-@var{reg}}和@option{-fcall-saved-@var{reg}}选项都已经被应用。
 
 @en You need not define this macro if it has no work to do.
 如果不需要做什么工作，则不必定义该宏。
@@ -2779,19 +2746,13 @@ of words in each data entry.
 @en the macro @code{REG_CLASS_FROM_LETTER} / @code{REG_CLASS_FROM_CONSTRAINT}
 @en to return @code{NO_REGS} if it
 @en is called with a letter for a class that shouldn't be used.
-如果整个寄存器的类别的使用，取决于target标记，
-则你可以通过使用该宏来指示GCC修改@code{fixed_regs}和@code{call_used_regs}为1，
-对于类别中的每个不应由GCC使用的寄存器。还有就是，
-定义宏@code{REG_CLASS_FROM_LETTER} / @code{REG_CLASS_FROM_CONSTRAINT}来返回@code{NO_REGS}，
-如果其被调用，并带有一个不应该被使用的类别字母。
+如果整个寄存器类别的使用，取决于目标机标记，则对于类别中的每个不应由GCC使用的寄存器，你可以通过使用该宏来指示GCC修改@code{fixed_regs}和@code{call_used_regs}为1。还有就是，如果其被调用，并带有一个不应该被使用的类别字母，则可以定义宏@code{REG_CLASS_FROM_LETTER} / @code{REG_CLASS_FROM_CONSTRAINT}来返回@code{NO_REGS}。
 
 @en (However, if this class is not included in @code{GENERAL_REGS} and all
 @en of the insn patterns whose constraints permit this class are
 @en controlled by target switches, then GCC will automatically avoid using
 @en these registers when the target switches are opposed to them.)
-（然而，如果该类没有包含在@code{GENERAL_REGS}中，
-并且所有的insn指令模式的约束允许该类通过target开关来控制，
-则GCC将自动避免使用这些寄存器，当target开关与它们相反时。）
+（然而，如果该类别没有包含在@code{GENERAL_REGS}中，并且所有的指令模式（insn patterns）的约束允许该类别通过目标机开关来控制，则当目标机开关与它们相反时，GCC将自动避免使用这些寄存器。）
 @end deftypefn
 
 @defmac INCOMING_REGNO (@var{out})
@@ -2800,10 +2761,7 @@ of words in each data entry.
 @en corresponding to the register number @var{out} as seen by the calling
 @en function.  Return @var{out} if register number @var{out} is not an
 @en outbound register.
-定义该宏，如果target机器具有寄存器窗口。
-该C表达式根据调用函数能看到的寄存器编号@var{out}，
-返回被调用函数所能看到的寄存器编号。
-返回@var{out}，如果寄存器编号@var{out}不是发送寄存器（outbound register）。
+如果目标机器具有寄存器窗口，则定义该宏。该C表达式，根据调用函数能看到的寄存器编号@var{out}，返回被调用函数所能看到的寄存器编号。如果寄存器编号@var{out}不是一个出站寄存器（outbound register），则返回@var{out}。
 @end defmac
 
 @defmac OUTGOING_REGNO (@var{in})
@@ -2812,10 +2770,7 @@ of words in each data entry.
 @en corresponding to the register number @var{in} as seen by the called
 @en function.  Return @var{in} if register number @var{in} is not an inbound
 @en register.
-定义该宏，如果target机器具有寄存器窗口。
-该C表达式根据被调用函数能看到的寄存器编号@var{in}，
-返回调用函数所能看到的寄存器编号。
-返回@var{in}，如果寄存器编号@var{in}不是运入寄存器（inbound register）。
+如果目标机器具有寄存器窗口，则定义该宏。该C表达式，根据被调用函数能看到的寄存器编号@var{in}，返回调用函数所能看到的寄存器编号。如果寄存器编号@var{in}不是一个进站寄存器（inbound register），则返回@var{in}。
 @end defmac
 
 @defmac LOCAL_REGNO (@var{regno})
@@ -2824,15 +2779,13 @@ of words in each data entry.
 @en register window.  Unlike most call-saved registers, such registers
 @en need not be explicitly restored on function exit or during non-local
 @en gotos.
-定义该宏，如果target机器具有寄存器窗口。该C表达式返回真，
-如果寄存器为调用保存的，但是在寄存器窗口中。不像大多调用保存的寄存器，
-这样的寄存器不需要在函数出口或者非局部调转中被显示的恢复。
+如果目标机器具有寄存器窗口，则定义该宏。该C表达式，当寄存器为调用保存的，并且在寄存器窗口中时，返回真。不像大多调用保存的寄存器，这样的寄存器不需要在函数出口或者非局部goto中被显式的恢复。
 @end defmac
 
 @defmac PC_REGNUM
 @en If the program counter has a register number, define this as that
 @en register number.  Otherwise, do not define it.
-如果程序计数器具有一个寄存器编号，则定义其为那个寄存器编号。否则不要定义它。
+如果程序计数器具有一个寄存器编号，则将其定义为那个寄存器编号。否则不要定义它。
 @end defmac
 
 @en @node Allocation Order
@@ -2850,7 +2803,7 @@ of words in each data entry.
 @en If defined, an initializer for a vector of integers, containing the
 @en numbers of hard registers in the order in which GCC should prefer
 @en to use them (from most preferred to least).
-如果定义，则为一个整数向量的初始化值，包含了硬件寄存器号，GCC将按该照顺序来使用它们（前面的优先）。
+如果定义，则为一个整数向量的初始化值，包含了硬件寄存器编号，GCC将按照该顺序来使用它们（前面的优先）。
 
 @en If this macro is not defined, registers are used lowest numbered first
 @en (all else being equal).
@@ -2861,7 +2814,7 @@ of words in each data entry.
 @en instruction supports only sequences of consecutive registers.  On such
 @en machines, define @code{REG_ALLOC_ORDER} to be an initializer that lists
 @en the highest numbered allocable register first.
-该宏的一个用处是在一些机器上，高编号的寄存器必须总是被保存并且save-multiple-registers指令只支持连续序列的寄存器。在这些机器上，可以定义@code{REG_ALLOC_ORDER}来初始化列表，使得高编号寄存器优先分配。
+该宏的一个用处是在一些机器上，高编号的寄存器必须总是被保存并且save-multiple-registers指令只支持连续序列的寄存器。在这些机器上，可以定义@code{REG_ALLOC_ORDER}来进行初始化，将可用于分配的高编号寄存器列在前面。
 @end defmac
 
 @defmac ADJUST_REG_ALLOC_ORDER
@@ -2889,7 +2842,7 @@ of words in each data entry.
 @en allocates registers in the order given by REG_ALLOC_ORDER even if some
 @en call-saved registers appear earlier than call-used ones, this macro
 @en should be defined.
-通常，IRA会尝试去估算在函数起始处保存寄存器和结尾处恢复寄存器的代价。这将使得其不优先使用调用保存（call-saved）的寄存器。如果机器想要确保IRA按照REG_ALLOC_ORDER中给定的顺序进行分配寄存器，即使一些调用保存的寄存器出现在调用使用（call-used）的寄存器之前，则要定义该宏。
+通常，IRA会尝试去估算在函数起始处保存寄存器和结尾处恢复寄存器的代价。这将使得其不优先使用调用保存的（call-saved）寄存器。如果机器想要确保IRA按照REG_ALLOC_ORDER中给定的顺序进行分配寄存器，即使一些调用保存的寄存器出现在调用使用的（call-used）寄存器之前，则要定义该宏。
 @end defmac
 
 @defmac IRA_HARD_REGNO_ADD_COST_MULTIPLIER (@var{regno})
@@ -2914,8 +2867,7 @@ of words in each data entry.
 @en This section discusses the macros that describe which kinds of values
 @en (specifically, which machine modes) each register can hold, and how many
 @en consecutive registers are needed for a given mode.
-这节讨论的宏，描述了每个寄存器可以存放哪类的值（明确的说，
-是哪些机器模式的），以及对于给定的机器模式需要多少个连续的寄存器。
+这节讨论的宏，描述了每个寄存器可以存放哪类的值（明确的说，是哪些机器模式的），以及对于给定的机器模式需要多少个连续的寄存器。
 
 @defmac HARD_REGNO_NREGS (@var{regno}, @var{mode})
 @en A C expression for the number of consecutive hard registers, starting
@@ -2923,10 +2875,7 @@ of words in each data entry.
 @en @var{mode}.  This macro must never return zero, even if a register
 @en cannot hold the requested mode - indicate that with HARD_REGNO_MODE_OK
 @en and/or CANNOT_CHANGE_MODE_CLASS instead.
-一个C表达式，为存放模式@var{mode}的值所需要的连续的硬件寄存器，
-起始于寄存器编号@var{regno}。该宏不要返回0，
-即使寄存器不能存放指定的mode —— 替代的，
-使用HARD_REGNO_MODE_OK 和/或 CANNOT_CHANGE_MODE_CLASS。
+一个C表达式，为存放模式@var{mode}的值所需要的连续的硬件寄存器，起始于寄存器编号@var{regno}。该宏不要返回0，即使寄存器不能存放指定的mode —— 替代的，使用HARD_REGNO_MODE_OK 和/或 CANNOT_CHANGE_MODE_CLASS。
 
 @en On a machine where all registers are exactly one word, a suitable
 @en definition of this macro is
@@ -2946,9 +2895,7 @@ of words in each data entry.
 @en multiplying GCC's notion of the size of the register when containing
 @en this mode by the number of registers returned by
 @en @code{HARD_REGNO_NREGS}).  By default this is zero.
-一个C表达式，为非0，如果模式为@var{mode}的值，存储在内存中，
-并由padding结尾，这使得其占有更多的空间，
-比在起始于寄存器编号@var{regno}的寄存器中。缺省的为0。
+一个C表达式，为非0，如果模式为@var{mode}的值，存储在内存中，并由padding结尾，这使得其占有更多的空间，比在起始于寄存器编号@var{regno}的寄存器中。缺省的为0。
 
 @en For example, if a floating-point value is stored in three 32-bit
 @en registers but takes up 128 bits in memory, then this would be
@@ -2961,9 +2908,7 @@ of words in each data entry.
 @en represented by an offset to the register number, when in fact such a
 @en @code{subreg} would contain some of the padding not stored in
 @en registers and so not be representable.
-该宏只有当@code{subreg_get_info}会错误的确定一个@code{subreg}可以通过寄存器编号的偏移量来表示，
-而实际上这样的@code{subreg}将会保存一些不应该被表示的padding时，
-才需要被定义。
+该宏只有当@code{subreg_get_info}会错误的确定一个@code{subreg}可以通过寄存器编号的偏移量来表示，而实际上这样的@code{subreg}将会保存一些不应该被表示的padding时，才需要被定义。
 @end defmac
 
 @defmac HARD_REGNO_NREGS_WITH_PADDING (@var{regno}, @var{mode})
@@ -2971,9 +2916,7 @@ of words in each data entry.
 @en @code{HARD_REGNO_NREGS_HAS_PADDING} returns nonzero, a C expression
 @en returning the greater number of registers required to hold the value
 @en including any padding.  In the example above, the value would be four.
-对于@code{HARD_REGNO_NREGS_HAS_PADDING}会返回非0的@var{regno}和@var{mode}的值，
-其为一个C表达式，返回保存包括任何padding的值所需要的寄存器的最大数。
-在上面的例子中，值将为4。
+对于@code{HARD_REGNO_NREGS_HAS_PADDING}会返回非0的@var{regno}和@var{mode}的值，其为一个C表达式，返回保存包括任何padding的值所需要的寄存器的最大数。在上面的例子中，值将为4。
 @end defmac
 
 @defmac REGMODE_NATURAL_SIZE (@var{mode})
@@ -2983,10 +2926,7 @@ of words in each data entry.
 @en used by the register allocator to try to optimize its results.  This
 @en happens for example on SPARC 64-bit where the natural size of
 @en floating-point registers is still 32-bit.
-定义该宏，如果存放模式@var{mode}的值的寄存器的自然大小，不是word大小。
-其为一个C表达式，对于指定的mode给出以字节为单位的自然的大小。
-其被寄存器分配用于尝试优化它的结果。
-例如这出现在SPARC 64位机器上，其浮点寄存器的自然大小仍然是32位。
+定义该宏，如果存放模式@var{mode}的值的寄存器的自然大小，不是word大小。其为一个C表达式，对于指定的mode给出以字节为单位的自然的大小。其被寄存器分配用于尝试优化它的结果。例如这出现在SPARC 64位机器上，其浮点寄存器的自然大小仍然是32位。
 @end defmac
 
 @defmac HARD_REGNO_MODE_OK (@var{regno}, @var{mode})
@@ -2994,10 +2934,7 @@ of words in each data entry.
 @en of mode @var{mode} in hard register number @var{regno} (or in several
 @en registers starting with that one).  For a machine where all registers
 @en are equivalent, a suitable definition is
-一个C表达式，其为非0，
-如果允许将一个@var{mode}模式的值存储在硬件寄存器编号@var{regno}
-（或者起始于它的多个寄存器）中。对于所有寄存器都是等价的机器上，
-一个合适的定义为
+一个C表达式，其为非0，如果允许将一个@var{mode}模式的值存储在硬件寄存器编号@var{regno}（或者起始于它的多个寄存器）中。对于所有寄存器都是等价的机器上，一个合适的定义为
 
 @smallexample
 #define HARD_REGNO_MODE_OK(REGNO, MODE) 1
@@ -3005,23 +2942,19 @@ of words in each data entry.
 
 @en You need not include code to check for the numbers of fixed registers,
 @en because the allocation mechanism considers them to be always occupied.
-你不需要包含检查固定寄存器编号的代码，
-因为分配机制总是认为它们已经被占用了。
+你不需要包含检查固定寄存器编号的代码，因为分配机制总是认为它们已经被占用了。
 
 @cindex register pairs
 @en On some machines, double-precision values must be kept in even/odd
 @en register pairs.  You can implement that by defining this macro to reject
 @en odd register numbers for such modes.
-在一些机器上，双精度值必须放在偶/奇寄存器对。
-你可以通过定义该宏来拒绝这样模式的奇数寄存器编号。
+在一些机器上，双精度值必须放在偶/奇寄存器对。你可以通过定义该宏来拒绝这样模式的奇数寄存器编号。
 
 @en The minimum requirement for a mode to be OK in a register is that the
 @en @samp{mov@var{mode}} instruction pattern support moves between the
 @en register and other hard register in the same class and that moving a
 @en value into the register and back out not alter it.
-对于一个模式可以放在寄存器中的最小需求为，
-@samp{mov@var{mode}}指令模式支持在寄存器和同一类别的其它硬件寄存器之间的移动，
-并且将一个值移动到寄存器中并移动回来，而不会改变。
+对于一个模式可以放在寄存器中的最小需求为，@samp{mov@var{mode}}指令模式支持在寄存器和同一类别的其它硬件寄存器之间的移动，并且将一个值移动到寄存器中并移动回来，而不会改变。
 
 @en Since the same instruction used to move @code{word_mode} will work for
 @en all narrower integer modes, it is not necessary on any machine for
@@ -3030,9 +2963,7 @@ of words in each data entry.
 @en is useful because of the interaction between @code{HARD_REGNO_MODE_OK}
 @en and @code{MODES_TIEABLE_P}; it is very desirable for all integer modes
 @en to be tieable.
-由于用于move @code{word_mode}的同一指令，也可以用于所有更窄的整数模式，
-所以@code{HARD_REGNO_MODE_OK}不必要在任何机器上对于这些模式都不同，
-假定你定义了指令模式@samp{movhi}等。
+由于用于move @code{word_mode}的同一指令，也可以用于所有更窄的整数模式，所以@code{HARD_REGNO_MODE_OK}不必要在任何机器上对于这些模式都不同，假定你定义了指令模式@samp{movhi}等。
 
 @en Many machines have special registers for floating point arithmetic.
 @en Often people assume that floating point machine modes are allowed only
@@ -3040,11 +2971,7 @@ of words in each data entry.
 @en can hold integers can safely @emph{hold} a floating point machine
 @en mode, whether or not floating arithmetic can be done on it in those
 @en registers.  Integer move instructions can be used to move the values.
-许多机器对于浮点算术具有特定的寄存器。
-通常人们假设浮点机器模式只在浮点寄存器中被允许。这并不真实。
-任何可以存放整数的寄存器都可以安全的存放一个浮点机器模式，
-而不管是否可以在这些寄存器上进行浮点算术。
-整数move指令可以用于移动这些值。
+许多机器对于浮点算术具有特定的寄存器。通常人们假设浮点机器模式只在浮点寄存器中被允许。这并不真实。任何可以存放整数的寄存器都可以安全的存放一个浮点机器模式，而不管是否可以在这些寄存器上进行浮点算术。整数move指令可以用于移动这些值。
 
 @en On some machines, though, the converse is true: fixed-point machine
 @en modes may not go in floating registers.  This is true if the floating
@@ -3055,45 +2982,32 @@ of words in each data entry.
 @en normalize, if you can store any bit pattern in one and retrieve it
 @en unchanged without a trap, then any machine mode may go in a floating
 @en register, so you can define this macro to say so.
-然而在一些机器上，定点机器模式不可以放在浮点寄存器中。
-比如如果浮点寄存器对任何存储的值进行标准化，
-因为存储一个非浮点值将会使值变得混淆。这种情况下，
-@code{HARD_REGNO_MODE_OK}应该拒绝定点机器模式放在浮点寄存器中。
-但是，如果浮点寄存器不自动标准化，
-如果你可以存储任何位的指令模式并无需改动的获得它，
-则任何机器模式都可以放在浮点寄存器中，这样你可以定义该宏来表明可以这么做。
+然而在一些机器上，定点机器模式不可以放在浮点寄存器中。比如如果浮点寄存器对任何存储的值进行标准化，因为存储一个非浮点值将会使值变得混淆。这种情况下，@code{HARD_REGNO_MODE_OK}应该拒绝定点机器模式放在浮点寄存器中。但是，如果浮点寄存器不自动标准化，如果你可以存储任何位的指令模式并无需改动的获得它，则任何机器模式都可以放在浮点寄存器中，这样你可以定义该宏来表明可以这么做。
 
 @en The primary significance of special floating registers is rather that
 @en they are the registers acceptable in floating point arithmetic
 @en instructions.  However, this is of no concern to
 @en @code{HARD_REGNO_MODE_OK}.  You handle it by writing the proper
 @en constraints for those instructions.
-当然，特定的浮点寄存器的主要意义是它们在浮点算术指令中可以使用。
-但是，这根@code{HARD_REGNO_MODE_OK}没有关系。
-你可以通过对那些执行写合适的约束来处理。
+当然，特定的浮点寄存器的主要意义是它们在浮点算术指令中可以使用。但是，这根@code{HARD_REGNO_MODE_OK}没有关系。你可以通过对那些执行写合适的约束来处理。
 
 @en On some machines, the floating registers are especially slow to access,
 @en so that it is better to store a value in a stack frame than in such a
 @en register if floating point arithmetic is not being done.  As long as the
 @en floating registers are not in class @code{GENERAL_REGS}, they will not
 @en be used unless some pattern's constraint asks for one.
-在一些机器上，浮点寄存器访问起来特别慢，所以如果浮点算术没有完成前，
-最好将值存在栈帧中，而不是在这样的寄存器中。
-只要浮点寄存器不在@code{GENERAL_REGS}类别中，它们将不会被使用，
-除非某个指令模式的约束要求这样。
+在一些机器上，浮点寄存器访问起来特别慢，所以如果浮点算术没有完成前，最好将值存在栈帧中，而不是在这样的寄存器中。只要浮点寄存器不在@code{GENERAL_REGS}类别中，它们将不会被使用，除非某个指令模式的约束要求这样。
 @end defmac
 
 @defmac HARD_REGNO_RENAME_OK (@var{from}, @var{to})
 @en A C expression that is nonzero if it is OK to rename a hard register
 @en @var{from} to another hard register @var{to}.
-一个C表达式，为非0，
-如果可以将一个硬件寄存器@var{from}重命名为另一个寄存器@var{to}。
+一个C表达式，为非0，如果可以将一个硬件寄存器@var{from}重命名为另一个寄存器@var{to}。
 
 @en One common use of this macro is to prevent renaming of a register to
 @en another register that is not saved by a prologue in an interrupt
 @en handler.
-该宏的一个通用的用法是防止将一个寄存器重命名为另一个寄存器，
-而其在中断处理函数的序言中没有被保存。
+该宏的一个通用的用法是防止将一个寄存器重命名为另一个寄存器，而其在中断处理函数的序言中没有被保存。
 
 @en The default is always nonzero.
 缺省总是为非0。
@@ -3102,8 +3016,7 @@ of words in each data entry.
 @defmac MODES_TIEABLE_P (@var{mode1}, @var{mode2})
 @en A C expression that is nonzero if a value of mode
 @en @var{mode1} is accessible in mode @var{mode2} without copying.
-一个C表达式，其为非0，如果一个模式@var{mode1}的值，
-不需要复制便可以按照模式@var{mode2}来访问。
+一个C表达式，其为非0，如果一个模式@var{mode1}的值，不需要复制便可以按照模式@var{mode2}来访问。
 
 @en If @code{HARD_REGNO_MODE_OK (@var{r}, @var{mode1})} and
 @en @code{HARD_REGNO_MODE_OK (@var{r}, @var{mode2})} are always the same for
@@ -3111,17 +3024,12 @@ of words in each data entry.
 @en should be nonzero.  If they differ for any @var{r}, you should define
 @en this macro to return zero unless some other mechanism ensures the
 @en accessibility of the value in a narrower mode.
-如果@code{HARD_REGNO_MODE_OK (@var{r}, @var{mode1})}和
-@code{HARD_REGNO_MODE_OK (@var{r}, @var{mode2})}对于任何@var{r}总是相同，
-则@code{MODES_TIEABLE_P (@var{mode1}, @var{mode2})}应该为非0。
-如果它们对于任何@var{r}都不同，则你应该定义该宏来返回0，
-除非某个其它机制能够确保值可以按照更窄的模式来访问。
+如果@code{HARD_REGNO_MODE_OK (@var{r}, @var{mode1})}和@code{HARD_REGNO_MODE_OK (@var{r}, @var{mode2})}对于任何@var{r}总是相同，则@code{MODES_TIEABLE_P (@var{mode1}, @var{mode2})}应该为非0。如果它们对于任何@var{r}都不同，则你应该定义该宏来返回0，除非某个其它机制能够确保值可以按照更窄的模式来访问。
 
 @en You should define this macro to return nonzero in as many cases as
 @en possible since doing so will allow GCC to perform better register
 @en allocation.
-你应该定义该宏来尽可能情况的返回非0，
-因为这样会使得GCC执行更好的寄存器分配。
+你应该定义该宏来尽可能情况的返回非0，因为这样会使得GCC执行更好的寄存器分配。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_HARD_REGNO_SCRATCH_OK (unsigned int @var{regno})
@@ -3141,8 +3049,7 @@ of words in each data entry.
 @en Define this macro if the compiler should avoid copies to/from @code{CCmode}
 @en registers.  You should only define this macro if support for copying to/from
 @en @code{CCmode} is incomplete.
-定义该宏，如果编译器应该避免复制从/到@code{CCmode}寄存器。
-你应该只当对复制从/到@code{CCmode}寄存器的支持不完善的时候定义该宏。
+如果编译器应该避免从/向@code{CCmode}寄存器中进行复制，则定义该宏。应该只有当从/向@code{CCmode}寄存器中进行复制，支持的不完善的时候，才定义该宏。
 @end defmac
 
 @en @node Leaf Functions
@@ -3234,8 +3141,7 @@ GCC是在它知道函数是否适合作为叶子函数来对待之前，分配�
 @en ``registers'' form a stack.  Stack registers are normally written by
 @en pushing onto the stack, and are numbered relative to the top of the
 @en stack.
-有一些特性用来处理计算机中形成栈的寄存器。
-栈寄存器通常写成被压入一个栈中，并相对于栈顶进行编号。
+有一些特性用来处理计算机中形成栈的寄存器。栈寄存器通常通过压栈的方式进行写入，并相对于栈顶进行编号。
 
 @en Currently, GCC can only handle one group of stack-like registers, and
 @en they must be consecutively numbered.  Furthermore, the existing
@@ -3244,11 +3150,7 @@ GCC是在它知道函数是否适合作为叶子函数来对待之前，分配�
 @en stack-like registers, you will need to do substantial work on
 @en @file{reg-stack.c} and write your machine description to cooperate
 @en with it, as well as defining these macros.
-目前，GCC只能处理一组类栈的寄存器，并且它们的编号必须是连续的。
-而且，现存的对类栈寄存器的支持是特定于80387浮点协处理器。
-如果你有一个新的体系结构使用了类栈寄存器，
-你将需要在@file{reg-stack.c}上做大量的工作，并书写你自己的机器描述，
-同时还要定义这些宏。
+目前，GCC只能处理一组类栈寄存器，并且它们的编号必须是连续的。而且，现存的对类栈寄存器的支持是特定于80387浮点协处理器。如果你有一个新的体系结构使用了类栈寄存器，你将需要在@file{reg-stack.c}上做大量的工作，并书写你自己的机器描述，同时还要定义这些宏。
 
 @defmac STACK_REGS
 @en Define this if the machine has any stack-like registers.
@@ -3256,8 +3158,9 @@ GCC是在它知道函数是否适合作为叶子函数来对待之前，分配�
 @end defmac
 
 @defmac STACK_REG_COVER_CLASS
-This is a cover class containing the stack registers.  Define this if
-the machine has any stack-like registers.
+@en This is a cover class containing the stack registers.  Define this if
+@en the machine has any stack-like registers.
+这是一个cover class，包含了栈寄存器。如果机器具有任何类栈寄存器，则定义该宏。
 @end defmac
 
 @defmac FIRST_STACK_REG
