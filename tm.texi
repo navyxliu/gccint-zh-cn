@@ -3568,14 +3568,7 @@ A target hook that places additional preference on the register class to use whe
 @en reload might apply optimizations to re-use an intermediate register
 @en and eliding the copy from the source when it can determine that the
 @en intermediate register still holds the required value.
-许多机器具有一些寄存器，其不能直接和内存之间进行复制，
-甚至不能和其它类型的寄存器。一个例子是@samp{MQ}寄存器，
-在大多数机器上，只能与通用寄存器直接进行复制，而不能和内存之间。
-下面，我们将使用术语‘中途寄存器’，当一个move操作不能直接执行，
-而必须首先通过将源复制到中途寄存器中，然后再从中途寄存器复制到目的。
-一个中途寄存器总是具有与源和目的相同的机器模式。由于其存放了被复制的实际的值，
-所以重载可能进行优化来重用一个中途寄存器，并且省略掉从源进行复制的操作，
-当它可以确定中途寄存器还保留着所需要的值的时候。
+许多机器具有一些寄存器，其不能直接和内存之间，甚至不能和其它类型的寄存器之间进行复制。例如@samp{MQ}寄存器，在大多数机器上，只能与通用寄存器之间直接进行复制，而不能和内存之间直接进行复制。下面，我们将用到术语‘中间寄存器（intermediate register）’。当一个move操作不能直接执行，则必须首先通过将源复制到中间寄存器中，然后再从中间寄存器复制到目的。中间寄存器总是具有与源和目的相同的机器模式。由于其存放了被复制的实际的值，所以，当它可以确定中间寄存器还保留着所需要的值的时候，重载可以进行优化来重用一个中间寄存器，并且省略掉从源进行复制的操作。
 
 @en Another kind of secondary reload is required on some machines which
 @en allow copying all registers to and from memory, but require a scratch
@@ -3587,26 +3580,17 @@ A target hook that places additional preference on the register class to use whe
 @en describe how the copy is performed with the help of the scratch register;
 @en these patterns also describe the number, register class(es) and mode(s)
 @en of the scratch register(s).
-另一种需要执行二次重载的情况是，在一些机器上，
-其允许所有的寄存器和内存之间进行复制，
-但要求一个scratch寄存器来存储一些内存的位置（例如，在RT上那些具有符号地址的，
-以及在SPARC上当编译PIC时那些具有特定符号地址的）。
-草稿寄存器不需要与被复制的值具有相同的机器模式，并且通常保留一个不同的值。
-在md文件中需要特殊的指令模式来描述复制在草稿寄存器的帮助下如何执行；
-这些指令模式还描述了草稿寄存器的编号，寄存器类别和机器模式。
+另一种需要执行二次重载的情况是，在一些机器上，其允许所有的寄存器和内存之间进行复制，但要求一个草稿（scratch）寄存器来存储一些内存的位置（例如，在RT上那些具有符号地址的，以及在SPARC上当编译PIC时那些具有特定符号地址的）。草稿寄存器不需要与被复制的值具有相同的机器模式，并且通常保留一个不同的值。在md文件中需要特殊的指令模式来描述复制在草稿寄存器的帮助下如何执行；这些指令模式还描述了草稿寄存器的编号，寄存器类别和机器模式。
 
 @en In some cases, both an intermediate and a scratch register are required.
-在一些情况下，同时需要中途寄存器和草稿寄存器。
+在一些情况下，会同时需要中间寄存器和草稿寄存器。
 
 @en For input reloads, this target hook is called with nonzero @var{in_p},
 @en and @var{x} is an rtx that needs to be copied to a register of class
 @en @var{reload_class} in @var{reload_mode}.  For output reloads, this target
 @en hook is called with zero @var{in_p}, and a register of class @var{reload_class}
 @en needs to be copied to rtx @var{x} in @var{reload_mode}.
-对于输入重载，该target钩子使用非零的@var{in_p}来调用，并且@var{x}为一个rtx，
-其需要被复制到一个类别为@var{reload_class}，机器模式为@var{reload_mode}的寄存器中。
-对于输出重载，该target钩子使用为0的@var{in_p}调用，并且一个类别为@var{reload_class}，
-需要复制到机器模式为reload_mode的rtx @var{x}中。
+对于输入重载，调用该目标钩子时，使用非零的@var{in_p}，并且@var{x}为一个rtx，其需要被复制到一个类别为@var{reload_class}，机器模式为@var{reload_mode}的寄存器中。对于输出重载，调用该目标钩子时，使用值为0的@var{in_p}，以及一个类别为@var{reload_class}的寄存器，其需要被复制到机器模式为@var{reload_mode}的rtx @var{x}中。
 
 @en If copying a register of @var{reload_class} from/to @var{x} requires
 @en an intermediate register, the hook @code{secondary_reload} should
@@ -3614,20 +3598,14 @@ A target hook that places additional preference on the register class to use whe
 @en If no intermediate register is required, it should return NO_REGS.
 @en If more than one intermediate register is required, describe the one
 @en that is closest in the copy chain to the reload register.
-如果在类别为@var{reload_class}的寄存器和@var{x}直接进行复制需要一个中途寄存器，
-则钩子@code{secondary_reload}应该返回一个该中途寄存器需要的寄存器类别。
-如果不需要中途寄存器，则其应该返回NO_REGS。如果需要多个中途寄存器，
-则描述在复制链中最近的那个。
+如果在类别为@var{reload_class}的寄存器和@var{x}之间直接进行复制需要一个中间寄存器，则钩子@code{secondary_reload}应该返回一个该中间寄存器所需要的寄存器类别。如果不需要中间寄存器，则其应该返回NO_REGS。如果需要多个中间寄存器，则描述在复制链中最近的那个。
 
 @en If scratch registers are needed, you also have to describe how to
 @en perform the copy from/to the reload register to/from this
 @en closest intermediate register.  Or if no intermediate register is
 @en required, but still a scratch register is needed, describe the
 @en copy  from/to the reload register to/from the reload operand @var{x}.
-如果需要草稿寄存器，
-则还要描述如何如何在重载寄存器和这个最近的中途寄存器直接进行复制。
-或者如果不需要中途寄存器，但仍然需要一个草稿寄存器，
-则描述重载寄存器和重载操作数@var{x}之间的复制。
+如果需要草稿寄存器，则还要描述如何在重载寄存器和这个最近的中间寄存器之间直接进行复制。或者如果不需要中间寄存器，但仍然需要一个草稿寄存器，则描述重载寄存器和重载操作数@var{x}之间的复制。
 
 @en You do this by setting @code{sri->icode} to the instruction code of a pattern
 @en in the md file which performs the move.  Operands 0 and 1 are the output
@@ -3636,17 +3614,13 @@ A target hook that places additional preference on the register class to use whe
 @en single-register-class
 @en @c [later: or memory]
 @en output constraint.
-为此，你需要设置@code{sri->icode}为在md文件中执行move的指令模式的代码。
-操作数0和1分别为该复制的输出和输入。从2以后的操作数为草稿操作数。
-这些草稿操作数必须具有机器模式并且一个single-register-class的输出约束。
+为此，你需要设置@code{sri->icode}为在md文件中执行move的指令模式的代码。操作数0和1分别为该复制的输出和输入。从2以后的操作数为草稿操作数。这些草稿操作数必须具有机器模式并且一个single-register-class的输出约束。
 
 @en When an intermediate register is used, the @code{secondary_reload}
 @en hook will be called again to determine how to copy the intermediate
 @en register to/from the reload operand @var{x}, so your hook must also
 @en have code to handle the register class of the intermediate operand.
-当使用中途寄存器的时候，@code{secondary_reload}钩子将会被再次调用，
-来确定如何在中途寄存器和重载操作数之间进行复制，
-所以你的钩子必须还要具有处理中途操作数的寄存器类别的代码。
+当使用中间寄存器的时候，@code{secondary_reload}钩子将会被再次调用，来确定如何在中间寄存器和重载操作数之间进行复制，所以你的钩子必须还要具有处理中间操作数的寄存器类别的代码。
 
 @c [For later: maybe we'll allow multi-alternative reload patterns -
 @c   the port maintainer could name a mov<mode> pattern that has clobbers -
@@ -3662,15 +3636,12 @@ A target hook that places additional preference on the register class to use whe
 @en pseudo-register, which could either be in a hard register or in memory.
 @en Use @code{true_regnum} to find out; it will return @minus{}1 if the pseudo is
 @en in memory and the hard register number if it is in a register.
-@var{x}可以为伪寄存器或者一个伪寄存器的@code{subreg}，
-其可以为一个硬件寄存器或者在内存中。使用@code{true_regnum}来查看；
-其将返回-1如果伪寄存器在内存中，以及硬件寄存器编号，如果其在一个寄存器中。
+@var{x}可以为伪寄存器或者一个伪寄存器的@code{subreg}，其可以为一个硬件寄存器或者在内存中。使用@code{true_regnum}来查看；其将返回-1如果伪寄存器在内存中，以及硬件寄存器编号，如果其在一个寄存器中。
 
 @en Scratch operands in memory (constraint @code{"=m"} / @code{"=&m"}) are
 @en currently not supported.  For the time being, you will have to continue
 @en to use @code{SECONDARY_MEMORY_NEEDED} for that purpose.
-在内存中的草稿操作数（约束@code{"=m"} / @code{"=&m"}）目前不被支持。
-为此，目前你必须继续使用@code{SECONDARY_MEMORY_NEEDED}。
+在内存中的草稿操作数（约束@code{"=m"} / @code{"=&m"}）目前不被支持。为此，目前你必须继续使用@code{SECONDARY_MEMORY_NEEDED}。
 
 @en @code{copy_cost} also uses this target hook to find out how values are
 @en copied.  If you want it to include some extra cost for the need to allocate
@@ -3678,71 +3649,68 @@ A target hook that places additional preference on the register class to use whe
 @en Or if two dependent moves are supposed to have a lower cost than the sum
 @en of the individual moves due to expected fortuitous scheduling and/or special
 @en forwarding logic, you can set @code{sri->extra_cost} to a negative amount.
-@code{copy_cost}还是要该target钩子来查找值如何被复制。
-如果你想让其包含像分配草稿寄存器所需要的额外代价，
-则可以设置@code{sri->extra_cost}为额外代价。
-或者如果两个相关move会具有比两个单个move之和的代价要低，
-则可以设置@code{sri->extra_cost}为一个负数。
+@code{copy_cost}还是要该target钩子来查找值如何被复制。如果你想让其包含像分配草稿寄存器所需要的额外代价，则可以设置@code{sri->extra_cost}为额外代价。或者如果两个相关move会具有比两个单个move之和的代价要低，则可以设置@code{sri->extra_cost}为一个负数。
 @end deftypefn
 
 @defmac SECONDARY_RELOAD_CLASS (@var{class}, @var{mode}, @var{x})
 @defmacx SECONDARY_INPUT_RELOAD_CLASS (@var{class}, @var{mode}, @var{x})
 @defmacx SECONDARY_OUTPUT_RELOAD_CLASS (@var{class}, @var{mode}, @var{x})
-These macros are obsolete, new ports should use the target hook
-@code{TARGET_SECONDARY_RELOAD} instead.
+@en These macros are obsolete, new ports should use the target hook
+@en @code{TARGET_SECONDARY_RELOAD} instead.
+这些宏已经被废弃了，新的移植应该使用目标钩子@code{TARGET_SECONDARY_RELOAD}。
 
-These are obsolete macros, replaced by the @code{TARGET_SECONDARY_RELOAD}
-target hook.  Older ports still define these macros to indicate to the
-reload phase that it may
-need to allocate at least one register for a reload in addition to the
-register to contain the data.  Specifically, if copying @var{x} to a
-register @var{class} in @var{mode} requires an intermediate register,
-you were supposed to define @code{SECONDARY_INPUT_RELOAD_CLASS} to return the
-largest register class all of whose registers can be used as
-intermediate registers or scratch registers.
+@en These are obsolete macros, replaced by the @code{TARGET_SECONDARY_RELOAD}
+@en target hook.  Older ports still define these macros to indicate to the
+@en reload phase that it may
+@en need to allocate at least one register for a reload in addition to the
+@en register to contain the data.  Specifically, if copying @var{x} to a
+@en register @var{class} in @var{mode} requires an intermediate register,
+@en you were supposed to define @code{SECONDARY_INPUT_RELOAD_CLASS} to return the
+@en largest register class all of whose registers can be used as
+@en intermediate registers or scratch registers.
 
-If copying a register @var{class} in @var{mode} to @var{x} requires an
-intermediate or scratch register, @code{SECONDARY_OUTPUT_RELOAD_CLASS}
-was supposed to be defined be defined to return the largest register
-class required.  If the
-requirements for input and output reloads were the same, the macro
-@code{SECONDARY_RELOAD_CLASS} should have been used instead of defining both
-macros identically.
+@en If copying a register @var{class} in @var{mode} to @var{x} requires an
+@en intermediate or scratch register, @code{SECONDARY_OUTPUT_RELOAD_CLASS}
+@en was supposed to be defined be defined to return the largest register
+@en class required.  If the
+@en requirements for input and output reloads were the same, the macro
+@en @code{SECONDARY_RELOAD_CLASS} should have been used instead of defining both
+@en macros identically.
 
-The values returned by these macros are often @code{GENERAL_REGS}.
-Return @code{NO_REGS} if no spare register is needed; i.e., if @var{x}
-can be directly copied to or from a register of @var{class} in
-@var{mode} without requiring a scratch register.  Do not define this
-macro if it would always return @code{NO_REGS}.
+@en The values returned by these macros are often @code{GENERAL_REGS}.
+@en Return @code{NO_REGS} if no spare register is needed; i.e., if @var{x}
+@en can be directly copied to or from a register of @var{class} in
+@en @var{mode} without requiring a scratch register.  Do not define this
+@en macro if it would always return @code{NO_REGS}.
 
-If a scratch register is required (either with or without an
-intermediate register), you were supposed to define patterns for
-@samp{reload_in@var{m}} or @samp{reload_out@var{m}}, as required
-(@pxref{Standard Names}.  These patterns, which were normally
-implemented with a @code{define_expand}, should be similar to the
-@samp{mov@var{m}} patterns, except that operand 2 is the scratch
-register.
+@en If a scratch register is required (either with or without an
+@en intermediate register), you were supposed to define patterns for
+@en @samp{reload_in@var{m}} or @samp{reload_out@var{m}}, as required
+@en (@pxref{Standard Names}.  These patterns, which were normally
+@en implemented with a @code{define_expand}, should be similar to the
+@en @samp{mov@var{m}} patterns, except that operand 2 is the scratch
+@en register.
 
-These patterns need constraints for the reload register and scratch
-register that
-contain a single register class.  If the original reload register (whose
-class is @var{class}) can meet the constraint given in the pattern, the
-value returned by these macros is used for the class of the scratch
-register.  Otherwise, two additional reload registers are required.
-Their classes are obtained from the constraints in the insn pattern.
+@en These patterns need constraints for the reload register and scratch
+@en register that
+@en contain a single register class.  If the original reload register (whose
+@en class is @var{class}) can meet the constraint given in the pattern, the
+@en value returned by these macros is used for the class of the scratch
+@en register.  Otherwise, two additional reload registers are required.
+@en Their classes are obtained from the constraints in the insn pattern.
 
-@var{x} might be a pseudo-register or a @code{subreg} of a
-pseudo-register, which could either be in a hard register or in memory.
-Use @code{true_regnum} to find out; it will return @minus{}1 if the pseudo is
-in memory and the hard register number if it is in a register.
+@en @var{x} might be a pseudo-register or a @code{subreg} of a
+@en pseudo-register, which could either be in a hard register or in memory.
+@en Use @code{true_regnum} to find out; it will return @minus{}1 if the pseudo is
+@en in memory and the hard register number if it is in a register.
 
-These macros should not be used in the case where a particular class of
-registers can only be copied to memory and not to another class of
-registers.  In that case, secondary reload registers are not needed and
-would not be helpful.  Instead, a stack location must be used to perform
-the copy and the @code{mov@var{m}} pattern should use memory as an
-intermediate storage.  This case often occurs between floating-point and
-general registers.
+@en These macros should not be used in the case where a particular class of
+@en registers can only be copied to memory and not to another class of
+@en registers.  In that case, secondary reload registers are not needed and
+@en would not be helpful.  Instead, a stack location must be used to perform
+@en the copy and the @code{mov@var{m}} pattern should use memory as an
+@en intermediate storage.  This case often occurs between floating-point and
+@en general registers.
 @end defmac
 
 @defmac SECONDARY_MEMORY_NEEDED (@var{class1}, @var{class2}, @var{m})
@@ -3752,10 +3720,7 @@ general registers.
 @en @var{m} in registers of @var{class1} can only be copied to registers of
 @en class @var{class2} by storing a register of @var{class1} into memory
 @en and loading that memory location into a register of @var{class2}.
-一些机器要求某些寄存器必须使用内存才能与其它寄存器进行复制。
-定义该宏在那些机器上，其为一个C表达式，
-为非0如果机器模式为@var{m}的对象在类别为@var{class1}的寄存器中，
-只能通过将@var{class1}的寄存器存储到内存中并且将内存位置加载到@var{class2}的寄存中。
+一些机器要求某些寄存器必须使用内存才能与其它寄存器进行复制。定义该宏在那些机器上，其为一个C表达式，为非0如果机器模式为@var{m}的对象在类别为@var{class1}的寄存器中，只能通过将@var{class1}的寄存器存储到内存中并且将内存位置加载到@var{class2}的寄存中。
 
 @en Do not define this macro if its value would always be zero.
 如果其值总是为0，则不要定义该宏。
@@ -3766,9 +3731,7 @@ general registers.
 @en allocates a stack slot for a memory location needed for register copies.
 @en If this macro is defined, the compiler instead uses the memory location
 @en defined by this macro.
-通常当@code{SECONDARY_MEMORY_NEEDED}被定义时，
-编译器会分配一个栈槽为需要寄存器复制的内存位置。
-如果该宏被定义，则编译器会替代的使用该宏定义的内存位置。
+通常当@code{SECONDARY_MEMORY_NEEDED}被定义时，编译器会分配一个栈槽为需要寄存器复制的内存位置。如果该宏被定义，则编译器会替代的使用该宏定义的内存位置。
 
 @en Do not define this macro if you do not define
 @en @code{SECONDARY_MEMORY_NEEDED}.
@@ -3781,17 +3744,13 @@ general registers.
 @en hold a quantity of @code{BITS_PER_WORD} bits and performs the store and
 @en load operations in a mode that many bits wide and whose class is the
 @en same as that of @var{mode}.
-当编译器需要一个二级内存位置在机器模式为@var{mode}的寄存器之间进行复制的时候，
-其通常分配足够的内存来存放@code{BITS_PER_WORD}个位，
-并且执行该位数宽度的@var{mode}的存储和加载操作。
+当编译器需要一个二级内存位置在机器模式为@var{mode}的寄存器之间进行复制的时候，其通常分配足够的内存来存放@code{BITS_PER_WORD}个位，并且执行该位数宽度的@var{mode}的存储和加载操作。
 
 @en This is right thing to do on most machines because it ensures that all
 @en bits of the register are copied and prevents accesses to the registers
 @en in a narrower mode, which some machines prohibit for floating-point
 @en registers.
-这在大多数机器上是正确的，
-因为其确保寄存器的所有位被复制并且阻止对寄存器按照较窄的机器模式来访问，
-这对于浮点寄存器通常是禁止的。
+这在大多数机器上是正确的，因为其确保寄存器的所有位被复制并且阻止对寄存器按照较窄的机器模式来访问，这对于浮点寄存器通常是禁止的。
 
 @en However, this default behavior is not correct on some machines, such as
 @en the DEC Alpha, that store short integers in floating-point registers
@@ -3811,21 +3770,22 @@ general registers.
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_CLASS_LIKELY_SPILLED_P (reg_class_t @var{rclass})
-A target hook which returns @code{true} if pseudos that have been assigned
-to registers of class @var{rclass} would likely be spilled because
-registers of @var{rclass} are needed for spill registers.
+@en A target hook which returns @code{true} if pseudos that have been assigned
+@en to registers of class @var{rclass} would likely be spilled because
+@en registers of @var{rclass} are needed for spill registers.
+一个目标钩子，如果伪寄存器已经被分配成类别为@var{rclass}的寄存器，在当类别为@var{rclass}的寄存器需要用作溢出寄存器的时候，该伪寄存器很可能被溢出，则返回@code{true}。
 
-The default version of this target hook returns @code{true} if @var{rclass}
-has exactly one register and @code{false} otherwise.  On most machines, this
-default should be used.  Only use this target hook to some other expression
-if pseudos allocated by @file{local-alloc.c} end up in memory because their
-hard registers were needed for spill registers.  If this target hook returns
-@code{false} for those classes, those pseudos will only be allocated by
-@file{global.c}, which knows how to reallocate the pseudo to another
-register.  If there would not be another register available for reallocation,
-you should not change the implementation of this target hook since
-the only effect of such implementation would be to slow down register
-allocation.
+@en The default version of this target hook returns @code{true} if @var{rclass}
+@en has exactly one register and @code{false} otherwise.  On most machines, this
+@en default should be used.  Only use this target hook to some other expression
+@en if pseudos allocated by @file{local-alloc.c} end up in memory because their
+@en hard registers were needed for spill registers.  If this target hook returns
+@en @code{false} for those classes, those pseudos will only be allocated by
+@en @file{global.c}, which knows how to reallocate the pseudo to another
+@en register.  If there would not be another register available for reallocation,
+@en you should not change the implementation of this target hook since
+@en the only effect of such implementation would be to slow down register
+@en allocation.
 @end deftypefn
 
 @defmac CLASS_MAX_NREGS (@var{class}, @var{mode})
@@ -3837,8 +3797,7 @@ allocation.
 @en the value of the macro @code{CLASS_MAX_NREGS (@var{class}, @var{mode})}
 @en should be the maximum value of @code{HARD_REGNO_NREGS (@var{regno},
 @en @var{mode})} for all @var{regno} values in the class @var{class}.
-这与宏@code{HARD_REGNO_NREGS}很相近。实际上，
-宏@code{CLASS_MAX_NREGS (@var{class}, @var{mode})}的值应该为@code{HARD_REGNO_NREGS (@var{regno},@var{mode})}的最大值。
+这与宏@code{HARD_REGNO_NREGS}很相近。实际上，宏@code{CLASS_MAX_NREGS (@var{class}, @var{mode})}的值应该为@code{HARD_REGNO_NREGS (@var{regno},@var{mode})}的最大值。
 
 @en This macro helps control the handling of multiple-word values
 @en in the reload pass.
@@ -3848,8 +3807,7 @@ allocation.
 @defmac CANNOT_CHANGE_MODE_CLASS (@var{from}, @var{to}, @var{class})
 @en If defined, a C expression that returns nonzero for a @var{class} for which
 @en a change from mode @var{from} to mode @var{to} is invalid.
-如果被定义，为一个C表达式，其返回非0，对于一个@var{class}，
-其由机器模式@var{from}到@var{to}的改变是无效的。
+如果被定义，为一个C表达式，其返回非0，对于一个@var{class}，其由机器模式@var{from}到@var{to}的改变是无效的。
 
 @en For the example, loading 32-bit integer or floating-point objects into
 @en floating-point registers on the Alpha extends them to 64 bits.
@@ -3857,9 +3815,7 @@ allocation.
 @en does not store the low-order 32 bits, as would be the case for a normal
 @en register.  Therefore, @file{alpha.h} defines @code{CANNOT_CHANGE_MODE_CLASS}
 @en as below:
-例如，加载32位整数或者浮点对象到浮点寄存器中，在Alpha上将被扩展为64位。
-因此加载64位对象并存储为32位对象时将不保存第32位。
-因此，@file{alpha.h}定义@code{CANNOT_CHANGE_MODE_CLASS}如下：
+例如，加载32位整数或者浮点对象到浮点寄存器中，在Alpha上将被扩展为64位。因此加载64位对象并存储为32位对象时将不保存第32位。因此，@file{alpha.h}定义@code{CANNOT_CHANGE_MODE_CLASS}如下：
 
 @smallexample
 #define CANNOT_CHANGE_MODE_CLASS(FROM, TO, CLASS) \
