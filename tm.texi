@@ -3430,37 +3430,42 @@ A target hook that places additional preference on the register class to use whe
 @end deftypefn
 
 @deftypefn {Target Hook} reg_class_t TARGET_PREFERRED_RELOAD_CLASS (rtx @var{x}, reg_class_t @var{rclass})
-A target hook that places additional restrictions on the register class
-to use when it is necessary to copy value @var{x} into a register in class
-@var{rclass}.  The value is a register class; perhaps @var{rclass}, or perhaps
-another, smaller class.
+@en A target hook that places additional restrictions on the register class
+@en to use when it is necessary to copy value @var{x} into a register in class
+@en @var{rclass}.  The value is a register class; perhaps @var{rclass}, or perhaps
+@en another, smaller class.
+一个目标钩子，当需要将值@var{x}复制到类别为@var{rclass}的寄存器中时，其用来对要使用的寄存器类别进行额外的限制。返回值为一个寄存器类别；可能为@var{rclass}，也可能为其它更小的类别。
 
-The default version of this hook always returns value of @code{rclass} argument.
+@en The default version of this hook always returns value of @code{rclass} argument.
+该钩子的缺省版本总是返回参数值@code{rclass}。
 
-Sometimes returning a more restrictive class makes better code.  For
-example, on the 68000, when @var{x} is an integer constant that is in range
-for a @samp{moveq} instruction, the value of this macro is always
-@code{DATA_REGS} as long as @var{rclass} includes the data registers.
-Requiring a data register guarantees that a @samp{moveq} will be used.
+@en Sometimes returning a more restrictive class makes better code.  For
+@en example, on the 68000, when @var{x} is an integer constant that is in range
+@en for a @samp{moveq} instruction, the value of this macro is always
+@en @code{DATA_REGS} as long as @var{rclass} includes the data registers.
+@en Requiring a data register guarantees that a @samp{moveq} will be used.
+有时候返回一个更加有限制的类别可以生成更好的代码。例如，在68000上，当@var{x}为一个值范围适合@samp{moveq}指令的整数常量时，只要@var{rclass}包含数据寄存器，则该宏的值总是为@code{DATA_REGS}。这种要求为一个数据寄存器的做法，可以确保@samp{moveq}会被使用。
 
-One case where @code{TARGET_PREFERRED_RELOAD_CLASS} must not return
-@var{rclass} is if @var{x} is a legitimate constant which cannot be
-loaded into some register class.  By returning @code{NO_REGS} you can
-force @var{x} into a memory location.  For example, rs6000 can load
-immediate values into general-purpose registers, but does not have an
-instruction for loading an immediate value into a floating-point
-register, so @code{TARGET_PREFERRED_RELOAD_CLASS} returns @code{NO_REGS} when
-@var{x} is a floating-point constant.  If the constant can't be loaded
-into any kind of register, code generation will be better if
-@code{LEGITIMATE_CONSTANT_P} makes the constant illegitimate instead
-of using @code{TARGET_PREFERRED_RELOAD_CLASS}.
+@en One case where @code{TARGET_PREFERRED_RELOAD_CLASS} must not return
+@en @var{rclass} is if @var{x} is a legitimate constant which cannot be
+@en loaded into some register class.  By returning @code{NO_REGS} you can
+@en force @var{x} into a memory location.  For example, rs6000 can load
+@en immediate values into general-purpose registers, but does not have an
+@en instruction for loading an immediate value into a floating-point
+@en register, so @code{TARGET_PREFERRED_RELOAD_CLASS} returns @code{NO_REGS} when
+@en @var{x} is a floating-point constant.  If the constant can't be loaded
+@en into any kind of register, code generation will be better if
+@en @code{LEGITIMATE_CONSTANT_P} makes the constant illegitimate instead
+@en of using @code{TARGET_PREFERRED_RELOAD_CLASS}.
+一种@code{PREFERRED_RELOAD_CLASS}必须不返回@var{rclass}的情况为，如果@var{x}为一个合法常量，且不能被加载到某个寄存器类别中。通过返回@code{NO_REGS}，你可以强迫@var{x}被放入内存中。例如，rs6000可以加载立即数到通用寄存器中，但是没有指令可以加载立即数到浮点寄存器中，所以当@var{x}为一个浮点常量时，@code{PREFERRED_RELOAD_CLASS}返回@code{NO_REGS}。如果常量不能被加载到任何种类的寄存器中，则通过@code{LEGITIMATE_CONSTANT_P}使常量为非法的，而不是使用@code{PREFERRED_RELOAD_CLASS}，将会生成更好的代码。
 
-If an insn has pseudos in it after register allocation, reload will go
-through the alternatives and call repeatedly @code{TARGET_PREFERRED_RELOAD_CLASS}
-to find the best one.  Returning @code{NO_REGS}, in this case, makes
-reload add a @code{!} in front of the constraint: the x86 back-end uses
-this feature to discourage usage of 387 registers when math is done in
-the SSE registers (and vice versa).
+@en If an insn has pseudos in it after register allocation, reload will go
+@en through the alternatives and call repeatedly @code{TARGET_PREFERRED_RELOAD_CLASS}
+@en to find the best one.  Returning @code{NO_REGS}, in this case, makes
+@en reload add a @code{!} in front of the constraint: the x86 back-end uses
+@en this feature to discourage usage of 387 registers when math is done in
+@en the SSE registers (and vice versa).
+如果一个insn在寄存器分配之后具有伪寄存器，则重载将遍历所有可选项并反复调用@code{PREFERRED_RELOAD_CLASS}来找到最好的一个。在这种情况下，如果返回@code{NO_REGS}，会使得重载在约束前增加一个@code{!}：x86后端使用了该特点，当在SSE寄存器中进行算术运算时，会不鼓励对387寄存器的使用（反之亦然）。
 @end deftypefn
 
 @defmac PREFERRED_RELOAD_CLASS (@var{x}, @var{class})
@@ -3469,10 +3474,7 @@ the SSE registers (and vice versa).
 @en @var{class}.  The value is a register class; perhaps @var{class}, or perhaps
 @en another, smaller class.  On many machines, the following definition is
 @en safe:
-一个C表达式，对寄存器类别进行额外的限制，
-用于当需要复制值@var{x}到类别为@var{class}的寄存器中。
-值为一个寄存器类别；可能为@var{class}或者其它比@var{class}小的类别。
-在许多机器上，下列定义是安全的：
+一个C表达式，对寄存器类别进行额外的限制，用于当需要复制值@var{x}到类别为@var{class}的寄存器中。值为一个寄存器类别；可能为@var{class}或者其它比@var{class}小的类别。在许多机器上，下列定义是安全的：
 
 @smallexample
 #define PREFERRED_RELOAD_CLASS(X,CLASS) CLASS
@@ -3483,10 +3485,7 @@ the SSE registers (and vice versa).
 @en for a @samp{moveq} instruction, the value of this macro is always
 @en @code{DATA_REGS} as long as @var{class} includes the data registers.
 @en Requiring a data register guarantees that a @samp{moveq} will be used.
-有时返回一个更加限制的类别将会产生更好的代码。例如，在68000上，
-当@var{x}为一个整数常量，并且在@samp{moveq}指令的范围内，
-则该宏的值总是为@code{DATA_REGS}，只要@var{class}包含数据寄存器。
-需要一个数据寄存器保证了@samp{moveq}将使用。
+有时候返回一个更加有限制的类别可以生成更好的代码。例如，在68000上，当@var{x}为一个值范围适合@samp{moveq}指令的整数常量时，只要@var{rclass}包含数据寄存器，则该宏的值总是为@code{DATA_REGS}。这种要求为一个数据寄存器的做法，可以确保@samp{moveq}会被使用。
 
 @en One case where @code{PREFERRED_RELOAD_CLASS} must not return
 @en @var{class} is if @var{x} is a legitimate constant which cannot be
@@ -3499,15 +3498,7 @@ the SSE registers (and vice versa).
 @en into any kind of register, code generation will be better if
 @en @code{LEGITIMATE_CONSTANT_P} makes the constant illegitimate instead
 @en of using @code{PREFERRED_RELOAD_CLASS}.
-一种@code{PREFERRED_RELOAD_CLASS}必须不返回@var{class}的情况为，
-如果@var{x}为一个合法常量其不能被加载到某个寄存器类别中。
-通过返回@code{NO_REGS}，你可以强迫@var{x}放入内存位置中。例如，
-rs6000可以加载立即数值到通用寄存器中，
-但没有指令可以加载立即数值到浮点寄存器中，
-所以@code{PREFERRED_RELOAD_CLASS}返回@code{NO_REGS}，
-当@var{x}为一个浮点常量时。如果常量不能被加载到任何种类的寄存器中，
-如果@code{LEGITIMATE_CONSTANT_P}使常量为非法的，
-而不是使用@code{PREFERRED_RELOAD_CLASS}，则代码生成将会更好。
+一种@code{PREFERRED_RELOAD_CLASS}必须不返回@var{rclass}的情况为，如果@var{x}为一个合法常量，且不能被加载到某个寄存器类别中。通过返回@code{NO_REGS}，你可以强迫@var{x}被放入内存中。例如，rs6000可以加载立即数到通用寄存器中，但是没有指令可以加载立即数到浮点寄存器中，所以当@var{x}为一个浮点常量时，@code{PREFERRED_RELOAD_CLASS}返回@code{NO_REGS}。如果常量不能被加载到任何种类的寄存器中，则通过@code{LEGITIMATE_CONSTANT_P}使常量为非法的，而不是使用@code{PREFERRED_RELOAD_CLASS}，将会生成更好的代码。
 
 @en If an insn has pseudos in it after register allocation, reload will go
 @en through the alternatives and call repeatedly @code{PREFERRED_RELOAD_CLASS}
@@ -3515,10 +3506,7 @@ rs6000可以加载立即数值到通用寄存器中，
 @en reload add a @code{!} in front of the constraint: the x86 back-end uses
 @en this feature to discourage usage of 387 registers when math is done in
 @en the SSE registers (and vice versa).
-如果一个insn在寄存器分配之后具有伪寄存器，
-则重载将遍历选择项并且反复调用@code{PREFERRED_RELOAD_CLASS}来找到最好的一个。
-返回@code{NO_REGS}，在这种情况下，使得重载在约束前增加一个@code{!}：
-x86后端使用该特征来劝阻使用387寄存器，当算术在SSE寄存器中进行时（反之亦然）。
+如果一个insn在寄存器分配之后具有伪寄存器，则重载将遍历所有可选项并反复调用@code{PREFERRED_RELOAD_CLASS}来找到最好的一个。在这种情况下，如果返回@code{NO_REGS}，会使得重载在约束前增加一个@code{!}：x86后端使用了该特点，当在SSE寄存器中进行算术运算时，会不鼓励对387寄存器的使用（反之亦然）。
 @end defmac
 
 @defmac PREFERRED_OUTPUT_RELOAD_CLASS (@var{x}, @var{class})
@@ -3530,19 +3518,21 @@ x86后端使用该特征来劝阻使用387寄存器，当算术在SSE寄存器�
 
 @en You can also use @code{PREFERRED_OUTPUT_RELOAD_CLASS} to discourage
 @en reload from using some alternatives, like @code{PREFERRED_RELOAD_CLASS}.
-你还可以使用@code{PREFERRED_OUTPUT_RELOAD_CLASS}来劝阻使用一些可选项的重载，
-类似于@code{PREFERRED_RELOAD_CLASS}。
+类似于@code{PREFERRED_RELOAD_CLASS}，你还可以使用@code{PREFERRED_OUTPUT_RELOAD_CLASS}来不鼓励使用一些可选项进行重载。
 @end defmac
 
 @deftypefn {Target Hook} reg_class_t TARGET_PREFERRED_OUTPUT_RELOAD_CLASS (rtx @var{x}, reg_class_t @var{rclass})
-Like @code{TARGET_PREFERRED_RELOAD_CLASS}, but for output reloads instead of
-input reloads.
+@en Like @code{TARGET_PREFERRED_RELOAD_CLASS}, but for output reloads instead of
+@en input reloads.
+类似于@code{TARGET_PREFERRED_RELOAD_CLASS}，但是用于输出重载而不是输入重载。
 
-The default version of this hook always returns value of @code{rclass}
-argument.
+@en The default version of this hook always returns value of @code{rclass}
+@en argument.
+该钩子的缺省版本总是返回参数值@code{rclass}。
 
-You can also use @code{TARGET_PREFERRED_OUTPUT_RELOAD_CLASS} to discourage
-reload from using some alternatives, like @code{TARGET_PREFERRED_RELOAD_CLASS}.
+@en You can also use @code{TARGET_PREFERRED_OUTPUT_RELOAD_CLASS} to discourage
+@en reload from using some alternatives, like @code{TARGET_PREFERRED_RELOAD_CLASS}.
+类似于@code{TARGET_PREFERRED_RELOAD_CLASS}，你还可以使用@code{TARGET_PREFERRED_OUTPUT_RELOAD_CLASS}来不鼓励使用一些可选项进行重载。
 @end deftypefn
 
 @defmac LIMIT_RELOAD_CLASS (@var{mode}, @var{class})
@@ -3550,13 +3540,11 @@ reload from using some alternatives, like @code{TARGET_PREFERRED_RELOAD_CLASS}.
 @en to use when it is necessary to be able to hold a value of mode
 @en @var{mode} in a reload register for which class @var{class} would
 @en ordinarily be used.
-一个C表达式，对寄存器类别实施额外的限制，
-用于当需要在一个类别为@var{class}的重载寄存器中保存机器模式为@var{mode}的值的时候。
+一个C表达式，用于当需要在类别为@var{class}的重载寄存器中存放机器模式为@var{mode}的值的时候，对寄存器类别实施额外的限制。
 
 @en Unlike @code{PREFERRED_RELOAD_CLASS}, this macro should be used when
 @en there are certain modes that simply can't go in certain reload classes.
-不像@code{PREFERRED_RELOAD_CLASS}，
-该宏应该用于当有特定的机器模式不能简单的放入特定的重载类别中的时候。
+不像@code{PREFERRED_RELOAD_CLASS}，该宏应该用于当有特定的机器模式不能简单的放入特定的重载类别中的时候。
 
 @en The value is a register class; perhaps @var{class}, or perhaps another,
 @en smaller class.
@@ -3564,7 +3552,7 @@ reload from using some alternatives, like @code{TARGET_PREFERRED_RELOAD_CLASS}.
 
 @en Don't define this macro unless the target machine has limitations which
 @en require the macro to do something nontrivial.
-不要定义该宏，除非target机器具有一些限制，使得宏需要做一些事情。
+除非目标机器具有一些限制，需要使用该宏来做一些事情，否则不要定义该宏。
 @end defmac
 
 @deftypefn {Target Hook} reg_class_t TARGET_SECONDARY_RELOAD (bool @var{in_p}, rtx @var{x}, reg_class_t @var{reload_class}, enum machine_mode @var{reload_mode}, secondary_reload_info *@var{sri})
