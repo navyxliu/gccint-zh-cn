@@ -26,17 +26,7 @@
 @en machine.  @file{@var{machine}.c} should also contain their definitions,
 @en if they are not defined elsewhere in GCC, and other functions called
 @en through the macros defined in the @file{.h} file.
-除了文件@file{@var{machine}.md}，
-机器描述还包括一个通常名为@file{@var{machine}.h}的C头文件和一个名为
-@file{@var{machine}.c}的C源文件。
-头文件定义了许多用来传达不适合@file{.md}文件框架的目标机器信息的宏。
-文件@file{tm.h}应该为@file{@var{machine}.h}的一个链接。
-头文件@file{config.h}包含@file{tm.h}，
-并且大多数编译器源文件包含@file{config.h}。
-源文件定义了变量@code{targetm}，
-其为一个包含了与目标机器相关的函数指针和数据的结构体。
-如果它们没有在GCC中的其它地方定义，@file{@var{machine}.c}还应该包含它们的定义，
-其它通过宏调用的函数在@file{.h}文件中定义。
+除了文件@file{@var{machine}.md}，机器描述还包括一个通常名为@file{@var{machine}.h}的C头文件和一个名为@file{@var{machine}.c}的C源文件。头文件定义了大量的宏，用来传达不适合于@file{.md}文件框架的目标机器信息。文件@file{tm.h}应该为@file{@var{machine}.h}的一个链接。头文件@file{config.h}包含@file{tm.h}，并且大多数编译器源文件包含@file{config.h}。源文件定义了变量@code{targetm}，其为一个包含了与目标机器相关的函数指针和数据的结构体。如果它们没有在GCC中的其它地方定义，@file{@var{machine}.c}还应该包含它们的定义，其它通过宏调用的函数在@file{.h}文件中定义。
 
 @en @menu
 @en * Target Structure::    The @code{targetm} variable.
@@ -120,10 +110,7 @@
 @en used to initialize the variable, and macros for the default initializers
 @en for elements of the structure.  The @file{.c} file should override those
 @en macros for which the default definition is inappropriate.  For example:
-目标机@file{.c}文件必须定义包含了目标机器相关的函数指针和数据的全局变量
-@code{targetm}。该变量在@file{target.h}中声明；
-@file{target-def.h}定义了用来初始化该变量的宏@code{TARGET_INITIALIZER}，
-和结构体元素的缺省初始化宏。@file{.c}文件应该覆写这些缺省定义不合适的宏。例如：
+目标机@file{.c}文件必须定义包含了目标机器相关的函数指针和数据的全局变量@code{targetm}。该变量在@file{target.h}中声明；@file{target-def.h}定义了用来初始化该变量的宏@code{TARGET_INITIALIZER}和结构体元素的缺省初始化宏。@file{.c}文件应该覆写这些缺省定义不合适的宏。例如：
 @smallexample
 #include "target.h"
 #include "target-def.h"
@@ -142,10 +129,7 @@ struct gcc_target targetm = TARGET_INITIALIZER;
 @en ``Target Hook'' with a prototype.  Many macros will change in future
 @en from being defined in the @file{.h} file to being part of the
 @en @code{targetm} structure.
-其中，宏应该通过这种方式在@file{.c}文件中被定义，
-从而成为@code{targetm}结构体的一部分。
-该宏将在下面作为具有函数原型的“目标钩子”来介绍。
-在@file{.h}.h文件中定义的许多宏将来都会改为@code{targetm}结构体的一部分。
+其中，宏应该通过这种方式在@file{.c}文件中被定义，从而成为@code{targetm}结构体的一部分。该宏将在下面作为具有函数原型的“目标钩子”来介绍。在@file{.h}文件中定义的许多宏将来都会改为@code{targetm}结构体的一部分。
 
 @en @node Driver
 @en @section Controlling the Compilation Driver, @file{gcc}
@@ -2122,15 +2106,12 @@ types.
 @en basic data types used in programs being compiled.  Unlike the macros in
 @en the previous section, these apply to specific features of C and related
 @en languages, rather than to fundamental aspects of storage layout.
-这些宏定义了在被编译的程序中使用的标准基础数据类型的大小和其它特征。
-不像之前章节中的宏，这些是应用到C和相关语言的特定特征上，
-而不是存储布局的基础方面。
+这些宏定义了在被编译的程序中使用的标准基础数据类型的大小和其它特征。不像前一章节中的宏，这些是应用到C和相关语言上的特定特征，而不是存储布局的基础方面。
 
 @defmac INT_TYPE_SIZE
 @en A C expression for the size in bits of the type @code{int} on the
 @en target machine.  If you don't define this, the default is one word.
-一个C表达式，为在target机器上类型@code{int}的位大小。
-如果没有定义，缺省为一个字。
+一个C表达式，为目标机器上类型@code{int}的位大小。如果没有定义，缺省为一个字。
 @end defmac
 
 @defmac SHORT_TYPE_SIZE
@@ -2138,15 +2119,13 @@ types.
 @en target machine.  If you don't define this, the default is half a word.
 @en (If this would be less than one storage unit, it is rounded up to one
 @en unit.)
-一个C表达式，为在target机器上类型@code{short}的位大小。如果没有定义，
-缺省为半个字。（如果比一个存储单元小，则会向上舍入为一个单元。）
+一个C表达式，为目标机器上类型@code{short}的位大小。如果没有定义，缺省为半个字。（如果比一个存储单元小，则会向上舍入为一个单元。）
 @end defmac
 
 @defmac LONG_TYPE_SIZE
 @en A C expression for the size in bits of the type @code{long} on the
 @en target machine.  If you don't define this, the default is one word.
-一个C表达式，为在target机器上类型@code{long}的位大小。
-如果没有定义，缺省为一个字。
+一个C表达式，为目标机器上类型@code{long}的位大小。如果没有定义，缺省为一个字。
 @end defmac
 
 @defmac ADA_LONG_TYPE_SIZE
@@ -2155,9 +2134,7 @@ types.
 @en that situation, define this macro to be a C expression to be used for
 @en the size of that type.  If you don't define this, the default is the
 @en value of @code{LONG_TYPE_SIZE}.
-在一些机器上，本地Ada编译器使用的类型@code{long}的大小与C使用的不相同。
-这种情况下，定义该宏为一个C表达式用于那个类型的大小。如果没有定义，
-则缺省为@code{LONG_TYPE_SIZE}的值。
+在一些机器上，本地Ada编译器使用的类型@code{long}的大小与C使用的不相同。这种情况下，定义该宏为一个C表达式用于那个类型的大小。如果没有定义，则缺省为@code{LONG_TYPE_SIZE}的值。
 @end defmac
 
 @defmac LONG_LONG_TYPE_SIZE
@@ -2165,111 +2142,98 @@ types.
 @en target machine.  If you don't define this, the default is two
 @en words.  If you want to support GNU Ada on your machine, the value of this
 @en macro must be at least 64.
-一个C表达式，为在target机器上类型@code{long long}的位大小。如果没有定义，
-缺省为两个字。如果你想在你的机器上支持GNU Ada，则该宏的值最少必须为64。
+一个C表达式，为目标机器上类型@code{long long}的位大小。如果没有定义，缺省为两个字。如果你想在你的机器上支持GNU Ada，则该宏的值最少必须为64。
 @end defmac
 
 @defmac CHAR_TYPE_SIZE
 @en A C expression for the size in bits of the type @code{char} on the
 @en target machine.  If you don't define this, the default is
 @en @code{BITS_PER_UNIT}.
-一个C表达式，为在target机器上类型@code{char}的位大小。
-如果没有定义，缺省为@code{BITS_PER_UNIT}。
+一个C表达式，为目标机器上类型@code{char}的位大小。如果没有定义，缺省为@code{BITS_PER_UNIT}。
 @end defmac
 
 @defmac BOOL_TYPE_SIZE
 @en A C expression for the size in bits of the C++ type @code{bool} and
 @en C99 type @code{_Bool} on the target machine.  If you don't define
 @en this, and you probably shouldn't, the default is @code{CHAR_TYPE_SIZE}.
-一个C表达式，为在target机器上C++类型@code{bool}和C99类型@code{_Bool}的位大小。
+一个C表达式，为目标机器上C++类型@code{bool}和C99类型@code{_Bool}的位大小。
 如果没有定义，并且通常不会定义，缺省为@code{CHAR_TYPE_SIZE}。
 @end defmac
 
 @defmac FLOAT_TYPE_SIZE
 @en A C expression for the size in bits of the type @code{float} on the
 @en target machine.  If you don't define this, the default is one word.
-一个C表达式，为在target机器上类型@code{float}的位大小。
-如果没有定义，缺省为一个字。
+一个C表达式，为目标机器上类型@code{float}的位大小。如果没有定义，缺省为一个字。
 @end defmac
 
 @defmac DOUBLE_TYPE_SIZE
 @en A C expression for the size in bits of the type @code{double} on the
 @en target machine.  If you don't define this, the default is two
 @en words.
-一个C表达式，为在target机器上类型@code{double}的位大小。
-如果没有定义，缺省为两个字。
+一个C表达式，为目标机器上类型@code{double}的位大小。如果没有定义，缺省为两个字。
 @end defmac
 
 @defmac LONG_DOUBLE_TYPE_SIZE
 @en A C expression for the size in bits of the type @code{long double} on
 @en the target machine.  If you don't define this, the default is two
 @en words.
-一个C表达式，为在target机器上类型@code{long double}的位大小。
-如果没有定义，缺省为两个字。
+一个C表达式，为目标机器上类型@code{long double}的位大小。如果没有定义，缺省为两个字。
 @end defmac
 
 @defmac SHORT_FRACT_TYPE_SIZE
 @en A C expression for the size in bits of the type @code{short _Fract} on
 @en the target machine.  If you don't define this, the default is
 @en @code{BITS_PER_UNIT}.
-一个C表达式，为在target机器上类型@code{short _Fract}的位大小。
-如果没有定义，缺省为@code{BITS_PER_UNIT}。
+一个C表达式，为目标机器上类型@code{short _Fract}的位大小。如果没有定义，缺省为@code{BITS_PER_UNIT}。
 @end defmac
 
 @defmac FRACT_TYPE_SIZE
 @en A C expression for the size in bits of the type @code{_Fract} on
 @en the target machine.  If you don't define this, the default is
 @en @code{BITS_PER_UNIT * 2}.
-一个C表达式，为在target机器上类型@code{_Fract}的位大小。如果没有定义，
-缺省为@code{BITS_PER_UNIT * 2}。
+一个C表达式，为目标机器上类型@code{_Fract}的位大小。如果没有定义，缺省为@code{BITS_PER_UNIT * 2}。
 @end defmac
 
 @defmac LONG_FRACT_TYPE_SIZE
 @en A C expression for the size in bits of the type @code{long _Fract} on
 @en the target machine.  If you don't define this, the default is
 @en @code{BITS_PER_UNIT * 4}.
-一个C表达式，为在target机器上类型@code{long _Fract}的位大小。
-如果没有定义，缺省为@code{BITS_PER_UNIT * 4}。
+一个C表达式，为目标机器上类型@code{long _Fract}的位大小。如果没有定义，缺省为@code{BITS_PER_UNIT * 4}。
 @end defmac
 
 @defmac LONG_LONG_FRACT_TYPE_SIZE
 @en A C expression for the size in bits of the type @code{long long _Fract} on
 @en the target machine.  If you don't define this, the default is
 @en @code{BITS_PER_UNIT * 8}.
-一个C表达式，为在target机器上类型@code{long long _Fract}的位大小。
-如果没有定义，缺省为@code{BITS_PER_UNIT * 8}。
+一个C表达式，为目标机器上类型@code{long long _Fract}的位大小。如果没有定义，缺省为@code{BITS_PER_UNIT * 8}。
 @end defmac
 
 @defmac SHORT_ACCUM_TYPE_SIZE
 @en A C expression for the size in bits of the type @code{short _Accum} on
 @en the target machine.  If you don't define this, the default is
 @en @code{BITS_PER_UNIT * 2}.
-一个C表达式，为在target机器上类型@code{short _Accum}的位大小。
-如果没有定义，缺省为@code{BITS_PER_UNIT * 2}。
+一个C表达式，为目标机器上类型@code{short _Accum}的位大小。如果没有定义，缺省为@code{BITS_PER_UNIT * 2}。
 @end defmac
 
 @defmac ACCUM_TYPE_SIZE
 @en A C expression for the size in bits of the type @code{_Accum} on
 @en the target machine.  If you don't define this, the default is
 @en @code{BITS_PER_UNIT * 4}.
-一个C表达式，为在target机器上类型@code{_Accum}的位大小。
-如果没有定义，缺省为@code{BITS_PER_UNIT * 4}。
+一个C表达式，为目标机器上类型@code{_Accum}的位大小。如果没有定义，缺省为@code{BITS_PER_UNIT * 4}。
 @end defmac
 
 @defmac LONG_ACCUM_TYPE_SIZE
 @en A C expression for the size in bits of the type @code{long _Accum} on
 @en the target machine.  If you don't define this, the default is
 @en @code{BITS_PER_UNIT * 8}.
-一个C表达式，为在target机器上类型@code{long _Accum}的位大小。
-如果没有定义，缺省为@code{BITS_PER_UNIT * 8}。
+一个C表达式，为目标机器上类型@code{long _Accum}的位大小。如果没有定义，缺省为@code{BITS_PER_UNIT * 8}。
 @end defmac
 
 @defmac LONG_LONG_ACCUM_TYPE_SIZE
 @en A C expression for the size in bits of the type @code{long long _Accum} on
 @en the target machine.  If you don't define this, the default is
 @en @code{BITS_PER_UNIT * 16}.
-一个C表达式，为在target机器上类型@code{long long _Accum}的位大小。
-如果没有定义，缺省为@code{BITS_PER_UNIT * 16}。
+一个C表达式，为目标机器上类型@code{long long _Accum}的位大小。如果没有定义，缺省为@code{BITS_PER_UNIT * 16}。
 @end defmac
 
 @defmac LIBGCC2_LONG_DOUBLE_TYPE_SIZE
@@ -2277,9 +2241,7 @@ types.
 @en if you want routines in @file{libgcc2.a} for a size other than
 @en @code{LONG_DOUBLE_TYPE_SIZE}.  If you don't define this, the
 @en default is @code{LONG_DOUBLE_TYPE_SIZE}.
-定义该宏，如果@code{LONG_DOUBLE_TYPE_SIZE}不是常量或者如果你想让@file{libgcc2.a}
-中具有大小不是@code{LONG_DOUBLE_TYPE_SIZE}的程序。如果没有定义，
-缺省为@code{LONG_DOUBLE_TYPE_SIZE}。
+定义该宏，如果@code{LONG_DOUBLE_TYPE_SIZE}不是常量或者如果你想让@file{libgcc2.a}中具有大小不是@code{LONG_DOUBLE_TYPE_SIZE}的程序。如果没有定义，缺省为@code{LONG_DOUBLE_TYPE_SIZE}。
 @end defmac
 
 @defmac LIBGCC2_HAS_DF_MODE
@@ -2289,11 +2251,7 @@ types.
 @en anyway.  If you don't define this and either @code{DOUBLE_TYPE_SIZE}
 @en or @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is 64 then the default is 1,
 @en otherwise it is 0.
-定义该宏，如果@code{DOUBLE_TYPE_SIZE}和
-@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}都不是@code{DFmode}，
-但是你还想让@file{libgcc2.a}中具有@code{DFmode}的程序。如果没有定义，
-并且@code{DOUBLE_TYPE_SIZE}或@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}为64，
-则缺省为1，否则为0。
+定义该宏，如果@code{DOUBLE_TYPE_SIZE}和@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}都不是@code{DFmode}，但是你还想让@file{libgcc2.a}中具有@code{DFmode}的程序。如果没有定义，并且@code{DOUBLE_TYPE_SIZE}或@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}为64，则缺省为1，否则为0。
 @end defmac
 
 @defmac LIBGCC2_HAS_XF_MODE
@@ -2301,9 +2259,7 @@ types.
 @en @code{XFmode} but you want @code{XFmode} routines in @file{libgcc2.a}
 @en anyway.  If you don't define this and @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}
 @en is 80 then the default is 1, otherwise it is 0.
-定义该宏，如果@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}不是@code{XFmode}，
-但是你还想让@file{libgcc2.a}中具有@code{XFmode}的程序。如果没有定义，
-并且@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}为80，则缺省为1，否则为0。
+定义该宏，如果@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}不是@code{XFmode}，但是你还想让@file{libgcc2.a}中具有@code{XFmode}的程序。如果没有定义，并且@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}为80，则缺省为1，否则为0。
 @end defmac
 
 @defmac LIBGCC2_HAS_TF_MODE
@@ -2311,9 +2267,7 @@ types.
 @en @code{TFmode} but you want @code{TFmode} routines in @file{libgcc2.a}
 @en anyway.  If you don't define this and @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}
 @en is 128 then the default is 1, otherwise it is 0.
-定义该宏，如果@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}不是@code{TFmode}，
-但是你还想让@file{libgcc2.a}中具有@code{TFmode}的程序。如果没有定义，
-并且@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}为128，则缺省为1，否则为0。
+定义该宏，如果@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}不是@code{TFmode}，但是你还想让@file{libgcc2.a}中具有@code{TFmode}的程序。如果没有定义，并且@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}为128，则缺省为1，否则为0。
 @end defmac
 
 @defmac SF_SIZE
@@ -2328,12 +2282,7 @@ types.
 @en @code{LDBL_MANT_DIG} for @code{DF_SIZE} according to whether
 @en @code{DOUBLE_TYPE_SIZE} or
 @en @code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE} is 64.
-定义这些宏为@code{SFmode}, @code{DFmode}, @code{XFmode}和@code{TFmode}值的尾数
-位大小，如果在@file{libgcc2.h}中的缺省定义不合适。缺省的，
-@code{FLT_MANT_DIG}用于@code{SF_SIZE}, @code{LDBL_MANT_DIG}用于@code{XF_SIZE}和
-@code{TF_SIZE}，并且@code{DBL_MANT_DIG}或@code{LDBL_MANT_DIG}用于
-@code{DF_SIZE}，根据@code{DOUBLE_TYPE_SIZE}或
-@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}是否为64。
+定义这些宏为@code{SFmode}, @code{DFmode}, @code{XFmode}和@code{TFmode}值的尾数位大小，如果在@file{libgcc2.h}中的缺省定义不合适。缺省的，@code{FLT_MANT_DIG}用于@code{SF_SIZE}, @code{LDBL_MANT_DIG}用于@code{XF_SIZE}和@code{TF_SIZE}，并且@code{DBL_MANT_DIG}或@code{LDBL_MANT_DIG}用于@code{DF_SIZE}，根据@code{DOUBLE_TYPE_SIZE}或@code{LIBGCC2_LONG_DOUBLE_TYPE_SIZE}是否为64。
 @end defmac
 
 @defmac TARGET_FLT_EVAL_METHOD
@@ -2341,8 +2290,7 @@ types.
 @en assuming, if applicable, that the floating-point control word is in its
 @en default state.  If you do not define this macro the value of
 @en @code{FLT_EVAL_METHOD} will be zero.
-一个C表达式，为@file{float.h}中的@code{FLT_EVAL_METHOD}的值。
-如果没有定义，则@code{FLT_EVAL_METHOD}的值将为0。
+一个C表达式，为@file{float.h}中的@code{FLT_EVAL_METHOD}的值。如果没有定义，则@code{FLT_EVAL_METHOD}的值将为0。
 @end defmac
 
 @defmac WIDEST_HARDWARE_FP_SIZE
@@ -2351,9 +2299,7 @@ types.
 @en value less than or equal to the value of @code{LONG_DOUBLE_TYPE_SIZE}.
 @en If you do not define this macro, the value of @code{LONG_DOUBLE_TYPE_SIZE}
 @en is the default.
-一个C表达式，为硬件支持的最宽浮点格式的位数。如果定义该宏，
-则必须指定一个小于或等于@code{LONG_DOUBLE_TYPE_SIZE}的值。如果没有定义，
-则缺省为@code{LONG_DOUBLE_TYPE_SIZE}的值。
+一个C表达式，为硬件支持的最宽浮点格式的位数。如果定义该宏，则必须指定一个小于或等于@code{LONG_DOUBLE_TYPE_SIZE}的值。如果没有定义，则缺省为@code{LONG_DOUBLE_TYPE_SIZE}的值。
 @end defmac
 
 @defmac DEFAULT_SIGNED_CHAR
@@ -2361,8 +2307,7 @@ types.
 @en @code{char} should be signed or unsigned by default.  The user can
 @en always override this default with the options @option{-fsigned-char}
 @en and @option{-funsigned-char}.
-一个表达式，其值为1或者0，根据类型@code{char}缺省应该为有符号的还是无符号的。
-用户总是可以使用选项@option{-fsigned-char}和@option{-funsigned-char}来覆盖该缺省定义。
+一个表达式，其值为1或者0，根据类型@code{char}缺省应该为有符号的还是无符号的。用户总是可以使用选项@option{-fsigned-char}和@option{-funsigned-char}来覆盖该缺省定义。
 @end defmac
 
 @deftypefn {Target Hook} bool TARGET_DEFAULT_SHORT_ENUMS (void)
@@ -2370,9 +2315,7 @@ types.
 @en @code{enum} type only as many bytes as it takes to represent the range
 @en of possible values of that type.  It should return false if all
 @en @code{enum} types should be allocated like @code{int}.
-该target钩子应该返回真，如果编译器应该为@code{enum}类型设置为可以表示该类型值
-范围的字节数。其应该返回假，如果所有的@code{enum}类型应该按照@code{int}类型的
-方式来分配。
+该target钩子应该返回真，如果编译器应该为@code{enum}类型设置为可以表示该类型值范围的字节数。其应该返回假，如果所有的@code{enum}类型应该按照@code{int}类型的方式来分配。
 
 @en The default is to return false.
 缺省为返回假。
@@ -2382,8 +2325,7 @@ types.
 @en A C expression for a string describing the name of the data type to use
 @en for size values.  The typedef name @code{size_t} is defined using the
 @en contents of the string.
-一个C表达式，为一个字符串描述了用于size值的数据类型名。
-typedef名@code{size_t}使用该字符串的内容来定义。
+一个C表达式，为一个字符串描述了用于size值的数据类型名。typedef名@code{size_t}使用该字符串的内容来定义。
 
 @en The string can contain more than one keyword.  If so, separate them with
 @en spaces, and write first any length keyword, then @code{unsigned} if
@@ -2392,11 +2334,7 @@ typedef名@code{size_t}使用该字符串的内容来定义。
 @en @code{init_decl_processing} in the file @file{c-decl.c}.  You may not
 @en omit @code{int} or change the order---that would cause the compiler to
 @en crash on startup.
-字符串可以包含多一个的关键字。如果是这样，则将它们使用空格分开，
-首先是任意长度的关键字，然后是合适@code{unsigned} 的，最后是@code{int}。
-字符串必须显示的匹配文件@file{c-decl.c}中函数@code{init_decl_processing}中
-定义的数据类型名。不可以省略掉@code{int}或者改变顺序，
-这将会使编译器在启动时崩溃。
+字符串可以包含多一个的关键字。如果是这样，则将它们使用空格分开，首先是任意长度的关键字，然后是合适@code{unsigned} 的，最后是@code{int}。字符串必须显示的匹配文件@file{c-decl.c}中函数@code{init_decl_processing}中定义的数据类型名。不可以省略掉@code{int}或者改变顺序，这将会使编译器在启动时崩溃。
 
 @en If you don't define this macro, the default is @code{"long unsigned
 @en int"}.
@@ -2408,9 +2346,7 @@ typedef名@code{size_t}使用该字符串的内容来定义。
 @en for the result of subtracting two pointers.  The typedef name
 @en @code{ptrdiff_t} is defined using the contents of the string.  See
 @en @code{SIZE_TYPE} above for more information.
-一个C表达式，为一个字符串，描述了用于两个指针相减的结果的数据类型名。
-typedef名@code{ptrdiff_t}使用该字符串的内容来定义。更多信息，
-参见上面的@code{SIZE_TYPE}。
+一个C表达式，为一个字符串，描述了用于两个指针相减的结果的数据类型名。typedef名@code{ptrdiff_t}使用该字符串的内容来定义。更多信息，参见上面的@code{SIZE_TYPE}。
 
 @en If you don't define this macro, the default is @code{"long int"}.
 如果没有定义，则缺省为@code{"long int"}。
@@ -2421,9 +2357,7 @@ typedef名@code{ptrdiff_t}使用该字符串的内容来定义。更多信息，
 @en for wide characters.  The typedef name @code{wchar_t} is defined using
 @en the contents of the string.  See @code{SIZE_TYPE} above for more
 @en information.
-一个C表达式，为一个字符串，描述了用于宽字符的数据类型名。
-typedef名@code{wchar_t}使用该字符串的内容来定义。更多信息，
-参见上面的@code{SIZE_TYPE}。
+一个C表达式，为一个字符串，描述了用于宽字符的数据类型名。typedef名@code{wchar_t}使用该字符串的内容来定义。更多信息，参见上面的@code{SIZE_TYPE}。
 
 @en If you don't define this macro, the default is @code{"int"}.
 如果没有定义，则缺省为@code{"int"}。
@@ -2433,8 +2367,7 @@ typedef名@code{wchar_t}使用该字符串的内容来定义。更多信息，
 @en A C expression for the size in bits of the data type for wide
 @en characters.  This is used in @code{cpp}, which cannot make use of
 @en @code{WCHAR_TYPE}.
-一个C表达式，为宽字符数据类型的位数。
-这用于不能使用@code{WCHAR_TYPE}的@code{cpp}中。
+一个C表达式，为宽字符数据类型的位数。这用于不能使用@code{WCHAR_TYPE}的@code{cpp}中。
 @end defmac
 
 @defmac WINT_TYPE
@@ -2443,10 +2376,7 @@ typedef名@code{wchar_t}使用该字符串的内容来定义。更多信息，
 @en @code{getwc}.  The typedef name @code{wint_t} is defined using the
 @en contents of the string.  See @code{SIZE_TYPE} above for more
 @en information.
-一个C表达式，为一个字符串，
-描述了传递给@code{printf}并且从@code{getwc}中返回的宽字符数据类型名。
-typedef名@code{wint_t}使用该字符串的内容来定义。更多信息，
-参见上面的@code{SIZE_TYPE}。
+一个C表达式，为一个字符串，描述了传递给@code{printf}并且从@code{getwc}中返回的宽字符数据类型名。typedef名@code{wint_t}使用该字符串的内容来定义。更多信息，参见上面的@code{SIZE_TYPE}。
 
 @en If you don't define this macro, the default is @code{"unsigned int"}.
 如果没有定义，则缺省为@code{"unsigned int"}。
@@ -2457,16 +2387,12 @@ typedef名@code{wint_t}使用该字符串的内容来定义。更多信息，
 @en can represent any value of any standard or extended signed integer type.
 @en The typedef name @code{intmax_t} is defined using the contents of the
 @en string.  See @code{SIZE_TYPE} above for more information.
-一个C表达式，为一个字符串，
-描述了可以表示任何标准或者扩展的有符号整数类型值的数据类型名。
-typedef名@code{intmax_t}使用该字符串的内容来定义。更多信息，
-参见上面的@code{SIZE_TYPE}。
+一个C表达式，为一个字符串，描述了可以表示任何标准或者扩展的有符号整数类型值的数据类型名。typedef名@code{intmax_t}使用该字符串的内容来定义。更多信息，参见上面的@code{SIZE_TYPE}。
 
 @en If you don't define this macro, the default is the first of
 @en @code{"int"}, @code{"long int"}, or @code{"long long int"} that has as
 @en much precision as @code{long long int}.
-如果没有定义，则缺省为@code{"int"}, @code{"long int"}或
-@code{"long long int"}中第一个与@code{long long int}具有相同精度的字符串。
+如果没有定义，则缺省为@code{"int"}, @code{"long int"}或@code{"long long int"}中第一个与@code{long long int}具有相同精度的字符串。
 @end defmac
 
 @defmac UINTMAX_TYPE
@@ -2474,18 +2400,13 @@ typedef名@code{intmax_t}使用该字符串的内容来定义。更多信息，
 @en can represent any value of any standard or extended unsigned integer
 @en type.  The typedef name @code{uintmax_t} is defined using the contents
 @en of the string.  See @code{SIZE_TYPE} above for more information.
-一个C表达式，为一个字符串，
-描述了可以表示任何标准或者扩展的无符号整数类型值的数据类型名。
-typedef名@code{uintmax_t}使用该字符串的内容来定义。更多信息，
-参见上面的@code{SIZE_TYPE}。
+一个C表达式，为一个字符串，描述了可以表示任何标准或者扩展的无符号整数类型值的数据类型名。typedef名@code{uintmax_t}使用该字符串的内容来定义。更多信息，参见上面的@code{SIZE_TYPE}。
 
 @en If you don't define this macro, the default is the first of
 @en @code{"unsigned int"}, @code{"long unsigned int"}, or @code{"long long
 @en unsigned int"} that has as much precision as @code{long long unsigned
 @en int}.
-如果没有定义，则缺省为@code{"unsigned int"}, @code{"long unsigned int"}或
-@code{"long long unsigned int"}中第一个与@code{long long unsigned int}
-具有相同精度的字符串。
+如果没有定义，则缺省为@code{"unsigned int"}, @code{"long unsigned int"}或@code{"long long unsigned int"}中第一个与@code{long long unsigned int}具有相同精度的字符串。
 @end defmac
 
 @defmac SIG_ATOMIC_TYPE
