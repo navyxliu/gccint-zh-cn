@@ -3286,7 +3286,7 @@ GCC是在它知道函数是否适合作为叶子函数来对待之前，分配�
 @en which are bit masks.  The @var{n}th integer specifies the contents of class
 @en @var{n}.  The way the integer @var{mask} is interpreted is that
 @en register @var{r} is in the class if @code{@var{mask} & (1 << @var{r})} is 1.
-一个初始化值，包含了寄存器类别的内容，作为位掩码的整数。第@var{n}个整数指定了类别@var{n}的内容。整数掩码的解析方式为，寄存器@var{r}在类别中，如果@code{@var{mask} & (1 << @var{r})}为1。
+一个初始化值，以位掩码的方式来描述寄存器类别的内容。第@var{n}个整数指定了类别@var{n}的内容。整数@var{mask}的解析方式为：如果@code{@var{mask} & (1 << @var{r})}为1，则寄存器@var{r}在该类别中。
 
 @en When the machine has more than 32 registers, an integer does not suffice.
 @en Then the integers are replaced by sub-initializers, braced groupings containing
@@ -3295,7 +3295,7 @@ GCC是在它知道函数是否适合作为叶子函数来对待之前，分配�
 @en In this situation, the first integer in each sub-initializer corresponds to
 @en registers 0 through 31, the second integer to registers 32 through 63, and
 @en so on.
-当机器具有多于32个寄存器的时候，一个整数还不能满足。这时整数被替换为子初始化值，为括号包裹的多个整数。每个子初始化值必须适合类型@code{HARD_REG_SET}的初始化值，其在@file{hard-reg-set.h}中定义。这种情况下，每个子初始化值的第一个整数对应于寄存器0到31，第二个对应于32到63，等等。
+当机器具有多于32个寄存器的时候，一个整数还不能满足。这时整数被替换为由大括号包裹的多个整数的子初始化值。每个子初始化值必须适合在@file{hard-reg-set.h}中定义的类型@code{HARD_REG_SET}。在这种情况下，每个子初始化值的第一个整数对应于寄存器0到31，第二个对应于32到63，等等。
 @end defmac
 
 @defmac REGNO_REG_CLASS (@var{regno})
@@ -3303,7 +3303,7 @@ GCC是在它知道函数是否适合作为叶子函数来对待之前，分配�
 @en @var{regno}.  In general there is more than one such class; choose a class
 @en which is @dfn{minimal}, meaning that no smaller class also contains the
 @en register.
-一个C表达式，其值为包含了硬件寄存器@var{regno}的寄存器类别。总的来说，会有不止一个这样的类别；选择最小的那个，这意味着没有更小的类别包含该寄存器。
+一个C表达式，其值为包含了硬件寄存器@var{regno}的寄存器类别。总的来说，会有不止一个这样的类别；选择最小的那个，即没有更小的类别包含该寄存器。
 @end defmac
 
 @defmac BASE_REG_CLASS
@@ -3474,7 +3474,7 @@ A target hook that places additional preference on the register class to use whe
 @en @var{class}.  The value is a register class; perhaps @var{class}, or perhaps
 @en another, smaller class.  On many machines, the following definition is
 @en safe:
-一个C表达式，对寄存器类别进行额外的限制，用于当需要复制值@var{x}到类别为@var{class}的寄存器中。值为一个寄存器类别；可能为@var{class}或者其它比@var{class}小的类别。在许多机器上，下列定义是安全的：
+一个C表达式，当需要将值@var{x}复制到类别为@var{rclass}的寄存器中时，其用来对要使用的寄存器类别进行额外的限制。返回值为一个寄存器类别；可能为@var{rclass}，也可能为其它更小的类别。在许多机器上，下列定义是安全的：
 
 @smallexample
 #define PREFERRED_RELOAD_CLASS(X,CLASS) CLASS
@@ -3720,7 +3720,7 @@ A target hook that places additional preference on the register class to use whe
 @en @var{m} in registers of @var{class1} can only be copied to registers of
 @en class @var{class2} by storing a register of @var{class1} into memory
 @en and loading that memory location into a register of @var{class2}.
-一些机器要求某些寄存器必须使用内存才能与其它寄存器进行复制。定义该宏在那些机器上，其为一个C表达式，为非0如果机器模式为@var{m}的对象在类别为@var{class1}的寄存器中，只能通过将@var{class1}的寄存器存储到内存中并且将内存位置加载到@var{class2}的寄存中。
+一些机器要求某些寄存器必须借助内存才能与其它寄存器之间进行复制。在那些机器上，定义该宏为一个C表达式，如果在类别为@var{class1}的寄存器中机器模式为@var{m}的对象，只能通过将@var{class1}的寄存器存储到内存中并且将内存位置加载到@var{class2}的寄存中，则为非0。
 
 @en Do not define this macro if its value would always be zero.
 如果其值总是为0，则不要定义该宏。
@@ -3731,7 +3731,7 @@ A target hook that places additional preference on the register class to use whe
 @en allocates a stack slot for a memory location needed for register copies.
 @en If this macro is defined, the compiler instead uses the memory location
 @en defined by this macro.
-通常当@code{SECONDARY_MEMORY_NEEDED}被定义时，编译器会分配一个栈槽为需要寄存器复制的内存位置。如果该宏被定义，则编译器会替代的使用该宏定义的内存位置。
+通常当@code{SECONDARY_MEMORY_NEEDED}被定义时，编译器会为寄存器复制所需要的内存位置分配一个栈槽。如果该宏被定义，则编译器会使用该宏定义的内存位置。
 
 @en Do not define this macro if you do not define
 @en @code{SECONDARY_MEMORY_NEEDED}.
@@ -3744,13 +3744,13 @@ A target hook that places additional preference on the register class to use whe
 @en hold a quantity of @code{BITS_PER_WORD} bits and performs the store and
 @en load operations in a mode that many bits wide and whose class is the
 @en same as that of @var{mode}.
-当编译器需要一个二级内存位置在机器模式为@var{mode}的寄存器之间进行复制的时候，其通常分配足够的内存来存放@code{BITS_PER_WORD}个位，并且执行该位数宽度的@var{mode}的存储和加载操作。
+当编译器在机器模式为@var{mode}的寄存器之间进行复制需要一个次级内存位置的时候，其通常会分配足够的内存来存放@code{BITS_PER_WORD}个位，并且执行该位数宽度的，机器模式为@var{mode}的存储和加载操作。
 
 @en This is right thing to do on most machines because it ensures that all
 @en bits of the register are copied and prevents accesses to the registers
 @en in a narrower mode, which some machines prohibit for floating-point
 @en registers.
-这在大多数机器上是正确的，因为其确保寄存器的所有位被复制并且阻止对寄存器按照较窄的机器模式来访问，这对于浮点寄存器通常是禁止的。
+这在大多数机器上是正确的，因为其确保寄存器的所有位被复制并且阻止对寄存器按照较窄的机器模式来访问，在一些机器上，这对于浮点寄存器通常是禁止的。
 
 @en However, this default behavior is not correct on some machines, such as
 @en the DEC Alpha, that store short integers in floating-point registers
@@ -3758,10 +3758,7 @@ A target hook that places additional preference on the register class to use whe
 @en widening will not work correctly and you must define this macro to
 @en suppress that widening in some cases.  See the file @file{alpha.h} for
 @en details.
-然而，该缺省行为在一些机器上是不正确的，例如DEC Alpha，
-其在浮点寄存器中存储short整数与在整数寄存器中是不同的。
-在那些机器上，缺省的宽度将不正确，你必须定义该宏来抑制这种宽度。
-详情参见@file{alpha.h}文件。
+然而，该缺省行为在一些机器上是不正确的，例如DEC Alpha，其在浮点寄存器中存储short整数与在整数寄存器中是不同的。在那些机器上，缺省的宽度将不正确，你必须定义该宏来抑制这种宽度。详情参见@file{alpha.h}文件。
 
 @en Do not define this macro if you do not define
 @en @code{SECONDARY_MEMORY_NEEDED} or if widening @var{mode} to a mode that
@@ -3801,13 +3798,13 @@ A target hook that places additional preference on the register class to use whe
 
 @en This macro helps control the handling of multiple-word values
 @en in the reload pass.
-该宏有助于处理多字的值，在重载过程中。
+该宏有助于在reload pass中处理多个字的值。
 @end defmac
 
 @defmac CANNOT_CHANGE_MODE_CLASS (@var{from}, @var{to}, @var{class})
 @en If defined, a C expression that returns nonzero for a @var{class} for which
 @en a change from mode @var{from} to mode @var{to} is invalid.
-如果被定义，为一个C表达式，其返回非0，对于一个@var{class}，其由机器模式@var{from}到@var{to}的改变是无效的。
+如果被定义，则为一个C表达式。当@var{class}不能从机器模式@var{from}转变成@var{to}的时候，其返回非0。
 
 @en For the example, loading 32-bit integer or floating-point objects into
 @en floating-point registers on the Alpha extends them to 64 bits.
@@ -3815,7 +3812,7 @@ A target hook that places additional preference on the register class to use whe
 @en does not store the low-order 32 bits, as would be the case for a normal
 @en register.  Therefore, @file{alpha.h} defines @code{CANNOT_CHANGE_MODE_CLASS}
 @en as below:
-例如，加载32位整数或者浮点对象到浮点寄存器中，在Alpha上将被扩展为64位。因此加载64位对象并存储为32位对象时将不保存第32位。因此，@file{alpha.h}定义@code{CANNOT_CHANGE_MODE_CLASS}如下：
+例如，在Alpha上加载32位的整数或者浮点对象到浮点寄存器中，会将其扩展为64位。因此加载一个64位的对象，然后将其存储为32位对象时，将不会保存低32位。因此，@file{alpha.h}定义@code{CANNOT_CHANGE_MODE_CLASS}为：
 
 @smallexample
 #define CANNOT_CHANGE_MODE_CLASS(FROM, TO, CLASS) \
@@ -3836,7 +3833,7 @@ A target hook that places additional preference on the register class to use whe
 @en The order of cover classes in the array is important.  If two classes
 @en have the same cost of usage for a pseudo, the class occurred first in
 @en the array is chosen for the pseudo.
-数组中cover类别的顺序很重要。如果对于一个伪寄存器的使用，两个类具有相同代价，则先出现在数组中的类将被选择用于该伪寄存器。
+数组中cover类别的顺序很重要。如果对于一个伪寄存器的使用，两个类别具有相同代价，则先出现在数组中的类别将被选择用于该伪寄存器。
 
 @en This hook is called once at compiler startup, after the command-line
 @en options have been processed. It is then re-examined by every call to
