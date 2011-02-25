@@ -23,10 +23,7 @@
 @en control flow from one basic block to another.  The data structures
 @en used to represent the control flow graph are defined in
 @en @file{basic-block.h}.
-控制流图（CFG）是一个建立在中间代码（RTL或者@code{tree}指令流）之上的数据结构，
-对正在编译的函数的控制流行为的抽象。CFG是一个有向图，顶点表示基本块，
-边表示从一个基本块到另一个的控制流的可能转换。
-用来表示控制流图的数据结构定义在@file{basic-block.h}中。
+控制流图（CFG）是一个建立在中间代码（RTL或者@code{tree}指令流）之上的数据结构，用来对编译函数的控制流行为进行抽象。CFG是一个有向图，顶点表示基本块，边表示从一个基本块到另一个基本可能的控制流转换。用来表示控制流图的数据结构定义在@file{basic-block.h}中。
 
 @en @menu
 @en * Basic Blocks::           The definition and representation of basic blocks.
@@ -36,11 +33,11 @@
 @en * Liveness information::   Using and maintaining liveness information.
 @en @end menu
 @menu
-* Basic Blocks::       基本块的定义和表示。    
-* Edges::           边的类型和表示。
-* Profile information::  频率和概率的表示。
-* Maintaining the CFG::      保持控制流图的更新。
-* Liveness information::     使用和维护活跃信息。
+* Basic Blocks::		基本块的定义和表示    
+* Edges::			边的类型和表示
+* Profile information::		频率和概率的表示
+* Maintaining the CFG::		维护和更新控制流图
+* Liveness information::	使用和维护活跃信息
 @end menu
 
 
@@ -54,8 +51,7 @@
 @en A basic block is a straight-line sequence of code with only one entry
 @en point and only one exit.  In GCC, basic blocks are represented using
 @en the @code{basic_block} data type.
-基本块是一段直线性的代码序列，并且只有一个入口和一个出口。
-在GCC中，基本块使用@code{basic_block}数据类型来表示。
+基本块是一段只有一个入口和一个出口的直线代码序列。在GCC中，基本块使用@code{basic_block}数据类型来表示。
 
 @findex next_bb, prev_bb, FOR_EACH_BB
 @en Two pointer members of the @code{basic_block} structure are the
@@ -67,14 +63,7 @@
 @en lexicographical order.  Dominator traversals are also possible using
 @en @code{walk_dominator_tree}.  Given two basic blocks A and B, block A
 @en dominates block B if A is @emph{always} executed before B@.
-结构体@code{basic_block}的两个指针成员，指针@code{next_bb}和@code{prev_bb}，
-用来维持与底层指令流顺序相同的基本块双向链表。
-基本块之间的链，由给定的操作CFG的API，通过透明的方式进行更新。
-宏@code{FOR_EACH_BB}可以用来按照词典顺序（lexicographical order）
-访问所有基本块。
-也可以使用@code{walk_dominator_tree}，进行支配遍历（dominator traversal）。
-给定两个基本块A和B，如果A@emph{总是}在B之前被执行，
-则基本块A支配（dominate）基本块B。
+结构体@code{basic_block}的两个指针成员，指针@code{next_bb}和@code{prev_bb}，用来维持与底层指令流顺序相同的基本块双向链表。基本块之间的链，由给定的操作CFG的API，通过透明的方式进行更新。宏@code{FOR_EACH_BB}可以用来按照字典顺序（lexicographical order）访问所有基本块。也可以使用@code{walk_dominator_tree}，按照支配顺序进行遍历（dominator traversal）。给定两个基本块A和B，如果A@emph{总是}在B之前被执行，则基本块A支配（dominate）基本块B。
 
 @findex BASIC_BLOCK
 @en The @code{BASIC_BLOCK} array contains all basic blocks in an
@@ -87,14 +76,7 @@
 @en process, as passes reorder, create, duplicate, and destroy basic
 @en blocks.  The index for any block should never be greater than
 @en @code{last_basic_block}.
-@code{BASIC_BLOCK}数组包含了所有的基本块，并且顺序不固定。
-每一个@code{basic_block}结构体都有一个域，
-用来保留一个唯一的整数标识符@code{index}，
-作为该基本块在@code{BASIC_BLOCK}数组中的索引。
-函数中基本块的总数为@code{n_basic_blocks}。
-由于中间过程（passes）可以重排，创建，复制和销毁基本块，
-所以基本块的索引和总数在编译过程中都可能改变。
-任何基本块块的索引都不应该比@code{last_basic_block}的大。
+@code{BASIC_BLOCK}数组包含了所有的基本块，并且顺序不固定。每个@code{basic_block}结构体都有一个域，用来存放唯一的整数标识符@code{index}，作为该基本块在@code{BASIC_BLOCK}数组中的索引。函数中基本块的总数为@code{n_basic_blocks}。由于passes可以重排，创建，复制和销毁基本块，所以基本块的索引和总数在编译过程中都可能会改变。任何基本块的索引都不能大于@code{last_basic_block}的。
 
 @findex ENTRY_BLOCK_PTR, EXIT_BLOCK_PTR
 @en Special basic blocks represent possible entry and exit points of a
@@ -102,10 +84,7 @@
 @en @code{EXIT_BLOCK_PTR}.  These blocks do not contain any code, and are
 @en not elements of the @code{BASIC_BLOCK} array.  Therefore they have
 @en been assigned unique, negative index numbers.
-有专门的基本块来表示一个函数的可能的入口和出口。
-这些基本块被称作@code{ENTRY_BLOCK_PRT}和@code{EXIT_BLOCK_PTR}。
-这些基本块不包含任何代码，并且不是@code{BASIC_BLOCK}数组的成员。
-因此它们被赋予了唯一的负数索引。
+有专门的基本块来表示函数的可能入口和出口。这些基本块被称作@code{ENTRY_BLOCK_PRT}和@code{EXIT_BLOCK_PTR}。这些基本块不包含任何代码，并且不是@code{BASIC_BLOCK}数组的成员。因此它们被赋予了唯一的负数索引。
 
 @en Each @code{basic_block} also contains pointers to the first
 @en instruction (the @dfn{head}) and the last instruction (the @dfn{tail})
@@ -114,12 +93,7 @@
 @en blocks in both major intermediate representations of GCC (@code{tree}
 @en and RTL), there are pointers to the head and end of a basic block for
 @en both representations.
-每个@code{basic_block}还包含了指针，用来指向基本块中第一条指令
-（@dfn{head}）和最后一条指令（@dfn{tail}），
-或者在基本块中包含的指令流的结尾（@dfn{end}）。
-实际上，由于@code{basic_block}数据类型在GCC的两个主要中间表示
-（@code{tree}和RTL）中都被用来表示基本块，
-因此具有针对这两种表示的指针，用来指向基本块的头和尾。
+每个@code{basic_block}还包含了指针，用来指向基本块中的第一条指令（@dfn{head}）和最后一条指令（@dfn{tail}），或者指令流的结尾（@dfn{end}）。实际上，由于@code{basic_block}数据类型在GCC的两个主要中间表示（@code{tree}和RTL）中都被用来表示基本块，因此有针对这两种表示的指向基本块头和尾的指针。
 
 @findex NOTE_INSN_BASIC_BLOCK, CODE_LABEL, notes
 @en For RTL, these pointers are @code{rtx head, end}.  In the RTL function
@@ -138,19 +112,7 @@
 @en instruction or last instruction before following @code{CODE_LABEL} or
 @en @code{NOTE_INSN_BASIC_BLOCK}.  A @code{CODE_LABEL} cannot appear in
 @en the instruction stream of a basic block.
-对于RTL，这些指针是@code{rtx head, end}。在RTL函数表示中，
-头指针总是指向@code{NOTE_INSN_BASIC_BLOCK}或者@code{CODE_LABEL}。
-在RTL函数表示中，指令流不仅包含“真正”的指令，
-而且还有注解（@dfn{notes}）。
-任何移动或者复制基本块的函数都需要注意更新这些注解。
-许多这些注解都期望指令流是由线性区域组成的，所以这使得更新比较困难。
-@code{NOTE_INSN_BASIC_BLOCK}注解是唯一类型的，
-可以出现在基本块内包含的指令流中。
-一个基本块的指令流总是跟随一个@code{NOTE_INSN_BASIC_BLOCK}，
-但是基本块注解之前可以有0个或多个@code{CODE_LABEL}节点。
-基本块结束于一条控制流指令，
-或者后面是紧随@code{CODE_LABEL}或者@code{NOTE_INSN_BASIC_BLOCK}的最后一条指令。
-@code{CODE_LABEL}不能出现在基本块中的指令流里。
+对于RTL，这些指针是@code{rtx head, end}。在RTL函数表示中，头指针总是指向@code{NOTE_INSN_BASIC_BLOCK}或者@code{CODE_LABEL}。在RTL函数表示中，指令流不仅包含“真正”的指令，而且还有注解（@dfn{notes}）。任何移动或者复制基本块的函数都需要注意更新这些注解。许多这些注解都期望指令流是由线性区域组成的，所以这使得更新比较困难。@code{NOTE_INSN_BASIC_BLOCK}是唯一可以出现在基本块内指令流中的注解。一个基本块的指令流总是跟随一个@code{NOTE_INSN_BASIC_BLOCK}，但是基本块注解之前可以有0个或多个@code{CODE_LABEL}节点。基本块结束于一条控制流指令，或者后面是紧随@code{CODE_LABEL}或者@code{NOTE_INSN_BASIC_BLOCK}的最后一条指令。@code{CODE_LABEL}不能出现在基本块中的指令流里。
 
 @findex can_fallthru
 @cindex table jump
@@ -165,14 +127,7 @@
 @en Before any edge is made @dfn{fall-thru}, the existence of such
 @en construct in the way needs to be checked by calling
 @en @code{can_fallthru} function.
-除了注解之外，跳转表向量也被表示为insn流中的“伪指令”。
-这些向量从不出现在基本块中，并应该总是被放在引用它们的
-表跳转指令（tabel jump instructions）的后面。
-在移除table-jump之后，通常很难消除计算地址和引用向量的代码，
-所以对这些向量的清除工作被推迟到活跃分析之后。
-这样，跳转表向量可能会在insn流中出现，但未被引用，没有任何用图。
-在将任何边（edge）作为@dfn{fall-thru}之前，
-都需要调用@code{can_fallthru}函数来检查这种构造方式是否可以。
+除了注解之外，跳转表向量也被表示为insn流中的“伪指令”。这些向量从不出现在基本块中，并应该总是被放在引用它们的表跳转指令（tabel jump instructions）的后面。在移除table-jump之后，通常很难消除计算地址和引用向量的代码，所以对这些向量的清除工作被推迟到活跃分析之后。这样，跳转表向量可能会在insn流中出现，但未被引用，没有任何用图。在将任何边（edge）作为@dfn{fall-thru}之前，都需要调用@code{can_fallthru}函数来检查这种构造方式是否可以。
 
 @cindex block statement iterators
 @en For the @code{tree} representation, the head and end of the basic block
@@ -184,12 +139,7 @@
 @en in the various @file{tree-*} files.
 @en The following snippet will pretty-print all the statements of the
 @en program in the GIMPLE representation.
-对于@code{tree}的表示，基本块的头和尾由@code{stmt_list}域指向，
-但是，决不要直接引用这些特定的@code{tree}。替代的，在树级别上，
-使用抽象容器和迭代器来访问基本块中的语句和表达式。
-这些迭代器被称作块语句迭代器（@dfn{block statement iterators}, BSI）。
-可以在各种@file{tree-*}文件中使用grep来查找@code{^bsi}。
-下面的片段可以打印（pretty-print）使用GIMPLE表示的程序的所有语句。
+对于@code{tree}表示，基本块的头和尾由@code{stmt_list}域指向。但是，不要直接引用这些特定的@code{tree}。替代的，在树级别上，使用抽象容器和迭代器来访问基本块中的语句和表达式。这些迭代器被称作块语句迭代器（@dfn{block statement iterators}, BSI）。可以在各种@file{tree-*}文件中使用grep来查找@code{^bsi}。下面的片段可以打印（pretty-print）使用GIMPLE表示的所有程序语句。
 
 @smallexample
 FOR_EACH_BB (bb)
@@ -221,20 +171,14 @@ FOR_EACH_BB (bb)
 @en The members @code{preds} and @code{succs} of the @code{basic_block} data
 @en type point to type-safe vectors of edges to the predecessors and
 @en successors of the block.
-边表示从某个基本块A的结束到另一个基本块B的开头的可能的控制流转换。
-我们称A是B的前驱，B是A的后继。在GCC中，边由@code{edge}数据类型表示。
-每个@code{edge}作为两个基本块之间的链接：
-一个@code{edge}的@code{src}成员指向前驱@code{dest}基本块。
-数据类型@code{basic_block}的成员@code{preds}和@code{succs}，
-指向块的前驱和后继们的边的type-safe向量。
+边表示从某个基本块A的结束到另一个基本块B的开头的可能的控制流转换。我们称A是B的前驱，B是A的后继。在GCC中，边由@code{edge}数据类型表示。每个@code{edge}作为两个基本块之间的链接：@code{edge}的@code{src}成员指向@code{dest}的前驱基本块。数据类型@code{basic_block}的成员@code{preds}和@code{succs}，指向块的前驱边向量和后继边向量。
 
 @cindex edge iterators
 @en When walking the edges in an edge vector, @dfn{edge iterators} should
 @en be used.  Edge iterators are constructed using the
 @en @code{edge_iterator} data structure and several methods are available
 @en to operate on them:
-当在一个边向量中访问边时，应该使用边迭代器。
-边迭代器由@code{edge_iterator}数据结构和一些可以使用的操作方法构成：
+当在一个边向量中访问边时，应该使用边迭代器。边迭代器由@code{edge_iterator}数据结构和一些可以使用的操作构成：
 
 @ftable @code
 @item ei_start
@@ -278,9 +222,7 @@ FOR_EACH_BB (bb)
 @en pointing at the end of the sequence.  This function has been provided
 @en for existing code makes the assumption that a @code{NULL} edge
 @en indicates the end of the sequence.
-该函数返回由@code{edge_iterator}当前指向的@code{edge}，
-但是如果迭代器指向序列的结尾时，则返回@code{NULL}。
-该函数是为现有的代码提供的，即代码假设用@code{NULL}边来表示序列的结尾。
+该函数返回由@code{edge_iterator}当前指向的@code{edge}，但是如果迭代器指向序列的结尾时，则返回@code{NULL}。该函数是为现有的代码提供的，这些代码假设用@code{NULL}边来表示序列的结尾。
 @end ftable
 
 @en The convenience macro @code{FOR_EACH_EDGE} can be used to visit all of
@@ -288,9 +230,7 @@ FOR_EACH_BB (bb)
 @en not be used when an element might be removed during the traversal,
 @en otherwise elements will be missed.  Here is an example of how to use
 @en the macro:
-宏@code{FOR_EACH_EDGE}可以方便的用来访问前驱边或后继边序列。
-当在遍历中会移除元素时，不要使用该宏，否则会错过这些元素。
-这里有一个如何使用该宏的例子：
+宏@code{FOR_EACH_EDGE}可以方便的用来访问前驱边或后继边序列。当在遍历中会移除掉某个元素时，不要使用该宏，否则会错过这些元素。这里有一个如何使用该宏的例子：
 
 @smallexample
 edge e;
@@ -313,13 +253,7 @@ FOR_EACH_EDGE (e, ei, bb->succs)
 @en field of the @code{edge} data type is used to store information
 @en about the type of edge we are dealing with.  Each edge is of one of
 @en the following types:
-有许多原因会导致控制流从一个块传递到另一个。
-一种可能是某条指令，例如@code{CODE_LABEL}，在一个线形的指令流中，
-总是起始一个新基本块。在这种情况下，
-一个@dfn{fall-thru}边将基本块与随后的第一个比本块相连。
-但是有许多其它原因会导致边被创建。
-@code{edge}的数据类型的@code{flags}域用于存储我们处理的边的类型信息。
-每个边都具有下列类型之一：
+有许多原因会导致控制流从一个块传递到另一个。一种可能是某条指令，例如@code{CODE_LABEL}，在线形的指令流中，总是起始一个新基本块。在这种情况下，一个@dfn{fall-thru}边将基本块与随后的第一个基本块相连。不过还有许多其它原因会导致边被创建。@code{edge}数据类型的@code{flags}域用于存储我们正在处理的边的类型信息。每个边都具有下列类型之一：
 
 @table @emph
 @item jump
@@ -327,9 +261,7 @@ FOR_EACH_EDGE (e, ei, bb->succs)
 @en These edges are used for unconditional or conditional jumps and in
 @en RTL also for table jumps.  They are the easiest to manipulate as they
 @en may be freely redirected when the flow graph is not in SSA form.
-与跳转指令相关的边没有被设置类型标识。这些边用于无条件或有条件跳转，
-以及RTL中还有表跳转。它们是最容易操作的，因为当流图不为SSA形式的时候，
-可以自由重定向。 
+与跳转指令相关的边没有被设置类型标识。这些边用于无条件或有条件跳转，以及RTL中还有表跳转。它们是最容易操作的，因为当流图不为SSA形式的时候，可以自由重定向。 
 
 @item fall-thru
 @findex EDGE_FALLTHRU, force_nonfallthru
@@ -341,10 +273,7 @@ FOR_EACH_EDGE (e, ei, bb->succs)
 @en available to insert an unconditional jump in the case that redirection
 @en is needed.  Note that this may require creation of a new basic block.
 @en Fall-thru边存在于当基本块不需要分支而是继续执行随后的块的时候。
-这些边的标志设为@code{EDGE_FALLTHRU}。不像其它类型的边，
-这些边必须直接进入基本块的指令流中。
-函数@code{force_nonfallthru}可以用于在需要重定向时插入一个无条件跳转。
-注意这可能需要创建一个新基本块。
+这些边的标志设为@code{EDGE_FALLTHRU}。不像其它类型的边，这些边必须直接进入基本块的指令流中。函数@code{force_nonfallthru}可以用于在需要重定向时插入一个无条件跳转。注意这可能需要创建一个新基本块。
 
 @item exception handling
 @cindex exception handling
@@ -492,12 +421,7 @@ GCC允许嵌套函数使用@code{goto}到一个通过参数传给被调用者的
 @en emit alternate prologues for functions called from different contexts.
 @en In future full support for multiple entry functions defined by Fortran
 @en 90 needs to be implemented.
-根据定义，函数执行起始于基本块0，
-所以总有一个边从@code{ENTRY_BLOCK_PTR}到基本块0。
-目前，对备用入口点没有@code{tree}表示。在RTL里，
-备用入口点通过定义了@code{LABEL_ALTERNATE_NAME}的@code{CODE_LABEL}指定。
-这能够被后端用于为通过不同上下文调用函数而生成备用prologues。
-将来，Fortran90定义的多入口函数的完全支持需要被实现。
+根据定义，函数执行起始于基本块0，所以总有一个边从@code{ENTRY_BLOCK_PTR}到基本块0。目前，对备用入口点没有@code{tree}表示。在RTL里，备用入口点通过定义了@code{LABEL_ALTERNATE_NAME}的@code{CODE_LABEL}指定。这能够被后端用于为通过不同上下文调用函数而生成备用prologues。将来，Fortran90定义的多入口函数的完全支持需要被实现。
 
 @item function exits
 @en In the pre-reload representation a function terminates after the last
@@ -505,9 +429,7 @@ GCC允许嵌套函数使用@code{goto}到一个通过参数传给被调用者的
 @en used.  This corresponds to the fall-thru edge into exit block.  After
 @en reload, optimal RTL epilogues are used that use explicit (conditional)
 @en return instructions that are represented by edges with no flags set.
-在pre-reload表示中，函数终止于insn链中的最后一条指令，
-并且没有显示的返回指令。这对应于由fall-thru引向出口块。
-reload之后，最佳的RTL epilogues被用于显示的（有条件的）返回指令中。
+在pre-reload表示中，函数终止于insn链中的最后一条指令，并且没有显式的返回指令。标记对应于进入出口块的fall-thru边。reload之后，最佳的RTL结尾部分（epilogues）会被使用，其会使用显式的（有条件的）返回指令，并使用没有标记设置的边来表示。
 @end table
 
 
@@ -898,11 +820,7 @@ GCC有两个主要的中间表示，
 @en registers only need to be assigned to a unique hard register or to a
 @en stack slot if they are live.  The hard registers and stack slots may
 @en be freely reused for other values when a register is dead.  
-活跃信息有助于决定在程序的给定点是否一些寄存器是“活跃”的，
-即其包含的值可能在程序之后的地方被使用。
-例如，这些信息被使用在寄存器分配过程，
-伪寄存器只有在活跃的时候才需要被分配给唯一的硬件寄存器或者栈存储单元。
-当一个寄存器无用的时候，硬件寄存器和栈存储单元可以被随意重用于其它值。
+活跃信息有助于确定某个寄存器在程序的给定点是否是“活跃”的，即其包含的值可能在之后的地方被使用。例如，这些信息会在寄存器分配中被用到，因为伪寄存器只有在活跃的时候才需要被分配给唯一的硬件寄存器或者栈槽。当寄存器是“死”的时候，硬件寄存器和栈槽则可以被自如的重用于其它值。
 
 @en Liveness information is available in the back end starting with
 @en @code{pass_df_initialize} and ending with @code{pass_df_finish}.  Three
@@ -915,13 +833,7 @@ GCC有两个主要的中间表示，
 @en variable is live at @code{P} if there is both an assignment that reaches
 @en it from the beginning of the function and a use that can be reached on
 @en some path from @code{P} to the end of the function.
-在后端从@code{pass_df_initialize}起始到@code{pass_df_finish}结束之间，
-活跃信息是有效的。有三种活跃分析：@code{LR}，能够确定在函数的任意点@code{P}，
-寄存器是否会在从@code{P}到函数结束之间的某处被使用。
-@code{UR}，能够确定是否从函数的起始到P之间定义了变量。
-@code{LIVE}是@code{LR}和@code{UR}的交集，变量在@code{P}点是活跃的，
-如果同时从函数的开始到现在存在一个赋值，
-并且从@code{P}到函数的结束之间存在对其的使用。
+从@code{pass_df_initialize}起始到@code{pass_df_finish}结束之间，活跃信息在后端是有效的。有三种活跃分析：@code{LR}，能够确定在函数的任意点@code{P}，寄存器是否会在从@code{P}到函数结束之间的某处被使用。@code{UR}，能够确定是否从函数的起始到P之间定义了变量。@code{LIVE}是@code{LR}和@code{UR}的交集，变量在@code{P}点是活跃的，如果同时从函数的开始到现在存在一个赋值，并且从@code{P}到函数的结束之间存在对其的使用。
 
 @en In general @code{LIVE} is the most useful of the three.  The macros
 @en @code{DF_[LR,UR,LIVE]_[IN,OUT]} can be used to access this information.
@@ -929,11 +841,7 @@ GCC有两个主要的中间表示，
 @en by the register number.  This information is only guaranteed to be up to
 @en date after calls are made to @code{df_analyze}.  See the file
 @en @code{df-core.c} for details on using the dataflow.  
-通常这三种信息里，@code{LIVE}最有帮助。
-宏@code{DF_[LR,UR,LIVE]_[IN,OUT]}可以用来访问这些信息。
-这些宏接受一个基本块号，并返回一个以寄存器号为索引的位图。
-该信息只保证截至在调用@code{df_analyze}之后是最新的。
-关于使用数据流的详细信息参见@file{df-core.c}文件。
+通常这三种信息里，@code{LIVE}最有帮助。宏@code{DF_[LR,UR,LIVE]_[IN,OUT]}可以用来访问这些信息。这些宏接受一个基本块号，并返回一个以寄存器号为索引的位图。该信息只保证截至在调用@code{df_analyze}之后是最新的。关于使用数据流的详细信息参见@file{df-core.c}文件。
 
 @findex REG_DEAD, REG_UNUSED
 @en The liveness information is stored partly in the RTL instruction stream
@@ -943,8 +851,5 @@ GCC有两个主要的中间表示，
 @en @code{REG_UNUSED} notes representing that the value computed by the
 @en instruction is never used.  The second is useful for instructions
 @en computing multiple values at once.
-活跃信息部分存在RTL指令流里，部分存在流程图里。局部信息存在指令流中：
-每条指令可以包含@code{REG_DEAD}注解（note），
-来表示给定寄存器的值已经不再被需要了，或者@code{REG_UNUSED}注解，
-来表示由指令计算所得的值从来没有被使用。第二个可以有助于指令一次计算多值。
+活跃信息有一部分存储在RTL指令流里，一部分存储在流程图里。局部信息存在指令流中：每条指令可以包含@code{REG_DEAD}注解（note），来表示给定寄存器的值已经不再被需要了，或者@code{REG_UNUSED}注解，来表示由指令计算所得的值从来没有被使用。第二个可以有助于指令一次计算多值。
 
