@@ -1,5 +1,5 @@
 @c Copyright (C) 1988, 1989, 1992, 1994, 1997, 1998, 1999, 2000, 2001, 2002,
-@c 2003, 2004, 2005, 2006, 2007, 2008, 2010
+@c 2003, 2004, 2005, 2006, 2007, 2008, 2010, 2011
 @c Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
@@ -584,17 +584,27 @@ XINT (@var{x}, 2)
 @en object associated with the reference.
 如果该寄存器被已知为存放了一些用户级的声明的值，则为那个tree节点。其也可以为@code{COMPONENT_REF}，这种情况下，其为某个域的引用，并且@code{TREE_OPERAND (@var{x}, 0)}包含了声明，或者另一个@code{COMPONENT_REF}，或者如果没有编译时对象相关引用，则为空。
 
+@findex MEM_OFFSET_KNOWN_P
+@item MEM_OFFSET_KNOWN_P (@var{x})
+True if the offset of the memory reference from @code{MEM_EXPR} is known.
+@samp{MEM_OFFSET (@var{x})} provides the offset if so.
+
 @findex MEM_OFFSET
 @item MEM_OFFSET (@var{x})
 @en The offset from the start of @code{MEM_EXPR} as a @code{CONST_INT} rtx.
-从@code{MEM_EXPR}起始的偏移量，为一个@code{CONST_INT} rtx。
+@c 从@code{MEM_EXPR}起始的偏移量，为一个@code{CONST_INT} rtx。
+The offset from the start of @code{MEM_EXPR}.  The value is only valid if
+@samp{MEM_OFFSET_KNOWN_P (@var{x})} is true.
+
 
 @findex MEM_SIZE
 @item MEM_SIZE (@var{x})
-@en The size in bytes of the memory reference as a @code{CONST_INT} rtx.
+@en The size in bytes of the memory reference.
 @en This is mostly relevant for @code{BLKmode} references as otherwise
-@en the size is implied by the mode.
-以字节为单位的内存引用长度，为一个@code{CONST_INT} rtx。这主要与@code{BLKmode}引用相关，否则机器模式已经隐含了长度。
+@en the size is implied by the mode.  The value is only valid if
+@en @samp{MEM_SIZE_KNOWN_P (@var{x})} is true.
+以字节为单位的内存引用长度。这主要与@code{BLKmode}引用相关，否则机器模式已经隐含了长度。
+The value is only valid if @en @samp{MEM_SIZE_KNOWN_P (@var{x})} is true.
 
 @findex MEM_ALIGN
 @item MEM_ALIGN (@var{x})
@@ -2902,10 +2912,17 @@ adding to@var{z} without doing an intermediate rounding step.
 @item (ffs:@var{m} @var{x})
 @en Represents one plus the index of the least significant 1-bit in
 @en @var{x}, represented as an integer of mode @var{m}.  (The value is
-@en zero if @var{x} is zero.)  The mode of @var{x} need not be @var{m};
-@en depending on the target machine, various mode combinations may be
-@en valid.
-表示在@var{x}中，最低有效，位为1的索引加上1，为一个模式@var{m}的整数。（如果@var{x}为零，则值为零。）@var{x}的机器模式不需要为@var{m}；取决于目标机器，可以有不同的机器模式的组合。
+@en zero if @var{x} is zero.)  The mode of @var{x} must be @var{m}
+@en or @code{VOIDmode}.
+表示在@var{x}中，最低有效，位为1的索引加上1，为一个模式@var{m}的整数。（如果@var{x}为零，则值为零。）@var{x}的机器模式一定为@var{m}或者 @code{VOIDmode}。
+
+@findex clrsb
+@item (clrsb:@var{m} @var{x})
+Represents the number of redundant leading sign bits in @var{x},
+represented as an integer of mode @var{m}, starting at the most
+significant bit position.  This is one less than the number of leading
+sign bits (either 0 or 1), with no special cases.  The mode of @var{x}
+must be @var{m} or @code{VOIDmode}.
 
 @findex clz
 @item (clz:@var{m} @var{x})
@@ -2914,9 +2931,9 @@ adding to@var{z} without doing an intermediate rounding step.
 @en If @var{x} is zero, the value is determined by
 @code{CLZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc}).  Note that this is one of
 @en the few expressions that is not invariant under widening.  The mode of
-@en @var{x} will usually be an integer mode.
+@en @var{x} must be @var{m} or @code{VOIDmode}.
 表示@var{x}中，从最高有效位开始，起始处为0的位数，为一个模式@var{m}的整数。如果@var{x}为零，则值由@code{CLZ_DEFINED_VALUE_AT_ZERO}
-(@pxref{Misc})来确定。注意，。@var{x}的机器模式通常为一个整数模式。
+(@pxref{Misc})来确定。注意，。@var{x}的机器模式通常为@var{m} 或者 @code{VOIDmode}。
 
 @findex ctz
 @item (ctz:@var{m} @var{x})
@@ -2925,28 +2942,28 @@ adding to@var{z} without doing an intermediate rounding step.
 @en If @var{x} is zero, the value is determined by
 @en @code{CTZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc}).  Except for this case,
 @en @code{ctz(x)} is equivalent to @code{ffs(@var{x}) - 1}.  The mode of
-@en @var{x} will usually be an integer mode.
+@en @var{x} must be @var{m} or @code{VOIDmode}.
 表示@var{x}中，从最低有效位开始，结尾处为0的位数，为一个模式@var{m}的整数。如果@var{x}为零，则值由@code{CTZ_DEFINED_VALUE_AT_ZERO}
-(@pxref{Misc})来确定。除此之外，@code{ctz(x)}等价于@code{ffs(@var{x}) - 1}。@var{x}的机器模式通常为一个整数模式。
+(@pxref{Misc})来确定。除此之外，@code{ctz(x)}等价于@code{ffs(@var{x}) - 1}。@var{x}的机器模式一定是@var{m} 或者 @code{VOIDmode}。
 
 @findex popcount
 @item (popcount:@var{m} @var{x})
 @en Represents the number of 1-bits in @var{x}, represented as an integer of
-@en mode @var{m}.  The mode of @var{x} will usually be an integer mode.
-表示@var{x}中为1的位数，为一个模式@var{m}的整数。@var{x}的机器模式通常为一个整数模式。
+@en mode @var{m}.  The mode of @var{x} must be @var{m} or @code{VOIDmode}.
+表示@var{x}中为1的位数，为一个模式@var{m}的整数。@var{x}的机器模式一定是@var{m} 或者 @code{VOIDmode}。
 
 @findex parity
 @item (parity:@var{m} @var{x})
 @en Represents the number of 1-bits modulo 2 in @var{x}, represented as an
-@en integer of mode @var{m}.  The mode of @var{x} will usually be an integer
-@en mode.
-表示@var{x}中为1的位数对2进行求模，为一个模式@var{m}的整数。@var{x}的机器模式通常为一个整数模式。
+@en integer of mode @var{m}.  The mode of @var{x} must be @var{m} or @code{VOIDmode}.
+表示@var{x}中为1的位数对2进行求模，为一个模式@var{m}的整数。@var{x}的机器模式一定是@var{m} 或者 @code{VOIDmode}。
 
 @findex bswap
 @item (bswap:@var{m} @var{x})
 @en Represents the value @var{x} with the order of bytes reversed, carried out
 @en in mode @var{m}, which must be a fixed-point machine mode.
-表示将@var{x}值的字节顺序进行反转，结果为@var{m}机器模式，其必须为一个定点机器模式。
+@en The mode of @var{x} must be @var{m} or @code{VOIDmode}.
+表示将@var{x}值的字节顺序进行反转，结果为@var{m}机器模式，其必须为一个定点机器模式。。@var{x}的机器模式一定是@var{m} 或者 @code{VOIDmode}。
 @end table
 
 @en @node Comparisons
@@ -3494,6 +3511,13 @@ an undefined way.
 @en @code{(set (pc) (return))}, but the latter form is never used.
 注意，指令模式为@code{(return)}的insn，在逻辑上等价于@code{(set (pc) (return))}，但是不使用后者的形式。
 
+@findex simple_return
+@item (simple_return)
+Like @code{(return)}, but truly represents only a function return, while
+@code{(return)} may represent an insn that also performs other functions
+of the function epilogue.  Like @code{(return)}, this may also occur in
+conditional jumps.
+
 @findex call
 @item (call @var{function} @var{nargs})
 @en Represents a function call.  @var{function} is a @code{mem} expression
@@ -3640,8 +3664,8 @@ an undefined way.
 @en brackets stand for a vector; the operand of @code{parallel} is a
 @en vector of expressions.  @var{x0}, @var{x1} and so on are individual
 @en side effect expressions---expressions of code @code{set}, @code{call},
-@en @code{return}, @code{clobber} or @code{use}.
-表示并行执行多个副作用。方括号表示一个向量；@code{parallel}的操作数为向量表达式。@var{x0}, @var{x1}等等为单独的副作用表达式，@code{set}, @code{call}, @code{return}, @code{clobber} 或 @code{use}。
+@en @code{return}, @code{simple_return},  @code{clobber} or @code{use}.
+表示并行执行多个副作用。方括号表示一个向量；@code{parallel}的操作数为向量表达式。@var{x0}, @var{x1}等等为单独的副作用表达式，@code{set}, @code{call}, @code{return}, @code{simple_return}, @code{clobber} 或 @code{use}。
 
 @en ``In parallel'' means that first all the values used in the individual
 @en side-effects are computed, and second all the actual side-effects are
@@ -4381,13 +4405,13 @@ insn的机器模式通常为@code{VOIDmode}，但有些阶段出于不同的目�
 @item PATTERN (@var{i})
 @en An expression for the side effect performed by this insn.  This must be
 @en one of the following codes: @code{set}, @code{call}, @code{use},
-@en @code{clobber}, @code{return}, @code{asm_input}, @code{asm_output},
+@en @code{clobber}, @code{return}, @code{simple_return}, @code{asm_input}, @code{asm_output},
 @en @code{addr_vec}, @code{addr_diff_vec}, @code{trap_if}, @code{unspec},
 @en @code{unspec_volatile}, @code{parallel}, @code{cond_exec}, or @code{sequence}.  If it is a @code{parallel},
 @en each element of the @code{parallel} must be one these codes, except that
 @en @code{parallel} expressions cannot be nested and @code{addr_vec} and
 @en @code{addr_diff_vec} are not permitted inside a @code{parallel} expression.
-一个表达式，为该insn执行的副作用。必须为下列代码中的一个：@code{set}, @code{call}, @code{use}, @code{clobber}, @code{return}, @code{asm_input}, @code{asm_output}, @code{addr_vec}, @code{addr_diff_vec}, @code{trap_if}, @code{unspec}, @code{unspec_volatile}, @code{parallel}, @code{cond_exec}或@code{sequence}。如果其为@code{parallel}，则@code{parallel}中的每个元素必须是这些代码中的一个，并且，@code{parallel}表达式不能被嵌套，@code{addr_vec}和@code{addr_diff_vec}不允许在@code{parallel}表达式中。
+一个表达式，为该insn执行的副作用。必须为下列代码中的一个：@code{set}, @code{call}, @code{use}, @code{clobber}, @code{return}, @code{simple_return}, @code{asm_input}, @code{asm_output}, @code{addr_vec}, @code{addr_diff_vec}, @code{trap_if}, @code{unspec}, @code{unspec_volatile}, @code{parallel}, @code{cond_exec}或@code{sequence}。如果其为@code{parallel}，则@code{parallel}中的每个元素必须是这些代码中的一个，并且，@code{parallel}表达式不能被嵌套，@code{addr_vec}和@code{addr_diff_vec}不允许在@code{parallel}表达式中。
 
 @findex INSN_CODE
 @item INSN_CODE (@var{i})

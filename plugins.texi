@@ -179,6 +179,7 @@ enum plugin_event
 @{
   PLUGIN_PASS_MANAGER_SETUP,    /* To hook into pass manager.  */
   PLUGIN_FINISH_TYPE,           /* After finishing parsing a type.  */
+  PLUGIN_FINISH_DECL,           /* After finishing parsing a declaration. */
   PLUGIN_FINISH_UNIT,           /* Useful for summary processing.  */
   PLUGIN_PRE_GENERICIZE,        /* Allows to see low level AST in C and C++ frontends.  */
   PLUGIN_FINISH,                /* Called before GCC exits.  */
@@ -380,7 +381,7 @@ handle_user_attribute (tree *node, tree name, tree args,
 
 /* Attribute definition */
 static struct attribute_spec user_attr =
-  @{ "user", 1, 1, false,  false, false, handle_user_attribute @};
+  @{ "user", 1, 1, false,  false, false, handle_user_attribute, false @};
 
 /* Plugin callback called during attribute registration.
 Registered with register_callback (plugin_name, PLUGIN_ATTRIBUTES, register_attributes, NULL)
@@ -476,6 +477,17 @@ register_my_pragma (void *event_data, void *data)
 @en calling @code{default_plugin_dir_name ()}.
 在插件内部，该@code{plugin}目录名可以通过调用@code{default_plugin_dir_name ()}来查询。
 
+Plugins may know, when they are compiled, the GCC version for which
+@file{plugin-version.h} is provided.  The constant macros
+@code{GCCPLUGIN_VERSION_MAJOR}, @code{GCCPLUGIN_VERSION_MINOR},
+@code{GCCPLUGIN_VERSION_PATCHLEVEL}, @code{GCCPLUGIN_VERSION} are
+integer numbers, so a plugin could ensure it is built for GCC 4.7 with 
+@smallexample
+#if GCCPLUGIN_VERSION != 4007
+#error this GCC plugin is for GCC 4.7
+#endif
+@end smallexample
+
 @en The following GNU Makefile excerpt shows how to build a simple plugin:
 下列GNU Makefile摘抄片段展示了如何构建一个简单的插件：
 
@@ -499,4 +511,8 @@ plugin.so: $(PLUGIN_OBJECT_FILES)
 @en Plugins needing to use @command{gengtype} require a GCC build
 @en directory for the same version of GCC that they will be linked
 @en against.
-需要使用@command{gengtype}的插件需要一个GCC的构建目录，其必须是与将要链接的GCC具有相同的版本。
+@obsolete 需要使用@command{gengtype}的插件需要一个GCC的构建目录，其必须是与将要链接的GCC具有相同的版本。
+When a plugin needs to use @command{gengtype}, be sure that both
+@file{gengtype} and @file{gtype.state} have the same version as the
+GCC for which the plugin is built.
+
