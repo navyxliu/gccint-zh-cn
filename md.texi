@@ -9027,31 +9027,14 @@ RTL模板不用于匹配，只是用于生成最初的insn列表。
 @en fail in other cases where machine insns aren't available.  When it fails,
 @en the compiler tries another strategy using different patterns (such as, a
 @en library call).
-@en 
+这个例子使用了@code{define_expand}，使得当移位数在支持的0到3的范围内时，便会生成移位RTL insn，而对于其它情况，则会失败。当其失败时，编译器便会使用不同的指令模式（比如一个库调用）来尝试其它策略。
+
 @en If the compiler were able to handle nontrivial condition-strings in
 @en patterns with names, then it would be possible to use a
 @en @code{define_insn} in that case.  Here is another case (zero-extension
 @en on the 68000) which makes more use of the power of @code{define_expand}:
-这个例子使用了@code{define_expand}，使得当移位数在支持的0到3的范围内时，
-便会生成移位RTL insn，而对于其它情况，则会失败。当其失败时，
-编译器便会使用不同的指令模式（比如一个库调用）来尝试其它策略。
+如果编译器能够处理具有名字的指令模式中的非平凡的条件字符串，则对于这样情况也可以使用@code{define_insn}。这里有另一种情况（68000上的零扩展），其使用了@code{define_expand}的更强大的功能：
 
-如果编译器能够处理具有名字的指令模式中的非平凡的条件字符串，
-则对于这样情况也可以使用@code{define_insn}。这里有另一种情况（68000上的零扩展），
-其使用了@code{define_expand}的更强大的功能：
-
-@en @smallexample
-@en (define_expand "zero_extendhisi2"
-@en   [(set (match_operand:SI 0 "general_operand" "")
-@en         (const_int 0))
-@en    (set (strict_low_part
-@en           (subreg:HI
-@en             (match_dup 0)
-@en             0))
-@en         (match_operand:HI 1 "general_operand" ""))]
-@en   ""
-@en   "operands[1] = make_safe_from (operands[1], operands[0]);")
-@en @end smallexample
 @smallexample
 (define_expand "zero_extendhisi2"
   [(set (match_operand:SI 0 "general_operand" "")
@@ -9066,7 +9049,7 @@ RTL模板不用于匹配，只是用于生成最初的insn列表。
 @end smallexample
 
 @noindent
-@en @findex make_safe_from
+@findex make_safe_from
 @en Here two RTL insns are generated, one to clear the entire output operand
 @en and the other to copy the input operand into its low half.  This sequence
 @en is incorrect if the input operand refers to [the old value of] the output
@@ -9074,26 +9057,15 @@ RTL模板不用于匹配，只是用于生成最初的insn列表。
 @en function @code{make_safe_from} copies the @code{operands[1]} into a
 @en temporary register if it refers to @code{operands[0]}.  It does this
 @en by emitting another RTL insn.
-@en 
+这里将会生成两个RTL insn，一个用于清除整个输出操作数，另一个用于将输入操作数复制到其低半部份。该指令序列在输入操作数指向输出操作数（的旧值）时，是不正确的。所以，准备语句用来确保不是这样。当其指向@code{operands[0]}时，函数@code{make_safe_from}用来将@code{operands[1]}复制到临时寄存器中。其通过生成另一个RTL insn来完成这件事。
+
 @en Finally, a third example shows the use of an internal operand.
 @en Zero-extension on the SPUR chip is done by @code{and}-ing the result
 @en against a halfword mask.  But this mask cannot be represented by a
 @en @code{const_int} because the constant value is too large to be legitimate
 @en on this machine.  So it must be copied into a register with
 @en @code{force_reg} and then the register used in the @code{and}.
-@findex make_safe_from
-这里将会生成两个RTL insn，一个用于清除整个输出操作数，
-另一个用于将输入操作数复制到其低半部份。
-该指令序列在输入操作数指向输出操作数（的旧值）时，是不正确的。
-所以，准备语句用来确保不是这样。当其指向@code{operands[0]}时，
-函数@code{make_safe_from}用来将@code{operands[1]}复制到临时寄存器中。
-其通过生成另一个RTL insn来完成这件事。
-
-最后，第三个例子显示了内部操作数的使用。
-在SPUR芯片上的零扩展是通过将结果与上半字mask来完成的。
-但是该mask不能通过一个@code{const_int}来表示，因为常量值太大，
-无法在该机器上被合法化。所以其必须使用@code{force_reg}复制到寄存器中，
-然后在@code{and}中使用该寄存器。
+最后，第三个例子显示了内部操作数的使用。在SPUR芯片上的零扩展是通过将结果与上半字mask来完成的。但是该mask不能通过一个@code{const_int}来表示，因为常量值太大，无法在该机器上被合法化。所以其必须使用@code{force_reg}复制到寄存器中，然后在@code{and}中使用该寄存器。
 
 @smallexample
 (define_expand "zero_extendhisi2"
@@ -9115,20 +9087,8 @@ RTL模板不用于匹配，只是用于生成最初的insn列表。
 @en at the end, emit an insn to copy the result of the operation into
 @en itself.  Such an insn will generate no code, but it can avoid problems
 @en in the compiler.
-注意：如果@code{define_expand}被用于一个标准的二元或者一元算数运算，
-或者一个位域运算，则其生成的最后的insn一定不能为一个@code{code_label},
-@code{barrier}或@code{note}。其必须为一个@code{insn},
-@code{jump_insn}或@code{call_insn}。如果你在结尾处不需要实际的insn，
-则可以生成一条将操作数的结果复制到其本身的insn。这样的insn将不会生成代码，
-但可以避免编译器中的问题。
+注意：如果@code{define_expand}被用于一个标准的二元或者一元算数运算，或者一个位域运算，则其生成的最后的insn一定不能为一个@code{code_label}, @code{barrier}或@code{note}。其必须为一个@code{insn}, @code{jump_insn}或@code{call_insn}。如果你在结尾处不需要实际的insn，则可以生成一条将操作数的结果复制到其本身的insn。这样的insn将不会生成代码，但可以避免编译器中的问题。
 
-@en @end ifset
-@en @ifset INTERNALS
-@en @node Insn Splitting
-@en @section Defining How to Split Instructions
-@en @cindex insn splitting
-@en @cindex instruction splitting
-@en @cindex splitting instructions
 @end ifset
 @ifset INTERNALS
 @node Insn Splitting
@@ -9145,7 +9105,8 @@ RTL模板不用于匹配，只是用于生成最初的insn列表。
 @en be able to move insns into one-instruction delay slots.  However, some
 @en insns may generate more than one machine instruction.  These insns
 @en cannot be placed into a delay slot.
-@en 
+有两种情况，你应该指定如何将一个指令模式拆分为多个insn。在一些机器上，指令需要延迟槽（@pxref{Delay Slots}）或者指令的输出对于多周期（@pxref{Processor pipeline description}）不可用，则优化这些情况的编译器过程需要能够将insn移入延迟槽中。但是，一些insn可能会生成不止一条机器指令。这些insn则不能被放入延迟槽。
+
 @en Often you can rewrite the single insn as a list of individual insns,
 @en each corresponding to one machine instruction.  The disadvantage of
 @en doing so is that it will cause the compilation to be slower and require
@@ -9153,7 +9114,8 @@ RTL模板不用于匹配，只是用于生成最初的insn列表。
 @en suppress some optimizations.  The compiler splits the insn if there is a
 @en reason to believe that it might improve instruction or delay slot
 @en scheduling.
-@en 
+通常你可以重写单个insn为单独的insn列表，每个对应于一条机器指令。这样做的缺点是它将造成编译变慢并且需要更多的空间。如果结果insn太复杂，则还会抑制一些优化。当编译器有理由相信可以改进指令或者延迟槽调度的时候，则会拆分insn。
+
 @en The insn combiner phase also splits putative insns.  If three insns are
 @en merged into one insn with a complex expression that cannot be matched by
 @en some @code{define_insn} pattern, the combiner phase attempts to split
@@ -9162,40 +9124,12 @@ RTL模板不用于匹配，只是用于生成最初的insn列表。
 @en subexpression.  However, in some other cases, such as performing an
 @en addition of a large constant in two insns on a RISC machine, the way to
 @en split the addition into two insns is machine-dependent.
-有两种情况，你应该指定如何将一个指令模式拆分为多个insn。在一些机器上，
-指令需要延迟槽（@pxref{Delay Slots}）或者指令的输出对于多周期
-（@pxref{Processor pipeline description}）不可用，
-则优化这些情况的编译器过程需要能够将insn移入延迟槽中。但是，
-一些insn可能会生成不止一条机器指令。这些insn则不能被放入延迟槽。
+insn组合器阶段还拆分putative insns。如果三个insn被合并到一个使用复杂表达式的insn，其不能被某个@code{define_insn}模式匹配，则组合器阶段尝试将复杂指令模式拆分为两个被识别的insn。通常，它能够将复杂指令模式通过拆分某个子表达式来断开。但是，有些情况下，像在一个RISC机器上执行一个大常量的加法，则拆分加法为两个insn的方式是机器相关的。
 
-通常你可以重写单个insn为单独的insn列表，每个对应于一条机器指令。
-这样做的缺点是它将造成编译变慢并且需要更多的空间。如果结果insn太复杂，
-则还会抑制一些优化。当编译器有理由相信可以改进指令或者延迟槽调度的时候，
-则会拆分insn。
-
-insn组合器阶段还拆分putative insns。
-如果三个insn被合并到一个使用复杂表达式的insn，
-其不能被某个@code{define_insn}模式匹配，
-则组合器阶段尝试将复杂指令模式拆分为两个被识别的insn。通常，
-它能够将复杂指令模式通过拆分某个子表达式来断开。但是，有些情况下，
-像在一个RISC机器上执行一个大常量的加法，则拆分加法为两个insn的方式是机器相关的。
-
-@en @findex define_split
+@findex define_split
 @en The @code{define_split} definition tells the compiler how to split a
 @en complex insn into several simpler insns.  It looks like this:
-@en 
-@en @smallexample
-@en (define_split
-@en   [@var{insn-pattern}]
-@en   "@var{condition}"
-@en   [@var{new-insn-pattern-1}
-@en    @var{new-insn-pattern-2}
-@en    @dots{}]
-@en   "@var{preparation-statements}")
-@en @end smallexample
-@findex define_split
-@code{define_split}定义告诉了编译器如何将一个复杂的insn拆分为多个简单的insn。
-它的形式为：
+@code{define_split}定义告诉了编译器如何将一个复杂的insn拆分为多个简单的insn。它的形式为：
 
 @smallexample
 (define_split
@@ -9213,7 +9147,8 @@ insn组合器阶段还拆分putative insns。
 @en satisfying @var{condition} is found, it is replaced in the insn list
 @en with the insns given by @var{new-insn-pattern-1},
 @en @var{new-insn-pattern-2}, etc.
-@en 
+@var{insn-pattern}为需要被拆分的指令模式，@var{condition}为要被测试的最终条件，跟@code{define_insn}中的一样。当一个insn匹配@var{insn-pattern}，并且满足条件@var{condition}，则它由insn列表@var{new-insn-pattern-1},@var{new-insn-pattern-2}等来替换。
+
 @en The @var{preparation-statements} are similar to those statements that
 @en are specified for @code{define_expand} (@pxref{Expander Definitions})
 @en and are executed before the new RTL is generated to prepare for the
@@ -9221,7 +9156,8 @@ insn组合器阶段还拆分putative insns。
 @en those in @code{define_expand}, however, these statements must not
 @en generate any new pseudo-registers.  Once reload has completed, they also
 @en must not allocate any space in the stack frame.
-@en 
+@var{preparation-statements}与那些为@code{define_expand}（@pxref{Expander Definitions}）指定的语句类似，并且在生成新RTL之前被执行。与@code{define_expand}中的不同之处为，这些语句不能生成任何新的伪寄存器。一旦完成重载，它们则不能在栈帧中分配任何空间。
+
 @en Patterns are matched against @var{insn-pattern} in two different
 @en circumstances.  If an insn needs to be split for delay slot scheduling
 @en or insn scheduling, the insn is already known to be valid, which means
@@ -9231,27 +9167,11 @@ insn组合器阶段还拆分putative insns。
 @en also be insns that are matched by some @code{define_insn} and, if
 @en @code{reload_completed} is nonzero, must also satisfy the constraints
 @en of those definitions.
-@en 
+指令模式根据两种不同的环境来匹配@var{insn-pattern}。如果需要为延迟槽调度或者insn调度来拆分insn，则insn已经是有效的，这意味着它已经被一些@code{define_insn}匹配过，并且如果@code{reload_completed}为非0，则已经满足那个@code{define_insn}的约束。在那种情况下，新的insn模式必须也是匹配某个@code{define_insn}的insn，并且如果@code{reload_completed}为非0，则也必须满足那些定义的约束。
+
 @en As an example of this usage of @code{define_split}, consider the following
 @en example from @file{a29k.md}, which splits a @code{sign_extend} from
 @en @code{HImode} to @code{SImode} into a pair of shift insns:
-@var{insn-pattern}为需要被拆分的指令模式，@var{condition}为要被测试的最终条件，
-跟@code{define_insn}中的一样。当一个insn匹配@var{insn-pattern}，
-并且满足条件@var{condition}，则它由insn列表@var{new-insn-pattern-1},
-@var{new-insn-pattern-2}等来替换。
-
-@var{preparation-statements}与那些为@code{define_expand}（@pxref{Expander Definitions}）
-指定的语句类似，并且在生成新RTL之前被执行。
-与@code{define_expand}中的不同之处为，这些语句不能生成任何新的伪寄存器。
-一旦完成重载，它们则不能在栈帧中分配任何空间。
-
-指令模式根据两种不同的环境来匹配@var{insn-pattern}。
-如果需要为延迟槽调度或者insn调度来拆分insn，则insn已经是有效的，
-这意味着它已经被一些@code{define_insn}匹配过，
-并且如果@code{reload_completed}为非0，则已经满足那个@code{define_insn}的约束。
-在那种情况下，新的insn模式必须也是匹配某个@code{define_insn}的insn，
-并且如果@code{reload_completed}为非0，则也必须满足那些定义的约束。
-
 对于这种@code{define_split}用法的例子，考虑下面来自@file{a29k.md}的例子，
 其将从@code{HImode}到@code{SImode}的@code{sign_extend}拆分为一对shift insn：
 
@@ -9283,14 +9203,7 @@ insn组合器阶段还拆分putative insns。
 @en 
 @en Here is an example of this use of @code{define_split}, taken from
 @en @file{rs6000.md}:
-当组合器阶段尝试拆分一个insn模式时，则情况总是为，
-指令模式没有被任何@code{define_insn}匹配。
-组合器过程首先尝试将单个@code{set}表达式拆分，
-然后是在@code{parallel}中的相同的@code{set}表达式，
-不过跟随一个伪寄存器的@code{clobber}，以作为scratch寄存器来使用。
-这这些情况下，组合器期望能够生成两个新的insn。
-它将验证这些指令模式匹配某个@code{define_insn}定义，
-所以你不需要在@code{define_split}中做这些测试（当然，there is no point in writing a @code{define_split} that will never produce insns that match).
+当组合器阶段尝试拆分一个insn模式时，则情况总是为，指令模式没有被任何@code{define_insn}匹配。组合器过程首先尝试将单个@code{set}表达式拆分，然后是在@code{parallel}中的相同的@code{set}表达式，不过跟随一个伪寄存器的@code{clobber}，以作为scratch寄存器来使用。这这些情况下，组合器期望能够生成两个新的insn。它将验证这些指令模式匹配某个@code{define_insn}定义，所以你不需要在@code{define_split}中做这些测试（当然，there is no point in writing a @code{define_split} that will never produce insns that match).
 
 @smallexample
 (define_split
@@ -9317,14 +9230,11 @@ insn组合器阶段还拆分putative insns。
 @en @code{const_int} that is @emph{not} a valid operand of a single add
 @en insn.  The add with the smaller displacement is written so that it
 @en can be substituted into the address of a subsequent operation.
-@en 
+这里断言@code{non_add_cint_operand}匹配任何不是单个add insn的有效操作数的@code{const_int}。
+
 @en An example that uses a scratch register, from the same file, generates
 @en an equality comparison of a register and a large constant:
-这里断言@code{non_add_cint_operand}匹配任何不是单个add insn的有效操作数的
-@code{const_int}。
-
-使用scratch寄存器的例子，来自同一个文件，
-用来生成等价的寄存器和大常量的比较运算：
+使用scratch寄存器的例子，来自同一个文件，用来生成等价的寄存器和大常量的比较运算：
 
 @smallexample
 (define_split
@@ -9357,12 +9267,14 @@ insn组合器阶段还拆分putative insns。
 @en insns that don't.  Instead, write two separate @code{define_split}
 @en definitions, one for the insns that are valid and one for the insns that
 @en are not valid.
-@en 
+为了避免混淆，不要写这样的@code{define_split}，其接受匹配某个@code{define_insn}的一些insn，同时也接受不匹配的insn。替代的，可以写两个分别的@code{define_split}定义，一个针对有效的insn，一个针对无效的insn。
+
 @en The splitter is allowed to split jump instructions into sequence of
 @en jumps or create new jumps in while splitting non-jump instructions.  As
 @en the central flowgraph and branch prediction information needs to be updated,
 @en several restriction apply.
-@en 
+允许将跳转指令拆分为一个跳转序列或者在拆分非跳转指令时创建新的跳转。由于控制流图和分支预测信息需要更新，所以会有一些限制。
+
 @en Splitting of jump instruction into sequence that over by another jump
 @en instruction is always valid, as compiler expect identical behavior of new
 @en jump.  When new sequence contains multiple jump instructions or new labels,
@@ -9373,28 +9285,13 @@ insn组合器阶段还拆分putative insns。
 @en it was a simple conditional jump, @minus{}1 otherwise.  To simplify
 @en recomputing of edge frequencies, the new sequence is required to have only
 @en forward jumps to the newly created labels.
-为了避免混淆，不要写这样的@code{define_split}，
-其接受匹配某个@code{define_insn}的一些insn，同时也接受不匹配的insn。替代的，
-可以写两个分别的@code{define_split}定义，一个针对有效的insn，
-一个针对无效的insn。
+将跳转指令拆分为由另一个跳转指令覆盖的指令序列，总是有效的，因为编译器期望新的跳转具有相同的行为。当新的序列包含多个跳转指令或新的标号时，则需要更多的辅助。只允许创建无条件跳转，或者简单的条件跳转指令。另外，其必须为每个条件跳转附加一个@code{REG_BR_PROB}注解。全局变量@code{split_branch_probability}保存了原始分支的可能性。为了简化边频率的重新计算，新的序列要求只具有向前跳转。
 
-允许将跳转指令拆分为一个跳转序列或者在拆分非跳转指令时创建新的跳转。
-由于控制流图和分支预测信息需要更新，所以会有一些限制。
-
-将跳转指令拆分为由另一个跳转指令覆盖的指令序列，总是有效的，
-因为编译器期望新的跳转具有相同的行为。当新的序列包含多个跳转指令或新的标号时，
-则需要更多的辅助。只允许创建无条件跳转，或者简单的条件跳转指令。另外，
-其必须为每个条件跳转附加一个@code{REG_BR_PROB}注解。
-全局变量@code{split_branch_probability}保存了原始分支的可能性。
-为了简化边频率的重新计算，新的序列要求只具有向前跳转。
-
-@en @findex define_insn_and_split
+@findex define_insn_and_split
 @en For the common case where the pattern of a define_split exactly matches the
 @en pattern of a define_insn, use @code{define_insn_and_split}.  It looks like
 @en this:
-@findex define_insn_and_split
-对于通常的情况，define_split的模式完全匹配define_insn的模式，
-则可以使用@code{define_insn_and_split}。其形式为：
+对于通常的情况，define_split的模式完全匹配define_insn的模式，则可以使用@code{define_insn_and_split}。其形式为：
 
 @smallexample
 (define_insn_and_split
@@ -9660,20 +9557,18 @@ genrecog -I/p1/abc/proc1 -I/p2/abcd/pro2 target.md
   "@var{optional-insn-attributes}")
 @end smallexample
 
-@en @noindent
+@noindent
 @en The last string operand may be omitted if you are not using any
 @en machine-specific information in this machine description.  If present,
 @en it must obey the same rules as in a @code{define_insn}.
-@en 
-@en In this skeleton, @var{insn-pattern-1} and so on are patterns to match
-@en consecutive insns.  The optimization applies to a sequence of insns when
-@en @var{insn-pattern-1} matches the first one, @var{insn-pattern-2} matches
-@en the next, and so on.
-@noindent
 如果没有在该机器描述中使用任何机器特定的信息，
 则可以省略掉最后的字符串操作数。
 如果有，则其必须遵守在@code{define_insn}中相同的规则。
 
+@en In this skeleton, @var{insn-pattern-1} and so on are patterns to match
+@en consecutive insns.  The optimization applies to a sequence of insns when
+@en @var{insn-pattern-1} matches the first one, @var{insn-pattern-2} matches
+@en the next, and so on.
 该结构中，@var{insn-pattern-1}等为匹配连续insn的指令模式。
 当@var{insn-pattern-1}匹配第一个insn，
 @var{insn-pattern-2}匹配下一个，等等依次类推的情况时，
@@ -9685,18 +9580,17 @@ genrecog -I/p1/abc/proc1 -I/p2/abcd/pro2 target.md
 @en would match a peephole but no @code{define_insn} will cause a crash in code
 @en generation in an unoptimized compilation, or at various optimization
 @en stages.
-@en 
+每个由窥孔匹配的insn也必须匹配一个@code{define_insn}。
+窥孔只在代码生成前的最后阶段被检查，并且只是可选的。
+因此，在一个未优化的编译中，或者不同的优化阶段中，
+任何匹配窥孔但是不匹配@code{define_insn}的将会在代码生成时造成崩溃。
+
 @en The operands of the insns are matched with @code{match_operands},
 @en @code{match_operator}, and @code{match_dup}, as usual.  What is not
 @en usual is that the operand numbers apply to all the insn patterns in the
 @en definition.  So, you can check for identical operands in two insns by
 @en using @code{match_operand} in one insn and @code{match_dup} in the
 @en other.
-每个由窥孔匹配的insn也必须匹配一个@code{define_insn}。
-窥孔只在代码生成前的最后阶段被检查，并且只是可选的。
-因此，在一个未优化的编译中，或者不同的优化阶段中，
-任何匹配窥孔但是不匹配@code{define_insn}的将会在代码生成时造成崩溃。
-
 和通常一样，insn的操作数使用@code{match_operands},
 @code{match_operator}和@code{match_dup}来匹配。
 不同的是，操作数编号应用在定义的所有insn指令模式中。所以，
@@ -12259,14 +12153,12 @@ insn被predicate时其将包含整个predicate，否则将为 @code{NULL}。
 @en Ports often need to define similar patterns for more than one machine
 @en mode or for more than one rtx code.  GCC provides some simple iterator
 @en facilities to make this process easier.
-@en 
+后端（Ports）常常需要为多个机器模式或者多个rtx代码定义类似的指令模式。GCC提供了一些简单的迭代机制使得该处理变的很容易。
+
 @en @menu
 @en * Mode Iterators::         Generating variations of patterns for different modes.
 @en * Code Iterators::         Doing the same for codes.
 @en @end menu
-后端（Ports）常常需要为多个机器模式或者多个rtx代码定义类似的指令模式。
-GCC提供了一些简单的迭代机制使得该处理变的很容易。
-
 @menu
 * Mode Iterators::     为不同的机器模式生成指令模式的变种
 * Code Iterators::         为代码做同样的事
@@ -12283,23 +12175,18 @@ GCC提供了一些简单的迭代机制使得该处理变的很容易。
 @en For example:
 后端（Ports）经常需要为两个或多个不同机器模式定义类似的指令模式。例如：
 
-@en @itemize @bullet
-@en @item
+@itemize @bullet
+@item
 @en If a processor has hardware support for both single and double
 @en floating-point arithmetic, the @code{SFmode} patterns tend to be
 @en very similar to the @code{DFmode} ones.
-@en 
-@en @item
-@en If a port uses @code{SImode} pointers in one configuration and
-@en @code{DImode} pointers in another, it will usually have very similar
-@en @code{SImode} and @code{DImode} patterns for manipulating pointers.
-@en @end itemize
-@itemize @bullet
-@item
 如果一个处理器对单浮点和双浮点算术都具有硬件支持，则 @code{SFmode} 的
 指令模式将会与 @code{DFmode} 的非常类似。
 
 @item
+@en If a port uses @code{SImode} pointers in one configuration and
+@en @code{DImode} pointers in another, it will usually have very similar
+@en @code{SImode} and @code{DImode} patterns for manipulating pointers.
 如果一个后端（port）在一个配置中使用 @code{SImode} 的指针，而在另一个
 配置中使用 @code{DImode} 的指针，则通常会具有非常类似的操作指针的
 @code{SImode} 和 @code{DImode} 的指令模式。
@@ -12338,24 +12225,18 @@ GCC提供了一些简单的迭代机制使得该处理变的很容易。
 (define_mode_iterator @var{name} [(@var{mode1} "@var{cond1}") @dots{} (@var{moden} "@var{condn}")])
 @end smallexample
 
-@en 
 @en This allows subsequent @file{.md} file constructs to use the mode suffix
 @en @code{:@var{name}}.  Every construct that does so will be expanded
 @en @var{n} times, once with every use of @code{:@var{name}} replaced by
 @en @code{:@var{mode1}}, once with every use replaced by @code{:@var{mode2}},
 @en and so on.  In the expansion for a particular @var{modei}, every
 @en C condition will also require that @var{condi} be true.
-@en 
-@en For example:
-@en 
-@en @smallexample
-@en (define_mode_iterator P [(SI "Pmode == SImode") (DI "Pmode == DImode")])
-@en @end smallexample
 这将允许后续的 @file{.md} 文件结构可以使用机器模式suffix 
 @code{:@var{name}}。每个这样的结构将被扩展 @var{n} 次，一次使用
 @code{:@var{mode1}} 来替换，一次使用 @code{:@var{mode2}} 来替换，等等。
 在扩展 @var{modei} 时，每个C条件 @var{condi} 还要为真。
 
+@en For example:
 例如：
 
 @smallexample
@@ -12367,19 +12248,11 @@ GCC提供了一些简单的迭代机制使得该处理变的很容易。
 @en by @code{:SI} and once with every @code{:P} replaced by @code{:DI}.
 @en The @code{:SI} version will only apply if @code{Pmode == SImode} and
 @en the @code{:DI} version will only apply if @code{Pmode == DImode}.
-@en 
+定义了一个新的机器模式后缀 @code{:P}。每个使用 @code{:P} 的结构将被扩展两次，一次由 @code{:SI} 来替换 @code{:P}，一次由 @code{:DI} 来替换@code{:P}。其中 @code{:SI} 版本的只有当 @code{Pmode == SImode} 时才被应用，@code{:DI} 版本的只有当 @code{Pmode == DImode} 时才被应用。
+
 @en As with other @file{.md} conditions, an empty string is treated
 @en as ``always true''.  @code{(@var{mode} "")} can also be abbreviated
 @en to @code{@var{mode}}.  For example:
-@en 
-@en @smallexample
-@en (define_mode_iterator GPR [SI (DI "TARGET_64BIT")])
-@en @end smallexample
-定义了一个新的机器模式后缀 @code{:P}。每个使用 @code{:P} 的结构将被扩展
-两次，一次由 @code{:SI} 来替换 @code{:P}，一次由 @code{:DI} 来替换
-@code{:P}。其中 @code{:SI} 版本的只有当 @code{Pmode == SImode} 时才被应
-用，@code{:DI} 版本的只有当 @code{Pmode == DImode} 时才被应用。
-
 就像其它 @file{.md} 条件，一个空字符串被当作“总为真”。@code{(@var{mode} "")}
 也可以被缩写为 @code{@var{mode}}。例如：
 
@@ -12389,55 +12262,45 @@ GCC提供了一些简单的迭代机制使得该处理变的很容易。
 
 @en means that the @code{:DI} expansion only applies if @code{TARGET_64BIT}
 @en but that the @code{:SI} expansion has no such constraint.
-@en 
-@en Iterators are applied in the order they are defined.  This can be
-@en significant if two iterators are used in a construct that requires
-@en substitutions.  @xref{Substitutions}.
-@en 
-@en @node Substitutions
-@en @subsubsection Substitution in Mode Iterators
-@en @findex define_mode_attr
-@en 
-@en If an @file{.md} file construct uses mode iterators, each version of the
-@en construct will often need slightly different strings or modes.  For
-@en example:
 意味着 @code{:DI} 扩展只有为 @code{TARGET_64BIT} 时被应用，但 @code{:SI} 
 扩展却没有这样的限制。
 
+@en Iterators are applied in the order they are defined.  This can be
+@en significant if two iterators are used in a construct that requires
+@en substitutions.  @xref{Substitutions}.
 迭代器按照它们定义的顺序被应用。这在当两个迭代器用于一个结构中需要替换时
 会变的很重要。@xref{Substitutions}。
 
+@en @node Substitutions
+@en @subsubsection Substitution in Mode Iterators
+@en @findex define_mode_attr
 @node Substitutions
 @subsubsection 机器模式迭代器中的替换
 @findex define_mode_attr
+@en If an @file{.md} file construct uses mode iterators, each version of the
+@en construct will often need slightly different strings or modes.  For
+@en example:
 如果一个 @file{.md} 文件结构使用了机器模式迭代器，则结构的每个版本将通常
 需要轻微不同的字符串或机器模式。例如：
 
-@en @itemize @bullet
-@en @item
+@itemize @bullet
+@item
 @en When a @code{define_expand} defines several @code{add@var{m}3} patterns
 @en (@pxref{Standard Names}), each expander will need to use the
 @en appropriate mode name for @var{m}.
-@en 
-@en @item
-@en When a @code{define_insn} defines several instruction patterns,
-@en each instruction will often use a different assembler mnemonic.
-@en 
-@en @item
-@en When a @code{define_insn} requires operands with different modes,
-@en using an iterator for one of the operand modes usually requires a specific
-@en mode for the other operand(s).
-@en @end itemize
-@itemize @bullet
-@item
 当一个 @code{define_expand} 定义了多个 @code{add@var{m}3} 指令模式时
 （@pxref{Standard Names}），每个扩展将需要针对 @var{m} 的适当的机器模式。
 
 @item
+@en When a @code{define_insn} defines several instruction patterns,
+@en each instruction will often use a different assembler mnemonic.
 当一个 @code{define_insn} 定义了多个指令模式时，每条指令将通常需要一个不
 同的汇编助记符。
 
 @item
+@en When a @code{define_insn} requires operands with different modes,
+@en using an iterator for one of the operand modes usually requires a specific
+@en mode for the other operand(s).
 当一个 @code{define_insn} 需要操作数具有不同的机器模式时，针对一个操作数
 的机器模式使用迭代器通常需要对于其它操作数使用特点的机器模式。
 @end itemize
@@ -12446,20 +12309,6 @@ GCC提供了一些简单的迭代机制使得该处理变的很容易。
 @en There are two standard attributes: @code{mode}, which is the name of
 @en the mode in lower case, and @code{MODE}, which is the same thing in
 @en upper case.  You can define other attributes using:
-@en 
-@en @smallexample
-@en (define_mode_attr @var{name} [(@var{mode1} "@var{value1}") @dots{} (@var{moden} "@var{valuen}")])
-@en @end smallexample
-@en 
-@en where @var{name} is the name of the attribute and @var{valuei}
-@en is the value associated with @var{modei}.
-@en 
-@en When GCC replaces some @var{:iterator} with @var{:mode}, it will scan
-@en each string and mode in the pattern for sequences of the form
-@en @code{<@var{iterator}:@var{attr}>}, where @var{attr} is the name of a
-@en mode attribute.  If the attribute is defined for @var{mode}, the whole
-@en @code{<@dots{}>} sequence will be replaced by the appropriate attribute
-@en value.
 GCC通过“机器模式属性”系统来支持这样的变种。有两种标准属性：@code{mode}，
 其为机器模式的小写名字，@code{MODE}，其为机器模式的大写名字。你可以定义其
 它属性，使用：
@@ -12468,33 +12317,22 @@ GCC通过“机器模式属性”系统来支持这样的变种。有两种标�
 (define_mode_attr @var{name} [(@var{mode1} "@var{value1}") @dots{} (@var{moden} "@var{valuen}")])
 @end smallexample
 
+@en where @var{name} is the name of the attribute and @var{valuei}
+@en is the value associated with @var{modei}.
 其中 @var{name} 为属性的名字，@var{valuei} 为与 @var{modei} 关联的值。
 
+@en When GCC replaces some @var{:iterator} with @var{:mode}, it will scan
+@en each string and mode in the pattern for sequences of the form
+@en @code{<@var{iterator}:@var{attr}>}, where @var{attr} is the name of a
+@en mode attribute.  If the attribute is defined for @var{mode}, the whole
+@en @code{<@dots{}>} sequence will be replaced by the appropriate attribute
+@en value.
 当GCC使用 @var{:mode} 来替换某个 @var{:iterator} 时，其将扫描指令模式中的
 每个字符串和机器模式，按照 @code{<@var{iterator}:@var{attr}>}形式的序列，
 其中@var{attr}为一个机器模式属性的名字。如果属性针对mode被定义，则整个
 @code{<@dots{}>} 序列将被适当的属性值替换。
 
 @en For example, suppose an @file{.md} file has:
-@en 
-@en @smallexample
-@en (define_mode_iterator P [(SI "Pmode == SImode") (DI "Pmode == DImode")])
-@en (define_mode_attr load [(SI "lw") (DI "ld")])
-@en @end smallexample
-@en 
-@en If one of the patterns that uses @code{:P} contains the string
-@en @code{"<P:load>\t%0,%1"}, the @code{SI} version of that pattern
-@en will use @code{"lw\t%0,%1"} and the @code{DI} version will use
-@en @code{"ld\t%0,%1"}.
-@en 
-@en Here is an example of using an attribute for a mode:
-@en 
-@en @smallexample
-@en (define_mode_iterator LONG [SI DI])
-@en (define_mode_attr SHORT [(SI "HI") (DI "SI")])
-@en (define_insn @dots{}
-@en   (sign_extend:LONG (match_operand:<LONG:SHORT> @dots{})) @dots{})
-@en @end smallexample
 例如，假设一个 @file{.md} 具有：
 
 @smallexample
@@ -12502,11 +12340,16 @@ GCC通过“机器模式属性”系统来支持这样的变种。有两种标�
 (define_mode_attr load [(SI "lw") (DI "ld")])
 @end smallexample
 
+@en If one of the patterns that uses @code{:P} contains the string
+@en @code{"<P:load>\t%0,%1"}, the @code{SI} version of that pattern
+@en will use @code{"lw\t%0,%1"} and the @code{DI} version will use
+@en @code{"ld\t%0,%1"}.
 如果其中一个使用 @code{:P} 的指令模式包含了字符串
 @code{"<P:load>\t%0,%1"}，则 @code{SI} 版本的指令模式将使用
 @code{"lw\t%0,%1"} 并且 @code{DI} 版本的将使用
 @code{"ld\t%0,%1"}。
 
+@en Here is an example of using an attribute for a mode:
 这里有一个关于使用针对一个机器模式的属性的例子：
 
 @smallexample
@@ -12523,61 +12366,25 @@ GCC通过“机器模式属性”系统来支持这样的变种。有两种标�
 
 @en @node Examples
 @en @subsubsection Mode Iterator Examples
-@en 
+@node Examples
+@subsubsection 有关机器模式迭代器的例子
 @en Here is an example from the MIPS port.  It defines the following
 @en modes and attributes (among others):
-@en 
+这里有一个来自MIPS后端的一个例子。其定义了下列机器模式和属性（除了别的以外）：
+
 @en @smallexample
 @en (define_mode_iterator GPR [SI (DI "TARGET_64BIT")])
 @en (define_mode_attr d [(SI "") (DI "d")])
 @en @end smallexample
-@en 
-@en and uses the following template to define both @code{subsi3}
-@en and @code{subdi3}:
-@node Examples
-@subsubsection 有关机器模式迭代器的例子
-
-这里有一个来自MIPS后端的一个例子。其定义了下列机器模式和属性（除了别的以外）：
-
 @smallexample
 (define_mode_iterator GPR [SI (DI "TARGET_64BIT")])
 (define_mode_attr d [(SI "") (DI "d")])
 @end smallexample
 
+@en and uses the following template to define both @code{subsi3}
+@en and @code{subdi3}:
 并且使用下列模板来同时定义 @code{subsi3} 和 @code{subdi3}：
 
-@en @smallexample
-@en (define_insn "sub<mode>3"
-@en   [(set (match_operand:GPR 0 "register_operand" "=d")
-@en         (minus:GPR (match_operand:GPR 1 "register_operand" "d")
-@en                    (match_operand:GPR 2 "register_operand" "d")))]
-@en   ""
-@en   "<d>subu\t%0,%1,%2"
-@en   [(set_attr "type" "arith")
-@en    (set_attr "mode" "<MODE>")])
-@en @end smallexample
-@en 
-@en This is exactly equivalent to:
-@en 
-@en @smallexample
-@en (define_insn "subsi3"
-@en   [(set (match_operand:SI 0 "register_operand" "=d")
-@en         (minus:SI (match_operand:SI 1 "register_operand" "d")
-@en                   (match_operand:SI 2 "register_operand" "d")))]
-@en   ""
-@en   "subu\t%0,%1,%2"
-@en   [(set_attr "type" "arith")
-@en    (set_attr "mode" "SI")])
-@en 
-@en (define_insn "subdi3"
-@en   [(set (match_operand:DI 0 "register_operand" "=d")
-@en         (minus:DI (match_operand:DI 1 "register_operand" "d")
-@en                   (match_operand:DI 2 "register_operand" "d")))]
-@en   ""
-@en   "dsubu\t%0,%1,%2"
-@en   [(set_attr "type" "arith")
-@en    (set_attr "mode" "DI")])
-@en @end smallexample
 @smallexample
 (define_insn "sub<mode>3"
   [(set (match_operand:GPR 0 "register_operand" "=d")
@@ -12589,6 +12396,7 @@ GCC通过“机器模式属性”系统来支持这样的变种。有两种标�
    (set_attr "mode" "<MODE>")])
 @end smallexample
 
+@en This is exactly equivalent to:
 这就完全等价于：
 
 @smallexample
@@ -12616,107 +12424,49 @@ GCC通过“机器模式属性”系统来支持这样的变种。有两种标�
 @en @cindex code iterators in @file{.md} files
 @en @findex define_code_iterator
 @en @findex define_code_attr
-@en 
-@en Code iterators operate in a similar way to mode iterators.  @xref{Mode Iterators}.
-@en 
-@en The construct:
 @node Code Iterators
 @subsection 代码迭代器
 @cindex code iterators in @file{.md} files
 @findex define_code_iterator
 @findex define_code_attr
-
+@en Code iterators operate in a similar way to mode iterators.  @xref{Mode Iterators}.
 代码迭代器使用与机器模式迭代器类似的方法来操作。@xref{Mode Iterators}。
 
+@en The construct:
 结构：
 
 @smallexample
 (define_code_iterator @var{name} [(@var{code1} "@var{cond1}") @dots{} (@var{coden} "@var{condn}")])
 @end smallexample
-@en 
+
 @en defines a pseudo rtx code @var{name} that can be instantiated as
 @en @var{codei} if condition @var{condi} is true.  Each @var{codei}
 @en must have the same rtx format.  @xref{RTL Classes}.
-@en 
-@en As with mode iterators, each pattern that uses @var{name} will be
-@en expanded @var{n} times, once with all uses of @var{name} replaced by
-@en @var{code1}, once with all uses replaced by @var{code2}, and so on.
-@en @xref{Defining Mode Iterators}.
-@en 
-@en It is possible to define attributes for codes as well as for modes.
-@en There are two standard code attributes: @code{code}, the name of the
-@en code in lower case, and @code{CODE}, the name of the code in upper case.
-@en Other attributes are defined using:
 定义了一个伪rtx代码 @var{name}，如果条件 @var{condi} 为真时，其可以作为
 @var{codei} 被实例化。每个 @var{codei} 必须具有相同的rtx格式。
 @xref{RTL Classes}。
 
+@en As with mode iterators, each pattern that uses @var{name} will be
+@en expanded @var{n} times, once with all uses of @var{name} replaced by
+@en @var{code1}, once with all uses replaced by @var{code2}, and so on.
+@en @xref{Defining Mode Iterators}.
 跟机器模式迭代器一样，每个使用 @var{name} 的指令模式将被扩展 @var{n} 次，
 一次使用 @var{code1} 来替换，一次使用 @var{code2}，等等。
 @xref{Defining Mode Iterators}。
 
+@en It is possible to define attributes for codes as well as for modes.
+@en There are two standard code attributes: @code{code}, the name of the
+@en code in lower case, and @code{CODE}, the name of the code in upper case.
+@en Other attributes are defined using:
 跟机器模式一样可以为代码定义属性。有两种标准代码属性：@code{code}，代码
 的小写形式名字，以及 @code{CODE}，代码的大写形式名字。其它属性使用下列
 方式来定义：
 
-@en @smallexample
-@en (define_code_attr @var{name} [(@var{code1} "@var{value1}") @dots{} (@var{coden} "@var{valuen}")])
-@en @end smallexample
-@en 
-@en Here's an example of code iterators in action, taken from the MIPS port:
-@en 
-@en @smallexample
-@en (define_code_iterator any_cond [unordered ordered unlt unge uneq ltgt unle ungt
-@en                                 eq ne gt ge lt le gtu geu ltu leu])
-@en 
-@en (define_expand "b<code>"
-@en   [(set (pc)
-@en         (if_then_else (any_cond:CC (cc0)
-@en                                    (const_int 0))
-@en                       (label_ref (match_operand 0 ""))
-@en                       (pc)))]
-@en   ""
-@en @{
-@en   gen_conditional_branch (operands, <CODE>);
-@en   DONE;
-@en @})
-@en @end smallexample
-@en 
-@en This is equivalent to:
-@en 
-@en @smallexample
-@en (define_expand "bunordered"
-@en   [(set (pc)
-@en         (if_then_else (unordered:CC (cc0)
-@en                                     (const_int 0))
-@en                       (label_ref (match_operand 0 ""))
-@en                       (pc)))]
-@en   ""
-@en @{
-@en   gen_conditional_branch (operands, UNORDERED);
-@en   DONE;
-@en @})
-@en 
-@en (define_expand "bordered"
-@en   [(set (pc)
-@en         (if_then_else (ordered:CC (cc0)
-@en                                   (const_int 0))
-@en                       (label_ref (match_operand 0 ""))
-@en                       (pc)))]
-@en   ""
-@en @{
-@en   gen_conditional_branch (operands, ORDERED);
-@en   DONE;
-@en @})
-@en 
-@en @dots{}
-@en @end smallexample
-@en 
-@en @end ifset
 @smallexample
 (define_code_attr @var{name} [(@var{code1} "@var{value1}") @dots{} (@var{coden} "@var{valuen}")])
 @end smallexample
 
+@en Here's an example of code iterators in action, taken from the MIPS port:
 这里有一个实际使用的关于代码迭代器的例子，摘自MIPS后端（port）：
 
 @smallexample
@@ -12736,6 +12486,7 @@ GCC通过“机器模式属性”系统来支持这样的变种。有两种标�
 @})
 @end smallexample
 
+@en This is equivalent to:
 这等价于：
 
 @smallexample
