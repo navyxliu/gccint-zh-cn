@@ -5713,21 +5713,6 @@ C表达式@code{match_test}，可以访问下列变量：
 @en optimization is applied if operand 2 does @emph{not} satisfy the
 @en @samp{K} constraint.  (This is a simplified version of a peephole
 @en definition from the i386 machine description.)
-@en 
-@en @smallexample
-@en (define_peephole2
-@en   [(match_scratch:SI 3 "r")
-@en    (set (match_operand:SI 0 "register_operand" "")
-@en         (mult:SI (match_operand:SI 1 "memory_operand" "")
-@en                  (match_operand:SI 2 "immediate_operand" "")))]
-@en 
-@en   "!satisfies_constraint_K (operands[2])"
-@en 
-@en   [(set (match_dup 3) (match_dup 1))
-@en    (set (match_dup 0) (mult:SI (match_dup 3) (match_dup 2)))]
-@en 
-@en   "")
-@en @end smallexample
 这里有一个使用@code{satisfies_constraint_@var{m}}的例子。 在窥孔优化（@pxref{Peephole Definitions}）中，操作数约束字符串将被忽略， 所以如果有相应的约束，它们必须在C条件中被测试。在例子中，如果操作数2不满足@samp{K}约束，优化将被采用。 （这是从 i386机器描述中的窥孔定义简化的版本。）
 
 @smallexample
@@ -6955,6 +6940,16 @@ in the rtl as
 
 @cindex @code{cmpstrn@var{m}} instruction pattern
 @item @samp{cmpstrn@var{m}}
+String compare instruction, with five operands.  Operand 0 is the output;
+it has mode @var{m}.  The remaining four operands are like the operands
+of @samp{movmem@var{m}}.  The two memory blocks specified are compared
+byte by byte in lexicographic order starting at the beginning of each
+string.  The instruction is not allowed to prefetch more than one byte
+at a time since either string may end in the first byte and reading past
+that may access an invalid page or segment and cause a fault.  The
+comparison terminates early if the fetched bytes are different or if
+they are equal to zero.  The effect of the instruction is to store a
+value in operand 0 whose sign indicates the result of the comparison.
 @en String compare instruction, with five operands.  Operand 0 is the output;
 @en it has mode @var{m}.  The remaining four operands are like the operands
 @en of @samp{movmem@var{m}}.  The two memory blocks specified are compared
@@ -6964,7 +6959,7 @@ in the rtl as
 @en that may access an invalid page or segment and cause a fault.  The
 @en effect of the instruction is to store a value in operand 0 whose sign
 @en indicates the result of the comparison.
-字符串比较指令，有5个操作数。操作数0为输出，机器模式为@var{m}。剩下的4个操作数类似于@samp{movmem@var{m}}的操作数。两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。指令不允许一次取多个字节，因为每个字符串都可能在第一个字节中终止，读取后面的字节可能会访问一个无效的页或者段，并产生一个缺失。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
+@obsolete 字符串比较指令，有5个操作数。操作数0为输出，机器模式为@var{m}。剩下的4个操作数类似于@samp{movmem@var{m}}的操作数。两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。指令不允许一次取多个字节，因为每个字符串都可能在第一个字节中终止，读取后面的字节可能会访问一个无效的页或者段，并产生一个缺失。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
  
 @cindex @code{cmpstr@var{m}} instruction pattern
 @item @samp{cmpstr@var{m}}
@@ -6990,6 +6985,14 @@ in the rtl as
  
 @cindex @code{cmpmem@var{m}} instruction pattern
 @item @samp{cmpmem@var{m}}
+Block compare instruction, with five operands like the operands
+of @samp{cmpstr@var{m}}.  The two memory blocks specified are compared
+byte by byte in lexicographic order starting at the beginning of each
+block.  Unlike @samp{cmpstr@var{m}} the instruction can prefetch
+any bytes in the two memory blocks.  Also unlike @samp{cmpstr@var{m}}
+the comparison will not stop if both bytes are zero.  The effect of
+the instruction is to store a value in operand 0 whose sign indicates
+the result of the comparison.
 @en Block compare instruction, with five operands like the operands
 @en of @samp{cmpstr@var{m}}.  The two memory blocks specified are compared
 @en byte by byte in lexicographic order starting at the beginning of each
@@ -6997,7 +7000,7 @@ in the rtl as
 @en any bytes in the two memory blocks.  The effect of the instruction is
 @en to store a value in operand 0 whose sign indicates the result of the
 @en comparison.
-块比较指令，这5个操作数类似于@samp{cmpstr@var{m}}。两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。不像@samp{cmpstr@var{m}}，该指令可以在两个内存块中取任意个字节。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
+@obsolete 块比较指令，这5个操作数类似于@samp{cmpstr@var{m}}。两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。不像@samp{cmpstr@var{m}}，该指令可以在两个内存块中取任意个字节。该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。
 
 @en @cindex @code{strlen@var{m}} instruction pattern
 @en @item @samp{strlen@var{m}}
@@ -7158,35 +7161,29 @@ RTL生成过程，生成的该指令，操作数2和3为常量，并且对于操
 @en for operands 1 and 2 and the constant is never zero for operand 1.
 RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操作数1，常量不为零。
 
-@en @cindex @code{mov@var{mode}cc} instruction pattern
-@en @item @samp{mov@var{mode}cc}
+@cindex @code{mov@var{mode}cc} instruction pattern
+@item @samp{mov@var{mode}cc}
 @en Conditionally move operand 2 or operand 3 into operand 0 according to the
 @en comparison in operand 1.  If the comparison is true, operand 2 is moved
 @en into operand 0, otherwise operand 3 is moved.
-@en 
+根据对操作数1的比较，有条件的将操作数2或者3移送到操作数0中。如果比较为真，则操作数2被移送到操作数0中，否则操作数3被移送。
+
 @en The mode of the operands being compared need not be the same as the operands
 @en being moved.  Some machines, sparc64 for example, have instructions that
 @en conditionally move an integer value based on the floating point condition
 @en codes and vice versa.
-@en 
-@en If the machine does not have conditional move instructions, do not
-@en define these patterns.
-@cindex @code{mov@var{mode}cc} instruction pattern
-@item @samp{mov@var{mode}cc}
-根据对操作数1的比较，有条件的将操作数2或者3移送到操作数0中。如果比较为真，则操作数2被移送到操作数0中，否则操作数3被移送。
-
 操作数的机器模式不需要与被移送的操作数的相同。一些机器，例如sparc64，具有可以根据浮点条件码，条件移送整数值的指令，以及相反的指令。
 
+@en If the machine does not have conditional move instructions, do not
+@en define these patterns.
 如果机器没有条件移送指令，则不要定义这些指令模式。
 
-@en @cindex @code{add@var{mode}cc} instruction pattern
-@en @item @samp{add@var{mode}cc}
+@cindex @code{add@var{mode}cc} instruction pattern
+@item @samp{add@var{mode}cc}
 @en Similar to @samp{mov@var{mode}cc} but for conditional addition.  Conditionally
 @en move operand 2 or (operands 2 + operand 3) into operand 0 according to the
 @en comparison in operand 1.  If the comparison is true, operand 2 is moved into
 @en operand 0, otherwise (operand 2 + operand 3) is moved.
-@cindex @code{add@var{mode}cc} instruction pattern
-@item @samp{add@var{mode}cc}
 类似于@samp{mov@var{mode}cc}，不过是条件加法。根据在操作数1中的比较，条件性的将操作数2或者(操作数2 + 操作数3)，移送到操作数0中。如果比较为真，则操作数2被移送到操作数0中，否则(操作数2 + 操作数3)被移送。
 
 @cindex @code{s@var{cond}} instruction pattern
@@ -7248,38 +7245,35 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @en in the @samp{cstore@var{mode}4} pattern, or remove the pattern altogether
 @en from the machine description.
 @en 
-@en @cindex @code{cbranch@var{mode}4} instruction pattern
-@en @item @samp{cbranch@var{mode}4}
+@cindex @code{cbranch@var{mode}4} instruction pattern
+@item @samp{cbranch@var{mode}4}
 @en Conditional branch instruction combined with a compare instruction.
 @en Operand 0 is a comparison operator.  Operand 1 and operand 2 are the
 @en first and second operands of the comparison, respectively.  Operand 3
 @en is a @code{label_ref} that refers to the label to jump to.
-@en 
-@en @cindex @code{jump} instruction pattern
-@en @item @samp{jump}
-@en A jump inside a function; an unconditional branch.  Operand 0 is the
-@en @code{label_ref} of the label to jump to.  This pattern name is mandatory
-@en on all machines.
-@cindex @code{cbranch@var{mode}4} instruction pattern
-@item @samp{cbranch@var{mode}4}
 条件分支指令，结合一个比较指令。操作数0为比较运算符。操作数1和2分别为比较运算的第一个和第二个操作数。操作数3为一个@code{label_ref}，指出了跳转的标号。
 
 @cindex @code{jump} instruction pattern
 @item @samp{jump}
+@en A jump inside a function; an unconditional branch.  Operand 0 is the
+@en @code{label_ref} of the label to jump to.  This pattern name is mandatory
+@en on all machines.
 函数内部跳转；无条件分支。操作数0为一个@code{label_ref}，指出了跳转的标号。该指令模式名在所有机器上都是强制必须的。
 
-@en @cindex @code{call} instruction pattern
-@en @item @samp{call}
+@cindex @code{call} instruction pattern
+@item @samp{call}
 @en Subroutine call instruction returning no value.  Operand 0 is the
 @en function to call; operand 1 is the number of bytes of arguments pushed
 @en as a @code{const_int}; operand 2 is the number of registers used as
 @en operands.
-@en 
+没有返回值的子程序调用指令。操作数0为调用的函数；操作数1为压栈的参数的字节数，为一个@code{const_int}；操作数2为用作操作数的寄存器数目。
+ 
 @en On most machines, operand 2 is not actually stored into the RTL
 @en pattern.  It is supplied for the sake of some RISC machines which need
 @en to put this information into the assembler code; they can put it in
 @en the RTL instead of operand 1.
-@en 
+在大多机器上，操作数2没有被实际存放在RTL模式中。提供它是出于安全考虑，一些RISC机器需要将该信息放到汇编代码中；它们可以将其放在RTL中，而不是操作数1中。
+
 @en Operand 0 should be a @code{mem} RTX whose address is the address of the
 @en function.  Note, however, that this address can be a @code{symbol_ref}
 @en expression even if it would not be a legitimate memory address on the
@@ -7287,46 +7281,32 @@ RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操
 @en instruction, the pattern for this operation should be a
 @en @code{define_expand} (@pxref{Expander Definitions}) that places the
 @en address into a register and uses that register in the call instruction.
-@cindex @code{call} instruction pattern
-@item @samp{call}
-没有返回值的子程序调用指令。操作数0为调用的函数；操作数1为压栈的参数的字节数，为一个@code{const_int}；操作数2为用作操作数的寄存器数目。
-
-在大多机器上，操作数2没有被实际存放在RTL模式中。提供它是出于安全考虑，一些RISC机器需要将该信息放到汇编代码中；它们可以将其放在RTL中，而不是操作数1中。
-
 操作数0应该为一个@code{mem} RTX，其地址为函数的地址。然而注意，该地址可以为一个@code{symbol_ref}表达式，即使其在目标机器上可能不是一个合法的内存地址。如果其也不是调用指令的有效参数，则该操作的指令模式应该为一个@code{define_expand} (@pxref{Expander Definitions})，其将地址放入寄存器中，并在调用指令中使用寄存器。
 
-@en @cindex @code{call_value} instruction pattern
-@en @item @samp{call_value}
+@cindex @code{call_value} instruction pattern
+@item @samp{call_value}
 @en Subroutine call instruction returning a value.  Operand 0 is the hard
 @en register in which the value is returned.  There are three more
 @en operands, the same as the three operands of the @samp{call}
 @en instruction (but with numbers increased by one).
-@en 
-@en Subroutines that return @code{BLKmode} objects use the @samp{call}
-@en insn.
-@en 
-@en @cindex @code{call_pop} instruction pattern
-@en @cindex @code{call_value_pop} instruction pattern
-@en @item @samp{call_pop}, @samp{call_value_pop}
-@en Similar to @samp{call} and @samp{call_value}, except used if defined and
-@en if @code{RETURN_POPS_ARGS} is nonzero.  They should emit a @code{parallel}
-@en that contains both the function call and a @code{set} to indicate the
-@en adjustment made to the frame pointer.
-@en 
-@en For machines where @code{RETURN_POPS_ARGS} can be nonzero, the use of these
-@en patterns increases the number of functions for which the frame pointer
-@en can be eliminated, if desired.
-@cindex @code{call_value} instruction pattern
-@item @samp{call_value}
 有返回值的子程序调用指令。操作数0为硬件寄存器，存放返回值。还有三个操作数，与@samp{call}指令相同（只不过将编号加一）。
 
+@en Subroutines that return @code{BLKmode} objects use the @samp{call}
+@en insn.
 返回 @code{BLKmode}对象的子程序，使用@samp{call} insn。
 
 @cindex @code{call_pop} instruction pattern
 @cindex @code{call_value_pop} instruction pattern
 @item @samp{call_pop}, @samp{call_value_pop}
+@en Similar to @samp{call} and @samp{call_value}, except used if defined and
+@en if @code{RETURN_POPS_ARGS} is nonzero.  They should emit a @code{parallel}
+@en that contains both the function call and a @code{set} to indicate the
+@en adjustment made to the frame pointer.
 类似于@samp{call} 和 @samp{call_value}，只不过用于其被定义，并且@code{RETURN_POPS_ARGS}为非零的时候。它们应该生成一个 @code{parallel}，包含函数调用和一个@code{set}，来指示对帧指针的调整。
 
+@en For machines where @code{RETURN_POPS_ARGS} can be nonzero, the use of these
+@en patterns increases the number of functions for which the frame pointer
+@en can be eliminated, if desired.
 对于@code{RETURN_POPS_ARGS}可以为非零的机器，使用这些指令模式可以增加帧指针被消除掉的函数的数目。
 
 @en @cindex @code{untyped_call} instruction pattern
