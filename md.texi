@@ -1087,30 +1087,12 @@ constraint选择的序号（0为第一个，1位第二个选择，以此类推�
 @en a limitation in the machine-description reader.
 这与@code{register_operand}略为不同，其对机器描述的读入器有些限制。
 
-@en @smallexample
-@en (match_operand @var{n} "pmode_register_operand" @var{constraint})
-@en @end smallexample
-
-@en @noindent
-@en means exactly what
-
-@en @smallexample
-@en (match_operand:P @var{n} "register_operand" @var{constraint})
-@en @end smallexample
-
-@en @noindent
-@en would mean, if the machine-description reader accepted @samp{:P}
-@en mode suffixes.  Unfortunately, it cannot, because @code{Pmode} is an
-@en alias for some other mode, and might vary with machine-specific
-@en options.  @xref{Misc}.
-@en @end defun
-当机器描述读入器接受@samp{:P}机器模式后缀时，
-
 @smallexample
 (match_operand @var{n} "pmode_register_operand" @var{constraint})
 @end smallexample
 
 @noindent
+@en means exactly what
 与
 
 @smallexample
@@ -1118,36 +1100,37 @@ constraint选择的序号（0为第一个，1位第二个选择，以此类推�
 @end smallexample
 
 @noindent
+@en would mean, if the machine-description reader accepted @samp{:P}
+@en mode suffixes.  Unfortunately, it cannot, because @code{Pmode} is an
+@en alias for some other mode, and might vary with machine-specific
+@en options.  @xref{Misc}.
+@en @end defun
+当机器描述读入器接受@samp{:P}机器模式后缀时，
 将具有完全相同的含义。不幸的是，这样不行，应为Pmode是其它机器模式的别名，
 并且可能随着机器特定选项的不同而改变。@xref{Misc}。
 @end defun
 
-@en @defun scratch_operand
+@defun scratch_operand
 @en This predicate allows hard registers and @code{SCRATCH} expressions,
 @en but not pseudo-registers.  It is used internally by @code{match_scratch};
 @en it should not be used directly.
-@en @end defun
-@defun scratch_operand
 该predicate允许硬件寄存器和@code{SCRATCH}表达式，但不允许伪寄存器。
 其由@code{match_scratch}在内部使用；而不应该被直接使用。
 @end defun
 
-@en @noindent
-@en The third category of predicates allow only some kind of memory reference.
 @noindent
+@en The third category of predicates allow only some kind of memory reference.
 第三类predicate只允许某种内存引用。
 
-@en @defun memory_operand
+@defun memory_operand
 @en This predicate allows any valid reference to a quantity of mode
 @en @var{mode} in memory, as determined by the weak form of
 @en @code{GO_IF_LEGITIMATE_ADDRESS} (@pxref{Addressing Modes}).
-@en @end defun
-@defun memory_operand
 该predicate允许任何对内存中机器模式@var{mode}的一定数量的有效引用，
 并通过@code{GO_IF_LEGITIMATE_ADDRESS}的弱形式来确定(@pxref{Addressing Modes})。
 @end defun
 
-@en @defun address_operand
+@defun address_operand
 @en This predicate is a little unusual; it allows any operand that is a
 @en valid expression for the @emph{address} of a quantity of mode
 @en @var{mode}, again determined by the weak form of
@@ -1156,8 +1139,6 @@ constraint选择的序号（0为第一个，1位第二个选择，以此类推�
 @en @code{memory_operand}, then @var{exp} is acceptable to
 @en @code{address_operand}.  Note that @var{exp} does not necessarily have
 @en the mode @var{mode}.
-@en @end defun
-@defun address_operand
 该predicate有些不常用；
 其允许任何为机器模式@var{mode}的一定数量的地址有效表达式操作数，
 同样通过@code{GO_IF_LEGITIMATE_ADDRESS}的弱形式来确定。
@@ -1166,7 +1147,7 @@ constraint选择的序号（0为第一个，1位第二个选择，以此类推�
 注意@var{exp}不必具有机器模式@var{mode}。
 @end defun
 
-@en @defun indirect_operand
+@defun indirect_operand
 @en This is a stricter form of @code{memory_operand} which allows only
 @en memory references with a @code{general_operand} as the address
 @en expression.  New uses of this predicate are discouraged, because
@@ -1175,8 +1156,6 @@ constraint选择的序号（0为第一个，1位第二个选择，以此类推�
 @en different requirements for memory operands for different instructions,
 @en it is better to define target-specific predicates which enforce the
 @en hardware's requirements explicitly.
-@en @end defun
-@defun indirect_operand
 这是一个@code{memory_operand}的更严格形式，
 其只允许将@code{general_operand}作为地址表达式的内存引用。
 不鼓励对该predicate的新的使用，因为@code{general_operand}的条件非常宽，
@@ -1185,82 +1164,66 @@ constraint选择的序号（0为第一个，1位第二个选择，以此类推�
 则最好定义目标机特定的predicate，以显式的加强硬件的要求。
 @end defun
 
-@en @defun push_operand
+@defun push_operand
 @en This predicate allows a memory reference suitable for pushing a value
 @en onto the stack.  This will be a @code{MEM} which refers to
 @en @code{stack_pointer_rtx}, with a side-effect in its address expression
 @en (@pxref{Incdec}); which one is determined by the
 @en @code{STACK_PUSH_CODE} macro (@pxref{Frame Layout}).
-@en @end defun
-@defun push_operand
 该predicate允许适合将值压入栈中的内存引用。这将为一个@code{MEM}，
 其引用@code{stack_pointer_rtx}，且在其地址表达式中具有一个副作用
 (@pxref{Incdec})；其由宏@code{STACK_PUSH_CODE}来确定(@pxref{Frame Layout}。
 @end defun
 
-@en @defun pop_operand
+@defun pop_operand
 @en This predicate allows a memory reference suitable for popping a value
 @en off the stack.  Again, this will be a @code{MEM} referring to
 @en @code{stack_pointer_rtx}, with a side-effect in its address
 @en expression.  However, this time @code{STACK_POP_CODE} is expected.
-@en @end defun
-@defun pop_operand
 该predicate允许适合将值弹出栈中的内存引用。同样，这将为一个@code{MEM} ，
 其引用@code{stack_pointer_rtx}，且在其地址表达式中具有一个副作用；
 不过，这次是@code{STACK_POP_CODE} 。
 @end defun
 
-@en @noindent
+@noindent
 @en The fourth category of predicates allow some combination of the above
 @en operands.
-@noindent
 第四类predicate允许上面的操作数的某种组合。
 
-@en @defun nonmemory_operand
-@en This predicate allows any immediate or register operand valid for @var{mode}.
-@en @end defun
 @defun nonmemory_operand
+@en This predicate allows any immediate or register operand valid for @var{mode}.
 该predicate允许任何对于@var{mode}有效的立即数，或寄存器操作数。
 @end defun
 
-@en @defun nonimmediate_operand
-@en This predicate allows any register or memory operand valid for @var{mode}.
-@en @end defun
 @defun nonimmediate_operand
+@en This predicate allows any register or memory operand valid for @var{mode}.
 该predicate允许任何对于@var{mode}有效的寄存器，或内存操作数。
 @end defun
 
-@en @defun general_operand
+@defun general_operand
 @en This predicate allows any immediate, register, or memory operand
 @en valid for @var{mode}.
-@en @end defun
-@defun general_operand
 该predicate允许任何对于@var{mode}有效的立即数，寄存器，或内存操作数。
 @end defun
 
-@en @noindent
-@en Finally, there are two generic operator predicates.
 @noindent
+@en Finally, there are two generic operator predicates.
 最后，有两个通用操作符断言。
 
-@en @defun comparison_operator
+@defun comparison_operator
 @en This predicate matches any expression which performs an arithmetic
 @en comparison in @var{mode}; that is, @code{COMPARISON_P} is true for the
 @en expression code.
-@en @end defun
-@defun comparison_operator
 该predicate匹配任何执行一个基于@var{mode}的算术比较表达式；
 即，@code{COMPARISON_P}对于表达式代码为真。
 @end defun
 
-@en @defun ordered_comparison_operator
+@defun ordered_comparison_operator
 @en This predicate matches any expression which performs an arithmetic
 @en comparison in @var{mode} and whose expression code is valid for integer
 @en modes; that is, the expression code will be one of @code{eq}, @code{ne},
 @en @code{lt}, @code{ltu}, @code{le}, @code{leu}, @code{gt}, @code{gtu},
 @en @code{ge}, @code{geu}.
-@en @end defun
-@defun ordered_comparison_operator
 This predicate matches any expression which performs an arithmetic
 comparison in @var{mode} and whose expression code is valid for integer
 modes; that is, the expression code will be one of @code{eq}, @code{ne},
@@ -1287,41 +1250,35 @@ modes; that is, the expression code will be one of @code{eq}, @code{ne},
 许多机器对操作数的要求无法使用通用的predicate来精确表达。
 你可以使用表达式@code{define_predicate}和@code{define_special_predicate}来定义 额外的predicate。这些表达式具有三个操作数： 
 
-@en @itemize @bullet
-@en @item
-@en The name of the predicate, as it will be referred to in
-@en @code{match_operand} or @code{match_operator} expressions.
 @itemize @bullet
 @item
+@en The name of the predicate, as it will be referred to in
+@en @code{match_operand} or @code{match_operator} expressions.
 predicate的名字，
 其将在@code{match_operand}或@code{match_operator}表达式中被引用。
 
-@en @item
+@item
 @en An RTL expression which evaluates to true if the predicate allows the
 @en operand @var{op}, false if it does not.  This expression can only use
 @en the following RTL codes:
-@item
 一个RTL表达式，如果predicate允许@var{op}操作数，则值为真，否则为假。
 该表达式只能使用下列RTL代码： 
 
-@en @table @code
-@en @item MATCH_OPERAND
+@table @code
+@item MATCH_OPERAND
 @en When written inside a predicate expression, a @code{MATCH_OPERAND}
 @en expression evaluates to true if the predicate it names would allow
 @en @var{op}.  The operand number and constraint are ignored.  Due to
 @en limitations in @command{genrecog}, you can only refer to generic
 @en predicates and predicates that have already been defined.
-@table @code
-@item MATCH_OPERAND
 当用于predicate表达式中时，
 表达式@code{MATCH_OPERAND}在predicate允许@var{op}时为真。
 操作数编号和constraint被忽略。由于@command{genrecog}中的限制，
 你只能用于引用通用的predicate和已经被定义的predicate。
 
-@en @item MATCH_CODE
+@item MATCH_CODE
 @en This expression evaluates to true if @var{op} or a specified
 @en subexpression of @var{op} has one of a given list of RTX codes.
-@item MATCH_CODE
 该表达式为真，
 如果@var{op}或一个指定的@var{op}的子表达式具有给定RTX代码列表中的一个RTX代码。
 
@@ -1355,46 +1312,39 @@ predicate的名字，
 其中@var{n}为@var{l}的字母顺序（0为`a'，1为'b'，等等）。
 @code{MATCH_CODE}然后检查完整字符串所抽取的子表达式的RTX代码。
 
-@en @item MATCH_TEST
+@item MATCH_TEST
 @en This expression has one operand, a string constant containing a C
 @en expression.  The predicate's arguments, @var{op} and @var{mode}, are
 @en available with those names in the C expression.  The @code{MATCH_TEST}
 @en evaluates to true if the C expression evaluates to a nonzero value.
 @en @code{MATCH_TEST} expressions must not have side effects.
-@item MATCH_TEST
 该表达式具有一个操作数，一个包含了一个C表达式的字符串常量。
 在C表达式中可以使用predicate的参数，@var{op}和@var{mode}。
 当C表达式为非0值时，@code{MATCH_TEST}为真。
 @code{MATCH_TEST}表达式必须不具有副作用。
 
-@en @item  AND
-@en @itemx IOR
-@en @itemx NOT
-@en @itemx IF_THEN_ELSE
+@item  AND
+@itemx IOR
+@itemx NOT
+@itemx IF_THEN_ELSE
 @en The basic @samp{MATCH_} expressions can be combined using these
 @en logical operators, which have the semantics of the C operators
 @en @samp{&&}, @samp{||}, @samp{!}, and @samp{@w{? :}} respectively.  As
 @en in Common Lisp, you may give an @code{AND} or @code{IOR} expression an
 @en arbitrary number of arguments; this has exactly the same effect as
 @en writing a chain of two-argument @code{AND} or @code{IOR} expressions.
-@en @end table
-@item  AND
-@itemx IOR
-@itemx NOT
-@itemx IF_THEN_ELSE
 基本的@samp{MATCH_}表达式可以使用这些逻辑操作符组合，
 其分别具有C操作符@samp{&&}, @samp{||}, @samp{!}和@samp{@w{? :}}的语义。
 正如在Common Lisp中，可以给@code{AND}或@code{IOR}表达式任意数目的参数；
 这跟写成两个参数的@code{AND}或@code{IOR}表达式链具有相同的效果。
 @end table
 
-@en @item
+@item
 @en An optional block of C code, which should execute
 @en @samp{@w{return true}} if the predicate is found to match and
 @en @samp{@w{return false}} if it does not.  It must not have any side
 @en effects.  The predicate arguments, @var{op} and @var{mode}, are
 @en available with those names.
-@item
 一个可选的C代码块，其应该在发现predicate匹配时执行@samp{@w{return true}}，
 不匹配时执行@samp{@w{return false}}。其一定不要具有副作用。
 predicate参数，@var{op}和@var{mode}，是有效的。
@@ -1404,7 +1354,6 @@ predicate参数，@var{op}和@var{mode}，是有效的。
 @en execute @samp{@w{return true}} for the predicate to allow the operand.
 @en The RTL expression is evaluated first; do not re-check anything in the
 @en code block that was checked in the RTL expression.
-@en @end itemize
 如果代码块存在于predicate定义中，则对于predicate允许的操作数，
 RTL表达式必须求值为true并且代码块必须执行@samp{@w{return true}}。
 RTL表达式被首先求值，不要重复检查代码块中的在RTL表达式中曾经被检查过的任何事情。
@@ -1597,42 +1546,34 @@ Here are specific details on what constraint letters you can use with
 @en the letters that are allowed:
 最简单的约束种类是一个由字母组成的字符串， 每个字母描述一种所允许的操作数。这里是所允许的字母：
 
-@en @table @asis
-@en @item whitespace
+@table @asis
+@item whitespace
 @en Whitespace characters are ignored and can be inserted at any position
 @en except the first.  This enables each alternative for different operands to
 @en be visually aligned in the machine description even if they have different
 @en number of constraints and modifiers.
-@table @asis
-@item whitespace
 空格字符将被忽略，并且可以插到除了起始处的任何地方。这使得机器描述中， 不同操作数的每个可选项可以被可视化的对齐，即使它们具有不同数目的约束和修饰符。 
 
-@en @cindex @samp{m} in constraint
-@en @cindex memory references in constraints
-@en @item @samp{m}
+@cindex @samp{m} in constraint
+@cindex memory references in constraints
+@item @samp{m}
 @en A memory operand is allowed, with any kind of address that the machine
 @en supports in general.
 @en Note that the letter used for the general memory constraint can be
 @en re-defined by a back end using the @code{TARGET_MEM_CONSTRAINT} macro.
-@cindex @samp{m} in constraint
-@cindex memory references in constraints
-@item @samp{m}
 内存操作数将被允许，包括机器支持的任何寻址方式。
 
-@en @cindex offsettable address
-@en @cindex @samp{o} in constraint
-@en @item @samp{o}
+@cindex offsettable address
+@cindex @samp{o} in constraint
+@item @samp{o}
 @en A memory operand is allowed, but only if the address is
 @en @dfn{offsettable}.  This means that adding a small integer (actually,
 @en the width in bytes of the operand, as determined by its machine mode)
 @en may be added to the address and the result is also a valid memory
 @en address.
-@cindex offsettable address
-@cindex @samp{o} in constraint
-@item @samp{o}
 内存操作数将被允许，但只有当地址为偏移表的时候。 这意味着可以对地址加上一个小的整数(实际上,是为操作数的数个字节宽度, 这由它的机器模式决定),其结果也为一个有效的内存地址。
 
-@en @cindex autoincrement/decrement addressing
+@cindex autoincrement/decrement addressing
 @en For example, an address which is constant is offsettable; so is an
 @en address that is the sum of a register and a constant (as long as a
 @en slightly larger constant is also within the range of address-offsets
@@ -1640,7 +1581,6 @@ Here are specific details on what constraint letters you can use with
 @en address is not offsettable.  More complicated indirect/indexed
 @en addresses may or may not be offsettable depending on the other
 @en addressing modes that the machine supports.
-@cindex autoincrement/decrement addressing
 例如，地址为常数的为一个偏移表；所以地址为一个寄存器和常数（只要常数在机器所支持 的地址偏移范围）的和；但是递增或者递减地址不是偏移表。更加复杂的间接/索引地址可 能是或者可能不是偏移表，这取决于机器支持的其它寻址模式。
 
 @en Note that in an output operand which can be matched by another
@@ -1648,16 +1588,14 @@ Here are specific details on what constraint letters you can use with
 @en by both @samp{<} (if the target machine has predecrement addressing)
 @en and @samp{>} (if the target machine has preincrement addressing).
 
-@en @cindex @samp{V} in constraint
-@en @item @samp{V}
-@en A memory operand that is not offsettable.  In other words, anything that
-@en would fit the @samp{m} constraint but not the @samp{o} constraint.
 @cindex @samp{V} in constraint
 @item @samp{V}
+@en A memory operand that is not offsettable.  In other words, anything that
+@en would fit the @samp{m} constraint but not the @samp{o} constraint.
 一个不是offsettable的内存操作数。换句话说， 任何适合@samp{m}约束但不是@samp{o}约束的。 
 
-@en @cindex @samp{<} in constraint
-@en @item @samp{<}
+@cindex @samp{<} in constraint
+@item @samp{<}
 @en A memory operand with autodecrement addressing (either predecrement or
 @en postdecrement) is allowed.  In inline @code{asm} this constraint is only
 @en allowed if the operand is used exactly once in an instruction that can
@@ -1668,95 +1606,72 @@ Here are specific details on what constraint letters you can use with
 @en the operand with @samp{<} in constraint string must be accompanied by
 @en special instruction suffixes like @code{%U0} instruction suffix on PowerPC
 @en or @code{%P0} on IA-64.
-@cindex @samp{<} in constraint
-@item @samp{<}
 允许具有自动减量寻址（先减或者后减）的内存操作数。 
 
-@en @cindex @samp{>} in constraint
-@en @item @samp{>}
+@cindex @samp{>} in constraint
+@item @samp{>}
 @en A memory operand with autoincrement addressing (either preincrement or
 @en postincrement) is allowed.  In inline @code{asm} the same restrictions
 @en as for @samp{<} apply.
-@cindex @samp{>} in constraint
-@item @samp{>}
 允许具有自动增量寻址（先增或者后增）的内存操作数。
 
-@en @cindex @samp{r} in constraint
-@en @cindex registers in constraints
-@en @item @samp{r}
-@en A register operand is allowed provided that it is in a general
-@en register.
 @cindex @samp{r} in constraint
 @cindex registers in constraints
 @item @samp{r}
+@en A register operand is allowed provided that it is in a general
+@en register.
 允许为通用寄存器的寄存器操作数。 
 
-@en @cindex constants in constraints
-@en @cindex @samp{i} in constraint
-@en @item @samp{i}
-@en An immediate integer operand (one with constant value) is allowed.
-@en This includes symbolic constants whose values will be known only at
-@en assembly time or later.
 @cindex constants in constraints
 @cindex @samp{i} in constraint
 @item @samp{i}
+@en An immediate integer operand (one with constant value) is allowed.
+@en This includes symbolic constants whose values will be known only at
+@en assembly time or later.
 立即数（具有常数值）将被允许。这包括符号常量， 其值将在汇编时候或者更晚的时候才被知道。 
 
-@en @cindex @samp{n} in constraint
-@en @item @samp{n}
+@cindex @samp{n} in constraint
+@item @samp{n}
 @en An immediate integer operand with a known numeric value is allowed.
 @en Many systems cannot support assembly-time constants for operands less
 @en than a word wide.  Constraints for these operands should use @samp{n}
 @en rather than @samp{i}.
-@cindex @samp{n} in constraint
-@item @samp{n}
 立即数，其具有已知的数值。 许多系统不支持汇编时间常量作为小于一个字的宽度的操作数。 这些操作数的约束应该为@samp{n}而不是@samp{i}。 
 
-@en @cindex @samp{I} in constraint
-@en @item @samp{I}, @samp{J}, @samp{K}, @dots{} @samp{P}
+@cindex @samp{I} in constraint
+@item @samp{I}, @samp{J}, @samp{K}, @dots{} @samp{P}
 @en Other letters in the range @samp{I} through @samp{P} may be defined in
 @en a machine-dependent fashion to permit immediate integer operands with
 @en explicit integer values in specified ranges.  For example, on the
 @en 68000, @samp{I} is defined to stand for the range of values 1 to 8.
 @en This is the range permitted as a shift count in the shift
 @en instructions.
-@cindex @samp{I} in constraint
-@item @samp{I}, @samp{J}, @samp{K}, @dots{} @samp{P}
 从@samp{I}到@samp{P}的其它字母可以被定义为机器特定的， 用来运行立即数具有显示指定范围的整数值。例如，在68000上， @samp{I}被定义为代表1到8的值。这是在移位指令中被允许作为移位数的范围。 
 
-@en @cindex @samp{E} in constraint
-@en @item @samp{E}
+@cindex @samp{E} in constraint
+@item @samp{E}
 @en An immediate floating operand (expression code @code{const_double}) is
 @en allowed, but only if the target floating point format is the same as
 @en that of the host machine (on which the compiler is running).
-@cindex @samp{E} in constraint
-@item @samp{E}
 浮点立即数（表达式代码为@code{const_double}）， 但是必须target浮点格式与host机器（编译器运行的机器）的相同才行。 
 
-@en @cindex @samp{F} in constraint
-@en @item @samp{F}
-@en An immediate floating operand (expression code @code{const_double} or
-@en @code{const_vector}) is allowed.
 @cindex @samp{F} in constraint
 @item @samp{F}
+@en An immediate floating operand (expression code @code{const_double} or
+@en @code{const_vector}) is allowed.
 浮点立即数（表达式代码为@code{const_double}或者@code{const_vector}）。 
 
-@en @cindex @samp{G} in constraint
-@en @cindex @samp{H} in constraint
-@en @item @samp{G}, @samp{H}
-@en @samp{G} and @samp{H} may be defined in a machine-dependent fashion to
-@en permit immediate floating operands in particular ranges of values.
 @cindex @samp{G} in constraint
 @cindex @samp{H} in constraint
 @item @samp{G}, @samp{H}
+@en @samp{G} and @samp{H} may be defined in a machine-dependent fashion to
+@en permit immediate floating operands in particular ranges of values.
 @samp{G}和@samp{H}可以被定义为机器特定的方式来允许浮点立即数具有特定范围的值。 
 
-@en @cindex @samp{s} in constraint
-@en @item @samp{s}
-@en An immediate integer operand whose value is not an explicit integer is
-@en allowed.
 @cindex @samp{s} in constraint
 @item @samp{s}
+@en An immediate integer operand whose value is not an explicit integer is
+@en allowed.
 整数立即数，其值不是一个显式的整数。
 
 @en This might appear strange; if an insn allows a constant operand with a
@@ -1775,17 +1690,15 @@ Here are specific details on what constraint letters you can use with
 @en constraints.
 例如，在68000上的全字指令，有可能使用一个立即数操作数； 但是如果立即数的值是处于-128和127之间，更好的代码是将值加载到寄存器中， 使用寄存器。这是因为加载到寄存器中可以由@samp{moveq}指令来完成。 我们对此通过定义字母@samp{K}来表示任意范围超出-128和127的整数， 然后在操作数约束中指定@samp{Ks}。
 
-@en @cindex @samp{g} in constraint
-@en @item @samp{g}
-@en Any register, memory or immediate integer operand is allowed, except for
-@en registers that are not general registers.
 @cindex @samp{g} in constraint
 @item @samp{g}
+@en Any register, memory or immediate integer operand is allowed, except for
+@en registers that are not general registers.
 任何寄存器，内存或整数立即数，除了不是通用寄存器的寄存器。 
 
-@en @cindex @samp{X} in constraint
-@en @item @samp{X}
-@en @ifset INTERNALS
+@cindex @samp{X} in constraint
+@item @samp{X}
+@ifset INTERNALS
 @en Any operand whatsoever is allowed, even if it does not satisfy
 @en @code{general_operand}.  This is normally used in the constraint of
 @en a @code{match_scratch} when certain alternatives will not actually
@@ -1794,24 +1707,18 @@ Here are specific details on what constraint letters you can use with
 @en @ifclear INTERNALS
 @en Any operand whatsoever is allowed.
 @en @end ifclear
-@cindex @samp{X} in constraint
-@item @samp{X}
-@ifset INTERNALS
 任何操作数都被允许，即使其不满足@code{general_operand}。 这通常用于@code{match_scratch}的约束中，当一些的可选项实际上不需要scratch寄存器的时候。 
 @end ifset
 @ifclear INTERNALS
 Any operand whatsoever is allowed.
 @end ifclear
 
-@en @cindex @samp{0} in constraint
-@en @cindex digits in constraint
-@en @item @samp{0}, @samp{1}, @samp{2}, @dots{} @samp{9}
-@en An operand that matches the specified operand number is allowed.  If a
-@en digit is used together with letters within the same alternative, the
-@en digit should come last.
 @cindex @samp{0} in constraint
 @cindex digits in constraint
 @item @samp{0}, @samp{1}, @samp{2}, @dots{} @samp{9}
+@en An operand that matches the specified operand number is allowed.  If a
+@en digit is used together with letters within the same alternative, the
+@en digit should come last.
 匹配指定操作数编号的操作数。如果数字与字母一起使用，则数字应该放在最后。
 
 @en This number is allowed to be more than a single digit.  If multiple
@@ -1822,8 +1729,8 @@ Any operand whatsoever is allowed.
 @en can use multiple alternatives instead.
 该编号允许多于单个数字。如果多个数字连续的在一起， 则它们被解析为一个单独的十进制整数。很少会因此产生不明确，因为到目前为止， 还没有想要将@samp{10}解析为匹配操作数1或者0的。如果有这样的需要， 则可以使用多个可选项来替代。
 
-@en @cindex matching constraint
-@en @cindex constraint, matching
+@cindex matching constraint
+@cindex constraint, matching
 @en This is called a @dfn{matching constraint} and what it really means is
 @en that the assembler has only a single operand that fills two roles
 @en @ifset INTERNALS
@@ -1836,8 +1743,6 @@ Any operand whatsoever is allowed.
 @en @end ifclear
 @en machines an add instruction really has only two operands, one of them an
 @en input-output operand:
-@cindex matching constraint
-@cindex constraint, matching
 这被称为匹配约束，其实际上是指汇编器只有一个单独的操作数， 却在RTL insn中扮演两个角色。例如，add insn在RTL中具有两个输入操作数和一个输出操作数，
 但是多数CISC机器上，add指令实际上只有两个操作数，其中一个为输入输出操作数：
 
@@ -1860,54 +1765,42 @@ addl #35,r12
 @en For proper results in such cases, the output template should always
 @en use the output-operand's number when printing the operand.
 @en @end ifset
-@en 
-@en @cindex load address instruction
-@en @cindex push address instruction
-@en @cindex address constraints
-@en @cindex @samp{p} in constraint
-@en @item @samp{p}
-@en An operand that is a valid memory address is allowed.  This is
-@en for ``load address'' and ``push address'' instructions.
+
 @cindex load address instruction
 @cindex push address instruction
 @cindex address constraints
 @cindex @samp{p} in constraint
 @item @samp{p}
+@en An operand that is a valid memory address is allowed.  This is
+@en for ``load address'' and ``push address'' instructions.
 允许一个为有效内存地址的操作数。这用于“加载地址”和“地址压栈”指令。
 
-@en @findex address_operand
+@findex address_operand
 @en @samp{p} in the constraint must be accompanied by @code{address_operand}
 @en as the predicate in the @code{match_operand}.  This predicate interprets
 @en the mode specified in the @code{match_operand} as the mode of the memory
 @en reference for which the address would be valid.
-@findex address_operand
 约束中的@samp{p}必须由@code{match_operand}中的作为断言的@code{address_operand}协同工作。该断言将@code{match_operand}中指定的机器模式解析为地址有效的内存引用的机器模式。
 
-@en @cindex other register constraints
-@en @cindex extensible constraints
-@en @item @var{other-letters}
+@cindex other register constraints
+@cindex extensible constraints
+@item @var{other-letters}
 @en Other letters can be defined in machine-dependent fashion to stand for
 @en particular classes of registers or other arbitrary operand types.
 @en @samp{d}, @samp{a} and @samp{f} are defined on the 68000/68020 to stand
 @en for data, address and floating point registers.
-@en @end table
-@cindex other register constraints
-@cindex extensible constraints
-@item @var{other-letters}
 其它字母可以采用机器相关的方式被定义，用于代表寄存器的特定类别或者其它任意的操作数类型。@samp{d}, @samp{a}和@samp{f}在68000/68020被定义用来代表数据，地址和浮点寄存器。
 @end table
 
-@en @ifset INTERNALS
+@ifset INTERNALS
 @en In order to have valid assembler code, each operand must satisfy
 @en its constraint.  But a failure to do so does not prevent the pattern
 @en from applying to an insn.  Instead, it directs the compiler to modify
 @en the code so that the constraint will be satisfied.  Usually this is
 @en done by copying an operand into a register.
-@en 
-@en Contrast, therefore, the two instruction patterns that follow:
-@ifset INTERNALS
 为了具有有效的汇编代码，每个操作数必须满足它的约束。但是如果不满足的话，也不会阻止将该指令模式应用到insn上。替代的，它会指示编译器去修改代码以至于约束将被满足。通常，这是通过将一个操作数复制到寄存器中来完成的。
 
+@en Contrast, therefore, the two instruction patterns that follow:
 因此，对比下面的两条指令模式：
 
 @smallexample
@@ -1974,56 +1867,47 @@ addl #35,r12
 @en reloading any possible operand so that it will fit.
 你必须确保每个操作数，在每个指令模式中，具有能够处理可能会出现的任何RTL表达式的约束。（当使用多个可选项时，每个指令模式，对于每个可能的操作数表达式组合，必须至少具有一个可选项可以处理该操作数的组合。）约束不需要允许任何可能的操作数——如果是这种情况，它们就不做约束了——但是它们必须至少指出可以加载任何可能操作数，使得适合约束的方法。
 
-@en @itemize @bullet
-@en @item
+@itemize @bullet
+@item
 @en If the constraint accepts whatever operands the predicate permits,
 @en there is no problem: reloading is never necessary for this operand.
-@en 
+如果约束接受断言允许的任何操作数，则没有问题：重载对于该操作数将没有必要。
+
 @en For example, an operand whose constraints permit everything except
 @en registers is safe provided its predicate rejects registers.
-@en 
+例如，操作数对于它的约束允许除了寄存器以外的任何事物，如果它的断言不接受寄存器的话，这样是安全的。
+
 @en An operand whose predicate accepts only constant values is safe
 @en provided its constraints include the letter @samp{i}.  If any possible
 @en constant value is accepted, then nothing less than @samp{i} will do;
 @en if the predicate is more selective, then the constraints may also be
 @en more selective.
-@itemize @bullet
-@item
-如果约束接受断言允许的任何操作数，则没有问题：重载对于该操作数将没有必要。
-
-例如，操作数对于它的约束允许除了寄存器以外的任何事物，如果它的断言不接受寄存器的话，这样是安全的。
-
 操作数对于断言只接受常量时，如果它的约束包含字母@samp{i}，则是安全的。如果任何可能的常量都被接受，则可以使用@samp{i}；如果断言具有更多的选择性，则约束也可以具有更多的选择性。
 
-@en @item
+@item
 @en Any operand expression can be reloaded by copying it into a register.
 @en So if an operand's constraints allow some kind of register, it is
 @en certain to be safe.  It need not permit all classes of registers; the
 @en compiler knows how to copy a register into another register of the
 @en proper class in order to make an instruction valid.
-@item
 任何操作数表达式可以通过复制到寄存器中来进行重载。所以如果一个操作数的约束允许某种寄存器，其当然是安全的。它不需要允许所有类型的寄存器；编译器知道为了使指令有效，如何将一个寄存器复制到另一个合适类别的寄存器中。 
 
-@en @cindex nonoffsettable memory reference
-@en @cindex memory reference, nonoffsettable
-@en @item
-@en A nonoffsettable memory reference can be reloaded by copying the
-@en address into a register.  So if the constraint uses the letter
-@en @samp{o}, all memory references are taken care of.
 @cindex nonoffsettable memory reference
 @cindex memory reference, nonoffsettable
 @item
+@en A nonoffsettable memory reference can be reloaded by copying the
+@en address into a register.  So if the constraint uses the letter
+@en @samp{o}, all memory references are taken care of.
 非偏移表的内存引用可以通过将地址复制到寄存器中来重载。所以如果约束使用字母@samp{o}，则所有内存引用将被照顾到。
 
-@en @item
+@item
 @en A constant operand can be reloaded by allocating space in memory to
 @en hold it as preinitialized data.  Then the memory reference can be used
 @en in place of the constant.  So if the constraint uses the letters
 @en @samp{o} or @samp{m}, constant operands are not a problem.
-@item
 常量操作数可以通过在内存中分配空间作为预先被初始化的数据来重载。然后可以使用内存引用。所以如果约束使用字母@samp{o}或者@samp{m}，则常量操作数不是问题。
 
-@en @item
+@item
 @en If the constraint permits a constant and a pseudo register used in an insn
 @en was not allocated to a hard register and is equivalent to a constant,
 @en the register will be replaced with the constant.  If the predicate does
@@ -2031,7 +1915,6 @@ addl #35,r12
 @en compiler will crash.  Thus the predicate must always recognize any
 @en objects allowed by the constraint.
 @en @end itemize
-@item
 如果约束允许的常量和伪寄存器没有被分配到硬件寄存器中，并且等价于一个常量，则寄存器将被常量替换。如果断言不允许常量并且insn出于某种原因被识别了，则编译器将会崩溃。因此断言必须总是能够识别任何被约束允许的对象。
 @end itemize
 
@@ -2039,7 +1922,8 @@ addl #35,r12
 @en not permit them, it can make the compiler crash.  When this operand happens
 @en to be a register, the reload pass will be stymied, because it does not know
 @en how to copy a register temporarily into memory.
-@en 
+如果操作数的断言能够识别寄存器，但是约束不允许它们，则能够使编译器崩溃。当该操作数正好是寄存器时，重载过程将被打乱，因为它不知道如何将寄存器临时复制到内存中。
+
 @en If the predicate accepts a unary operator, the constraint applies to the
 @en operand.  For example, the MIPS processor at ISA level 3 supports an
 @en instruction which adds two registers in @code{SImode} to produce a
@@ -2048,9 +1932,6 @@ addl #35,r12
 @en @code{sign_extend} of an @code{SImode} register.  Write the constraint
 @en to indicate the type of register that is required for the operand of the
 @en @code{sign_extend}.
-@en @end ifset
-如果操作数的断言能够识别寄存器，但是约束不允许它们，则能够使编译器崩溃。当该操作数正好是寄存器时，重载过程将被打乱，因为它不知道如何将寄存器临时复制到内存中。
-
 如果断言接受一元操作符，约束将被应用到操作数上。例如，MIPS处理器在ISA3级时，支持一条指令，其将两个@code{SImode}的寄存器相加产生一个 @code{DImode}的结果，但是必须寄存器能够被正确的符号扩展。该断言对于输入操作数接受一个@code{SImode}寄存器的@code{sign_extend}。将约束写成指示寄存器的类型需要为@code{sign_extend}的操作数。
 
 @end ifset
@@ -2113,43 +1994,34 @@ addl #35,r12
 需要的复制最少的可选项将被选中。如果两个可选项需要相同数目的复制，
 则选择前面的。这些选择可以通过字符@samp{?}和@samp{!}来改变：
 
-@en @table @code
-@en @cindex @samp{?} in constraint
-@en @cindex question mark
-@en @item ?
-@en Disparage slightly the alternative that the @samp{?} appears in,
-@en as a choice when no alternative applies exactly.  The compiler regards
-@en this alternative as one unit more costly for each @samp{?} that appears
-@en in it.
 @table @code
 @cindex @samp{?} in constraint
 @cindex question mark
 @item ?
+@en Disparage slightly the alternative that the @samp{?} appears in,
+@en as a choice when no alternative applies exactly.  The compiler regards
+@en this alternative as one unit more costly for each @samp{?} that appears
+@en in it.
 轻微降低@samp{?}出现的可选项，当没有可选项被确切应用时，才将其作为选择。
 编译器将该可选项的花销认为高出一个单元。 
 
-@en @cindex @samp{!} in constraint
-@en @cindex exclamation point
-@en @item !
+@cindex @samp{!} in constraint
+@cindex exclamation point
+@item !
 @en Disparage severely the alternative that the @samp{!} appears in.
 @en This alternative can still be used if it fits without reloading,
 @en but if reloading is needed, some other alternative will be used.
 @en @end table
-@cindex @samp{!} in constraint
-@cindex exclamation point
-@item !
 严格降低@samp{!}出现的可选项，当该选项没有reloading的时候还可以被使用， 但是如果需要reloading，则将使用其它可选项。 
 @end table
 
-@en @ifset INTERNALS
+@ifset INTERNALS
 @en When an insn pattern has multiple alternatives in its constraints, often
 @en the appearance of the assembler code is determined mostly by which
 @en alternative was matched.  When this is so, the C code for writing the
 @en assembler code can use the variable @code{which_alternative}, which is
 @en the ordinal number of the alternative that was actually satisfied (0 for
 @en the first, 1 for the second alternative, etc.).  @xref{Output Statement}.
-@en @end ifset
-@ifset INTERNALS
 当insn指令模式在其约束中具有多个可选项时， 经常会出现通过哪个可选项被匹配而决定使用使用什么汇编代码的情况。这时， 输写汇编代码的C代码可以使用变量@code{which_alternative}， 其为实际被满足的可选项的顺序编号（0对应第一个，1对应第二个，等等）。@xref{Output Statement}。
 @end ifset
 
@@ -2227,56 +2099,54 @@ addl #35,r12
 @en first character of the constraint string.
 如果你指定了@samp{=}或者@samp{+}，你要将它作为约束字符串的第一个字符。
 
-@en @cindex @samp{&} in constraint
-@en @cindex earlyclobber operand
-@en @item &
+@cindex @samp{&} in constraint
+@cindex earlyclobber operand
+@item &
 @en Means (in a particular alternative) that this operand is an
 @en @dfn{earlyclobber} operand, which is modified before the instruction is
 @en finished using the input operands.  Therefore, this operand may not lie
 @en in a register that is used as an input operand or as part of any memory
 @en address.
-@en 
+意味着（在一个特别的可选项中）该操作数为一个@dfn{earlyclobber}操作数，
+其在指令完成使用输入操作数之前就被修改了。
+因此该操作数可能不在被用作输入操作数或者用作任何内存地址的一部分的寄存器中。
+
 @en @samp{&} applies only to the alternative in which it is written.  In
 @en constraints with multiple alternatives, sometimes one alternative
 @en requires @samp{&} while others do not.  See, for example, the
 @en @samp{movdf} insn of the 68000.
-@en 
+@samp{&}只应用于其所在的可选项。在具有多个可选项的约束中，
+有时一个可选项需要@samp{&}，而其它的不需要。例如，参见68000的@samp{movdf} insn。
+
 @en An input operand can be tied to an earlyclobber operand if its only
 @en use as an input occurs before the early result is written.  Adding
 @en alternatives of this form often allows GCC to produce better code
 @en when only some of the inputs can be affected by the earlyclobber.
 @en See, for example, the @samp{mulsi3} insn of the ARM@.
-@en 
-@en @samp{&} does not obviate the need to write @samp{=}.
-@cindex @samp{&} in constraint
-@cindex earlyclobber operand
-@item &
-意味着（在一个特别的可选项中）该操作数为一个@dfn{earlyclobber}操作数，
-其在指令完成使用输入操作数之前就被修改了。
-因此该操作数可能不在被用作输入操作数或者用作任何内存地址的一部分的寄存器中。
-
-@samp{&}只应用于其所在的可选项。在具有多个可选项的约束中，
-有时一个可选项需要@samp{&}，而其它的不需要。例如，参见68000的@samp{movdf} insn。
-
 一个输入操作数可以被限定为一个earlyclobber操作数，
 如果它唯一的作为输入的使用发生在早期结果被写出之前。
 增加这种形式的可选项经常可以允许GCC来产生更好的代码，
 当只有一些输出可以被earlyclobber影响时。例如，参见ARM的@samp{mulsi3} insn。
 
+@en @samp{&} does not obviate the need to write @samp{=}.
 @samp{&}不排除对@samp{=}的需要。
 
-@en @cindex @samp{%} in constraint
-@en @item %
+@cindex @samp{%} in constraint
+@item %
 @en Declares the instruction to be commutative for this operand and the
 @en following operand.  This means that the compiler may interchange the
 @en two operands if that is the cheapest way to make all operands fit the
 @en constraints.
-@en @ifset INTERNALS
+声明指令对于该操作数和随后的操作数是可交换的。这意味着编译器可以交换两操作数，
+如果有更廉价的方式来使得所有操作数都适合约束。
+@ifset INTERNALS
 @en This is often used in patterns for addition instructions
 @en that really have only two operands: the result must go in one of the
 @en arguments.  Here for example, is how the 68000 halfword-add
 @en instruction is defined:
-@en 
+这经常被用于实际上只有两个操作数的加法指令中：结果必须放在一个参数中。
+这里有个例子，是68000半字加指令如何被定义的： 
+ 
 @en @smallexample
 @en (define_insn "addhi3"
 @en   [(set (match_operand:HI 0 "general_operand" "=m,r")
@@ -2285,21 +2155,6 @@ addl #35,r12
 @en   @dots{})
 @en @end smallexample
 @en @end ifset
-@en GCC can only handle one commutative pair in an asm; if you use more,
-@en the compiler may fail.  Note that you need not use the modifier if
-@en the two alternatives are strictly identical; this would only waste
-@en time in the reload pass.  The modifier is not operational after
-@en register allocation, so the result of @code{define_peephole2}
-@en and @code{define_split}s performed after reload cannot rely on
-@en @samp{%} to make the intended insn match.
-@cindex @samp{%} in constraint
-@item %
-声明指令对于该操作数和随后的操作数是可交换的。这意味着编译器可以交换两操作数，
-如果有更廉价的方式来使得所有操作数都适合约束。
-@ifset INTERNALS
-这经常被用于实际上只有两个操作数的加法指令中：结果必须放在一个参数中。
-这里有个例子，是68000半字加指令如何被定义的： 
-
 @smallexample
 (define_insn "addhi3"
   [(set (match_operand:HI 0 "general_operand" "=m,r")
@@ -2308,32 +2163,36 @@ addl #35,r12
   @dots{})
 @end smallexample
 @end ifset
+
+@en GCC can only handle one commutative pair in an asm; if you use more,
+@en the compiler may fail.  Note that you need not use the modifier if
+@en the two alternatives are strictly identical; this would only waste
+@en time in the reload pass.  The modifier is not operational after
+@en register allocation, so the result of @code{define_peephole2}
+@en and @code{define_split}s performed after reload cannot rely on
+@en @samp{%} to make the intended insn match.
 GCC只能处理在asm中的一个可交换对；如果你有更多的，编译器将会失败。
 注意如果两个可选项严格相同，则不需要使用该修饰符；这只会在重载过程浪费时间。
 该修饰符在寄存器分配之后，是不可操作的，
 所以在重载之后执行的@code{define_peephole2}和@code{define_split}的结果不能依赖
 @samp{%}来进行insn匹配。
 
-@en @cindex @samp{#} in constraint
-@en @item #
+@cindex @samp{#} in constraint
+@item #
 @en Says that all following characters, up to the next comma, are to be
 @en ignored as a constraint.  They are significant only for choosing
 @en register preferences.
-@cindex @samp{#} in constraint
-@item #
 表示所有后续的字符，直到下一个逗号，作为约束都被忽略掉。
 它们只对选择寄存器优先时有意义。 
 
-@en @cindex @samp{*} in constraint
-@en @item *
+@cindex @samp{*} in constraint
+@item *
 @en Says that the following character should be ignored when choosing
 @en register preferences.  @samp{*} has no effect on the meaning of the
 @en constraint as a constraint, and no effect on reloading.
-@cindex @samp{*} in constraint
-@item *
 表示后续字符在选择寄存器优先时应该被忽略掉。@samp{*}对于重载没有影响。
 
-@en @ifset INTERNALS
+@ifset INTERNALS
 @en Here is an example: the 68000 has an instruction to sign-extend a
 @en halfword in a data register, and can also sign-extend a value by
 @en copying it into an address register.  While either kind of register is
@@ -2342,17 +2201,6 @@ GCC只能处理在asm中的一个可交换对；如果你有更多的，编译�
 @en register its goal.  Therefore, @samp{*} is used so that the @samp{d}
 @en constraint letter (for data register) is ignored when computing
 @en register preferences.
-@en 
-@en @smallexample
-@en (define_insn "extendhisi2"
-@en   [(set (match_operand:SI 0 "general_operand" "=*d,a")
-@en         (sign_extend:SI
-@en          (match_operand:HI 1 "general_operand" "0,g")))]
-@en   @dots{})
-@en @end smallexample
-@en @end ifset
-@en @end table
-@ifset INTERNALS
 这里有一个例子：68000有一条指令，用于在数据寄存器中符号扩展一个半字，
 并且还可以通过将其复制到一个地址寄存器中来符号扩展一个值。
 当每种寄存器都可以被接受时，对于地址寄存器的约束相对不是很严格，
@@ -2387,7 +2235,8 @@ GCC只能处理在asm中的一个可交换对；如果你有更多的，编译�
 @en general-purpose registers respectively; @pxref{Simple Constraints}), and
 @en @samp{I}, usually the letter indicating the most common
 @en immediate-constant format.
-@en 
+只要可能，就应该在@code{asm}参数中使用通用目的的约束字母， 因为它们可以向阅读你的代码的人们传达更加可读的意思。如果无法做到， 则使用在不同体系结构中通常具有非常相似的意思的约束字母。 最通用的约束为@samp{m}和@samp{r}（分别用于内存和通用寄存器； @pxref{Simple Constraints}， 以及@samp{I}，通常用于指示最常见的立即数常量格式。
+
 @en Each architecture defines additional constraints.  These constraints
 @en are used by the compiler itself for instruction generation, as well as
 @en for @code{asm} statements; therefore, some of the constraints are not
@@ -2397,8 +2246,6 @@ GCC只能处理在asm中的一个可交换对；如果你有更多的，编译�
 @en constraints that aren't.  The compiler source file mentioned in the
 @en table heading for each architecture is the definitive reference for
 @en the meanings of that architecture's constraints.
-只要可能，就应该在@code{asm}参数中使用通用目的的约束字母， 因为它们可以向阅读你的代码的人们传达更加可读的意思。如果无法做到， 则使用在不同体系结构中通常具有非常相似的意思的约束字母。 最通用的约束为@samp{m}和@samp{r}（分别用于内存和通用寄存器； @pxref{Simple Constraints}， 以及@samp{I}，通常用于指示最常见的立即数常量格式。
-
 每个体系结构定义了额外的约束。这些约束被编译器本身使用，用于指令生成， 同时也用于@code{asm}语句；因此，一些约束对于@code{asm}并不是很有用处。 这里有一个总结，关于在一些特定机器上使用的机器相关的约束； 包括对@code{asm}有用处的和没有用处的。 在表中提到的针对每个体系结构的编译器原文件，是该体系结构的约束的定义参考。
 
 @en @table @emph
