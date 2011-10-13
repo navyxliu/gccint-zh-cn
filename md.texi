@@ -11272,19 +11272,19 @@ GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟�
 @en @cindex instruction latency time
 @en @cindex regular expressions
 @en @cindex data bypass
-@en The following construction is the major one to describe pipeline
-@en characteristics of an instruction.
 @findex define_insn_reservation
 @cindex instruction latency time
 @cindex regular expressions
 @cindex data bypass
+@en The following construction is the major one to describe pipeline
+@en characteristics of an instruction.
 下面的结构为描述一条指令的流水线特征的主要结构。
 
 @smallexample
 (define_insn_reservation @var{insn-name} @var{default_latency}
                          @var{condition} @var{regexp})
 @end smallexample
-@en 
+
 @en @var{default_latency} is a number giving latency time of the
 @en instruction.  There is an important difference between the old
 @en description and the automaton based pipeline description.  The latency
@@ -11296,13 +11296,25 @@ GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟�
 @en is negative, the cost is considered to be zero).  You can always
 @en change the default costs for any description by using the target hook
 @en @code{TARGET_SCHED_ADJUST_COST} (@pxref{Scheduling}).
-@en 
+@var{default_latency}为一个数，给出了指令的延迟时间。
+在旧描述和基于自动机的流水线描述中，有一个重要的不同之处。
+当我们使用旧描述时，延迟时间是用于所有的依赖。
+在基于自动机的流水线描述中，给定的延迟时间只用于真依赖。
+反依赖的代价总为0，并且输出依赖的代价是生产者insn和消费者insn的延迟时间之差
+（如果差为负数，则代价被认为为0）。
+你可以通过使用目标机钩子@code{TARGET_SCHED_ADJUST_COST}（@pxref{Scheduling}），
+来改变任何描述的缺省代价。
+
 @en @var{insn-name} is a string giving the internal name of the insn.  The
 @en internal names are used in constructions @code{define_bypass} and in
 @en the automaton description file generated for debugging.  The internal
 @en name has nothing in common with the names in @code{define_insn}.  It is a
 @en good practice to use insn classes described in the processor manual.
-@en 
+@var{insn-name}为一个字符串，给出了insn的内部名字。
+内部名字被用于结构@code{define_bypass}和为了调试所生成的自动机描述文件。
+内部名字与@code{define_insn}中的名字没有任何关系。
+使用在处理器手册中描述的insn类别，是一个很好的做法。
+
 @en @var{condition} defines what RTL insns are described by this
 @en construction.  You should remember that you will be in trouble if
 @en @var{condition} for two or more different
@@ -11314,24 +11326,6 @@ GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟�
 @en contain @code{symbol_ref}).  It is also not checked during the
 @en pipeline hazard recognizer work because it would slow down the
 @en recognizer considerably.
-@en 
-@en @var{regexp} is a string describing the reservation of the cpu's functional
-@en units by the instruction.  The reservations are described by a regular
-@en expression according to the following syntax:
-@var{default_latency}为一个数，给出了指令的延迟时间。
-在旧描述和基于自动机的流水线描述中，有一个重要的不同之处。
-当我们使用旧描述时，延迟时间是用于所有的依赖。
-在基于自动机的流水线描述中，给定的延迟时间只用于真依赖。
-反依赖的代价总为0，并且输出依赖的代价是生产者insn和消费者insn的延迟时间之差
-（如果差为负数，则代价被认为为0）。
-你可以通过使用目标机钩子@code{TARGET_SCHED_ADJUST_COST}（@pxref{Scheduling}），
-来改变任何描述的缺省代价。
-
-@var{insn-name}为一个字符串，给出了insn的内部名字。
-内部名字被用于结构@code{define_bypass}和为了调试所生成的自动机描述文件。
-内部名字与@code{define_insn}中的名字没有任何关系。
-使用在处理器手册中描述的insn类别，是一个很好的做法。
-
 @var{condition}定义了什么样的RTL insns由该结构描述。
 你应该记住如果对于一个insn，
 两个或更多不同@code{define_insn_reservation}结构的@var{condition}都为真，
@@ -11341,6 +11335,9 @@ GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟�
 （特别是如果条件中包含@code{symbol_ref}）。
 这在流水线识别器工作时，也不被检查，因为它将使识别器变得相当慢。
 
+@en @var{regexp} is a string describing the reservation of the cpu's functional
+@en units by the instruction.  The reservations are described by a regular
+@en expression according to the following syntax:
 @var{regexp}为一个字符串，描述了指令对cpu的功能单元的保留。
 保留通过正规表达式来描述，语法如下：
 
@@ -11366,75 +11363,52 @@ GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟�
 
 @en @itemize @bullet
 @en @item
-@en @samp{,} is used for describing the start of the next cycle in
-@en the reservation.
-@en 
-@en @item
-@en @samp{|} is used for describing a reservation described by the first
-@en regular expression @strong{or} a reservation described by the second
-@en regular expression @strong{or} etc.
-@en 
-@en @item
-@en @samp{+} is used for describing a reservation described by the first
-@en regular expression @strong{and} a reservation described by the
-@en second regular expression @strong{and} etc.
-@en 
-@en @item
-@en @samp{*} is used for convenience and simply means a sequence in which
-@en the regular expression are repeated @var{number} times with cycle
-@en advancing (see @samp{,}).
-@en 
-@en @item
-@en @samp{cpu_function_unit_name} denotes reservation of the named
-@en functional unit.
-@en 
-@en @item
-@en @samp{reservation_name} --- see description of construction
-@en @samp{define_reservation}.
-@en 
-@en @item
-@en @samp{nothing} denotes no unit reservations.
-@en @end itemize
 @itemize @bullet
 @item
+@en @samp{,} is used for describing the start of the next cycle in
+@en the reservation.
 @samp{,}用于描述在保留中，下一周期的开始。
 
 @item
+@en @samp{|} is used for describing a reservation described by the first
+@en regular expression @strong{or} a reservation described by the second
+@en regular expression @strong{or} etc.
 @samp{|}用于描述在保留中，第一个正规表达式@strong{or}第二个正规表达式，
 @strong{or}等等。 
 
 @item
+@en @samp{+} is used for describing a reservation described by the first
+@en regular expression @strong{and} a reservation described by the
+@en second regular expression @strong{and} etc.
 @samp{+}用于描述在保留中，第一个正规表达式@strong{and}第二个正规表达式，
 @strong{and}等等。
 
 @item
+@en @samp{*} is used for convenience and simply means a sequence in which
+@en the regular expression are repeated @var{number} times with cycle
+@en advancing (see @samp{,}).
 @samp{*}用于方便记述，其简单的表示一个正规表达式序列，
 表达式随着周期前移被重复@var{number}次（参见@samp{,}）。
 
 @item
+@en @samp{cpu_function_unit_name} denotes reservation of the named
+@en functional unit.
 @samp{cpu_function_unit_name}表示对命名功能单元的保留。
 
 @item
+@en @samp{reservation_name} --- see description of construction
+@en @samp{define_reservation}.
 @samp{reservation_name} --- 参见对结构@samp{define_reservation}的描述。
 
 @item
+@en @samp{nothing} denotes no unit reservations.
 @samp{nothing}表示没有功能单元被保留。
 @end itemize
 
-@en @findex define_reservation
+@findex define_reservation
 @en Sometimes unit reservations for different insns contain common parts.
 @en In such case, you can simplify the pipeline description by describing
 @en the common part by the following construction
-@en 
-@en @smallexample
-@en (define_reservation @var{reservation-name} @var{regexp})
-@en @end smallexample
-@en 
-@en @var{reservation-name} is a string giving name of @var{regexp}.
-@en Functional unit names and reservation names are in the same name
-@en space.  So the reservation names should be different from the
-@en functional unit names and can not be the reserved name @samp{nothing}.
-@findex define_reservation
 有时，对于不同insn，具有共同部分的单元保留。
 这样情况，你可以通过使用下面的结构来描述共同部分，以简化流水线描述。
 
@@ -11442,6 +11416,10 @@ GCC指令调度器使用流水线冒险识别器通过给定的处理器时钟�
 (define_reservation @var{reservation-name} @var{regexp})
 @end smallexample
 
+@en @var{reservation-name} is a string giving name of @var{regexp}.
+@en Functional unit names and reservation names are in the same name
+@en space.  So the reservation names should be different from the
+@en functional unit names and can not be the reserved name @samp{nothing}.
 @var{reservation-name}为一个字符串，给出了@var{regexp}的名字。
 功能单元名和保留名属于同一命名空间。所以，保留名应该与功能单元名不同，
 并且不能为预留名@samp{nothing}。
