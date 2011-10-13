@@ -2248,749 +2248,519 @@ GCC只能处理在asm中的一个可交换对；如果你有更多的，编译�
 @en the meanings of that architecture's constraints.
 每个体系结构定义了额外的约束。这些约束被编译器本身使用，用于指令生成， 同时也用于@code{asm}语句；因此，一些约束对于@code{asm}并不是很有用处。 这里有一个总结，关于在一些特定机器上使用的机器相关的约束； 包括对@code{asm}有用处的和没有用处的。 在表中提到的针对每个体系结构的编译器原文件，是该体系结构的约束的定义参考。
 
-@en @table @emph
-@en @item ARM family---@file{config/arm/arm.h}
-@en @table @code
-@en @item f
-@en Floating-point register
-@en 
-@en @item w
-@en VFP floating-point register
-@en 
-@en @item F
-@en One of the floating-point constants 0.0, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0
-@en or 10.0
-@en 
-@en @item G
-@en Floating-point constant that would satisfy the constraint @samp{F} if it
-@en were negated
-@en 
-@en @item I
-@en Integer that is valid as an immediate operand in a data processing
-@en instruction.  That is, an integer in the range 0 to 255 rotated by a
-@en multiple of 2
-@en 
-@en @item J
-@en Integer in the range @minus{}4095 to 4095
-@en 
-@en @item K
-@en Integer that satisfies constraint @samp{I} when inverted (ones complement)
-@en 
-@en @item L
-@en Integer that satisfies constraint @samp{I} when negated (twos complement)
-@en 
-@en @item M
-@en Integer in the range 0 to 32
-@en 
-@en @item Q
-@en A memory reference where the exact address is in a single register
-@en (`@samp{m}' is preferable for @code{asm} statements)
-@en 
-@en @item R
-@en An item in the constant pool
-@en 
-@en @item S
-@en A symbol in the text segment of the current file
-@en 
-@en @item Uv
-@en A memory reference suitable for VFP load/store insns (reg+constant offset)
-@en 
-@en @item Uy
-@en A memory reference suitable for iWMMXt load/store instructions.
-@en 
-@en @item Uq
-@en A memory reference suitable for the ARMv4 ldrsb instruction.
-@en @end table
 @table @emph
 @item ARM family---@file{config/arm/arm.h}
 @table @code
 @item f
+@en Floating-point register
 浮点寄存器
-
+ 
 @item w
+@en VFP floating-point register
 VFP浮点寄存器
 
 @item F
+@en One of the floating-point constants 0.0, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0
+@en or 10.0
 浮点常量0.0, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0或者10.0
 
 @item G
+@en Floating-point constant that would satisfy the constraint @samp{F} if it
+@en were negated
 浮点常量，其负数满足约束@samp{F}
 
 @item I
+@en Integer that is valid as an immediate operand in a data processing
+@en instruction.  That is, an integer in the range 0 to 255 rotated by a
+@en multiple of 2
 可以在数据处理指令中作为立即数的整数。即，0到255范围的整数，被2的倍数进行旋转
 
 @item J
+@en Integer in the range @minus{}4095 to 4095
 范围在@minus{}4095到4095的整数
 
 @item K
+@en Integer that satisfies constraint @samp{I} when inverted (ones complement)
 当倒置后，满足约束@samp{I}的整数
 
 @item L
+@en Integer that satisfies constraint @samp{I} when negated (twos complement)
 当求负后，满足约束@samp{I}的整数
 
 @item M
+@en Integer in the range 0 to 32
 范围在0到32的整数
 
 @item Q
+@en A memory reference where the exact address is in a single register
+@en (`@samp{m}' is preferable for @code{asm} statements)
 一个内存引用，其确切的地址在单个寄存器中（`@samp{m}'可以用于@code{asm}语句）
 
 @item R
+@en An item in the constant pool
 在常量池中的项
 
 @item S
+@en A symbol in the text segment of the current file
 在当前文件中text段中的符号
 
 @item Uv
+@en A memory reference suitable for VFP load/store insns (reg+constant offset)
 适于VFP加载/存储insn（寄存器+常量 偏移量）的内存引用
 
 @item Uy
+@en A memory reference suitable for iWMMXt load/store instructions.
 适于iWMMXt加载/存储指令的内存引用
 
 @item Uq
+@en A memory reference suitable for the ARMv4 ldrsb instruction.
 适于ARMv4 ldrsb指令的内存引用
 @end table
 
-@en @item AVR family---@file{config/avr/constraints.md}
-@en @table @code
-@en @item l
-@en Registers from r0 to r15
-@en 
-@en @item a
-@en Registers from r16 to r23
-@en 
-@en @item d
-@en Registers from r16 to r31
-@en 
-@en @item w
-@en Registers from r24 to r31.  These registers can be used in @samp{adiw} command
-@en 
-@en @item e
-@en Pointer register (r26--r31)
-@en 
-@en @item b
-@en Base pointer register (r28--r31)
-@en 
-@en @item q
-@en Stack pointer register (SPH:SPL)
-@en 
-@en @item t
-@en Temporary register r0
-@en 
-@en @item x
-@en Register pair X (r27:r26)
-@en 
-@en @item y
-@en Register pair Y (r29:r28)
-@en 
-@en @item z
-@en Register pair Z (r31:r30)
-@en 
-@en @item I
-@en Constant greater than @minus{}1, less than 64
-@en 
-@en @item J
-@en Constant greater than @minus{}64, less than 1
-@en 
-@en @item K
-@en Constant integer 2
-@en 
-@en @item L
-@en Constant integer 0
-@en 
-@en @item M
-@en Constant that fits in 8 bits
-@en 
-@en @item N
-@en Constant integer @minus{}1
-@en 
-@en @item O
-@en Constant integer 8, 16, or 24
-@en 
-@en @item P
-@en Constant integer 1
-@en 
-@en @item G
-@en A floating point constant 0.0
-@en 
-@en @item R
-@en Integer constant in the range @minus{}6 @dots{} 5.
-@en 
-@en @item Q
-@en A memory address based on Y or Z pointer with displacement.
-@en @end table
 @item AVR family---@file{config/avr/constraints.md}
 @table @code
 @item l
+@en Registers from r0 to r15
 寄存器r0到r15
 
 @item a
+@en Registers from r16 to r23
 寄存器r16到r23
 
 @item d
+@en Registers from r16 to r31
 寄存器r16到r31
 
 @item w
+@en Registers from r24 to r31.  These registers can be used in @samp{adiw} command
 寄存器r24到r31。这些寄存器可以用于@samp{adiw}命令
 
 @item e
+@en Pointer register (r26--r31)
 指针寄存器(r26--r31)
 
 @item b
+@en Base pointer register (r28--r31)
 基指针寄存器(r28--r31)
 
 @item q
+@en Stack pointer register (SPH:SPL)
 栈指针寄存器(SPH:SPL)
 
 @item t
+@en Temporary register r0
 临时寄存器r0
 
 @item x
+@en Register pair X (r27:r26)
 寄存器对X (r27:r26)
 
 @item y
+@en Register pair Y (r29:r28)
 寄存器对Y (r29:r28)
 
 @item z
+@en Register pair Z (r31:r30)
 寄存器对Z (r31:r30)
 
 @item I
+@en Constant greater than @minus{}1, less than 64
 常量，大于@minus{}1，小于64
 
 @item J
+@en Constant greater than @minus{}64, less than 1
 常量，大于@minus{}64，小于1
 
 @item K
+@en Constant integer 2
 常量整数2
 
 @item L
+@en Constant integer 0
 常量整数0
 
 @item M
+@en Constant that fits in 8 bits
 8位的常量
 
 @item N
+@en Constant integer @minus{}1
 常量整数@minus{}1
 
 @item O
+@en Constant integer 8, 16, or 24
 常量整数8，16或24
 
 @item P
+@en Constant integer 1
 常量整数1
 
 @item G
+@en A floating point constant 0.0
 浮点常量0.0
 
 @item R
+@en Integer constant in the range @minus{}6 @dots{} 5.
 整数常量，范围在-6 @dots{} 5
 
 @item Q
+@en A memory address based on Y or Z pointer with displacement.
 一个内存地址，基于Y或者Z指针，加上一个位移
 @end table
 
-@en @item CRX Architecture---@file{config/crx/crx.h}
-@en @table @code
-@en 
-@en @item b
-@en Registers from r0 to r14 (registers without stack pointer)
-@en 
-@en @item l
-@en Register r16 (64-bit accumulator lo register)
-@en 
-@en @item h
-@en Register r17 (64-bit accumulator hi register)
-@en 
-@en @item k
-@en Register pair r16-r17. (64-bit accumulator lo-hi pair)
-@en 
-@en @item I
-@en Constant that fits in 3 bits
-@en 
-@en @item J
-@en Constant that fits in 4 bits
-@en 
-@en @item K
-@en Constant that fits in 5 bits
-@en 
-@en @item L
-@en Constant that is one of @minus{}1, 4, @minus{}4, 7, 8, 12, 16, 20, 32, 48
-@en 
-@en @item G
-@en Floating point constant that is legal for store immediate
-@en @end table
 @item CRX Architecture---@file{config/crx/crx.h}
 @table @code
 
 @item b
+@en Registers from r0 to r14 (registers without stack pointer)
 寄存器从r0到r14（不含栈指针）
 
 @item l
+@en Register r16 (64-bit accumulator lo register)
 寄存器r16（64位累加器lo寄存器）
 
 @item h
+@en Register r17 (64-bit accumulator hi register)
 寄存器r17（64位累加器hi寄存器）
 
 @item k
+@en Register pair r16-r17. (64-bit accumulator lo-hi pair)
 寄存器对r16-r17（64位累加器lo-hi寄存器对）
 
 @item I
+@en Constant that fits in 3 bits
 3位的常量
 
 @item J
+@en Constant that fits in 4 bits
 4位的常量
 
 @item K
+@en Constant that fits in 5 bits
 5位的常量
 
 @item L
+@en Constant that is one of @minus{}1, 4, @minus{}4, 7, 8, 12, 16, 20, 32, 48
 常量-1, 4, -4, 7, 8, 12, 16, 20, 32, 48
 
 @item G
+@en Floating point constant that is legal for store immediate
 浮点常量，合法的可以用于存储的立即数。
 @end table
 
-@en @item Hewlett-Packard PA-RISC---@file{config/pa/pa.h}
-@en @table @code
-@en @item a
-@en General register 1
-@en 
-@en @item f
-@en Floating point register
-@en 
-@en @item q
-@en Shift amount register
-@en 
-@en @item x
-@en Floating point register (deprecated)
-@en 
-@en @item y
-@en Upper floating point register (32-bit), floating point register (64-bit)
-@en 
-@en @item Z
-@en Any register
-@en 
-@en @item I
-@en Signed 11-bit integer constant
-@en 
-@en @item J
-@en Signed 14-bit integer constant
-@en 
-@en @item K
-@en Integer constant that can be deposited with a @code{zdepi} instruction
-@en 
-@en @item L
-@en Signed 5-bit integer constant
-@en 
-@en @item M
-@en Integer constant 0
-@en 
-@en @item N
-@en Integer constant that can be loaded with a @code{ldil} instruction
-@en 
-@en @item O
-@en Integer constant whose value plus one is a power of 2
-@en 
-@en @item P
-@en Integer constant that can be used for @code{and} operations in @code{depi}
-@en and @code{extru} instructions
-@en 
-@en @item S
-@en Integer constant 31
-@en 
-@en @item U
-@en Integer constant 63
-@en 
-@en @item G
-@en Floating-point constant 0.0
-@en 
-@en @item A
-@en A @code{lo_sum} data-linkage-table memory operand
-@en 
-@en @item Q
-@en A memory operand that can be used as the destination operand of an
-@en integer store instruction
-@en 
-@en @item R
-@en A scaled or unscaled indexed memory operand
-@en 
-@en @item T
-@en A memory operand for floating-point loads and stores
-@en 
-@en @item W
-@en A register indirect memory operand
-@en @end table
 @item Hewlett-Packard PA-RISC---@file{config/pa/pa.h}
 @table @code
 @item a
+@en General register 1
 通用寄存器1
 
 @item f
+@en Floating point register
 浮点寄存器
 
 @item q
+@en Shift amount register
 移位数量寄存器
 
 @item x
+@en Floating point register (deprecated)
 浮点寄存器(不推荐的)
 
 @item y
+@en Upper floating point register (32-bit), floating point register (64-bit)
 高位部分浮点寄存器（32位），浮点寄存器（64位）
 
 @item Z
+@en Any register
 任何寄存器
 
 @item I
+@en Signed 11-bit integer constant
 有符号的11位整数常量
 
 @item J
+@en Signed 14-bit integer constant
 有符号的14位整数常量
 
 @item K
+@en Integer constant that can be deposited with a @code{zdepi} instruction
 可以使用指令@code{zdepi}存放的整数常量
 
 @item L
+@en Signed 5-bit integer constant
 有符号的5位整数常量
 
 @item M
+@en Integer constant 0
 整数常量0
 
 @item N
+@en Integer constant that can be loaded with a @code{ldil} instruction
 可以使用@code{ldil}指令加载的整数常量
 
 @item O
+@en Integer constant whose value plus one is a power of 2
 整数常量，其值加上1便为2的幂
 
 @item P
+@en Integer constant that can be used for @code{and} operations in @code{depi}
+@en and @code{extru} instructions
 可以用于在@code{depi}和@code{extru}指令中@code{and}运算的整数常量
 
 @item S
+@en Integer constant 31
 整数常量31
 
 @item U
+@en Integer constant 63
 整数常量63
 
 @item G
+@en Floating-point constant 0.0
 浮点常量0.0
 
 @item A
+@en A @code{lo_sum} data-linkage-table memory operand
 一个@code{lo_sum} data-linkage-table内存操作数
 
 @item Q
+@en A memory operand that can be used as the destination operand of an
+@en integer store instruction
 可以用作整数存储指令的目的操作数的内存操作数
 
 @item R
+@en A scaled or unscaled indexed memory operand
 缩放或者未缩放的索引内存操作数
 
 @item T
+@en A memory operand for floating-point loads and stores
 浮点加载和存储的内存操作数
 
 @item W
+@en A register indirect memory operand
 寄存器间接内存操作数
 @end table
 
-@en @item picoChip family---@file{picochip.h}
-@en @table @code
-@en @item k
+@item picoChip family---@file{picochip.h}
+@table @code
+@item k
 @en Stack register.
-@en 
-@en @item f
+栈寄存器
+
+@item f
 @en Pointer register.  A register which can be used to access memory without
 @en supplying an offset.  Any other register can be used to access memory,
 @en but will need a constant offset.  In the case of the offset being zero,
 @en it is more efficient to use a pointer register, since this reduces code
 @en size.
-@en 
-@en @item t
-@en A twin register.  A register which may be paired with an adjacent
-@en register to create a 32-bit register.
-@en 
-@en @item a
-@en Any absolute memory address (e.g., symbolic constant, symbolic
-@en constant + offset).
-@en 
-@en @item I
-@en 4-bit signed integer.
-@en 
-@en @item J
-@en 4-bit unsigned integer.
-@en 
-@en @item K
-@en 8-bit signed integer.
-@en 
-@en @item M
-@en Any constant whose absolute value is no greater than 4-bits.
-@en 
-@en @item N
-@en 10-bit signed integer
-@en 
-@en @item O
-@en 16-bit signed integer.
-@en 
-@en @end table
-@item picoChip family---@file{picochip.h}
-@table @code
-@item k
-栈寄存器
-
-@item f
 指针寄存器。可以用于访问内存，无需提供偏移量。任何其它寄存器可以用于访问内存，但需要一个常量偏移量。当偏移量为零的时候，使用指针寄存器会更有效，因为这将减少代码大小。
 
 @item t
+@en A twin register.  A register which may be paired with an adjacent
+@en register to create a 32-bit register.
 成对寄存器。相邻的两个寄存器，用来创建一个32位寄存器。
 
 @item a
+@en Any absolute memory address (e.g., symbolic constant, symbolic
+@en constant + offset).
 任何绝对内存地址（例如，符号常量，符号常量+偏移量）
 
 @item I
+@en 4-bit signed integer.
 4位有符号整数
 
 @item J
+@en 4-bit unsigned integer.
 4位无符号整数
 
 @item K
+@en 8-bit signed integer.
 8位有符号整数
 
 @item M
+@en Any constant whose absolute value is no greater than 4-bits.
 任何绝对值不大于4位的常量
 
 @item N
+@en 10-bit signed integer
 10位有符号整数
 
 @item O
+@en 16-bit signed integer.
 16位有符号整数
 
 @end table
 
-@en @item PowerPC and IBM RS6000---@file{config/rs6000/rs6000.h}
-@en @table @code
-@en @item b
-@en Address base register
-@en 
-@en @item d
-@en Floating point register (containing 64-bit value)
-@en 
-@en @item f
-@en Floating point register (containing 32-bit value)
-@en 
-@en @item v
-@en Altivec vector register
-@en 
-@en @item wd
-@en VSX vector register to hold vector double data
-@en 
-@en @item wf
-@en VSX vector register to hold vector float data
-@en 
-@en @item ws
-@en VSX vector register to hold scalar float data
-@en 
-@en @item wa
-@en Any VSX register
-@en 
-@en @item h
-@en @samp{MQ}, @samp{CTR}, or @samp{LINK} register
-@en 
-@en @item q
-@en @samp{MQ} register
-@en 
-@en @item c
-@en @samp{CTR} register
-@en 
-@en @item l
-@en @samp{LINK} register
-@en 
-@en @item x
-@en @samp{CR} register (condition register) number 0
-@en 
-@en @item y
-@en @samp{CR} register (condition register)
-@en 
-@en @item z
-@en @samp{XER[CA]} carry bit (part of the XER register)
-@en 
-@en @item I
-@en Signed 16-bit constant
-@en 
-@en @item J
-@en Unsigned 16-bit constant shifted left 16 bits (use @samp{L} instead for
-@en @code{SImode} constants)
-@en 
-@en @item K
-@en Unsigned 16-bit constant
-@en 
-@en @item L
-@en Signed 16-bit constant shifted left 16 bits
-@en 
-@en @item M
-@en Constant larger than 31
-@en 
-@en @item N
-@en Exact power of 2
-@en 
-@en @item O
-@en Zero
-@en 
-@en @item P
-@en Constant whose negation is a signed 16-bit constant
-@en 
-@en @item G
-@en Floating point constant that can be loaded into a register with one
-@en instruction per word
-@en 
-@en @item H
-@en Integer/Floating point constant that can be loaded into a register using
-@en three instructions
-@en 
-@en @item m
-@en Memory operand.  
-@en Normally, @code{m} does not allow addresses that update the base register.
-@en If @samp{<} or @samp{>} constraint is also used, they are allowed and
-@en therefore on PowerPC targets in that case it is only safe
-@en to use @samp{m<>} in an @code{asm} statement if that @code{asm} statement
-@en accesses the operand exactly once.  The @code{asm} statement must also
-@en use @samp{%U@var{<opno>}} as a placeholder for the ``update'' flag in the
-@en corresponding load or store instruction.  For example:
-@en 
-@en @smallexample
-@en asm ("st%U0 %1,%0" : "=m<>" (mem) : "r" (val));
-@en @end smallexample
-@en 
-@en is correct but:
-@en 
-@en @smallexample
-@en asm ("st %1,%0" : "=m<>" (mem) : "r" (val));
-@en @end smallexample
-@en 
-@en is not.
-@en 
-@en @item es
-@en A ``stable'' memory operand; that is, one which does not include any
-@en automodification of the base register.  This used to be useful when
-@en @samp{m} allowed automodification of the base register, but as those are now only
-@en allowed when @samp{<} or @samp{>} is used, @samp{es} is basically the same
-@en as @samp{m} without @samp{<} and @samp{>}.
-@en 
-@en @item Q
-@en Memory operand that is an offset from a register (it is usually better
-@en to use @samp{m} or @samp{es} in @code{asm} statements)
-@en 
-@en @item Z
-@en Memory operand that is an indexed or indirect from a register (it is
-@en usually better to use @samp{m} or @samp{es} in @code{asm} statements)
-@en 
-@en @item R
-@en AIX TOC entry
-@en 
-@en @item a
-@en Address operand that is an indexed or indirect from a register (@samp{p} is
-@en preferable for @code{asm} statements)
-@en 
-@en @item S
-@en Constant suitable as a 64-bit mask operand
-@en 
-@en @item T
-@en Constant suitable as a 32-bit mask operand
-@en 
-@en @item U
-@en System V Release 4 small data area reference
-@en 
-@en @item t
-@en AND masks that can be performed by two rldic@{l, r@} instructions
-@en 
-@en @item W
-@en Vector constant that does not require memory
-@en 
-@en @item j
-@en Vector constant that is all zeros.
-@en 
-@en @end table
 @item PowerPC and IBM RS6000---@file{config/rs6000/rs6000.h}
 @table @code
 @item b
+@en Address base register
 基址寄存器
 
+@item d
+Floating point register (containing 64-bit value)
+
 @item f
+@en Floating point register (containing 32-bit value)
 浮点寄存器
 
 @item v
+@en Altivec vector register
 向量寄存器
 
+@item wd
+VSX vector register to hold vector double data
+
+@item wf
+VSX vector register to hold vector float data
+
+@item ws
+VSX vector register to hold scalar float data
+
+@item wa
+Any VSX register
+
 @item h
+@en @samp{MQ}, @samp{CTR}, or @samp{LINK} register
 @samp{MQ}, @samp{CTR}或者@samp{LINK}寄存器
 
 @item q
+@en @samp{MQ} register
 @samp{MQ}寄存器
 
 @item c
+@en @samp{CTR} register
 @samp{CTR}寄存器
 
 @item l
+@en @samp{LINK} register
 @samp{LINK}寄存器
 
 @item x
+@en @samp{CR} register (condition register) number 0
 @samp{CR}寄存器(条件寄存器)编号0
 
 @item y
+@en @samp{CR} register (condition register)
 @samp{CR}寄存器(条件寄存器)
 
 @item z
+@en @samp{XER[CA]} carry bit (part of the XER register)
 @samp{FPMEM}栈内存，用于FPR-GPR传送
 
 @item I
+@en Signed 16-bit constant
 有符号16位常量
 
 @item J
+@en Unsigned 16-bit constant shifted left 16 bits (use @samp{L} instead for
+@en @code{SImode} constants)
 无符号16位常量，向左移16位（使用@samp{L}来替代常量）
 
 @item K
+@en Unsigned 16-bit constant
 无符号16位常量
 
 @item L
+@en Signed 16-bit constant shifted left 16 bits
 有符号16位常量，向左移16位
 
 @item M
+@en Constant larger than 31
 大于31的常量
 
 @item N
+@en Exact power of 2
 2的幂
 
 @item O
+@en Zero
 零
 
 @item P
+@en Constant whose negation is a signed 16-bit constant
 常量，其负数为有符号的16位常量
 
 @item G
+@en Floating point constant that can be loaded into a register with one
+@en instruction per word
 浮点常量，可以使用一个字的指令将其加载到寄存器中
 
 @item H
+@en Integer/Floating point constant that can be loaded into a register using
+@en three instructions
 整数/浮点常量，可以使用三条指令将其加载到寄存器中
 
+@item m
+Memory operand.  
+Normally, @code{m} does not allow addresses that update the base register.
+If @samp{<} or @samp{>} constraint is also used, they are allowed and
+therefore on PowerPC targets in that case it is only safe
+to use @samp{m<>} in an @code{asm} statement if that @code{asm} statement
+accesses the operand exactly once.  The @code{asm} statement must also
+use @samp{%U@var{<opno>}} as a placeholder for the ``update'' flag in the
+corresponding load or store instruction.  For example:
+
+@smallexample
+asm ("st%U0 %1,%0" : "=m<>" (mem) : "r" (val));
+@end smallexample
+
+is correct but:
+
+@smallexample
+asm ("st %1,%0" : "=m<>" (mem) : "r" (val));
+@end smallexample
+
+is not.
+
+@item es
+A ``stable'' memory operand; that is, one which does not include any
+automodification of the base register.  This used to be useful when
+@samp{m} allowed automodification of the base register, but as those are now only
+allowed when @samp{<} or @samp{>} is used, @samp{es} is basically the same
+as @samp{m} without @samp{<} and @samp{>}.
+
 @item Q
+@en Memory operand that is an offset from a register (it is usually better
+@en to use @samp{m} or @samp{es} in @code{asm} statements)
 内存操作数，相对于寄存器的偏移量(@samp{m}适用于@code{asm}语句)
 
 @item Z
+@en Memory operand that is an indexed or indirect from a register (it is
+@en usually better to use @samp{m} or @samp{es} in @code{asm} statements)
 内存操作数，来自寄存器的一个索引或者间接访问(@samp{m}适用于@code{asm}语句)
 
 @item R
+@en AIX TOC entry
 AIX TOC项
 
 @item a
+@en Address operand that is an indexed or indirect from a register (@samp{p} is
+@en preferable for @code{asm} statements)
 地址操作数，来自寄存器的一个索引或者间接访问(@samp{p}适用于@code{asm}语句)
 
 @item S
+@en Constant suitable as a 64-bit mask operand
 适于作64位掩码操作数的常量
 
 @item T
+@en Constant suitable as a 32-bit mask operand
 适于作32位掩码操作数的常量
 
 @item U
+@en System V Release 4 small data area reference
 System V Release 4对小数据区域的引用
 
 @item t
+@en AND masks that can be performed by two rldic@{l, r@} instructions
 AND掩码，可以通过两条rldic@{l, r@}指令执行
 
 @item W
+@en Vector constant that does not require memory
 不需要内存的向量常量
+
+@item j
+@en Vector constant that is all zeros.
 @end table
 
 @item Intel 386---@file{config/i386/constraints.md}
@@ -3161,299 +2931,204 @@ unsigned long long rdtsc (void)
 32位无符号整数常量，或者已知适合该范围的符号引用（用于零扩展x86-64指令的立即数）
 @end table
  
-@en @item Intel IA-64---@file{config/ia64/ia64.h}
-@en @table @code
-@en @item a
-@en General register @code{r0} to @code{r3} for @code{addl} instruction
-@en 
-@en @item b
-@en Branch register
-@en 
-@en @item c
-@en Predicate register (@samp{c} as in ``conditional'')
-@en 
-@en @item d
-@en Application register residing in M-unit
-@en 
-@en @item e
-@en Application register residing in I-unit
-@en 
-@en @item f
-@en Floating-point register
-@en 
-@en @item m
-@en Memory operand.  If used together with @samp{<} or @samp{>},
-@en the operand can have postincrement and postdecrement which
-@en require printing with @samp{%Pn} on IA-64.
-@en 
-@en @item G
-@en Floating-point constant 0.0 or 1.0
-@en 
-@en @item I
-@en 14-bit signed integer constant
-@en 
-@en @item J
-@en 22-bit signed integer constant
-@en 
-@en @item K
-@en 8-bit signed integer constant for logical instructions
-@en 
-@en @item L
-@en 8-bit adjusted signed integer constant for compare pseudo-ops
-@en 
-@en @item M
-@en 6-bit unsigned integer constant for shift counts
-@en 
-@en @item N
-@en 9-bit signed integer constant for load and store postincrements
-@en 
-@en @item O
-@en The constant zero
-@en 
-@en @item P
-@en 0 or @minus{}1 for @code{dep} instruction
-@en 
-@en @item Q
-@en Non-volatile memory for floating-point loads and stores
-@en 
-@en @item R
-@en Integer constant in the range 1 to 4 for @code{shladd} instruction
-@en 
-@en @item S
-@en Memory operand except postincrement and postdecrement.  This is
-@en now roughly the same as @samp{m} when not used together with @samp{<}
-@en or @samp{>}.
-@en @end table
 @item Intel IA-64---@file{config/ia64/ia64.h}
 @table @code
 @item a
+@en General register @code{r0} to @code{r3} for @code{addl} instruction
 通用寄存器@code{r0}到@code{r3}，用于@code{addl}指令
 
 @item b
+@en Branch register
 分支寄存器
 
 @item c
+@en Predicate register (@samp{c} as in ``conditional'')
 断言寄存器(@samp{c} as in ``conditional'')
 
 @item d
+@en Application register residing in M-unit
 在M-unit中的应用寄存器
 
 @item e
+@en Application register residing in I-unit
 在I-unit中的应用寄存器
 
 @item f
+@en Floating-point register
 浮点寄存器
 
 @item m
+@en Memory operand.  If used together with @samp{<} or @samp{>},
+@en the operand can have postincrement and postdecrement which
+@en require printing with @samp{%Pn} on IA-64.
 内存操作数，记住在IA-64上，@samp{m}允许使用@samp{%Pn}打印的后增和后减方式。使用@samp{S}来禁止后增和后减。
 
 @item G
+@en Floating-point constant 0.0 or 1.0
 浮点常量0.0或者1.0
 
 @item I
+@en 14-bit signed integer constant
 14位有符号整数常量
 
 @item J
+@en 22-bit signed integer constant
 22位有符号整数常量
 
 @item K
+@en 8-bit signed integer constant for logical instructions
 8位有符号整数常量，用于逻辑指令
 
 @item L
+@en 8-bit adjusted signed integer constant for compare pseudo-ops
 8位被调整的有符号整数常量，用于比较伪操作
 
 @item M
+@en 6-bit unsigned integer constant for shift counts
 6位无符号整数常量，用于移位计数
 
 @item N
+@en 9-bit signed integer constant for load and store postincrements
 9位有符号整数常量，用于后增方式的加载和存储
 
 @item O
+@en The constant zero
 常量零
 
 @item P
+@en 0 or @minus{}1 for @code{dep} instruction
 0 或者 @minus{}1，用于@code{dep}指令
 
 @item Q
+@en Non-volatile memory for floating-point loads and stores
 非volatile内存，用于浮点加载和存储
 
 @item R
+@en Integer constant in the range 1 to 4 for @code{shladd} instruction
 整数常量范围在1到4，用于@code{shladd}指令
 
 @item S
+@en Memory operand except postincrement and postdecrement.  This is
+@en now roughly the same as @samp{m} when not used together with @samp{<}
+@en or @samp{>}.
 除了后增和后减以外的内存操作数
 @end table
 
-@en @item FRV---@file{config/frv/frv.h}
-@en @table @code
-@en @item a
-@en Register in the class @code{ACC_REGS} (@code{acc0} to @code{acc7}).
-@en 
-@en @item b
-@en Register in the class @code{EVEN_ACC_REGS} (@code{acc0} to @code{acc7}).
-@en 
-@en @item c
-@en Register in the class @code{CC_REGS} (@code{fcc0} to @code{fcc3} and
-@en @code{icc0} to @code{icc3}).
-@en 
-@en @item d
-@en Register in the class @code{GPR_REGS} (@code{gr0} to @code{gr63}).
-@en 
-@en @item e
-@en Register in the class @code{EVEN_REGS} (@code{gr0} to @code{gr63}).
-@en Odd registers are excluded not in the class but through the use of a machine
-@en mode larger than 4 bytes.
-@en 
-@en @item f
-@en Register in the class @code{FPR_REGS} (@code{fr0} to @code{fr63}).
-@en 
-@en @item h
-@en Register in the class @code{FEVEN_REGS} (@code{fr0} to @code{fr63}).
-@en Odd registers are excluded not in the class but through the use of a machine
-@en mode larger than 4 bytes.
-@en 
-@en @item l
-@en Register in the class @code{LR_REG} (the @code{lr} register).
-@en 
-@en @item q
-@en Register in the class @code{QUAD_REGS} (@code{gr2} to @code{gr63}).
-@en Register numbers not divisible by 4 are excluded not in the class but through
-@en the use of a machine mode larger than 8 bytes.
-@en 
-@en @item t
-@en Register in the class @code{ICC_REGS} (@code{icc0} to @code{icc3}).
-@en 
-@en @item u
-@en Register in the class @code{FCC_REGS} (@code{fcc0} to @code{fcc3}).
-@en 
-@en @item v
-@en Register in the class @code{ICR_REGS} (@code{cc4} to @code{cc7}).
-@en 
-@en @item w
-@en Register in the class @code{FCR_REGS} (@code{cc0} to @code{cc3}).
-@en 
-@en @item x
-@en Register in the class @code{QUAD_FPR_REGS} (@code{fr0} to @code{fr63}).
-@en Register numbers not divisible by 4 are excluded not in the class but through
-@en the use of a machine mode larger than 8 bytes.
-@en 
-@en @item z
-@en Register in the class @code{SPR_REGS} (@code{lcr} and @code{lr}).
-@en 
-@en @item A
-@en Register in the class @code{QUAD_ACC_REGS} (@code{acc0} to @code{acc7}).
-@en 
-@en @item B
-@en Register in the class @code{ACCG_REGS} (@code{accg0} to @code{accg7}).
-@en 
-@en @item C
-@en Register in the class @code{CR_REGS} (@code{cc0} to @code{cc7}).
-@en 
-@en @item G
-@en Floating point constant zero
-@en 
-@en @item I
-@en 6-bit signed integer constant
-@en 
-@en @item J
-@en 10-bit signed integer constant
-@en 
-@en @item L
-@en 16-bit signed integer constant
-@en 
-@en @item M
-@en 16-bit unsigned integer constant
-@en 
-@en @item N
-@en 12-bit signed integer constant that is negative---i.e.@: in the
-@en range of @minus{}2048 to @minus{}1
-@en 
-@en @item O
-@en Constant zero
-@en 
-@en @item P
-@en 12-bit signed integer constant that is greater than zero---i.e.@: in the
-@en range of 1 to 2047.
-@en 
-@en @end table
 @item FRV---@file{config/frv/frv.h}
 @table @code
 @item a
+@en Register in the class @code{ACC_REGS} (@code{acc0} to @code{acc7}).
 类别@code{ACC_REGS}中的寄存器(@code{acc0} 到 @code{acc7}).
 
 @item b
+@en Register in the class @code{EVEN_ACC_REGS} (@code{acc0} to @code{acc7}).
 类别@code{EVEN_ACC_REGS}中的寄存器(@code{acc0} 到 @code{acc7}).
 
 @item c
+@en Register in the class @code{CC_REGS} (@code{fcc0} to @code{fcc3} and
+@en @code{icc0} to @code{icc3}).
 类别@code{CC_REGS}中的寄存器(@code{fcc0} 到 @code{fcc3} 以及 @code{icc0} 到 @code{icc3}).
 
 @item d
+@en Register in the class @code{GPR_REGS} (@code{gr0} to @code{gr63}).
 类别@code{GPR_REGS}中的寄存器(@code{gr0} 到 @code{gr63}).
 
 @item e
+@en Register in the class @code{EVEN_REGS} (@code{gr0} to @code{gr63}).
+@en Odd registers are excluded not in the class but through the use of a machine
+@en mode larger than 4 bytes.
 类别@code{EVEN_REGS}中的寄存器(@code{gr0} 到 @code{gr63})。奇数寄存器不在该类中，但是可以使用大于4个字节的机器模式来使用。
 
 @item f
+@en Register in the class @code{FPR_REGS} (@code{fr0} to @code{fr63}).
 类别@code{FPR_REGS}中的寄存器(@code{fr0} 到 @code{fr63}).
 
 @item h
+@en Register in the class @code{FEVEN_REGS} (@code{fr0} to @code{fr63}).
+@en Odd registers are excluded not in the class but through the use of a machine
+@en mode larger than 4 bytes.
 类别@code{FEVEN_REGS}中的寄存器(@code{fr0} 到 @code{fr63})。奇数寄存器不在该类中，但是可以使用大于4个字节的机器模式来使用。
 
 @item l
+@en Register in the class @code{LR_REG} (the @code{lr} register).
 类比@code{LR_REG}中的寄存器(@code{lr}寄存器)。
 
 @item q
+@en Register in the class @code{QUAD_REGS} (@code{gr2} to @code{gr63}).
+@en Register numbers not divisible by 4 are excluded not in the class but through
+@en the use of a machine mode larger than 8 bytes.
 类别@code{QUAD_REGS}中的寄存器(@code{gr2} 到 @code{gr63})。无法被4整除的寄存器编号不在该类中，但是可以使用大于8个字节的机器模式来使用。
 
 @item t
+@en Register in the class @code{ICC_REGS} (@code{icc0} to @code{icc3}).
 类别@code{ICC_REGS}中的寄存器(@code{icc0} 到 @code{icc3}).
 
 @item u
+@en Register in the class @code{FCC_REGS} (@code{fcc0} to @code{fcc3}).
 类别@code{FCC_REGS}中的寄存器(@code{fcc0} 到 @code{fcc3}).
 
 @item v
+@en Register in the class @code{ICR_REGS} (@code{cc4} to @code{cc7}).
 类别@code{ICR_REGS}中的寄存器(@code{cc4} 到 @code{cc7}).
 
 @item w
+@en Register in the class @code{FCR_REGS} (@code{cc0} to @code{cc3}).
 类别@code{FCR_REGS}中的寄存器(@code{cc0} 到 @code{cc3}).
 
 @item x
+@en Register in the class @code{QUAD_FPR_REGS} (@code{fr0} to @code{fr63}).
+@en Register numbers not divisible by 4 are excluded not in the class but through
+@en the use of a machine mode larger than 8 bytes.
 类别@code{QUAD_FPR_REGS}中的寄存器(@code{fr0} 到 @code{fr63})。无法被4整除的寄存器编号不在该类中，但是可以使用大于8个字节的机器模式来使用。
 
 @item z
+@en Register in the class @code{SPR_REGS} (@code{lcr} and @code{lr}).
 类别@code{SPR_REGS}中的寄存器(@code{lcr} 和 @code{lr}).
 
 @item A
+@en Register in the class @code{QUAD_ACC_REGS} (@code{acc0} to @code{acc7}).
 类别@code{QUAD_ACC_REGS}中的寄存器(@code{acc0} 到 @code{acc7}).
 
 @item B
+@en Register in the class @code{ACCG_REGS} (@code{accg0} to @code{accg7}).
 类别@code{ACCG_REGS}中的寄存器(@code{accg0} 到 @code{accg7}).
 
 @item C
+@en Register in the class @code{CR_REGS} (@code{cc0} to @code{cc7}).
 类别@code{CR_REGS}中的寄存器(@code{cc0} 到 @code{cc7}).
 
 @item G
+@en Floating point constant zero
 浮点常量零
 
 @item I
+@en 6-bit signed integer constant
 6位有符号整数常量
 
 @item J
+@en 10-bit signed integer constant
 10位有符号整数常量
 
 @item L
+@en 16-bit signed integer constant
 16位有符号整数常量
 
 @item M
+@en 16-bit unsigned integer constant
 16位无符号整数常量
 
 @item N
+@en 12-bit signed integer constant that is negative---i.e.@: in the
+@en range of @minus{}2048 to @minus{}1
 12位有符号整数常量，且为负---即，范围在@minus{}2048 到 @minus{}1
 
 @item O
+@en Constant zero
 常量零
 
 @item P
+@en 12-bit signed integer constant that is greater than zero---i.e.@: in the
+@en range of 1 to 2047.
 12有符号整数常量，且大于零---即，范围在1到2047
 @end table
 
