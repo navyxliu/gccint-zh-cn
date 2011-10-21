@@ -4413,119 +4413,55 @@ MAC16 40位累加器
 
 @end table
 
-@en @ifset INTERNALS
-@en @node Disable Insn Alternatives
-@en @subsection Disable insn alternatives using the @code{enabled} attribute
-@en @cindex enabled
-@en 
-@en The @code{enabled} insn attribute may be used to disable certain insn
-@en alternatives for machine-specific reasons.  This is useful when adding
-@en new instructions to an existing pattern which are only available for
-@en certain cpu architecture levels as specified with the @code{-march=}
-@en option.
-@en 
-@en If an insn alternative is disabled, then it will never be used.  The
-@en compiler treats the constraints for the disabled alternative as
-@en unsatisfiable.
-@en 
-@en In order to make use of the @code{enabled} attribute a back end has to add
-@en in the machine description files:
 @ifset INTERNALS
 @node Disable Insn Alternatives
 @subsection 使用@code{enabled}属性来禁止insn可选项
 @cindex enabled
 
+@en The @code{enabled} insn attribute may be used to disable certain insn
+@en alternatives for machine-specific reasons.  This is useful when adding
+@en new instructions to an existing pattern which are only available for
+@en certain cpu architecture levels as specified with the @code{-march=}
+@en option.
 insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特定的insn的可选项。这用于，当为现有的指令模式，增加新的指令，且其只用于使用@code{-march=}选项指定的特定cpu体系结构级别。
 
+@en If an insn alternative is disabled, then it will never be used.  The
+@en compiler treats the constraints for the disabled alternative as
+@en unsatisfiable.
 如果insn的可选项被禁止，则其将不被使用。编译器将被禁止的可选项的约束视为不被满足。
 
+@en In order to make use of the @code{enabled} attribute a back end has to add
+@en in the machine description files:
 为了能够使用@code{enabled}属性，后端必须在机器描述文件中增加：
 
-@en @enumerate
-@en @item
+@enumerate
+@item
 @en A definition of the @code{enabled} insn attribute.  The attribute is
 @en defined as usual using the @code{define_attr} command.  This
 @en definition should be based on other insn attributes and/or target flags.
 @en The @code{enabled} attribute is a numeric attribute and should evaluate to
 @en @code{(const_int 1)} for an enabled alternative and to
 @en @code{(const_int 0)} otherwise.
-@en @item
+对@code{enabled} insn属性的定义。该属性通常使用@code{define_attr}命令来定义。该定义应该基于其它insn属性以及/或者目标机标记。@code{enabled}属性为数字属性，并且对于被启用的可选项应该求值为@code{(const_int 1)}，否则为@code{(const_int 0)}。
+
+@item
 @en A definition of another insn attribute used to describe for what
 @en reason an insn alternative might be available or
 @en not.  E.g. @code{cpu_facility} as in the example below.
-@en @item
+另一个insn属性的定义，用于描述为什么一个insn可选项可用或不可用。例如，下面例子中的@code{cpu_facility}。
+
+@item
 @en An assignment for the second attribute to each insn definition
 @en combining instructions which are not all available under the same
 @en circumstances.  (Note: It obviously only makes sense for definitions
 @en with more than one alternative.  Otherwise the insn pattern should be
 @en disabled or enabled using the insn condition.)
-@en @end enumerate
-@enumerate
-@item
-对@code{enabled} insn属性的定义。该属性通常使用@code{define_attr}命令来定义。该定义应该基于其它insn属性以及/或者目标机标记。@code{enabled}属性为数字属性，并且对于被启用的可选项应该求值为@code{(const_int 1)}，否则为@code{(const_int 0)}。
-
-@item
-另一个insn属性的定义，用于描述为什么一个insn可选项可用或不可用。例如，下面例子中的@code{cpu_facility}。
-
-@item
 对每个insn定义，赋予第二个属性。（注意：显然只是针对那些具有多个可选项的定义。其它insn模式应该使用insn条件来禁止或开启。）
 
 @end enumerate
 
 @en E.g. the following two patterns could easily be merged using the @code{enabled}
 @en attribute:
-@en 
-@en @smallexample
-@en 
-@en (define_insn "*movdi_old"
-@en   [(set (match_operand:DI 0 "register_operand" "=d")
-@en         (match_operand:DI 1 "register_operand" " d"))]
-@en   "!TARGET_NEW"
-@en   "lgr %0,%1")
-@en 
-@en (define_insn "*movdi_new"
-@en   [(set (match_operand:DI 0 "register_operand" "=d,f,d")
-@en         (match_operand:DI 1 "register_operand" " d,d,f"))]
-@en   "TARGET_NEW"
-@en   "@@
-@en    lgr  %0,%1
-@en    ldgr %0,%1
-@en    lgdr %0,%1")
-@en 
-@en @end smallexample
-@en 
-@en to:
-@en 
-@en @smallexample
-@en 
-@en (define_insn "*movdi_combined"
-@en   [(set (match_operand:DI 0 "register_operand" "=d,f,d")
-@en         (match_operand:DI 1 "register_operand" " d,d,f"))]
-@en   ""
-@en   "@@
-@en    lgr  %0,%1
-@en    ldgr %0,%1
-@en    lgdr %0,%1"
-@en   [(set_attr "cpu_facility" "*,new,new")])
-@en 
-@en @end smallexample
-@en 
-@en with the @code{enabled} attribute defined like this:
-@en 
-@en @smallexample
-@en 
-@en (define_attr "cpu_facility" "standard,new" (const_string "standard"))
-@en 
-@en (define_attr "enabled" ""
-@en   (cond [(eq_attr "cpu_facility" "standard") (const_int 1)
-@en          (and (eq_attr "cpu_facility" "new")
-@en               (ne (symbol_ref "TARGET_NEW") (const_int 0)))
-@en          (const_int 1)]
-@en         (const_int 0)))
-@en 
-@en @end smallexample
-@en 
-@en @end ifset
 例如，下面两个指令模式可以容易的使用@code{enabled}属性合并在一起：
 
 @smallexample
@@ -4547,6 +4483,7 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 
 @end smallexample
 
+@en to:
 合并成:
 
 @smallexample
@@ -4560,6 +4497,20 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
    ldgr %0,%1
    lgdr %0,%1"
   [(set_attr "cpu_facility" "*,new,new")])
+
+@end smallexample
+
+with the @code{enabled} attribute defined like this:
+@smallexample
+
+(define_attr "cpu_facility" "standard,new" (const_string "standard"))
+
+(define_attr "enabled" ""
+  (cond [(eq_attr "cpu_facility" "standard") (const_int 1)
+         (and (eq_attr "cpu_facility" "new")
+              (ne (symbol_ref "TARGET_NEW") (const_int 0)))
+         (const_int 1)]
+        (const_int 0)))
 
 @end smallexample
 
@@ -4610,13 +4561,12 @@ insn属性@code{enabled}，可以出于机器特定的原因，用来禁止特�
 @en look at the operand.  The usual use of expressions is to map some
 @en register constraints to @code{NO_REGS} when the register class
 @en is not available on a given subarchitecture.
-@en 
-@en @var{docstring} is a sentence documenting the meaning of the
-@en constraint.  Docstrings are explained further below.
-@en @end deffn
 @deffn {MD Expression} define_register_constraint name regclass docstring
 这三个参数都是字符串常量。@var{name}为约束的名字， 将在@code{match_operand}表达式中出现。如果@var{name}为多个字母的约束， 则它的长度应该与所有起始与同一字母的约束相同。 @var{regclass}可以为相应的寄存器类别的名字(@pxref{Register Classes})， 或者一个C表达式，其值为合适的寄存器类别。如果为表达式，其必须不具有副作用， 并且不能查看操作数。通常使用表达式是为了当寄存器类别对于给定的子体系结构无效时， 将一些寄存器约束映射为@code{NO_REGS}。
 
+@en @var{docstring} is a sentence documenting the meaning of the
+@en constraint.  Docstrings are explained further below.
+@en @end deffn
 @var{docstring}为一条语句，介绍了约束的含义。这将在下面做进一步的解释。
 @end deffn
 
@@ -4925,59 +4875,51 @@ C表达式@code{match_test}，可以访问下列变量：
 @en pattern to accomplish a certain task.
 这里有一个在编译器的RTL生成过程中有意义的指令名称表，在指令模式中给定这些名字中的一个，则告诉RTL生成过程，其可以使用该指令模式来完成一个特定的任务。
 
-@en @table @asis
-@en @cindex @code{mov@var{m}} instruction pattern
-@en @item @samp{mov@var{m}}
+@table @asis
+@cindex @code{mov@var{m}} instruction pattern
+@item @samp{mov@var{m}}
 @en Here @var{m} stands for a two-letter machine mode name, in lowercase.
 @en This instruction pattern moves data with that machine mode from operand
 @en 1 to operand 0.  For example, @samp{movsi} moves full-word data.
-@en 
+这里@var{m}表示一个两字母的机器模式名字，小写。该指令模式将那种机器模式的数据从操作数1移送到操作数0。例如@samp{movsi}移送整字数据。
+
 @en If operand 0 is a @code{subreg} with mode @var{m} of a register whose
 @en own mode is wider than @var{m}, the effect of this instruction is
 @en to store the specified value in the part of the register that corresponds
 @en to mode @var{m}.  Bits outside of @var{m}, but which are within the
 @en same target word as the @code{subreg} are undefined.  Bits which are
 @en outside the target word are left unchanged.
-@en 
+如果操作数0为一个寄存器的@code{subreg}，机器模式为@var{m}，寄存器自己的机器模式比@var{m}更宽，则该指令的效果是将指定的值存储在寄存器的对应于机器模式@var{m}的部分。@var{m}之外，且与@code{subreg}在同一个目标字中的位，为未定义。目标字以外的位保持不变。
+
 @en This class of patterns is special in several ways.  First of all, each
 @en of these names up to and including full word size @emph{must} be defined,
 @en because there is no other way to copy a datum from one place to another.
 @en If there are patterns accepting operands in larger modes,
 @en @samp{mov@var{m}} must be defined for integer modes of those sizes.
-@en 
+这类指令模式有几处特别的地方。首先，每个这些直到整字大小的名字，包括整字大小的，必须被定义，因为没有其它方式来从一个地方将数据复制到另一个地方。如果有接受更大机器模式的操作数的指令模式，则必须为那些大小的整数机器模式定义@samp{mov@var{m}}。
+
 @en Second, these patterns are not used solely in the RTL generation pass.
 @en Even the reload pass can generate move insns to copy values from stack
 @en slots into temporary registers.  When it does so, one of the operands is
 @en a hard register and the other is an operand that can need to be reloaded
 @en into a register.
-@table @asis
-@cindex @code{mov@var{m}} instruction pattern
-@item @samp{mov@var{m}}
-这里@var{m}表示一个两字母的机器模式名字，小写。该指令模式将那种机器模式的数据从操作数1移送到操作数0。例如@samp{movsi}移送整字数据。
-
-如果操作数0为一个寄存器的@code{subreg}，机器模式为@var{m}，寄存器自己的机器模式比@var{m}更宽，则该指令的效果是将指定的值存储在寄存器的对应于机器模式@var{m}的部分。@var{m}之外，且与@code{subreg}在同一个目标字中的位，为未定义。目标字以外的位保持不变。
-
-这类指令模式有几处特别的地方。首先，每个这些直到整字大小的名字，包括整字大小的，必须被定义，因为没有其它方式来从一个地方将数据复制到另一个地方。如果有接受更大机器模式的操作数的指令模式，则必须为那些大小的整数机器模式定义@samp{mov@var{m}}。
-
 第二，这些指令模式不仅用在RTL生成过程。甚至重载过程可以生成move insn将值从栈槽复制到临时寄存器中。当这样的时候，其中一个操作数为硬件寄存器，另一个为需要被重载到寄存器中的操作数。
 
-@en @findex force_reg
+@findex force_reg
 @en Therefore, when given such a pair of operands, the pattern must generate
 @en RTL which needs no reloading and needs no temporary registers---no
 @en registers other than the operands.  For example, if you support the
 @en pattern with a @code{define_expand}, then in such a case the
 @en @code{define_expand} mustn't call @code{force_reg} or any other such
 @en function which might generate new pseudo registers.
-@en 
+因此，当给定这样一对操作数时，指令模式必须生成不需要重载，并且不需要临时寄存器的RTL。例如，如果你使用一个@code{define_expand}来支持该指令模式，则这种情况下，@code{define_expand}一定不能调用@code{force_reg}或者任何其它可能生成新的伪寄存器的函数。
+
 @en This requirement exists even for subword modes on a RISC machine where
 @en fetching those modes from memory normally requires several insns and
 @en some temporary registers.
-@findex force_reg
-因此，当给定这样一对操作数时，指令模式必须生成不需要重载，并且不需要临时寄存器的RTL。例如，如果你使用一个@code{define_expand}来支持该指令模式，则这种情况下，@code{define_expand}一定不能调用@code{force_reg}或者任何其它可能生成新的伪寄存器的函数。
-
 甚至对于在RISC机器上的子字机器模式，从内存中获取这些机器模式通常需要多个insn和一些临时变量，该要求也存在。
 
-@en @findex change_address
+@findex change_address
 @en During reload a memory reference with an invalid address may be passed
 @en as an operand.  Such an address will be replaced with a valid address
 @en later in the reload pass.  In this case, nothing may be done with the
@@ -4986,50 +4928,48 @@ C表达式@code{match_test}，可以访问下列变量：
 @en an address into a valid address and no routine (such as
 @en @code{change_address}) that will do so may be called.  Note that
 @en @code{general_operand} will fail when applied to such an address.
-@findex change_address
 重载过程中，具有无效地址的内存引用可以被作为操作数。这样的地址将在重载过程的后面被替换成有效地址。这种情况下，可能对地址没有做任何事情，而只是使用它。如果其被复制，则将无法使用有效的地址进行替换。不要尝试将这样的地址变成有效的地址。注意，@code{general_operand}当应用到这样的地址的时候将会失败。
 
-@en @findex reload_in_progress
+@findex reload_in_progress
 @en The global variable @code{reload_in_progress} (which must be explicitly
 @en declared if required) can be used to determine whether such special
 @en handling is required.
+全局变量@code{reload_in_progress}（其必须被显式的声明）可以用来确定是否需要这样的特殊的处理。
 
 @en The variety of operands that have reloads depends on the rest of the
 @en machine description, but typically on a RISC machine these can only be
 @en pseudo registers that did not get hard registers, while on other
 @en machines explicit memory references will get optional reloads.
-@en 
-@en If a scratch register is required to move an object to or from memory,
-@en it can be allocated using @code{gen_reg_rtx} prior to life analysis.
-@en 
-@en If there are cases which need scratch registers during or after reload,
-@en you must provide an appropriate secondary_reload target hook.
-@findex reload_in_progress
-全局变量@code{reload_in_progress}（其必须被显式的声明）可以用来确定是否需要这样的特殊的处理。
-
 需要进行重载的操作数的种类取决于机器描述的其余部分，不过通常在RISC机器上，只有那些没有获得硬件寄存器的伪寄存器，而在其它机器上，显式的内存引用也有可能需要进行重载。
 
+@en If a scratch register is required to move an object to or from memory,
+@en it can be allocated using @code{gen_reg_rtx} prior to life analysis.
 如果一个scratch寄存器，被需要用来将一个对象与内存之间进行移送，则其可以活跃分析之前，使用@code{gen_reg_rtx}来进行分配。
 
+@en If there are cases which need scratch registers during or after reload,
+@en you must provide an appropriate secondary_reload target hook.
 如果在重载过程中，或者之后，有需要scratch寄存器的情况，则你必须提供一个适当的secondary_reload目标钩子。
 
-@en @findex can_create_pseudo_p
+@findex can_create_pseudo_p
 @en The macro @code{can_create_pseudo_p} can be used to determine if it
 @en is unsafe to create new pseudo registers.  If this variable is nonzero, then
 @en it is unsafe to call @code{gen_reg_rtx} to allocate a new pseudo.
-@en 
+宏@code{can_create_pseudo_p}可以用来确定创建一个新的伪寄存器是否不安全。如果该变量为非零，则调用@code{gen_reg_rtx}来分配一个新的伪寄存器是不安全的。
+
 @en The constraints on a @samp{mov@var{m}} must permit moving any hard
 @en register to any other hard register provided that
 @en @code{HARD_REGNO_MODE_OK} permits mode @var{m} in both registers and
 @en @code{TARGET_REGISTER_MOVE_COST} applied to their classes returns a value
 @en of 2.
-@en 
+@samp{mov@var{m}}上的约束必须允许将任何硬件寄存器移送到任何其它硬件寄存器上，假设@code{HARD_REGNO_MODE_OK}在两个寄存器上都允许机器模式@var{m}，并且@code{REGISTER_MOVE_COST}应用到它们的类别上返回值2。
+
 @en It is obligatory to support floating point @samp{mov@var{m}}
 @en instructions into and out of any registers that can hold fixed point
 @en values, because unions and structures (which have modes @code{SImode} or
 @en @code{DImode}) can be in those registers and they may have floating
 @en point members.
-@en 
+必须提供浮点@samp{mov@var{m}}指令，用于任何可以存放定点值的寄存器，因为联合体和结构体（具有机器模式@code{SImode}或@code{DImode}）可以在那些寄存器中，并且它们可以具有浮点成员。
+
 @en There may also be a need to support fixed point @samp{mov@var{m}}
 @en instructions in and out of floating point registers.  Unfortunately, I
 @en have forgotten why this was so, and I don't know whether it is still
@@ -5037,27 +4977,22 @@ C表达式@code{match_test}，可以访问下列变量：
 @en floating point registers, then the constraints of the fixed point
 @en @samp{mov@var{m}} instructions must be designed to avoid ever trying to
 @en reload into a floating point register.
-@findex can_create_pseudo_p
-宏@code{can_create_pseudo_p}可以用来确定创建一个新的伪寄存器是否不安全。如果该变量为非零，则调用@code{gen_reg_rtx}来分配一个新的伪寄存器是不安全的。
-
-@samp{mov@var{m}}上的约束必须允许将任何硬件寄存器移送到任何其它硬件寄存器上，假设@code{HARD_REGNO_MODE_OK}在两个寄存器上都允许机器模式@var{m}，并且@code{REGISTER_MOVE_COST}应用到它们的类别上返回值2。
-
-必须提供浮点@samp{mov@var{m}}指令，用于任何可以存放定点值的寄存器，因为联合体和结构体（具有机器模式@code{SImode}或@code{DImode}）可以在那些寄存器中，并且它们可以具有浮点成员。
-
 还需要支持定点@samp{mov@var{m}}指令，用于浮点寄存器。不幸的是，我忘了为什么要这样，并且不知道这是否还是真的。如果@code{HARD_REGNO_MODE_OK}排斥在浮点寄存器中的定点值，则定点@samp{mov@var{m}}指令的约束必须被设计成，避免尝试重载到一个浮点寄存器。
 
-@en @cindex @code{reload_in} instruction pattern
-@en @cindex @code{reload_out} instruction pattern
-@en @item @samp{reload_in@var{m}}
-@en @itemx @samp{reload_out@var{m}}
+@cindex @code{reload_in} instruction pattern
+@cindex @code{reload_out} instruction pattern
+@item @samp{reload_in@var{m}}
+@itemx @samp{reload_out@var{m}}
 @en These named patterns have been obsoleted by the target hook
 @en @code{secondary_reload}.
-@en 
+这些命名指令模式已经被目标钩子@code{secondary_reload}废弃。
+
 @en Like @samp{mov@var{m}}, but used when a scratch register is required to
 @en move between operand 0 and operand 1.  Operand 2 describes the scratch
 @en register.  See the discussion of the @code{SECONDARY_RELOAD_CLASS}
 @en macro in @pxref{Register Classes}.
-@en 
+类似@samp{mov@var{m}}，不过用于当需要使用scratch寄存器在操作数0和操作数1之间移送的时候。操作数2描述scratch寄存器。@pxref{Register Classes}中对@code{SECONDARY_RELOAD_CLASS}宏的讨论。
+
 @en There are special restrictions on the form of the @code{match_operand}s
 @en used in these patterns.  First, only the predicate for the reload
 @en operand is examined, i.e., @code{reload_in} examines operand 1, but not
@@ -5068,72 +5003,54 @@ C表达式@code{match_test}，可以访问下列变量：
 @en matches the @code{ALL_REGS} register class.  This may relieve ports
 @en of the burden of defining an @code{ALL_REGS} constraint letter just
 @en for these patterns.
-@cindex @code{reload_in} instruction pattern
-@cindex @code{reload_out} instruction pattern
-@item @samp{reload_in@var{m}}
-@itemx @samp{reload_out@var{m}}
-这些命名指令模式已经被目标钩子@code{secondary_reload}废弃。
-
-类似@samp{mov@var{m}}，不过用于当需要使用scratch寄存器在操作数0和操作数1之间移送的时候。操作数2描述scratch寄存器。@pxref{Register Classes}中对@code{SECONDARY_RELOAD_CLASS}宏的讨论。
-
 这些指令模式中的@code{match_operand}的形式，有一些特殊的限制。首先，只有重载操作数的断言才被检查，即@code{reload_in}检查操作数1，而不检查操作数0和2。第二，在约束中只能有一个可选项。第三，约束只能使用单个寄存器类别字母；后续的约束字母都被忽略。一个例外是，空的约束字符串匹配@code{ALL_REGS}寄存器类别。这可以减轻后端为这些指令模式定义@code{ALL_REGS}约束字母的负担。
 
-@en @cindex @code{movstrict@var{m}} instruction pattern
-@en @item @samp{movstrict@var{m}}
+@cindex @code{movstrict@var{m}} instruction pattern
+@item @samp{movstrict@var{m}}
 @en Like @samp{mov@var{m}} except that if operand 0 is a @code{subreg}
 @en with mode @var{m} of a register whose natural mode is wider,
 @en the @samp{movstrict@var{m}} instruction is guaranteed not to alter
 @en any of the register except the part which belongs to mode @var{m}.
-@cindex @code{movstrict@var{m}} instruction pattern
-@item @samp{movstrict@var{m}}
 类似@samp{mov@var{m}}，只不过，如果操作数0为一个寄存器的机器模式为@var{m}的@code{subreg}，且寄存器的自然机器模式是较宽的，则@samp{movstrict@var{m}}指令保证不会修改属于机器模式@var{m}之外的寄存器的任何部分。
 
-@en @cindex @code{movmisalign@var{m}} instruction pattern
-@en @item @samp{movmisalign@var{m}}
+@cindex @code{movmisalign@var{m}} instruction pattern
+@item @samp{movmisalign@var{m}}
 @en This variant of a move pattern is designed to load or store a value
 @en from a memory address that is not naturally aligned for its mode.
 @en For a store, the memory will be in operand 0; for a load, the memory
 @en will be in operand 1.  The other operand is guaranteed not to be a
 @en memory, so that it's easy to tell whether this is a load or store.
-@en 
-@en This pattern is used by the autovectorizer, and when expanding a
-@en @code{MISALIGNED_INDIRECT_REF} expression.
-@cindex @code{movmisalign@var{m}} instruction pattern
-@item @samp{movmisalign@var{m}}
 该move指令模式的变体，被设计为从没有与其机器模式自然对齐的内存地址中加载和存储值。对于存储，内存将在操作数0中；对于加载，内存将在操作数1中。其它操作数保证不为内存，所以容易判别是加载还是存储。
 
+@en This pattern is used by the autovectorizer, and when expanding a
+@en @code{MISALIGNED_INDIRECT_REF} expression.
 该指令模式用于向量化，当展开@code{MISALIGNED_INDIRECT_REF}表达式的时候。
 
-@en @cindex @code{load_multiple} instruction pattern
-@en @item @samp{load_multiple}
+@cindex @code{load_multiple} instruction pattern
+@item @samp{load_multiple}
 @en Load several consecutive memory locations into consecutive registers.
 @en Operand 0 is the first of the consecutive registers, operand 1
 @en is the first memory location, and operand 2 is a constant: the
 @en number of consecutive registers.
-@en 
+将多个连续的内存位置加载到连续的寄存器中。操作数0为连续寄存器中的第一个，操作数1为第一个内存位置，操作数2为一个常量：连续寄存器的数目。
+
 @en Define this only if the target machine really has such an instruction;
 @en do not define this if the most efficient way of loading consecutive
 @en registers from memory is to do them one at a time.
-@en 
+只有当目标机器确实具有这样指令的时候才定义该指令模式；如果将内存加载到连续寄存器的最有效的方式，是每次加载一个，则 不用定义该指令模式。
+
 @en On some machines, there are restrictions as to which consecutive
 @en registers can be stored into memory, such as particular starting or
 @en ending register numbers or only a range of valid counts.  For those
 @en machines, use a @code{define_expand} (@pxref{Expander Definitions})
 @en and make the pattern fail if the restrictions are not met.
-@en 
+在一些机器上，对于哪些连续寄存器可以存储到内存中，会有一些限制，例如特定的起始寄存器或者结尾寄存器的编号，或者一个有效范围。对于那些机器，使用@code{define_expand} (@pxref{Expander Definitions})，并当不符合限制的时候，将指令模式变成失败。
+
 @en Write the generated insn as a @code{parallel} with elements being a
 @en @code{set} of one register from the appropriate memory location (you may
 @en also need @code{use} or @code{clobber} elements).  Use a
 @en @code{match_parallel} (@pxref{RTL Template}) to recognize the insn.  See
 @en @file{rs6000.md} for examples of the use of this insn pattern.
-@cindex @code{load_multiple} instruction pattern
-@item @samp{load_multiple}
-将多个连续的内存位置加载到连续的寄存器中。操作数0为连续寄存器中的第一个，操作数1为第一个内存位置，操作数2为一个常量：连续寄存器的数目。
-
-只有当目标机器确实具有这样指令的时候才定义该指令模式；如果将内存加载到连续寄存器的最有效的方式，是每次加载一个，则 不用定义该指令模式。
-
-在一些机器上，对于哪些连续寄存器可以存储到内存中，会有一些限制，例如特定的起始寄存器或者结尾寄存器的编号，或者一个有效范围。对于那些机器，使用@code{define_expand} (@pxref{Expander Definitions})，并当不符合限制的时候，将指令模式变成失败。
-
 将生成的insn写成一个@code{parallel}，其元素为一个从适当内存位置到寄存器的@code{set}（可能还需要@code{use}或元素@code{clobber}）。使用@code{match_parallel} (@pxref{RTL Template})来识别insn。关于使用该insn模式的例子，可以参见@file{rs6000.md}。
 
 @en @cindex @samp{store_multiple} instruction pattern
@@ -5146,12 +5063,10 @@ C表达式@code{match_test}，可以访问下列变量：
 @item @samp{store_multiple}
 类似于@samp{load_multiple}，不过是将多个连续的寄存器存储到连续的内存位置。操作数0为连续内存位置的第一个，操作数1为第一个寄存器，操作数2为常量：连续寄存器的数目。 
 
-@en @cindex @code{vec_set@var{m}} instruction pattern
-@en @item @samp{vec_set@var{m}}
-@en Set given field in the vector value.  Operand 0 is the vector to modify,
-@en operand 1 is new value of field and operand 2 specify the field index.
 @cindex @code{vec_set@var{m}} instruction pattern
 @item @samp{vec_set@var{m}}
+@en Set given field in the vector value.  Operand 0 is the vector to modify,
+@en operand 1 is new value of field and operand 2 specify the field index.
 设置向量中给定的域。操作数0为要修改的向量，操作数1为域的新值，操作数2指定了域的索引。
 
 @cindex @code{vec_extract@var{m}} instruction pattern
@@ -7600,23 +7515,6 @@ GCC具有三个特定的命名指令模式，来支持低开销循环。
 @en the iteration counter needs to be biased by the same amount as the
 @en decrement operation, in this case @minus{}1.  Note that the following similar
 @en pattern will not be matched by the combiner.
-@en 
-@en @smallexample
-@en @group
-@en (define_insn "decrement_and_branch_until_zero"
-@en   [(set (pc)
-@en         (if_then_else
-@en           (ge (match_operand:SI 0 "general_operand" "+d*am")
-@en               (const_int 1))
-@en           (label_ref (match_operand 1 "" ""))
-@en           (pc)))
-@en    (set (match_dup 0)
-@en         (plus:SI (match_dup 0)
-@en                  (const_int -1)))]
-@en   "find_reg_note (insn, REG_NONNEG, 0)"
-@en   "@dots{}")
-@en @end group
-@en @end smallexample
 注意，由于该insn为jump insn并且具有一个输出，所以其必须处理自己的重载，
 因此要使用`m' constraint。还要注意，由于该insn是在指令组合过程中，
 通过将两个连序insn组合成一个隐式并行的insn而生成的，所以迭代计数器需要。
@@ -7696,137 +7594,100 @@ GCC具有三个特定的命名指令模式，来支持低开销循环。
 @en are performed:
 除了进行代数简化以外，还执行了下面的规范化：
 
-@en @itemize @bullet
-@en @item
+@itemize @bullet
+@item
 @en For commutative and comparison operators, a constant is always made the
 @en second operand.  If a machine only supports a constant as the second
 @en operand, only patterns that match a constant in the second operand need
 @en be supplied.
-@en 
-@en @item
+对于可交换指令和比较指令，总是将常量作为第二个操作数。
+如果机器只支持常量作为第二个操作数，
+则只需要提供匹配将常量作为第二个操作数的指令模式。
+
+@item
 @en For associative operators, a sequence of operators will always chain
 @en to the left; for instance, only the left operand of an integer @code{plus}
 @en can itself be a @code{plus}.  @code{and}, @code{ior}, @code{xor},
 @en @code{plus}, @code{mult}, @code{smin}, @code{smax}, @code{umin}, and
 @en @code{umax} are associative when applied to integers, and sometimes to
 @en floating-point.
-@itemize @bullet
-@item
-对于可交换指令和比较指令，总是将常量作为第二个操作数。
-如果机器只支持常量作为第二个操作数，
-则只需要提供匹配将常量作为第二个操作数的指令模式。
-
-@item
 对于结合性操作符，操作符序列总是向左方向链接；例如，一个整数@code{plus}，
 只有它的左操作数本身可以为一个@code{plus}。当应用到整数时，
 @code{and}, @code{ior}, @code{xor}, @code{plus}, @code{mult}, @code{smin}, 
 @code{smax}, @code{umin}和@code{umax}为可结合的，对于浮点，这些有时为可结合的。
 
-@en @item
-@en @cindex @code{neg}, canonicalization of
-@en @cindex @code{not}, canonicalization of
-@en @cindex @code{mult}, canonicalization of
-@en @cindex @code{plus}, canonicalization of
-@en @cindex @code{minus}, canonicalization of
-@en For these operators, if only one operand is a @code{neg}, @code{not},
-@en @code{mult}, @code{plus}, or @code{minus} expression, it will be the
-@en first operand.
-@en 
-@en @item
-@en In combinations of @code{neg}, @code{mult}, @code{plus}, and
-@en @code{minus}, the @code{neg} operations (if any) will be moved inside
-@en the operations as far as possible.  For instance,
-@en @code{(neg (mult A B))} is canonicalized as @code{(mult (neg A) B)}, but
-@en @code{(plus (mult (neg B) C) A)} is canonicalized as
-@en @code{(minus A (mult B C))}.
 @item
 @cindex @code{neg}, canonicalization of
 @cindex @code{not}, canonicalization of
 @cindex @code{mult}, canonicalization of
 @cindex @code{plus}, canonicalization of
 @cindex @code{minus}, canonicalization of
+@en For these operators, if only one operand is a @code{neg}, @code{not},
+@en @code{mult}, @code{plus}, or @code{minus} expression, it will be the
+@en first operand.
 对于这些操作符，如果只有一个为@code{neg}, @code{not},@code{mult}, @code{plus} 或
 @code{minus}表达式的操作数，则其将为第一个操作数。
 
 @item
+@en In combinations of @code{neg}, @code{mult}, @code{plus}, and
+@en @code{minus}, the @code{neg} operations (if any) will be moved inside
+@en the operations as far as possible.  For instance,
+@en @code{(neg (mult A B))} is canonicalized as @code{(mult (neg A) B)}, but
+@en @code{(plus (mult (neg B) C) A)} is canonicalized as
+@en @code{(minus A (mult B C))}.
 对于@code{neg}, @code{mult}, @code{plus}和@code{minus}的组合中，
 @code{neg}操作（如果存在）将被尽可能的移到内部。
 例如@code{(neg (mult A B))}将被规范为@code{(mult (neg A) B)}，
 但是@code{(plus (mult (neg A) B) C)}将被规范为@code{(minus A (mult B C))}。 
 
-@en @cindex @code{compare}, canonicalization of
-@en @item
-@en For the @code{compare} operator, a constant is always the second operand
-@en if the first argument is a condition code register or @code{(cc0)}.
-@en 
-@en @item
-@en An operand of @code{neg}, @code{not}, @code{mult}, @code{plus}, or
-@en @code{minus} is made the first operand under the same conditions as
-@en above.
 @cindex @code{compare}, canonicalization of
 @item
+@en For the @code{compare} operator, a constant is always the second operand
+@en if the first argument is a condition code register or @code{(cc0)}.
 对于@code{compare}运算符，在使用@code{cc0}（参见@ref{Jump Patterns}）的机器上，
 常量总是为第二个操作数。 在其它机器上，极少的情况下，
 编译器可能想使用常量作为第一个操作数来构建@code{compare}。但是，
 这些情况并不常见，所以不值得来提供匹配常量作为第一个操作数的指令模式，
 除非机器确实具有这样的指令。
 
+@en An operand of @code{neg}, @code{not}, @code{mult}, @code{plus}, or
+@en @code{minus} is made the first operand under the same conditions as
+@en above.
 在与上面条件相同的情况下，@code{neg}, @code{not}, @code{mult}, @code{plus} 或
 @code{minus}的操作数被作为第一个操作数。
 
-@en @item
+@item
 @en @code{(ltu (plus @var{a} @var{b}) @var{b})} is converted to
 @en @code{(ltu (plus @var{a} @var{b}) @var{a})}. Likewise with @code{geu} instead
 @en of @code{ltu}.
-@en 
-@en @item
-@en @code{(minus @var{x} (const_int @var{n}))} is converted to
-@en @code{(plus @var{x} (const_int @var{-n}))}.
-@en 
-@en @item
-@en Within address computations (i.e., inside @code{mem}), a left shift is
-@en converted into the appropriate multiplication by a power of two.
-@item
 @code{(ltu (plus @var{a} @var{b}) @var{b})}被转换为
 @code{(ltu (plus @var{a} @var{b}) @var{a})}。
 同样，使用@code{geu}来替换@code{ltu}。
 
 @item
+@en @code{(minus @var{x} (const_int @var{n}))} is converted to
+@en @code{(plus @var{x} (const_int @var{-n}))}.
 @code{(minus @var{x} (const_int @var{n}))}被转换为
 @code{(plus @var{x} (const_int @var{-n}))}。
 
 @item
+@en Within address computations (i.e., inside @code{mem}), a left shift is
+@en converted into the appropriate multiplication by a power of two.
 在地址计算中（即，在@code{mem}中），左移操作被转换为与合适的2的幂相乘。 
 
-@en @cindex @code{ior}, canonicalization of
-@en @cindex @code{and}, canonicalization of
-@en @cindex De Morgan's law
-@en @item
-@en De Morgan's Law is used to move bitwise negation inside a bitwise
-@en logical-and or logical-or operation.  If this results in only one
-@en operand being a @code{not} expression, it will be the first one.
-@en 
-@en A machine that has an instruction that performs a bitwise logical-and of one
-@en operand with the bitwise negation of the other should specify the pattern
-@en for that instruction as
-@en 
-@en @smallexample
-@en (define_insn ""
-@en   [(set (match_operand:@var{m} 0 @dots{})
-@en         (and:@var{m} (not:@var{m} (match_operand:@var{m} 1 @dots{}))
-@en                      (match_operand:@var{m} 2 @dots{})))]
-@en   "@dots{}"
-@en   "@dots{}")
-@en @end smallexample
-@en 
-@en @noindent
 @cindex @code{ior}, canonicalization of
 @cindex @code{and}, canonicalization of
 @cindex De Morgan's law
 @item
+@en De Morgan's Law is used to move bitwise negation inside a bitwise
+@en logical-and or logical-or operation.  If this results in only one
+@en operand being a @code{not} expression, it will be the first one.
 De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中，将位置反。
 如果该结果为@code{not}表达式的唯一的操作数，则其为第一个。
 
+@en A machine that has an instruction that performs a bitwise logical-and of one
+@en operand with the bitwise negation of the other should specify the pattern
+@en for that instruction as
 具有执行按位‘逻辑与’，且其中一个操作数为一个按位求反的机器，
 应该为该指令指定如下的指令模式
 
@@ -7841,18 +7702,6 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
 
 @noindent
 @en Similarly, a pattern for a ``NAND'' instruction should be written
-@en 
-@en @smallexample
-@en (define_insn ""
-@en   [(set (match_operand:@var{m} 0 @dots{})
-@en         (ior:@var{m} (not:@var{m} (match_operand:@var{m} 1 @dots{}))
-@en                      (not:@var{m} (match_operand:@var{m} 2 @dots{}))))]
-@en   "@dots{}"
-@en   "@dots{}")
-@en @end smallexample
-@en 
-@en In both cases, it is not necessary to include patterns for the many
-@en logically equivalent RTL expressions.
 类似的，“NAND”指令的指令模式应给被写为
 
 @smallexample
@@ -7864,6 +7713,8 @@ De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中�
   "@dots{}")
 @end smallexample
 
+@en In both cases, it is not necessary to include patterns for the many
+@en logically equivalent RTL expressions.
 对于这两种情况，都没必要包含许多逻辑上相同的RTL表达式。
 
 @cindex @code{xor}, canonicalization of
