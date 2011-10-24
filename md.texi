@@ -115,7 +115,7 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @en for are hard-coded in the compiler---it will ignore unnamed patterns and
 @en patterns with names it doesn't know about, but if you don't provide a
 @en named pattern it needs, it will abort.
-在生成RTL insn列表的pass中，只与命名的@code{define_insn}或者@code{define_expand}的insn名字有关系。编译器会选择恰当名字的模式，并且根据这章后面的介绍来应用操作数，而不需要关心RTL模板或者操作数约束（constraint）。注意，编译器所寻找的名字是被硬编码进编译器中的——它将忽略未命名的模式和名字无法识别的模式，但是，如果你没有提供编译器所需要的命名模式，它将会异常退出（abort）。
+在生成RTL insn列表的pass中，只与命名@code{define_insn}或者@code{define_expand}的insn名字有关系。编译器会选择恰当名字的模式，并且根据这章后面的介绍来应用操作数，而不需要关心RTL模板或者操作数约束（constraint）。注意，编译器所寻找的名字是被硬编码进编译器中的——它将忽略未命名的模式和名字无法识别的模式，但是，如果你没有提供编译器所需要的命名模式，它将会异常退出（abort）。
 
 @en If a @code{define_insn} is used, the template given is inserted into the
 @en insn list.  If a @code{define_expand} is used, one of three things
@@ -131,7 +131,7 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @en replace, and rearrange the insns in the insn list.  This is where the
 @en @code{define_split} and @code{define_peephole} patterns get used, for
 @en example.
-一旦生成了insn列表，则各种优化pass便在insn列表中进行转换，替代和重排insn。例如，@code{define_split}和@code{define_peephole}模式便在这些地方被使用。
+一旦生成了insn列表，则各种优化pass便在insn列表中进行转换，替代和重排insn。例如，@code{define_split}和@code{define_peephole}模式便是在这些地方被使用。
 
 @en Finally, the insn list's RTL is matched up with the RTL templates in the
 @en @code{define_insn} patterns, and those patterns are used to emit the
@@ -151,10 +151,10 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @en to be filled in later, operand constraints that restrict how the pieces can
 @en be filled in, and an output pattern or C code to generate the assembler
 @en output, all wrapped up in a @code{define_insn} expression.
-每个指令模式包含了一个不完全的RTL表达式，和之后要被填充的部分；操作数constraint，用来限制如何填充那些部分；以及一个输出模式或者C代码来生成汇编输出。所有这些都由一个@code{define_insn}表达式包裹起来。
+每个指令模式包含了一个不完全的RTL表达式和之后要被填充的部分；操作数约束，用来限制如何填充那些部分；以及一个输出模式或者C代码，用来生成汇编输出。所有这些都由一个@code{define_insn}表达式包裹起来。
 
 @en A @code{define_insn} is an RTL expression containing four or five operands:
-@code{define_insn}是一个RTL表达式，包含了四或五个操作数：
+@code{define_insn}是一个RTL表达式，包含了四至五个操作数：
 
 @enumerate
 @item
@@ -163,23 +163,23 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @en pass of the compiler.  This pass knows certain names and will use
 @en the instruction patterns with those names, if the names are defined
 @en in the machine description.
-一个可选的名字。存在名字表明该指令模式能够为编译器的RTL生成过程，执行一个确定的标准工作。这个过程知道确定的名字，并且如果在机器描述中定义了这些名字，则会使用它们的指令模式。
+一个可选的名字。如果存在名字，则表明该指令模式能够在编译器的RTL生成pass中，执行一个特定的标准工作。这个pass知道特定的名字，并且如果在机器描述中定义了这些名字，则会使用它们的指令模式。
 
 @en The absence of a name is indicated by writing an empty string
 @en where the name should go.  Nameless instruction patterns are never
 @en used for generating RTL code, but they may permit several simpler insns
 @en to be combined later on.
-空字符串表示不存在名字。没有命名的指令模式是不会被用来生成RTL代码的，但是之后它们能够用来组合多个简单insn。
+可以使用空字符串来表示不存在名字。没有命名的指令模式是不会被用来生成RTL代码的，但是它们可以在后面用来将多个简单的insn合并起来。
  
 @en Names that are not thus known and used in RTL-generation have no
 @en effect; they are equivalent to no name at all.
-不识别的并且因此不在RTL生成中使用的名字，没有任何作用，就像没有命名一样。
+不被识别的名字，则在RTL生成pass中不起作用；就像没有命名一样。
  
 @en For the purpose of debugging the compiler, you may also specify a
 @en name beginning with the @samp{*} character.  Such a name is used only
 @en for identifying the instruction in RTL dumps; it is entirely equivalent
 @en to having a nameless pattern for all other purposes.
-出于调试编译器的目的，你可能还需要指定一个名字起始于@samp{*}字符。这样的名字只被用来标识RTL dump中的指令，其它的都与没有命名的模式一样。
+出于调试编译器的目的，你还可以指定一个名字起始于@samp{*}字符。这样的名字只被用来标识RTL dump中的指令，其它的都与没有命名的模式一样。
 
 @item
 @en The @dfn{RTL template} (@pxref{RTL Template}) is a vector of incomplete
@@ -187,7 +187,7 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @en incomplete because it may contain @code{match_operand},
 @en @code{match_operator}, and @code{match_dup} expressions that stand for
 @en operands of the instruction.
-@dfn{RTL template}（@pxref{RTL Template}）是一个不完全的RTL表达式向量，展示了这条指令的样子。所谓不完全是因为它可以包含@code{match_operand}, @code{match_operator}和@code{match_dup}表达式，用来表示指令的操作数。
+@dfn{RTL template}（@pxref{RTL Template}）是一个不完全的RTL表达式向量，展现了这条指令的样子。所谓不完全是因为它可以包含@code{match_operand}, @code{match_operator}和@code{match_dup}表达式，用来表示指令的操作数。
 
 @en If the vector has only one element, that element is the template for the
 @en instruction pattern.  If the vector has multiple elements, then the
@@ -200,7 +200,7 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @cindex conditions, in patterns
 @en A condition.  This is a string which contains a C expression that is
 @en the final test to decide whether an insn body matches this pattern.
-一个条件。这是一个字符串，包含了一个C表达式用来最终测试，判定一个insn实体是否匹配该模式。
+一个条件。这是一个字符串，包含了一个C表达式用于最后的测试，来判定一个insn实体是否匹配该模式。
 
 @cindex named patterns and conditions
 @en For a named pattern, the condition (if present) may not depend on
@@ -208,7 +208,7 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @en flags.  The compiler needs to test these conditions during
 @en initialization in order to learn exactly which named instructions are
 @en available in a particular run.
-对于命名模式，条件（如果存在）可能不取决于要被匹配的insn的数据，而只是取决于目标-机器-类型标记（target-machine-type flag）。编译器需要在初始化时测试这些条件，以至于能够确切的知道在这一次运行中，哪些命名指令是可用的。
+对于命名模式，条件（如果存在）可以不依赖要被匹配的insn的数据，而只是取决于目标-机器-类型标记（target-machine-type flag）。编译器需要在初始化时测试这些条件，以便能够确切的知道在这一次运行中，哪些命名指令是可用的。
 
 @findex operands
 @en For nameless patterns, the condition is applied only when matching an
@@ -217,13 +217,13 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @en @code{operands}.  For an insn where the condition has once matched, it
 @en can't be used to control register allocation, for example by excluding
 @en certain hard registers or hard register combinations.
-对于没有命名的模式，条件只用来匹配一个单独的insn，并且只在insn已经匹配了模式的识别模版。insn的操作数可以为vector @code{operands}。对于一旦条件匹配的insn，它便不能被用来控制寄存器分配，例如用来排除某个硬件寄存器，或者硬件寄存器组合。 
+对于没有命名的模式，只有在匹配单个insn，并且该insn已经匹配了模式的识别模版之后，条件才被使用。insn的操作数可以在向量@code{operands}中找到。对于条件匹配的insn，条件不能被用来控制寄存器分配，例如用来排除特定的硬件寄存器，或者硬件寄存器组合。 
 
 @item
 @en The @dfn{output template}: a string that says how to output matching
 @en insns as assembler code.  @samp{%} in this string specifies where
 @en to substitute the value of an operand.  @xref{Output Template}.
-@dfn{output template}：一个字符串，说明了如何将匹配的insn输出为汇编代码。字符串中的@samp{%}指定了替换一个操作数值的地方。@pxref{Output Template}。
+@dfn{output template}：一个字符串，说明了如何将匹配的insn输出为汇编代码。字符串中的@samp{%}指定了替换操作数的值的地方。@pxref{Output Template}。
  
 @en When simple substitution isn't general enough, you can specify a piece
 @en of C code to compute the output.  @xref{Output Statement}.
@@ -232,7 +232,7 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @item
 @en Optionally, a vector containing the values of attributes for insns matching
 @en this pattern.  @xref{Insn Attributes}.
-一个可选的向量，包含了匹配该模式的insn的属性值。@xref{Insn Attributes}。
+一个可选的向量，包含了匹配该模式的insn属性值。@xref{Insn Attributes}。
 @end enumerate
 
 @en @node Example
@@ -242,7 +242,7 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @cindex @code{define_insn} example
 
 @en Here is an actual example of an instruction pattern, for the 68000/68020.
-这个指令模式的例子来自68000/68020中。
+这里有个68000/68020的实际的指令模式例子。
 
 @smallexample
 (define_insn "tstsi"
