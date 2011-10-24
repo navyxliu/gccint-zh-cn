@@ -20,7 +20,7 @@
 @en that is worth telling the compiler about).  It may also contain comments.
 @en A semicolon causes the rest of the line to be a comment, unless the semicolon
 @en is inside a quoted string.
-目标机器的@file{.md}文件包含了目标机器支持的（或者最起码值得告诉编译器的）每条指令的模式。还可能包含注释。分号使得一行的剩余部分为注释，引号标注的字符串中的分号除外。
+目标机器的@file{.md}文件包含了目标机器支持的（或者最起码值得告诉编译器的）每条指令的模式。其还可以包含注释。分号使得一行的剩余部分成为注释，引号标注的字符串中的分号除外。
 
 @en See the next chapter for information on the C header file.
 关于C头文件的信息，参见下一章。
@@ -76,7 +76,7 @@
 * Including Patterns::		在机器描述中包含模式。
 * Peephole Definitions::	定义机器特定的窥孔优化。
 * Insn Attributes::		为生成的insn指定属性值。
-* Conditional Execution::	为预测（predication）生成@code{define_insn}模式。
+* Conditional Execution::	为断言（predication）生成@code{define_insn}模式。
 * Constant Definitions::	定义可以用在md文件中的符号常量。
 * Iterators::			使用迭代器从模板中生成模式。
 @end menu
@@ -115,7 +115,7 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @en for are hard-coded in the compiler---it will ignore unnamed patterns and
 @en patterns with names it doesn't know about, but if you don't provide a
 @en named pattern it needs, it will abort.
-生成过程，只与insn的名字有关系，包括命名的@code{define_insn}或者@code{define_expand}。编译器会选择恰当名字的模式，并且根据这章后面的文档来使用 操作数，而不需要关心RTL模板或者操作数constraint。注意，编译器所寻找的名字是被硬编码 进编译器中的——它将忽略未命名的模式和名字无法识别的模式，但是，如果你没有提供所需要的命名模式，它将异常中断（abort）。
+在生成RTL insn列表的pass中，只与命名的@code{define_insn}或者@code{define_expand}的insn名字有关系。编译器会选择恰当名字的模式，并且根据这章后面的介绍来应用操作数，而不需要关心RTL模板或者操作数约束（constraint）。注意，编译器所寻找的名字是被硬编码进编译器中的——它将忽略未命名的模式和名字无法识别的模式，但是，如果你没有提供编译器所需要的命名模式，它将会异常退出（abort）。
 
 @en If a @code{define_insn} is used, the template given is inserted into the
 @en insn list.  If a @code{define_expand} is used, one of three things
@@ -125,19 +125,19 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @en compiler to use an alternate way of performing that task.  If it invokes
 @en neither @code{DONE} nor @code{FAIL}, the template given in the pattern
 @en is inserted, as if the @code{define_expand} were a @code{define_insn}.
-如果使用了@code{define_insn}，所给出的模版将会被插入到insn列表中。如果使用了@code{define_expand}，将会发生三种情况之一，取决于条件逻辑。条件逻辑可以手动为insn列表创建一个新的insn，并且调用@code{DONE}。对于某些命名模式，它可以调用@code{FAIL}来告诉编译器使用一种备用方式完成任务。如果既没有调用DONE也没有调用@code{FAIL}，在模式中所给出的模版将会被插入，就像@code{define_insn}一样。
+如果是使用的@code{define_insn}，则给定的模版将会被插入到insn列表中。如果是使用的@code{define_expand}，则根据条件逻辑，将会有三种情况会发生。条件逻辑可以手动为insn列表创建一个新的insn，比如通过@code{emit_insn()}，并且调用@code{DONE}。对于某些命名模式，它可以调用@code{FAIL}来告诉编译器使用一种替代方式完成任务。如果既没有调用DONE也没有调用@code{FAIL}，则在模式中所给出的模版将会被插入到insn列表中，就像@code{define_insn}一样。
 
 @en Once the insn list is generated, various optimization passes convert,
 @en replace, and rearrange the insns in the insn list.  This is where the
 @en @code{define_split} and @code{define_peephole} patterns get used, for
 @en example.
-一旦生成insn列表，各种优化过程便在insn列表中转换，替代和重排insn。例如，@code{define_split}和@code{define_peephole}模式便在这里被使用。
+一旦生成了insn列表，则各种优化pass便在insn列表中进行转换，替代和重排insn。例如，@code{define_split}和@code{define_peephole}模式便在这些地方被使用。
 
 @en Finally, the insn list's RTL is matched up with the RTL templates in the
 @en @code{define_insn} patterns, and those patterns are used to emit the
 @en final assembly code.  For this purpose, each named @code{define_insn}
 @en acts like it's unnamed, since the names are ignored.
-最后，insn列表的RTL被用来匹配@code{define_insn}模式中的RTL模版，并且那些模式 被用来生成最终的汇编代码。这时，由于不需要关心名字，所以每个命名的@code{define_insn}跟没有命名没有区别。
+最后，insn列表的RTL被用来匹配@code{define_insn}模式中的RTL模版，并且那些模式被用来生成最终的汇编代码。这时，由于不需要关心名字，所以每个命名的@code{define_insn}跟没有命名的没有区别。
 
 @en @node Patterns
 @en @section Everything about Instruction Patterns
