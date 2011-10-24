@@ -1230,18 +1230,17 @@ predicate的名字，
 @ifclear INTERNALS
 @en @node Constraints
 @en @section Constraints for @code{asm} Operands
-@en @cindex operand constraints, @code{asm}
-@en @cindex constraints, @code{asm}
-@en @cindex @code{asm} constraints
 @node Constraints
 @section @code{asm}操作数的constraint条件
-@cindex 操作数的约束, @code{asm}
-@cindex 约束, @code{asm}
-@cindex @code{asm} 约束
+@cindex operand constraints, @code{asm}
+@cindex constraints, @code{asm}
+@cindex @code{asm} constraints
 
 @en Here are specific details on what constraint letters you can use with
 @en @code{asm} operands.
-@en @end ifclear
+Here are specific details on what constraint letters you can use with
+@code{asm} operands.
+@end ifclear
 @en Constraints can say whether
 @en an operand may be in a register, and which kinds of register; whether the
 @en operand can be a memory reference, and which kinds of address; whether the
@@ -1251,14 +1250,11 @@ predicate的名字，
 @en @samp{<} or @samp{>} constraints are used, because there is no guarantee
 @en that the side-effects will happen exactly once in an instruction that can update
 @en the addressing register.
-Here are specific details on what constraint letters you can use with
-@code{asm} operands.
-@end ifclear
 约束可以告诉一个操作数是否可以在寄存器中，以及哪种寄存器；
 操作数是否可以为内存引用，以及哪种寻址方式；操作数是否可以为立即数，
 以及可以具有什么值。约束还可以要求两个操作数要匹配。
 
-@en @ifset INTERNALS
+@ifset INTERNALS
 @en @menu
 @en * Simple Constraints::  Basic use of constraints.
 @en * Multi-Alternative::   When an insn has two alternative constraint-patterns.
@@ -1269,8 +1265,6 @@ Here are specific details on what constraint letters you can use with
 @en * Define Constraints::  How to define machine-specific constraints.
 @en * C Constraint Interface:: How to test constraints from C code.
 @en @end menu
-@en @end ifset
-@ifset INTERNALS
 @menu
 * Simple Constraints::       约束的基本用法
 * Multi-Alternative::     当insn具有两个可选的约束模式
@@ -1283,15 +1277,13 @@ Here are specific details on what constraint letters you can use with
 @end menu
 @end ifset
 
-@en @ifclear INTERNALS
+@ifclear INTERNALS
 @en @menu
 @en * Simple Constraints::  Basic use of constraints.
 @en * Multi-Alternative::   When an insn has two alternative constraint-patterns.
 @en * Modifiers::           More precise control over effects of constraints.
 @en * Machine Constraints:: Special constraints for some particular machines.
 @en @end menu
-@en @end ifclear
-@ifclear INTERNALS
 @menu
 * 简单约束::     约束的基本用法
 * 多个可选项::   当insn具有两个可选的约束模式
@@ -1302,10 +1294,9 @@ Here are specific details on what constraint letters you can use with
 
 @en @node Simple Constraints
 @en @subsection Simple Constraints
-@en @cindex simple constraints
 @node Simple Constraints
 @subsection 简单约束
-@cindex 简单约束
+@cindex simple constraints
 
 @en The simplest kind of constraint is a string full of letters, each of
 @en which describes one kind of operand that is permitted.  Here are
@@ -1469,12 +1460,9 @@ Here are specific details on what constraint letters you can use with
 @en @code{general_operand}.  This is normally used in the constraint of
 @en a @code{match_scratch} when certain alternatives will not actually
 @en require a scratch register.
-@en @end ifset
-@en @ifclear INTERNALS
-@en Any operand whatsoever is allowed.
-@en @end ifclear
 任何操作数都被允许，即使其不满足@code{general_operand}。 这通常用于@code{match_scratch}的约束中，当一些的可选项实际上不需要scratch寄存器的时候。 
 @end ifset
+
 @ifclear INTERNALS
 Any operand whatsoever is allowed.
 @end ifclear
@@ -1509,8 +1497,7 @@ Any operand whatsoever is allowed.
 @en @end ifclear
 @en machines an add instruction really has only two operands, one of them an
 @en input-output operand:
-这被称为匹配约束，其实际上是指汇编器只有一个单独的操作数， 却在RTL insn中扮演两个角色。例如，add insn在RTL中具有两个输入操作数和一个输出操作数，
-但是多数CISC机器上，add指令实际上只有两个操作数，其中一个为输入输出操作数：
+这被称为匹配约束，其实际上是指汇编器只有一个单独的操作数， 却在RTL insn中扮演两个角色。例如，add insn在RTL中具有两个输入操作数和一个输出操作数，但是多数CISC机器上，add指令实际上只有两个操作数，其中一个为输入输出操作数：
 
 @smallexample
 addl #35,r12
@@ -1680,7 +1667,6 @@ addl #35,r12
 @en not permit a constant and the insn is re-recognized for some reason, the
 @en compiler will crash.  Thus the predicate must always recognize any
 @en objects allowed by the constraint.
-@en @end itemize
 如果约束允许的常量和伪寄存器没有被分配到硬件寄存器中，并且等价于一个常量，则寄存器将被常量替换。如果断言不允许常量并且insn出于某种原因被识别了，则编译器将会崩溃。因此断言必须总是能够识别任何被约束允许的对象。
 @end itemize
 
@@ -1703,28 +1689,26 @@ addl #35,r12
 @end ifset
 @en @node Multi-Alternative
 @en @subsection Multiple Alternative Constraints
-@en @cindex multiple alternative constraints
 @node Multi-Alternative
 @subsection 多个可选的约束
-@cindex 多个可选的约束
+@cindex multiple alternative constraints
 
+@ifset INTERNALS
 @en Sometimes a single instruction has multiple alternative sets of possible
 @en operands.  For example, on the 68000, a logical-or instruction can combine
 @en register or an immediate value into memory, or it can combine any kind of
 @en operand into a register; but it cannot combine one memory location into
 @en another.
-@en 
+有时单个指令具有多个可选的操作数集。例如，在68000上，
+一个逻辑或指令可以将寄存器或者立即数的值组合到内存中，
+或者可以组合任何类型的操作数到寄存器中；但是不能将一个内存位置组合到另一个中。
+
 @en These constraints are represented as multiple alternatives.  An alternative
 @en can be described by a series of letters for each operand.  The overall
 @en constraint for an operand is made from the letters for this operand
 @en from the first alternative, a comma, the letters for this operand from
 @en the second alternative, a comma, and so on until the last alternative.
-@ifset INTERNALS
 @en Here is how it is done for fullword logical-or on the 68000:
-有时单个指令具有多个可选的操作数集。例如，在68000上，
-一个逻辑或指令可以将寄存器或者立即数的值组合到内存中，
-或者可以组合任何类型的操作数到寄存器中；但是不能将一个内存位置组合到另一个中。
-
 这些约束作为多个可选项来表示。
 一个可选项可以通过针对每个操作数的一系列字母来描述。
 一个操作数的总的约束由该操作数第一个可选项的字母，逗号，
@@ -1755,10 +1739,7 @@ addl #35,r12
 @en The alternative requiring the least copying is chosen.  If two alternatives
 @en need the same amount of copying, the one that comes first is chosen.
 @en These choices can be altered with the @samp{?} and @samp{!} characters:
-如果所有操作数适合任意一个可选项，则指令为有效的。否则，对于每个可选项，
-编译器计算要复制操作数使得可选项可以使用所需要增加的指令个数。
-需要的复制最少的可选项将被选中。如果两个可选项需要相同数目的复制，
-则选择前面的。这些选择可以通过字符@samp{?}和@samp{!}来改变：
+如果所有操作数适合任意一个可选项，则指令为有效的。否则，对于每个可选项，编译器计算要复制操作数使得可选项可以使用所需要增加的指令个数。需要的复制最少的可选项将被选中。如果两个可选项需要相同数目的复制，则选择前面的。这些选择可以通过字符@samp{?}和@samp{!}来改变：
 
 @table @code
 @cindex @samp{?} in constraint
@@ -1768,8 +1749,7 @@ addl #35,r12
 @en as a choice when no alternative applies exactly.  The compiler regards
 @en this alternative as one unit more costly for each @samp{?} that appears
 @en in it.
-轻微降低@samp{?}出现的可选项，当没有可选项被确切应用时，才将其作为选择。
-编译器将该可选项的花销认为高出一个单元。 
+轻微降低@samp{?}出现的可选项，当没有可选项被确切应用时，才将其作为选择。编译器将该可选项的花销认为高出一个单元。 
 
 @cindex @samp{!} in constraint
 @cindex exclamation point
@@ -1799,7 +1779,7 @@ addl #35,r12
 @cindex class preference constraints
 @cindex register class preference constraints
 
-@en @cindex voting between constraint alternatives
+@cindex voting between constraint alternatives
 @en The operand constraints have another function: they enable the compiler
 @en to decide which kind of hardware register a pseudo register is best
 @en allocated to.  The compiler examines the constraints that apply to the
@@ -1809,18 +1789,11 @@ addl #35,r12
 @en The constraint letters @samp{g} and @samp{r} also vote: they vote in
 @en favor of a general register.  The machine description says which registers
 @en are considered general.
-@cindex voting between constraint alternatives
-操作数约束还具有另一个功能：它们使编译器可以决定为伪寄存器分配哪种硬件寄存器。
-编译器检查应用到使用伪寄存器的insn的约束，
-查看机器相关的指定寄存器类别的字母像@samp{d}和@samp{a}。
-伪寄存器被放在获得最多“票数”的类别中。约束字母@samp{g}和@samp{r}也要投票：
-它们在通用寄存器方面进行投票。机器描述告诉哪种寄存器被认为是通用的。
+操作数约束还具有另一个功能：它们使编译器可以决定为伪寄存器分配哪种硬件寄存器。编译器检查应用到使用伪寄存器的insn的约束，查看机器相关的指定寄存器类别的字母像@samp{d}和@samp{a}。伪寄存器被放在获得最多“票数”的类别中。约束字母@samp{g}和@samp{r}也要投票：它们在通用寄存器方面进行投票。机器描述告诉哪种寄存器被认为是通用的。
 
 @en Of course, on some machines all registers are equivalent, and no register
 @en classes are defined.  Then none of this complexity is relevant.
-@en @end ifset
-当然，在一些机器上所有寄存器都是等价的，并且没有定义寄存器类别。
-那么就相应的没有这么复杂了。
+当然，在一些机器上所有寄存器都是等价的，并且没有定义寄存器类别。那么就相应的没有这么复杂了。
 @end ifset
 
 @en @node Modifiers
@@ -1852,9 +1825,7 @@ addl #35,r12
 @en which are outputs from it.  @samp{=} identifies an output; @samp{+}
 @en identifies an operand that is both input and output; all other operands
 @en are assumed to be input only.
-当编译器修订操作数来满足约束时，
-它需要知道哪些操作数为指令的输入以及哪些为它的输出。@samp{=}表示一个输出；
-@samp{+}表示一个操作数同时为输入和输出；所有其它操作数将被认为只是输入。
+当编译器修订操作数来满足约束时，它需要知道哪些操作数为指令的输入以及哪些为它的输出。@samp{=}表示一个输出；@samp{+}表示一个操作数同时为输入和输出；所有其它操作数将被认为只是输入。
 
 @en If you specify @samp{=} or @samp{+} in a constraint, you put it in the
 @en first character of the constraint string.
@@ -1868,26 +1839,20 @@ addl #35,r12
 @en finished using the input operands.  Therefore, this operand may not lie
 @en in a register that is used as an input operand or as part of any memory
 @en address.
-意味着（在一个特别的可选项中）该操作数为一个@dfn{earlyclobber}操作数，
-其在指令完成使用输入操作数之前就被修改了。
-因此该操作数可能不在被用作输入操作数或者用作任何内存地址的一部分的寄存器中。
+意味着（在一个特别的可选项中）该操作数为一个@dfn{earlyclobber}操作数，其在指令完成使用输入操作数之前就被修改了。因此该操作数可能不在被用作输入操作数或者用作任何内存地址的一部分的寄存器中。
 
 @en @samp{&} applies only to the alternative in which it is written.  In
 @en constraints with multiple alternatives, sometimes one alternative
 @en requires @samp{&} while others do not.  See, for example, the
 @en @samp{movdf} insn of the 68000.
-@samp{&}只应用于其所在的可选项。在具有多个可选项的约束中，
-有时一个可选项需要@samp{&}，而其它的不需要。例如，参见68000的@samp{movdf} insn。
+@samp{&}只应用于其所在的可选项。在具有多个可选项的约束中，有时一个可选项需要@samp{&}，而其它的不需要。例如，参见68000的@samp{movdf} insn。
 
 @en An input operand can be tied to an earlyclobber operand if its only
 @en use as an input occurs before the early result is written.  Adding
 @en alternatives of this form often allows GCC to produce better code
 @en when only some of the inputs can be affected by the earlyclobber.
 @en See, for example, the @samp{mulsi3} insn of the ARM@.
-一个输入操作数可以被限定为一个earlyclobber操作数，
-如果它唯一的作为输入的使用发生在早期结果被写出之前。
-增加这种形式的可选项经常可以允许GCC来产生更好的代码，
-当只有一些输出可以被earlyclobber影响时。例如，参见ARM的@samp{mulsi3} insn。
+一个输入操作数可以被限定为一个earlyclobber操作数，如果它唯一的作为输入的使用发生在早期结果被写出之前。增加这种形式的可选项经常可以允许GCC来产生更好的代码，当只有一些输出可以被earlyclobber影响时。例如，参见ARM的@samp{mulsi3} insn。
 
 @en @samp{&} does not obviate the need to write @samp{=}.
 @samp{&}不排除对@samp{=}的需要。
@@ -1898,24 +1863,14 @@ addl #35,r12
 @en following operand.  This means that the compiler may interchange the
 @en two operands if that is the cheapest way to make all operands fit the
 @en constraints.
-声明指令对于该操作数和随后的操作数是可交换的。这意味着编译器可以交换两操作数，
-如果有更廉价的方式来使得所有操作数都适合约束。
+声明指令对于该操作数和随后的操作数是可交换的。这意味着编译器可以交换两操作数，如果有更廉价的方式来使得所有操作数都适合约束。
 @ifset INTERNALS
 @en This is often used in patterns for addition instructions
 @en that really have only two operands: the result must go in one of the
 @en arguments.  Here for example, is how the 68000 halfword-add
 @en instruction is defined:
-这经常被用于实际上只有两个操作数的加法指令中：结果必须放在一个参数中。
-这里有个例子，是68000半字加指令如何被定义的： 
+这经常被用于实际上只有两个操作数的加法指令中：结果必须放在一个参数中。这里有个例子，是68000半字加指令如何被定义的： 
  
-@en @smallexample
-@en (define_insn "addhi3"
-@en   [(set (match_operand:HI 0 "general_operand" "=m,r")
-@en      (plus:HI (match_operand:HI 1 "general_operand" "%0,0")
-@en               (match_operand:HI 2 "general_operand" "di,g")))]
-@en   @dots{})
-@en @end smallexample
-@en @end ifset
 @smallexample
 (define_insn "addhi3"
   [(set (match_operand:HI 0 "general_operand" "=m,r")
@@ -1932,19 +1887,14 @@ addl #35,r12
 @en register allocation, so the result of @code{define_peephole2}
 @en and @code{define_split}s performed after reload cannot rely on
 @en @samp{%} to make the intended insn match.
-GCC只能处理在asm中的一个可交换对；如果你有更多的，编译器将会失败。
-注意如果两个可选项严格相同，则不需要使用该修饰符；这只会在重载过程浪费时间。
-该修饰符在寄存器分配之后，是不可操作的，
-所以在重载之后执行的@code{define_peephole2}和@code{define_split}的结果不能依赖
-@samp{%}来进行insn匹配。
+GCC只能处理在asm中的一个可交换对；如果你有更多的，编译器将会失败。注意如果两个可选项严格相同，则不需要使用该修饰符；这只会在重载过程浪费时间。该修饰符在寄存器分配之后，是不可操作的，所以在重载之后执行的@code{define_peephole2}和@code{define_split}的结果不能依赖@samp{%}来进行insn匹配。
 
 @cindex @samp{#} in constraint
 @item #
 @en Says that all following characters, up to the next comma, are to be
 @en ignored as a constraint.  They are significant only for choosing
 @en register preferences.
-表示所有后续的字符，直到下一个逗号，作为约束都被忽略掉。
-它们只对选择寄存器优先时有意义。 
+表示所有后续的字符，直到下一个逗号，作为约束都被忽略掉。它们只对选择寄存器优先时有意义。 
 
 @cindex @samp{*} in constraint
 @item *
@@ -1962,12 +1912,7 @@ GCC只能处理在asm中的一个可交换对；如果你有更多的，编译�
 @en register its goal.  Therefore, @samp{*} is used so that the @samp{d}
 @en constraint letter (for data register) is ignored when computing
 @en register preferences.
-这里有一个例子：68000有一条指令，用于在数据寄存器中符号扩展一个半字，
-并且还可以通过将其复制到一个地址寄存器中来符号扩展一个值。
-当每种寄存器都可以被接受时，对于地址寄存器的约束相对不是很严格，
-所以最好是寄存器分配将地址寄存器作为其目标。
-因此，@samp{*}被使用，以至于@samp{d}约束字母（数据寄存器）被忽略，
-当计算寄存器优先时。
+这里有一个例子：68000有一条指令，用于在数据寄存器中符号扩展一个半字，并且还可以通过将其复制到一个地址寄存器中来符号扩展一个值。当每种寄存器都可以被接受时，对于地址寄存器的约束相对不是很严格，所以最好是寄存器分配将地址寄存器作为其目标。因此，@samp{*}被使用，以至于@samp{d}约束字母（数据寄存器）被忽略，当计算寄存器优先时。
 
 @smallexample
 (define_insn "extendhisi2"
