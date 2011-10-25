@@ -279,15 +279,15 @@ insn列表被用来匹配RTL模板，产生汇编代码。
 @en @samp{tstsi} means ``test a @code{SImode} value'' and tells the RTL generation
 @en pass that, when it is necessary to test such a value, an insn to do so
 @en can be constructed using this pattern.
-这是一条根据通用操作数来设置条件代码的指令。这个模式不需要条件（条件为空字符串），所以任何insn，如果RTL描述的形式相符，则可以根据这个模式来处理。名字@samp{tstsi}表示“test a @code{SImode} value”，并且告诉了RTL生成过程，当其需要测试这样的值时，可以使用这个模式来构造一条指令。
+这是一条根据通用操作数来设置条件代码的指令。这个模式不需要条件（条件为空字符串），所以任何insn，如果RTL描述具有如上形式，则可以根据这个模式来处理。名字@samp{tstsi}表示“test a @code{SImode} value”，并且告诉RTL生成pass，当其需要测试这样的值时，可以使用这个模式来构造一条指令。
 
 @en The output control string is a piece of C code which chooses which
 @en output template to return based on the kind of operand and the specific
 @en type of CPU for which code is being generated.
-输出控制字符串是一部分C代码，用来根据操作数的类别和CPU的特定类型选择输出模版。
+输出控制字符串是一部分C代码，用来根据操作数的类别和CPU的特定类型选择输出模版，生成代码。
 
 @en @samp{"rm"} is an operand constraint.  Its meaning is explained below.
-@samp{"rm"}是一个操作数constraint。后面将会解释它的含义。
+@samp{"rm"}是一个操作数约束。后面将会解释它的含义。
 
 @en @node RTL Template
 @en @section RTL Template
@@ -329,7 +329,7 @@ RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们�
 @en expressions.  In the case of a @code{define_expand}, any operand numbers
 @en used only in @code{match_dup} expressions have higher values than all
 @en other operand numbers.
-每个指令模式中的操作数编号必须从0开始连续的选择。在指令模式中，可以对每个操作数编号只是用一个@code{match_operand}表达式。 通常操作数按照在@code{match_operand}表达式中出现的顺序被编号。对于@code{define_expand}，任何使用的操作数编号，只有在@code{match_dup}表达式中才会具有比其它操作数编号更高的值。
+每个指令模式中的操作数编号必须从0开始连续的选择。在指令模式中，可以对每个操作数编号只用一个@code{match_operand}表达式。 通常操作数按照在@code{match_operand}表达式中出现的顺序被编号。对于@code{define_expand}，所有只在@code{match_dup}表达式中才用到的操作数编号，会具有比其它操作数编号更高的值。
 
 @en @var{predicate} is a string that is the name of a function that
 @en accepts two arguments, an expression and a machine mode.
@@ -341,25 +341,25 @@ RTL模板用来定义哪些insn匹配特定的模式，以及如何找到它们�
 @en @var{predicate} may be an empty string; then it means no test is to be
 @en done on the operand, so anything which occurs in this position is
 @en valid.
-@var{predicate}为一个字符串，为一个函数的名字，其接受两个参数，一个表达式和一个 机器模式。@xref{Predicates}。在匹配过程中，函数将会被调用，使用假定的操作数作为 表达式并且@var{m}作为机器模式参数（如果@var{m}没有被指定，则使用@code{VOIDmode}，这通常会使得@var{predicate}可以接受任何机器模式）。如果其返回0，则该指令模式匹配失败。@var{predicate}可以为一个空字符串；这意味着不对操作数作测试，这样出现在该位置的任何都是有效的。
+@var{predicate}为一个字符串，是一个函数的名字，其接受两个参数，一个表达式和一个机器模式。@xref{Predicates}。在匹配过程中，函数将会被调用，使用假定的操作数作为表达式并且@var{m}作为机器模式参数（如果@var{m}没有被指定，则使用@code{VOIDmode}，这通常会使得@var{predicate}可以接受任何机器模式）。如果其返回0，则该指令模式匹配失败。@var{predicate}可以为一个空字符串；这意味着不对操作数作测试，这样出现在该位置的任何操作数都是有效的。
 
 @en Most of the time, @var{predicate} will reject modes other than @var{m}---but
 @en not always.  For example, the predicate @code{address_operand} uses
 @en @var{m} as the mode of memory ref that the address should be valid for.
 @en Many predicates accept @code{const_int} nodes even though their mode is
 @en @code{VOIDmode}.
-大多时候，@var{predicate}将会拒绝@var{m}之外的机器模式——但并不总是这样。例 如，predicate @code{address_operand}使用@var{m}作为内存引用的机器模式。许多predicate接受@code{const_int}节点，即使它们的机器模式为@code{VOIDmode}。
+大多时候，@var{predicate}将会拒绝@var{m}之外的机器模式——但并不总是这样。例如，断言@code{address_operand}使用@var{m}作为内存引用中有效地址的机器模式，而许多断言会接受@code{const_int}节点，即使它们的机器模式为@code{VOIDmode}。
 
 @en @var{constraint} controls reloading and the choice of the best register
 @en class to use for a value, as explained later (@pxref{Constraints}).
 @en If the constraint would be an empty string, it can be omitted.
-@var{constraint}控制重载以及针对一个值选择最好的寄存器类别来使用，将在后面解释（@pxref{Constraints}）。如果constraint为空字符串，则可以忽略掉。
+@var{constraint}用来控制reloading，以及将在后面讲到的，如何针对一个值选择使用最好的寄存器类别（@pxref{Constraints}）。如果约束为空字符串，则可以忽略掉。
 
 @en People are often unclear on the difference between the constraint and the
 @en predicate.  The predicate helps decide whether a given insn matches the
 @en pattern.  The constraint plays no role in this decision; instead, it
 @en controls various decisions in the case of an insn which does match.
-人们经常弄不清楚constraint和predicate的区别。predicate帮助决定一个给定的insn是否匹配指令模式。constraint在该决定中不发挥作用；替代的，其控制已经匹配的insn的各种决定。
+人们经常弄不清楚约束（constraint）和断言（predicate）的区别。断言用来帮助判定一个给定的insn是否匹配指令模式。约束在该决策中并不发挥作用，而是用来控制对于已经匹配的insn，进行的各种决策。
 
 @findex match_scratch
 @item (match_scratch:@var{m} @var{n} @var{constraint})
@@ -512,7 +512,7 @@ commutative_integer_operator (x, mode)
 @en This pattern is a placeholder for an insn that consists of a
 @en @code{parallel} expression with a variable number of elements.  This
 @en expression should only appear at the top level of an insn pattern.
-该指令模式为一个insn的占位符，该insn由一个具有可变数目元素的@code{parallel}表达式组成。该表达式应该只在insn指令模式的顶层出现。
+该指令模式代表一个insn，并且该insn由一个具有可变数目元素的@code{parallel}表达式组成。该表达式只能在insn指令模式的顶层出现。
 
 @en When constructing an insn, operand number @var{n} will be substituted at
 @en this point.  When matching an insn, it matches if the body of the insn
@@ -523,7 +523,7 @@ commutative_integer_operator (x, mode)
 @en @code{parallel} that is the body of the insn.  It is the responsibility
 @en of the predicate to validate elements of the @code{parallel} beyond
 @en those listed in the @code{match_parallel}.
-当构造insn时，操作数编号@var{n}将在该处被替换。当匹配一个insn时，其当insn的主体为一个@code{parallel}表达式，其具有至少跟向量@var{subpat}表达式同样多数目元素，并且函数@var{predicate}返回非零时才匹配。predicate负责判定在@code{match_parallel}中的@code{parallel}的元素是否有效。
+当构造insn时，操作数编号@var{n}将在该处被替换。当匹配一个insn时，其当insn的主体为一个@code{parallel}表达式，其具有至少跟向量@var{subpat}表达式同样多数目元素，并且函数@var{predicate}返回非零时才匹配。断言（predicate）负责判定在@code{match_parallel}中的@code{parallel}的元素是否有效。
 
 @en A typical use of @code{match_parallel} is to match load and store
 @en multiple expressions, which can contain a variable number of elements
