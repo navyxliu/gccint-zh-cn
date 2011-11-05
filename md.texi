@@ -876,14 +876,14 @@ commutative_integer_operator (x, mode)
 @en These are the generic predicates available to all back ends.  They are
 @en defined in @file{recog.c}.  The first category of predicates allow
 @en only constant, or @dfn{immediate}, operands.
-这些是通用predicate，适用于所有后端。它们定义在@file{recog.c}中。第一类predicate只允许常量或立即数。
+这些断言(predicate)是通用的，适用于所有后端。它们在@file{recog.c}中定义。第一类断言只允许常量或立即数。
 
 @defun immediate_operand
 @en This predicate allows any sort of constant that fits in @var{mode}.
 @en It is an appropriate choice for instructions that take operands that
 @en must be constant.
 @en @end defun
-该predicate允许适合相应@var{mode}的任何类别的常量。适合用于操作数必须为常量的指令。
+该断言允许适合@var{mode}的任何常量。适合用于操作数必须为常量的指令。
 @end defun
 
 @defun const_int_operand
@@ -891,7 +891,7 @@ commutative_integer_operator (x, mode)
 @en @var{mode}.  It is an appropriate choice for an immediate operand that
 @en does not allow a symbol or label.
 @en @end defun
-该predicate允许适合相应@var{mode}的任何@code{CONST_INT}表达式。适合用于不是符号（symbol）或标号（label）的立即数。
+该断言允许适合@var{mode}的任何@code{CONST_INT}表达式。适合用于不是符号（symbol）或标号（label）的立即数。
 @end defun
 
 @defun const_double_operand
@@ -899,25 +899,25 @@ commutative_integer_operator (x, mode)
 @en exactly @var{mode}.  If @var{mode} is @code{VOIDmode}, it will also
 @en accept @code{CONST_INT}.  It is intended for immediate floating point
 @en constants.
-该predicate接受任何确实为@var{mode}的@code{CONST_DOUBLE}表达式。如果@var{mode}为@code{VOIDmode}，则其还接受@code{CONST_INT}。它是用于浮点立即数的。
+该断言接受任何确实为@var{mode}的@code{CONST_DOUBLE}表达式。如果@var{mode}为@code{VOIDmode}，则其还接受@code{CONST_INT}。可以用于立即数浮点常量。
 @end defun
 
 @noindent
 @en The second category of predicates allow only some kind of machine
 @en register.
-第二类predicate只允许某种类别的机器寄存器。
+第二类断言只允许某种类别的机器寄存器。
 
 @defun register_operand
 @en This predicate allows any @code{REG} or @code{SUBREG} expression that
 @en is valid for @var{mode}.  It is often suitable for arithmetic
 @en instruction operands on a RISC machine.
-该predicate允许适合相应@var{mode}的任何@code{REG}或@code{SUBREG}表达式。通常适合于RISC机器上的算术指令操作数。
+该断言允许适合@var{mode}的任何@code{REG}或@code{SUBREG}表达式。通常适用于RISC机器上的算术指令操作数。
 @end defun
 
 @defun pmode_register_operand
 @en This is a slight variant on @code{register_operand} which works around
 @en a limitation in the machine-description reader.
-这与@code{register_operand}略为不同，其对机器描述的读入器有些限制。
+这与@code{register_operand}略有不同，用于绕过机器描述读入部分的限制。
 
 @smallexample
 (match_operand @var{n} "pmode_register_operand" @var{constraint})
@@ -936,25 +936,28 @@ commutative_integer_operator (x, mode)
 @en mode suffixes.  Unfortunately, it cannot, because @code{Pmode} is an
 @en alias for some other mode, and might vary with machine-specific
 @en options.  @xref{Misc}.
-当机器描述读入器接受@samp{:P}机器模式后缀时，将具有完全相同的含义。不幸的是，这样不行，应为Pmode是其它机器模式的别名，并且可能随着机器特定选项的不同而改变。@xref{Misc}。
+如果当机器描述读入部分接受@samp{:P}机器模式后缀时，则具有完全相同的含义。不幸的是，这样不行，因为@code{Pmode}是其它机器模式的别名，并且还可能随着机器特定选项而改变。@xref{Misc}。
 @end defun
 
 @defun scratch_operand
 @en This predicate allows hard registers and @code{SCRATCH} expressions,
 @en but not pseudo-registers.  It is used internally by @code{match_scratch};
 @en it should not be used directly.
-该predicate允许硬件寄存器和@code{SCRATCH}表达式，但不允许伪寄存器。其由@code{match_scratch}在内部使用；而不应该被直接使用。
+该断言允许硬件寄存器和@code{SCRATCH}表达式，但不允许伪寄存器。其由@code{match_scratch}在内部使用；而不应该被直接使用。
 @end defun
 
 @noindent
 @en The third category of predicates allow only some kind of memory reference.
-第三类predicate只允许某种内存引用。
+第三类断言只允许某种内存引用。
 
 @defun memory_operand
 @en This predicate allows any valid reference to a quantity of mode
 @en @var{mode} in memory, as determined by the weak form of
 @en @code{GO_IF_LEGITIMATE_ADDRESS} (@pxref{Addressing Modes}).
-该predicate允许任何对内存中机器模式@var{mode}的一定数量的有效引用，并通过@code{GO_IF_LEGITIMATE_ADDRESS}的弱形式来确定(@pxref{Addressing Modes})。
+@obsolete 该断言允许任何对内存中机器模式@var{mode}的一定数量的有效引用，并通过@code{GO_IF_LEGITIMATE_ADDRESS}的弱形式来确定(@pxref{Addressing Modes})。
+This predicate allows any valid reference to a quantity of mode
+@var{mode} in memory, as determined by the weak form of
+@code{GO_IF_LEGITIMATE_ADDRESS} (@pxref{Addressing Modes}).
 @end defun
 
 @defun address_operand
@@ -966,7 +969,7 @@ commutative_integer_operator (x, mode)
 @en @code{memory_operand}, then @var{exp} is acceptable to
 @en @code{address_operand}.  Note that @var{exp} does not necessarily have
 @en the mode @var{mode}.
-该predicate有些不常用；其允许任何为机器模式@var{mode}的一定数量的地址有效表达式操作数，同样通过@code{GO_IF_LEGITIMATE_ADDRESS}的弱形式来确定。首先，如果@samp{@w{(mem:@var{mode} (@var{exp}))}}被@code{memory_operand}接受，则@var{exp}被@code{address_operand}接受。注意@var{exp}不必具有机器模式@var{mode}。
+该断言不太常用；其允许任何为机器模式@var{mode}的一定数量的地址有效表达式操作数，同样通过@code{GO_IF_LEGITIMATE_ADDRESS}的弱形式来确定。首先，如果@samp{@w{(mem:@var{mode} (@var{exp}))}}被@code{memory_operand}接受，则@var{exp}被@code{address_operand}接受。注意@var{exp}不必具有机器模式@var{mode}。
 @end defun
 
 @defun indirect_operand
@@ -987,7 +990,7 @@ commutative_integer_operator (x, mode)
 @en @code{stack_pointer_rtx}, with a side-effect in its address expression
 @en (@pxref{Incdec}); which one is determined by the
 @en @code{STACK_PUSH_CODE} macro (@pxref{Frame Layout}).
-该predicate允许适合将值压入栈中的内存引用。这将为一个@code{MEM}，其引用@code{stack_pointer_rtx}，且在其地址表达式中具有一个副作用(@pxref{Incdec})；其由宏@code{STACK_PUSH_CODE}来确定(@pxref{Frame Layout}。
+该断言允许适合将值压入栈中的内存引用。这将为一个@code{MEM}，其引用@code{stack_pointer_rtx}，且在其地址表达式中具有一个副作用(@pxref{Incdec})；其由宏@code{STACK_PUSH_CODE}来确定(@pxref{Frame Layout}。
 @end defun
 
 @defun pop_operand
@@ -995,39 +998,39 @@ commutative_integer_operator (x, mode)
 @en off the stack.  Again, this will be a @code{MEM} referring to
 @en @code{stack_pointer_rtx}, with a side-effect in its address
 @en expression.  However, this time @code{STACK_POP_CODE} is expected.
-该predicate允许适合将值弹出栈中的内存引用。同样，这将为一个@code{MEM} ，其引用@code{stack_pointer_rtx}，且在其地址表达式中具有一个副作用；不过，这次是@code{STACK_POP_CODE} 。
+该断言允许适合将值弹出栈中的内存引用。同样，这将为一个@code{MEM} ，其引用@code{stack_pointer_rtx}，且在其地址表达式中具有一个副作用；不过，这次是@code{STACK_POP_CODE} 。
 @end defun
 
 @noindent
 @en The fourth category of predicates allow some combination of the above
 @en operands.
-第四类predicate允许上面的操作数的某种组合。
+第四类断言允许上面的操作数的某种组合。
 
 @defun nonmemory_operand
 @en This predicate allows any immediate or register operand valid for @var{mode}.
-该predicate允许任何对于@var{mode}有效的立即数，或寄存器操作数。
+该断言允许任何对于@var{mode}有效的立即数，或寄存器操作数。
 @end defun
 
 @defun nonimmediate_operand
 @en This predicate allows any register or memory operand valid for @var{mode}.
-该predicate允许任何对于@var{mode}有效的寄存器，或内存操作数。
+该断言允许任何对于@var{mode}有效的寄存器，或内存操作数。
 @end defun
 
 @defun general_operand
 @en This predicate allows any immediate, register, or memory operand
 @en valid for @var{mode}.
-该predicate允许任何对于@var{mode}有效的立即数，寄存器，或内存操作数。
+该断言允许任何对于@var{mode}有效的立即数，寄存器，或内存操作数。
 @end defun
 
 @noindent
 @en Finally, there are two generic operator predicates.
-最后，有两个通用操作符断言。
+最后，有两个通用的操作符断言。
 
 @defun comparison_operator
 @en This predicate matches any expression which performs an arithmetic
 @en comparison in @var{mode}; that is, @code{COMPARISON_P} is true for the
 @en expression code.
-该predicate匹配任何执行一个基于@var{mode}的算术比较表达式；即，@code{COMPARISON_P}对于表达式代码为真。
+该断言匹配任何执行基于@var{mode}的算术比较表达式；即，@code{COMPARISON_P}对于表达式代码为真。
 @end defun
 
 @defun ordered_comparison_operator
@@ -1036,11 +1039,7 @@ commutative_integer_operator (x, mode)
 @en modes; that is, the expression code will be one of @code{eq}, @code{ne},
 @en @code{lt}, @code{ltu}, @code{le}, @code{leu}, @code{gt}, @code{gtu},
 @en @code{ge}, @code{geu}.
-This predicate matches any expression which performs an arithmetic
-comparison in @var{mode} and whose expression code is valid for integer
-modes; that is, the expression code will be one of @code{eq}, @code{ne},
-@code{lt}, @code{ltu}, @code{le}, @code{leu}, @code{gt}, @code{gtu},
-@code{ge}, @code{geu}.
+该断言匹配任何执行基于@var{mode}的算术比较表达式，且表达式代码适合整形机器模式；即，表达式代码为@code{eq}, @code{ne}, @code{lt}, @code{ltu}, @code{le}, @code{leu}, @code{gt}, @code{gtu}, @code{ge}, 或者@code{geu}.
 @end defun
 
 @en @node Defining Predicates
