@@ -430,45 +430,53 @@ the summaries are read back into memory and all passes run the
 @emph{Execute} stage.  Optimization summaries are streamed and
 sent to LTRANS, where all the passes execute the @emph{Transform}
 stage.
+在WHOPR模式下，所有优化遍都先执行它们的@emph{Generate summary}阶段。
 
-Most optimization passes split naturally into analysis,
-propagation and transformation stages.  But some do not.  The
-main problem arises when one pass performs changes and the
-following pass gets confused by seeing different callgraphs
-between the @emph{Transform} stage and the @emph{Generate summary}
-or @emph{Execute} stage.  This means that the passes are required
-to communicate their decisions with each other.
+@en Most optimization passes split naturally into analysis,
+@en @propagation and transformation stages.  But some do not.  The
+@en main problem arises when one pass performs changes and the
+@en following pass gets confused by seeing different callgraphs
+@en between the @emph{Transform} stage and the @emph{Generate summary}
+@en or @emph{Execute} stage.  This means that the passes are required
+@en to communicate their decisions with each other.
+大多数优化遍会自然地分为分析，传播和转换三个阶段，但是有些优化遍不是。当一个优化遍做出了修改，而后边的优化遍就会在@emph{Transform}阶段和@emph{Generate summary}阶段看到的不同调用图而感到疑惑，这样问题就出来了。这就意味着优化遍之间需要相互交互它们的决定。
 
-To facilitate this communication, the GCC callgraph
-infrastructure implements @emph{virtual clones}, a method of
-representing the changes performed by the optimization passes in
-the callgraph without needing to update function bodies.
+@en To facilitate this communication, the GCC callgraph
+@en infrastructure implements @emph{virtual clones}, a method of
+@en representing the changes performed by the optimization passes in
+@en the callgraph without needing to update function bodies.
+为了方便这样的决定交互，GCC的调用图基础实现了@emph{virtual clones}，这个方法可以表示优化遍对调用图做的修改，而不需要改变函数体。
 
-A @emph{virtual clone} in the callgraph is a function that has no
-associated body, just a description of how to create its body based
-on a different function (which itself may be a virtual clone).
+@en A @emph{virtual clone} in the callgraph is a function that has no
+@en associated body, just a description of how to create its body based
+@en on a different function (which itself may be a virtual clone).
+调用图中的一个@emph{virtual clone}就是一个函数，但是没有相关的函数体。它只是一个描述如何根据一个不同的函数（这个函数本身也可能是一个virtual clone）来创建它的函数体。
 
-The description of function modifications includes adjustments to
-the function's signature (which allows, for example, removing or
-adding function arguments), substitutions to perform on the
-function body, and, for inlined functions, a pointer to the
-function that it will be inlined into.
+@en The description of function modifications includes adjustments to
+@en the function's signature (which allows, for example, removing or
+@en adding function arguments), substitutions to perform on the
+@en function body, and, for inlined functions, a pointer to the
+@en function that it will be inlined into.
+对一个函数的修改的描述包括了函数签名的调整（它允许，比如，删除或者添加函数参数），在函数体上的替换，和指向内联函数的指针会被内联到函数体。
 
-It is also possible to redirect any edge of the callgraph from a
-function to its virtual clone.  This implies updating of the call
-site to adjust for the new function signature.
+@en It is also possible to redirect any edge of the callgraph from a
+@en function to its virtual clone.  This implies updating of the call
+@en site to adjust for the new function signature.
+调用图中的一个边有可能从一个函数指向它的virtual clone。这样就意味着更新call site用来调整新的函数签名。
 
-Most of the transformations performed by inter-procedural
-optimizations can be represented via virtual clones.  For
-instance, a constant propagation pass can produce a virtual clone
-of the function which replaces one of its arguments by a
-constant.  The inliner can represent its decisions by producing a
-clone of a function whose body will be later integrated into
-a given function.
+@en Most of the transformations performed by inter-procedural
+@en optimizations can be represented via virtual clones.  For
+@en instance, a constant propagation pass can produce a virtual clone
+@en of the function which replaces one of its arguments by a
+@en constant.  The inliner can represent its decisions by producing a
+@en clone of a function whose body will be later integrated into
+@en a given function.
+大多数过程间优化所做的变换都可以用virtual clones代表。例如，常量传播优化可以给函数创造一个virtual clone，其把其中一个参数替换为一个常数。内联函数优化可以用制造一个函数的克隆，然后把这个克隆集成到某个特定函数中去。
 
-Using @emph{virtual clones}, the program can be easily updated
-during the @emph{Execute} stage, solving most of pass interactions
-problems that would otherwise occur during @emph{Transform}.
+@en Using @emph{virtual clones}, the program can be easily updated
+@en during the @emph{Execute} stage, solving most of pass interactions
+@en problems that would otherwise occur during @emph{Transform}.
+使用@emph{virtual clones}，程序可以被容易地更新在@emph{Execute}更新，这样也可以解决优化遍的交互的大部分问题，否者，这些问题会发生在@emph{Transform}阶段。
 
 Virtual clones are later materialized in the LTRANS stage and
 turned into real functions.  Passes executed after the virtual
