@@ -1,0 +1,118 @@
+@c Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+@c 1999, 2000, 2001, 2003, 2004, 2007 Free Software Foundation, Inc.
+@c This is part of the GCC manual.
+@c For copying conditions, see the file gcc.texi.
+
+@node Bugs
+@chapter Reporting Bugs
+@cindex bugs
+@cindex reporting bugs
+
+Your bug reports play an essential role in making GCC reliable.
+
+你的bug报告在让GCC可用的过程中扮演了重要的角色。
+
+When you encounter a problem, the first thing to do is to see if it is
+already known.  @xref{Trouble}.  If it isn't known, then you should
+report the problem.
+
+当你发现一个问题，首先应该确认是不是已知问题，如果不是已知问题，那么你应该报告这个问题。
+
+@menu
+* Criteria:  Bug Criteria.   Have you really found a bug?
+* Reporting: Bug Reporting.  How to report a bug effectively.
+* Known: Trouble.            Known problems.
+* Help: Service.             Where to ask for help.
+@end menu
+
+@node Bug Criteria,Bug Reporting,,Bugs
+@section Have You Found a Bug?
+@cindex bug criteria
+
+If you are not sure whether you have found a bug, here are some guidelines:
+
+如果你不确定你发现是不是一个bug，这里有几个建议供你参考：
+
+@itemize @bullet
+@cindex fatal signal
+@cindex core dump
+@item
+If the compiler gets a fatal signal, for any input whatever, that is a
+compiler bug.  Reliable compilers never crash.
+
+如果在任何情况下编译器输出错信息，那必然是一个编译器bug，一个可用的编译器不应该崩溃。
+
+@cindex invalid assembly code
+@cindex assembly code, invalid
+@item
+If the compiler produces invalid assembly code, for any input whatever
+(except an @code{asm} statement), that is a compiler bug, unless the
+compiler reports errors (not just warnings) which would ordinarily
+prevent the assembler from being run.
+
+如果编译器在任何情况下产生无效的汇编代码，都必然是一个编译器bug，除非编译器报错了。
+
+@cindex undefined behavior
+@cindex undefined function value
+@cindex increment operators
+@item
+If the compiler produces valid assembly code that does not correctly
+execute the input source code, that is a compiler bug.
+
+如果编译器产生错误的代码，都必然是一个编译器bug。
+
+However, you must double-check to make sure, because you may have a
+program whose behavior is undefined, which happened by chance to give
+the desired results with another C or C++ compiler.
+
+但是，你必须确认这种情况，因为你可能在遇到了未定义行为。
+
+For example, in many nonoptimizing compilers, you can write @samp{x;}
+at the end of a function instead of @samp{return x;}, with the same
+results.  But the value of the function is undefined if @code{return}
+is omitted; it is not a bug when GCC produces different results.
+
+例如，在很多非优化编译器中，你可以在函数结尾写 x; 而不是 return x; ，也不会出错，但是省略了return函数的返回值便是不确定的，GCC会报错，但是这不是GCC的错，而是未定义行为。
+
+Problems often result from expressions with two increment operators,
+as in @code{f (*p++, *p++)}.  Your previous compiler might have
+interpreted that expression the way you intended; GCC might
+interpret it another way.  Neither compiler is wrong.  The bug is
+in your code.
+
+同样的问题经常出现在 f (*p++, *p++) 之类的代码中。你之前的编译器可能按照你想的递增了两次，GCC可能不那么做。两个编译器都是对的，只是你的代码不对，你不应该写出这种狗屎代码来。
+
+After you have localized the error to a single source line, it should
+be easy to check for these things.  If your program is correct and
+well defined, you have found a compiler bug.
+
+当你定位了报错的具体代码后，就好说了。如果你的程序正确并且书写良好，恭喜你，你发现了一个编译器bug。
+
+@item
+If the compiler produces an error message for valid input, that is a
+compiler bug.
+
+如果编译器在有效输入的情况下报错，那么这是一个编译器bug。
+
+@cindex invalid input
+@item
+If the compiler does not produce an error message for invalid input,
+that is a compiler bug.  However, you should note that your idea of
+``invalid input'' might be someone else's idea of ``an extension'' or
+``support for traditional practice''.
+
+如果编译器在无效输入的时候不报错，这个也是一个编译器bug。然而，你应该确定那是无效输入，别把语言扩展和支持传统语法当成了无效输入。
+
+@item
+If you are an experienced user of one of the languages GCC supports, your
+suggestions for improvement of GCC are welcome in any case.
+
+如果你是一个经验丰富的某个GCC前端支持的用户，你对GCC的改进建议将在任何时候都是受欢迎的。
+@end itemize
+
+@node Bug Reporting,,Bug Criteria,Bugs
+@section How and where to Report Bugs
+@cindex compiler bugs, reporting
+
+Bugs should be reported to the bug database at @value{BUGURL}.
+Bug应该在bug数据库被提交。
