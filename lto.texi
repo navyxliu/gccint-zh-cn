@@ -485,10 +485,11 @@ on new functions, so for a pass there is no significant
 difference between operating on a real function or a virtual
 clone introduced before its @emph{Execute} stage.
 
-Optimization passes then work on virtual clones introduced before
-their @emph{Execute} stage as if they were real functions.  The
-only difference is that clones are not visible during the
-@emph{Generate Summary} stage.
+@en Optimization passes then work on virtual clones introduced before
+@en their @emph{Execute} stage as if they were real functions.  The
+@en only difference is that clones are not visible during the
+@en @emph{Generate Summary} stage.
+然后优化遍会对在执行阶段之前引入的@emph{virtual clones} ，当作真正的函数，进行优化。这些@emph{virtual clones}和真正的函数的区别就是他们在@emph{Generate Summary}阶段不可见。
 
 To keep function summaries updated, the callgraph interface
 allows an optimizer to register a callback that is called every
@@ -502,16 +503,17 @@ optimization summaries updated for the @emph{Transform} stage.
 
 @subsection IPA references
 
-GCC represents IPA references in the callgraph.  For a function
-or variable @code{A}, the @emph{IPA reference} is a list of all
-locations where the address of @code{A} is taken and, when
-@code{A} is a variable, a list of all direct stores and reads
-to/from @code{A}.  References represent an oriented multi-graph on
-the union of nodes of the callgraph and the varpool.  See
-@file{ipa-reference.c}:@code{ipa_reference_write_optimization_summary}
-and
-@file{ipa-reference.c}:@code{ipa_reference_read_optimization_summary}
-for details.
+@en GCC represents IPA references in the callgraph.  For a function
+@en or variable @code{A}, the @emph{IPA reference} is a list of all
+@en locations where the address of @code{A} is taken and, when
+@en @code{A} is a variable, a list of all direct stores and reads
+@en to/from @code{A}.  References represent an oriented multi-graph on
+@en the union of nodes of the callgraph and the varpool.  See
+@en @file{ipa-reference.c}:@code{ipa_reference_write_optimization_summary}
+@en and
+@en @file{ipa-reference.c}:@code{ipa_reference_read_optimization_summary}
+@en for details.
+GCC在调用图中表现IPA的引用。对已一个函数或者变量 @code{A}，@emph{IPA reference} 就是一个所有使用地址@code{A}的代码位置的列表。如果@code{A}是一个变量，这个列表就是所有直接对@code{A}读写的代码位置。References represent an oriented multi-graph on the union of nodes of the callgraph and the varpool.  参见@file{ipa-reference.c}:@code{ipa_reference_write_optimization_summary}和@file{ipa-reference.c}:@code{ipa_reference_read_optimization_summary}。
 
 @subsection Jump functions
 Suppose that an optimization pass sees a function @code{A} and it
@@ -526,91 +528,101 @@ perform inlining of callbacks.
 
 @section Whole program assumptions, linker plugin and symbol visibilities
 
-Link-time optimization gives relatively minor benefits when used
-alone.  The problem is that propagation of inter-procedural
-information does not work well across functions and variables
-that are called or referenced by other compilation units (such as
-from a dynamically linked library).  We say that such functions
-are variables are @emph{externally visible}.
+@en Link-time optimization gives relatively minor benefits when used
+@en alone.  The problem is that propagation of inter-procedural
+@en information does not work well across functions and variables
+@en that are called or referenced by other compilation units (such as
+@en from a dynamically linked library).  We say that such functions
+@en are variables are @emph{externally visible}.
+链接时优化在单独使用的时候，得到的收益相对较小。这个问题是因为过程间优化信息的传播对于那些在别的编译单元（比如动态链接库）调用或者引用的函数和变量效果不好。我们称这样的函数和变量为@emph{外部可见}。
 
-To make the situation even more difficult, many applications
-organize themselves as a set of shared libraries, and the default
-ELF visibility rules allow one to overwrite any externally
-visible symbol with a different symbol at runtime.  This
-basically disables any optimizations across such functions and
-variables, because the compiler cannot be sure that the function
-body it is seeing is the same function body that will be used at
-runtime.  Any function or variable not declared @code{static} in
-the sources degrades the quality of inter-procedural
-optimization.
+@en To make the situation even more difficult, many applications
+@en organize themselves as a set of shared libraries, and the default
+@en ELF visibility rules allow one to overwrite any externally
+@en visible symbol with a different symbol at runtime.  This
+@en basically disables any optimizations across such functions and
+@en variables, because the compiler cannot be sure that the function
+@en body it is seeing is the same function body that will be used at
+@en runtime.  Any function or variable not declared @code{static} in
+@en the sources degrades the quality of inter-procedural
+@en optimization.
+很多应用程序都会把自己组织成一些共享库，而且缺省的ELF符号可见性规则允许在运行时，用别的符号覆盖任意外部可见的符号。这样就是使得情况更加复杂。这样就基本上关闭了在这些函数和变量上进行优化的可能，因为编译器不能确定它所看到的函数体是否和在运行时使用的函数体一致。任何在代码中没有声明为@code{static} 函数或者变量都会降低过程间优化的质量。
 
-To avoid this problem the compiler must assume that it sees the
-whole program when doing link-time optimization.  Strictly
-speaking, the whole program is rarely visible even at link-time.
-Standard system libraries are usually linked dynamically or not
-provided with the link-time information.  In GCC, the whole
-program option (@option{-fwhole-program}) asserts that every
-function and variable defined in the current compilation
-unit is static, except for function @code{main} (note: at
-link time, the current unit is the union of all objects compiled
-with LTO).  Since some functions and variables need to
-be referenced externally, for example by another DSO or from an
-assembler file, GCC also provides the function and variable
-attribute @code{externally_visible} which can be used to disable
-the effect of @option{-fwhole-program} on a specific symbol.
+@en To avoid this problem the compiler must assume that it sees the
+@en whole program when doing link-time optimization.  Strictly
+@en speaking, the whole program is rarely visible even at link-time.
+@en Standard system libraries are usually linked dynamically or not
+@en provided with the link-time information.  In GCC, the whole
+@en program option (@option{-fwhole-program}) asserts that every
+@en function and variable defined in the current compilation
+@en unit is static, except for function @code{main} (note: at
+@en link time, the current unit is the union of all objects compiled
+@en with LTO).  Since some functions and variables need to
+@en be referenced externally, for example by another DSO or from an
+@en assembler file, GCC also provides the function and variable
+@en attribute @code{externally_visible} which can be used to disable
+@en the effect of @option{-fwhole-program} on a specific symbol.
+为了避免这个问题，编译器必须认为在进行链接时优化时，它能够看到程序的所有部分。严格地说，即时在链接时刻，程序的所有部分也是不容易得到的。标准系统库通常都是动态链接，或者不会在程序链接时刻提供信息。在GCC，全局程序优化选项(@option{-fwhole-program})断定每一个在当前编译单元中定义的函数和变量都是静态的，除了函数 @code{main} （注：在链接时刻，当前编译单元就是所用使用LTO编译的对象）。犹豫一些函数和变量需要被外部引用，比如被另一个DSO引用或者汇编文件使用，GCC也为这些函数和变量提供属性@code{externally_visible}。这个属性可以用来关闭选项@option{-fwhole-program}对某个特定符号带来的效果。
 
-The whole program mode assumptions are slightly more complex in
-C++, where inline functions in headers are put into @emph{COMDAT}
-sections.  COMDAT function and variables can be defined by
-multiple object files and their bodies are unified at link-time
-and dynamic link-time.  COMDAT functions are changed to local only
-when their address is not taken and thus un-sharing them with a
-library is not harmful.  COMDAT variables always remain externally
-visible, however for readonly variables it is assumed that their
-initializers cannot be overwritten by a different value.
 
-GCC provides the function and variable attribute
-@code{visibility} that can be used to specify the visibility of
-externally visible symbols (or alternatively an
-@option{-fdefault-visibility} command line option).  ELF defines
-the @code{default}, @code{protected}, @code{hidden} and
-@code{internal} visibilities.
+@en The whole program mode assumptions are slightly more complex in
+@en C++, where inline functions in headers are put into @emph{COMDAT}
+@en sections.  COMDAT function and variables can be defined by
+@en multiple object files and their bodies are unified at link-time
+@en and dynamic link-time.  COMDAT functions are changed to local only
+@en when their address is not taken and thus un-sharing them with a
+@en library is not harmful.  COMDAT variables always remain externally
+@en visible, however for readonly variables it is assumed that their
+@en initializers cannot be overwritten by a different value.
+全局程序优化在C++程序中，假设就更加复杂。因为C++头文件中的内联函数都被放到了@emph{COMDAT}段中。COMDAT函数和对象可以被多个目标文件定义，而且他们的函数体在链接时刻和动态链接时刻被统一起来。COMDAT函数只有当地址没有taken，才能被改变为局部函数。COMDAT变量一直是外部可见的，但是对于只读变量，it is assumed that their initializers cannot be overwritten by a different value.
 
-The most commonly used is visibility is @code{hidden}.  It
-specifies that the symbol cannot be referenced from outside of
-the current shared library.  Unfortunately, this information
-cannot be used directly by the link-time optimization in the
-compiler since the whole shared library also might contain
-non-LTO objects and those are not visible to the compiler.
+@en GCC provides the function and variable attribute
+@en @code{visibility} that can be used to specify the visibility of
+@en externally visible symbols (or alternatively an
+@en @option{-fdefault-visibility} command line option).  ELF defines
+@en the @code{default}, @code{protected}, @code{hidden} and
+@en @code{internal} visibilities.
+GCC 给函数和变量提供了属性@code{visibility}，可以设置外部可见呼号的可见性 （或者在命令行中使用选项@option{-fdefault-visibility} 来改变）。ELF标准定义了@code{default}，@code{protected}, @code{hidden} 和 @code{internal} 这集中可见性。
 
-GCC solves this problem using linker plugins.  A @emph{linker
-plugin} is an interface to the linker that allows an external
-program to claim the ownership of a given object file.  The linker
-then performs the linking procedure by querying the plugin about
-the symbol table of the claimed objects and once the linking
-decisions are complete, the plugin is allowed to provide the
-final object file before the actual linking is made.  The linker
-plugin obtains the symbol resolution information which specifies
-which symbols provided by the claimed objects are bound from the
-rest of a binary being linked.
+@en The most commonly used is visibility is @code{hidden}.  It
+@en specifies that the symbol cannot be referenced from outside of
+@en the current shared library.  Unfortunately, this information
+@en cannot be used directly by the link-time optimization in the
+@en compiler since the whole shared library also might contain
+@en non-LTO objects and those are not visible to the compiler.
+可见性@code{hidden}是最通常使用的。它设定了符号不能被当前共享库以外的部分引用。不幸的是，这个信息不能被链接时优化直接使用，因为全部的空想看可能包含非LTO对象，而且这些对象对编译器不可见。
 
-Currently, the linker plugin  works only in combination
-with the Gold linker, but a GNU ld implementation is under
-development.
+@en GCC solves this problem using linker plugins.  A @emph{linker
+@en plugin} is an interface to the linker that allows an external
+@en program to claim the ownership of a given object file.  The linker
+@en then performs the linking procedure by querying the plugin about
+@en the symbol table of the claimed objects and once the linking
+@en decisions are complete, the plugin is allowed to provide the
+@en final object file before the actual linking is made.  The linker
+@en plugin obtains the symbol resolution information which specifies
+@en which symbols provided by the claimed objects are bound from the
+@en rest of a binary being linked.
+GCC 使用连接器插件来解决这个问题。A @emph{linker plugin}是一个到连接器的接口，这个接口允许外部程序要求一个指定目标文件的所有权。在链接器执行链接过程中，链接器询问插件，要求目标文件的符号表。一旦链接决定完成，插件可以在真正的链接之前，提供最后的目标文件。链接器插件获得了符号解析的信息，这些信息指定了由要求的目标文件提供的哪些符号被绑定到正在链接的二进制文件的别的部分。
 
-GCC is designed to be independent of the rest of the toolchain
-and aims to support linkers without plugin support.  For this
-reason it does not use the linker plugin by default.  Instead,
-the object files are examined by @command{collect2} before being
-passed to the linker and objects found to have LTO sections are
-passed to @command{lto1} first.  This mode does not work for
-library archives.  The decision on what object files from the
-archive are needed depends on the actual linking and thus GCC
-would have to implement the linker itself.  The resolution
-information is missing too and thus GCC needs to make an educated
-guess based on @option{-fwhole-program}.  Without the linker
-plugin GCC also assumes that symbols are declared @code{hidden}
-and not referred by non-LTO code by default.
+@en Currently, the linker plugin  works only in combination
+@en with the Gold linker, but a GNU ld implementation is under
+@en development.
+目前，链接器插件仅仅和Gold链接器能一起工作，但是GNU ld的实现正在开发中。
+
+@en GCC is designed to be independent of the rest of the toolchain
+@en and aims to support linkers without plugin support.  For this
+@en reason it does not use the linker plugin by default.  Instead,
+@en the object files are examined by @command{collect2} before being
+@en passed to the linker and objects found to have LTO sections are
+@en passed to @command{lto1} first.  This mode does not work for
+@en library archives.  The decision on what object files from the
+@en archive are needed depends on the actual linking and thus GCC
+@en would have to implement the linker itself.  The resolution
+@en information is missing too and thus GCC needs to make an educated
+@en guess based on @option{-fwhole-program}.  Without the linker
+@en plugin GCC also assumes that symbols are declared @code{hidden}
+@en and not referred by non-LTO code by default.
+GCC被设计成为独立于工具链其他部分，而且为了支持没有插件支持的链接器。由于这个原因，GCC缺省不使用链接器插件。目标文件先被@command{collect2}检查，然后送到链接器。在这个过程中，如果目标文件中发现含有LTO段，会被首先送到 @command{lto1} 。这样的模式不适用于库档案。决定什么目标文件来源于档案，取决于实际的链接，所以GCC必须已经实现了链接器，才能知道。解析信息也丢失了，所以GCC需要基于@option{-fwhole-program}做一个合理的猜测。没有链接器插件，GCC也可以认为缺省情况下，符号被声明为@code{hidden}，没有被非LTO代码引用。
 
 @en @section Internal flags controlling @code{lto1}
 
