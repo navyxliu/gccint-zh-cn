@@ -1342,12 +1342,14 @@ FIXME: 讨论一下非C的测试包。
 增加任何访问特定特征所需要的编译器选项。该指令对使用缺省方式启用特征或者根本不提供特征的目标不做任何事情。其必须在所有@code{dg-options}指令之后。对于支持的@var{feature}值，参见@ref{Add Options, ,}。
 
 @item @{ dg-additional-options @var{options} [@{ target @var{selector} @}] @}
-This directive provides a list of compiler options, to be used
-if the target system matches @var{selector}, that are added to the default
-options used for this set of tests.
+@en This directive provides a list of compiler options, to be used
+@en if the target system matches @var{selector}, that are added to the default
+@en options used for this set of tests.
+该指令提供一个编译器选项列表，当目标机器系统匹配时使用，并添加到这组测试所使用的缺省选项之后。
 @end table
 
-@subsubsection Modify the test timeout value
+@en @subsubsection Modify the test timeout value
+@subsubsection 修改测试的超时时间值
 
 @en The normal timeout limit, in seconds, is found by searching the
 @en following in order:
@@ -1369,203 +1371,245 @@ options used for this set of tests.
 
 @table @code
 @item @{ dg-timeout @var{n} [@{target @var{selector} @}] @}
-Set the time limit for the compilation and for the execution of the test
-to the specified number of seconds.
+@en Set the time limit for the compilation and for the execution of the test
+@en to the specified number of seconds.
+将编译和执行测试的时间限制设置为指定的秒数。
 
 @item @{ dg-timeout-factor @var{x} [@{ target @var{selector} @}] @}
-Multiply the normal time limit for compilation and execution of the test
-by the specified floating-point factor.
+@en Multiply the normal time limit for compilation and execution of the test
+@en by the specified floating-point factor.
+将编译和执行测试的通常时间限制乘以指定的浮点因子。
 @end table
 
-@subsubsection Skip a test for some targets
+@subsubsection 对一些目标跳过测试
 
 @table @code
 @item @{ dg-skip-if @var{comment} @{ @var{selector} @} [@{ @var{include-opts} @} [@{ @var{exclude-opts} @}]] @}
-Arguments @var{include-opts} and @var{exclude-opts} are lists in which
-each element is a string of zero or more GCC options.
-Skip the test if all of the following conditions are met:
+@en Arguments @var{include-opts} and @var{exclude-opts} are lists in which
+@en each element is a string of zero or more GCC options.
+@en Skip the test if all of the following conditions are met:
+参数@var{include-opts}和@var{exclude-opts}是列表，其元素为零个或多个GCC选项组成的字符串。如果下列条件都满足则跳过该测试：
 @itemize @bullet
-@item the test system is included in @var{selector}
+@en @item the test system is included in @var{selector}
+@item 测试系统包含在@var{selector}中。
 
-@item for at least one of the option strings in @var{include-opts},
-every option from that string is in the set of options with which
-the test would be compiled; use @samp{"*"} for an @var{include-opts} list
-that matches any options; that is the default if @var{include-opts} is
-not specified
+@en @item for at least one of the option strings in @var{include-opts},
+@en every option from that string is in the set of options with which
+@en the test would be compiled; use @samp{"*"} for an @var{include-opts} list
+@en that matches any options; that is the default if @var{include-opts} is
+@en not specified
+@item 对于@var{include-opts}中的至少一个选项字符串，字符串中的每个选项都在编译测试所用到的选项集中；对于@var{include-opts}，使用@samp{"*"}来匹配任何选项；其为@var{include-opts}没有被指定时的缺省方式。
 
-@item for each of the option strings in @var{exclude-opts}, at least one
-option from that string is not in the set of options with which the test
-would be compiled; use @samp{""} for an empty @var{exclude-opts} list;
-that is the default if @var{exclude-opts} is not specified
+@en @item for each of the option strings in @var{exclude-opts}, at least one
+@en option from that string is not in the set of options with which the test
+@en would be compiled; use @samp{""} for an empty @var{exclude-opts} list;
+@en that is the default if @var{exclude-opts} is not specified
+@item 对于@var{exclude-opts}中的每个选项字符串，字符串中至少一个选项不在编译测试所用到的选项集中；对于@var{exclude-opts}，使用@samp{""}来表示空列表；其为@var{include-opts}没有被指定时的缺省方式。
+
 @end itemize
 
-For example, to skip a test if option @code{-Os} is present:
+@en For example, to skip a test if option @code{-Os} is present:
+例如，如果当选项@code{-Os}存在时，则跳过测试：
 
 @smallexample
 /* @{ dg-skip-if "" @{ *-*-* @}  @{ "-Os" @} @{ "" @} @} */
 @end smallexample
 
-To skip a test if both options @code{-O2} and @code{-g} are present:
+@en To skip a test if both options @code{-O2} and @code{-g} are present:
+如果选项@code{-O2}和@code{-g}都存在时，则跳过测试：
 
 @smallexample
 /* @{ dg-skip-if "" @{ *-*-* @}  @{ "-O2 -g" @} @{ "" @} @} */
 @end smallexample
 
-To skip a test if either @code{-O2} or @code{-O3} is present:
+@en To skip a test if either @code{-O2} or @code{-O3} is present:
+如果选项@code{-O2}或者@code{-O3}存在，则跳过测试：
 
 @smallexample
 /* @{ dg-skip-if "" @{ *-*-* @}  @{ "-O2" "-O3" @} @{ "" @} @} */
 @end smallexample
 
-To skip a test unless option @code{-Os} is present:
+@en To skip a test unless option @code{-Os} is present:
+如果选项@code{-Os}不存在，则跳过测试：
 
 @smallexample
 /* @{ dg-skip-if "" @{ *-*-* @}  @{ "*" @} @{ "-Os" @} @} */
 @end smallexample
 
-To skip a test if either @code{-O2} or @code{-O3} is used with @code{-g}
-but not if @code{-fpic} is also present:
+@en To skip a test if either @code{-O2} or @code{-O3} is used with @code{-g}
+@en but not if @code{-fpic} is also present:
+如果@code{-O2}或者@code{-O3}，和@code{-g}一起使用，并且@code{-fpic}不存在，则跳过测试：
 
 @smallexample
 /* @{ dg-skip-if "" @{ *-*-* @}  @{ "-O2 -g" "-O3 -g" @} @{ "-fpic" @} @} */
 @end smallexample
 
 @item @{ dg-require-effective-target @var{keyword} [@{ @var{selector} @}] @}
-Skip the test if the test target, including current multilib flags,
-is not covered by the effective-target keyword.
-If the directive includes the optional @samp{@{ @var{selector} @}}
-then the effective-target test is only performed if the target system
-matches the @var{selector}.
-This directive must appear after any @code{dg-do} directive in the test
-and before any @code{dg-additional-sources} directive.
-@xref{Effective-Target Keywords, , }.
+@en Skip the test if the test target, including current multilib flags,
+@en is not covered by the effective-target keyword.
+@en If the directive includes the optional @samp{@{ @var{selector} @}}
+@en then the effective-target test is only performed if the target system
+@en matches the @var{selector}.
+@en This directive must appear after any @code{dg-do} directive in the test
+@en and before any @code{dg-additional-sources} directive.
+@en @xref{Effective-Target Keywords, , }.
+如果测试目标，包括当前的multilib标记，没有被有效目标关键字覆盖，则跳过测试。如果该指令包括了可选的@samp{@{ @var{selector} @}}，则有效目标测试只有当目标系统匹配@var{selector}时，才被执行。该指令必须出现在测试中任何@code{dg-do}指令之后，以及任何@code{dg-additional-sources}指令之前。@xref{Effective-Target Keywords, , }。
 
 @item @{ dg-require-@var{support} args @}
-Skip the test if the target does not provide the required support.
-These directives must appear after any @code{dg-do} directive in the test
-and before any @code{dg-additional-sources} directive.
-They require at least one argument, which can be an empty string if the
-specific procedure does not examine the argument.
-@xref{Require Support, , }, for a complete list of these directives.
+@en Skip the test if the target does not provide the required support.
+@en These directives must appear after any @code{dg-do} directive in the test
+@en and before any @code{dg-additional-sources} directive.
+@en They require at least one argument, which can be an empty string if the
+@en specific procedure does not examine the argument.
+@en @xref{Require Support, , }, for a complete list of these directives.
+如果目标机器没有提供所需的支持，则跳过测试。这些指令必须出现在test中任何@code{dg-do}指令之后，以及任何@code{dg-additional-sources}指令之前。它们需要至少一个参数，如果程序不检查参数，则可以为一个空字符串。对于这些指令的完整列表，@xref{Require Support, , }。
 @end table
 
-@subsubsection Expect a test to fail for some targets
+@en @subsubsection Expect a test to fail for some targets
+@subsubsection 对一些目标期望测试失败
 
 @table @code
 @item  @{ dg-xfail-if @var{comment} @{ @var{selector} @} [@{ @var{include-opts} @} [@{ @var{exclude-opts} @}]] @}
-Expect the test to fail if the conditions (which are the same as for
-@code{dg-skip-if}) are met.  This does not affect the execute step.
+@en Expect the test to fail if the conditions (which are the same as for
+@en @code{dg-skip-if}) are met.  This does not affect the execute step.
+如果条件（与@code{dg-skip-if}相同）满足，则期望测试失败。这不影响执行步骤。
 
 @item  @{ dg-xfail-run-if @var{comment} @{ @var{selector} @} [@{ @var{include-opts} @} [@{ @var{exclude-opts} @}]] @}
-Expect the execute step of a test to fail if the conditions (which are
-the same as for @code{dg-skip-if}) are met.
+@en Expect the execute step of a test to fail if the conditions (which are
+@en the same as for @code{dg-skip-if}) are met.
+如果条件（与@code{dg-skip-if}相同）满足，则期望测试的执行步骤失败。
 @end table
 
-@subsubsection Expect the test executable to fail
+@en @subsubsection Expect the test executable to fail
+@subsubsection 期望可执行测试程序运行失败
 
 @table @code
 @item  @{ dg-shouldfail @var{comment} [@{ @var{selector} @} [@{ @var{include-opts} @} [@{ @var{exclude-opts} @}]]] @}
-Expect the test executable to return a nonzero exit status if the
-conditions (which are the same as for @code{dg-skip-if}) are met.
+@en Expect the test executable to return a nonzero exit status if the
+@en conditions (which are the same as for @code{dg-skip-if}) are met.
+如果条件（与@code{dg-skip-if}相同）满足，则期望测试的可执行程序返回一个非零的退出状态。
 @end table
 
-@subsubsection Verify compiler messages
+@en @subsubsection Verify compiler messages
+@subsubsection 验证编译器的消息
 
 @table @code
 @item @{ dg-error @var{regexp} [@var{comment} [@{ target/xfail @var{selector} @} [@var{line}] @}]] @}
-This DejaGnu directive appears on a source line that is expected to get
-an error message, or else specifies the source line associated with the
-message.  If there is no message for that line or if the text of that
-message is not matched by @var{regexp} then the check fails and
-@var{comment} is included in the @code{FAIL} message.  The check does
-not look for the string @samp{error} unless it is part of @var{regexp}.
+@en This DejaGnu directive appears on a source line that is expected to get
+@en an error message, or else specifies the source line associated with the
+@en message.  If there is no message for that line or if the text of that
+@en message is not matched by @var{regexp} then the check fails and
+@en @var{comment} is included in the @code{FAIL} message.  The check does
+@en not look for the string @samp{error} unless it is part of @var{regexp}.
+该DejaGnu指令出现在期望得到错误消息的源代码行上，或者在其它地方来指定源代码行与该消息相关联。如果那行没有产生消息，或者如果消息文本与@var{regexp}不匹配，则检查失败并将@var{comment}包含在@code{FAIL}消息中。进行检查时，除非@samp{error}为@var{regexp}的一部分，否则不对该字符串进行查看。
 
 @item @{ dg-warning @var{regexp} [@var{comment} [@{ target/xfail @var{selector} @} [@var{line}] @}]] @}
-This DejaGnu directive appears on a source line that is expected to get
-a warning message, or else specifies the source line associated with the
-message.  If there is no message for that line or if the text of that
-message is not matched by @var{regexp} then the check fails and
-@var{comment} is included in the @code{FAIL} message.  The check does
-not look for the string @samp{warning} unless it is part of @var{regexp}.
+@en This DejaGnu directive appears on a source line that is expected to get
+@en a warning message, or else specifies the source line associated with the
+@en message.  If there is no message for that line or if the text of that
+@en message is not matched by @var{regexp} then the check fails and
+@en @var{comment} is included in the @code{FAIL} message.  The check does
+@en not look for the string @samp{warning} unless it is part of @var{regexp}.
+该DejaGnu指令出现在期望得到警告消息的源代码行上，或者在其它地方来指定源代码行与该消息相关联。如果那行没有产生消息，或者如果消息文本与@var{regexp}不匹配，则检查失败并将@var{comment}包含在@code{FAIL}消息中。进行检查时，除非@samp{warning}为@var{regexp}的一部分，否则不对该字符串进行查看。
 
 @item @{ dg-message @var{regexp} [@var{comment} [@{ target/xfail @var{selector} @} [@var{line}] @}]] @}
-The line is expected to get a message other than an error or warning.
-If there is no message for that line or if the text of that message is
-not matched by @var{regexp} then the check fails and @var{comment} is
-included in the @code{FAIL} message.
+@en The line is expected to get a message other than an error or warning.
+@en If there is no message for that line or if the text of that message is
+@en not matched by @var{regexp} then the check fails and @var{comment} is
+@en included in the @code{FAIL} message.
+该行期望得到一个错误或者警告之外的消息。如果那行没有产生消息，或者如果消息文本与@var{regexp}不匹配，则检查失败并将@var{comment}包含在@code{FAIL}消息中。
 
 @item @{ dg-bogus @var{regexp} [@var{comment} [@{ target/xfail @var{selector} @} [@var{line}] @}]] @}
-This DejaGnu directive appears on a source line that should not get a
-message matching @var{regexp}, or else specifies the source line
-associated with the bogus message.  It is usually used with @samp{xfail}
-to indicate that the message is a known problem for a particular set of
-targets.
+@en This DejaGnu directive appears on a source line that should not get a
+@en message matching @var{regexp}, or else specifies the source line
+@en associated with the bogus message.  It is usually used with @samp{xfail}
+@en to indicate that the message is a known problem for a particular set of
+@en targets.
+该DejaGnu指令出现在不应该得到匹配@var{regexp}消息的源代码行上，或者在其它地方来指定源代码行与该消息相关联。其通常与@samp{xfail}一起使用，来指示该消息为特定目标集下的已知问题。
 
 @item @{ dg-excess-errors @var{comment} [@{ target/xfail @var{selector} @}] @}
-This DejaGnu directive indicates that the test is expected to fail due
-to compiler messages that are not handled by @samp{dg-error},
-@samp{dg-warning} or @samp{dg-bogus}.  For this directive @samp{xfail}
-has the same effect as @samp{target}.
+@en This DejaGnu directive indicates that the test is expected to fail due
+@en to compiler messages that are not handled by @samp{dg-error},
+@en @samp{dg-warning} or @samp{dg-bogus}.  For this directive @samp{xfail}
+@en has the same effect as @samp{target}.
+该DejaGnu指令，用来指示测试由于编译器消息没有被@samp{dg-error}，@samp{dg-warning}或@samp{dg-bogus}处理，而期望为失败。对于该指令，@samp{xfail}和@samp{target}具有相同的效果。
 
 @item @{ dg-prune-output @var{regexp} @}
-Prune messages matching @var{regexp} from the test output.
+@en Prune messages matching @var{regexp} from the test output.
+从测试输出中剪裁掉匹配@var{regexp}的消息。
 @end table
 
-@subsubsection Verify output of the test executable
+@en @subsubsection Verify output of the test executable
+@subsubsection 验证可执行测试程序的输出
 
 @table @code
 @item @{ dg-output @var{regexp} [@{ target/xfail @var{selector} @}] @}
-This DejaGnu directive compares @var{regexp} to the combined output
-that the test executable writes to @file{stdout} and @file{stderr}.
+@en This DejaGnu directive compares @var{regexp} to the combined output
+@en that the test executable writes to @file{stdout} and @file{stderr}.
+该DejaGnu指令用来对@var{regexp}，与可执行测试程序写入到@file{stdout}和@file{stderr}的组合输出进行比较。
 @end table
 
-@subsubsection Specify additional files for a test
+@en @subsubsection Specify additional files for a test
+@subsubsection 为测试指定额外的文件
 
 @table @code
 @item @{ dg-additional-files "@var{filelist}" @}
-Specify additional files, other than source files, that must be copied
-to the system where the compiler runs.
+@en Specify additional files, other than source files, that must be copied
+@en to the system where the compiler runs.
+指定源文件之外的文件，其必须被复制到编译器运行的系统下。
 
 @item @{ dg-additional-sources "@var{filelist}" @}
-Specify additional source files to appear in the compile line
-following the main test file.
+@en Specify additional source files to appear in the compile line
+@en following the main test file.
+指定额外的源文件，来出现在编译命令行中主测试文件之后。
 @end table
 
-@subsubsection Add checks at the end of a test
+@en @subsubsection Add checks at the end of a test
+@subsubsection 在测试结束之后增加检查
 
 @table @code
 @item @{ dg-final @{ @var{local-directive} @} @}
-This DejaGnu directive is placed within a comment anywhere in the
-source file and is processed after the test has been compiled and run.
-Multiple @samp{dg-final} commands are processed in the order in which
-they appear in the source file.  @xref{Final Actions, , }, for a list
-of directives that can be used within @code{dg-final}.
+@en This DejaGnu directive is placed within a comment anywhere in the
+@en source file and is processed after the test has been compiled and run.
+@en Multiple @samp{dg-final} commands are processed in the order in which
+@en they appear in the source file.  @xref{Final Actions, , }, for a list
+@en of directives that can be used within @code{dg-final}.
+该DejaGnu指令可以放在源文件中任何位置的注释之中，当测试被编译和运行之后进行处理。多个@code{dg-final}命令则按照它们在源文件中出现的顺序进行处理。对于可以在@code{dg-final}中使用的指令列表，@xref{Final Actions, , }。
 @end table
 
+@en @node Selectors
+@en @subsection Selecting targets to which a test applies
 @node Selectors
-@subsection Selecting targets to which a test applies
+@subsection 选择用于测试的目标
 
-Several test directives include @var{selector}s to limit the targets
-for which a test is run or to declare that a test is expected to fail
-on particular targets.
+@en Several test directives include @var{selector}s to limit the targets
+@en for which a test is run or to declare that a test is expected to fail
+@en on particular targets.
+一些测试指令包含有@var{selector}，用来限定可以运行测试的目标，或者声明在特定目标上测试是期望失败。
 
-A selector is:
+@en A selector is:
+选择器为：
 @itemize @bullet
-@item one or more target triplets, possibly including wildcard characters
-@item a single effective-target keyword (@pxref{Effective-Target Keywords})
-@item a logical expression
+@en @item one or more target triplets, possibly including wildcard characters
+@item 一个或者多个目标机器三元组，可能包括通配符
+@en @item a single effective-target keyword (@pxref{Effective-Target Keywords})
+@item 单个有效目标关键字（@pxref{Effective-Target Keywords}）
+@en @item a logical expression
+@item 一个逻辑表达式
 @end itemize
 
-Depending on the
-context, the selector specifies whether a test is skipped and reported
-as unsupported or is expected to fail.  Use @samp{*-*-*} to match any
-target.
+@en Depending on the
+@en context, the selector specifies whether a test is skipped and reported
+@en as unsupported or is expected to fail.  Use @samp{*-*-*} to match any
+@en target.
+根据上下文，选择器可以指定测试是否被跳过并被报告为不支持，或者期望失败。使用@samp{*-*-*}来匹配任意目标机器。
 
-A selector expression appears within curly braces and uses a single
-logical operator: one of @samp{!}, @samp{&&}, or @samp{||}.  An
-operand is another selector expression, an effective-target keyword,
-a single target triplet, or a list of target triplets within quotes or
-curly braces.  For example:
+@en A selector expression appears within curly braces and uses a single
+@en logical operator: one of @samp{!}, @samp{&&}, or @samp{||}.  An
+@en operand is another selector expression, an effective-target keyword,
+@en a single target triplet, or a list of target triplets within quotes or
+@en curly braces.  For example:
+选择器表达式出现在大括号中，并且使用单个逻辑操作符：@samp{!}，@samp{&&}，或者@samp{||}。操作数可以为另一个选择器表达式，有效目标关键字，单个目标机器三元组，或者使用引号或者大括号包裹的目标机器三元组列表。例如：
 
 @smallexample
 @{ target @{ ! "hppa*-*-* ia64*-*-*" @} @}
@@ -1573,132 +1617,172 @@ curly braces.  For example:
 @{ xfail @{ lp64 || vect_no_align @} @}
 @end smallexample
 
+@en @node Effective-Target Keywords
+@en @subsection Keywords describing target attributes
 @node Effective-Target Keywords
-@subsection Keywords describing target attributes
+@subsection 描述目标机器属性的关键字
 
-Effective-target keywords identify sets of targets that support
-particular functionality.  They are used to limit tests to be run only
-for particular targets, or to specify that particular sets of targets
-are expected to fail some tests.
+@en Effective-target keywords identify sets of targets that support
+@en particular functionality.  They are used to limit tests to be run only
+@en for particular targets, or to specify that particular sets of targets
+@en are expected to fail some tests.
+有效目标关键字用来标识支持特定功能的目标机器集。它们被用于限定测试只运行在特定目标机器上，或者指定特定目标机器会期望某些测试失败。
 
-Effective-target keywords are defined in @file{lib/target-supports.exp} in
-the GCC testsuite, with the exception of those that are documented as
-being local to a particular test directory.
+@en Effective-target keywords are defined in @file{lib/target-supports.exp} in
+@en the GCC testsuite, with the exception of those that are documented as
+@en being local to a particular test directory.
+有效目标关键字在GCC测试包中的@file{lib/target-supports.exp}里定义，对于那些局限于特定测试目录下的除外。
 
-The @samp{effective target} takes into account all of the compiler options
-with which the test will be compiled, including the multilib options.
-By convention, keywords ending in @code{_nocache} can also include options
-specified for the particular test in an earlier @code{dg-options} or
-@code{dg-add-options} directive.
+@en The @samp{effective target} takes into account all of the compiler options
+@en with which the test will be compiled, including the multilib options.
+@en By convention, keywords ending in @code{_nocache} can also include options
+@en specified for the particular test in an earlier @code{dg-options} or
+@en @code{dg-add-options} directive.
+@samp{effective target}会考虑编译测试所用的所有编译器选项，包括multilib选项。作为约定，以@code{_nocache}作为结尾的关键字还可以包含，在早期@code{dg-options}或者@code{dg-add-options}指令中为特定测试指定的选项。
 
-@subsubsection Data type sizes
+@en @subsubsection Data type sizes
+@subsubsection 数据类型大小
 
 @table @code
 @item ilp32
-Target has 32-bit @code{int}, @code{long}, and pointers.
+@en Target has 32-bit @code{int}, @code{long}, and pointers.
+目标机器具有32位的@code{int}，@code{long}和指针。
 
 @item lp64
-Target has 32-bit @code{int}, 64-bit @code{long} and pointers.
+@en Target has 32-bit @code{int}, 64-bit @code{long} and pointers.
+目标机器具有32位的@code{int}，64位的@code{long}和指针。
 
 @item llp64
-Target has 32-bit @code{int} and @code{long}, 64-bit @code{long long}
-and pointers.
+@en Target has 32-bit @code{int} and @code{long}, 64-bit @code{long long}
+@en and pointers.
+目标机器具有32位的@code{int}和@code{long}，64位的@code{long long}和指针。
 
 @item double64
-Target has 64-bit @code{double}.
+@en Target has 64-bit @code{double}.
+目标机器具有64位的@code{double}。
 
 @item double64plus
-Target has @code{double} that is 64 bits or longer.
+@en Target has @code{double} that is 64 bits or longer.
+目标机器具有64位或者更长的@code{double}。
 
 @item int32plus
-Target has @code{int} that is at 32 bits or longer.
+@en Target has @code{int} that is at 32 bits or longer.
+目标机器具有32位或者更长的@code{int}。
 
 @item int16
-Target has @code{int} that is 16 bits or shorter.
+@en Target has @code{int} that is 16 bits or shorter.
+目标机器具有16位或者更短的@code{int}。
 
 @item large_double
-Target supports @code{double} that is longer than @code{float}.
+@en Target supports @code{double} that is longer than @code{float}.
+目标机器支持比@code{float}长的@code{double}。
 
 @item large_long_double
-Target supports @code{long double} that is longer than @code{double}.
+@en Target supports @code{long double} that is longer than @code{double}.
+目标机器支持比@code{double}长的@code{long double}。
 
 @item ptr32plus
-Target has pointers that are 32 bits or longer.
+@en Target has pointers that are 32 bits or longer.
+目标机器具有32位或者更长的指针。
 
 @item size32plus
-Target supports array and structure sizes that are 32 bits or longer.
+@en Target supports array and structure sizes that are 32 bits or longer.
+目标机器支持32位或者更长的数组和数据结构。
 
 @item 4byte_wchar_t
-Target has @code{wchar_t} that is at least 4 bytes.
+@en Target has @code{wchar_t} that is at least 4 bytes.
+目标机器具有至少4个字节的@code{wchar_t}。
 @end table
 
-@subsubsection Fortran-specific attributes
+@en @subsubsection Fortran-specific attributes
+@subsubsection Fortran特定属性
 
 @table @code
 @item fortran_integer_16
-Target supports Fortran @code{integer} that is 16 bytes or longer.
+@en Target supports Fortran @code{integer} that is 16 bytes or longer.
+目标机器支持16个字节或者更长的Fortran @code{integer}。
 
 @item fortran_large_int
-Target supports Fortran @code{integer} kinds larger than @code{integer(8)}.
+@en Target supports Fortran @code{integer} kinds larger than @code{integer(8)}.
+目标机器支持大于@code{integer(8)}的Fortran @code{integer}种类。
 
 @item fortran_large_real
-Target supports Fortran @code{real} kinds larger than @code{real(8)}.
+@en Target supports Fortran @code{real} kinds larger than @code{real(8)}.
+目标机器支持大于@code{real(8)}的Fortran @code{real}种类。
 @end table
 
-@subsubsection Vector-specific attributes
+@en @subsubsection Vector-specific attributes
+@subsubsection 向量特定属性
 
 @table @code
 @item vect_condition
-Target supports vector conditional operations.
+@en Target supports vector conditional operations.
+目标机器支持向量条件操作。
 
 @item vect_double
-Target supports hardware vectors of @code{double}.
+@en Target supports hardware vectors of @code{double}.
+目标机器支持硬件向量@code{double}。
 
 @item vect_float
-Target supports hardware vectors of @code{float}.
+@en Target supports hardware vectors of @code{float}.
+目标机器支持硬件向量@code{float}。
 
 @item vect_int
-Target supports hardware vectors of @code{int}.
+@en Target supports hardware vectors of @code{int}.
+目标机器支持硬件向量@code{int}。
 
 @item vect_long
-Target supports hardware vectors of @code{long}.
+@en Target supports hardware vectors of @code{long}.
+目标机器支持硬件向量@code{long}。
 
 @item vect_long_long
-Target supports hardware vectors of @code{long long}.
+@en Target supports hardware vectors of @code{long long}.
+目标机器支持硬件向量@code{long long}。
 
 @item vect_aligned_arrays
-Target aligns arrays to vector alignment boundary.
+@en Target aligns arrays to vector alignment boundary.
+目标机器将数组按照向量对齐边界进行对齐。
 
 @item vect_hw_misalign
-Target supports a vector misalign access.
+@en Target supports a vector misalign access.
+目标机器支持向量非对齐访问。
 
 @item vect_no_align
-Target does not support a vector alignment mechanism.
+@en Target does not support a vector alignment mechanism.
+目标机器不支持向量对齐机制。
 
 @item vect_no_int_max
-Target does not support a vector max instruction on @code{int}.
+@en Target does not support a vector max instruction on @code{int}.
+目标机器不支持在@code{int}上的向量max指令。
 
 @item vect_no_int_add
-Target does not support a vector add instruction on @code{int}.
+@en Target does not support a vector add instruction on @code{int}.
+目标机器不支持在@code{int}上的向量add指令。
 
 @item vect_no_bitwise
-Target does not support vector bitwise instructions.
+@en Target does not support vector bitwise instructions.
+目标机器不支持向量位操作指令。
 
 @item vect_char_mult
-Target supports @code{vector char} multiplication.
+@en Target supports @code{vector char} multiplication.
+目标机器不支持@code{vector char}乘法。
 
 @item vect_short_mult
-Target supports @code{vector short} multiplication.
+@en Target supports @code{vector short} multiplication.
+目标机器不支持@code{vector short}乘法。
 
 @item vect_int_mult
-Target supports @code{vector int} multiplication.
+@en Target supports @code{vector int} multiplication.
+目标机器不支持@code{vector int}乘法。
 
 @item vect_extract_even_odd
-Target supports vector even/odd element extraction.
+@en Target supports vector even/odd element extraction.
+目标机器支持向量奇/偶元素抽取操作。
 
 @item vect_extract_even_odd_wide
-Target supports vector even/odd element extraction of vectors with elements
-@code{SImode} or larger.
+@en Target supports vector even/odd element extraction of vectors with elements
+@en @code{SImode} or larger.
+目标机器支持元素为@code{SImode}或者更大的向量奇/偶元素抽取操作。
 
 @item vect_interleave
 Target supports vector interleaving.
@@ -1714,7 +1798,8 @@ element types.
 Target supports vector permutation.
 
 @item vect_shift
-Target supports a hardware vector shift operation.
+@en Target supports a hardware vector shift operation.
+目标机器支持硬件向量移位操作。
 
 @item vect_widen_sum_hi_to_si
 Target supports a vector widening summation of @code{short} operands
@@ -1741,16 +1826,20 @@ into @code{int} results, or can promote (unpack) from @code{short} to
 @code{int} and perform non-widening multiplication of @code{int}.
 
 @item vect_sdot_qi
-Target supports a vector dot-product of @code{signed char}.
+@en Target supports a vector dot-product of @code{signed char}.
+目标机器支持@code{signed char}类型的向量点积。
 
 @item vect_udot_qi
-Target supports a vector dot-product of @code{unsigned char}.
+@en Target supports a vector dot-product of @code{unsigned char}.
+目标机器支持@code{unsigned char}类型的向量点积。
 
 @item vect_sdot_hi
-Target supports a vector dot-product of @code{signed short}.
+@en Target supports a vector dot-product of @code{signed short}.
+目标机器支持@code{signed short}类型的向量点积。
 
 @item vect_udot_hi
-Target supports a vector dot-product of @code{unsigned short}.
+@en Target supports a vector dot-product of @code{unsigned short}.
+目标机器支持@code{unsigned short}类型的向量点积。
 
 @item vect_pack_trunc
 Target supports a vector demotion (packing) of @code{short} to @code{char}
@@ -1761,211 +1850,272 @@ Target supports a vector promotion (unpacking) of @code{char} to @code{short}
 and from @code{char} to @code{int}.
 
 @item vect_intfloat_cvt
-Target supports conversion from @code{signed int} to @code{float}.
+@en Target supports conversion from @code{signed int} to @code{float}.
+目标机器支持从@code{signed int}到@code{float}的转换。
 
 @item vect_uintfloat_cvt
-Target supports conversion from @code{unsigned int} to @code{float}.
+@en Target supports conversion from @code{unsigned int} to @code{float}.
+目标机器支持从@code{unsigned int}到@code{float}的转换。
 
 @item vect_floatint_cvt
-Target supports conversion from @code{float} to @code{signed int}.
+@en Target supports conversion from @code{float} to @code{signed int}.
+目标机器支持从@code{float}到@code{signed int}的转换。
 
 @item vect_floatuint_cvt
-Target supports conversion from @code{float} to @code{unsigned int}.
+@en Target supports conversion from @code{float} to @code{unsigned int}.
+目标机器支持从@code{float}到@code{unsigned int}的转换。
 @end table
 
-@subsubsection Thread Local Storage attributes
+@en @subsubsection Thread Local Storage attributes
+@subsubsection 线程局部存储属性
 
 @table @code
 @item tls
-Target supports thread-local storage.
+@en Target supports thread-local storage.
+目标机器支持线程局部存储。
 
 @item tls_native
-Target supports native (rather than emulated) thread-local storage.
+@en Target supports native (rather than emulated) thread-local storage.
+目标机器支持本地（而不是模拟的）线程局部存储。
 
 @item tls_runtime
-Test system supports executing TLS executables.
+@en Test system supports executing TLS executables.
+测试系统支持执行TLS可执行程序。
 @end table
 
-@subsubsection Decimal floating point attributes
+@en @subsubsection Decimal floating point attributes
+@subsubsection 十进制浮点属性
 
 @table @code
 @item dfp
-Targets supports compiling decimal floating point extension to C.
+@en Targets supports compiling decimal floating point extension to C.
+目标机器支持编译十进制浮点C扩展。
 
 @item dfp_nocache
-Including the options used to compile this particular test, the
-target supports compiling decimal floating point extension to C.
+@en Including the options used to compile this particular test, the
+@en target supports compiling decimal floating point extension to C.
+目标机器支持编译十进制浮点C扩展，包括用于编译该特定测试的选项。
 
 @item dfprt
-Test system can execute decimal floating point tests.
+@en Test system can execute decimal floating point tests.
+测试系统可以执行十进制浮点测试。
 
 @item dfprt_nocache
-Including the options used to compile this particular test, the
-test system can execute decimal floating point tests.
+@en Including the options used to compile this particular test, the
+@en test system can execute decimal floating point tests.
+测试系统可以执行十进制浮点测试，包括用于编译该特定测试的选项。
 
 @item hard_dfp
-Target generates decimal floating point instructions with current options.
+@en Target generates decimal floating point instructions with current options.
+目标机器使用当前选项生成十进制浮点指令。
 @end table
 
-@subsubsection ARM-specific attributes
+@en @subsubsection ARM-specific attributes
+@subsubsection ARM特定属性
 
 @table @code
 @item arm32
-ARM target generates 32-bit code.
+@en ARM target generates 32-bit code.
+ARM目标机器生成32位代码。
 
 @item arm_eabi
 ARM target adheres to the ABI for the ARM Architecture.
 
 @item arm_hard_vfp_ok
-ARM target supports @code{-mfpu=vfp -mfloat-abi=hard}.
-Some multilibs may be incompatible with these options.
+@en ARM target supports @code{-mfpu=vfp -mfloat-abi=hard}.
+@en Some multilibs may be incompatible with these options.
+ARM目标机器支持@code{-mfpu=vfp -mfloat-abi=hard}。一些multilib可能与这些选项不兼容。
 
 @item arm_iwmmxt_ok
-ARM target supports @code{-mcpu=iwmmxt}.
-Some multilibs may be incompatible with this option.
+@en ARM target supports @code{-mcpu=iwmmxt}.
+@en Some multilibs may be incompatible with this option.
+ARM目标机器支持@code{-mcpu=iwmmxt}。一些multilib可能与这些选项不兼容。
 
 @item arm_neon
-ARM target supports generating NEON instructions.
+@en ARM target supports generating NEON instructions.
+ARM目标机器支持生成NEON指令。
 
 @item arm_neon_hw
-Test system supports executing NEON instructions.
+@en Test system supports executing NEON instructions.
+测试系统支持执行NEON指令。
 
 @item arm_neon_ok
 @anchor{arm_neon_ok}
-ARM Target supports @code{-mfpu=neon -mfloat-abi=softfp} or compatible
-options.  Some multilibs may be incompatible with these options.
+@en ARM Target supports @code{-mfpu=neon -mfloat-abi=softfp} or compatible
+@en options.  Some multilibs may be incompatible with these options.
+ARM目标机器支持@code{-mfpu=neon -mfloat-abi=softfp}或者兼容选项。一些multilib可能与这些选项不兼容。
 
 @item arm_neon_fp16_ok
 @anchor{arm_neon_fp16_ok}
-ARM Target supports @code{-mfpu=neon-fp16 -mfloat-abi=softfp} or compatible
-options.  Some multilibs may be incompatible with these options.
+@en ARM Target supports @code{-mfpu=neon-fp16 -mfloat-abi=softfp} or compatible
+@en options.  Some multilibs may be incompatible with these options.
+ARM目标机器支持@code{-mfpu=neon-fp16 -mfloat-abi=softfp}或者兼容选项。一些multilib可能与这些选项不兼容。
 
 @item arm_thumb1_ok
-ARM target generates Thumb-1 code for @code{-mthumb}.
+@en ARM target generates Thumb-1 code for @code{-mthumb}.
+ARM目标机器为@code{-mthumb}生成Thumb-1代码。
 
 @item arm_thumb2_ok
-ARM target generates Thumb-2 code for @code{-mthumb}.
+@en ARM target generates Thumb-2 code for @code{-mthumb}.
+ARM目标机器为@code{-mthumb}生成Thumb-2代码。
 
 @item arm_vfp_ok
-ARM target supports @code{-mfpu=vfp -mfloat-abi=softfp}.
-Some multilibs may be incompatible with these options.
+@en ARM target supports @code{-mfpu=vfp -mfloat-abi=softfp}.
+@en Some multilibs may be incompatible with these options.
+ARM目标机器支持@code{-mfpu=vfp -mfloat-abi=softfp}。一些multilib可能与这些选项不兼容。
 @end table
 
-@subsubsection MIPS-specific attributes
+@en @subsubsection MIPS-specific attributes
+@subsubsection MIPS特定属性
 
 @table @code
 @item mips64
-MIPS target supports 64-bit instructions.
+@en MIPS target supports 64-bit instructions.
+MIPS目标机器支持64位指令。
 
 @item nomips16
-MIPS target does not produce MIPS16 code.
+@en MIPS target does not produce MIPS16 code.
+MIPS目标机器不产生MIPS16代码。
 
 @item mips16_attribute
-MIPS target can generate MIPS16 code.
+@en MIPS target can generate MIPS16 code.
+MIPS目标机器可以生成MIPS16代码。
 
 @item mips_loongson
-MIPS target is a Loongson-2E or -2F target using an ABI that supports
-the Loongson vector modes.
+@en MIPS target is a Loongson-2E or -2F target using an ABI that supports
+@en the Loongson vector modes.
+MIPS目标机器是使用了支持Loongson向量模式ABI的Loongson-2E或者2F目标机器。
 
 @item mips_newabi_large_long_double
-MIPS target supports @code{long double} larger than @code{double}
-when using the new ABI.
+@en MIPS target supports @code{long double} larger than @code{double}
+@en when using the new ABI.
+MIPS目标机器支持比@code{double}大的@code{long double}，当使用新ABI时。
 
 @item mpaired_single
-MIPS target supports @code{-mpaired-single}.
+@en MIPS target supports @code{-mpaired-single}.
+MIPS目标机器支持@code{-mpaired-single}。
 @end table
 
-@subsubsection PowerPC-specific attributes
+@en @subsubsection PowerPC-specific attributes
+@subsubsection PowerPC特定属性
 
 @table @code
 @item powerpc64
-Test system supports executing 64-bit instructions.
+@en Test system supports executing 64-bit instructions.
+测试系统支持执行64位指令。
 
 @item powerpc_altivec
-PowerPC target supports AltiVec.
+@en PowerPC target supports AltiVec.
+PowerPC目标机器支持AltiVec。
 
 @item powerpc_altivec_ok
-PowerPC target supports @code{-maltivec}.
+@en PowerPC target supports @code{-maltivec}.
+PowerPC目标机器支持@code{-maltivec}。
 
 @item powerpc_fprs
-PowerPC target supports floating-point registers.
+@en PowerPC target supports floating-point registers.
+PowerPC目标机器支持浮点寄存器。
 
 @item powerpc_hard_double
-PowerPC target supports hardware double-precision floating-point.
+@en PowerPC target supports hardware double-precision floating-point.
+PowerPC目标机器支持硬件双精度浮点。
 
 @item powerpc_ppu_ok
-PowerPC target supports @code{-mcpu=cell}.
+@en PowerPC target supports @code{-mcpu=cell}.
+PowerPC目标机器支持@code{-mcpu=cell}。
 
 @item powerpc_spe
-PowerPC target supports PowerPC SPE.
+@en PowerPC target supports PowerPC SPE.
+PowerPC目标机器支持PowerPC SPE。
 
 @item powerpc_spe_nocache
-Including the options used to compile this particular test, the
-PowerPC target supports PowerPC SPE.
+@en Including the options used to compile this particular test, the
+@en PowerPC target supports PowerPC SPE.
+PowerPC目标机器支持PowerPC SPE，包括用于编译该特定测试的选项。
 
 @item powerpc_spu
-PowerPC target supports PowerPC SPU.
+@en PowerPC target supports PowerPC SPU.
+PowerPC目标机器支持PowerPC SPU。
 
 @item spu_auto_overlay
 SPU target has toolchain that supports automatic overlay generation.
+SPU目标机器具有支持自动生成的工具链。
 
 @item powerpc_vsx_ok
-PowerPC target supports @code{-mvsx}.
+@en PowerPC target supports @code{-mvsx}.
+PowerPC目标机器支持@code{-mvsx}。
 
 @item powerpc_405_nocache
-Including the options used to compile this particular test, the
-PowerPC target supports PowerPC 405.
+@en Including the options used to compile this particular test, the
+@en PowerPC target supports PowerPC 405.
+PowerPC目标机器支持PowerPC 405，包括用于编译该特定测试的选项。
 
 @item vmx_hw
-PowerPC target supports executing AltiVec instructions.
+@en PowerPC target supports executing AltiVec instructions.
+PowerPC目标机器支持。
 @end table
 
-@subsubsection Other hardware attributes
+@en @subsubsection Other hardware attributes
+@subsubsection 其它硬件属性
 
 @table @code
 @item avx
-Target supports compiling @code{avx} instructions.
+@en Target supports compiling @code{avx} instructions.
+目标机器支持编译@code{avx}指令。
 
 @item avx_runtime
-Target supports the execution of @code{avx} instructions.
+@en Target supports the execution of @code{avx} instructions.
+目标机器支持执行@code{avx}指令。
 
 @item cell_hw
-Test system can execute AltiVec and Cell PPU instructions.
+@en Test system can execute AltiVec and Cell PPU instructions.
+测试系统能够执行AltiVec和Cell PPU指令。
 
 @item coldfire_fpu
-Target uses a ColdFire FPU.
+@en Target uses a ColdFire FPU.
+目标机器使用ColdFire FPU。
 
 @item hard_float
-Target supports FPU instructions.
+@en Target supports FPU instructions.
+目标机器支持FPU指令。
 
 @item sse
-Target supports compiling @code{sse} instructions.
+@en Target supports compiling @code{sse} instructions.
+目标机器支持编译@code{sse}指令。
 
 @item sse_runtime
-Target supports the execution of @code{sse} instructions.
+@en Target supports the execution of @code{sse} instructions.
+目标机器支持执行@code{sse}指令。
 
 @item sse2
-Target supports compiling @code{sse2} instructions.
+@en Target supports compiling @code{sse2} instructions.
+目标机器支持编译@code{sse2}指令。
 
 @item sse2_runtime
-Target supports the execution of @code{sse2} instructions.
+@en Target supports the execution of @code{sse2} instructions.
+目标机器支持执行@code{sse2}指令。
 
 @item sync_char_short
-Target supports atomic operations on @code{char} and @code{short}.
+@en Target supports atomic operations on @code{char} and @code{short}.
+目标机器支持在@code{char}和@code{short}之上的原子操作。
 
 @item sync_int_long
-Target supports atomic operations on @code{int} and @code{long}.
+@en Target supports atomic operations on @code{int} and @code{long}.
+目标机器支持在@code{int}和@code{long}之上的原子操作。
 
 @item ultrasparc_hw
-Test environment appears to run executables on a simulator that
-accepts only @code{EM_SPARC} executables and chokes on @code{EM_SPARC32PLUS}
-or @code{EM_SPARCV9} executables.
+@en Test environment appears to run executables on a simulator that
+@en accepts only @code{EM_SPARC} executables and chokes on @code{EM_SPARC32PLUS}
+@en or @code{EM_SPARCV9} executables.
+测试环境是在模拟器上运行可执行程序，且只接受@code{EM_SPARC}可执行程序，对于@code{EM_SPARC32PLUS}或者@code{EM_SPARCV9}可执行程序则不成。
 
 @item vect_cmdline_needed
-Target requires a command line argument to enable a SIMD instruction set.
+@en Target requires a command line argument to enable a SIMD instruction set.
+目标机器需要命令行参数来启用SIMD指令集。
 @end table
 
-@subsubsection Environment attributes
+@en @subsubsection Environment attributes
+@subsubsection 环境属性
 
 @table @code
 @item c
@@ -2055,7 +2205,8 @@ Target is a VxWorks RTP.
 Target supports wide characters.
 @end table
 
-@subsubsection Other attributes
+@en @subsubsection Other attributes
+@subsubsection 其它属性
 
 @table @code
 @item automatic_stack_alignment
@@ -2163,61 +2314,79 @@ Target supports @code{wchar_t} that is compatible with @code{char16_t}.
 Target supports @code{wchar_t} that is compatible with @code{char32_t}.
 @end table
 
-@subsubsection Local to tests in @code{gcc.target/i386}
+@en @subsubsection Local to tests in @code{gcc.target/i386}
+@subsubsection 局限于@code{gcc.target/i386}下的测试
 
 @table @code
 @item 3dnow
-Target supports compiling @code{3dnow} instructions.
+@en Target supports compiling @code{3dnow} instructions.
+目标机器支持编译@code{3dnow}指令。
 
 @item aes
-Target supports compiling @code{aes} instructions.
+@en Target supports compiling @code{aes} instructions.
+目标机器支持编译@code{aes}指令。
 
 @item fma4
-Target supports compiling @code{fma4} instructions.
+@en Target supports compiling @code{fma4} instructions.
+目标机器支持编译@code{fma4}指令。
 
 @item ms_hook_prologue
-Target supports attribute @code{ms_hook_prologue}.
+@en Target supports attribute @code{ms_hook_prologue}.
+目标机器支持属性@code{ms_hook_prologue}。
 
 @item pclmul
-Target supports compiling @code{pclmul} instructions.
+@en Target supports compiling @code{pclmul} instructions.
+目标机器支持编译@code{pclmul}指令。
 
 @item sse3
-Target supports compiling @code{sse3} instructions.
+@en Target supports compiling @code{sse3} instructions.
+目标机器支持编译@code{sse3}指令。
 
 @item sse4
-Target supports compiling @code{sse4} instructions.
+@en Target supports compiling @code{sse4} instructions.
+目标机器支持编译@code{sse4}指令。
 
 @item sse4a
-Target supports compiling @code{sse4a} instructions.
+@en Target supports compiling @code{sse4a} instructions.
+目标机器支持编译@code{sse4a}指令。
 
 @item ssse3
-Target supports compiling @code{ssse3} instructions.
+@en Target supports compiling @code{ssse3} instructions.
+目标机器支持编译@code{ssse3}指令。
 
 @item vaes
-Target supports compiling @code{vaes} instructions.
+@en Target supports compiling @code{vaes} instructions.
+目标机器支持编译@code{vaes}指令。
 
 @item vpclmul
-Target supports compiling @code{vpclmul} instructions.
+@en Target supports compiling @code{vpclmul} instructions.
+目标机器支持编译@code{vpclmul}指令。
 
 @item xop
-Target supports compiling @code{xop} instructions.
+@en Target supports compiling @code{xop} instructions.
+目标机器支持编译@code{xop}指令。
 @end table
 
-@subsubsection Local to tests in @code{gcc.target/spu/ea}
+@en @subsubsection Local to tests in @code{gcc.target/spu/ea}
+@subsubsection 局限于@code{gcc.target/spu/ea}下的测试
 
 @table @code
 @item ealib
-Target @code{__ea} library functions are available.
+@en Target @code{__ea} library functions are available.
+目标机器@code{__ea}库函数可用。
 @end table
 
-@subsubsection Local to tests in @code{gcc.test-framework}
+@en @subsubsection Local to tests in @code{gcc.test-framework}
+@subsubsection 局限于@code{gcc.test-framework}下的测试
 
 @table @code
 @item no
-Always returns 0.
+@en Always returns 0.
+总是返回0。
 
 @item yes
-Always returns 1.
+@en Always returns 1.
+总是返回1。
 @end table
 
 @node Add Options
