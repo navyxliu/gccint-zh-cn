@@ -471,6 +471,7 @@ third form, the alias may not have an argument, if the alias is used
 in the positive form then @var{posarg} is considered to be passed to
 @option{-@var{opt}}, and if the alias is used in the negative form
 then @var{negarg} is considered to be passed to @option{-@var{opt}}.
+别名的选项 @option{-@var{opt}}。第一种形式，被传递给别名的任何参数被认为传递给了@option{-@var{opt}}，@option{-@var{opt}} 被认为是否定形式如果别名是否定形式。第二种形式，别名可能不是否定或者没有任何参数，并且 @var{posarg} 被认为当作一个参数传递给 @option{-@var{opt}}。第三中形式，别名可能没有任何参数，如果别名被在积极形式中使用，则 @var{posarg} 被视为传递给@option{-@var{opt}}，并且如果别名被在否定形式中使用，则 @var{negarg} 被视为传递给@option{-@var{opt}}。
 
 Aliases should not specify @code{Var} or @code{Mask} or
 @code{UInteger}.  Aliases should normally specify the same languages
@@ -478,16 +479,19 @@ as the target of the alias; the flags on the target will be used to
 determine any diagnostic for use of an option for the wrong language,
 while those on the alias will be used to identify what command-line
 text is the option and what text is any argument to that option.
+别名不应该被制定为@code{Var} 或 @code{Mask} 或 @code{UInteger}。别名通常应该被制定为相同语言，然而这些别名在命令行是不被区分的。
 
 When an @code{Alias} definition is used for an option, driver specs do
 not need to handle it and no @samp{OPT_} enumeration value is defined
 for it; only the canonical form of the option will be seen in those
 places.
+当 @code{Alias} 定义被一个选项使用的时候，driver specs不必做处理，并且没有对应 @samp{OPT_} 枚举值被定义，仅传统形式下的选项是可见的。
 
 @item Ignore
 This option is ignored apart from printing any warning specified using
 @code{Warn}.  The option will not be seen by specs and no @samp{OPT_}
 enumeration value is defined for it.
+该选项在使用 @code{Warn} 时被忽略，该选项在specs中不可见，并且没有 @samp{OPT_} 对应的值。
 
 @item SeparateAlias
 For an option marked with @code{Joined}, @code{Separate} and
@@ -495,6 +499,7 @@ For an option marked with @code{Joined}, @code{Separate} and
 argument; with a joined argument it acts as a normal option, with an
 @samp{OPT_} enumeration value.  This is for compatibility with the
 Java @option{-d} option and should not be used for new options.
+如果一个选项被标记为 @code{Joined}，@code{Separate} 和 @code{Alias}，该选项将仅作为一个传递分割参数时的时别名，每个参数就是一个普通选项，可以取 @samp{OPT_} 枚举值。因为兼容原因保留的Java @option{-d} 选项应该不再被使用。
 
 @item Warn(@var{message})
 If this option is used, output the warning @var{message}.
@@ -503,6 +508,7 @@ a @samp{%qs} format which is the option name, or not taking any
 operands, which is passed to the @samp{warning} function.  If an alias
 is marked @code{Warn}, the target of the alias must not also be marked
 @code{Warn}.
+如果使用了该选项，输出警告信息 @var{message}。@var{message} 是一串格式化的字符串，要么是一个 @samp{%qs} 格式的单操作数选项名，要么是传递给 @samp{warning} 函数的多操作数组合。如果一个别名被标记成 @code{Warn} 了，那么该别名的目标也应该被标记成 @code{Warn}。
 
 @item Report
 @en The state of the option should be printed by @option{-fverbose-asm}.
@@ -512,12 +518,14 @@ is marked @code{Warn}, the target of the alias must not also be marked
 This is a warning option and should be shown as such in
 @option{--help} output.  This flag does not currently affect anything
 other than @option{--help}.
+警告选项，@option{--help} 输出中应该有相关内容。该参数目前无效。
 
 @item Optimization
 This is an optimization option.  It should be shown as such in
 @option{--help} output, and any associated variable named using
 @code{Var} should be saved and restored when the optimization level is
 changed with @code{optimize} attributes.
+优化选项。@option{--help} 输出中应该有相关内容，任何赋给该变量 @code{Var} 的值应该在优化等级  @code{optimize} 改变时被保存/恢复。
 
 @item Undocumented
 @en The option is deliberately missing documentation and should not
@@ -536,6 +544,7 @@ changed with @code{optimize} attributes.
 Build the @code{cl_target_option} structure to hold a copy of the
 option, add the functions @code{cl_target_option_save} and
 @code{cl_target_option_restore} to save and restore the options.
+@code{cl_target_option} 结构保存了一个选项的副本，增加 @code{cl_target_option_save} 和@code{cl_target_option_restore} 函数用来保存和恢复这个选项。
 
 @item SetByCombined
 The option may also be set by a combined option such as
@@ -549,4 +558,6 @@ combined option.  For example, some front ends use this to prevent
 value of @option{-fmath-errno} for languages that do not use
 @code{errno}.
 
+该选项也可以通过 @option{-ffast-math} 一类的组合选项来设置。这导致 @code{gcc_options} 结构中保存一个 @code{frontend_set_@var{name}} 域，其中 @code{@var{name}} 是当前保持的这个选项（没有前缀 @code{x_}）值的名字。这样，前端就可以有办法分辨显式设置，以及不能被组合选项改变值。
+例如，有些不直接使用 @code{errno} 的前端，通过使用 @option{-ffast-math} 和 @option{-fno-fast-math} 来改变 @option{-fmath-errno} 的值。
 @end table
