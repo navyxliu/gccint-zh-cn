@@ -52,6 +52,8 @@ A target specific save record to save additional information. These
 records have two fields: the string @samp{TargetSave}, and a
 declaration type to go in the @code{cl_target_option} structure.
 
+一个目标相关的保存记录用来保存额外信息。这些记录有两个域：字符串 @samp{TargetSave}，和一个在@code{cl_target_option} 中结构的类型声明。
+
 @item
 A variable record to define a variable used to store option
 information.  These records have two fields: the string
@@ -62,6 +64,8 @@ options where declaring the initializer in a single option definition
 record, or duplicating it in many records, would be inappropriate, or
 for variables set in option handlers rather than referenced by
 @code{Var} properties.
+
+定义一个变量记录用来存储选项信息。这些记录有两个领域：字符串 @samp{变量}，和这个变量类型和名称的声明，也许还有可选初始化值（但没有任何结束符@samp{;}）。在声明一个初始化单独选项的时候，这些记录可以被很多选项使用，或者在很多选项中复制它，都是不适当的，设置变量应该在选项处理程序而不是对 @code{Var} 属性的直接引用。
 
 @item
 A variable record to define a variable used to store option
@@ -74,12 +78,16 @@ and @samp{TargetSave} records in that the variable is defined in the
 the @code{cl_target_option} structure.  The variables are saved in the
 target save code and restored in the target restore code.
 
+用变量记录定义的变量用来存储选项信息。这些记录有两个字段：字符串 @samp{TargetVariable}，和这个变量类型和名称的声明，也许还有可选的初始化值（但没有任何结束符 @samp{;}）。@samp{TargetVariable} 是 @samp{Variable} 和 @code{gcc_options}结构中的 @samp{TargetSave} 记录变量定义的组合，但这些变量也存储在 @code{cl_target_option} 结构中。这些变量保存在target save code和target restore code中。
+
 @item
 A variable record to record any additional files that the
 @file{options.h} file should include.  This is useful to provide
 enumeration or structure definitions needed for target variables.
 These records have two fields: the string @samp{HeaderInclude} and the
 name of the include file.
+
+变量记录用来记录任何 @file{options.h} 中应该包含的附加文件。这在提供目标变量的枚举或结构的定义的时候非常有用。这些记录有两个域：字符串 #samp{HeaderInclude} 和头文件的名称。
 
 @item
 A variable record to record any additional files that the
@@ -89,6 +97,8 @@ sequences to properly set up the initialization.  These records have
 two fields: the string @samp{SourceInclude} and the name of the
 include file.
 
+变量记录用来记录任何 @file{options.c} 中应该包含的附加文件。这在提供目标变量需要的内联函数和正确设置初始化 @code{＃ifdef} 序列的时候非常有用。这些记录有两个域：字符串 @samp{SourceInclude}和头文件名称。
+
 @item
 An enumeration record to define a set of strings that may be used as
 arguments to an option or options.  These records have three fields:
@@ -96,21 +106,32 @@ the string @samp{Enum}, a space-separated list of properties and help
 text used to describe the set of strings in @option{--help} output.
 Properties use the same format as option properties; the following are
 valid:
+
+枚举记录定义了一套可以用来作为字符串选项的参数。这些记录有三个域：
+字符串 @samp{Enum}，空格分隔的属性列表，描述 @option{--help} 输出的帮助
+文字。属性选项属性使用相同的格式，以下是有效选项：
+
 @table @code
 @item Name(@var{name})
 This property is required; @var{name} must be a name (suitable for use
 in C identifiers) used to identify the set of strings in @code{Enum}
 option properties.
 
+此属性是必需的，@var{name} 必须是一个名称（合法的C标识符）用来确定在 @code{Enum} 选项属性中的字符串。
+
 @item Type(@var{type})
 This property is required; @var{type} is the C type for variables set
 by options using this enumeration together with @code{Var}.
+
+此属性是必需的，@var{type} 是一个被选项用 @code{Var} 中的值设置的变量的C类型。
 
 @item UnknownError(@var{message})
 The message @var{message} will be used as an error message if the
 argument is invalid; for enumerations without @code{UnknownError}, a
 generic error message is used.  @var{message} should contain a single
 @samp{%qs} format, which will be used to format the invalid argument.
+
+@var{message} 将被用作参数无效时的错误消息，枚举中不存在 @code{UnknownError} 的时候使用一般性错误消息。@var{message} 应该包含一个用于格式化无效参数的 @samp{％qs}格式。
 @end table
 
 @item
@@ -119,18 +140,28 @@ given in an @samp{Enum} record.  These records have two fields: the
 string @samp{EnumValue} and a space-separated list of properties.
 Properties use the same format as option properties; the following are
 valid:
+
+枚举值记录用来定义一个 @samp{Enum} 记录中给定一组字符串。这些记录有两个字段：
+字符串 @samp{EnumValue} 和空格分隔的属性列表。属性选项属性使用相同的格式，以下是有效选项：
+
 @table @code
 @item Enum(@var{name})
 This property is required; @var{name} says which @samp{Enum} record
 this @samp{EnumValue} record corresponds to.
 
+此属性是必需的，@var{name} 是 @samp{Enum} 中 @samp{EnumValue} 的对应记录。
+
 @item String(@var{string})
 This property is required; @var{string} is the string option argument
 being described by this record.
 
+此属性是必需的，@var{string}是记录中存储的字符串选项内容。
+
 @item Value(@var{value})
 This property is required; it says what value (representable as
 @code{int}) should be used for the given string.
+
+此属性是必需的，它表示给定的字符串的值（表示为@code{int}）。
 
 @item Canonical
 This property is optional.  If present, it says the present string is
@@ -138,12 +169,17 @@ the canonical one among all those with the given value.  Other strings
 yielding that value will be mapped to this one so specs do not need to
 handle them.
 
+此属性是可选的。如果存在，表示当前字符串是所有给定值的典型之一。其他字符串
+产生的值将被映射到这里，以至于specs不需要处理它们。
+
 @item DriverOnly
 This property is optional.  If present, the present string will only
 be accepted by the driver.  This is used for cases such as
 @option{-march=native} that are processed by the driver so that
 @samp{gcc -v} shows how the options chosen depended on the system on
 which the compiler was run.
+
+该属性是可选的。当前，这些字符串仅仅被driver接受。用来在 @option{-march=native} 的时候传递给driver，导致运行 @samp{gcc -v} 可以显示当前系统使用的选项。
 @end table
 
 @item
