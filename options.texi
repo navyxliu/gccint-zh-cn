@@ -367,11 +367,16 @@ If the option takes an argument and has the @code{Enum} property,
 the @code{Enum} property of this option) that stores the value of the
 argument.
 
+如果该选项接受一个参数，并具有 @code{Enum}属性，
+@var{var} 是一个用来存储参数值的变量（@samp{Enum}记录中的 @code{Name} 属性和 @code{Enum} 属性拥有同样参数的 @code{Type} 属性中的给定类型）。
+
 @item
 If the option has the @code{Defer} property, @var{var} is a pointer to
 a @code{VEC(cl_deferred_option,heap)} that stores the option for later
 processing.  (@var{var} is declared with type @code{void *} and needs
 to be cast to @code{VEC(cl_deferred_option,heap)} before use.)
+
+如果选项中有@code{Defer}属性，@var{var} 是一个指向用来存储后续过程使用的选项 @code{VEC(cl_deferred_option,heap)} 指针。（@var{var}被声明成 @code{void *} 类型，并且在使用之前需要转化成 @code{VEC(cl_deferred_option,heap)}）
 
 @item
 @en Otherwise, if the option takes an argument, @var{var} is a pointer to
@@ -381,7 +386,9 @@ to be cast to @code{VEC(cl_deferred_option,heap)} before use.)
 @end itemize
 
 The option-processing script will usually zero-initialize @var{var}.
+选项处理脚本通常把 @var{var} 初始化为0。
 You can modify this behavior using @code{Init}.
+你可以通过修改 @code{Init} 来到达修改默认行为的目的。
 
 @item Var(@var{var}, @var{set})
 @en The option controls an integer variable @var{var} and is active when
@@ -444,9 +451,12 @@ with the corresponding @samp{Enum} record.  The string is checked and
 converted to the integer specified in the corresponding
 @samp{EnumValue} record before being passed to option handlers.
 
+该选项的参数是一个@samp{Enum} 记录中对应的字符串。在纪录传递选项处理之前，该字符串被选中并根据 @samp{EnumValue}中的值转化为相应整数。
+
 @item Defer
 The option should be stored in a vector, specified with @code{Var},
 for later processing.
+这个选项应该存储为一个向量，和 @code{Var} 一样，在后续过程中使用。
 
 @item Alias(@var{opt})
 @itemx Alias(@var{opt}, @var{arg})
