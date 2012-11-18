@@ -6,13 +6,15 @@
 @c Diego Novillo <dnovillo@google.com>
 
 @node LTO
-@chapter Link Time Optimization
+@en @chapter Link Time Optimization
+@chapter 链接时优化
 @cindex lto
 @cindex whopr
 @cindex wpa
 @cindex ltrans
 
-@section Design Overview
+@en @section Design Overview
+@section 设计简介
 
 @en Link time optimization is implemented as a GCC front end for a
 @en bytecode representation of GIMPLE that is emitted in special sections
@@ -83,7 +85,8 @@
 
 LTO的下半个部分是"读者"。这个部分是作为GCC的前端@file{lto/lto.c}文件@file{lto1}实现的。当@file{collect2}检查出链接文件集合@code{.o}/@code{.a}具有LTO信息，而且选项@option{-flto}被打开，它就调用@file{lto1}，@file{lto1}读入一些文件，把它们聚集成为一个单独的为优化的翻译单元。这个读入功能的主入口点是@file{lto/lto.c}文件的@code{lto_main}函数。
 
-@subsection LTO modes of operation
+@en @subsection LTO modes of operation
+@subsection 链接时优化操作的模式
 
 @en One of the main goals of the GCC link-time infrastructure was to allow
 @en effective compilation of large programs.  For this reason GCC implements two
@@ -158,7 +161,9 @@ WHOPR可以被看作为普通LTO编译模式的扩展。在LTO模式，当所有
 @en whole program into memory.
 当在WHOPR编译模式中时，在WPA阶段，调用图被分块。整个程序被分割为大小基本一致的若干分块。编译器尽量减少跨越分块边缘的引用。WHOPR的主要有点是允许并行执行LTRANS阶段，而这个阶段有恰恰是整个编译过程中最耗时的部分。例外，它也避免了把整个程序全部加载到内存。
 
-@section LTO file sections
+@en @section LTO file sections
+@section 链接时优化的文件部分
+
 
 @en LTO information is stored in several ELF sections inside object files.
 @en Data structures and enum codes for sections are defined in
@@ -186,8 +191,8 @@ At link time, the options given on the command line and the options
 saved on all the files in a link-time set are applied globally.  No
 attempt is made at validating the combination of flags (other than the
 usual validation done by option processing).  This is implemented in
+现在，GCC不再支持把编译的LTO对象文件跟不同的命令行操作集合结合到一个单独的二进制文件中。链接时的命令行参数和配置文件参数是全局通用的。在合并参数时不会执行验证操作（除了处理参数时做的惯例验证）。这个实现在
 @file{lto/lto.c}:@code{lto_read_all_file_options}.
-
 
 @en @item Symbol table (@code{.gnu.lto_.symtab})
 @item 符号表 (@code{.gnu.lto_.symtab})
@@ -353,7 +358,8 @@ usual validation done by option processing).  This is implemented in
 (@code{write_optimization_summary} 在@code{struct ipa_opt_pass_d})。它把过程间繁殖信息记录到目标文件。它和@code{write_summary}使用了同样的数据结构和函数。
 @end enumerate
 
-@item LTRANS time
+@en @item LTRANS time
+@item LTRANS 时间段
 @enumerate
 @en @item @emph{Read optimization summary}
 @en (@code{read_optimization_summary} in @code{struct
@@ -364,11 +370,10 @@ usual validation done by option processing).  This is implemented in
 @item @emph{读入优化总计信息}
 (@code{read_optimization_summary} in @code{struct ipa_opt_pass_d})。对应于@code{write_optimization_summary}。它读入@code{write_optimization_summary}输出的过程间优化决定。
 
-@item @emph{Transform} (@code{function_transform} and
-@code{variable_transform} in @code{struct ipa_opt_pass_d}).
-The actual function bodies and variable initializers are updated
-based on the information passed down from the @emph{Execute} stage.
-
+@en @item @emph{Transform} (@code{function_transform} and
+@en @code{variable_transform} in @code{struct ipa_opt_pass_d}).
+@en The actual function bodies and variable initializers are updated
+@en based on the information passed down from the @emph{Execute} stage.
 @item @emph{Transform} (@code{struct ipa_opt_pass_d} 中的@code{function_transform} 和 @code{variable_transform})。
 实际的函数体和变量初始化函数根据从@emph{执行}阶段专递下来的信息来更新。
 
@@ -423,13 +428,13 @@ based on the information passed down from the @emph{Execute} stage.
 引入WHOPR编译模式的一个主要挑战就是处理由各个优化遍之间的交互带来的问题。在LTO编译模式，所有的优化遍顺序执行，每一个优化遍都由分析阶段(或者@emph{Generate summary})，扩展(或者@emph{Execute})阶段和@emph{转换}阶段组成。一个优化遍的工作完成了，下一个优化遍就看到了更新过了程序表达，然后就执行。这杨就使得每一个优化遍都独立于其它优化遍。
 
 
-In WHOPR mode all passes first execute their @emph{Generate
-summary} stage.  Then summary writing marks the end of the LGEN
-stage.  At WPA time,
-the summaries are read back into memory and all passes run the
-@emph{Execute} stage.  Optimization summaries are streamed and
-sent to LTRANS, where all the passes execute the @emph{Transform}
-stage.
+@en In WHOPR mode all passes first execute their @emph{Generate
+@en summary} stage.  Then summary writing marks the end of the LGEN
+@en stage.  At WPA time,
+@en the summaries are read back into memory and all passes run the
+@en @emph{Execute} stage.  Optimization summaries are streamed and
+@en sent to LTRANS, where all the passes execute the @emph{Transform}
+@en stage.
 在WHOPR模式下，所有优化遍都先执行它们的@emph{Generate summary}阶段。
 
 @en Most optimization passes split naturally into analysis,
