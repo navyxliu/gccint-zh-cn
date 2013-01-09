@@ -482,14 +482,15 @@ usual validation done by option processing).  This is implemented in
 @en Using @emph{virtual clones}, the program can be easily updated
 @en during the @emph{Execute} stage, solving most of pass interactions
 @en problems that would otherwise occur during @emph{Transform}.
-使用@emph{virtual clones}，程序可以被容易地更新在@emph{Execute}更新，这样也可以解决优化遍的交互的大部分问题，否者，这些问题会发生在@emph{Transform}阶段。
+使用@emph{virtual clone}，程序可以被容易地更新在@emph{Execute}更新，这样也可以解决优化遍的交互的大部分问题，否者，这些问题会发生在@emph{Transform}阶段。
 
-Virtual clones are later materialized in the LTRANS stage and
-turned into real functions.  Passes executed after the virtual
-clone were introduced also perform their @emph{Transform} stage
-on new functions, so for a pass there is no significant
-difference between operating on a real function or a virtual
-clone introduced before its @emph{Execute} stage.
+@en Virtual clones are later materialized in the LTRANS stage and
+@en turned into real functions.  Passes executed after the virtual
+@en clone were introduced also perform their @emph{Transform} stage
+@en on new functions, so for a pass there is no significant
+@en difference between operating on a real function or a virtual
+@en clone introduced before its @emph{Execute} stage.
+Virtual clone 在 LTRANS 阶段和转向实函数的时候是延后处理的。在引入 virtual clone 并且对新函数执行完 @emph{Transform} 阶段后执行，因此对于一个 pass 来说在 @emph{Execute} 阶段之前操作一个实函数和 virtual clone 是没有区别的。
 
 @en Optimization passes then work on virtual clones introduced before
 @en their @emph{Execute} stage as if they were real functions.  The
@@ -497,17 +498,19 @@ clone introduced before its @emph{Execute} stage.
 @en @emph{Generate Summary} stage.
 然后优化遍会对在执行阶段之前引入的@emph{virtual clones} ，当作真正的函数，进行优化。这些@emph{virtual clones}和真正的函数的区别就是他们在@emph{Generate Summary}阶段不可见。
 
-To keep function summaries updated, the callgraph interface
-allows an optimizer to register a callback that is called every
-time a new clone is introduced as well as when the actual
-function or variable is generated or when a function or variable
-is removed.  These hooks are registered in the @emph{Generate
-summary} stage and allow the pass to keep its information intact
-until the @emph{Execute} stage.  The same hooks can also be
-registered during the @emph{Execute} stage to keep the
-optimization summaries updated for the @emph{Transform} stage.
+@en To keep function summaries updated, the callgraph interface
+@en allows an optimizer to register a callback that is called every
+@en time a new clone is introduced as well as when the actual
+@en function or variable is generated or when a function or variable
+@en is removed.  These hooks are registered in the @emph{Generate
+@en summary} stage and allow the pass to keep its information intact
+@en until the @emph{Execute} stage.  The same hooks can also be
+@en registered during the @emph{Execute} stage to keep the
+@en optimization summaries updated for the @emph{Transform} stage.
+为了保证函数摘要的更新，调用图接口允许优化器注册 callback，这个 callback 在每次引入新的克隆，生成实函数或变量或者删除函数或者变量的时候调用。在@emph{Generate summary}阶段注册这些钩子并且允许保存完整信息直到@emph{Execute}阶段。在@emph{Execute}阶段也可以注册相同的钩子用来为@emph{Transform}阶段保存更新的优化摘要。
 
-@subsection IPA references
+@en @subsection IPA references
+@subsection IPA 引用
 
 @en GCC represents IPA references in the callgraph.  For a function
 @en or variable @code{A}, the @emph{IPA reference} is a list of all
@@ -521,18 +524,22 @@ optimization summaries updated for the @emph{Transform} stage.
 @en for details.
 GCC在调用图中表现IPA的引用。对已一个函数或者变量 @code{A}，@emph{IPA reference} 就是一个所有使用地址@code{A}的代码位置的列表。如果@code{A}是一个变量，这个列表就是所有直接对@code{A}读写的代码位置。References represent an oriented multi-graph on the union of nodes of the callgraph and the varpool.  参见@file{ipa-reference.c}:@code{ipa_reference_write_optimization_summary}和@file{ipa-reference.c}:@code{ipa_reference_read_optimization_summary}。
 
-@subsection Jump functions
-Suppose that an optimization pass sees a function @code{A} and it
-knows the values of (some of) its arguments.  The @emph{jump
-function} describes the value of a parameter of a given function
-call in function @code{A} based on this knowledge.
+@en @subsection Jump functions
+@subsection 跳转功能
+@en Suppose that an optimization pass sees a function @code{A} and it
+@en knows the values of (some of) its arguments.  The @emph{jump
+@en function} describes the value of a parameter of a given function
+@en call in function @code{A} based on this knowledge.
+假设优化过程遇到函数 @code{A} 并且知道它的（一些）参数的值，跳转功能会根据已有的知识确定函数 @code{A} 中给定函数调用的参数的值。
 
-Jump functions are used by several optimizations, such as the
-inter-procedural constant propagation pass and the
-devirtualization pass.  The inliner also uses jump functions to
-perform inlining of callbacks.
+@en Jump functions are used by several optimizations, such as the
+@en inter-procedural constant propagation pass and the
+@en devirtualization pass.  The inliner also uses jump functions to
+@en perform inlining of callbacks.
+跳转函数在一些优化中都有用到，比如过程间静态传递过程和解虚拟化过程。内联函数优化也使用跳转功能来实现内联回调。
 
-@section Whole program assumptions, linker plugin and symbol visibilities
+@en @section Whole program assumptions, linker plugin and symbol visibilities
+@section 完整程序的假设，链接器插件和符号可见性
 
 @en Link-time optimization gives relatively minor benefits when used
 @en alone.  The problem is that propagation of inter-procedural
