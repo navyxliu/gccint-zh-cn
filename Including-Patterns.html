@@ -1,0 +1,134 @@
+<html lang="zh">
+<head>
+<title>Including Patterns - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Machine-Desc.html#Machine-Desc" title="Machine Desc">
+<link rel="prev" href="Insn-Splitting.html#Insn-Splitting" title="Insn Splitting">
+<link rel="next" href="Peephole-Definitions.html#Peephole-Definitions" title="Peephole Definitions">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Including-Patterns"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Peephole-Definitions.html#Peephole-Definitions">Peephole Definitions</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Insn-Splitting.html#Insn-Splitting">Insn Splitting</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Machine-Desc.html#Machine-Desc">Machine Desc</a>
+<hr>
+</div>
+
+<h3 class="section">16.17 在机器描述中包含指令模式</h3>
+
+<p><a name="index-insn-includes-3613"></a>
+<a name="index-include-3614"></a>模板<code>include</code>告诉编译器工具，
+从哪里寻找在其它文件中而不是文件<samp><span class="file">.md</span></samp>中的模板。
+这只在构建时候使用，并且不允许进行预处理操作。
+
+ <p>其形如：
+
+<pre class="smallexample">     
+     (include
+       <var>pathname</var>)
+</pre>
+ <!-- For example: -->
+ <p>例如：
+
+<pre class="smallexample">     
+     (include "filestuff")
+     
+</pre>
+ <!-- Where @var{pathname} is a string that specifies the location of the file, -->
+<!-- specifies the include file to be in @file{gcc/config/target/filestuff}.  The -->
+<!-- directory @file{gcc/config/target} is regarded as the default directory. -->
+<!-- Machine descriptions may be split up into smaller more manageable subsections -->
+<!-- and placed into subdirectories. -->
+<!-- By specifying: -->
+ <p>其中<var>pathname</var>为一个指定文件位置的字符串，
+指定了包含文件为<samp><span class="file">gcc/config/target/filestuff</span></samp>。
+目录<samp><span class="file">gcc/config/target</span></samp>被当作缺省目录。
+
+ <p>机器描述可以被分割成容易管理的小章节并放在子目录下。
+
+ <p>通过指定：
+
+<pre class="smallexample">     
+     (include "BOGUS/filestuff")
+     
+</pre>
+ <!-- the include file is specified to be in @file{gcc/config/@var{target}/BOGUS/filestuff}. -->
+<!-- Specifying an absolute path for the include file such as; -->
+<!-- @smallexample -->
+ <p>包含文件被指定为<samp><span class="file">gcc/config/</span><var>target</var><span class="file">/BOGUS/filestuff</span></samp>。
+
+ <p>为包含文件指定一个绝对路径，像：
+
+<pre class="smallexample">     
+     (include "/u2/BOGUS/filestuff")
+     
+</pre>
+ <!-- is permitted but is not encouraged. -->
+ <p>是被允许的，但不鼓励这么做。
+
+<!-- @subsection RTL Generation Tool Options for Directory Search -->
+<!-- @cindex directory options .md -->
+<!-- @cindex options, directory search -->
+<!-- @cindex search options -->
+<h4 class="subsection">16.17.1 用于目录搜索的RTL生成工具选项</h4>
+
+<p><a name="index-directory-options-_002emd-3615"></a><a name="index-options_002c-directory-search-3616"></a><a name="index-search-options-3617"></a>
+<!-- The @option{-I@var{dir}} option specifies directories to search for machine descriptions. -->
+<!-- For example: -->
+选项<samp><span class="option">-I</span><var>dir</var></samp>指定了搜索机器描述的目录。例如：
+
+<pre class="smallexample">     
+     genrecog -I/p1/abc/proc1 -I/p2/abcd/pro2 target.md
+     
+</pre>
+ <!-- Add the directory @var{dir} to the head of the list of directories to be -->
+<!-- searched for header files.  This can be used to override a system machine definition -->
+<!-- file, substituting your own version, since these directories are -->
+<!-- searched before the default machine description file directories.  If you use more than -->
+<!-- one @option{-I} option, the directories are scanned in left-to-right -->
+<!-- order; the standard default directory come after. -->
+ <p>目录<var>dir</var>将被增加到搜索头文件的目录列表的头部。
+这可以用来覆盖系统的机器定义文件，而替换为你自己的版本，
+因为这些目录将在缺省机器描述文件目录之前被搜索。
+如果你使用了多个<samp><span class="option">-I</span></samp>选项，则目录按照从左到右的顺序被扫描；
+之后为标准的缺省目录。
+
+<!-- @end ifset -->
+<!-- @ifset INTERNALS -->
+<!-- @node Peephole Definitions -->
+<!-- @section Machine-Specific Peephole Optimizers -->
+<!-- @cindex peephole optimizer definitions -->
+<!-- @cindex defining peephole optimizers -->
+ </body></html>
+

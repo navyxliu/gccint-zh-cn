@@ -1,0 +1,369 @@
+<html lang="zh">
+<head>
+<title>Frame Layout - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Stack-and-Calling.html#Stack-and-Calling" title="Stack and Calling">
+<link rel="next" href="Exception-Handling.html#Exception-Handling" title="Exception Handling">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Frame-Layout"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Exception-Handling.html#Exception-Handling">Exception Handling</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Stack-and-Calling.html#Stack-and-Calling">Stack and Calling</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.10.1 基本的帧布局</h4>
+
+<p><a name="index-stack-frame-layout-4050"></a><a name="index-frame-layout-4051"></a>
+<!-- prevent bad page break with this line -->
+<!-- Here is the basic stack layout. -->
+这里是基本的栈布局。
+
+<div class="defun">
+&mdash; Macro: <b>STACK_GROWS_DOWNWARD</b><var><a name="index-STACK_005fGROWS_005fDOWNWARD-4052"></a></var><br>
+<blockquote><!-- Define this macro if pushing a word onto the stack moves the stack -->
+     <!-- pointer to a smaller address. -->
+      <p>定义该宏，如果将一个字压入栈中使得栈指针移向更小的地址。
+
+     <!-- When we say, ``define this macro if @dots{}'', it means that the -->
+     <!-- compiler checks this macro only with @code{#ifdef} so the precise -->
+     <!-- definition used does not matter. -->
+      <p>当我们说“定义该宏，如果<small class="dots">...</small>”，这意味着编译器只是使用<code>#ifdef</code>来检查该宏，所以具体定义的值并没有关系。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>STACK_PUSH_CODE</b><var><a name="index-STACK_005fPUSH_005fCODE-4053"></a></var><br>
+<blockquote><!-- This macro defines the operation used when something is pushed -->
+     <!-- on the stack.  In RTL, a push operation will be -->
+     <!-- @code{(set (mem (STACK_PUSH_CODE (reg sp))) @dots{})} -->
+      <p>该宏定义了当压栈所使用的操作。对于RTL形式，压栈操作将为<code>(set (mem (STACK_PUSH_CODE (reg sp))) ...)</code>。
+
+     <!-- The choices are @code{PRE_DEC}, @code{POST_DEC}, @code{PRE_INC}, -->
+     <!-- and @code{POST_INC}.  Which of these is correct depends on -->
+     <!-- the stack direction and on whether the stack pointer points -->
+     <!-- to the last item on the stack or whether it points to the -->
+     <!-- space for the next item on the stack. -->
+      <p>可选择的方式为<code>PRE_DEC</code>, <code>POST_DEC</code>, <code>PRE_INC</code>和<code>POST_INC</code>。
+使用哪一个是正确的，取决于栈的方向和栈指针是否指向栈中的最后一项，还是指向之后的空间。
+
+     <!-- The default is @code{PRE_DEC} when @code{STACK_GROWS_DOWNWARD} is -->
+     <!-- defined, which is almost always right, and @code{PRE_INC} otherwise, -->
+     <!-- which is often wrong. -->
+      <p>缺省为<code>PRE_DEC</code>，当<code>STACK_GROWS_DOWNWARD</code>被定义时，这大多情况下都是正确，否则为<code>PRE_INC</code>，这经常是错误的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FRAME_GROWS_DOWNWARD</b><var><a name="index-FRAME_005fGROWS_005fDOWNWARD-4054"></a></var><br>
+<blockquote><!-- Define this macro to nonzero value if the addresses of local variable slots -->
+     <!-- are at negative offsets from the frame pointer. -->
+      <p>定义该宏为非零值，如果局部变量槽的地址位于帧指针的负偏移处。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ARGS_GROW_DOWNWARD</b><var><a name="index-ARGS_005fGROW_005fDOWNWARD-4055"></a></var><br>
+<blockquote><!-- Define this macro if successive arguments to a function occupy decreasing -->
+     <!-- addresses on the stack. -->
+      <p>定义该宏，如果函数的连续的参数在栈上的地址是递减的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>STARTING_FRAME_OFFSET</b><var><a name="index-STARTING_005fFRAME_005fOFFSET-4056"></a></var><br>
+<blockquote><!-- Offset from the frame pointer to the first local variable slot to be allocated. -->
+      <p>帧指针到第一个被分配的局部变量槽的偏移量。
+
+     <!-- If @code{FRAME_GROWS_DOWNWARD}, find the next slot's offset by -->
+     <!-- subtracting the first slot's length from @code{STARTING_FRAME_OFFSET}. -->
+     <!-- Otherwise, it is found by adding the length of the first slot to the -->
+     <!-- value @code{STARTING_FRAME_OFFSET}. -->
+      <p>如果<code>FRAME_GROWS_DOWNWARD</code>，则通过从<code>STARTING_FRAME_OFFSET</code>减去第一个栈槽的长度来查找下一个栈槽的偏移量。否则，通过从<code>STARTING_FRAME_OFFSET</code>加上第一个栈槽的长度来查找。
+<!-- i'm not sure if the above is still correct.. had to change it to get -->
+<!-- rid of an overfull.  -mew 2feb93 -->
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>STACK_ALIGNMENT_NEEDED</b><var><a name="index-STACK_005fALIGNMENT_005fNEEDED-4057"></a></var><br>
+<blockquote><!-- Define to zero to disable final alignment of the stack during reload. -->
+     <!-- The nonzero default for this macro is suitable for most ports. -->
+      <p>定义为0，来禁止在重载过程中对栈进行最后的对齐操作。缺省的非0值适合于大多port。
+
+     <!-- On ports where @code{STARTING_FRAME_OFFSET} is nonzero or where there -->
+     <!-- is a register save block following the local block that doesn't require -->
+     <!-- alignment to @code{STACK_BOUNDARY}, it may be beneficial to disable -->
+     <!-- stack alignment and do it in the backend. -->
+      <p>在一些port上，<code>STARTING_FRAME_OFFSET</code>为非0，或者在局部块之后有一块寄存器保存区域，其不需要对齐到<code>STACK_BOUNDARY</code>，这样禁止栈对齐并且在后端实现可能会更好。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>STACK_POINTER_OFFSET</b><var><a name="index-STACK_005fPOINTER_005fOFFSET-4058"></a></var><br>
+<blockquote><!-- Offset from the stack pointer register to the first location at which -->
+     <!-- outgoing arguments are placed.  If not specified, the default value of -->
+     <!-- zero is used.  This is the proper value for most machines. -->
+      <p>从栈指针寄存器到第一个输出的参数所放在的位置的偏移量。如果没有指定，则缺省值0被使用。这对于大多数机器都合适。
+
+     <!-- If @code{ARGS_GROW_DOWNWARD}, this is the offset to the location above -->
+     <!-- the first location at which outgoing arguments are placed. -->
+      <p>如果<code>ARGS_GROW_DOWNWARD</code>，
+则这是输出参数位于的第一个位置的上面的位置的偏移量。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FIRST_PARM_OFFSET</b> (<var>fundecl</var>)<var><a name="index-FIRST_005fPARM_005fOFFSET-4059"></a></var><br>
+<blockquote><!-- Offset from the argument pointer register to the first argument's -->
+     <!-- address.  On some machines it may depend on the data type of the -->
+     <!-- function. -->
+      <p>参数指针寄存器到第一个参数的地址的偏移量。在一些机器上，其可能依赖于函数的数据类型。
+
+     <!-- If @code{ARGS_GROW_DOWNWARD}, this is the offset to the location above -->
+     <!-- the first argument's address. -->
+      <p>如果<code>ARGS_GROW_DOWNWARD</code>，则这是第一个参数的地址的上面的位置的偏移量。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>STACK_DYNAMIC_OFFSET</b> (<var>fundecl</var>)<var><a name="index-STACK_005fDYNAMIC_005fOFFSET-4060"></a></var><br>
+<blockquote><!-- Offset from the stack pointer register to an item dynamically allocated -->
+     <!-- on the stack, e.g., by @code{alloca}. -->
+      <p>栈指针寄存器到在栈上动态分配的对象的偏移量，例如，通过<code>alloca</code>。
+
+     <!-- The default value for this macro is @code{STACK_POINTER_OFFSET} plus the -->
+     <!-- length of the outgoing arguments.  The default is correct for most -->
+     <!-- machines.  See @file{function.c} for details. -->
+      <p>该宏的缺省值为<code>STACK_POINTER_OFFSET</code>加上输出参数的长度。缺省值对于大多数机器是正确的。详情参见<samp><span class="file">function.c</span></samp>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INITIAL_FRAME_ADDRESS_RTX</b><var><a name="index-INITIAL_005fFRAME_005fADDRESS_005fRTX-4061"></a></var><br>
+<blockquote><!-- A C expression whose value is RTL representing the address of the initial -->
+     <!-- stack frame. This address is passed to @code{RETURN_ADDR_RTX} and -->
+     <!-- @code{DYNAMIC_CHAIN_ADDRESS}.  If you don't define this macro, a reasonable -->
+     <!-- default value will be used.  Define this macro in order to make frame pointer -->
+     <!-- elimination work in the presence of @code{__builtin_frame_address (count)} and -->
+     <!-- @code{__builtin_return_address (count)} for @code{count} not equal to zero. -->
+      <p>一个C表达式，其值为RTL，表示初始栈帧的地址。该地址被传给<code>RETURN_ADDR_RTX</code>和<code>DYNAMIC_CHAIN_ADDRESS</code>。如果你没有定义该宏，则一个合理的缺省值将被使用。定义该宏，可以使帧指针消除在<code>__builtin_frame_address (count)</code>和<code>__builtin_return_address (count)</code>不等于0的情况下工作。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DYNAMIC_CHAIN_ADDRESS</b> (<var>frameaddr</var>)<var><a name="index-DYNAMIC_005fCHAIN_005fADDRESS-4062"></a></var><br>
+<blockquote><!-- A C expression whose value is RTL representing the address in a stack -->
+     <!-- frame where the pointer to the caller's frame is stored.  Assume that -->
+     <!-- @var{frameaddr} is an RTL expression for the address of the stack frame -->
+     <!-- itself. -->
+      <p>一个C表达式，其值为RTL，表示栈帧中的地址，指向被存储的调用者的帧。假设<var>frameaddr</var>为一个栈帧本身的地址的RTL表达式。
+
+     <!-- If you don't define this macro, the default is to return the value -->
+     <!-- of @var{frameaddr}-that is, the stack frame address is also the -->
+     <!-- address of the stack word that points to the previous frame. -->
+      <p>如果你没有定义该宏，则缺省为返回<var>frameaddr</var>的值——也就是说，栈帧地址也是指向之前帧的地址。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SETUP_FRAME_ADDRESSES</b><var><a name="index-SETUP_005fFRAME_005fADDRESSES-4063"></a></var><br>
+<blockquote><!-- If defined, a C expression that produces the machine-specific code to -->
+     <!-- setup the stack so that arbitrary frames can be accessed.  For example, -->
+     <!-- on the SPARC, we must flush all of the register windows to the stack -->
+     <!-- before we can access arbitrary stack frames.  You will seldom need to -->
+     <!-- define this macro. -->
+      <p>如果定义，为一个C表达式，其产生机器特定的代码来建立栈，使得可以访问任意的帧。例如，在SPARC上，我们必须刷新栈的所有寄存器窗口，在我们可以访问任意栈帧之前。你很少会需要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: rtx <b>TARGET_BUILTIN_SETJMP_FRAME_VALUE</b> (<var>void</var>)<var><a name="index-TARGET_005fBUILTIN_005fSETJMP_005fFRAME_005fVALUE-4064"></a></var><br>
+<blockquote><!-- This target hook should return an rtx that is used to store -->
+     <!-- the address of the current frame into the built in @code{setjmp} buffer. -->
+     <!-- The default value, @code{virtual_stack_vars_rtx}, is correct for most -->
+     <!-- machines.  One reason you may need to define this target hook is if -->
+     <!-- @code{hard_frame_pointer_rtx} is the appropriate value on your machine. -->
+      <p>该target钩子应该返回一个rtx，用于将当前帧的地址存储到内建的<code>setjmp</code>缓存中。缺省值，<code>virtual_stack_vars_rtx</code>，对于大多数机器是正确的。一种你可能需要定义该target钩子的原因是，如果<code>hard_frame_pointer_rtx</code>在你的机器上是合适的值。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FRAME_ADDR_RTX</b> (<var>frameaddr</var>)<var><a name="index-FRAME_005fADDR_005fRTX-4065"></a></var><br>
+<blockquote><!-- A C expression whose value is RTL representing the value of the frame -->
+     <!-- address for the current frame.  @var{frameaddr} is the frame pointer -->
+     <!-- of the current frame.  This is used for __builtin_frame_address. -->
+     <!-- You need only define this macro if the frame address is not the same -->
+     <!-- as the frame pointer.  Most machines do not need to define it. -->
+      <p>一个C表达式，其值为RTL，表示当前帧的帧地址。<var>frameaddr</var>为当前帧的帧指针。这用于__builtin_frame_address。你只有当帧地址与帧指针不同的时候才需要定义该宏。大多数机器不需要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>RETURN_ADDR_RTX</b> (<var>count, frameaddr</var>)<var><a name="index-RETURN_005fADDR_005fRTX-4066"></a></var><br>
+<blockquote><p>A C expression whose value is RTL representing the value of the return
+address for the frame <var>count</var> steps up from the current frame, after
+the prologue.  <var>frameaddr</var> is the frame pointer of the <var>count</var>
+frame, or the frame pointer of the <var>count</var> &minus; 1 frame if
+<code>RETURN_ADDR_IN_PREVIOUS_FRAME</code> is defined.
+
+      <p>The value of the expression must always be the correct address when
+<var>count</var> is zero, but may be <code>NULL_RTX</code> if there is no way to
+determine the return address of other frames. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>RETURN_ADDR_IN_PREVIOUS_FRAME</b><var><a name="index-RETURN_005fADDR_005fIN_005fPREVIOUS_005fFRAME-4067"></a></var><br>
+<blockquote><!-- Define this if the return address of a particular stack frame is accessed -->
+     <!-- from the frame pointer of the previous stack frame. -->
+      <p>定义该宏，如果一个特定的栈帧的返回地址是从之前栈帧的帧指针中访问的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INCOMING_RETURN_ADDR_RTX</b><var><a name="index-INCOMING_005fRETURN_005fADDR_005fRTX-4068"></a></var><br>
+<blockquote><!-- A C expression whose value is RTL representing the location of the -->
+     <!-- incoming return address at the beginning of any function, before the -->
+     <!-- prologue.  This RTL is either a @code{REG}, indicating that the return -->
+     <!-- value is saved in @samp{REG}, or a @code{MEM} representing a location in -->
+     <!-- the stack. -->
+      <p>一个C表达式，其值为RTL，表示在任何函数的起始处，在序言之前，流入的返回地址的位置。该RTL或者为一个<code>REG</code>，指示返回地址保存在&lsquo;<samp><span class="samp">REG</span></samp>&rsquo;中，或者一个<code>MEM</code>表示位于栈中。
+
+     <!-- You only need to define this macro if you want to support call frame -->
+     <!-- debugging information like that provided by DWARF 2. -->
+      <p>你只在你想支持调用帧调试信息，像DWARF2提供的那样，的时候才需要定义该宏。
+
+     <!-- If this RTL is a @code{REG}, you should also define -->
+     <!-- @code{DWARF_FRAME_RETURN_COLUMN} to @code{DWARF_FRAME_REGNUM (REGNO)}. -->
+      <p>如果该RTL为一个<code>REG</code>，你还要定义<code>DWARF_FRAME_RETURN_COLUMN</code>为<code>DWARF_FRAME_REGNUM (REGNO)</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DWARF_ALT_FRAME_RETURN_COLUMN</b><var><a name="index-DWARF_005fALT_005fFRAME_005fRETURN_005fCOLUMN-4069"></a></var><br>
+<blockquote><!-- A C expression whose value is an integer giving a DWARF 2 column -->
+     <!-- number that may be used as an alternative return column.  The column -->
+     <!-- must not correspond to any gcc hard register (that is, it must not -->
+     <!-- be in the range of @code{DWARF_FRAME_REGNUM}). -->
+      <p>一个C表达式，其值为一个整数，给出了DWARF2的列号，可以用作替代的返回列。column必须不对应于任何gcc硬件寄存器（也就是说，其必须不在<code>DWARF_FRAME_REGNUM</code>的范围中）。
+
+     <!-- This macro can be useful if @code{DWARF_FRAME_RETURN_COLUMN} is set to a -->
+     <!-- general register, but an alternative column needs to be used for signal -->
+     <!-- frames.  Some targets have also used different frame return columns -->
+     <!-- over time. -->
+      <p>该宏当被设为一个通用寄存器，但是候选的column需要用于signal帧的时候会很有用。一些target还使用了不同的帧返回列。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DWARF_ZERO_REG</b><var><a name="index-DWARF_005fZERO_005fREG-4070"></a></var><br>
+<blockquote><!-- A C expression whose value is an integer giving a DWARF 2 register -->
+     <!-- number that is considered to always have the value zero.  This should -->
+     <!-- only be defined if the target has an architected zero register, and -->
+     <!-- someone decided it was a good idea to use that register number to -->
+     <!-- terminate the stack backtrace.  New ports should avoid this. -->
+      <p>一个C表达式，其值为一个整数，给出了DWARF2寄存器编号，其被认为总是具有值0。这应该只当target的体系结构中具有一个0寄存器并且认为使用寄存器编号来确定栈的回溯是一个好主意的时候才被定义。新的part应该避免该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_DWARF_HANDLE_FRAME_UNSPEC</b> (<var>const char *label, rtx pattern, int index</var>)<var><a name="index-TARGET_005fDWARF_005fHANDLE_005fFRAME_005fUNSPEC-4071"></a></var><br>
+<blockquote><!-- This target hook allows the backend to emit frame-related insns that -->
+     <!-- contain UNSPECs or UNSPEC_VOLATILEs.  The DWARF 2 call frame debugging -->
+     <!-- info engine will invoke it on insns of the form -->
+      <p>该target钩子允许后端生成帧相关的insn，其包含了UNSPECs或UNSPEC_VOLATILEs。DWARF2调用帧调试信息引擎将会按照如下的形式来调用它
+     <pre class="smallexample">          (set (reg) (unspec [...] UNSPEC_INDEX))
+</pre>
+      <!-- and -->
+      <p>和
+     <pre class="smallexample">          (set (reg) (unspec_volatile [...] UNSPECV_INDEX)).
+</pre>
+      <!-- to let the backend emit the call frame instructions.  @var{label} is -->
+     <!-- the CFI label attached to the insn, @var{pattern} is the pattern of -->
+     <!-- the insn and @var{index} is @code{UNSPEC_INDEX} or @code{UNSPECV_INDEX}. -->
+      <p>来使后端生成调用帧指令。<var>label</var>为insn附带的CFI标号，
+<var>pattern</var>为insn的指令模式，
+<var>index</var>为<code>UNSPEC_INDEX</code>或<code>UNSPECV_INDEX</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INCOMING_FRAME_SP_OFFSET</b><var><a name="index-INCOMING_005fFRAME_005fSP_005fOFFSET-4072"></a></var><br>
+<blockquote><!-- A C expression whose value is an integer giving the offset, in bytes, -->
+     <!-- from the value of the stack pointer register to the top of the stack -->
+     <!-- frame at the beginning of any function, before the prologue.  The top of -->
+     <!-- the frame is defined to be the value of the stack pointer in the -->
+     <!-- previous frame, just before the call instruction. -->
+      <p>一个C表达式，其值为一个整数，给出了偏移字节数，从栈指针寄存器到任何函数的起始处，序言之前的栈帧的顶部。帧的顶部被定义为之前帧的栈指针的值，就在call指令之前。
+
+     <!-- You only need to define this macro if you want to support call frame -->
+     <!-- debugging information like that provided by DWARF 2. -->
+      <p>你只有当你想支持像DWARF2提供的那样的帧调试信息时才需要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ARG_POINTER_CFA_OFFSET</b> (<var>fundecl</var>)<var><a name="index-ARG_005fPOINTER_005fCFA_005fOFFSET-4073"></a></var><br>
+<blockquote><!-- A C expression whose value is an integer giving the offset, in bytes, -->
+     <!-- from the argument pointer to the canonical frame address (cfa).  The -->
+     <!-- final value should coincide with that calculated by -->
+     <!-- @code{INCOMING_FRAME_SP_OFFSET}.  Which is unfortunately not usable -->
+     <!-- during virtual register instantiation. -->
+      <p>一个C表达式，其值为一个整数，给出了偏移字节数，从参数指针到规范化帧地址（cfa）。最终的值应该与通过<code>INCOMING_FRAME_SP_OFFSET</code>所计算的一致。不幸的是这在虚寄存器实例化的时候不可用。
+
+     <!-- The default value for this macro is -->
+     <!-- @code{FIRST_PARM_OFFSET (fundecl) + crtl->args.pretend_args_size}, -->
+     <!-- which is correct for most machines; in general, the arguments are found -->
+     <!-- immediately before the stack frame.  Note that this is not the case on -->
+     <!-- some targets that save registers into the caller's frame, such as SPARC -->
+     <!-- and rs6000, and so such targets need to define this macro. -->
+      <p>该宏的缺省值为<code>FIRST_PARM_OFFSET (fundecl)</code>，其对于大多数机器是正确的；总的来说，参数在栈帧之前被找到。注意有些情况不是这样的，一些target将寄存器保存在调用者的帧中，像SPARC和rs6000，这样的target就不需要定义该宏。
+
+     <!-- You only need to define this macro if the default is incorrect, and you -->
+     <!-- want to support call frame debugging information like that provided by -->
+     <!-- DWARF 2. -->
+      <p>你只有当缺省是不正确的时候，以及你想支持像DWARF2提供的那样的帧调试信息时才需要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FRAME_POINTER_CFA_OFFSET</b> (<var>fundecl</var>)<var><a name="index-FRAME_005fPOINTER_005fCFA_005fOFFSET-4074"></a></var><br>
+<blockquote><!-- If defined, a C expression whose value is an integer giving the offset -->
+     <!-- in bytes from the frame pointer to the canonical frame address (cfa). -->
+     <!-- The final value should coincide with that calculated by -->
+     <!-- @code{INCOMING_FRAME_SP_OFFSET}. -->
+      <p>如果被定义，则为一个C表达式，其值为一个整数，给出了偏移字节数，从帧指针到规范化帧地址（cfa）。最终的值应该与通过<code>INCOMING_FRAME_SP_OFFSET</code>所计算的一致。
+
+     <!-- Normally the CFA is calculated as an offset from the argument pointer, -->
+     <!-- via @code{ARG_POINTER_CFA_OFFSET}, but if the argument pointer is -->
+     <!-- variable due to the ABI, this may not be possible.  If this macro is -->
+     <!-- defined, it implies that the virtual register instantiation should be -->
+     <!-- based on the frame pointer instead of the argument pointer.  Only one -->
+     <!-- of @code{FRAME_POINTER_CFA_OFFSET} and @code{ARG_POINTER_CFA_OFFSET} -->
+     <!-- should be defined. -->
+      <p>通常CFA被作为参数指针的偏移量来计算，通过<code>ARG_POINTER_CFA_OFFSET</code>，但是如果参数指针是一个变量，这就不太可能了。如果该宏被定义，它暗示了虚寄存器实例化应该基于帧指针而不是参数指针。<code>FRAME_POINTER_CFA_OFFSET</code>和<code>ARG_POINTER_CFA_OFFSET</code>只有一个应该被定义。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CFA_FRAME_BASE_OFFSET</b> (<var>fundecl</var>)<var><a name="index-CFA_005fFRAME_005fBASE_005fOFFSET-4075"></a></var><br>
+<blockquote><!-- If defined, a C expression whose value is an integer giving the offset -->
+     <!-- in bytes from the canonical frame address (cfa) to the frame base used -->
+     <!-- in DWARF 2 debug information.  The default is zero.  A different value -->
+     <!-- may reduce the size of debug information on some ports. -->
+      <p>如果定义，则为一个C表达式，其值为一个整数，给出了偏移字节数，从规范化帧地址（cfa）到DWARF2调试信息使用的frame base。缺省为0。不同的值可以在一些port上减少调试信息的大小。
+</p></blockquote></div>
+
+<!-- @node Exception Handling -->
+<!-- @subsection Exception Handling Support -->
+ </body></html>
+

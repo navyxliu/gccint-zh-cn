@@ -1,0 +1,587 @@
+<html lang="zh">
+<head>
+<title>Addressing Modes - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Target-Macros.html#Target-Macros" title="Target Macros">
+<link rel="prev" href="Library-Calls.html#Library-Calls" title="Library Calls">
+<link rel="next" href="Anchored-Addresses.html#Anchored-Addresses" title="Anchored Addresses">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Addressing-Modes"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Anchored-Addresses.html#Anchored-Addresses">Anchored Addresses</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Library-Calls.html#Library-Calls">Library Calls</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Target-Macros.html#Target-Macros">Target Macros</a>
+<hr>
+</div>
+
+<h3 class="section">17.14 寻址模式</h3>
+
+<p><a name="index-addressing-modes-4270"></a>
+<!-- prevent bad page break with this line -->
+<!-- This is about addressing modes. -->
+这是关于寻址模式的宏。
+
+<div class="defun">
+&mdash; Macro: <b>HAVE_PRE_INCREMENT</b><var><a name="index-HAVE_005fPRE_005fINCREMENT-4271"></a></var><br>
+&mdash; Macro: <b>HAVE_PRE_DECREMENT</b><var><a name="index-HAVE_005fPRE_005fDECREMENT-4272"></a></var><br>
+&mdash; Macro: <b>HAVE_POST_INCREMENT</b><var><a name="index-HAVE_005fPOST_005fINCREMENT-4273"></a></var><br>
+&mdash; Macro: <b>HAVE_POST_DECREMENT</b><var><a name="index-HAVE_005fPOST_005fDECREMENT-4274"></a></var><br>
+<blockquote><!-- A C expression that is nonzero if the machine supports pre-increment, -->
+     <!-- pre-decrement, post-increment, or post-decrement addressing respectively. -->
+      <p>一个C表达式，为非0，如果机器分别支持前增，前减，后增，或者后减寻址。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>HAVE_PRE_MODIFY_DISP</b><var><a name="index-HAVE_005fPRE_005fMODIFY_005fDISP-4275"></a></var><br>
+&mdash; Macro: <b>HAVE_POST_MODIFY_DISP</b><var><a name="index-HAVE_005fPOST_005fMODIFY_005fDISP-4276"></a></var><br>
+<blockquote><!-- A C expression that is nonzero if the machine supports pre- or -->
+     <!-- post-address side-effect generation involving constants other than -->
+     <!-- the size of the memory operand. -->
+      <p>一个C表达式，非零，如果机器支持pre-或者post-address，
+除了生成内存操作数的大小以外，还有常量副作用生成。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>HAVE_PRE_MODIFY_REG</b><var><a name="index-HAVE_005fPRE_005fMODIFY_005fREG-4277"></a></var><br>
+&mdash; Macro: <b>HAVE_POST_MODIFY_REG</b><var><a name="index-HAVE_005fPOST_005fMODIFY_005fREG-4278"></a></var><br>
+<blockquote><!-- A C expression that is nonzero if the machine supports pre- or -->
+     <!-- post-address side-effect generation involving a register displacement. -->
+      <p>一个C表达式，非零，如果机器支持pre-或者post-address，
+除了生成内存操作数的大小以外，还有寄存器置换的副作用生成。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CONSTANT_ADDRESS_P</b> (<var>x</var>)<var><a name="index-CONSTANT_005fADDRESS_005fP-4279"></a></var><br>
+<blockquote><!-- A C expression that is 1 if the RTX @var{x} is a constant which -->
+     <!-- is a valid address.  On most machines the default definition of -->
+     <!-- @code{(CONSTANT_P (@var{x}) && GET_CODE (@var{x}) != CONST_DOUBLE)} -->
+     <!-- is acceptable, but a few machines are more restrictive as to which -->
+     <!-- constant addresses are supported. -->
+      <p>一个C表达式，为1，如果RTX <var>x</var>为一个常量，其为一个有效地址。
+在大多数机器上，这可以被定义为<code>CONSTANT_P (</code><var>x</var><code>)</code>，
+但一些机器在支持哪些常量地址方面更加严格。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CONSTANT_P</b> (<var>x</var>)<var><a name="index-CONSTANT_005fP-4280"></a></var><br>
+<blockquote><!-- @code{CONSTANT_P}, which is defined by target-independent code, -->
+     <!-- accepts integer-values expressions whose values are not explicitly -->
+     <!-- known, such as @code{symbol_ref}, @code{label_ref}, and @code{high} -->
+     <!-- expressions and @code{const} arithmetic expressions, in addition to -->
+     <!-- @code{const_int} and @code{const_double} expressions. -->
+      <p><code>CONSTANT_P</code>，其由target无关代码定义，接受整数值表达式，
+其值不被显示的知道，例如<code>symbol_ref</code>, <code>label_ref</code>，<code>high</code>表达式，
+以及<code>const</code>算术表达式，<code>const_int</code>和<code>const_double</code>表达式。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>MAX_REGS_PER_ADDRESS</b><var><a name="index-MAX_005fREGS_005fPER_005fADDRESS-4281"></a></var><br>
+<blockquote><!-- A number, the maximum number of registers that can appear in a valid -->
+     <!-- memory address.  Note that it is up to you to specify a value equal to -->
+     <!-- the maximum number that @code{TARGET_LEGITIMATE_ADDRESS_P} would ever -->
+     <!-- accept. -->
+      <p>一个数，为可以出现在一个有效的内存地址中的最大寄存器编号。
+注意需要你来指定<code>GO_IF_LEGITIMATE_ADDRESS</code>应该能够接受的等于该最大值的值。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_LEGITIMATE_ADDRESS_P</b> (<var>enum machine_mode mode, rtx x, bool strict</var>)<var><a name="index-TARGET_005fLEGITIMATE_005fADDRESS_005fP-4282"></a></var><br>
+<blockquote><p>A function that returns whether <var>x</var> (an RTX) is a legitimate memory
+address on the target machine for a memory operand of mode <var>mode</var>.
+
+      <p>Legitimate addresses are defined in two variants: a strict variant and a
+non-strict one.  The <var>strict</var> parameter chooses which variant is
+desired by the caller.
+
+      <p>The strict variant is used in the reload pass.  It must be defined so
+that any pseudo-register that has not been allocated a hard register is
+considered a memory reference.  This is because in contexts where some
+kind of register is required, a pseudo-register with no hard register
+must be rejected.  For non-hard registers, the strict variant should look
+up the <code>reg_renumber</code> array; it should then proceed using the hard
+register number in the array, or treat the pseudo as a memory reference
+if the array holds <code>-1</code>.
+
+      <p>The non-strict variant is used in other passes.  It must be defined to
+accept all pseudo-registers in every context where some kind of
+register is required.
+
+      <p>Normally, constant addresses which are the sum of a <code>symbol_ref</code>
+and an integer are stored inside a <code>const</code> RTX to mark them as
+constant.  Therefore, there is no need to recognize such sums
+specifically as legitimate addresses.  Normally you would simply
+recognize any <code>const</code> as legitimate.
+
+      <p>Usually <code>PRINT_OPERAND_ADDRESS</code> is not prepared to handle constant
+sums that are not marked with  <code>const</code>.  It assumes that a naked
+<code>plus</code> indicates indexing.  If so, then you <em>must</em> reject such
+naked constant sums as illegitimate addresses, so that none of them will
+be given to <code>PRINT_OPERAND_ADDRESS</code>.
+
+      <p><a name="index-g_t_0040code_007bTARGET_005fENCODE_005fSECTION_005fINFO_007d-and-address-validation-4283"></a>On some machines, whether a symbolic address is legitimate depends on
+the section that the address refers to.  On these machines, define the
+target hook <code>TARGET_ENCODE_SECTION_INFO</code> to store the information
+into the <code>symbol_ref</code>, and then check for it here.  When you see a
+<code>const</code>, you will have to look inside it to find the
+<code>symbol_ref</code> in order to determine the section.  参见<a href="Assembler-Format.html#Assembler-Format">Assembler Format</a>.
+
+      <p><a name="index-g_t_0040code_007bGO_005fIF_005fLEGITIMATE_005fADDRESS_007d-4284"></a>Some ports are still using a deprecated legacy substitute for
+this hook, the <code>GO_IF_LEGITIMATE_ADDRESS</code> macro.  This macro
+has this syntax:
+
+     <pre class="example">          #define GO_IF_LEGITIMATE_ADDRESS (<var>mode</var>, <var>x</var>, <var>label</var>)
+</pre>
+      <p class="noindent">and should <code>goto </code><var>label</var> if the address <var>x</var> is a valid
+address on the target machine for a memory operand of mode <var>mode</var>.
+
+      <p><a name="index-REG_005fOK_005fSTRICT-4285"></a>Compiler source files that want to use the strict variant of this
+macro define the macro <code>REG_OK_STRICT</code>.  You should use an
+<code>#ifdef REG_OK_STRICT</code> conditional to define the strict variant in
+that case and the non-strict variant otherwise.
+
+      <p>Using the hook is usually simpler because it limits the number of
+files that are recompiled when changes are made. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_MEM_CONSTRAINT</b><var><a name="index-TARGET_005fMEM_005fCONSTRAINT-4286"></a></var><br>
+<blockquote><p>A single character to be used instead of the default <code>'m'</code>
+character for general memory addresses.  This defines the constraint
+letter which matches the memory addresses accepted by
+<code>TARGET_LEGITIMATE_ADDRESS_P</code>.  Define this macro if you want to
+support new address formats in your back end without changing the
+semantics of the <code>'m'</code> constraint.  This is necessary in order to
+preserve functionality of inline assembly constructs using the
+<code>'m'</code> constraint. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FIND_BASE_TERM</b> (<var>x</var>)<var><a name="index-FIND_005fBASE_005fTERM-4287"></a></var><br>
+<blockquote><!-- A C expression to determine the base term of address @var{x}, -->
+     <!-- or to provide a simplified version of @var{x} from which @file{alias.c} -->
+     <!-- can easily find the base term.  This macro is used in only two places: -->
+     <!-- @code{find_base_value} and @code{find_base_term} in @file{alias.c}. -->
+      <p>一个C表达式，用来确定地址<var>x</var>的base term。该宏只在两个地方使用：
+<samp><span class="file">alias.c</span></samp>的<code>find_base_value</code>和 <code>find_base_term</code>。
+
+     <!-- It is always safe for this macro to not be defined.  It exists so -->
+     <!-- that alias analysis can understand machine-dependent addresses. -->
+      <p>不定义该宏也总是安全的。它的存在是为了别名分析可以理解机器相关的地址。
+
+     <!-- The typical use of this macro is to handle addresses containing -->
+     <!-- a label_ref or symbol_ref within an UNSPEC@. -->
+      <p>该宏的典型用法是处理在UNSPEC中包含label_ref或symbol_ref的地址。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: rtx <b>TARGET_LEGITIMIZE_ADDRESS</b> (<var>rtx x, rtx oldx, enum machine_mode mode</var>)<var><a name="index-TARGET_005fLEGITIMIZE_005fADDRESS-4288"></a></var><br>
+<blockquote><p>This hook is given an invalid memory address <var>x</var> for an
+operand of mode <var>mode</var> and should try to return a valid memory
+address.
+
+      <p><a name="index-break_005fout_005fmemory_005frefs-4289"></a><var>x</var> will always be the result of a call to <code>break_out_memory_refs</code>,
+and <var>oldx</var> will be the operand that was given to that function to produce
+<var>x</var>.
+
+      <p>The code of the hook should not alter the substructure of
+<var>x</var>.  If it transforms <var>x</var> into a more legitimate form, it
+should return the new <var>x</var>.
+
+      <p>It is not necessary for this hook to come up with a legitimate address. 
+The compiler has standard ways of doing so in all cases.  In fact, it
+is safe to omit this hook or make it return <var>x</var> if it cannot find
+a valid way to legitimize the address.  But often a machine-dependent
+strategy can generate better code. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LEGITIMIZE_RELOAD_ADDRESS</b> (<var>x, mode, opnum, type, ind_levels, win</var>)<var><a name="index-LEGITIMIZE_005fRELOAD_005fADDRESS-4290"></a></var><br>
+<blockquote><!-- A C compound statement that attempts to replace @var{x}, which is an address -->
+     <!-- that needs reloading, with a valid memory address for an operand of mode -->
+     <!-- @var{mode}.  @var{win} will be a C statement label elsewhere in the code. -->
+     <!-- It is not necessary to define this macro, but it might be useful for -->
+     <!-- performance reasons. -->
+      <p>一条C复合语句，其尝试使用一个机器模式为<var>mode</var>的操作数的有效内存地址，
+来替换地址需要重载的<var>x</var>。<var>win</var>为代码中的一个C语句标号。
+不必要定义该宏，但其可能会对性能有帮助。
+
+     <!-- For example, on the i386, it is sometimes possible to use a single -->
+     <!-- reload register instead of two by reloading a sum of two pseudo -->
+     <!-- registers into a register.  On the other hand, for number of RISC -->
+     <!-- processors offsets are limited so that often an intermediate address -->
+     <!-- needs to be generated in order to address a stack slot.  By defining -->
+     <!-- @code{LEGITIMIZE_RELOAD_ADDRESS} appropriately, the intermediate addresses -->
+     <!-- generated for adjacent some stack slots can be made identical, and thus -->
+     <!-- be shared. -->
+      <p>例如，在i386上，有时可能通过将两个伪寄存器的和重载到一个寄存器中，
+从而只使用一个重载寄存器，而不是两个。另一方面，
+许多RISC处理器的偏移量是有限制的，使得经常要生成一个中间地址来寻址一个栈槽。
+通过适当的定义<code>LEGITIMIZE_RELOAD_ADDRESS</code>，
+为邻近的一些栈槽生成的中间地址可以为同一个，实现共享。
+
+     <!-- @emph{Note}: This macro should be used with caution.  It is necessary -->
+     <!-- to know something of how reload works in order to effectively use this, -->
+     <!-- and it is quite easy to produce macros that build in too much knowledge -->
+     <!-- of reload internals. -->
+      <p>注意：该宏应该慎重使用。有必要了解重载是如何工作的，以便有效的使用该宏。
+
+     <!-- @emph{Note}: This macro must be able to reload an address created by a -->
+     <!-- previous invocation of this macro.  If it fails to handle such addresses -->
+     <!-- then the compiler may generate incorrect code or abort. -->
+      <p>注意：该宏必须能够重载由该宏的之前调用所创建的地址。
+如果不能处理这样的地址，则编译器可能会产生不正确的代码或者中断退出。
+
+      <p><a name="index-push_005freload-4291"></a><!-- The macro definition should use @code{push_reload} to indicate parts that -->
+<!-- need reloading; @var{opnum}, @var{type} and @var{ind_levels} are usually -->
+<!-- suitable to be passed unaltered to @code{push_reload}. -->
+宏定义应该使用<code>push_reload</code>来指示需要重载的部分；
+<var>opnum</var>，<var>type</var>和<var>ind_levels</var>通常无需更改而直接传给<code>push_reload</code>。
+
+     <!-- The code generated by this macro must not alter the substructure of -->
+     <!-- @var{x}.  If it transforms @var{x} into a more legitimate form, it -->
+     <!-- should assign @var{x} (which will always be a C variable) a new value. -->
+     <!-- This also applies to parts that you change indirectly by calling -->
+     <!-- @code{push_reload}. -->
+      <p>该宏生成的代码必须不要修改<var>x</var>的子结构体。如果其将<var>x</var>转换成更合法的形式，
+则其必须为<var>x</var>（其总为一个c变量）赋予一个新的值。
+这也通常应用于你通过调用<code>push_reload</code>而间接改变的部分。
+
+      <p><a name="index-strict_005fmemory_005faddress_005fp-4292"></a><!-- The macro definition may use @code{strict_memory_address_p} to test if -->
+<!-- the address has become legitimate. -->
+宏定义可以使用<code>strict_memory_address_p</code>来测试地址是否已经为合法的。
+
+      <p><a name="index-copy_005frtx-4293"></a><!-- If you want to change only a part of @var{x}, one standard way of doing -->
+<!-- this is to use @code{copy_rtx}.  Note, however, that it unshares only a -->
+<!-- single level of rtl.  Thus, if the part to be changed is not at the -->
+<!-- top level, you'll need to replace first the top level. -->
+<!-- It is not necessary for this macro to come up with a legitimate -->
+<!-- address;  but often a machine-dependent strategy can generate better code. -->
+如果你只想改变<var>x</var>的一部分，一种标准的方法是使用<code>copy_rtx</code>。
+但是注意，其只与rtl同一级不共享。因此，如果改变的部分不在顶层，
+则你要首先替换顶层。该宏不必要产生一个合法的地址；但是通常机器相关的策略可以产生更好的代码。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_MODE_DEPENDENT_ADDRESS_P</b> (<var>const_rtx addr</var>)<var><a name="index-TARGET_005fMODE_005fDEPENDENT_005fADDRESS_005fP-4294"></a></var><br>
+<blockquote><p>This hook returns <code>true</code> if memory address <var>addr</var> can have
+different meanings depending on the machine mode of the memory
+reference it is used for or if the address is valid for some modes
+but not others.
+
+      <p>Autoincrement and autodecrement addresses typically have mode-dependent
+effects because the amount of the increment or decrement is the size
+of the operand being addressed.  Some machines have other mode-dependent
+addresses.  Many RISC machines have no mode-dependent addresses.
+
+      <p>You may assume that <var>addr</var> is a valid address for the machine.
+
+      <p>The default version of this hook returns <code>false</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>GO_IF_MODE_DEPENDENT_ADDRESS</b> (<var>addr, label</var>)<var><a name="index-GO_005fIF_005fMODE_005fDEPENDENT_005fADDRESS-4295"></a></var><br>
+<blockquote><!-- A C statement or compound statement with a conditional @code{goto -->
+     <!-- @var{label};} executed if memory address @var{x} (an RTX) can have -->
+     <!-- different meanings depending on the machine mode of the memory -->
+     <!-- reference it is used for or if the address is valid for some modes -->
+     <!-- but not others. -->
+      <p>一条C语句或者复合语句，具有一个条件<code>goto </code><var>label</var><code>;</code>；
+当内存地址<var>x</var>（一个RTX）可以具有不同的含义，
+该含义取决于内存引用的机器模式时，被执行。
+
+     <!-- Autoincrement and autodecrement addresses typically have mode-dependent -->
+     <!-- effects because the amount of the increment or decrement is the size -->
+     <!-- of the operand being addressed.  Some machines have other mode-dependent -->
+     <!-- addresses.  Many RISC machines have no mode-dependent addresses. -->
+      <p>自动递增和自动递减地址通常具有机器模式相关的效果，
+因为递增或递减的数量为被寻址的操作数的大小。
+一些机器具有其它机器模式相关的地址。许多RISC机器没有机器模式相关的地址。
+
+     <!-- You may assume that @var{addr} is a valid address for the machine. -->
+      <p>你可以假设<var>addr</var>对于机器是一个有效的地址。
+
+      <p>These are obsolete macros, replaced by the
+<code>TARGET_MODE_DEPENDENT_ADDRESS_P</code> target hook. 
+</p></blockquote></div>
+
+<!-- A C expression that is nonzero if @var{x} is a legitimate constant for -->
+<!-- an immediate operand on the target machine.  You can assume that -->
+<!-- @var{x} satisfies @code{CONSTANT_P}, so you need not check this.  In fact, -->
+<!-- @samp{1} is a suitable definition for this macro on machines where -->
+<!-- anything @code{CONSTANT_P} is valid. -->
+<!-- 一个C表达式，如果@var{x}对于target机器上的一个立即操作数为合法的常量， -->
+<!-- 则为非0。你可以假设@var{x}满足@code{CONSTANT_P}，所以不需要进行检查。 -->
+<!-- 实际上，在任何@code{CONSTANT_P}都是有效的机器上，为该宏定义为@samp{1}是合适的。 -->
+<!-- @end defmac -->
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_LEGITIMATE_CONSTANT_P</b> (<var>enum machine_mode mode, rtx x</var>)<var><a name="index-TARGET_005fLEGITIMATE_005fCONSTANT_005fP-4296"></a></var><br>
+<blockquote><p>This hook returns true if <var>x</var> is a legitimate constant for a
+<var>mode</var>-mode immediate operand on the target machine.  You can assume that
+<var>x</var> satisfies <code>CONSTANT_P</code>, so you need not check this.
+
+      <p>The default definition returns true. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: rtx <b>TARGET_DELEGITIMIZE_ADDRESS</b> (<var>rtx x</var>)<var><a name="index-TARGET_005fDELEGITIMIZE_005fADDRESS-4297"></a></var><br>
+<blockquote><!-- This hook is used to undo the possibly obfuscating effects of the -->
+     <!-- @code{LEGITIMIZE_ADDRESS} and @code{LEGITIMIZE_RELOAD_ADDRESS} target -->
+     <!-- macros.  Some backend implementations of these macros wrap symbol -->
+     <!-- references inside an @code{UNSPEC} rtx to represent PIC or similar -->
+     <!-- addressing modes.  This target hook allows GCC's optimizers to understand -->
+     <!-- the semantics of these opaque @code{UNSPEC}s by converting them back -->
+     <!-- into their original form. -->
+      <p>该钩子用于撤销<code>LEGITIMIZE_ADDRESS</code>和<code>LEGITIMIZE_RELOAD_ADDRESS</code> target
+宏可能造成的模糊效果。这些宏的一些后端实现，
+将符号引用包含在一个<code>UNSPEC</code> rtx中来表示PIC或者类似的寻址模式。
+该target钩子允许GCC的优化器来理解这些透明的<code>UNSPEC</code>的语义，
+通过将它们转换回到它们最初的形式。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_CANNOT_FORCE_CONST_MEM</b> ((<var>enum machine_mode mode, rtx x</var>)<var><a name="index-TARGET_005fCANNOT_005fFORCE_005fCONST_005fMEM-4298"></a></var><br>
+<blockquote><!-- This hook should return true if @var{x} is of a form that cannot (or -->
+     <!-- should not) be spilled to the constant pool.  @var{mode} is the mode -->
+     <!-- of @var{x}. -->
+     <!-- The default version of this hook returns false. -->
+      <p>该钩子应该返回真，如果<var>x</var>不能够（或不应该）被溢出到常量池中。<var>mode</var> 是<var>x</var>的模式。
+该钩子的缺省版本返回假。
+
+     <!-- The primary reason to define this hook is to prevent reload from -->
+     <!-- deciding that a non-legitimate constant would be better reloaded -->
+     <!-- from the constant pool instead of spilling and reloading a register -->
+     <!-- holding the constant.  This restriction is often true of addresses -->
+     <!-- of TLS symbols for various targets. -->
+      <p>定义该钩子的主要原因是阻止重载决定将一个不合法的常量从常量池中重载，
+而不是溢出并重载一个寄存器来保存常量。对于不同的target，
+该限制对于TLS符号的地址常常是真。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_USE_BLOCKS_FOR_CONSTANT_P</b> (<var>enum machine_mode mode, const_rtx x</var>)<var><a name="index-TARGET_005fUSE_005fBLOCKS_005fFOR_005fCONSTANT_005fP-4299"></a></var><br>
+<blockquote><!-- This hook should return true if pool entries for constant @var{x} can -->
+     <!-- be placed in an @code{object_block} structure.  @var{mode} is the mode -->
+     <!-- of @var{x}. -->
+      <p>该钩子应该返回真，
+如果常量<var>x</var>的池实体（pool entries）可以放在一个<code>object_block</code>结构体中。
+<var>mode</var>为<var>x</var>的机器模式。
+
+     <!-- The default version returns false for all constants. -->
+      <p>缺省版本为所有的常量返回假。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_BUILTIN_RECIPROCAL</b> (<var>unsigned fn, bool md_fn, bool sqrt</var>)<var><a name="index-TARGET_005fBUILTIN_005fRECIPROCAL-4300"></a></var><br>
+<blockquote><!-- This hook should return the DECL of a function that implements reciprocal of -->
+     <!-- the builtin function with builtin function code @var{fn}, or -->
+     <!-- @code{NULL_TREE} if such a function is not available.  @var{md_fn} is true -->
+     <!-- when @var{fn} is a code of a machine-dependent builtin function.  When -->
+     <!-- @var{sqrt} is true, additional optimizations that apply only to the reciprocal -->
+     <!-- of a square root function are performed, and only reciprocals of @code{sqrt} -->
+     <!-- function are valid. -->
+      <p>该钩子应该返回一个函数的decl，该函数实现了代码为<var>fn</var>的内建函数的倒数，
+或者如果没有这样的函数，则返回<code>NULL_TREE</code>。
+当<var>fn</var>为一个机器相关的内建函数的代码时，<var>tm_fn</var>为真。
+当<var>sqrt</var>为真时，只对平方根函数进行额外的优化，
+并且只有<var>sqrt</var>函数的倒数可用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_VECTORIZE_BUILTIN_MASK_FOR_LOAD</b> (<var>void</var>)<var><a name="index-TARGET_005fVECTORIZE_005fBUILTIN_005fMASK_005fFOR_005fLOAD-4301"></a></var><br>
+<blockquote><!-- This hook should return the DECL of a function @var{f} that given an -->
+     <!-- address @var{addr} as an argument returns a mask @var{m} that can be -->
+     <!-- used to extract from two vectors the relevant data that resides in -->
+     <!-- @var{addr} in case @var{addr} is not properly aligned. -->
+      <p>该钩子应该返回一个函数<var>f</var>的decl，给定一个地址<var>addr</var>作为参数，
+该函数返回一个掩码<var>m</var>，在<var>addr</var>没有被适当的对齐时，
+其可以用于从两个向量中抽取位于<var>addr</var>中的相关数据。
+
+     <!-- The autovectorizer, when vectorizing a load operation from an address -->
+     <!-- @var{addr} that may be unaligned, will generate two vector loads from -->
+     <!-- the two aligned addresses around @var{addr}. It then generates a -->
+     <!-- @code{REALIGN_LOAD} operation to extract the relevant data from the -->
+     <!-- two loaded vectors. The first two arguments to @code{REALIGN_LOAD}, -->
+     <!-- @var{v1} and @var{v2}, are the two vectors, each of size @var{VS}, and -->
+     <!-- the third argument, @var{OFF}, defines how the data will be extracted -->
+     <!-- from these two vectors: if @var{OFF} is 0, then the returned vector is -->
+     <!-- @var{v2}; otherwise, the returned vector is composed from the last -->
+     <!-- @var{VS}-@var{OFF} elements of @var{v1} concatenated to the first -->
+     <!-- @var{OFF} elements of @var{v2}. -->
+      <p>自动向量化，当向量化一个加载操作，且地址<var>addr</var>可以没有对齐，
+则会生成两个向量加载，从<var>addr</var>附件的两个对齐的地址。
+其然后生成一个<code>REALIGN_LOAD</code>操作，来从两个加载的向量中抽取相关数据。
+<code>REALIGN_LOAD</code>的前两个参数，<var>v1</var>和<var>v2</var>，为两个向量，
+每个的大小为<var>VS</var>，第三个参数，<var>OFF</var>，定义了数据如何从这两个向量中抽取：
+如果<var>OFF</var>为0，则返回的向量为<var>V2</var>；
+否则返回的向量由<var>v1</var>的后<var>VS</var>-<var>OFF</var>个元素连接到<var>v2</var>的前<var>OFF</var>个元素而组成。
+
+     <!-- If this hook is defined, the autovectorizer will generate a call -->
+     <!-- to @var{f} (using the DECL tree that this hook returns) and will -->
+     <!-- use the return value of @var{f} as the argument @var{OFF} to -->
+     <!-- @code{REALIGN_LOAD}. Therefore, the mask @var{m} returned by @var{f} -->
+     <!-- should comply with the semantics expected by @code{REALIGN_LOAD} -->
+     <!-- described above. -->
+     <!-- If this hook is not defined, then @var{addr} will be used as -->
+     <!-- the argument @var{OFF} to @code{REALIGN_LOAD}, in which case the low -->
+     <!-- log2(@var{VS}) @minus{} 1 bits of @var{addr} will be considered. -->
+      <p>如果定义了该钩子，则自动向量化会生成一个对<var>f</var>的调用（使用该钩子返回的DECL）
+并使用<var>f</var>的返回值作为<code>REALIGN_LOAD</code>的参数<var>OFF</var>。因此，
+<var>f</var>返回的掩码<var>m</var>应该遵守<code>REALIGN_LOAD</code>所期望的上面描述的语义。
+如果该钩子没有被定义，
+则<var>addr</var>将作为<code>REALIGN_LOAD</code>的参数<var>OFF</var>来使用，
+这种情况下将会考虑<var>addr</var>的低log2(<var>VS</var>)-1位。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_EVEN</b> (<var>tree x</var>)<var><a name="index-TARGET_005fVECTORIZE_005fBUILTIN_005fMUL_005fWIDEN_005fEVEN-4302"></a></var><br>
+<blockquote><!-- This hook should return the DECL of a function @var{f} that implements -->
+     <!-- widening multiplication of the even elements of two input vectors of type @var{x}. -->
+      <p>该钩子应该返回一个函数<var>f</var>的decl，
+该函数实现了两个类型为<var>x</var>的输入向量作为偶数元素的加宽乘法。
+
+     <!-- If this hook is defined, the autovectorizer will use it along with the -->
+     <!-- @code{TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_ODD} target hook when vectorizing -->
+     <!-- widening multiplication in cases that the order of the results does not have to be -->
+     <!-- preserved (e.g.@: used only by a reduction computation). Otherwise, the -->
+     <!-- @code{widen_mult_hi/lo} idioms will be used. -->
+      <p>如果定义了该钩子，则自动化向量当进行向量化加宽乘法时，
+将会使用它和<code>TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_ODD</code> target钩子，
+以防结果顺序不需要被保存（例如，只用于减法计算）。
+否则将使用<code>widen_mult_hi/lo</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_ODD</b> (<var>tree x</var>)<var><a name="index-TARGET_005fVECTORIZE_005fBUILTIN_005fMUL_005fWIDEN_005fODD-4303"></a></var><br>
+<blockquote><!-- This hook should return the DECL of a function @var{f} that implements -->
+     <!-- widening multiplication of the odd elements of two input vectors of type @var{x}. -->
+      <p>该钩子应该返回一个函数<var>f</var>的decl，
+该函数实现了两个类型为<var>x</var>的输入向量作为奇数元素的加宽乘法。
+
+     <!-- If this hook is defined, the autovectorizer will use it along with the -->
+     <!-- @code{TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_EVEN} target hook when vectorizing -->
+     <!-- widening multiplication in cases that the order of the results does not have to be -->
+     <!-- preserved (e.g.@: used only by a reduction computation). Otherwise, the -->
+     <!-- @code{widen_mult_hi/lo} idioms will be used. -->
+      <p>如果定义了该钩子，则自动化向量当进行向量化加宽乘法时，
+将会使用它和<code>TARGET_VECTORIZE_BUILTIN_MUL_WIDEN_EVEN</code> target钩子，
+以防结果顺序不需要被保存（例如，只用于减法计算）。
+否则将使用<code>widen_mult_hi/lo</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_VECTORIZE_BUILTIN_VECTORIZATION_COST</b> (<var>enum vect_cost_for_stmt type_of_cost, tree vectype, int misalign</var>)<var><a name="index-TARGET_005fVECTORIZE_005fBUILTIN_005fVECTORIZATION_005fCOST-4304"></a></var><br>
+<blockquote><p>Returns cost of different scalar or vector statements for vectorization cost model. 
+For vector memory operations the cost may depend on type (<var>vectype</var>) and
+misalignment value (<var>misalign</var>). 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_VECTORIZE_VECTOR_ALIGNMENT_REACHABLE</b> (<var>const_tree type, bool is_packed</var>)<var><a name="index-TARGET_005fVECTORIZE_005fVECTOR_005fALIGNMENT_005fREACHABLE-4305"></a></var><br>
+<blockquote><p>Return true if vector alignment is reachable (by peeling N iterations) for the given type. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_VECTORIZE_BUILTIN_VEC_PERM</b> (<var>tree type, tree *mask_element_type</var>)<var><a name="index-TARGET_005fVECTORIZE_005fBUILTIN_005fVEC_005fPERM-4306"></a></var><br>
+<blockquote><p>Target builtin that implements vector permute. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_VECTORIZE_BUILTIN_VEC_PERM_OK</b> (<var>tree vec_type, tree mask</var>)<var><a name="index-TARGET_005fVECTORIZE_005fBUILTIN_005fVEC_005fPERM_005fOK-4307"></a></var><br>
+<blockquote><p>Return true if a vector created for <code>builtin_vec_perm</code> is valid. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_VECTORIZE_BUILTIN_CONVERSION</b> (<var>unsigned code, tree dest_type, tree src_type</var>)<var><a name="index-TARGET_005fVECTORIZE_005fBUILTIN_005fCONVERSION-4308"></a></var><br>
+<blockquote><!-- This hook should return the DECL of a function that implements conversion of the -->
+     <!-- input vector of type @var{src_type} to type @var{dest_type}. -->
+     <!-- The value of @var{code} is one of the enumerators in @code{enum tree_code} and -->
+     <!-- specifies how the conversion is to be applied -->
+     <!-- (truncation, rounding, etc.). -->
+      <p>该钩子应该返回一个函数的decl，该函数实现了类型为<var>type</var>的输入向量的转换。
+如果<var>type</var>为一个整数类型，则转换结果为一个同样大小的浮点类型的向量。
+如果<var>type</var>为浮点类型，则转换结果为一个同样大小的整数类型的向量。
+<var>code</var>指定了如何应用转换（截断，舍入，等）。
+
+     <!-- If this hook is defined, the autovectorizer will use the -->
+     <!-- @code{TARGET_VECTORIZE_BUILTIN_CONVERSION} target hook when vectorizing -->
+     <!-- conversion. Otherwise, it will return @code{NULL_TREE}. -->
+      <p>如果定义了该钩子，则自动向量化当进行向量化转换时，
+会使用<code>TARGET_VECTORIZE_BUILTIN_CONVERSION</code> target钩子。
+否则，其应该返回<code>NULL_TREE</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_VECTORIZE_BUILTIN_VECTORIZED_FUNCTION</b> (<var>tree fndecl, tree vec_type_out, tree vec_type_in</var>)<var><a name="index-TARGET_005fVECTORIZE_005fBUILTIN_005fVECTORIZED_005fFUNCTION-4309"></a></var><br>
+<blockquote><!-- This hook should return the decl of a function that implements the -->
+     <!-- vectorized variant of the builtin function with builtin function code -->
+     <!-- @var{code} or @code{NULL_TREE} if such a function is not available. -->
+     <!-- The value of @var{fndecl} is the builtin function declaration.  The -->
+     <!-- return type of the vectorized function shall be of vector type -->
+     <!-- @var{vec_type_out} and the argument types should be @var{vec_type_in}. -->
+      <p>该钩子应该返回一个函数的decl，
+该函数实现了代码为<var>code</var>的内建函数的向量化变体，
+或者如果没有这样的函数则返回<code>NULL_TREE</code>。
+向量化的函数的返回类型应该为向量类型<var>vec_type_out</var>，
+并且参数类型应该为<var>vec_type_in</var>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_VECTORIZE_SUPPORT_VECTOR_MISALIGNMENT</b> (<var>enum machine_mode mode, const_tree type, int misalignment, bool is_packed</var>)<var><a name="index-TARGET_005fVECTORIZE_005fSUPPORT_005fVECTOR_005fMISALIGNMENT-4310"></a></var><br>
+<blockquote><p>This hook should return true if the target supports misaligned vector
+store/load of a specific factor denoted in the <var>misalignment</var>
+parameter.  The vector store/load should be of machine mode <var>mode</var> and
+the elements in the vectors should be of type <var>type</var>.  <var>is_packed</var>
+parameter is true if the memory access is defined in a packed struct. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: enum machine_mode <b>TARGET_VECTORIZE_PREFERRED_SIMD_MODE</b> (<var>enum machine_mode mode</var>)<var><a name="index-TARGET_005fVECTORIZE_005fPREFERRED_005fSIMD_005fMODE-4311"></a></var><br>
+<blockquote><p>This hook should return the preferred mode for vectorizing scalar
+mode <var>mode</var>.  The default is
+equal to <code>word_mode</code>, because the vectorizer can do some
+transformations even in absence of specialized <acronym>SIMD</acronym> hardware. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: unsigned int <b>TARGET_VECTORIZE_AUTOVECTORIZE_VECTOR_SIZES</b> (<var>void</var>)<var><a name="index-TARGET_005fVECTORIZE_005fAUTOVECTORIZE_005fVECTOR_005fSIZES-4312"></a></var><br>
+<blockquote><p>This hook should return a mask of sizes that should be iterated over
+after trying to autovectorize using the vector size derived from the
+mode returned by <code>TARGET_VECTORIZE_PREFERRED_SIMD_MODE</code>. 
+The default is zero which means to not iterate over other vector sizes. 
+</p></blockquote></div>
+
+<!-- @node Anchored Addresses -->
+<!-- @section Anchored Addresses -->
+ </body></html>
+

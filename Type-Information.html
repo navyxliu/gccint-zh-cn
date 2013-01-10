@@ -1,0 +1,128 @@
+<html lang="zh">
+<head>
+<title>Type Information - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="prev" href="Header-Dirs.html#Header-Dirs" title="Header Dirs">
+<link rel="next" href="Plugins.html#Plugins" title="Plugins">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Type-Information"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Plugins.html#Plugins">Plugins</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Header-Dirs.html#Header-Dirs">Header Dirs</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
+<hr>
+</div>
+
+<h2 class="chapter">22 内存管理和类型信息</h2>
+
+<p><a name="index-GGC-4943"></a><a name="index-GTY-4944"></a>
+<!-- GCC uses some fairly sophisticated memory management techniques, which -->
+<!-- involve determining information about GCC's data structures from GCC's -->
+<!-- source code and using this information to perform garbage collection and -->
+<!-- implement precompiled headers. -->
+GCC使用了一些相当复杂微妙的内存管理技术，包括从GCC源代码中确定GCC的数据结构的信息，并使用该信息来执行垃圾收集和实现预编译头文件。
+
+<!-- A full C parser would be too complicated for this task, so a limited -->
+<!-- subset of C is interpreted and special markers are used to determine -->
+<!-- what parts of the source to look at.  All @code{struct} and -->
+<!-- @code{union} declarations that define data structures that are -->
+<!-- allocated under control of the garbage collector must be marked.  All -->
+<!-- global variables that hold pointers to garbage-collected memory must -->
+<!-- also be marked.  Finally, all global variables that need to be saved -->
+<!-- and restored by a precompiled header must be marked.  (The precompiled -->
+<!-- header mechanism can only save static variables if they're scalar. -->
+<!-- Complex data structures must be allocated in garbage-collected memory -->
+<!-- to be saved in a precompiled header.) -->
+ <p>使用完整的C解析器来完成这项工作会非常复杂，因此只需要解析C的限定子集，并且使用特定的标记来确定源代码的哪些部分需要分析。所有的<code>struct</code>和<code>union</code>声明，如果所定义的数据结构要在垃圾收集器的控制下进行分配，则必须被标记。所有的全局变量，如果所保存的指针是指向垃圾收集的内存，则也必须被标记。最后，所有的全局变量，如果需要通过预编译头文件来保存和恢复，则必须被标记。（预编译头文件机制只能保存标量，复杂的数据结构必须被分配在垃圾收集内存中，从而被保存在预编译头文件中。）
+
+<!-- The full format of a marker is -->
+ <p>标记的完整格式是
+
+<pre class="smallexample">     GTY (([<var>option</var>] [(<var>param</var>)], [<var>option</var>] [(<var>param</var>)] ...))
+</pre>
+ <p class="noindent"><!-- but in most cases no options are needed.  The outer double parentheses -->
+<!-- are still necessary, though: @code{GTY(())}.  Markers can appear: -->
+不过大多数情况下，不需要选项。虽然这样，外面的双括号依然是必须的：<code>GTY(())</code>。标记可以出现在：
+
+     <ul>
+<li><!-- In a structure definition, before the open brace; -->
+在结构体定义中，放在开括号之前；
+<li><!-- In a global variable declaration, after the keyword @code{static} or -->
+<!-- @code{extern}; and -->
+在全局变量声明中，放在关键词 <code>static</code> 或者 <code>extern</code> 之后；
+<li><!-- In a structure field definition, before the name of the field. -->
+在结构体的域的定义里，在域的名字之前。
+</ul>
+
+<!-- Here are some examples of marking simple data structures and globals. -->
+ <p>这里有一些标记简单数据结构和全局变量的例子。
+
+<pre class="smallexample">     struct GTY(()) <var>tag</var>
+     {
+       <var>fields</var>...
+     };
+     
+     typedef struct GTY(()) <var>tag</var>
+     {
+       <var>fields</var>...
+     } *<var>typename</var>;
+     
+     static GTY(()) struct <var>tag</var> *<var>list</var>;   /* <span class="roman">points to GC memory</span> */
+     static GTY(()) int <var>counter</var>;        /* <span class="roman">save counter in a PCH</span> */
+</pre>
+ <!-- The parser understands simple typedefs such as -->
+<!-- @code{typedef struct @var{tag} *@var{name};} and -->
+<!-- @code{typedef int @var{name};}. -->
+<!-- These don't need to be marked. -->
+ <p>解析器能够理解简单的typedef，例如<code>typedef struct </code><var>tag</var><code> *</code><var>name</var><code>;</code>和<code>typedef int </code><var>name</var><code>;</code>。这些不需要被标记。
+
+<!-- @menu -->
+<!-- * GTY Options::         What goes inside a @code{GTY(())}. -->
+<!-- * GGC Roots::           Making global variables GGC roots. -->
+<!-- * Files::               How the generated files work. -->
+<!-- * Invoking the garbage collector::   How to invoke the garbage collector. -->
+<!-- * Troubleshooting::     When something does not work as expected. -->
+<!-- @end menu -->
+<ul class="menu">
+<li><a accesskey="1" href="GTY-Options.html#GTY-Options">GTY Options</a>: 			<code>GTY(())</code>的内部
+<li><a accesskey="2" href="GGC-Roots.html#GGC-Roots">GGC Roots</a>: 			标记全局变量GGC roots
+<li><a accesskey="3" href="Files.html#Files">Files</a>: 			生成的文件是如何工作的
+<li><a accesskey="4" href="Invoking-the-garbage-collector.html#Invoking-the-garbage-collector">Invoking the garbage collector</a>:    如何调用垃圾收集器
+<li><a accesskey="5" href="Troubleshooting.html#Troubleshooting">Troubleshooting</a>: 		当出现和预期不一样的情况时
+</ul>
+
+<!-- @node GTY Options -->
+<!-- @section The Inside of a @code{GTY(())} -->
+ </body></html>
+

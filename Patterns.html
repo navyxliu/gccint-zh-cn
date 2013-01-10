@@ -1,0 +1,148 @@
+<html lang="zh">
+<head>
+<title>Patterns - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Machine-Desc.html#Machine-Desc" title="Machine Desc">
+<link rel="prev" href="Overview.html#Overview" title="Overview">
+<link rel="next" href="Example.html#Example" title="Example">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Patterns"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Example.html#Example">Example</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Overview.html#Overview">Overview</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Machine-Desc.html#Machine-Desc">Machine Desc</a>
+<hr>
+</div>
+
+<h3 class="section">16.2 指令模式的方方面面</h3>
+
+<p><a name="index-patterns-3204"></a><a name="index-instruction-patterns-3205"></a>
+<a name="index-define_005finsn-3206"></a><!-- Each instruction pattern contains an incomplete RTL expression, with pieces -->
+<!-- to be filled in later, operand constraints that restrict how the pieces can -->
+<!-- be filled in, and an output pattern or C code to generate the assembler -->
+<!-- output, all wrapped up in a @code{define_insn} expression. -->
+每个指令模式包含了一个不完全的RTL表达式，和之后要被填充的部分；操作数constraint，用来
+限制如何填充那些部分；以及一个输出模式或者C代码来生成汇编输出。所有这些都由一个
+ <code>define_insn</code> 表达式包裹起来。
+
+<!-- A @code{define_insn} is an RTL expression containing four or five operands: -->
+ <p><code>define_insn</code> 是一个RTL表达式，包含了四或五个操作数：
+
+     <ol type=1 start=1>
+<li><!-- An optional name.  The presence of a name indicate that this instruction -->
+<!-- pattern can perform a certain standard job for the RTL-generation -->
+<!-- pass of the compiler.  This pass knows certain names and will use -->
+<!-- the instruction patterns with those names, if the names are defined -->
+<!-- in the machine description. -->
+一个可选的名字。存在名字表明该指令模式能够为编译器的RTL生成过程，执行一个确定的
+标准工作。这个过程知道确定的名字，并且如果在机器描述中定义了这些名字，则会使用
+它们的指令模式。
+
+     <!-- The absence of a name is indicated by writing an empty string -->
+     <!-- where the name should go.  Nameless instruction patterns are never -->
+     <!-- used for generating RTL code, but they may permit several simpler insns -->
+     <!-- to be combined later on. -->
+     <p>空字符串表示不存在名字。没有命名的指令模式是不会被用来生成RTL代码的，但是之后它
+们能够用来组合多个简单insn。
+
+     <!-- Names that are not thus known and used in RTL-generation have no -->
+     <!-- effect; they are equivalent to no name at all. -->
+     <p>不识别的并且因此不在RTL生成中使用的名字，没有任何作用，就像没有命名一样。
+
+     <!-- For the purpose of debugging the compiler, you may also specify a -->
+     <!-- name beginning with the @samp{*} character.  Such a name is used only -->
+     <!-- for identifying the instruction in RTL dumps; it is entirely equivalent -->
+     <!-- to having a nameless pattern for all other purposes. -->
+     <p>出于调试编译器的目的，你可能还需要指定一个名字起始于 &lsquo;<samp><span class="samp">*</span></samp>&rsquo; 字符。这样的名字只
+被用来标识RTL dump中的指令，其它的都与没有命名的模式一样。
+
+     <li><!-- The @dfn{RTL template} (@pxref{RTL Template}) is a vector of incomplete -->
+<!-- RTL expressions which show what the instruction should look like.  It is -->
+<!-- incomplete because it may contain @code{match_operand}, -->
+<!-- @code{match_operator}, and @code{match_dup} expressions that stand for -->
+<!-- operands of the instruction. -->
+<dfn>RTL template</dfn>（参见<a href="RTL-Template.html#RTL-Template">RTL Template</a>）是一个不完全的RTL表达式向量，展示了这
+条指令的样子。所谓不完全是因为它可以包含 <code>match_operand</code>,
+<code>match_operator</code> 和 <code>match_dup</code> 表达式，用来表示指令的操作数。
+
+     <!-- If the vector has only one element, that element is the template for the -->
+     <!-- instruction pattern.  If the vector has multiple elements, then the -->
+     <!-- instruction pattern is a @code{parallel} expression containing the -->
+     <!-- elements described. -->
+     <p>如果向量只有一个元素，则那个元素为指令模式的模版。如果向量有多个元素，则指令模式是一个 <code>parallel</code> 表达式，包含了所描述的元素。
+
+     <li><a name="index-pattern-conditions-3207"></a><a name="index-conditions_002c-in-patterns-3208"></a><!-- A condition.  This is a string which contains a C expression that is -->
+<!-- the final test to decide whether an insn body matches this pattern. -->
+一个条件。这是一个字符串，包含了一个C表达式用来最终测试，判定一个insn实体是否匹
+配该模式。
+
+     <p><a name="index-named-patterns-and-conditions-3209"></a><!-- For a named pattern, the condition (if present) may not depend on -->
+<!-- the data in the insn being matched, but only the target-machine-type -->
+<!-- flags.  The compiler needs to test these conditions during -->
+<!-- initialization in order to learn exactly which named instructions are -->
+<!-- available in a particular run. -->
+对于命名模式，条件（如果存在）可能不取决于要被匹配的insn的数据，而只是取决于
+目标-机器-类型标记（target-machine-type flag）。编译器需要在初始化时测试这些条
+件，以至于能够确切的知道在这一次运行中，哪些命名指令是可用的。
+
+     <p><a name="index-operands-3210"></a><!-- For nameless patterns, the condition is applied only when matching an -->
+<!-- individual insn, and only after the insn has matched the pattern's -->
+<!-- recognition template.  The insn's operands may be found in the vector -->
+<!-- @code{operands}.  For an insn where the condition has once matched, it -->
+<!-- can't be used to control register allocation, for example by excluding -->
+<!-- certain hard registers or hard register combinations. -->
+对于没有命名的模式，条件只用来匹配一个单独的insn，并且只在insn已经匹配了模式的识
+别模版。insn的操作数可以为vector <code>operands</code>。对于一旦条件匹配的insn，它便不能被用来控制寄存器分配，例如用来排除某个硬件寄存器，或者硬件寄存器组合。
+
+     <li><!-- The @dfn{output template}: a string that says how to output matching -->
+<!-- insns as assembler code.  @samp{%} in this string specifies where -->
+<!-- to substitute the value of an operand.  @xref{Output Template}. -->
+<dfn>output template</dfn>：一个字符串，说明了如何将匹配的insn输出为汇编代码。字符串
+中的 &lsquo;<samp><span class="samp">%</span></samp>&rsquo; 指定了替换一个操作数值的地方。参见<a href="Output-Template.html#Output-Template">Output Template</a>。
+
+     <!-- When simple substitution isn't general enough, you can specify a piece -->
+     <!-- of C code to compute the output.  @xref{Output Statement}. -->
+     <p>当简单替换无法满足需求的时候，你可以指定一块C代码来计算输出。
+参见<a href="Output-Statement.html#Output-Statement">Output Statement</a>。
+
+     <li><!-- Optionally, a vector containing the values of attributes for insns matching -->
+<!-- this pattern.  @xref{Insn Attributes}. -->
+一个可选的向量，包含了匹配该模式的insn的属性值。参见<a href="Insn-Attributes.html#Insn-Attributes">Insn Attributes</a>。
+      </ol>
+
+<!-- @node Example -->
+<!-- @section Example of @code{define_insn} -->
+<!-- @cindex @code{define_insn} example -->
+ </body></html>
+

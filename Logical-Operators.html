@@ -1,0 +1,296 @@
+<html lang="zh">
+<head>
+<title>Logical Operators - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Operands.html#Operands" title="Operands">
+<link rel="prev" href="Conditional-Expressions.html#Conditional-Expressions" title="Conditional Expressions">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Logical-Operators"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Conditional-Expressions.html#Conditional-Expressions">Conditional Expressions</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Operands.html#Operands">Operands</a>
+<hr>
+</div>
+
+<h4 class="subsection">12.5.4 逻辑运算符</h4>
+
+<p><a name="index-Logical-Operators-2724"></a>
+<!-- Except when they appear in the condition operand of a -->
+<!-- @code{GIMPLE_COND}, logical `and' and `or' operators are simplified -->
+<!-- as follows: @code{a = b && c} becomes -->
+除非它们出现在<code>GIMPLE_COND</code>的条件操作数中，否则逻辑的`and'和`or'操作符将按照下列方式进行简化：<code>a = b &amp;&amp; c</code>变成
+
+<pre class="smallexample">     T1 = (bool)b;
+     if (T1 == true)
+       T1 = (bool)c;
+     a = T1;
+</pre>
+ <!-- Note that @code{T1} in this example cannot be an expression temporary, -->
+<!-- because it has two different assignments. -->
+ <p>注意该例子中的<code>T1</code>不能为表达式临时对象，因为其具有两个不同的赋值。
+
+<!-- @subsection Manipulating operands -->
+<h4 class="subsection">12.5.5 操作操作数</h4>
+
+<!-- All gimple operands are of type @code{tree}.  But only certain -->
+<!-- types of trees are allowed to be used as operand tuples.  Basic -->
+<!-- validation is controlled by the function -->
+<!-- @code{get_gimple_rhs_class}, which given a tree code, returns an -->
+<!-- @code{enum} with the following values of type @code{enum -->
+<!-- gimple_rhs_class} -->
+<p>所有的gimple操作数都是<code>tree</code>类型的。不过只有特定类型的tree可以被用作操作数元组。函数<code>get_gimple_rhs_class</code>可以进行基本的验证，其给定一个tree代码，返回一个<code>enum</code>，为下列<code>enum gimple_rhs_class</code>类型的值
+
+     <ul>
+<li><code>GIMPLE_INVALID_RHS</code>
+<!-- The tree cannot be used as a GIMPLE operand. -->
+该tree不能用作GIMPLE操作数。
+
+     <li><code>GIMPLE_TERNARY_RHS</code>
+<!-- The tree is a valid GIMPLE ternary operation. -->
+
+     <li><code>GIMPLE_BINARY_RHS</code>
+<!-- The tree is a valid GIMPLE binary operation. -->
+该tree为一个有效的GIMPLE二元运算。
+
+     <li><code>GIMPLE_UNARY_RHS</code>
+<!-- The tree is a valid GIMPLE unary operation. -->
+该tree为一个有效的GIMPLE一元运算。
+
+     <li><code>GIMPLE_SINGLE_RHS</code>
+<!-- The tree is a single object, that cannot be split into simpler -->
+<!-- operands (for instance, @code{SSA_NAME}, @code{VAR_DECL}, @code{COMPONENT_REF}, etc). -->
+该tree为单个对象，不能被拆分成更简单的操作数（例如，<code>SSA_NAME</code>, <code>VAR_DECL</code>, <code>COMPONENT_REF</code>等等）。
+
+     <!-- This operand class also acts as an escape hatch for tree nodes -->
+     <!-- that may be flattened out into the operand vector, but would need -->
+     <!-- more than two slots on the RHS.  For instance, a @code{COND_EXPR} -->
+     <!-- expression of the form @code{(a op b) ? x : y} could be flattened -->
+     <!-- out on the operand vector using 4 slots, but it would also -->
+     <!-- require additional processing to distinguish @code{c = a op b} -->
+     <!-- from @code{c = a op b ? x : y}.  Something similar occurs with -->
+     <!-- @code{ASSERT_EXPR}.   In time, these special case tree -->
+     <!-- expressions should be flattened into the operand vector. -->
+     <p>该操作数类别还作为转义通口，对于那些可以被平整到操作数向量中，但是右手边会需要多于两个插槽的tree节点。例如，<code>(a op b) ? x : y</code>的<code>COND_EXPR</code>表达式，会被平整到使用4个插槽的操作数向量中，但是其还需要额外的处理来从<code>c = a op b ? x : y</code>中判断<code>c = a op b</code>。对于<code>ASSERT_EXPR</code>，也有类似的情况。这些特殊情况的tree表达式应该被平整到操作数向量中。
+</ul>
+
+<!-- For tree nodes in the categories @code{GIMPLE_TERNARY_RHS}, -->
+<!-- @code{GIMPLE_BINARY_RHS} and @code{GIMPLE_UNARY_RHS}, they cannot be -->
+<!-- stored inside tuples directly.  They first need to be flattened and -->
+<!-- separated into individual components.  For instance, given the GENERIC -->
+<!-- expression -->
+ <p>对于在<code>GIMPLE_BINARY_RHS</code>和<code>GIMPLE_UNARY_RHS</code>类别中的tree节点，它们不能被直接存放在元组中。需要首先被平整，分隔到独立的部分。例如，给定GENERIC表达式
+
+<pre class="smallexample">     a = b + c
+</pre>
+ <!-- its tree representation is: -->
+ <p>其tree表示为:
+
+<pre class="smallexample">     MODIFY_EXPR &lt;VAR_DECL  &lt;a&gt;, PLUS_EXPR &lt;VAR_DECL &lt;b&gt;, VAR_DECL &lt;c&gt;&gt;&gt;
+</pre>
+ <!-- In this case, the GIMPLE form for this statement is logically -->
+<!-- identical to its GENERIC form but in GIMPLE, the @code{PLUS_EXPR} -->
+<!-- on the RHS of the assignment is not represented as a tree, -->
+<!-- instead the two operands are taken out of the @code{PLUS_EXPR} sub-tree -->
+<!-- and flattened into the GIMPLE tuple as follows: -->
+ <p>这种情况下，该语句的GIMPLE形式逻辑上等同于它的GENERIC形式，但是在GIMPLE中，赋值语句的右手边<code>PLUS_EXPR</code>，不被表示成一个tree，替代的，<code>PLUS_EXPR</code>的两个操作数子树被拿出来，并平整到GIMPLE元组中，如下：
+
+<pre class="smallexample">     GIMPLE_ASSIGN &lt;PLUS_EXPR, VAR_DECL &lt;a&gt;, VAR_DECL &lt;b&gt;, VAR_DECL &lt;c&gt;&gt;
+</pre>
+ <!-- @subsection Operand vector allocation -->
+<h4 class="subsection">12.5.6 操作数向量分配</h4>
+
+<!-- The operand vector is stored at the bottom of the three tuple -->
+<!-- structures that accept operands. This means, that depending on -->
+<!-- the code of a given statement, its operand vector will be at -->
+<!-- different offsets from the base of the structure.  To access -->
+<!-- tuple operands use the following accessors -->
+<p>操作数向量被存放在三元组结构的底部。这意味着，取决于给定语句的代码，其操作数向量相对于基本结构体的偏移量会不同。使用下列方法来访问元组操作数
+
+<div class="defun">
+&mdash; GIMPLE function: unsigned <b>gimple_num_ops</b> (<var>gimple g</var>)<var><a name="index-gimple_005fnum_005fops-2725"></a></var><br>
+<blockquote><!-- Returns the number of operands in statement G. -->
+      <p>返回语句<code>G</code>中的操作数个数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: tree <b>gimple_op</b> (<var>gimple g, unsigned i</var>)<var><a name="index-gimple_005fop-2726"></a></var><br>
+<blockquote><!-- Returns operand @code{I} from statement @code{G}. -->
+      <p>返回语句<code>G</code>的第<code>I</code>个操作数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: tree * <b>gimple_ops</b> (<var>gimple g</var>)<var><a name="index-gimple_005fops-2727"></a></var><br>
+<blockquote><!-- Returns a pointer into the operand vector for statement @code{G}.  This -->
+     <!-- is computed using an internal table called @code{gimple_ops_offset_}[]. -->
+     <!-- This table is indexed by the gimple code of @code{G}. -->
+      <p>返回指向语句<code>G</code>的操作数向量的指针。这通过内部称作<code>gimple_ops_offset_</code>[]的表来计算。该表的索引为<code>G</code>的gimple代码。
+
+     <!-- When the compiler is built, this table is filled-in using the -->
+     <!-- sizes of the structures used by each statement code defined in -->
+     <!-- gimple.def.  Since the operand vector is at the bottom of the -->
+     <!-- structure, for a gimple code @code{C} the offset is computed as sizeof -->
+     <!-- (struct-of @code{C}) - sizeof (tree). -->
+      <p>当编译器被构建时，将gimple.def中定义的每个语句代码，所对应的结构体大小来填充该表。因为操作数向量在结构体的底部，所以对于gimple代码<code>C</code>，其偏移量被计算为sizeof (struct-of <code>C</code>) - sizeof (tree)。
+
+     <!-- This mechanism adds one memory indirection to every access when -->
+     <!-- using @code{gimple_op}(), if this becomes a bottleneck, a pass can -->
+     <!-- choose to memoize the result from @code{gimple_ops}() and use that to -->
+     <!-- access the operands. -->
+      <p>该机制对于使用<code>gimple_op</code>()的每次访问，都增加了一个内存重定向，如果这会变成瓶颈，则编译过程可以选择记住<code>gimple_ops</code>()的结果，并使用它来访问操作数。
+</p></blockquote></div>
+
+<!-- @subsection Operand validation -->
+<h4 class="subsection">12.5.7 操作数有效性</h4>
+
+<!-- When adding a new operand to a gimple statement, the operand will -->
+<!-- be validated according to what each tuple accepts in its operand -->
+<!-- vector.  These predicates are called by the -->
+<!-- @code{gimple_@var{name}_set_...()}.  Each tuple will use one of the -->
+<!-- following predicates (Note, this list is not exhaustive): -->
+<p>当为gimple语句增加一个新的操作数，将根据每个元组在它操作数向量中可以接受的情况来验证该操作数。这些断言由<code>gimple_</code><var>name</var><code>_set_...()</code>调用。元组会使用下列断言（注意，该列表并不全）：
+
+<div class="defun">
+&mdash; GIMPLE function: is_gimple_operand <b>(</b><var>tree t</var>)<var><a name="index-g_t_0028-2728"></a></var><br>
+<blockquote><!-- This is the most permissive of the predicates.  It essentially -->
+     <!-- checks whether t has a @code{gimple_rhs_class} of @code{GIMPLE_SINGLE_RHS}. -->
+      <p>这是条件最宽的断言。其实质上是检查t是否具有<code>GIMPLE_SINGLE_RHS</code>的<code>gimple_rhs_class</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>is_gimple_val</b> (<var>tree t</var>)<var><a name="index-is_005fgimple_005fval-2729"></a></var><br>
+<blockquote><!-- Returns true if t is a "GIMPLE value", which are all the -->
+     <!-- non-addressable stack variables (variables for which -->
+     <!-- @code{is_gimple_reg} returns true) and constants (expressions for which -->
+     <!-- @code{is_gimple_min_invariant} returns true). -->
+      <p>返回真，如果t为一个“GIMPLE值”，其为所有非寻址的栈变量（<code>is_gimple_reg</code>返回真的变量）和常量（<code>is_gimple_min_invariant</code>返回真的表达式）。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>is_gimple_addressable</b> (<var>tree t</var>)<var><a name="index-is_005fgimple_005faddressable-2730"></a></var><br>
+<blockquote><!-- Returns true if t is a symbol or memory reference whose address -->
+     <!-- can be taken. -->
+      <p>返回真，如果t为一个符号，或者内存引用，其地址可以被使用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>is_gimple_asm_val</b> (<var>tree t</var>)<var><a name="index-is_005fgimple_005fasm_005fval-2731"></a></var><br>
+<blockquote><!-- Similar to @code{is_gimple_val} but it also accepts hard registers. -->
+      <p>类似于<code>is_gimple_val</code>，不过其还接受硬件寄存器。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>is_gimple_call_addr</b> (<var>tree t</var>)<var><a name="index-is_005fgimple_005fcall_005faddr-2732"></a></var><br>
+<blockquote><!-- Return true if t is a valid expression to use as the function -->
+     <!-- called by a @code{GIMPLE_CALL}. -->
+      <p>返回真，如果t为一个有效的表达式，被作用由<code>GIMPLE_CALL</code>调用的函数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>is_gimple_mem_ref_addr</b> (<var>tree t</var>)<var><a name="index-is_005fgimple_005fmem_005fref_005faddr-2733"></a></var><br>
+<blockquote><!-- Return true if t is a valid expression to use as first operand -->
+     <!-- of a @code{MEM_REF} expression. -->
+      </blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>is_gimple_constant</b> (<var>tree t</var>)<var><a name="index-is_005fgimple_005fconstant-2734"></a></var><br>
+<blockquote><!-- Return true if t is a valid gimple constant. -->
+      <p>返回真，如果t为一个有效的gimple常量。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>is_gimple_min_invariant</b> (<var>tree t</var>)<var><a name="index-is_005fgimple_005fmin_005finvariant-2735"></a></var><br>
+<blockquote><!-- Return true if t is a valid minimal invariant.  This is different -->
+     <!-- from constants, in that the specific value of t may not be known -->
+     <!-- at compile time, but it is known that it doesn't change (e.g., -->
+     <!-- the address of a function local variable). -->
+      <p>返回真，如果t为一个有效的最小不变量。这与常量不同，其特定的值在编译的时候可能不已知，但是知道其不会改变（例如，函数局部变量的地址）。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>is_gimple_min_invariant_address</b> (<var>tree t</var>)<var><a name="index-is_005fgimple_005fmin_005finvariant_005faddress-2736"></a></var><br>
+<blockquote><!-- Return true if t is an @code{ADDR_EXPR} that does not change once a -->
+     <!-- function is running. -->
+      <p>返回真，如果t为一个<code>ADDR_EXPR</code>，其在程序运行时不会改变。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>is_gimple_ip_invariant</b> (<var>tree t</var>)<var><a name="index-is_005fgimple_005fip_005finvariant-2737"></a></var><br>
+<blockquote><!-- Return true if t is an interprocedural invariant.  This means that t -->
+     <!-- is a valid invariant in all functions (e.g. it can be an address of a -->
+     <!-- global variable but not of a local one). -->
+      </blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>is_gimple_ip_invariant_address</b> (<var>tree t</var>)<var><a name="index-is_005fgimple_005fip_005finvariant_005faddress-2738"></a></var><br>
+<blockquote><!-- Return true if t is an @code{ADDR_EXPR} that does not change once the -->
+     <!-- program is running (and which is valid in all functions). -->
+      </blockquote></div>
+
+<!-- @subsection Statement validation -->
+<h4 class="subsection">12.5.8 语句有效性</h4>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>is_gimple_assign</b> (<var>gimple g</var>)<var><a name="index-is_005fgimple_005fassign-2739"></a></var><br>
+<blockquote><!-- Return true if the code of g is @code{GIMPLE_ASSIGN}. -->
+      <p>返回真，如果g的代码为<code>GIMPLE_ASSIGN</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>is_gimple_call</b> (<var>gimple g</var>)<var><a name="index-is_005fgimple_005fcall-2740"></a></var><br>
+<blockquote><!-- Return true if the code of g is @code{GIMPLE_CALL}. -->
+      <p>返回真，如果g的代码为<code>GIMPLE_CALL</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>is_gimple_debug</b> (<var>gimple g</var>)<var><a name="index-is_005fgimple_005fdebug-2741"></a></var><br>
+<blockquote><!-- Return true if the code of g is @code{GIMPLE_DEBUG}. -->
+      </blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>gimple_assign_cast_p</b> (<var>gimple g</var>)<var><a name="index-gimple_005fassign_005fcast_005fp-2742"></a></var><br>
+<blockquote><!-- Return true if g is a @code{GIMPLE_ASSIGN} that performs a type cast -->
+     <!-- operation. -->
+      <p>返回真，如果g为一个<code>GIMPLE_ASSIGN</code>并执行一个类型转换操作。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>gimple_debug_bind_p</b> (<var>gimple g</var>)<var><a name="index-gimple_005fdebug_005fbind_005fp-2743"></a></var><br>
+<blockquote><!-- Return true if g is a @code{GIMPLE_DEBUG} that binds the value of an -->
+     <!-- expression to a variable. -->
+      </blockquote></div>
+
+<!-- @node Manipulating GIMPLE statements -->
+<!-- @section Manipulating GIMPLE statements -->
+ </body></html>
+

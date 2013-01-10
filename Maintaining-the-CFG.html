@@ -1,0 +1,205 @@
+<html lang="zh">
+<head>
+<title>Maintaining the CFG - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Control-Flow.html#Control-Flow" title="Control Flow">
+<link rel="prev" href="Profile-information.html#Profile-information" title="Profile information">
+<link rel="next" href="Liveness-information.html#Liveness-information" title="Liveness information">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Maintaining-the-CFG"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Liveness-information.html#Liveness-information">Liveness information</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Profile-information.html#Profile-information">Profile information</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Control-Flow.html#Control-Flow">Control Flow</a>
+<hr>
+</div>
+
+<h3 class="section">15.4 维护CFG</h3>
+
+<p><a name="index-cfghooks_002eh-3181"></a>
+<!-- An important task of each compiler pass is to keep both the control -->
+<!-- flow graph and all profile information up-to-date.  Reconstruction of -->
+<!-- the control flow graph after each pass is not an option, since it may be -->
+<!-- very expensive and lost profile information cannot be reconstructed at -->
+<!-- all. -->
+每个编译器过程都具有的一个重要任务是保持控制流图和所有profile信息更新。在每个过程之后都重建控制流图是不可能的，因为这样代价会很高，而且丢失的profile信息是根本无法重建的。
+
+<!-- GCC has two major intermediate representations, and both use the -->
+<!-- @code{basic_block} and @code{edge} data types to represent control -->
+<!-- flow.  Both representations share as much of the CFG maintenance code -->
+<!-- as possible.  For each representation, a set of @dfn{hooks} is defined -->
+<!-- so that each representation can provide its own implementation of CFG -->
+<!-- manipulation routines when necessary.  These hooks are defined in -->
+<!-- @file{cfghooks.h}.  There are hooks for almost all common CFG -->
+<!-- manipulations, including block splitting and merging, edge redirection -->
+<!-- and creating and deleting basic blocks.  These hooks should provide -->
+<!-- everything you need to maintain and manipulate the CFG in both the RTL -->
+<!-- and @code{tree} representation. -->
+ <p>GCC有两个主要的中间表示，并且它们都使用<code>basic_block</code>和<code>edge</code>数据类型来表示控制流。两种表示都尽可能多的共享CFG维护的代码。对于每一种表示，都定义了一套<dfn>hooks</dfn>，以便于需要的时候可以提供自己的CFG维护函数的实现。这些钩子定义在<samp><span class="file">cfghooks.h</span></samp>中。这些钩子提供了几乎所有普通的CFG操作，包括块分割和合并，边重定向，以及创建和删除基本块。这些钩子应该提供所有需要的维护和操作RTL和<code>tree</code>表示下的CFG。
+
+<!-- At the moment, the basic block boundaries are maintained transparently -->
+<!-- when modifying instructions, so there rarely is a need to move them -->
+<!-- manually (such as in case someone wants to output instruction outside -->
+<!-- basic block explicitly). -->
+<!-- Often the CFG may be better viewed as integral part of instruction -->
+<!-- chain, than structure built on the top of it.  However, in principle -->
+<!-- the control flow graph for the @code{tree} representation is -->
+<!-- @emph{not} an integral part of the representation, in that a function -->
+<!-- tree may be expanded without first building a  flow graph for the -->
+<!-- @code{tree} representation at all.  This happens when compiling -->
+<!-- without any @code{tree} optimization enabled.  When the @code{tree} -->
+<!-- optimizations are enabled and the instruction stream is rewritten in -->
+<!-- SSA form, the CFG is very tightly coupled with the instruction stream. -->
+<!-- In particular, statement insertion and removal has to be done with -->
+<!-- care.  In fact, the whole @code{tree} representation can not be easily -->
+<!-- used or maintained without proper maintenance of the CFG -->
+<!-- simultaneously. -->
+ <p>目前，基本块的边界在修改指令时会被透明的维护，因此很少需要手动移动它们（比如当有人想要显式的输出基本块外面的指令的时候）。将CFG看作指令链的组成部分，比看作建立在之上的结构，往往要更好些。但是原则上，对于树表示的控制流图并不是数表示的必须部分。函数树可以在不需要首先创建树表示的流图的情况下就被扩展。这种情况在没有进行任何树优化的编译时会发生。当进行树优化时，并且指令流被重写为SSA形式，CFG就和指令流非常紧密的联系起来了。特别在语句插入和移除时要注意。实际上，如果没有同时对CFG进行恰当的维护，整个树表示就很难使用和维护。
+
+ <p><a name="index-BLOCK_005fFOR_005fINSN_002c-bb_005ffor_005fstmt-3182"></a><!-- In the RTL representation, each instruction has a -->
+<!-- @code{BLOCK_FOR_INSN} value that represents pointer to the basic block -->
+<!-- that contains the instruction.  In the @code{tree} representation, the -->
+<!-- function @code{bb_for_stmt} returns a pointer to the basic block -->
+<!-- containing the queried statement. -->
+在RTL表示里，每条指令有一个<code>BLOCK_FOR_INSN</code>值用来表示指向包含该指令的基本块。在<code>tree</code>表示里，函数<code>bb_for_stmt</code>返回一个指向包含所查询语句的基本块。
+
+ <p><a name="index-block-statement-iterators-3183"></a><!-- When changes need to be applied to a function in its @code{tree} -->
+<!-- representation, @dfn{block statement iterators} should be used.  These -->
+<!-- iterators provide an integrated abstraction of the flow graph and the -->
+<!-- instruction stream.  Block statement iterators are constructed using -->
+<!-- the @code{block_stmt_iterator} data structure and several modifier are -->
+<!-- available, including the following: -->
+在<code>tree</code>表示里，当需要对函数进行改动时，应该使用块语句迭代器（<dfn>block statement iterators</dfn>）。这些迭代器提供了流程图和指令流的整体抽象。块语句迭代器由<code>block_stmt_iterator</code>数据结构和一些修改函数构成，包括下面的：
+
+     <dl>
+<dt><code>bsi_start</code><a name="index-bsi_005fstart-3184"></a><dd><!-- This function initializes a @code{block_stmt_iterator} that points to -->
+<!-- the first non-empty statement in a basic block. -->
+该函数初始化一个<code>block_stmt_iterator</code>，使其指向基本块中第一条非空语句。
+
+     <br><dt><code>bsi_last</code><a name="index-bsi_005flast-3185"></a><dd><!-- This function initializes a @code{block_stmt_iterator} that points to -->
+<!-- the last statement in a basic block. -->
+该函数初始化一个<code>block_stmt_iterator</code>，使其指向基本块中最后一条语句。
+
+     <br><dt><code>bsi_end_p</code><a name="index-bsi_005fend_005fp-3186"></a><dd><!-- This predicate is @code{true} if a @code{block_stmt_iterator} -->
+<!-- represents the end of a basic block. -->
+如果<code>block_stmt_iterator</code>表示基本块的结束，则为<code>true</code>。
+
+     <br><dt><code>bsi_next</code><a name="index-bsi_005fnext-3187"></a><dd><!-- This function takes a @code{block_stmt_iterator} and makes it point to -->
+<!-- its successor. -->
+该函数接受一个<code>block_stmt_iterator</code>，并使其指向它的后继。
+
+     <br><dt><code>bsi_prev</code><a name="index-bsi_005fprev-3188"></a><dd><!-- This function takes a @code{block_stmt_iterator} and makes it point to -->
+<!-- its predecessor. -->
+该函数接受一个<code>block_stmt_iterator</code>，并使其指向它的前驱。
+
+     <br><dt><code>bsi_insert_after</code><a name="index-bsi_005finsert_005fafter-3189"></a><dd><!-- This function inserts a statement after the @code{block_stmt_iterator} -->
+<!-- passed in.  The final parameter determines whether the statement -->
+<!-- iterator is updated to point to the newly inserted statement, or left -->
+<!-- pointing to the original statement. -->
+该函数在<code>block_stmt_iterator</code>所在位置之后插入一条语句。最后一个参数决定是否将语句迭代器更新指向新插入的语句，还是保留指向原来的语句。
+
+     <br><dt><code>bsi_insert_before</code><a name="index-bsi_005finsert_005fbefore-3190"></a><dd><!-- This function inserts a statement before the @code{block_stmt_iterator} -->
+<!-- passed in.  The final parameter determines whether the statement -->
+<!-- iterator is updated to point to the newly inserted statement, or left -->
+<!-- pointing to the original  statement. -->
+该函数在<code>block_stmt_iterator</code>所在位置之前插入一条语句。最后一个参数决定是否将语句迭代器更新指向新插入的语句，还是保留指向原来的语句。
+
+     <br><dt><code>bsi_remove</code><a name="index-bsi_005fremove-3191"></a><dd><!-- This function removes the @code{block_stmt_iterator} passed in and -->
+<!-- rechains the remaining statements in a basic block, if any. -->
+该函数移除<code>block_stmt_iterator</code>所在位置的语句，并且如果基本块中还有语句，则将剩余的语句重新链接。
+</dl>
+
+ <p><a name="index-BB_005fHEAD_002c-BB_005fEND-3192"></a><!-- In the RTL representation, the macros @code{BB_HEAD} and @code{BB_END} -->
+<!-- may be used to get the head and end @code{rtx} of a basic block.  No -->
+<!-- abstract iterators are defined for traversing the insn chain, but you -->
+<!-- can just use @code{NEXT_INSN} and @code{PREV_INSN} instead.  @xref{Insns}. -->
+在RTL表示里，宏<code>BB_HEAD</code>和<code>BB_END</code>可以用来获得基本块的起始<code>rtx</code>和结束<code>rtx</code>。没有抽象迭代器被定义用来遍历insn链，不过可以使用<code>NEXT_INSN</code>和<code>PREV_INSN</code>替代。参见<a href="Insns.html#Insns">Insns</a>。
+
+ <p><a name="index-purge_005fdead_005fedges-3193"></a><!-- Usually a code manipulating pass simplifies the instruction stream and -->
+<!-- the flow of control, possibly eliminating some edges.  This may for -->
+<!-- example happen when a conditional jump is replaced with an -->
+<!-- unconditional jump, but also when simplifying possibly trapping -->
+<!-- instruction to non-trapping while compiling Java.  Updating of edges -->
+<!-- is not transparent and each optimization pass is required to do so -->
+<!-- manually.  However only few cases occur in practice.  The pass may -->
+<!-- call @code{purge_dead_edges} on a given basic block to remove -->
+<!-- superfluous edges, if any. -->
+通常一个代码操作过程将会简化指令流和控制流，也可能消除一些边。例如当一个条件跳转被替换为非条件跳转，甚至在编译java时，将可能的trapping指令简化为non-trapping。边的更新是不透明的，每个优化过程都要求手动进行。不过，实际中这种情况很少发生。如果存在的话，过程可以针对给定的基本块调用<code>purge_dead_edges</code>来移除多余的边。
+
+ <p><a name="index-redirect_005fedge_005fand_005fbranch_002c-redirect_005fjump-3194"></a><!-- Another common scenario is redirection of branch instructions, but -->
+<!-- this is best modeled as redirection of edges in the control flow graph -->
+<!-- and thus use of @code{redirect_edge_and_branch} is preferred over more -->
+<!-- low level functions, such as @code{redirect_jump} that operate on RTL -->
+<!-- chain only.  The CFG hooks defined in @file{cfghooks.h} should provide -->
+<!-- the complete API required for manipulating and maintaining the CFG@. -->
+另一个常见的情景是分支指令的重定向。不过由于可以非常好的建模为控制流图里的边重定向，因此应尽量使用<code>redirect_edge_and_branch</code>，而不是其它底层函数，例如只是操作RTL链的<code>redirect_jump</code>。定义在<samp><span class="file">cfghooks.h</span></samp>中的CFG钩子应该提供了操作和维护CFG所需要的全部API。
+
+ <p><a name="index-split_005fblock-3195"></a><!-- It is also possible that a pass has to insert control flow instruction -->
+<!-- into the middle of a basic block, thus creating an entry point in the -->
+<!-- middle of the basic block, which is impossible by definition: The -->
+<!-- block must be split to make sure it only has one entry point, i.e.@: the -->
+<!-- head of the basic block.  The CFG hook @code{split_block} may be used -->
+<!-- when an instruction in the middle of a basic block has to become the -->
+<!-- target of a jump or branch instruction. -->
+有时候，一个过程可能不得不要向基本块的中间插入控制流指令，这样的话，就在基本块中间产生一个入口点。根据定义，这是不可能的，因此必须要将块分开以确保只含有一个入口点，也就是基本块的头。当基本块中间的指令必须成为跳转或分支指令的目标时，可以使用CFG钩子<code>split_block</code>。
+
+ <p><a name="index-insert_005finsn_005fon_005fedge-3196"></a><a name="index-commit_005fedge_005finsertions-3197"></a><a name="index-bsi_005finsert_005fon_005fedge-3198"></a><a name="index-bsi_005fcommit_005fedge_005finserts-3199"></a><a name="index-edge-splitting-3200"></a><!-- For a global optimizer, a common operation is to split edges in the -->
+<!-- flow graph and insert instructions on them.  In the RTL -->
+<!-- representation, this can be easily done using the -->
+<!-- @code{insert_insn_on_edge} function that emits an instruction -->
+<!-- ``on the edge'', caching it for a later @code{commit_edge_insertions} -->
+<!-- call that will take care of moving the inserted instructions off the -->
+<!-- edge into the instruction stream contained in a basic block.  This -->
+<!-- includes the creation of new basic blocks where needed.  In the -->
+<!-- @code{tree} representation, the equivalent functions are -->
+<!-- @code{bsi_insert_on_edge} which inserts a block statement -->
+<!-- iterator on an edge, and @code{bsi_commit_edge_inserts} which flushes -->
+<!-- the instruction to actual instruction stream. -->
+对一个全局优化，一个常用的操作是在流图中将边拆分，并插入指令。在RTL表示里，可以很容易的实现，通过使用<code>insert_insn_on_edge</code>函数来生成一条暂存的“on the edge”指令，以便之后的<code>commit_edge_insertions</code>调用来将插入的指令从边上移到基本块的指令流里。如果需要的话，还会生成新的基本块。在<code>tree</code>表示里，等价的函数为<code>bsi_insert_on_edge</code>，用来在边上插入一个块语句迭代器，以及<code>bsi_commit_edge_inserts</code>，将指令挪到实际的指令流里。
+
+<!-- While debugging the optimization pass, a @code{verify_flow_info} -->
+<!-- function may be useful to find bugs in the control flow graph updating -->
+<!-- code. -->
+ <p>在调试优化过程时，函数<code>verify_flow_info</code>可能有助于发现在控制流图的更新代码中的bug。
+
+<!-- Note that at present, the representation of control flow in the -->
+<!-- @code{tree} representation is discarded before expanding to RTL@. -->
+<!-- Long term the CFG should be maintained and ``expanded'' to the -->
+<!-- RTL representation along with the function @code{tree} itself. -->
+ <p>注意，目前在由树的表示扩展到RTL时，控制流的表示会被丢弃。长远的看，CFG应给被维持并随着函数树本身被扩展到RTL表示。
+
+<!-- @node Liveness information -->
+<!-- @section Liveness information -->
+ </body></html>
+

@@ -1,0 +1,305 @@
+<html lang="zh">
+<head>
+<title>Statements for C++ - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="C-and-C_002b_002b-Trees.html#C-and-C_002b_002b-Trees" title="C and C++ Trees">
+<link rel="prev" href="Functions-for-C_002b_002b.html#Functions-for-C_002b_002b" title="Functions for C++">
+<link rel="next" href="C_002b_002b-Expressions.html#C_002b_002b-Expressions" title="C++ Expressions">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Statements-for-C++"></a>
+<a name="Statements-for-C_002b_002b"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="C_002b_002b-Expressions.html#C_002b_002b-Expressions">C++ Expressions</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Functions-for-C_002b_002b.html#Functions-for-C_002b_002b">Functions for C++</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="C-and-C_002b_002b-Trees.html#C-and-C_002b_002b-Trees">C and C++ Trees</a>
+<hr>
+</div>
+
+<h4 class="subsection">11.10.5 C++语句</h4>
+
+<p><a name="index-statements-2672"></a><a name="index-BREAK_005fSTMT-2673"></a><a name="index-CLEANUP_005fSTMT-2674"></a><a name="index-CLEANUP_005fDECL-2675"></a><a name="index-CLEANUP_005fEXPR-2676"></a><a name="index-CONTINUE_005fSTMT-2677"></a><a name="index-DECL_005fSTMT-2678"></a><a name="index-DECL_005fSTMT_005fDECL-2679"></a><a name="index-DO_005fSTMT-2680"></a><a name="index-DO_005fBODY-2681"></a><a name="index-DO_005fCOND-2682"></a><a name="index-EMPTY_005fCLASS_005fEXPR-2683"></a><a name="index-EXPR_005fSTMT-2684"></a><a name="index-EXPR_005fSTMT_005fEXPR-2685"></a><a name="index-FOR_005fSTMT-2686"></a><a name="index-FOR_005fINIT_005fSTMT-2687"></a><a name="index-FOR_005fCOND-2688"></a><a name="index-FOR_005fEXPR-2689"></a><a name="index-FOR_005fBODY-2690"></a><a name="index-HANDLER-2691"></a><a name="index-IF_005fSTMT-2692"></a><a name="index-IF_005fCOND-2693"></a><a name="index-THEN_005fCLAUSE-2694"></a><a name="index-ELSE_005fCLAUSE-2695"></a><a name="index-RETURN_005fSTMT-2696"></a><a name="index-RETURN_005fEXPR-2697"></a><a name="index-SUBOBJECT-2698"></a><a name="index-SUBOBJECT_005fCLEANUP-2699"></a><a name="index-SWITCH_005fSTMT-2700"></a><a name="index-SWITCH_005fCOND-2701"></a><a name="index-SWITCH_005fBODY-2702"></a><a name="index-TRY_005fBLOCK-2703"></a><a name="index-TRY_005fSTMTS-2704"></a><a name="index-TRY_005fHANDLERS-2705"></a><a name="index-HANDLER_005fPARMS-2706"></a><a name="index-HANDLER_005fBODY-2707"></a><a name="index-USING_005fSTMT-2708"></a><a name="index-WHILE_005fSTMT-2709"></a><a name="index-WHILE_005fBODY-2710"></a><a name="index-WHILE_005fCOND-2711"></a>
+<!-- A function that has a definition in the current translation unit will -->
+<!-- have a non-@code{NULL} @code{DECL_INITIAL}.  However, back ends should not make -->
+<!-- use of the particular value given by @code{DECL_INITIAL}. -->
+在当前转换单元中定义的函数将会有一个非<code>NULL</code>的<code>DECL_INITIAL</code>。
+但是，后端不应该使用<code>DECL_INITIAL</code>给出的该特定值。
+
+<!-- The @code{DECL_SAVED_TREE} macro will give the complete body of the -->
+<!-- function. -->
+ <p>宏<code>DECL_SAVED_TREE</code>将会给出完整的函数体。
+
+<!-- @subsubsection Statements -->
+<h5 class="subsubsection">11.10.5.1 语句</h5>
+
+<!-- There are tree nodes corresponding to all of the source-level -->
+<!-- statement constructs, used within the C and C++ frontends.  These are -->
+<!-- enumerated here, together with a list of the various macros that can -->
+<!-- be used to obtain information about them.  There are a few macros that -->
+<!-- can be used with all statements: -->
+<p>C和C++前端，使用了对应于所有源级的语句构造的树节点。
+这些都列举在这里，并附上能够用来获得它们的信息的各种宏的列表。
+有一些宏能用于所有的语句：
+
+     <dl>
+<dt><code>STMT_IS_FULL_EXPR_P</code><a name="index-STMT_005fIS_005fFULL_005fEXPR_005fP-2712"></a><dd><!-- In C++, statements normally constitute ``full expressions''; temporaries -->
+<!-- created during a statement are destroyed when the statement is complete. -->
+<!-- However, G++ sometimes represents expressions by statements; these -->
+<!-- statements will not have @code{STMT_IS_FULL_EXPR_P} set.  Temporaries -->
+<!-- created during such statements should be destroyed when the innermost -->
+<!-- enclosing statement with @code{STMT_IS_FULL_EXPR_P} set is exited. -->
+在C++里，语句通常构成“充分表达式（full expressions）”；
+在语句中创建的临时事物会在声明完成时被销毁。
+然而，G++有时通过语句来表示表达式；
+这些语句将不会设置<code>STMT_IS_FULL_EXPR_P</code>。
+在这样的语句中创建的临时事物将会在最内层设置了
+<code>STMT_IS_FULL_EXPR_P</code>的语句退出时被销毁。
+</dl>
+
+<!-- Here is the list of the various statement nodes, and the macros used to -->
+<!-- access them.  This documentation describes the use of these nodes in -->
+<!-- non-template functions (including instantiations of template functions). -->
+<!-- In template functions, the same nodes are used, but sometimes in -->
+<!-- slightly different ways. -->
+ <p>这里有一个各种语句节点的列表，以及访问它们的宏。
+该文档描述了在非模板函数（包括模板函数的实例）中这些节点的用法。
+在模板函数里，使用相同的节点，但是有时方法略有不同。
+
+<!-- Many of the statements have substatements.  For example, a @code{while} -->
+<!-- loop will have a body, which is itself a statement.  If the substatement -->
+<!-- is @code{NULL_TREE}, it is considered equivalent to a statement -->
+<!-- consisting of a single @code{;}, i.e., an expression statement in which -->
+<!-- the expression has been omitted.  A substatement may in fact be a list -->
+<!-- of statements, connected via their @code{TREE_CHAIN}s.  So, you should -->
+<!-- always process the statement tree by looping over substatements, like -->
+<!-- this: -->
+ <p>许多语句具有子语句。例如，一个<code>while</code>循环将会有一个循环体，
+其本身也是一个语句。如果子语句是<code>NULL_TREE</code>，
+则被认为相当于一个<code>;</code>组成的语句，即一个表达式语句，其中表达式为空。
+一个子语句实际上可以为一个语句列表，通过它们的<code>TREE_CHAIN</code>连接一起。
+所以，你应该总是通过循环所有的子语句来处理语句树，像这样：
+<pre class="smallexample">     void process_stmt (stmt)
+          tree stmt;
+     {
+       while (stmt)
+         {
+           switch (TREE_CODE (stmt))
+             {
+             case IF_STMT:
+               process_stmt (THEN_CLAUSE (stmt));
+               /* <span class="roman">More processing here.</span>  */
+               break;
+     
+             ...
+             }
+     
+           stmt = TREE_CHAIN (stmt);
+         }
+     }
+</pre>
+ <!-- In other words, while the @code{then} clause of an @code{if} statement -->
+<!-- in C++ can be only one statement (although that one statement may be a -->
+<!-- compound statement), the intermediate representation will sometimes use -->
+<!-- several statements chained together. -->
+ <p>换句话说，虽然C++中<code>if</code>语句的<code>then</code>子句可以只是一个语句，
+但中间表示有时会使用多个语句连接在一起。
+
+     <dl>
+<dt><code>BREAK_STMT</code><dd><!-- Used to represent a @code{break} statement.  There are no additional -->
+<!-- fields. -->
+用来表示一条<code>break</code>语句。没有额外的域。
+
+     <br><dt><code>CLEANUP_STMT</code><dd><!-- Used to represent an action that should take place upon exit from the -->
+<!-- enclosing scope.  Typically, these actions are calls to destructors for -->
+<!-- local objects, but back ends cannot rely on this fact.  If these nodes -->
+<!-- are in fact representing such destructors, @code{CLEANUP_DECL} will be -->
+<!-- the @code{VAR_DECL} destroyed.  Otherwise, @code{CLEANUP_DECL} will be -->
+<!-- @code{NULL_TREE}.  In any case, the @code{CLEANUP_EXPR} is the -->
+<!-- expression to execute.  The cleanups executed on exit from a scope -->
+<!-- should be run in the reverse order of the order in which the associated -->
+<!-- @code{CLEANUP_STMT}s were encountered. -->
+用来表示在封闭作用域的出口上执行的动作。
+通常，这些动作是为局部对象调用析构函数，但是后端不能依靠这个事实。
+如果这些节点确实是表示了这样的析构函数，
+<code>CLEANUP_DECL</code>将为销毁的<code>VAR_DECL</code>。
+否则<code>CLEANUP_DECL</code>为<code>NULL_TREE</code>。
+无论哪种情况，<code>CLEANUP_EXPR</code>都是要被执行的表达式。
+清除工作在作用域的出口被执行，
+并且按照所遇到的<code>CLEANUP_STMT</code>的相反顺序进行。
+
+     <br><dt><code>CONTINUE_STMT</code><dd><!-- Used to represent a @code{continue} statement.  There are no additional -->
+<!-- fields. -->
+用来表示一条<code>continue</code>语句。没有额外的域。
+
+     <br><dt><code>CTOR_STMT</code><dd><!-- Used to mark the beginning (if @code{CTOR_BEGIN_P} holds) or end (if -->
+<!-- @code{CTOR_END_P} holds of the main body of a constructor.  See also -->
+<!-- @code{SUBOBJECT} for more information on how to use these nodes. -->
+用于标记构建函数体的起始（<code>CTOR_BEGIN_P</code>）或结尾（<code>CTOR_END_P</code>）。关于如何使用这些节点的更多信息，参见<code>SUBOBJECT</code>。
+
+     <br><dt><code>DO_STMT</code><dd><!-- Used to represent a @code{do} loop.  The body of the loop is given by -->
+<!-- @code{DO_BODY} while the termination condition for the loop is given by -->
+<!-- @code{DO_COND}.  The condition for a @code{do}-statement is always an -->
+<!-- expression. -->
+用来表示<code>do</code>循环。循环体由<code>DO_BODY</code>给出，
+终止条件由<code>DO_COND</code>给出。<code>do</code>语句的条件总是一个表达式。
+
+     <br><dt><code>EMPTY_CLASS_EXPR</code><dd><!-- Used to represent a temporary object of a class with no data whose -->
+<!-- address is never taken.  (All such objects are interchangeable.)  The -->
+<!-- @code{TREE_TYPE} represents the type of the object. -->
+用来表示类的临时对象。（所有这样的对象都是可互换的。）
+<code>TREE_TYPE</code>表示对象的类型。
+
+     <br><dt><code>EXPR_STMT</code><dd><!-- Used to represent an expression statement.  Use @code{EXPR_STMT_EXPR} to -->
+<!-- obtain the expression. -->
+用来表示表达式语句。使用<code>EXPR_STMT_EXPR</code>来获得表达式。
+
+     <br><dt><code>FOR_STMT</code><dd><!-- Used to represent a @code{for} statement.  The @code{FOR_INIT_STMT} is -->
+<!-- the initialization statement for the loop.  The @code{FOR_COND} is the -->
+<!-- termination condition.  The @code{FOR_EXPR} is the expression executed -->
+<!-- right before the @code{FOR_COND} on each loop iteration; often, this -->
+<!-- expression increments a counter.  The body of the loop is given by -->
+<!-- @code{FOR_BODY}.  Note that @code{FOR_INIT_STMT} and @code{FOR_BODY} -->
+<!-- return statements, while @code{FOR_COND} and @code{FOR_EXPR} return -->
+<!-- expressions. -->
+用来表示一条<code>for</code>语句。<code>FOR_INIT_STMT</code>是循环的初始语句。
+<code>FOR_COND</code>是终止条件。
+<code>FOR_INIT_STMT</code>是在每次循环迭代<code>FOR_COND</code>之前执行的表达式，
+该表达式常常是增加计数器。循环体由<code>FOR_BODY</code>给出。
+注意<code>FOR_INIT_STMT</code>和<code>FOR_BODY</code>返回语句，
+而<code>FOR_COND</code>和<code>FOR_EXPR</code>返回表达式。
+
+     <br><dt><code>HANDLER</code><dd><!-- Used to represent a C++ @code{catch} block.  The @code{HANDLER_TYPE} -->
+<!-- is the type of exception that will be caught by this handler; it is -->
+<!-- equal (by pointer equality) to @code{NULL} if this handler is for all -->
+<!-- types.  @code{HANDLER_PARMS} is the @code{DECL_STMT} for the catch -->
+<!-- parameter, and @code{HANDLER_BODY} is the code for the block itself. -->
+用来表示C++ <code>catch</code>块。<code>HANDLER_TYPE</code>是由该处理者捕捉的异常类型。
+如果该处理者是针对所有类型的，则等于（指针等于）<code>NULL</code>。
+<code>HANDLER_PARMS</code>是<code>catch</code>参数，是一个<code>DECL_STMT</code>。
+<code>HANDLER_BODY</code>是块本身的代码。
+
+     <br><dt><code>IF_STMT</code><dd><!-- Used to represent an @code{if} statement.  The @code{IF_COND} is the -->
+<!-- expression. -->
+用来表示一条<code>if</code>语句。<code>IF_COND</code>是表达式。
+
+     <!-- If the condition is a @code{TREE_LIST}, then the @code{TREE_PURPOSE} is -->
+     <!-- a statement (usually a @code{DECL_STMT}).  Each time the condition is -->
+     <!-- evaluated, the statement should be executed.  Then, the -->
+     <!-- @code{TREE_VALUE} should be used as the conditional expression itself. -->
+     <!-- This representation is used to handle C++ code like this: -->
+     <p>如果条件是一个<code>TREE_LIST</code>，
+则<code>TREE_PURPOSE</code>是一条语句（通常为 <code>DECL_STMT</code>）。
+每次评估条件的时候，都要执行该语句。
+然后，<code>TREE_VALUE</code>应该作为条件表达式本身来使用。
+该表示用来处理C++代码，如：
+
+     <p>C++ distinguishes between this and <code>COND_EXPR</code> for handling templates.
+
+     <pre class="smallexample">          if (int i = 7) ...
+</pre>
+     <!-- where there is a new local variable (or variables) declared within the -->
+     <!-- condition. -->
+     <p>其中，在条件中声明了一个（或多个）新的局部变量。
+
+     <p>The <code>THEN_CLAUSE</code> represents the statement given by the <code>then</code>
+condition, while the <code>ELSE_CLAUSE</code> represents the statement given
+by the <code>else</code> condition.
+
+     <br><dt><code>SUBOBJECT</code><dd><!-- In a constructor, these nodes are used to mark the point at which a -->
+<!-- subobject of @code{this} is fully constructed.  If, after this point, an -->
+<!-- exception is thrown before a @code{CTOR_STMT} with @code{CTOR_END_P} set -->
+<!-- is encountered, the @code{SUBOBJECT_CLEANUP} must be executed.  The -->
+<!-- cleanups must be executed in the reverse order in which they appear. -->
+在构造函数中，这些节点用来标记在某一点子对象被完全构造。如果，这一点之后，在遇到设置了<code>CTOR_END_P</code>的<code>CTOR_STMT</code>之前，有异常抛出，则必须执行<code>SUBOBJECT_CLEANUP</code>。清除工作必须按照它们出现的顺序反向执行。
+
+     <br><dt><code>SWITCH_STMT</code><dd><!-- Used to represent a @code{switch} statement.  The @code{SWITCH_STMT_COND} -->
+<!-- is the expression on which the switch is occurring.  See the documentation -->
+<!-- for an @code{IF_STMT} for more information on the representation used -->
+<!-- for the condition.  The @code{SWITCH_STMT_BODY} is the body of the switch -->
+<!-- statement.   The @code{SWITCH_STMT_TYPE} is the original type of switch -->
+<!-- expression as given in the source, before any compiler conversions. -->
+用来表示一个<code>switch</code>语句。
+<code>SWITCH_STMT_COND</code>是发生<code>switch</code>的表达式。
+更多关于条件表示的信息，参见<code>IF_STMT</code>文档。
+<code>SWITCH_STMT_BODY</code>是<code>switch</code>语句主体。
+<code>SWITCH_STMT_TYPE</code>是源代码中给出的<code>switch</code>表达式的，
+在任何编译器转换之前的原始类型。
+
+     <br><dt><code>TRY_BLOCK</code><dd><!-- Used to represent a @code{try} block.  The body of the try block is -->
+<!-- given by @code{TRY_STMTS}.  Each of the catch blocks is a @code{HANDLER} -->
+<!-- node.  The first handler is given by @code{TRY_HANDLERS}.  Subsequent -->
+<!-- handlers are obtained by following the @code{TREE_CHAIN} link from one -->
+<!-- handler to the next.  The body of the handler is given by -->
+<!-- @code{HANDLER_BODY}. -->
+用来表示一个<code>try</code>块。<code>try</code>块的主体由<code>TRY_STMTS</code>给出。
+每个<code>catch</code>块都是一个<code>HANDLER</code>节点。
+第一个<code>handler</code>由 <code>TRY_HANDLERS</code>给出。
+后续的<code>handlers</code>可以通过<code>TREE_CHAIN</code>获得。
+<code>handler</code>的主体由<code>HANDLER_BODY</code>给出。
+
+     <!-- If @code{CLEANUP_P} holds of the @code{TRY_BLOCK}, then the -->
+     <!-- @code{TRY_HANDLERS} will not be a @code{HANDLER} node.  Instead, it will -->
+     <!-- be an expression that should be executed if an exception is thrown in -->
+     <!-- the try block.  It must rethrow the exception after executing that code. -->
+     <!-- And, if an exception is thrown while the expression is executing, -->
+     <!-- @code{terminate} must be called. -->
+     <p>如果<code>CLEANUP_P</code>持有<code>TRY_BLOCK</code>，
+则<code>TRY_HANDLERS</code>将不是一个<code>HANDLER</code>节点。
+相反的，其将会是一个表达式，并且如果在<code>try</code>块中抛出异常时则被执行。
+其必须在执行完那些代码之后再重新抛出异常。
+并且，如果当表达式正在执行的时候，如果有异常抛出，则必须终止。
+
+     <br><dt><code>USING_STMT</code><dd><!-- Used to represent a @code{using} directive.  The namespace is given by -->
+<!-- @code{USING_STMT_NAMESPACE}, which will be a NAMESPACE_DECL@.  This node -->
+<!-- is needed inside template functions, to implement using directives -->
+<!-- during instantiation. -->
+用来表示<code>using</code>指示符。命名空间为一个NAMESPACE_DECL，
+由<code>USING_STMT_NAMESPACE</code>给出。该节点在模板函数内部需要，
+用来在实例化时实现<code>using</code>指示符。
+
+     <br><dt><code>WHILE_STMT</code><dd><!-- Used to represent a @code{while} loop.  The @code{WHILE_COND} is the -->
+<!-- termination condition for the loop.  See the documentation for an -->
+<!-- @code{IF_STMT} for more information on the representation used for the -->
+<!-- condition. -->
+用来表示一个<code>while</code>循环。<code>WHILE_COND</code>是循环的终止条件。
+关于用来表示条件的更多信息，参见<code>IF_STMT</code>的文档。
+
+     <!-- The @code{WHILE_BODY} is the body of the loop. -->
+     <p><code>WHILE_BODY</code>是循环体。
+
+ </dl>
+
+<!-- @node C++ Expressions -->
+<!-- @subsection C++ Expressions -->
+ </body></html>
+

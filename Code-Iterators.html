@@ -1,0 +1,179 @@
+<html lang="zh">
+<head>
+<title>Code Iterators - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Iterators.html#Iterators" title="Iterators">
+<link rel="prev" href="Mode-Iterators.html#Mode-Iterators" title="Mode Iterators">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Code-Iterators"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Mode-Iterators.html#Mode-Iterators">Mode Iterators</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Iterators.html#Iterators">Iterators</a>
+<hr>
+</div>
+
+<h4 class="subsection">16.22.2 代码迭代器</h4>
+
+<p><a name="index-code-iterators-in-_0040file_007b_002emd_007d-files-3734"></a><a name="index-define_005fcode_005fiterator-3735"></a><a name="index-define_005fcode_005fattr-3736"></a>
+代码迭代器使用与机器模式迭代器类似的方法来操作。参见<a href="Mode-Iterators.html#Mode-Iterators">Mode Iterators</a>。
+
+ <p>结构：
+
+<pre class="smallexample">     (define_code_iterator <var>name</var> [(<var>code1</var> "<var>cond1</var>") ... (<var>coden</var> "<var>condn</var>")])
+</pre>
+ <!-- defines a pseudo rtx code @var{name} that can be instantiated as -->
+<!-- @var{codei} if condition @var{condi} is true.  Each @var{codei} -->
+<!-- must have the same rtx format.  @xref{RTL Classes}. -->
+<!-- As with mode iterators, each pattern that uses @var{name} will be -->
+<!-- expanded @var{n} times, once with all uses of @var{name} replaced by -->
+<!-- @var{code1}, once with all uses replaced by @var{code2}, and so on. -->
+<!-- @xref{Defining Mode Iterators}. -->
+<!-- It is possible to define attributes for codes as well as for modes. -->
+<!-- There are two standard code attributes: @code{code}, the name of the -->
+<!-- code in lower case, and @code{CODE}, the name of the code in upper case. -->
+<!-- Other attributes are defined using: -->
+ <p>定义了一个伪rtx代码 <var>name</var>，如果条件 <var>condi</var> 为真时，其可以作为
+<var>codei</var> 被实例化。每个 <var>codei</var> 必须具有相同的rtx格式。
+参见<a href="RTL-Classes.html#RTL-Classes">RTL Classes</a>。
+
+ <p>跟机器模式迭代器一样，每个使用 <var>name</var> 的指令模式将被扩展 <var>n</var> 次，
+一次使用 <var>code1</var> 来替换，一次使用 <var>code2</var>，等等。
+参见<a href="Defining-Mode-Iterators.html#Defining-Mode-Iterators">Defining Mode Iterators</a>。
+
+ <p>跟机器模式一样可以为代码定义属性。有两种标准代码属性：<code>code</code>，代码
+的小写形式名字，以及 <code>CODE</code>，代码的大写形式名字。其它属性使用下列
+方式来定义：
+
+<!-- @smallexample -->
+<!-- (define_code_attr @var{name} [(@var{code1} "@var{value1}") @dots{} (@var{coden} "@var{valuen}")]) -->
+<!-- @end smallexample -->
+<!-- Here's an example of code iterators in action, taken from the MIPS port: -->
+<!-- @smallexample -->
+<!-- (define_code_iterator any_cond [unordered ordered unlt unge uneq ltgt unle ungt -->
+<!-- eq ne gt ge lt le gtu geu ltu leu]) -->
+<!-- (define_expand "b<code>" -->
+<!-- [(set (pc) -->
+<!-- (if_then_else (any_cond:CC (cc0) -->
+<!-- (const_int 0)) -->
+<!-- (label_ref (match_operand 0 "")) -->
+<!-- (pc)))] -->
+<!-- "" -->
+<!-- @{ -->
+<!-- gen_conditional_branch (operands, <CODE>); -->
+<!-- DONE; -->
+<!-- @}) -->
+<!-- @end smallexample -->
+<!-- This is equivalent to: -->
+<!-- @smallexample -->
+<!-- (define_expand "bunordered" -->
+<!-- [(set (pc) -->
+<!-- (if_then_else (unordered:CC (cc0) -->
+<!-- (const_int 0)) -->
+<!-- (label_ref (match_operand 0 "")) -->
+<!-- (pc)))] -->
+<!-- "" -->
+<!-- @{ -->
+<!-- gen_conditional_branch (operands, UNORDERED); -->
+<!-- DONE; -->
+<!-- @}) -->
+<!-- (define_expand "bordered" -->
+<!-- [(set (pc) -->
+<!-- (if_then_else (ordered:CC (cc0) -->
+<!-- (const_int 0)) -->
+<!-- (label_ref (match_operand 0 "")) -->
+<!-- (pc)))] -->
+<!-- "" -->
+<!-- @{ -->
+<!-- gen_conditional_branch (operands, ORDERED); -->
+<!-- DONE; -->
+<!-- @}) -->
+<!-- @dots{} -->
+<!-- @end smallexample -->
+<!-- @end ifset -->
+<pre class="smallexample">     (define_code_attr <var>name</var> [(<var>code1</var> "<var>value1</var>") ... (<var>coden</var> "<var>valuen</var>")])
+</pre>
+ <p>这里有一个实际使用的关于代码迭代器的例子，摘自MIPS后端（port）：
+
+<pre class="smallexample">     (define_code_iterator any_cond [unordered ordered unlt unge uneq ltgt unle ungt
+                                     eq ne gt ge lt le gtu geu ltu leu])
+     
+     (define_expand "b&lt;code&gt;"
+       [(set (pc)
+             (if_then_else (any_cond:CC (cc0)
+                                        (const_int 0))
+                           (label_ref (match_operand 0 ""))
+                           (pc)))]
+       ""
+     {
+       gen_conditional_branch (operands, &lt;CODE&gt;);
+       DONE;
+     })
+</pre>
+ <p>这等价于：
+
+<pre class="smallexample">     (define_expand "bunordered"
+       [(set (pc)
+             (if_then_else (unordered:CC (cc0)
+                                         (const_int 0))
+                           (label_ref (match_operand 0 ""))
+                           (pc)))]
+       ""
+     {
+       gen_conditional_branch (operands, UNORDERED);
+       DONE;
+     })
+     
+     (define_expand "bordered"
+       [(set (pc)
+             (if_then_else (ordered:CC (cc0)
+                                       (const_int 0))
+                           (label_ref (match_operand 0 ""))
+                           (pc)))]
+       ""
+     {
+       gen_conditional_branch (operands, ORDERED);
+       DONE;
+     })
+     
+     ...
+</pre>
+ <!-- Copyright (C) 1988,1989,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001, -->
+<!-- 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 -->
+<!-- Free Software Foundation, Inc. -->
+<!-- This is part of the GCC manual. -->
+<!-- For copying conditions, see the file gcc.texi. -->
+<!-- @node Target Macros -->
+<!-- @chapter Target Description Macros and Functions -->
+ </body></html>
+

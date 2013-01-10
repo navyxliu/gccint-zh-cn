@@ -1,0 +1,144 @@
+<html lang="zh">
+<head>
+<title>Accessors - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="RTL.html#RTL" title="RTL">
+<link rel="prev" href="RTL-Classes.html#RTL-Classes" title="RTL Classes">
+<link rel="next" href="Special-Accessors.html#Special-Accessors" title="Special Accessors">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Accessors"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Special-Accessors.html#Special-Accessors">Special Accessors</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="RTL-Classes.html#RTL-Classes">RTL Classes</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="RTL.html#RTL">RTL</a>
+<hr>
+</div>
+
+<h3 class="section">10.3 访问操作数</h3>
+
+<p><a name="index-accessors-1716"></a><a name="index-access-to-operands-1717"></a><a name="index-operand-access-1718"></a>
+<a name="index-XEXP-1719"></a><a name="index-XINT-1720"></a><a name="index-XWINT-1721"></a><a name="index-XSTR-1722"></a><!-- Operands of expressions are accessed using the macros @code{XEXP}, -->
+<!-- @code{XINT}, @code{XWINT} and @code{XSTR}.  Each of these macros takes -->
+<!-- two arguments: an expression-pointer (RTX) and an operand number -->
+<!-- (counting from zero).  Thus, -->
+表达式的操作数用宏<code>XEXP</code>、<code>XINT</code>、<code>XWINT</code>和<code>XSTR</code>访问。
+所有这些宏都有两个参数：一个为表达式指针（RTX），
+另一个为操作数序号 ( 从0 开始计算 )。如：
+
+<pre class="smallexample">     XEXP (<var>x</var>, 2)
+</pre>
+ <p class="noindent"><!-- accesses operand 2 of expression @var{x}, as an expression. -->
+表示以表达式方式访问表达式<var>x</var>的第2个操作数。
+
+<pre class="smallexample">     XINT (<var>x</var>, 2)
+</pre>
+ <p class="noindent"><!-- accesses the same operand as an integer.  @code{XSTR}, used in the same -->
+<!-- fashion, would access it as a string. -->
+表示以整数方式访问<code>x</code>的第2个操作数。
+<code>XSTR</code>表示以字符串方式访问。
+
+<!-- Any operand can be accessed as an integer, as an expression or as a string. -->
+<!-- You must choose the correct method of access for the kind of value actually -->
+<!-- stored in the operand.  You would do this based on the expression code of -->
+<!-- the containing expression.  That is also how you would know how many -->
+<!-- operands there are. -->
+ <p>任何一个操作数都能以整数方式、表达式方式或字符串方式来访问，
+但必须根据存贮在操作数中的实际值选择正确的访问方式。
+这可根据表达式的代码而获得，同样也可表达式代码获得操作数的个数。
+
+<!-- For example, if @var{x} is a @code{subreg} expression, you know that it has -->
+<!-- two operands which can be correctly accessed as @code{XEXP (@var{x}, 0)} -->
+<!-- and @code{XINT (@var{x}, 1)}.  If you did @code{XINT (@var{x}, 0)}, you -->
+<!-- would get the address of the expression operand but cast as an integer; -->
+<!-- that might occasionally be useful, but it would be cleaner to write -->
+<!-- @code{(int) XEXP (@var{x}, 0)}.  @code{XEXP (@var{x}, 1)} would also -->
+<!-- compile without error, and would return the second, integer operand cast as -->
+<!-- an expression pointer, which would probably result in a crash when -->
+<!-- accessed.  Nothing stops you from writing @code{XEXP (@var{x}, 28)} either, -->
+<!-- but this will access memory past the end of the expression with -->
+<!-- unpredictable results. -->
+ <p>例如：若<var>x</var>是<code>subreg</code>表达式，通过表达式代码可知它有二个操作数，
+这两个操作数的访问应该是<code>XEXP (</code><var>x</var><code>, 0)</code> 和<code>XINT (</code><var>x</var><code>, 1)</code>，
+若写成<code>XINT (</code><var>x</var><code>, 0)</code>，那么，你得到的表达式地址将被强制成整数，
+偶尔可能会需要这样做，但在这种情况下用<code>(int) XEXP (</code><var>x</var><code>, 0)</code>表示要更好。
+同样写成<code>XEXP (</code><var>x</var><code>, 1)</code> 也不会导致编译错误，
+它将返回强制为表达式指针而实际为整数的1号操作数，在运行中访问该指针时，
+这可能会导致出错。同样，你也可以写成<code>XEXP (</code><var>x</var><code>, 28)</code>，
+但这超出了此表达式的存贮边界，所得到的将是一个预料不到的结果。
+
+<!-- Access to operands which are vectors is more complicated.  You can use the -->
+<!-- macro @code{XVEC} to get the vector-pointer itself, or the macros -->
+<!-- @code{XVECEXP} and @code{XVECLEN} to access the elements and length of a -->
+<!-- vector. -->
+ <p>对向量操作数的访问较为复杂些，可用<code>XVEC</code>宏来获取向量指针本身，
+<code>XVECEXP</code>和<code>XVECLEN</code>宏访问一个向量的元素和长度。
+
+<!-- @table @code -->
+<!-- @findex XVEC -->
+<!-- @item XVEC (@var{exp}, @var{idx}) -->
+<!-- Access the vector-pointer which is operand number @var{idx} in @var{exp}. -->
+<!-- @findex XVECLEN -->
+<!-- @item XVECLEN (@var{exp}, @var{idx}) -->
+<!-- Access the length (number of elements) in the vector which is -->
+<!-- in operand number @var{idx} in @var{exp}.  This value is an @code{int}. -->
+<!-- @findex XVECEXP -->
+<!-- @item XVECEXP (@var{exp}, @var{idx}, @var{eltnum}) -->
+<!-- Access element number @var{eltnum} in the vector which is -->
+<!-- in operand number @var{idx} in @var{exp}.  This value is an RTX@. -->
+<!-- It is up to you to make sure that @var{eltnum} is not negative -->
+<!-- and is less than @code{XVECLEN (@var{exp}, @var{idx})}. -->
+<!-- @end table -->
+     
+<a name="index-XVEC-1723"></a>
+<dl><dt><code>XVEC (</code><var>exp</var><code>, </code><var>idx</var><code>)</code><dd>获得<var>exp</var>中第<var>idx</var>个操作数的向量指针。
+
+     <p><a name="index-XVECLEN-1724"></a><br><dt><code>XVECLEN (</code><var>exp</var><code>, </code><var>idx</var><code>)</code><dd>获得<var>exp</var>中第<var>idx</var>个操作数（为向量操作数）的向量长度（元素个数），
+其值是<code>int</code>。
+
+     <p><a name="index-XVECEXP-1725"></a><br><dt><code>XVECEXP (</code><var>exp</var><code>, </code><var>idx</var><code>, </code><var>eltnum</var><code>)</code><dd>访问<var>exp</var>中第<var>idx</var>个操作数（为向量操作数）的第<var>eltnum</var>个元素，
+其值是一个RTX。
+
+     <p>需要由你来确保<var>eltnum</var>不为负，并且小于<code>XVECLEN (</code><var>exp</var><code>, </code><var>idx</var><code>)</code>。
+</dl>
+
+<!-- All the macros defined in this section expand into lvalues and therefore -->
+<!-- can be used to assign the operands, lengths and vector elements as well as -->
+<!-- to access them. -->
+ <p>在本节中所定义的所有宏定义都被扩展成左值，
+因而也可用于对操作数、长度和向量元素赋值。
+
+<!-- @node Special Accessors -->
+<!-- @section Access to Special Operands -->
+ </body></html>
+

@@ -1,0 +1,285 @@
+<html lang="zh">
+<head>
+<title>Makefile - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="gcc-Directory.html#gcc-Directory" title="gcc Directory">
+<link rel="prev" href="Build.html#Build" title="Build">
+<link rel="next" href="Library-Files.html#Library-Files" title="Library Files">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Makefile"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Library-Files.html#Library-Files">Library Files</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Build.html#Build">Build</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="gcc-Directory.html#gcc-Directory">gcc Directory</a>
+<hr>
+</div>
+
+<h4 class="subsection">6.3.4 Makefile工作目标</h4>
+
+<p><a name="index-makefile-targets-1664"></a><a name="index-targets_002c-makefile-1665"></a>
+<!-- These targets are available from the @samp{gcc} directory: -->
+这些工作目标可以从&lsquo;<samp><span class="samp">gcc</span></samp>&rsquo;目录下获得：
+
+     <dl>
+<dt><code>all</code><dd><!-- This is the default target.  Depending on what your build/host/target -->
+<!-- configuration is, it coordinates all the things that need to be built. -->
+这是缺省工作目标。它会根据你对build/host/target的配置，
+来协调构建所有需要的事物。
+
+     <br><dt><code>doc</code><dd><!-- Produce info-formatted documentation and man pages.  Essentially it -->
+<!-- calls @samp{make man} and @samp{make info}. -->
+生成info格式的文档和man页。实质上它是调用了&lsquo;<samp><span class="samp">make man</span></samp>&rsquo;和&lsquo;<samp><span class="samp">make info</span></samp>&rsquo;。
+
+     <br><dt><code>dvi</code><dd><!-- Produce DVI-formatted documentation. -->
+生成DVI格式的文档。
+
+     <br><dt><code>pdf</code><dd><!-- Produce PDF-formatted documentation. -->
+生成PDF格式的文档。
+
+     <br><dt><code>html</code><dd><!-- Produce HTML-formatted documentation. -->
+生成HTML格式的文档。
+
+     <br><dt><code>man</code><dd><!-- Generate man pages. -->
+生成man页。
+
+     <br><dt><code>info</code><dd><!-- Generate info-formatted pages. -->
+生成info格式的页。
+
+     <br><dt><code>mostlyclean</code><dd><!-- Delete the files made while building the compiler. -->
+删除构建编译器中创建的文件。
+
+     <br><dt><code>clean</code><dd><!-- That, and all the other files built by @samp{make all}. -->
+由&lsquo;<samp><span class="samp">make all</span></samp>&rsquo;创建的所有其它文件。
+
+     <br><dt><code>distclean</code><dd><!-- That, and all the files created by @command{configure}. -->
+由<samp><span class="command">configure</span></samp>创建的所有文件。
+
+     <br><dt><code>maintainer-clean</code><dd><!-- Distclean plus any file that can be generated from other files.  Note -->
+<!-- that additional tools may be required beyond what is normally needed to -->
+<!-- build GCC. -->
+Distclean，以及任何由其它文件生成的文件。
+注意可能会需要，除了构建gcc所需的，额外的工具。
+
+     <br><dt><code>srcextra</code><dd><!-- Generates files in the source directory that are not version-controlled but -->
+<!-- should go into a release tarball. -->
+在源目录生成不在CVS中存在的，但是属于发行tar包的文件。
+由CVS源文件<samp><span class="file">gcc/java/parse.y</span></samp>生成的<samp><span class="file">gcc/java/parse.c</span></samp>是一个例子。
+
+     <br><dt><code>srcinfo</code><dt><code>srcman</code><dd><!-- Copies the info-formatted and manpage documentation into the source -->
+<!-- directory usually for the purpose of generating a release tarball. -->
+将info格式的和manpage文档复制到源目录，用于生成发行tar包。
+
+     <br><dt><code>install</code><dd><!-- Installs GCC. -->
+安装gcc。
+
+     <br><dt><code>uninstall</code><dd><!-- Deletes installed files, though this is not supported. -->
+删除安装的文件。
+
+     <br><dt><code>check</code><dd><!-- Run the testsuite.  This creates a @file{testsuite} subdirectory that -->
+<!-- has various @file{.sum} and @file{.log} files containing the results of -->
+<!-- the testing.  You can run subsets with, for example, @samp{make check-gcc}. -->
+<!-- You can specify specific tests by setting @env{RUNTESTFLAGS} to be the name -->
+<!-- of the @file{.exp} file, optionally followed by (for some tests) an equals -->
+<!-- and a file wildcard, like: -->
+运行测试包。这将创建一个<samp><span class="file">testsuite</span></samp>子目录，
+其中具有各种包含测试结果的<samp><span class="file">.sum</span></samp>和<samp><span class="file">.log</span></samp>文件。
+可以使用，例如&lsquo;<samp><span class="samp">make check-gcc</span></samp>&rsquo;的方式，来运行一个测试子集。
+可以通过设定RUNTESTFLAGS为<samp><span class="file">.exp</span></samp>文件名，
+（对于某些测试）后面可选的一个等号和一个文件通配符，来指定特定的测试。如：
+
+     <pre class="smallexample">          make check-gcc RUNTESTFLAGS="execute.exp=19980413-*"
+</pre>
+     <!-- Note that running the testsuite may require additional tools be -->
+     <!-- installed, such as Tcl or DejaGnu. -->
+     <p>注意可能需要安装额外的工具，像TCL或dejagnu，来运行测试包。
+</dl>
+
+<!-- The toplevel tree from which you start GCC compilation is not -->
+<!-- the GCC directory, but rather a complex Makefile that coordinates -->
+<!-- the various steps of the build, including bootstrapping the compiler -->
+<!-- and using the new compiler to build target libraries. -->
+ <p>开始编译GCC的顶层树不是GCC目录，而是使用一个复杂的Makefile来协调构建的各个步骤，包括自举（bootstrap）编译器，以及使用新的编译器来构建目标库。
+
+<!-- When GCC is configured for a native configuration, the default action -->
+<!-- for @command{make} is to do a full three-stage bootstrap.  This means -->
+<!-- that GCC is built three times-once with the native compiler, once with -->
+<!-- the native-built compiler it just built, and once with the compiler it -->
+<!-- built the second time.  In theory, the last two should produce the same -->
+<!-- results, which @samp{make compare} can check.  Each stage is configured -->
+<!-- separately and compiled into a separate directory, to minimize problems -->
+<!-- due to ABI incompatibilities between the native compiler and GCC. -->
+ <p>当GCC被配置为本地配置时，<samp><span class="command">make</span></samp>的缺省动作是执行完整的三阶段自举。
+这意味着GCC将被构建三次，一次是使用本地编译器，
+一次是使用刚由本地编译器构建的编译器，一次是使用第二次构建的编译器。
+理论上，最后两次应该产生相同的结果，这可以使用&lsquo;<samp><span class="samp">make compare</span></samp>&rsquo;来检验。
+每个阶段都被单独的配置和编译到独立的目录里，
+以尽可能减少由于本地编译器和GCC之间的ABI不兼容所带来的问题。
+
+<!-- If you do a change, rebuilding will also start from the first stage -->
+<!-- and ``bubble'' up the change through the three stages.  Each stage -->
+<!-- is taken from its build directory (if it had been built previously), -->
+<!-- rebuilt, and copied to its subdirectory.  This will allow you to, for -->
+<!-- example, continue a bootstrap after fixing a bug which causes the -->
+<!-- stage2 build to crash.  It does not provide as good coverage of the -->
+<!-- compiler as bootstrapping from scratch, but it ensures that the new -->
+<!-- code is syntactically correct (e.g., that you did not use GCC extensions -->
+<!-- by mistake), and avoids spurious bootstrap comparison -->
+<!-- failures@footnote{Except if the compiler was buggy and miscompiled -->
+<!-- some of the files that were not modified.  In this case, it's best -->
+<!-- to use @command{make restrap}.}. -->
+ <p>如果做了改动，重建工作将还会从第一阶段开始，并且将改动贯穿三个阶段。
+每个阶段都在它的构建目录下开始（如果先前曾被构建过），
+重建，并且复制到它的子目录。这将允许你，在修订了引起第二阶段构建崩溃的bug之后，
+可以继续进行自举。这虽然对编译器没有提供像从头进行自举那样好的覆盖效果，
+但却能保证新的代码在语法上是正确的（例如，没有错误使用GCC的扩展功能），
+并避免了不合逻辑的自举比较失败
+<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a>。
+
+<!-- Other targets available from the top level include: -->
+ <p>其它由顶层可以获得的目标包括：
+
+     <dl>
+<dt><code>bootstrap-lean</code><dd><!-- Like @code{bootstrap}, except that the various stages are removed once -->
+<!-- they're no longer needed.  This saves disk space. -->
+类似<code>bootstrap</code>，除了各个阶段当不再需要的时候，将被移除。
+这可以节省磁盘空间。
+
+     <br><dt><code>bootstrap2</code><dt><code>bootstrap2-lean</code><dd><!-- Performs only the first two stages of bootstrap.  Unlike a three-stage -->
+<!-- bootstrap, this does not perform a comparison to test that the compiler -->
+<!-- is running properly.  Note that the disk space required by a ``lean'' -->
+<!-- bootstrap is approximately independent of the number of stages. -->
+只执行前两个阶段的自举。不像三阶段自举，这将不执行测试编译器运行正常的比较。
+注意使用“lean”的自举所需要的磁盘空间几乎是与阶段数目无关的。
+
+     <br><dt><code>stage</code><var>N</var><code>-bubble (</code><var>N</var><code> = 1...4, profile, feedback)</code><dd><!-- Rebuild all the stages up to @var{N}, with the appropriate flags, -->
+<!-- ``bubbling'' the changes as described above. -->
+使用适当的标记，来重建所有的阶段，只到<var>N</var>，并将按照上面描述的来传播改动。
+
+     <br><dt><code>all-stage</code><var>N</var><code> (</code><var>N</var><code> = 1...4, profile, feedback)</code><dd><!-- Assuming that stage @var{N} has already been built, rebuild it with the -->
+<!-- appropriate flags.  This is rarely needed. -->
+假设阶段<var>N</var>已经被构建，使用适当的标记来重建它。这个很少用到。
+
+     <br><dt><code>cleanstrap</code><dd><!-- Remove everything (@samp{make clean}) and rebuilds (@samp{make bootstrap}). -->
+移除所有（&lsquo;<samp><span class="samp">make clean</span></samp>&rsquo;）并重建（&lsquo;<samp><span class="samp">make bootstrap</span></samp>&rsquo;）。
+
+     <br><dt><code>compare</code><dd><!-- Compares the results of stages 2 and 3.  This ensures that the compiler -->
+<!-- is running properly, since it should produce the same object files -->
+<!-- regardless of how it itself was compiled. -->
+比较阶段2和3的结果。这用于确保编译器运行正常，因为不管它本身是如何被编译的，都应该产生相同的目标文件。
+
+     <br><dt><code>profiledbootstrap</code><dd><!-- Builds a compiler with profiling feedback information.  In this case, -->
+<!-- the second and third stages are named @samp{profile} and @samp{feedback}, -->
+<!-- respectively.  For more information, see -->
+<!-- @ref{Building,,Building with profile feedback,gccinstall,Installing GCC}. -->
+构建带有profile反馈信息的编译器。更多信息，参见
+<a href="../gccinstall/Building.html#Building">Building with profile feedback</a>。
+
+     <br><dt><code>restrap</code><dd><!-- Restart a bootstrap, so that everything that was not built with -->
+<!-- the system compiler is rebuilt. -->
+重新启动自举，使得任何没有使用系统编译器构建的将被重建。
+
+     <br><dt><code>stage</code><var>N</var><code>-start (</code><var>N</var><code> = 1...4, profile, feedback)</code><dd><!-- For each package that is bootstrapped, rename directories so that, -->
+<!-- for example, @file{gcc} points to the stage@var{N} GCC, compiled -->
+<!-- with the stage@var{N-1} GCC@footnote{Customarily, the system compiler -->
+<!-- is also termed the @file{stage0} GCC.}. -->
+对于被自举的每个package，重命名目录，使得例如，
+当使用<var>N-1</var>阶段的（stageN-1）GCC编译时，gcc指向<var>N</var>阶段的（stageN）GCC。
+
+     <!-- You will invoke this target if you need to test or debug the -->
+     <!-- stage@var{N} GCC@.  If you only need to execute GCC (but you need -->
+     <!-- not run @samp{make} either to rebuild it or to run test suites), -->
+     <!-- you should be able to work directly in the @file{stage@var{N}-gcc} -->
+     <!-- directory.  This makes it easier to debug multiple stages in -->
+     <!-- parallel. -->
+     <p>如果需要测试或调试<var>N</var>阶段的GCC时，你将使用该目标。
+如果只需要执行GCC（但不需要运行&lsquo;<samp><span class="samp">make</span></samp>&rsquo;，也不需要重建或运行测试包），
+你应该能够在<samp><span class="file">stage</span><var>N</var><span class="file">-gcc</span></samp>目录下工作。
+这使得很容易进行并行的调试多个阶段。
+<a rel="footnote" href="#fn-2" name="fnd-2"><sup>2</sup></a>。
+
+     <br><dt><code>stage</code><dd><!-- For each package that is bootstrapped, relocate its build directory -->
+<!-- to indicate its stage.  For example, if the @file{gcc} directory -->
+<!-- points to the stage2 GCC, after invoking this target it will be -->
+<!-- renamed to @file{stage2-gcc}. -->
+对于被自举的每个package，重定位它的构建目录来指示它的阶段。
+例如，如果<samp><span class="file">gcc</span></samp>目录指向阶段2的GCC，则执行该目标之后，
+将被重命名为<samp><span class="file">stage2-gcc</span></samp>。
+
+ </dl>
+
+<!-- If you wish to use non-default GCC flags when compiling the stage2 and -->
+<!-- stage3 compilers, set @code{BOOT_CFLAGS} on the command line when doing -->
+<!-- @samp{make}. -->
+ <p>如果在编译阶段2和阶段3的编译器时，想使用非缺省的GCC标记，
+则在执行&lsquo;<samp><span class="samp">make</span></samp>&rsquo;时，在命令行上设置<code>BOOT_CFLAGS</code>。
+
+<!-- Usually, the first stage only builds the languages that the compiler -->
+<!-- is written in: typically, C and maybe Ada.  If you are debugging a -->
+<!-- miscompilation of a different stage2 front-end (for example, of the -->
+<!-- Fortran front-end), you may want to have front-ends for other languages -->
+<!-- in the first stage as well.  To do so, set @code{STAGE1_LANGUAGES} -->
+<!-- on the command line when doing @samp{make}. -->
+ <p>通常，第一阶段只构建编写编译器的语言：通常是C，以及可能会有Ada。
+如果你在调试一个其它的阶段2前端的错误编译（例如，Fortran前端），
+你可能想要在第一阶段也有其它语言的前端。如果这样，
+在执行&lsquo;<samp><span class="samp">make</span></samp>&rsquo;时在命令行中设置<code>STAGE1_LANGUAGES</code>。
+
+<!-- For example, in the aforementioned scenario of debugging a Fortran -->
+<!-- front-end miscompilation caused by the stage1 compiler, you may need a -->
+<!-- command like -->
+ <p>例如，在前述情况中，要调试由阶段1编译器造成的Fortran前端的错误编译，
+可能需要一个命令如
+
+<pre class="example">     make stage2-bubble STAGE1_LANGUAGES=c,fortran
+</pre>
+ <!-- Alternatively, you can use per-language targets to build and test -->
+<!-- languages that are not enabled by default in stage1.  For example, -->
+<!-- @command{make f951} will build a Fortran compiler even in the stage1 -->
+<!-- build directory. -->
+ <p>另外，可以使用每个语言的目标，来构建和测试没有在阶段1启用的语言。
+例如，<samp><span class="command">make f951</span></samp>将在stage1构建目录下构建一个Fortran编译器。
+
+<!-- @node Library Files -->
+<!-- @subsection Library Source Files and Headers under the @file{gcc} Directory -->
+ <div class="footnote">
+<hr>
+<h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> 除非编译器有bug，以及一些没有被修改的文件被错误编译了。
+在这种情况下，最好使用<samp><span class="command">make restrap</span></samp>。</p>
+
+ <p class="footnote"><small>[<a name="fn-2" href="#fnd-2">2</a>]</small> 习惯上，系统编译器也被称为0阶段（<samp><span class="file">stage0</span></samp>）GCC。</p>
+
+ <hr></div>
+
+ </body></html>
+

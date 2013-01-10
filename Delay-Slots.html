@@ -1,0 +1,169 @@
+<html lang="zh">
+<head>
+<title>Delay Slots - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Insn-Attributes.html#Insn-Attributes" title="Insn Attributes">
+<link rel="prev" href="Constant-Attributes.html#Constant-Attributes" title="Constant Attributes">
+<link rel="next" href="Processor-pipeline-description.html#Processor-pipeline-description" title="Processor pipeline description">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Delay-Slots"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Processor-pipeline-description.html#Processor-pipeline-description">Processor pipeline description</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Constant-Attributes.html#Constant-Attributes">Constant Attributes</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Insn-Attributes.html#Insn-Attributes">Insn Attributes</a>
+<hr>
+</div>
+
+<h4 class="subsection">16.19.7 延迟槽调度</h4>
+
+<p><a name="index-delay-slots_002c-defining-3683"></a>
+<!-- The insn attribute mechanism can be used to specify the requirements for -->
+<!-- delay slots, if any, on a target machine.  An instruction is said to -->
+<!-- require a @dfn{delay slot} if some instructions that are physically -->
+<!-- after the instruction are executed as if they were located before it. -->
+<!-- Classic examples are branch and call instructions, which often execute -->
+<!-- the following instruction before the branch or call is performed. -->
+<!-- On some machines, conditional branch instructions can optionally -->
+<!-- @dfn{annul} instructions in the delay slot.  This means that the -->
+<!-- instruction will not be executed for certain branch outcomes.  Both -->
+<!-- instructions that annul if the branch is true and instructions that -->
+<!-- annul if the branch is false are supported. -->
+<!-- Delay slot scheduling differs from instruction scheduling in that -->
+<!-- determining whether an instruction needs a delay slot is dependent only -->
+<!-- on the type of instruction being generated, not on data flow between the -->
+<!-- instructions.  See the next section for a discussion of data-dependent -->
+<!-- instruction scheduling. -->
+如果在一个目标机上存在延迟槽的话，insn属性机制可以用于指定对延迟槽的需求。
+一条指令被称为需要延迟槽，
+如果在物理上位于该指令之后的一些指令将被按照它们仿佛是位于之前的情况被执行。
+典型的例子是分支和调用指令，其通常在执行分支或调用之前先执行后面的指令。
+
+ <p>在一些机器上，条件分支指令可以选择性的废除（<dfn>annul</dfn>）延迟槽中的指令。
+这意味着该指令对于特定的分支结果将不被执行。
+对于分支为真时废除指令和分支为假时废除指令，这两种方式都被支持。
+
+ <p>延迟槽调度与指令调度的不同之处在于，
+判定一条指令是否需要延迟槽只依赖于正被生成的指令的类型，而不是指令间的数据流。
+关于数据相关的指令调度的讨论，参见下一个章节。
+
+<!-- @findex define_delay -->
+<!-- The requirement of an insn needing one or more delay slots is indicated -->
+<!-- via the @code{define_delay} expression.  It has the following form: -->
+ <p><a name="index-define_005fdelay-3684"></a>一个insn对一个或多个延迟槽的需求是通过<code>define_delay</code>表达式来表示的。
+其具有下列形式：
+
+<pre class="smallexample">     (define_delay <var>test</var>
+                   [<var>delay-1</var> <var>annul-true-1</var> <var>annul-false-1</var>
+                    <var>delay-2</var> <var>annul-true-2</var> <var>annul-false-2</var>
+                    ...])
+</pre>
+ <!-- @var{test} is an attribute test that indicates whether this -->
+<!-- @code{define_delay} applies to a particular insn.  If so, the number of -->
+<!-- required delay slots is determined by the length of the vector specified -->
+<!-- as the second argument.  An insn placed in delay slot @var{n} must -->
+<!-- satisfy attribute test @var{delay-n}.  @var{annul-true-n} is an -->
+<!-- attribute test that specifies which insns may be annulled if the branch -->
+<!-- is true.  Similarly, @var{annul-false-n} specifies which insns in the -->
+<!-- delay slot may be annulled if the branch is false.  If annulling is not -->
+<!-- supported for that delay slot, @code{(nil)} should be coded. -->
+<!-- For example, in the common case where branch and call insns require -->
+<!-- a single delay slot, which may contain any insn other than a branch or -->
+<!-- call, the following would be placed in the @file{md} file: -->
+ <p><var>test</var>是一个属性测试，用来表示该<code>define_delay</code>是否应用到特定的insn。
+如果是，则所需延迟槽的数目通过作为第二个参数的向量的长度来确定。
+放在延迟槽<var>n</var>中的insn必须满足属性测试<var>delay-n</var>。
+<var>annul-true-n</var>是一个属性测试，用来指定当分支为真时哪些insn可以被废除。
+如果该延迟槽不支持废除，则应该使用<code>(nil)</code>。
+
+ <p>例如，通常情况下分支和调用insns都需要一个单个的延迟槽，
+其可以包含任何不是分支或调用的其它insn，则下面的可以放入<samp><span class="file">md</span></samp>文件中：
+
+<pre class="smallexample">     (define_delay (eq_attr "type" "branch,call")
+                   [(eq_attr "type" "!branch,call") (nil) (nil)])
+</pre>
+ <!-- Multiple @code{define_delay} expressions may be specified.  In this -->
+<!-- case, each such expression specifies different delay slot requirements -->
+<!-- and there must be no insn for which tests in two @code{define_delay} -->
+<!-- expressions are both true. -->
+<!-- For example, if we have a machine that requires one delay slot for branches -->
+<!-- but two for calls,  no delay slot can contain a branch or call insn, -->
+<!-- and any valid insn in the delay slot for the branch can be annulled if the -->
+<!-- branch is true, we might represent this as follows: -->
+ <p>可以指定多个<code>define_delay</code>表达式。在这种情况下，
+每个这样的表达式都指定了不同的延迟槽需求，
+并且在两个<code>define_delay</code>表达式中的test必须不能都为真。
+
+ <p>例如，如果我们有一个机器，其对分支需要一个延迟槽，但对调用需要两个，
+延迟槽不能包含分支或调用insn，并且当分支为真时，
+任何在分支延迟槽中的有效insn可以被废除，则我们可以使用下列方式来表示：
+
+<!-- @smallexample -->
+<!-- (define_delay (eq_attr "type" "branch") -->
+<!-- [(eq_attr "type" "!branch,call") -->
+<!-- (eq_attr "type" "!branch,call") -->
+<!-- (nil)]) -->
+<!-- (define_delay (eq_attr "type" "call") -->
+<!-- [(eq_attr "type" "!branch,call") (nil) (nil) -->
+<!-- (eq_attr "type" "!branch,call") (nil) (nil)]) -->
+<!-- @end smallexample -->
+<!-- @c the above is *still* too long.  -mew 4feb93 -->
+<pre class="smallexample">     (define_delay (eq_attr "type" "branch")
+        [(eq_attr "type" "!branch,call")
+         (eq_attr "type" "!branch,call")
+         (nil)])
+     
+     (define_delay (eq_attr "type" "call")
+                   [(eq_attr "type" "!branch,call") (nil) (nil)
+                    (eq_attr "type" "!branch,call") (nil) (nil)])
+</pre>
+ <!-- the above is *still* too long.  -mew 4feb93 -->
+<!-- @end ifset -->
+<!-- @ifset INTERNALS -->
+<!-- @node Processor pipeline description -->
+<!-- @subsection Specifying processor pipeline description -->
+<!-- @cindex processor pipeline description -->
+<!-- @cindex processor functional units -->
+<!-- @cindex instruction latency time -->
+<!-- @cindex interlock delays -->
+<!-- @cindex data dependence delays -->
+<!-- @cindex reservation delays -->
+<!-- @cindex pipeline hazard recognizer -->
+<!-- @cindex automaton based pipeline description -->
+<!-- @cindex regular expressions -->
+<!-- @cindex deterministic finite state automaton -->
+<!-- @cindex automaton based scheduler -->
+<!-- @cindex RISC -->
+<!-- @cindex VLIW -->
+ </body></html>
+

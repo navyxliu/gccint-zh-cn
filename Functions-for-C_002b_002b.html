@@ -1,0 +1,249 @@
+<html lang="zh">
+<head>
+<title>Functions for C++ - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="C-and-C_002b_002b-Trees.html#C-and-C_002b_002b-Trees" title="C and C++ Trees">
+<link rel="prev" href="Classes.html#Classes" title="Classes">
+<link rel="next" href="Statements-for-C_002b_002b.html#Statements-for-C_002b_002b" title="Statements for C++">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Functions-for-C++"></a>
+<a name="Functions-for-C_002b_002b"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Statements-for-C_002b_002b.html#Statements-for-C_002b_002b">Statements for C++</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Classes.html#Classes">Classes</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="C-and-C_002b_002b-Trees.html#C-and-C_002b_002b-Trees">C and C++ Trees</a>
+<hr>
+</div>
+
+<h4 class="subsection">11.10.4 C++函数</h4>
+
+<p><a name="index-function-2640"></a><a name="index-FUNCTION_005fDECL-2641"></a><a name="index-OVERLOAD-2642"></a><a name="index-OVL_005fCURRENT-2643"></a><a name="index-OVL_005fNEXT-2644"></a>
+<!-- A function is represented by a @code{FUNCTION_DECL} node.  A set of -->
+<!-- overloaded functions is sometimes represented by an @code{OVERLOAD} node. -->
+函数由<code>FUNCTION_DECL</code>节点表示。
+重载函数集有时通过一个<code>OVERLOAD</code>节点来表示。
+
+<!-- An @code{OVERLOAD} node is not a declaration, so none of the -->
+<!-- @samp{DECL_} macros should be used on an @code{OVERLOAD}.  An -->
+<!-- @code{OVERLOAD} node is similar to a @code{TREE_LIST}.  Use -->
+<!-- @code{OVL_CURRENT} to get the function associated with an -->
+<!-- @code{OVERLOAD} node; use @code{OVL_NEXT} to get the next -->
+<!-- @code{OVERLOAD} node in the list of overloaded functions.  The macros -->
+<!-- @code{OVL_CURRENT} and @code{OVL_NEXT} are actually polymorphic; you can -->
+<!-- use them to work with @code{FUNCTION_DECL} nodes as well as with -->
+<!-- overloads.  In the case of a @code{FUNCTION_DECL}, @code{OVL_CURRENT} -->
+<!-- will always return the function itself, and @code{OVL_NEXT} will always -->
+<!-- be @code{NULL_TREE}. -->
+ <p><code>OVERLOAD</code>节点不是一个声明。
+所以没有&lsquo;<samp><span class="samp">DECL_</span></samp>&rsquo;宏用于<code>OVERLOAD</code>。
+<code>OVERLOAD</code>节点类似于一个<code>TREE_LIST</code>。
+使用<code>OVL_CURRENT</code>来获得<code>OVERLOAD</code>节点关联的函数；
+使用<code>OVL_NEXT</code>来获得重载函数列表中下一个<code>OVERLOAD</code>节点。
+宏<code>OVL_CURRENT</code>和<code>OVL_NEXT</code>实际上是多态的；
+你可以用它们工作于<code>FUNCTION_DECL</code>节点上，就像在重载上一样。
+在<code>FUNCTION_DECL</code>的情况下，<code>OVL_CURRENT</code>将总是返回函数本身，
+<code>OVL_NEXT</code>将总是为<code>NULL_TREE</code>。
+
+<!-- To determine the scope of a function, you can use the -->
+<!-- @code{DECL_CONTEXT} macro.  This macro will return the class -->
+<!-- (either a @code{RECORD_TYPE} or a @code{UNION_TYPE}) or namespace (a -->
+<!-- @code{NAMESPACE_DECL}) of which the function is a member.  For a virtual -->
+<!-- function, this macro returns the class in which the function was -->
+<!-- actually defined, not the base class in which the virtual declaration -->
+<!-- occurred. -->
+ <p>要确定函数的作用域，可以使用<code>DECL_CONTEXT</code>宏。
+该宏将返回函数作为其成员的类（或者<code>RECORD_TYPE</code>或者<code>UNION_TYPE</code>）
+或命名空间（<code>NAMESPACE_DECL</code>）。对于虚函数，
+该宏返回函数被实际定义的类，而不是其声明所在的基类。
+
+<!-- If a friend function is defined in a class scope, the -->
+<!-- @code{DECL_FRIEND_CONTEXT} macro can be used to determine the class in -->
+<!-- which it was defined.  For example, in -->
+ <p>如果友函数定义在类的作用域里，
+宏<code>DECL_FRIEND_CONTEXT</code>可以用来判定其定义所在的类。例如，在
+<pre class="smallexample">     class C { friend void f() {} };
+</pre>
+ <p class="noindent"><!-- the @code{DECL_CONTEXT} for @code{f} will be the -->
+<!-- @code{global_namespace}, but the @code{DECL_FRIEND_CONTEXT} will be the -->
+<!-- @code{RECORD_TYPE} for @code{C}. -->
+中，<code>f</code>的<code>DECL_CONTEXT</code>将为<code>global_namespace</code>，
+而<code>C</code>的<code>DECL_FRIEND_CONTEXT</code>将为<code>RECORD_TYPE</code>。
+
+<!-- The following macros and functions can be used on a @code{FUNCTION_DECL}: -->
+ <p>下列宏和函数能够用于<code>FUNCTION_DECL</code>:
+     <dl>
+<dt><code>DECL_MAIN_P</code><a name="index-DECL_005fMAIN_005fP-2645"></a><dd><!-- This predicate holds for a function that is the program entry point -->
+<!-- @code{::code}. -->
+该断言判断一个函数是否为程序的入口点<code>::code</code>。
+
+     <br><dt><code>DECL_LOCAL_FUNCTION_P</code><a name="index-DECL_005fLOCAL_005fFUNCTION_005fP-2646"></a><dd><!-- This predicate holds if the function was declared at block scope, even -->
+<!-- though it has a global scope. -->
+该断言判断函数是否声明在块作用域中，即使具有全局作用域。
+
+     <br><dt><code>DECL_ANTICIPATED</code><a name="index-DECL_005fANTICIPATED-2647"></a><dd><!-- This predicate holds if the function is a built-in function but its -->
+<!-- prototype is not yet explicitly declared. -->
+该断言判断函数是否为built-in函数，并且函数原形没有显示声明。
+
+     <br><dt><code>DECL_EXTERN_C_FUNCTION_P</code><a name="index-DECL_005fEXTERN_005fC_005fFUNCTION_005fP-2648"></a><dd><!-- This predicate holds if the function is declared as an -->
+<!-- `@code{extern "C"}' function. -->
+该断言判断函数是否声明为`<code>extern "C"</code>'函数。
+
+     <br><dt><code>DECL_LINKONCE_P</code><a name="index-DECL_005fLINKONCE_005fP-2649"></a><dd><!-- This macro holds if multiple copies of this function may be emitted in -->
+<!-- various translation units.  It is the responsibility of the linker to -->
+<!-- merge the various copies.  Template instantiations are the most common -->
+<!-- example of functions for which @code{DECL_LINKONCE_P} holds; G++ -->
+<!-- instantiates needed templates in all translation units which require them, -->
+<!-- and then relies on the linker to remove duplicate instantiations. -->
+该宏用来判断该函数是否会在不同的转换单元产生多个副本。
+合并不同副本是连接器的责任。
+模版实例是使用<code>DECL_LINKONCE_P</code>最常见的例子。
+G++会在需要它们的所有转换单元里实例化模版，
+然后依赖连接器去移除重复的实例。
+
+     <!-- FIXME: This macro is not yet implemented. -->
+     <p>FIXME: 该宏还没有实现。
+
+     <br><dt><code>DECL_FUNCTION_MEMBER_P</code><a name="index-DECL_005fFUNCTION_005fMEMBER_005fP-2650"></a><dd><!-- This macro holds if the function is a member of a class, rather than a -->
+<!-- member of a namespace. -->
+该宏用来判断函数是否为一个类的成员，而不是命名空间的成员。
+
+     <br><dt><code>DECL_STATIC_FUNCTION_P</code><a name="index-DECL_005fSTATIC_005fFUNCTION_005fP-2651"></a><dd><!-- This predicate holds if the function a static member function. -->
+该断言用来判断函数是否为一个静态成员函数。
+
+     <br><dt><code>DECL_NONSTATIC_MEMBER_FUNCTION_P</code><a name="index-DECL_005fNONSTATIC_005fMEMBER_005fFUNCTION_005fP-2652"></a><dd><!-- This macro holds for a non-static member function. -->
+该宏用来判断是否为一个非静态成员函数。
+
+     <br><dt><code>DECL_CONST_MEMFUNC_P</code><a name="index-DECL_005fCONST_005fMEMFUNC_005fP-2653"></a><dd><!-- This predicate holds for a @code{const}-member function. -->
+该断言用来判断是否为<code>const</code>成员函数。
+
+     <br><dt><code>DECL_VOLATILE_MEMFUNC_P</code><a name="index-DECL_005fVOLATILE_005fMEMFUNC_005fP-2654"></a><dd><!-- This predicate holds for a @code{volatile}-member function. -->
+该断言用来判断是否为<code>volatile</code>成员函数。
+
+     <br><dt><code>DECL_CONSTRUCTOR_P</code><a name="index-DECL_005fCONSTRUCTOR_005fP-2655"></a><dd><!-- This macro holds if the function is a constructor. -->
+该宏用来判断函数是否为一个构造函数。
+
+     <br><dt><code>DECL_NONCONVERTING_P</code><a name="index-DECL_005fNONCONVERTING_005fP-2656"></a><dd><!-- This predicate holds if the constructor is a non-converting constructor. -->
+该断言用来判断构造函数是否为一个非转换构造函数。
+
+     <br><dt><code>DECL_COMPLETE_CONSTRUCTOR_P</code><a name="index-DECL_005fCOMPLETE_005fCONSTRUCTOR_005fP-2657"></a><dd><!-- This predicate holds for a function which is a constructor for an object -->
+<!-- of a complete type. -->
+该断言用来判断函数是否为完全类型的对象的构造函数。
+
+     <br><dt><code>DECL_BASE_CONSTRUCTOR_P</code><a name="index-DECL_005fBASE_005fCONSTRUCTOR_005fP-2658"></a><dd><!-- This predicate holds for a function which is a constructor for a base -->
+<!-- class sub-object. -->
+该断言用来判断函数是否为一个基类的子对象的构造函数。
+
+     <br><dt><code>DECL_COPY_CONSTRUCTOR_P</code><a name="index-DECL_005fCOPY_005fCONSTRUCTOR_005fP-2659"></a><dd><!-- This predicate holds for a function which is a copy-constructor. -->
+该断言用来判断函数是否为一个复制构造函数。
+
+     <br><dt><code>DECL_DESTRUCTOR_P</code><a name="index-DECL_005fDESTRUCTOR_005fP-2660"></a><dd><!-- This macro holds if the function is a destructor. -->
+该宏用来判断函数是否为一个析构函数。
+
+     <br><dt><code>DECL_COMPLETE_DESTRUCTOR_P</code><a name="index-DECL_005fCOMPLETE_005fDESTRUCTOR_005fP-2661"></a><dd><!-- This predicate holds if the function is the destructor for an object a -->
+<!-- complete type. -->
+该断言用来判断函数是否为一个完全类型的对象的析构函数。
+
+     <br><dt><code>DECL_OVERLOADED_OPERATOR_P</code><a name="index-DECL_005fOVERLOADED_005fOPERATOR_005fP-2662"></a><dd><!-- This macro holds if the function is an overloaded operator. -->
+该宏用来判断函数是否为一个重载操作符。
+
+     <br><dt><code>DECL_CONV_FN_P</code><a name="index-DECL_005fCONV_005fFN_005fP-2663"></a><dd><!-- This macro holds if the function is a type-conversion operator. -->
+该宏用来判断函数是否为一个类型转换操作符。
+
+     <br><dt><code>DECL_GLOBAL_CTOR_P</code><a name="index-DECL_005fGLOBAL_005fCTOR_005fP-2664"></a><dd><!-- This predicate holds if the function is a file-scope initialization -->
+<!-- function. -->
+该断言用来判断函数是否为一个文件作用域的初始化函数。
+
+     <br><dt><code>DECL_GLOBAL_DTOR_P</code><a name="index-DECL_005fGLOBAL_005fDTOR_005fP-2665"></a><dd><!-- This predicate holds if the function is a file-scope finalization -->
+<!-- function. -->
+该断言用来判断函数是否为一个文件作用域的结束化函数。
+
+     <br><dt><code>DECL_THUNK_P</code><a name="index-DECL_005fTHUNK_005fP-2666"></a><dd><!-- This predicate holds if the function is a thunk. -->
+该断言用来判断函数是否为一个thunk。
+
+     <!-- These functions represent stub code that adjusts the @code{this} pointer -->
+     <!-- and then jumps to another function.  When the jumped-to function -->
+     <!-- returns, control is transferred directly to the caller, without -->
+     <!-- returning to the thunk.  The first parameter to the thunk is always the -->
+     <!-- @code{this} pointer; the thunk should add @code{THUNK_DELTA} to this -->
+     <!-- value.  (The @code{THUNK_DELTA} is an @code{int}, not an -->
+     <!-- @code{INTEGER_CST}.) -->
+     <p>这些函数表示stub代码，用来调整<code>this</code>指针，然后跳转到另一个函数中。当从被跳转的函数中返回时，控制被直接传给调用者，不需要返回到thunk中。thunk的第一个参数总是为<code>this</code>指针；thunk应该将该值加上<code>THUNK_DELTA</code>。（<code>THUNK_DELTA</code>是一个<code>int</code>，而不是<code>INTEGER_CST</code>。）
+
+     <!-- Then, if @code{THUNK_VCALL_OFFSET} (an @code{INTEGER_CST}) is nonzero -->
+     <!-- the adjusted @code{this} pointer must be adjusted again.  The complete -->
+     <!-- calculation is given by the following pseudo-code: -->
+     <p>然后，如果<code>THUNK_VCALL_OFFSET</code>（一个<code>INTEGER_CST</code>）是非零的，则被调整的<code>this</code>必须再次被调整。下面的伪代码给出了完整的计算：
+
+     <pre class="smallexample">          this += THUNK_DELTA
+          if (THUNK_VCALL_OFFSET)
+            this += (*((ptrdiff_t **) this))[THUNK_VCALL_OFFSET]
+</pre>
+     <!-- Finally, the thunk should jump to the location given -->
+     <!-- by @code{DECL_INITIAL}; this will always be an expression for the -->
+     <!-- address of a function. -->
+     <p>最终，thunk应该跳转到由<code>DECL_INITIAL</code>给出的位置；这将总是一个函数地址的表达式。
+
+     <br><dt><code>DECL_NON_THUNK_FUNCTION_P</code><a name="index-DECL_005fNON_005fTHUNK_005fFUNCTION_005fP-2667"></a><dd><!-- This predicate holds if the function is @emph{not} a thunk function. -->
+该断言用来判断函数<em>不是</em>一个thunk函数。
+
+     <br><dt><code>GLOBAL_INIT_PRIORITY</code><a name="index-GLOBAL_005fINIT_005fPRIORITY-2668"></a><dd><!-- If either @code{DECL_GLOBAL_CTOR_P} or @code{DECL_GLOBAL_DTOR_P} holds, -->
+<!-- then this gives the initialization priority for the function.  The -->
+<!-- linker will arrange that all functions for which -->
+<!-- @code{DECL_GLOBAL_CTOR_P} holds are run in increasing order of priority -->
+<!-- before @code{main} is called.  When the program exits, all functions for -->
+<!-- which @code{DECL_GLOBAL_DTOR_P} holds are run in the reverse order. -->
+如果<code>DECL_GLOBAL_CTOR_P</code>或者<code>DECL_GLOBAL_DTOR_P</code>有效，则该宏给出了函数的初始优先级。连接器将设法安排<code>DECL_GLOBAL_CTOR_P</code>所保存的所有的函数在递增的顺序下运行，在<code>main</code>被调用之前。当程序退出时，<code>DECL_GLOBAL_DTOR_P</code>所保存的所有函数按照相反的顺序执行。
+
+     <br><dt><code>TYPE_RAISES_EXCEPTIONS</code><a name="index-TYPE_005fRAISES_005fEXCEPTIONS-2669"></a><dd><!-- This macro returns the list of exceptions that a (member-)function can -->
+<!-- raise.  The returned list, if non @code{NULL}, is comprised of nodes -->
+<!-- whose @code{TREE_VALUE} represents a type. -->
+该宏返回（成员）函数可以引起的异常列表。返回的列表，如果不是<code>NULL</code>，则为<code>TREE_VALUE</code>代表一个类型的节点组成。
+
+     <br><dt><code>TYPE_NOTHROW_P</code><a name="index-TYPE_005fNOTHROW_005fP-2670"></a><dd><!-- This predicate holds when the exception-specification of its arguments -->
+<!-- is of the form `@code{()}'. -->
+该断言用来判断是否是使用`<code>()</code>'形式来指定异常的参数。
+
+     <br><dt><code>DECL_ARRAY_DELETE_OPERATOR_P</code><a name="index-DECL_005fARRAY_005fDELETE_005fOPERATOR_005fP-2671"></a><dd><!-- This predicate holds if the function an overloaded -->
+<!-- @code{operator delete[]}. -->
+该断言用来判断函数是否为一个重载的<code>operator delete[]</code>。
+
+ </dl>
+
+<!--  -->
+<!-- Function Bodies -->
+<!--  -->
+<!-- @node Statements for C++ -->
+<!-- @subsection Statements for C++ -->
+ </body></html>
+

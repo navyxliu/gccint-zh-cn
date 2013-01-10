@@ -1,0 +1,125 @@
+<html lang="zh">
+<head>
+<title>Leaf Functions - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Registers.html#Registers" title="Registers">
+<link rel="prev" href="Values-in-Registers.html#Values-in-Registers" title="Values in Registers">
+<link rel="next" href="Stack-Registers.html#Stack-Registers" title="Stack Registers">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Leaf-Functions"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Stack-Registers.html#Stack-Registers">Stack Registers</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Values-in-Registers.html#Values-in-Registers">Values in Registers</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Registers.html#Registers">Registers</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.7.4 处理叶子函数</h4>
+
+<p><a name="index-leaf-functions-3990"></a><a name="index-functions_002c-leaf-3991"></a><!-- On some machines, a leaf function (i.e., one which makes no calls) can run -->
+<!-- more efficiently if it does not make its own register window.  Often this -->
+<!-- means it is required to receive its arguments in the registers where they -->
+<!-- are passed by the caller, instead of the registers where they would -->
+<!-- normally arrive. -->
+在一些机器上，一个叶子函数（即，不做任何调用的函数），如果其不创建自己的寄存器窗口，则可以运行的更加有效。通常这意味着，其需要通过调用者传递参数的寄存器来接收它的参数，而不是它们通常到达的寄存器。
+
+<!-- The special treatment for leaf functions generally applies only when -->
+<!-- other conditions are met; for example, often they may use only those -->
+<!-- registers for its own variables and temporaries.  We use the term ``leaf -->
+<!-- function'' to mean a function that is suitable for this special -->
+<!-- handling, so that functions with no calls are not necessarily ``leaf -->
+<!-- functions''. -->
+ <p>通常只有当叶子函数还满足其它条件时，才会对其进行特殊的对待；例如，通常它们可能只使用，用于它自己的变量和临时对象的那些寄存器。我们使用术语“叶子函数”来指一个适合这样特殊处理的函数，所以没有函数调用的函数并不一定是“叶子函数”。
+
+<!-- GCC assigns register numbers before it knows whether the function is -->
+<!-- suitable for leaf function treatment.  So it needs to renumber the -->
+<!-- registers in order to output a leaf function.  The following macros -->
+<!-- accomplish this. -->
+ <p>GCC是在它知道函数是否适合作为叶子函数来对待之前，分配寄存器编号的。所以它需要重编号寄存器，以便输出一个叶子函数。下面的宏用来完成此事。
+
+<div class="defun">
+&mdash; Macro: <b>LEAF_REGISTERS</b><var><a name="index-LEAF_005fREGISTERS-3992"></a></var><br>
+<blockquote><!-- Name of a char vector, indexed by hard register number, which -->
+     <!-- contains 1 for a register that is allowable in a candidate for leaf -->
+     <!-- function treatment. -->
+      <p>一个char向量的名字，按照硬件寄存器编号进行索引，对于允许作为叶子函数处理的候选寄存器，其值为1。
+
+     <!-- If leaf function treatment involves renumbering the registers, then the -->
+     <!-- registers marked here should be the ones before renumbering-those that -->
+     <!-- GCC would ordinarily allocate.  The registers which will actually be -->
+     <!-- used in the assembler code, after renumbering, should not be marked with 1 -->
+     <!-- in this vector. -->
+      <p>如果叶子函数处理涉及到重编号寄存器，则这里标记的寄存器应该是重编号之前的——那些GCC通常分配的。重编号后，在汇编代码中实际被使用的寄存器，不要在该向量中被标记为1。
+
+     <!-- Define this macro only if the target machine offers a way to optimize -->
+     <!-- the treatment of leaf functions. -->
+      <p>只有当目标机器提供了优化叶子函数处理的方法时，才定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LEAF_REG_REMAP</b> (<var>regno</var>)<var><a name="index-LEAF_005fREG_005fREMAP-3993"></a></var><br>
+<blockquote><!-- A C expression whose value is the register number to which @var{regno} -->
+     <!-- should be renumbered, when a function is treated as a leaf function. -->
+      <p>一个C表达式，当函数作为叶子函数来处理时，其值为应该对<var>regno</var>进行重编的寄存器编号。
+
+     <!-- If @var{regno} is a register number which should not appear in a leaf -->
+     <!-- function before renumbering, then the expression should yield @minus{}1, which -->
+     <!-- will cause the compiler to abort. -->
+      <p>如果<var>regno</var>为一个在重编号前不应该出现在叶子函数中的寄存器编号，则表达式的值应该为-1，这将造成编译器中断退出。
+
+     <!-- Define this macro only if the target machine offers a way to optimize the -->
+     <!-- treatment of leaf functions, and registers need to be renumbered to do -->
+     <!-- this. -->
+      <p>只有当目标机器提供了优化叶子函数处理的方法，并且寄存器需要被重编号的时候，才定义该宏。
+</p></blockquote></div>
+
+ <p><a name="index-current_005ffunction_005fis_005fleaf-3994"></a><a name="index-current_005ffunction_005fuses_005fonly_005fleaf_005fregs-3995"></a><!-- @code{TARGET_ASM_FUNCTION_PROLOGUE} and -->
+<!-- @code{TARGET_ASM_FUNCTION_EPILOGUE} must usually treat leaf functions -->
+<!-- specially.  They can test the C variable @code{current_function_is_leaf} -->
+<!-- which is nonzero for leaf functions.  @code{current_function_is_leaf} is -->
+<!-- set prior to local register allocation and is valid for the remaining -->
+<!-- compiler passes.  They can also test the C variable -->
+<!-- @code{current_function_uses_only_leaf_regs} which is nonzero for leaf -->
+<!-- functions which only use leaf registers. -->
+<!-- @code{current_function_uses_only_leaf_regs} is valid after all passes -->
+<!-- that modify the instructions have been run and is only useful if -->
+<!-- @code{LEAF_REGISTERS} is defined. -->
+<code>TARGET_ASM_FUNCTION_PROLOGUE</code>和<code>TARGET_ASM_FUNCTION_EPILOGUE</code>通常必须专门处理叶子函数。它们可以测试C变量<code>current_function_is_leaf</code>，其对于叶子函数为非0。<code>current_function_is_leaf</code>在局部寄存器分配之前被设置，并且可以用于剩余的编译器过程。它们还可以测试C变量<code>current_function_uses_only_leaf_regs</code>，其对于只用叶子寄存器的叶子函数为非0。<code>current_function_uses_only_leaf_regs</code>在所有修改指令的过程被运行完之后可用，并且只有当<code>LEAF_REGISTERS</code>被定义时才有用。
+
+<!-- changed this to fix overfull.  ALSO:  why the "it" at the beginning -->
+<!-- of the next paragraph?!  -mew 2feb93 -->
+<!-- @node Stack Registers -->
+<!-- @subsection Registers That Form a Stack -->
+ </body></html>
+

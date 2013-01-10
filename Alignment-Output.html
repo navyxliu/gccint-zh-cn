@@ -1,0 +1,217 @@
+<html lang="zh">
+<head>
+<title>Alignment Output - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Assembler-Format.html#Assembler-Format" title="Assembler Format">
+<link rel="prev" href="Exception-Region-Output.html#Exception-Region-Output" title="Exception Region Output">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Alignment-Output"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Exception-Region-Output.html#Exception-Region-Output">Exception Region Output</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Assembler-Format.html#Assembler-Format">Assembler Format</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.21.10 用于对齐的汇编命令</h4>
+
+<!-- prevent bad page break with this line -->
+<!-- This describes commands for alignment. -->
+<p>这一节描述了用于对齐的命令。
+
+<div class="defun">
+&mdash; Macro: <b>JUMP_ALIGN</b> (<var>label</var>)<var><a name="index-JUMP_005fALIGN-4629"></a></var><br>
+<blockquote><!-- The alignment (log base 2) to put in front of @var{label}, which is -->
+     <!-- a common destination of jumps and has no fallthru incoming edge. -->
+      <p>在<var>label</var>前放入的对齐数（基于2的log），
+label为跳转的普通目的地并且不具有fallthru入边。
+
+     <!-- This macro need not be defined if you don't want any special alignment -->
+     <!-- to be done at such a time.  Most machine descriptions do not currently -->
+     <!-- define the macro. -->
+      <p>如果你目前不想做任何特殊的对齐，则不需要定义该宏。
+大多数机器描述目前都没有定义该宏。
+
+     <!-- Unless it's necessary to inspect the @var{label} parameter, it is better -->
+     <!-- to set the variable @var{align_jumps} in the target's -->
+     <!-- @code{TARGET_OPTION_OVERRIDE}.  Otherwise, you should try to honor the user's -->
+     <!-- selection in @var{align_jumps} in a @code{JUMP_ALIGN} implementation. -->
+      <p>除非需要检查<var>label</var>参数，
+最好在target的<code>OVERRIDE_OPTIONS</code>中设置变量<var>align_jumps</var>。
+否则应该尽量在<code>JUMP_ALIGN</code>实现中尊重用户在<var>align_jumps</var>中的选择。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_ASM_JUMP_ALIGN_MAX_SKIP</b> (<var>rtx label</var>)<var><a name="index-TARGET_005fASM_005fJUMP_005fALIGN_005fMAX_005fSKIP-4630"></a></var><br>
+<blockquote><p>The maximum number of bytes to skip before <var>label</var> when applying
+<code>JUMP_ALIGN</code>.  This works only if
+<code>ASM_OUTPUT_MAX_SKIP_ALIGN</code> is defined. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LABEL_ALIGN_AFTER_BARRIER</b> (<var>label</var>)<var><a name="index-LABEL_005fALIGN_005fAFTER_005fBARRIER-4631"></a></var><br>
+<blockquote><!-- The alignment (log base 2) to put in front of @var{label}, which follows -->
+     <!-- a @code{BARRIER}. -->
+      <p>在<var>label</var>前放入的对齐数（基于2的log），<var>label</var>后跟随一个<code>BARRIER</code>。
+
+     <!-- This macro need not be defined if you don't want any special alignment -->
+     <!-- to be done at such a time.  Most machine descriptions do not currently -->
+     <!-- define the macro. -->
+      <p>如果你目前不想做任何特殊的对齐，则不需要定义该宏。
+大多数机器描述目前都没有定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_ASM_LABEL_ALIGN_AFTER_BARRIER_MAX_SKIP</b> (<var>rtx label</var>)<var><a name="index-TARGET_005fASM_005fLABEL_005fALIGN_005fAFTER_005fBARRIER_005fMAX_005fSKIP-4632"></a></var><br>
+<blockquote><!-- The maximum number of bytes to skip before @var{label} when applying -->
+     <!-- @code{LABEL_ALIGN_AFTER_BARRIER}.  This works only if -->
+     <!-- @code{ASM_OUTPUT_MAX_SKIP_ALIGN} is defined. -->
+      <p>当应用<code>LABEL_ALIGN_AFTER_BARRIER</code>时，在<var>label</var>之前要跳过的最大字节个数。
+这只在定义了<code>ASM_OUTPUT_MAX_SKIP_ALIGN</code>时才起作用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LOOP_ALIGN</b> (<var>label</var>)<var><a name="index-LOOP_005fALIGN-4633"></a></var><br>
+<blockquote><!-- The alignment (log base 2) to put in front of @var{label}, which follows -->
+     <!-- a @code{NOTE_INSN_LOOP_BEG} note. -->
+      <p>在<var>label</var>前放入的对齐数（基于2的log），
+<var>label</var>后跟随一个<code>NOTE_INSN_LOOP_BEG</code>注解。
+
+     <!-- This macro need not be defined if you don't want any special alignment -->
+     <!-- to be done at such a time.  Most machine descriptions do not currently -->
+     <!-- define the macro. -->
+      <p>如果你目前不想做任何特殊的对齐，则不需要定义该宏。
+大多数机器描述目前都没有定义该宏。
+
+     <!-- Unless it's necessary to inspect the @var{label} parameter, it is better -->
+     <!-- to set the variable @code{align_loops} in the target's -->
+     <!-- @code{TARGET_OPTION_OVERRIDE}.  Otherwise, you should try to honor the user's -->
+     <!-- selection in @code{align_loops} in a @code{LOOP_ALIGN} implementation. -->
+      <p>除非需要检查<var>label</var>参数，
+最好在target的<code>OVERRIDE_OPTIONS</code>中设置变量<code>align_loops</code>。
+否则应该尽量在<code>LOOP_ALIGN</code>实现中尊重用户在<code>align_loops</code>中的选择。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_ASM_LOOP_ALIGN_MAX_SKIP</b> (<var>rtx label</var>)<var><a name="index-TARGET_005fASM_005fLOOP_005fALIGN_005fMAX_005fSKIP-4634"></a></var><br>
+<blockquote><!-- The maximum number of bytes to skip when applying @code{LOOP_ALIGN} to -->
+     <!-- @var{label}.  This works only if @code{ASM_OUTPUT_MAX_SKIP_ALIGN} is -->
+     <!-- defined. -->
+      <p>当对<var>label</var>应用<code>LOOP_ALIGN</code>时，要跳过的最大字节个数。
+这只在定义了<code>ASM_OUTPUT_MAX_SKIP_ALIGN</code>时才起作用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>LABEL_ALIGN</b> (<var>label</var>)<var><a name="index-LABEL_005fALIGN-4635"></a></var><br>
+<blockquote><!-- The alignment (log base 2) to put in front of @var{label}. -->
+     <!-- If @code{LABEL_ALIGN_AFTER_BARRIER} / @code{LOOP_ALIGN} specify a different alignment, -->
+     <!-- the maximum of the specified values is used. -->
+      <p>在<var>label</var>前放入的对齐数（基于2的log），
+如果<code>LABEL_ALIGN_AFTER_BARRIER</code> / <code>LOOP_ALIGN</code>指定了不相同的对齐，
+则使用最大的值。
+
+     <!-- Unless it's necessary to inspect the @var{label} parameter, it is better -->
+     <!-- to set the variable @code{align_labels} in the target's -->
+     <!-- @code{TARGET_OPTION_OVERRIDE}.  Otherwise, you should try to honor the user's -->
+     <!-- selection in @code{align_labels} in a @code{LABEL_ALIGN} implementation. -->
+      <p>除非需要检查<var>label</var>参数，
+最好在target的<code>OVERRIDE_OPTIONS</code>中设置变量<code>align_labels</code>。
+否则应该尽量在<code>LABEL_ALIGN</code>实现中尊重用户在<code>align_labels</code>中的选择。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_ASM_LABEL_ALIGN_MAX_SKIP</b> (<var>rtx label</var>)<var><a name="index-TARGET_005fASM_005fLABEL_005fALIGN_005fMAX_005fSKIP-4636"></a></var><br>
+<blockquote><!-- The maximum number of bytes to skip when applying @code{LABEL_ALIGN} -->
+     <!-- to @var{label}.  This works only if @code{ASM_OUTPUT_MAX_SKIP_ALIGN} -->
+     <!-- is defined. -->
+      <p>当对<var>label</var>应用<code>LABEL_ALIGN</code>时，要跳过的最大字节个数。
+这只在定义了<code>ASM_OUTPUT_MAX_SKIP_ALIGN</code>时才起作用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_SKIP</b> (<var>stream, nbytes</var>)<var><a name="index-ASM_005fOUTPUT_005fSKIP-4637"></a></var><br>
+<blockquote><!-- A C statement to output to the stdio stream @var{stream} an assembler -->
+     <!-- instruction to advance the location counter by @var{nbytes} bytes. -->
+     <!-- Those bytes should be zero when loaded.  @var{nbytes} will be a C -->
+     <!-- expression of type @code{unsigned HOST_WIDE_INT}. -->
+      <p>一条C语句，将一条汇编指令输出到stdio流<var>stream</var>中，
+使得将位置计数器前移<var>nbytes</var>个字节。那些字节在加载时应该为0。
+<var>nbytes</var>将为<code>unsigned HOST_WIDE_INT</code>类型的C表达式。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_NO_SKIP_IN_TEXT</b><var><a name="index-ASM_005fNO_005fSKIP_005fIN_005fTEXT-4638"></a></var><br>
+<blockquote><!-- Define this macro if @code{ASM_OUTPUT_SKIP} should not be used in the -->
+     <!-- text section because it fails to put zeros in the bytes that are skipped. -->
+     <!-- This is true on many Unix systems, where the pseudo-op to skip bytes -->
+     <!-- produces no-op instructions rather than zeros when used in the text -->
+     <!-- section. -->
+      <p>定义该宏，如果<code>ASM_OUTPUT_SKIP</code>不应该在text section中使用，
+因为无法在跳过的字节中放入0。这在许多Unix系统上都为，
+当在text section中使用时，跳过字节的伪指令会产生no-op指令，而不是0。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_ALIGN</b> (<var>stream, power</var>)<var><a name="index-ASM_005fOUTPUT_005fALIGN-4639"></a></var><br>
+<blockquote><!-- A C statement to output to the stdio stream @var{stream} an assembler -->
+     <!-- command to advance the location counter to a multiple of 2 to the -->
+     <!-- @var{power} bytes.  @var{power} will be a C expression of type @code{int}. -->
+      <p>一条C语句，将一条汇编指令输出到stdio流<var>stream</var>中，
+使得将位置计数器前移2的<var>power</var>次幂个字节。
+<var>power</var>为<code>int</code>类型的表达式。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_ALIGN_WITH_NOP</b> (<var>stream, power</var>)<var><a name="index-ASM_005fOUTPUT_005fALIGN_005fWITH_005fNOP-4640"></a></var><br>
+<blockquote><!-- Like @code{ASM_OUTPUT_ALIGN}, except that the ``nop'' instruction is used -->
+     <!-- for padding, if necessary. -->
+      <p>类似<code>ASM_OUTPUT_ALIGN</code>，除了使用“nop”指令来填充，如果需要的话。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_MAX_SKIP_ALIGN</b> (<var>stream, power, max_skip</var>)<var><a name="index-ASM_005fOUTPUT_005fMAX_005fSKIP_005fALIGN-4641"></a></var><br>
+<blockquote><!-- A C statement to output to the stdio stream @var{stream} an assembler -->
+     <!-- command to advance the location counter to a multiple of 2 to the -->
+     <!-- @var{power} bytes, but only if @var{max_skip} or fewer bytes are needed to -->
+     <!-- satisfy the alignment request.  @var{power} and @var{max_skip} will be -->
+     <!-- a C expression of type @code{int}. -->
+      <p>一条C语句，将一条汇编指令输出到stdio流<var>stream</var>中，
+使得将位置计数器前移2的<var>power</var>次幂个字节，
+但只有当需要<var>max_skip</var>个或者更少的字节来满足对齐要求的时候才行。
+<var>power</var>和<var>max_skip</var>为<code>int</code>类型的表达式。
+</p></blockquote></div>
+
+<!-- @node Debugging Info -->
+<!-- @section Controlling Debugging Information Format -->
+ </body></html>
+

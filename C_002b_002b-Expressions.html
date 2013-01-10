@@ -1,0 +1,99 @@
+<html lang="zh">
+<head>
+<title>C++ Expressions - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="C-and-C_002b_002b-Trees.html#C-and-C_002b_002b-Trees" title="C and C++ Trees">
+<link rel="prev" href="Statements-for-C_002b_002b.html#Statements-for-C_002b_002b" title="Statements for C++">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="C++-Expressions"></a>
+<a name="C_002b_002b-Expressions"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Statements-for-C_002b_002b.html#Statements-for-C_002b_002b">Statements for C++</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="C-and-C_002b_002b-Trees.html#C-and-C_002b_002b-Trees">C and C++ Trees</a>
+<hr>
+</div>
+
+<h4 class="subsection">11.10.6 C++表达式</h4>
+
+<!-- This section describes expressions specific to the C and C++ front -->
+<!-- ends. -->
+<p>这一章节描述了C和C++前端特定的表达式。
+
+     <dl>
+<dt><code>TYPEID_EXPR</code><dd><!-- Used to represent a @code{typeid} expression. -->
+用来表示<code>typeid</code>表达式。
+
+     <br><dt><code>NEW_EXPR</code><dt><code>VEC_NEW_EXPR</code><dd><!-- Used to represent a call to @code{new} and @code{new[]} respectively. -->
+分别用来表示对<code>new</code>和<code>new[]</code>的调用。
+
+     <br><dt><code>DELETE_EXPR</code><dt><code>VEC_DELETE_EXPR</code><dd><!-- Used to represent a call to @code{delete} and @code{delete[]} respectively. -->
+分别用来表示对<code>delete</code>和<code>delete[]</code>的调用。
+
+     <br><dt><code>MEMBER_REF</code><dd><!-- Represents a reference to a member of a class. -->
+表示对类的成员的引用。
+
+     <br><dt><code>THROW_EXPR</code><dd><!-- Represents an instance of @code{throw} in the program.  Operand 0, -->
+<!-- which is the expression to throw, may be @code{NULL_TREE}. -->
+表示程序中<code>throw</code>的实例。操作数0，为要抛出的表达式，可以为<code>NULL_TREE</code>。
+
+     <br><dt><code>AGGR_INIT_EXPR</code><dd><!-- An @code{AGGR_INIT_EXPR} represents the initialization as the return -->
+<!-- value of a function call, or as the result of a constructor.  An -->
+<!-- @code{AGGR_INIT_EXPR} will only appear as a full-expression, or as the -->
+<!-- second operand of a @code{TARGET_EXPR}.  @code{AGGR_INIT_EXPR}s have -->
+<!-- a representation similar to that of @code{CALL_EXPR}s.  You can use -->
+<!-- the @code{AGGR_INIT_EXPR_FN} and @code{AGGR_INIT_EXPR_ARG} macros to access -->
+<!-- the function to call and the arguments to pass. -->
+<code>AGGR_INIT_EXPR</code>表示作为函数调用的返回值或者作为构造函数的结果的初始化。
+<code>AGGR_INIT_EXPR</code>只作为充分表达式出现，
+或作为<code>TARGET_EXPR</code>的第二个操作数。
+<code>AGGR_INIT_EXPR</code>具有跟<code>CALL_EXPR</code>类似的表示。
+可以使用<code>AGGR_INIT_EXPR_FN</code>和<code>AGGR_INIT_EXPR_ARG</code>宏来访问调用的函数，
+以及传递的参数。
+
+     <!-- If @code{AGGR_INIT_VIA_CTOR_P} holds of the @code{AGGR_INIT_EXPR}, then -->
+     <!-- the initialization is via a constructor call.  The address of the -->
+     <!-- @code{AGGR_INIT_EXPR_SLOT} operand, which is always a @code{VAR_DECL}, -->
+     <!-- is taken, and this value replaces the first argument in the argument -->
+     <!-- list. -->
+     <p>如果<code>AGGR_INIT_VIA_CTOR_P</code>持有<code>AGGR_INIT_EXPR</code>，
+则初始化是通过一个构造函数进行的。<code>AGGR_INIT_EXPR_SLOT</code>操作数的地址，
+其总是一个<code>VAR_DECL</code>，将被接受，并且该值替代参数列表中的第一个参数。
+
+     <!-- In either case, the expression is void. -->
+     <p>在这两种情况下，表达式都是void的。
+
+ </dl>
+
+ </body></html>
+

@@ -1,0 +1,130 @@
+<html lang="zh">
+<head>
+<title>Front End Makefile - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Front-End.html#Front-End" title="Front End">
+<link rel="prev" href="Front-End-Config.html#Front-End-Config" title="Front End Config">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Front-End-Makefile"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Front-End-Config.html#Front-End-Config">Front End Config</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Front-End.html#Front-End">Front End</a>
+<hr>
+</div>
+
+<h5 class="subsubsection">6.3.8.3 The Front End <samp><span class="file">Make-lang.in</span></samp> File</h5>
+
+<!-- Each language subdirectory contains a @file{Make-lang.in} file.  It contains -->
+<!-- targets @code{@var{lang}.@var{hook}} (where @code{@var{lang}} is the -->
+<!-- setting of @code{language} in @file{config-lang.in}) for the following -->
+<!-- values of @code{@var{hook}}, and any other Makefile rules required to -->
+<!-- build those targets (which may if necessary use other Makefiles -->
+<!-- specified in @code{outputs} in @file{config-lang.in}, although this is -->
+<!-- deprecated).  It also adds any testsuite targets that can use the -->
+<!-- standard rule in @file{gcc/Makefile.in} to the variable -->
+<!-- @code{lang_checks}. -->
+<p>所有的language子目录都需要这个文件。它包含了目标<var>lang</var><code>.</code><var>hook</var>（<var>lang</var>是在<samp><span class="file">config-lang.in</span></samp>中对<code>language</code>的设置），即下面的<var>hook</var>的值，以及构建这些目标的其它Makefile规则(如果需要的话，可以使用在<samp><span class="file">config-lang.in</span></samp>中通过<code>outputs</code>指定的其它Makefile，但是不赞成这种方式)。它还向变量<code>lang_checks</code>增加了任何可以使用<samp><span class="file">gcc/Makefile.in</span></samp>中的标准规则的测试包目标。
+
+     <dl>
+<dt><code>all.cross</code><dt><code>start.encap</code><dt><code>rest.encap</code><dd><!-- FIXME: exactly what goes in each of these targets? -->
+FIXME: 确切的描述这些目标。
+<br><dt><code>tags</code><dd><!-- Build an @command{etags} @file{TAGS} file in the language subdirectory -->
+<!-- in the source tree. -->
+在源树的语言子目录中构建一个<samp><span class="command">etags</span></samp> <samp><span class="file">TAGS</span></samp>文件。
+<br><dt><code>info</code><dd><!-- Build info documentation for the front end, in the build directory. -->
+<!-- This target is only called by @samp{make bootstrap} if a suitable -->
+<!-- version of @command{makeinfo} is available, so does not need to check -->
+<!-- for this, and should fail if an error occurs. -->
+在构建目录下构建前端的info文档。这个目标只被&lsquo;<samp><span class="samp">make bootstrap</span></samp>&rsquo;在有合适版本的<samp><span class="command">makeinfo</span></samp>时调用，所以不需要进行检查，并且如果错误发生时，应该失败。
+<br><dt><code>dvi</code><dd><!-- Build DVI documentation for the front end, in the build directory. -->
+<!-- This should be done using @code{$(TEXI2DVI)}, with appropriate -->
+<!-- @option{-I} arguments pointing to directories of included files. -->
+在构建目录下构建前端的DVI文档。这应该使用<code>$(TEXI2DVI)</code>，以及合适的指向要包含文件目录的<samp><span class="option">-I</span></samp>参数，来完成。
+<br><dt><code>pdf</code><dd><!-- Build PDF documentation for the front end, in the build directory. -->
+<!-- This should be done using @code{$(TEXI2PDF)}, with appropriate -->
+<!-- @option{-I} arguments pointing to directories of included files. -->
+在构建目录下构建前端的PDF文档。这应该使用<code>$(TEXI2PDF)</code>，以及合适的指向要包含文件目录的<samp><span class="option">-I</span></samp>参数，来完成。
+<br><dt><code>html</code><dd><!-- Build HTML documentation for the front end, in the build directory. -->
+在构建目录下构建前端的HTML文档
+<br><dt><code>man</code><dd><!-- Build generated man pages for the front end from Texinfo manuals -->
+<!-- (@pxref{Man Page Generation}), in the build directory.  This target -->
+<!-- is only called if the necessary tools are available, but should ignore -->
+<!-- errors so as not to stop the build if errors occur; man pages are -->
+<!-- optional and the tools involved may be installed in a broken way. -->
+在构建目录下通过Texinfo手册来生成前端的man页（参见<a href="Man-Page-Generation.html#Man-Page-Generation">Man Page Generation</a>）。该目标只在所需工具可用时才被调用，并且应该能够忽视错误，从而不会在错误发生时停止构建；man页是可选的，其相关工具如果没有被安装也可以。
+<br><dt><code>install-common</code><dd><!-- Install everything that is part of the front end, apart from the -->
+<!-- compiler executables listed in @code{compilers} in -->
+<!-- @file{config-lang.in}. -->
+安装前端的所有部分，
+除了在<samp><span class="file">config-lang.in</span></samp>中列出的<code>compilers</code>可执行程序以外。
+<br><dt><code>install-info</code><dd><!-- Install info documentation for the front end, if it is present in the -->
+<!-- source directory.  This target should have dependencies on info files -->
+<!-- that should be installed. -->
+安装前端的info文档，如果源目录中存在的话。该目标应该与要安装的info文件有依赖关系。
+<br><dt><code>install-man</code><dd><!-- Install man pages for the front end.  This target should ignore -->
+<!-- errors. -->
+安装前端的man页。该目标应该能够忽略错误。
+<br><dt><code>install-plugin</code><dd>Install headers needed for plugins. 
+<br><dt><code>srcextra</code><dd><!-- Copies its dependencies into the source directory.  This generally should -->
+<!-- be used for generated files such as Bison output files which are not -->
+<!-- version-controlled, but should be included in any release tarballs.  This -->
+<!-- target will be executed during a bootstrap if -->
+<!-- @samp{-enable-generated-files-in-srcdir} was specified as a -->
+<!-- @file{configure} option. -->
+将它的依赖复制到源目录中。通常用于生成的文件，像Bison输出文件，其不存在于CVS中，但应该放到任何的发行tar包中。该目标将在自举过程中当&lsquo;<samp><span class="samp">--enable-generated-files-in-srcdir</span></samp>&rsquo;被指定为一个<samp><span class="file">configure</span></samp>选项时被执行。
+<br><dt><code>srcinfo</code><dt><code>srcman</code><dd><!-- Copies its dependencies into the source directory.  These targets will be -->
+<!-- executed during a bootstrap if @samp{-enable-generated-files-in-srcdir} -->
+<!-- was specified as a @file{configure} option. -->
+将它的依赖复制到源目录中。该目标将在自举过程中当&lsquo;<samp><span class="samp">--enable-generated-files-in-srcdir</span></samp>&rsquo;被指定为一个<samp><span class="file">configure</span></samp>选项时被执行。
+<br><dt><code>uninstall</code><dd><!-- Uninstall files installed by installing the compiler.  This is -->
+<!-- currently documented not to be supported, so the hook need not do -->
+<!-- anything. -->
+卸载通过安装编译器所安装的文件。目前还不支持，所以不要做任何事情。
+<br><dt><code>mostlyclean</code><dt><code>clean</code><dt><code>distclean</code><dt><code>maintainer-clean</code><dd><!-- The language parts of the standard GNU -->
+<!-- @samp{*clean} targets.  @xref{Standard Targets, , Standard Targets for -->
+<!-- Users, standards, GNU Coding Standards}, for details of the standard -->
+<!-- targets.  For GCC, @code{maintainer-clean} should delete -->
+<!-- all generated files in the source directory that are not version-controlled, -->
+<!-- but should not delete anything that is. -->
+标准GNU&lsquo;<samp><span class="samp">*clean</span></samp>&rsquo;目标的语言部分。关于标准目标的详情，参见<a href="../standards/Standard-Targets.html#Standard-Targets">Standard Targets for Users</a>。对于GCC，<code>maintainer-clean</code>应该删除所有在源目录下生成的没有放入CVS的文件，但不要删除任何放入CVS的文件。
+</dl>
+
+<!-- @file{Make-lang.in} must also define a variable @code{@var{lang}_OBJS} -->
+<!-- to a list of host object files that are used by that language. -->
+ <p><samp><span class="file">Make-lang.in</span></samp>还必须要定义一个变量<var>lang</var><code>_OBJS</code>，其为那个语言所用到的主机目标文件列表。
+
+<!-- @node Back End -->
+<!-- @subsection Anatomy of a Target Back End -->
+ </body></html>
+

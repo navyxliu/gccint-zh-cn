@@ -1,0 +1,78 @@
+<html lang="zh">
+<head>
+<title>Invoking the garbage collector - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Type-Information.html#Type-Information" title="Type Information">
+<link rel="prev" href="Files.html#Files" title="Files">
+<link rel="next" href="Troubleshooting.html#Troubleshooting" title="Troubleshooting">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Invoking-the-garbage-collector"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Troubleshooting.html#Troubleshooting">Troubleshooting</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Files.html#Files">Files</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Type-Information.html#Type-Information">Type Information</a>
+<hr>
+</div>
+
+<h3 class="section">22.4 如何调用垃圾收集器</h3>
+
+<p><a name="index-garbage-collector_002c-invocation-4972"></a><a name="index-ggc_005fcollect-4973"></a>
+<!-- The GCC garbage collector GGC is only invoked explicitly. In contrast -->
+<!-- with many other garbage collectors, it is not implicitly invoked by -->
+<!-- allocation routines when a lot of memory has been consumed. So the -->
+<!-- only way to have GGC reclaim storage it to call the @code{ggc_collect} -->
+<!-- function explicitly.  This call is an expensive operation, as it may -->
+<!-- have to scan the entire heap.  Beware that local variables (on the GCC -->
+<!-- call stack) are not followed by such an invocation (as many other -->
+<!-- garbage collectors do): you should reference all your data from static -->
+<!-- or external @code{GTY}-ed variables, and it is advised to call -->
+<!-- @code{ggc_collect} with a shallow call stack.  The GGC is an exact mark -->
+<!-- and sweep garbage collector (so it does not scan the call stack for -->
+<!-- pointers).  In practice GCC passes don't often call @code{ggc_collect} -->
+<!-- themselves, because it is called by the pass manager between passes. -->
+GCC垃圾搜集器GGC只能被显式的调用。相对于其它许多垃圾搜集器，当大量内存被消耗时，其不会被分配程序隐式的调用。所以，让GGC回收存储的唯一方法是显式的调用<code>ggc_collect</code>函数。该调用的开销很大，可能会扫描整个堆。要注意的是，局部变量（在GCC调用栈上）并不遵循这样的调用（正如许多其它垃圾搜集器一样）：你应该将所有的<code>GTY</code>变量标记为static或者external，并且建议不要在太深的调用栈中调用<code>ggc_collect</code>。GGC是一个严格的mark-and-sweep垃圾搜集器（所以，它不会扫描调用栈中的指针）。实际中，GCC passes本身并不经常调用<code>ggc_collect</code>，而是由pass管理器在pass之间进行调用。
+
+<!-- At the time of the @code{ggc_collect} call all pointers in the GC-marked -->
+<!-- structures must be valid or @code{NULL}.  In practice this means that -->
+<!-- there should not be uninitialized pointer fields in the structures even -->
+<!-- if your code never reads or writes those fields at a particular -->
+<!-- instance.  One way to ensure this is to use cleared versions of -->
+<!-- allocators unless all the fields are initialized manually immediately -->
+<!-- after allocation. -->
+ <p>在调用<code>ggc_collect</code>的时候，所有在GC标记的结构体中的指针必须为有效的或者<code>NULL</code>。实际上，这意味着在结构体中不要有未被初始化的指针域，即使你的代码在特定情况下并不会读写这些域。要确保这种情况不会发生，一种方法是使用分配器的清除版本（cleared versions），除非所有的域在分配之后都被立即手动初始化。
+
+<!-- @node Troubleshooting -->
+<!-- @section Troubleshooting the garbage collector -->
+ </body></html>
+

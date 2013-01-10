@@ -1,0 +1,217 @@
+<html lang="zh">
+<head>
+<title>Option file format - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Options.html#Options" title="Options">
+<link rel="next" href="Option-properties.html#Option-properties" title="Option properties">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Option-file-format"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Option-properties.html#Option-properties">Option properties</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Options.html#Options">Options</a>
+<hr>
+</div>
+
+<h3 class="section">8.1 选项文件格式</h3>
+
+<!-- Option files are a simple list of records in which each field occupies -->
+<!-- its own line and in which the records themselves are separated by -->
+<!-- blank lines.  Comments may appear on their own line anywhere within -->
+<!-- the file and are preceded by semicolons.  Whitespace is allowed before -->
+<!-- the semicolon. -->
+<p>选项文件是一个简单的记录列表，记录中的每个域独自占有一行，记录之间由空行分隔。注释独自占有一行，可以出现在文件的任何地方，并且由分号开头。分号前允许有空格。
+
+<!-- The files can contain the following types of record: -->
+ <p>文件中可以包含下列类型的记录：
+
+     <ul>
+<li><!-- A language definition record.  These records have two fields: the -->
+<!-- string @samp{Language} and the name of the language.  Once a language -->
+<!-- has been declared in this way, it can be used as an option property. -->
+<!-- @xref{Option properties}. -->
+语言定义记录。这些记录有两个域：字符串&lsquo;<samp><span class="samp">Language</span></samp>&rsquo;和语言的名字。一旦通过这种方式声明了一个语言，则可以作为选项属性来使用。参见<a href="Option-properties.html#Option-properties">Option properties</a>。
+
+     <li><!-- A target specific save record to save additional information. These -->
+<!-- records have two fields: the string @samp{TargetSave}, and a -->
+<!-- declaration type to go in the @code{cl_target_option} structure. -->
+一个目标相关的保存记录用来保存额外信息。这些记录有两个域：字符串 &lsquo;<samp><span class="samp">TargetSave</span></samp>&rsquo;，和一个在<code>cl_target_option</code> 中结构的类型声明。
+
+     <li><!-- A variable record to define a variable used to store option -->
+<!-- information.  These records have two fields: the string -->
+<!-- @samp{Variable}, and a declaration of the type and name of the -->
+<!-- variable, optionally with an initializer (but without any trailing -->
+<!-- @samp{;}).  These records may be used for variables used for many -->
+<!-- options where declaring the initializer in a single option definition -->
+<!-- record, or duplicating it in many records, would be inappropriate, or -->
+<!-- for variables set in option handlers rather than referenced by -->
+<!-- @code{Var} properties. -->
+定义一个变量记录用来存储选项信息。这些记录有两个领域：字符串 &lsquo;<samp><span class="samp">变量</span></samp>&rsquo;，和这个变量类型和名称的声明，也许还有可选初始化值（但没有任何结束符&lsquo;<samp><span class="samp">;</span></samp>&rsquo;）。在声明一个初始化单独选项的时候，这些记录可以被很多选项使用，或者在很多选项中复制它，都是不适当的，设置变量应该在选项处理程序而不是对 <code>Var</code> 属性的直接引用。
+
+     <li><!-- A variable record to define a variable used to store option -->
+<!-- information.  These records have two fields: the string -->
+<!-- @samp{TargetVariable}, and a declaration of the type and name of the -->
+<!-- variable, optionally with an initializer (but without any trailing -->
+<!-- @samp{;}).  @samp{TargetVariable} is a combination of @samp{Variable} -->
+<!-- and @samp{TargetSave} records in that the variable is defined in the -->
+<!-- @code{gcc_options} structure, but these variables are also stored in -->
+<!-- the @code{cl_target_option} structure.  The variables are saved in the -->
+<!-- target save code and restored in the target restore code. -->
+用变量记录定义的变量用来存储选项信息。这些记录有两个字段：字符串 &lsquo;<samp><span class="samp">TargetVariable</span></samp>&rsquo;，和这个变量类型和名称的声明，也许还有可选的初始化值（但没有任何结束符 &lsquo;<samp><span class="samp">;</span></samp>&rsquo;）。&lsquo;<samp><span class="samp">TargetVariable</span></samp>&rsquo; 是 &lsquo;<samp><span class="samp">Variable</span></samp>&rsquo; 和 <code>gcc_options</code>结构中的 &lsquo;<samp><span class="samp">TargetSave</span></samp>&rsquo; 记录变量定义的组合，但这些变量也存储在 <code>cl_target_option</code> 结构中。这些变量保存在target save code和target restore code中。
+
+     <li><!-- A variable record to record any additional files that the -->
+<!-- @file{options.h} file should include.  This is useful to provide -->
+<!-- enumeration or structure definitions needed for target variables. -->
+<!-- These records have two fields: the string @samp{HeaderInclude} and the -->
+<!-- name of the include file. -->
+变量记录用来记录任何 <samp><span class="file">options.h</span></samp> 中应该包含的附加文件。这在提供目标变量的枚举或结构的定义的时候非常有用。这些记录有两个域：字符串 &lsquo;<samp><span class="samp">HeaderInclude</span></samp>&rsquo; 和头文件的名称。
+
+     <li><!-- A variable record to record any additional files that the -->
+<!-- @file{options.c} file should include.  This is useful to provide -->
+<!-- inline functions needed for target variables and/or @code{#ifdef} -->
+<!-- sequences to properly set up the initialization.  These records have -->
+<!-- two fields: the string @samp{SourceInclude} and the name of the -->
+<!-- include file. -->
+变量记录用来记录任何 <samp><span class="file">options.c</span></samp> 中应该包含的附加文件。这在提供目标变量需要的内联函数和正确设置初始化 <code>＃ifdef</code> 序列的时候非常有用。这些记录有两个域：字符串 &lsquo;<samp><span class="samp">SourceInclude</span></samp>&rsquo;和头文件名称。
+
+     <li><!-- An enumeration record to define a set of strings that may be used as -->
+<!-- arguments to an option or options.  These records have three fields: -->
+<!-- the string @samp{Enum}, a space-separated list of properties and help -->
+<!-- text used to describe the set of strings in @option{-help} output. -->
+<!-- Properties use the same format as option properties; the following are -->
+<!-- valid: -->
+枚举记录定义了一套可以用来作为字符串选项的参数。这些记录有三个域：
+字符串 &lsquo;<samp><span class="samp">Enum</span></samp>&rsquo;，空格分隔的属性列表，描述 <samp><span class="option">--help</span></samp> 输出的帮助
+文字。属性选项属性使用相同的格式，以下是有效选项：
+
+          <dl>
+<dt><code>Name(</code><var>name</var><code>)</code><dd><!-- This property is required; @var{name} must be a name (suitable for use -->
+<!-- in C identifiers) used to identify the set of strings in @code{Enum} -->
+<!-- option properties. -->
+此属性是必需的，<var>name</var> 必须是一个名称（合法的C标识符）用来确定在 <code>Enum</code> 选项属性中的字符串。
+
+          <br><dt><code>Type(</code><var>type</var><code>)</code><dd><!-- This property is required; @var{type} is the C type for variables set -->
+<!-- by options using this enumeration together with @code{Var}. -->
+此属性是必需的，<var>type</var> 是一个被选项用 <code>Var</code> 中的值设置的变量的C类型。
+
+          <br><dt><code>UnknownError(</code><var>message</var><code>)</code><dd><!-- The message @var{message} will be used as an error message if the -->
+<!-- argument is invalid; for enumerations without @code{UnknownError}, a -->
+<!-- generic error message is used.  @var{message} should contain a single -->
+<!-- @samp{%qs} format, which will be used to format the invalid argument. -->
+<var>message</var> 将被用作参数无效时的错误消息，枚举中不存在 <code>UnknownError</code> 的时候使用一般性错误消息。<var>message</var> 应该包含一个用于格式化无效参数的 &lsquo;<samp><span class="samp">％qs</span></samp>&rsquo;格式。
+</dl>
+
+     <li><!-- An enumeration value record to define one of the strings in a set -->
+<!-- given in an @samp{Enum} record.  These records have two fields: the -->
+<!-- string @samp{EnumValue} and a space-separated list of properties. -->
+<!-- Properties use the same format as option properties; the following are -->
+<!-- valid: -->
+枚举值记录用来定义一个 &lsquo;<samp><span class="samp">Enum</span></samp>&rsquo; 记录中给定一组字符串。这些记录有两个字段：
+字符串 &lsquo;<samp><span class="samp">EnumValue</span></samp>&rsquo; 和空格分隔的属性列表。属性选项属性使用相同的格式，以下是有效选项：
+
+          <dl>
+<dt><code>Enum(</code><var>name</var><code>)</code><dd><!-- This property is required; @var{name} says which @samp{Enum} record -->
+<!-- this @samp{EnumValue} record corresponds to. -->
+此属性是必需的，<var>name</var> 是 &lsquo;<samp><span class="samp">Enum</span></samp>&rsquo; 中 &lsquo;<samp><span class="samp">EnumValue</span></samp>&rsquo; 的对应记录。
+
+          <br><dt><code>String(</code><var>string</var><code>)</code><dd><!-- This property is required; @var{string} is the string option argument -->
+<!-- being described by this record. -->
+此属性是必需的，<var>string</var>是记录中存储的字符串选项内容。
+
+          <br><dt><code>Value(</code><var>value</var><code>)</code><dd><!-- This property is required; it says what value (representable as -->
+<!-- @code{int}) should be used for the given string. -->
+此属性是必需的，它表示给定的字符串的值（表示为<code>int</code>）。
+
+          <br><dt><code>Canonical</code><dd><!-- This property is optional.  If present, it says the present string is -->
+<!-- the canonical one among all those with the given value.  Other strings -->
+<!-- yielding that value will be mapped to this one so specs do not need to -->
+<!-- handle them. -->
+此属性是可选的。如果存在，表示当前字符串是所有给定值的典型之一。其他字符串
+产生的值将被映射到这里，以至于specs不需要处理它们。
+
+          <br><dt><code>DriverOnly</code><dd><!-- This property is optional.  If present, the present string will only -->
+<!-- be accepted by the driver.  This is used for cases such as -->
+<!-- @option{-march=native} that are processed by the driver so that -->
+<!-- @samp{gcc -v} shows how the options chosen depended on the system on -->
+<!-- which the compiler was run. -->
+该属性是可选的。当前，这些字符串仅仅被driver接受。用来在 <samp><span class="option">-march=native</span></samp> 的时候传递给driver，导致运行 &lsquo;<samp><span class="samp">gcc -v</span></samp>&rsquo; 可以显示当前系统使用的选项。
+</dl>
+
+     <li><!-- An option definition record.  These records have the following fields: -->
+选项定义记录。这些记录有如下域：
+          <ol type=1 start=1>
+<li><!-- the name of the option, with the leading ``-'' removed -->
+选项的名字，去掉前导符“-”
+<li><!-- a space-separated list of option properties (@pxref{Option properties}) -->
+空格分隔的选项属性列表 (参见<a href="Option-properties.html#Option-properties">Option properties</a>)
+<li><!-- the help text to use for @option{-help} (omitted if the second field -->
+<!-- contains the @code{Undocumented} property). -->
+帮助文本，用于<samp><span class="option">--help</span></samp>（如果第二个域包含<code>Undocumented</code>属性，则会忽略该域）
+          </ol>
+
+     <!-- By default, all options beginning with ``f'', ``W'' or ``m'' are -->
+     <!-- implicitly assumed to take a ``no-'' form.  This form should not be -->
+     <!-- listed separately.  If an option beginning with one of these letters -->
+     <!-- does not have a ``no-'' form, you can use the @code{RejectNegative} -->
+     <!-- property to reject it. -->
+     <p>缺省的，所有以“f”，“W”或者“m”开头的选项被隐式的假设会有一个“no-”形式。该形式不必再单独列出来。如果以这些字母开头的选项没有“no-”形式，可以使用<code>RejectNegative</code>属性来去掉。
+
+     <!-- The help text is automatically line-wrapped before being displayed. -->
+     <!-- Normally the name of the option is printed on the left-hand side of -->
+     <!-- the output and the help text is printed on the right.  However, if the -->
+     <!-- help text contains a tab character, the text to the left of the tab is -->
+     <!-- used instead of the option's name and the text to the right of the -->
+     <!-- tab forms the help text.  This allows you to elaborate on what type -->
+     <!-- of argument the option takes. -->
+     <p>帮助文本在显示前会被自动换行。正常情况下，选项的名字会被打印在输出的左边，帮助文本被打印在右边。但是，如果帮助文本包含一个tab字符，则tab左边的文本会被用来替代选项的名字，tab右边的文本作为帮助文本。这样就可以用来详尽的阐述选项会使用什么类型的参数。
+
+     <li><!-- A target mask record.  These records have one field of the form -->
+<!-- @samp{Mask(@var{x})}.  The options-processing script will automatically -->
+<!-- allocate a bit in @code{target_flags} (@pxref{Run-time Target}) for -->
+<!-- each mask name @var{x} and set the macro @code{MASK_@var{x}} to the -->
+<!-- appropriate bitmask.  It will also declare a @code{TARGET_@var{x}} -->
+<!-- macro that has the value 1 when bit @code{MASK_@var{x}} is set and -->
+<!-- 0 otherwise. -->
+目标掩码记录。这些记录有一个域，形式为&lsquo;<samp><span class="samp">Mask(</span><var>x</var><span class="samp">)</span></samp>&rsquo;。选项处理脚本将会自动在target_flags（参见<a href="Run_002dtime-Target.html#Run_002dtime-Target">Run-time Target</a>）中为每个掩码名字x分配一个位，并且将<code>MASK_</code><var>x</var>宏对应的位置位。同时，会声明一个<code>TARGET_</code><var>x</var>宏，当<code>MASK_</code><var>x</var>位被置位时其值为1，否则为0。
+
+     <!-- They are primarily intended to declare target masks that are not -->
+     <!-- associated with user options, either because these masks represent -->
+     <!-- internal switches or because the options are not available on all -->
+     <!-- configurations and yet the masks always need to be defined. -->
+     <p>它们最初是为了声明与用户选项没有联系的目标掩码，或者是因为这些掩码表示内部的开关，或者是因为这些选项不在所有的配置中，但是还需要定义掩码的。
+</ul>
+
+<!-- @node Option properties -->
+<!-- @section Option properties -->
+ </body></html>
+

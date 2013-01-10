@@ -1,0 +1,120 @@
+<html lang="zh">
+<head>
+<title>DBX Hooks - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Debugging-Info.html#Debugging-Info" title="Debugging Info">
+<link rel="prev" href="DBX-Options.html#DBX-Options" title="DBX Options">
+<link rel="next" href="File-Names-and-DBX.html#File-Names-and-DBX" title="File Names and DBX">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="DBX-Hooks"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="File-Names-and-DBX.html#File-Names-and-DBX">File Names and DBX</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="DBX-Options.html#DBX-Options">DBX Options</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Debugging-Info.html#Debugging-Info">Debugging Info</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.22.3 针对DBX格式的钩子</h4>
+
+<!-- prevent bad page break with this line -->
+<!-- These are hooks for DBX format. -->
+<!-- 这些是针对DBX格式的钩子。 -->
+<div class="defun">
+&mdash; Macro: <b>DBX_OUTPUT_LBRAC</b> (<var>stream, name</var>)<var><a name="index-DBX_005fOUTPUT_005fLBRAC-4665"></a></var><br>
+<blockquote><!-- Define this macro to say how to output to @var{stream} the debugging -->
+     <!-- information for the start of a scope level for variable names.  The -->
+     <!-- argument @var{name} is the name of an assembler symbol (for use with -->
+     <!-- @code{assemble_name}) whose value is the address where the scope begins. -->
+      <p>定义该宏，
+以告知如何将变量名的作用域级别的起始调试信息输出到<var>stream</var>中。
+参数<var>name</var>为一个汇编符号的名字（使用<code>assemble_name</code>），
+其值为作用域起始的地址。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_OUTPUT_RBRAC</b> (<var>stream, name</var>)<var><a name="index-DBX_005fOUTPUT_005fRBRAC-4666"></a></var><br>
+<blockquote><!-- Like @code{DBX_OUTPUT_LBRAC}, but for the end of a scope level. -->
+      <p>类似<code>DBX_OUTPUT_LBRAC</code>，不过是作用域级别的结尾。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_OUTPUT_NFUN</b> (<var>stream, lscope_label, decl</var>)<var><a name="index-DBX_005fOUTPUT_005fNFUN-4667"></a></var><br>
+<blockquote><!-- Define this macro if the target machine requires special handling to -->
+     <!-- output an @code{N_FUN} entry for the function @var{decl}. -->
+      <p>定义该宏，
+如果target机器要求对函数<var>decl</var>输出一个<code>N_FUN</code>条目进行特殊处理。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_OUTPUT_SOURCE_LINE</b> (<var>stream, line, counter</var>)<var><a name="index-DBX_005fOUTPUT_005fSOURCE_005fLINE-4668"></a></var><br>
+<blockquote><!-- A C statement to output DBX debugging information before code for line -->
+     <!-- number @var{line} of the current source file to the stdio stream -->
+     <!-- @var{stream}.  @var{counter} is the number of time the macro was -->
+     <!-- invoked, including the current invocation; it is intended to generate -->
+     <!-- unique labels in the assembly output. -->
+      <p>一条C语句，将DBX调试信息在当前源文件行号<var>line</var>的代码前，
+输出到stdio流<var>stream</var>中。<var>counter</var>为宏被调用的次数，
+包括当前调用；其用于在汇编输出中生成为一个标号。
+
+     <!-- This macro should not be defined if the default output is correct, or -->
+     <!-- if it can be made correct by defining @code{DBX_LINES_FUNCTION_RELATIVE}. -->
+      <p>如果缺省输出是正确的，
+或者其能够通过定义<code>DBX_LINES_FUNCTION_RELATIVE</code>而变的正确，
+则不要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>NO_DBX_FUNCTION_END</b><var><a name="index-NO_005fDBX_005fFUNCTION_005fEND-4669"></a></var><br>
+<blockquote><!-- Some stabs encapsulation formats (in particular ECOFF), cannot handle the -->
+     <!-- @code{.stabs "",N_FUN,,0,0,Lscope-function-1} gdb dbx extension construct. -->
+     <!-- On those machines, define this macro to turn this feature off without -->
+     <!-- disturbing the rest of the gdb extensions. -->
+      <p>一些stab封装格式（特别是ECOFF），
+不能处理<code>.stabs "",N_FUN,,0,0,Lscope-function-1</code> gdb dbx扩展结构。
+在那些机器上，定义该宏来关掉这个特点，并且不影响其它gdb扩展。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>NO_DBX_BNSYM_ENSYM</b><var><a name="index-NO_005fDBX_005fBNSYM_005fENSYM-4670"></a></var><br>
+<blockquote><!-- Some assemblers cannot handle the @code{.stabd BNSYM/ENSYM,0,0} gdb dbx -->
+     <!-- extension construct.  On those machines, define this macro to turn this -->
+     <!-- feature off without disturbing the rest of the gdb extensions. -->
+      <p>一些汇编器不能处理<code>.stabd BNSYM/ENSYM,0,0</code> gdb dbx扩展结构。
+在那些机器上，定义该宏来关掉这个特点，并且不影响其它gdb扩展。
+</p></blockquote></div>
+
+<!-- @node File Names and DBX -->
+<!-- @subsection File Names in DBX Format -->
+ </body></html>
+

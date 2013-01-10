@@ -1,0 +1,176 @@
+<html lang="zh">
+<head>
+<title>Mode Switching - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Target-Macros.html#Target-Macros" title="Target Macros">
+<link rel="prev" href="Floating-Point.html#Floating-Point" title="Floating Point">
+<link rel="next" href="Target-Attributes.html#Target-Attributes" title="Target Attributes">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Mode-Switching"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Target-Attributes.html#Target-Attributes">Target Attributes</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Floating-Point.html#Floating-Point">Floating Point</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Target-Macros.html#Target-Macros">Target Macros</a>
+<hr>
+</div>
+
+<h3 class="section">17.24 机器模式切换指令</h3>
+
+<p><a name="index-mode-switching-4714"></a><!-- The following macros control mode switching optimizations: -->
+下列的宏用来控制模式切换优化：
+
+<div class="defun">
+&mdash; Macro: <b>OPTIMIZE_MODE_SWITCHING</b> (<var>entity</var>)<var><a name="index-OPTIMIZE_005fMODE_005fSWITCHING-4715"></a></var><br>
+<blockquote><!-- Define this macro if the port needs extra instructions inserted for mode -->
+     <!-- switching in an optimizing compilation. -->
+      <p>定义该宏，如果在优化编译中，port需要为机器模式切换插入额外的指令。
+
+     <!-- For an example, the SH4 can perform both single and double precision -->
+     <!-- floating point operations, but to perform a single precision operation, -->
+     <!-- the FPSCR PR bit has to be cleared, while for a double precision -->
+     <!-- operation, this bit has to be set.  Changing the PR bit requires a general -->
+     <!-- purpose register as a scratch register, hence these FPSCR sets have to -->
+     <!-- be inserted before reload, i.e.@: you can't put this into instruction emitting -->
+     <!-- or @code{TARGET_MACHINE_DEPENDENT_REORG}. -->
+      <p>例如，SH4可以执行单精度和双精度的浮点运算，但是执行单精度运算时，
+必须清除FPSCR PR位，而执行双精度运算时，必须设置该位。
+改变PR位需要一个通用寄存器来作为草稿寄存器，
+因此这些FPSCR设置必须在重载之前被插入，
+即你不能将它放在指令输出或者<code>TARGET_MACHINE_DEPENDENT_REORG</code>阶段。
+
+     <!-- You can have multiple entities that are mode-switched, and select at run time -->
+     <!-- which entities actually need it.  @code{OPTIMIZE_MODE_SWITCHING} should -->
+     <!-- return nonzero for any @var{entity} that needs mode-switching. -->
+     <!-- If you define this macro, you also have to define -->
+     <!-- @code{NUM_MODES_FOR_MODE_SWITCHING}, @code{MODE_NEEDED}, -->
+     <!-- @code{MODE_PRIORITY_TO_MODE} and @code{EMIT_MODE_SET}. -->
+     <!-- @code{MODE_AFTER}, @code{MODE_ENTRY}, and @code{MODE_EXIT} -->
+     <!-- are optional. -->
+      <p>你可以具有多个具有模式切换的实体，并且在运行时选择哪些实体实际需要。
+对于任何需要模式切换的<var>entity</var>，<code>OPTIMIZE_MODE_SWITCHING</code>应该返回非零。
+如果你定义了该宏，你还必须定义<code>NUM_MODES_FOR_MODE_SWITCHING</code>,
+<code>MODE_NEEDED</code>, <code>MODE_PRIORITY_TO_MODE</code>和<code>EMIT_MODE_SET</code>。
+<code>MODE_AFTER</code>, <code>MODE_ENTRY</code>和<code>MODE_EXIT</code>是可选的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>NUM_MODES_FOR_MODE_SWITCHING</b><var><a name="index-NUM_005fMODES_005fFOR_005fMODE_005fSWITCHING-4716"></a></var><br>
+<blockquote><!-- If you define @code{OPTIMIZE_MODE_SWITCHING}, you have to define this as -->
+     <!-- initializer for an array of integers.  Each initializer element -->
+     <!-- N refers to an entity that needs mode switching, and specifies the number -->
+     <!-- of different modes that might need to be set for this entity. -->
+     <!-- The position of the initializer in the initializer-starting counting at -->
+     <!-- zero-determines the integer that is used to refer to the mode-switched -->
+     <!-- entity in question. -->
+     <!-- In macros that take mode arguments / yield a mode result, modes are -->
+     <!-- represented as numbers 0 @dots{} N @minus{} 1.  N is used to specify that no mode -->
+     <!-- switch is needed / supplied. -->
+      <p>如果你定义了<code>OPTIMIZE_MODE_SWITCHING</code>，你必须定义该宏，
+作为整数数组的初始化。每个初始化元素N引用一个需要模式切换的实体，
+并且指定了该实体可能需要被设置的不同模式的数目。
+初始化的位置——起始于0——确定了被用于引用有问题的模式切换实体的整数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>MODE_NEEDED</b> (<var>entity, insn</var>)<var><a name="index-MODE_005fNEEDED-4717"></a></var><br>
+<blockquote><!-- @var{entity} is an integer specifying a mode-switched entity.  If -->
+     <!-- @code{OPTIMIZE_MODE_SWITCHING} is defined, you must define this macro to -->
+     <!-- return an integer value not larger than the corresponding element in -->
+     <!-- @code{NUM_MODES_FOR_MODE_SWITCHING}, to denote the mode that @var{entity} must -->
+     <!-- be switched into prior to the execution of @var{insn}. -->
+      <p><var>entity</var>为一个整数指定了模式切换的实体。
+如果定义了<code>OPTIMIZE_MODE_SWITCHING</code>，
+则必须定义该宏来返回一个不大于在<code>NUM_MODES_FOR_MODE_SWITCHING</code>
+中相应元素的整数值，来指示<var>entity</var>在执行<var>insn</var>前必须被切换成的模式。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>MODE_AFTER</b> (<var>mode, insn</var>)<var><a name="index-MODE_005fAFTER-4718"></a></var><br>
+<blockquote><!-- If this macro is defined, it is evaluated for every @var{insn} during -->
+     <!-- mode switching.  It determines the mode that an insn results in (if -->
+     <!-- different from the incoming mode). -->
+      <p>如果定义该宏，其在模式切换过程中对于每个<var>insn</var>进行求值。
+其确定一个insn的结果时的模式（如果与输入时的模式不同）。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>MODE_ENTRY</b> (<var>entity</var>)<var><a name="index-MODE_005fENTRY-4719"></a></var><br>
+<blockquote><!-- If this macro is defined, it is evaluated for every @var{entity} that needs -->
+     <!-- mode switching.  It should evaluate to an integer, which is a mode that -->
+     <!-- @var{entity} is assumed to be switched to at function entry.  If @code{MODE_ENTRY} -->
+     <!-- is defined then @code{MODE_EXIT} must be defined. -->
+      <p>如果定义该宏，其对每个需要模式切换的<var>entity</var>进行求值。
+结果为一个整数，为<var>entity</var>在函数入口处被假定切换成的模式。
+如果定义了<code>MODE_ENTRY</code>，则必须定义<code>MODE_EXIT</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>MODE_EXIT</b> (<var>entity</var>)<var><a name="index-MODE_005fEXIT-4720"></a></var><br>
+<blockquote><!-- If this macro is defined, it is evaluated for every @var{entity} that needs -->
+     <!-- mode switching.  It should evaluate to an integer, which is a mode that -->
+     <!-- @var{entity} is assumed to be switched to at function exit.  If @code{MODE_EXIT} -->
+     <!-- is defined then @code{MODE_ENTRY} must be defined. -->
+      <p>如果定义该宏，其对每个需要模式切换的实体进行求值。结果为一个整数，
+为实体在函数出口处被假定切换成的模式。如果定义了<code>MODE_EXIT</code>，
+则必须定义<code>MODE_ENTRY</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>MODE_PRIORITY_TO_MODE</b> (<var>entity, n</var>)<var><a name="index-MODE_005fPRIORITY_005fTO_005fMODE-4721"></a></var><br>
+<blockquote><!-- This macro specifies the order in which modes for @var{entity} are processed. -->
+     <!-- 0 is the highest priority, @code{NUM_MODES_FOR_MODE_SWITCHING[@var{entity}] - 1} the -->
+     <!-- lowest.  The value of the macro should be an integer designating a mode -->
+     <!-- for @var{entity}.  For any fixed @var{entity}, @code{mode_priority_to_mode} -->
+     <!-- (@var{entity}, @var{n}) shall be a bijection in 0 @dots{} -->
+     <!-- @code{num_modes_for_mode_switching[@var{entity}] - 1}. -->
+      <p>该宏指定了被处理的<var>entity</var>的模式顺序。0为最高优先级，
+<code>NUM_MODES_FOR_MODE_SWITCHING[</code><var>entity</var><code>] - 1</code>为最低。
+宏的值应该为一个整数，表示<var>entity</var>的一个模式。对于任何固定的<var>entity</var>，
+<code>mode_priority_to_mode</code>(<var>entity</var>, <var>n</var>))应该为0<small class="dots">...</small>
+<code>num_modes_for_mode_switching[</code><var>entity</var><code>] - 1</code>之间的双向影射。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>EMIT_MODE_SET</b> (<var>entity, mode, hard_regs_live</var>)<var><a name="index-EMIT_005fMODE_005fSET-4722"></a></var><br>
+<blockquote><!-- Generate one or more insns to set @var{entity} to @var{mode}. -->
+     <!-- @var{hard_reg_live} is the set of hard registers live at the point where -->
+     <!-- the insn(s) are to be inserted. -->
+      <p>生成一个或多个insn来将<var>entity</var>设为<var>mode</var>。
+<var>hard_reg_live</var>是在insn被插入点处的硬件寄存器活跃集。
+</p></blockquote></div>
+
+<!-- @node Target Attributes -->
+<!-- @section Defining target-specific uses of @code{__attribute__} -->
+ </body></html>
+

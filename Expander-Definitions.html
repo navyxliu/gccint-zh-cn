@@ -1,0 +1,371 @@
+<html lang="zh">
+<head>
+<title>Expander Definitions - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Machine-Desc.html#Machine-Desc" title="Machine Desc">
+<link rel="prev" href="Insn-Canonicalizations.html#Insn-Canonicalizations" title="Insn Canonicalizations">
+<link rel="next" href="Insn-Splitting.html#Insn-Splitting" title="Insn Splitting">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Expander-Definitions"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Insn-Splitting.html#Insn-Splitting">Insn Splitting</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Insn-Canonicalizations.html#Insn-Canonicalizations">Insn Canonicalizations</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Machine-Desc.html#Machine-Desc">Machine Desc</a>
+<hr>
+</div>
+
+<h3 class="section">16.15 为代码生成定义RTL序列</h3>
+
+<p><a name="index-expander-definitions-3601"></a><a name="index-code-generation-RTL-sequences-3602"></a><a name="index-defining-RTL-sequences-for-code-generation-3603"></a>
+<!-- On some target machines, some standard pattern names for RTL generation -->
+<!-- cannot be handled with single insn, but a sequence of RTL insns can -->
+<!-- represent them.  For these target machines, you can write a -->
+<!-- @code{define_expand} to specify how to generate the sequence of RTL@. -->
+在一些目标机上，一些用于RTL生成的标准指令模式名无法通过单个insn来处理，
+但是可以用一个RTL insn序列来表示它们。对于这些目标机，
+你可以写一个<code>define_expand</code>来指定如何生成RTL序列。
+
+<!-- @findex define_expand -->
+<!-- A @code{define_expand} is an RTL expression that looks almost like a -->
+<!-- @code{define_insn}; but, unlike the latter, a @code{define_expand} is used -->
+<!-- only for RTL generation and it can produce more than one RTL insn. -->
+<!-- A @code{define_expand} RTX has four operands: -->
+ <p><a name="index-define_005fexpand-3604"></a><code>define_expand</code>为一个RTL表达式，看起来非常像<code>define_insn</code>；
+但是不同之处为，<code>define_expand</code>只用于RTL生成，并且可以产生多个RTL insn。
+
+ <p><code>define_expand</code> RTX具有4个操作数:
+
+<!-- @itemize @bullet -->
+<!-- @item -->
+<!-- The name.  Each @code{define_expand} must have a name, since the only -->
+<!-- use for it is to refer to it by name. -->
+     <ul>
+<li>名字。每个<code>define_expand</code>必须具有一个名字，
+因为必须通过对名字的引用才能使用它。
+
+     <!-- @item -->
+     <!-- The RTL template.  This is a vector of RTL expressions representing -->
+     <!-- a sequence of separate instructions.  Unlike @code{define_insn}, there -->
+     <!-- is no implicit surrounding @code{PARALLEL}. -->
+     <li>RTL模板。这是一个RTL表达式向量，表示一个指令序列。
+
+     <!-- @item -->
+     <!-- The condition, a string containing a C expression.  This expression is -->
+     <!-- used to express how the availability of this pattern depends on -->
+     <!-- subclasses of target machine, selected by command-line options when GCC -->
+     <!-- is run.  This is just like the condition of a @code{define_insn} that -->
+     <!-- has a standard name.  Therefore, the condition (if present) may not -->
+     <!-- depend on the data in the insn being matched, but only the -->
+     <!-- target-machine-type flags.  The compiler needs to test these conditions -->
+     <!-- during initialization in order to learn exactly which named instructions -->
+     <!-- are available in a particular run. -->
+     <li>条件，一个字符串包含了一个C表达式。
+该表达式用于表示该指令模式对于GCC运行时命令行选项所选择的什么样的target机器
+子类别有效。这跟具有标准名字的<code>define_insn</code>的条件类似。因此，
+条件（如果存在）可以不依赖于所匹配的insn的数据，而只是依赖于target机器类型标号。
+编译器需要在初始化时测试这些条件，以便确切的知道在一次特定的运行时，
+哪些命名指令有效。
+
+     <!-- @item -->
+     <!-- The preparation statements, a string containing zero or more C -->
+     <!-- statements which are to be executed before RTL code is generated from -->
+     <!-- the RTL template. -->
+     <!-- Usually these statements prepare temporary registers for use as -->
+     <!-- internal operands in the RTL template, but they can also generate RTL -->
+     <!-- insns directly by calling routines such as @code{emit_insn}, etc. -->
+     <!-- Any such insns precede the ones that come from the RTL template. -->
+     <!-- @end itemize -->
+     <li>准备语句，一个字符串，包含了0个或多个C语句，其将在RTL模板生成RTL代码前被执行。通常这些语句可以用来为RTL模板中的内部操作数准备一些临时寄存器，但是它们也同样可以通过调用函数，比如<code>emit_insn</code>等，直接生成RTL指令。任何这些生成的指令都在RTL模板中的指令前。
+</ul>
+
+<!-- Every RTL insn emitted by a @code{define_expand} must match some -->
+<!-- @code{define_insn} in the machine description.  Otherwise, the compiler -->
+<!-- will crash when trying to generate code for the insn or trying to optimize -->
+<!-- it. -->
+<!-- The RTL template, in addition to controlling generation of RTL insns, -->
+<!-- also describes the operands that need to be specified when this pattern -->
+<!-- is used.  In particular, it gives a predicate for each operand. -->
+<!-- A true operand, which needs to be specified in order to generate RTL from -->
+<!-- the pattern, should be described with a @code{match_operand} in its first -->
+<!-- occurrence in the RTL template.  This enters information on the operand's -->
+<!-- predicate into the tables that record such things.  GCC uses the -->
+<!-- information to preload the operand into a register if that is required for -->
+<!-- valid RTL code.  If the operand is referred to more than once, subsequent -->
+<!-- references should use @code{match_dup}. -->
+<!-- The RTL template may also refer to internal ``operands'' which are -->
+<!-- temporary registers or labels used only within the sequence made by the -->
+<!-- @code{define_expand}.  Internal operands are substituted into the RTL -->
+<!-- template with @code{match_dup}, never with @code{match_operand}.  The -->
+<!-- values of the internal operands are not passed in as arguments by the -->
+<!-- compiler when it requests use of this pattern.  Instead, they are computed -->
+<!-- within the pattern, in the preparation statements.  These statements -->
+<!-- compute the values and store them into the appropriate elements of -->
+<!-- @code{operands} so that @code{match_dup} can find them. -->
+<!-- There are two special macros defined for use in the preparation statements: -->
+<!-- @code{DONE} and @code{FAIL}.  Use them with a following semicolon, -->
+<!-- as a statement. -->
+ <p>每个由<code>define_expand</code>生成的RTL insn必须匹配机器描述中的某个
+<code>define_insn</code>。否则，编译器在尝试为insn生成代码或者试图对其进行优化的时候，
+将会崩溃。
+
+ <p>RTL模板，除了控制RTL insn的生成，还描述了当使用该指令模式时，
+所需要指定的操作数。特别是，它为每个操作数给出了断言。
+
+ <p>需要被指定的由指令模式生成RTL的，真正的操作数，
+在RTL模板中它第一次出现的位置使用<code>match_operand</code>来描述。
+这将把对于操作数的断言信息放入记录该事情的表中。
+如果操作数被引用多次，则后续的引用应该使用<code>match_dup</code>。
+
+ <p>RTL模板还可以引用内部操作数，
+其为只在由<code>define_expand</code>生成的序列中使用的临时寄存器或者标号。
+内部操作数使用<code>match_dup</code>来替换到RTL模板中，而不是<code>match_operand</code>。
+内部操作数的值在编译器需要使用该指令模式时，不作为参数传入。替代的，
+它们在指令模式中计算，在准备语句中。
+这些语句计算值并将它们存入到合适的<code>operands</code>元素中，
+以便<code>match_dup</code>可以找到它们。
+
+ <p>有两个特定的宏，用于准备语句中：<code>DONE</code>和<code>FAIL</code>。
+在其后面跟随一个分号，以作为一条语句来使用。
+
+<!-- @table @code -->
+<!-- @findex DONE -->
+<!-- @item DONE -->
+<!-- Use the @code{DONE} macro to end RTL generation for the pattern.  The -->
+<!-- only RTL insns resulting from the pattern on this occasion will be -->
+<!-- those already emitted by explicit calls to @code{emit_insn} within the -->
+<!-- preparation statements; the RTL template will not be generated. -->
+     
+<a name="index-DONE-3605"></a>
+<dl><dt><code>DONE</code><dd>使用<code>DONE</code>宏来结束该指令模式的RTL生成。这种情况下，
+由该指令模式生成的唯一的RTL insn将为在准备语句中显示调用<code>emit_insn</code>生成
+的insn；RTL模板将不被生成。
+
+     <!-- @findex FAIL -->
+     <!-- @item FAIL -->
+     <!-- Make the pattern fail on this occasion.  When a pattern fails, it means -->
+     <!-- that the pattern was not truly available.  The calling routines in the -->
+     <!-- compiler will try other strategies for code generation using other patterns. -->
+     <!-- Failure is currently supported only for binary (addition, multiplication, -->
+     <!-- shifting, etc.) and bit-field (@code{extv}, @code{extzv}, and @code{insv}) -->
+     <!-- operations. -->
+     <!-- @end table -->
+     <!-- If the preparation falls through (invokes neither @code{DONE} nor -->
+     <!-- @code{FAIL}), then the @code{define_expand} acts like a -->
+     <!-- @code{define_insn} in that the RTL template is used to generate the -->
+     <!-- insn. -->
+     <!-- The RTL template is not used for matching, only for generating the -->
+     <!-- initial insn list.  If the preparation statement always invokes -->
+     <!-- @code{DONE} or @code{FAIL}, the RTL template may be reduced to a simple -->
+     <!-- list of operands, such as this example: -->
+     <p><a name="index-FAIL-3606"></a><br><dt><code>FAIL</code><dd>
+使指令模式对于这种情况失败。当指令模式失败时，这意味着指令模式实际上无效。编译器中的调用程序将会尝试其它策略，使用其它指令模式来进行代码生成。
+
+     <p>目前，FAIL操作只支持二元（加法，乘法，移位等）和
+位域（<code>extv</code>, <code>extzv</code>和<code>insv</code>）操作。
+</dl>
+
+ <p>如果准备语句即没有调用<code>DONE</code>，也没有调用<code>FAIL</code>，
+则<code>define_expand</code>的行为便跟<code>define_insn</code>一样，即RTL模板用于生成insn
+
+ <p>RTL模板不用于匹配，只是用于生成最初的insn列表。
+如果准备语句总是调用<code>DONE</code>或者<code>FAIL</code>，
+则RTL模板可以简化为一个简单的操作数列表，例如：
+
+<!-- @smallexample -->
+<!-- @group -->
+<!-- (define_expand "addsi3" -->
+<!-- [(match_operand:SI 0 "register_operand" "") -->
+<!-- (match_operand:SI 1 "register_operand" "") -->
+<!-- (match_operand:SI 2 "register_operand" "")] -->
+<!-- @end group -->
+<!-- @group -->
+<!-- "" -->
+<!-- " -->
+<!-- @{ -->
+<!-- handle_add (operands[0], operands[1], operands[2]); -->
+<!-- DONE; -->
+<!-- @}") -->
+<!-- @end group -->
+<!-- @end smallexample -->
+<!-- Here is an example, the definition of left-shift for the SPUR chip: -->
+<!-- @smallexample -->
+<!-- @group -->
+<!-- (define_expand "ashlsi3" -->
+<!-- [(set (match_operand:SI 0 "register_operand" "") -->
+<!-- (ashift:SI -->
+<!-- @end group -->
+<!-- @group -->
+<!-- (match_operand:SI 1 "register_operand" "") -->
+<!-- (match_operand:SI 2 "nonmemory_operand" "")))] -->
+<!-- "" -->
+<!-- " -->
+<!-- @end group -->
+<!-- @end smallexample -->
+<!-- @smallexample -->
+<!-- @group -->
+<!-- @{ -->
+<!-- if (GET_CODE (operands[2]) != CONST_INT -->
+<!-- || (unsigned) INTVAL (operands[2]) > 3) -->
+<!-- FAIL; -->
+<!-- @}") -->
+<!-- @end group -->
+<!-- @end smallexample -->
+<pre class="smallexample">     (define_expand "addsi3"
+       [(match_operand:SI 0 "register_operand" "")
+        (match_operand:SI 1 "register_operand" "")
+        (match_operand:SI 2 "register_operand" "")]
+       ""
+       "
+     {
+       handle_add (operands[0], operands[1], operands[2]);
+       DONE;
+     }")
+</pre>
+ <p>这里有一个例子，是为SPUR芯片定义的左移位：
+
+<pre class="smallexample">     (define_expand "ashlsi3"
+       [(set (match_operand:SI 0 "register_operand" "")
+             (ashift:SI
+               (match_operand:SI 1 "register_operand" "")
+               (match_operand:SI 2 "nonmemory_operand" "")))]
+       ""
+       "
+</pre>
+ <pre class="smallexample">     {
+       if (GET_CODE (operands[2]) != CONST_INT
+           || (unsigned) INTVAL (operands[2]) &gt; 3)
+         FAIL;
+     }")
+</pre>
+ <p class="noindent"><!-- This example uses @code{define_expand} so that it can generate an RTL insn -->
+<!-- for shifting when the shift-count is in the supported range of 0 to 3 but -->
+<!-- fail in other cases where machine insns aren't available.  When it fails, -->
+<!-- the compiler tries another strategy using different patterns (such as, a -->
+<!-- library call). -->
+<!-- If the compiler were able to handle nontrivial condition-strings in -->
+<!-- patterns with names, then it would be possible to use a -->
+<!-- @code{define_insn} in that case.  Here is another case (zero-extension -->
+<!-- on the 68000) which makes more use of the power of @code{define_expand}: -->
+这个例子使用了<code>define_expand</code>，使得当移位数在支持的0到3的范围内时，
+便会生成移位RTL insn，而对于其它情况，则会失败。当其失败时，
+编译器便会使用不同的指令模式（比如一个库调用）来尝试其它策略。
+
+ <p>如果编译器能够处理具有名字的指令模式中的非平凡的条件字符串，
+则对于这样情况也可以使用<code>define_insn</code>。这里有另一种情况（68000上的零扩展），
+其使用了<code>define_expand</code>的更强大的功能：
+
+<!-- @smallexample -->
+<!-- (define_expand "zero_extendhisi2" -->
+<!-- [(set (match_operand:SI 0 "general_operand" "") -->
+<!-- (const_int 0)) -->
+<!-- (set (strict_low_part -->
+<!-- (subreg:HI -->
+<!-- (match_dup 0) -->
+<!-- 0)) -->
+<!-- (match_operand:HI 1 "general_operand" ""))] -->
+<!-- "" -->
+<!-- "operands[1] = make_safe_from (operands[1], operands[0]);") -->
+<!-- @end smallexample -->
+<pre class="smallexample">     (define_expand "zero_extendhisi2"
+       [(set (match_operand:SI 0 "general_operand" "")
+             (const_int 0))
+        (set (strict_low_part
+               (subreg:HI
+                 (match_dup 0)
+                 0))
+             (match_operand:HI 1 "general_operand" ""))]
+       ""
+       "operands[1] = make_safe_from (operands[1], operands[0]);")
+</pre>
+ <p class="noindent"><!-- @findex make_safe_from -->
+<!-- Here two RTL insns are generated, one to clear the entire output operand -->
+<!-- and the other to copy the input operand into its low half.  This sequence -->
+<!-- is incorrect if the input operand refers to [the old value of] the output -->
+<!-- operand, so the preparation statement makes sure this isn't so.  The -->
+<!-- function @code{make_safe_from} copies the @code{operands[1]} into a -->
+<!-- temporary register if it refers to @code{operands[0]}.  It does this -->
+<!-- by emitting another RTL insn. -->
+<!-- Finally, a third example shows the use of an internal operand. -->
+<!-- Zero-extension on the SPUR chip is done by @code{and}-ing the result -->
+<!-- against a halfword mask.  But this mask cannot be represented by a -->
+<!-- @code{const_int} because the constant value is too large to be legitimate -->
+<!-- on this machine.  So it must be copied into a register with -->
+<!-- @code{force_reg} and then the register used in the @code{and}. -->
+<a name="index-make_005fsafe_005ffrom-3607"></a>这里将会生成两个RTL insn，一个用于清除整个输出操作数，
+另一个用于将输入操作数复制到其低半部份。
+该指令序列在输入操作数指向输出操作数（的旧值）时，是不正确的。
+所以，准备语句用来确保不是这样。当其指向<code>operands[0]</code>时，
+函数<code>make_safe_from</code>用来将<code>operands[1]</code>复制到临时寄存器中。
+其通过生成另一个RTL insn来完成这件事。
+
+ <p>最后，第三个例子显示了内部操作数的使用。
+在SPUR芯片上的零扩展是通过将结果与上半字mask来完成的。
+但是该mask不能通过一个<code>const_int</code>来表示，因为常量值太大，
+无法在该机器上被合法化。所以其必须使用<code>force_reg</code>复制到寄存器中，
+然后在<code>and</code>中使用该寄存器。
+
+<pre class="smallexample">     (define_expand "zero_extendhisi2"
+       [(set (match_operand:SI 0 "register_operand" "")
+             (and:SI (subreg:SI
+                       (match_operand:HI 1 "register_operand" "")
+                       0)
+                     (match_dup 2)))]
+       ""
+       "operands[2]
+          = force_reg (SImode, GEN_INT (65535)); ")
+</pre>
+ <!-- @emph{Note:} If the @code{define_expand} is used to serve a -->
+<!-- standard binary or unary arithmetic operation or a bit-field operation, -->
+<!-- then the last insn it generates must not be a @code{code_label}, -->
+<!-- @code{barrier} or @code{note}.  It must be an @code{insn}, -->
+<!-- @code{jump_insn} or @code{call_insn}.  If you don't need a real insn -->
+<!-- at the end, emit an insn to copy the result of the operation into -->
+<!-- itself.  Such an insn will generate no code, but it can avoid problems -->
+<!-- in the compiler. -->
+ <p>注意：如果<code>define_expand</code>被用于一个标准的二元或者一元算数运算，
+或者一个位域运算，则其生成的最后的insn一定不能为一个<code>code_label</code>,
+<code>barrier</code>或<code>note</code>。其必须为一个<code>insn</code>,
+<code>jump_insn</code>或<code>call_insn</code>。如果你在结尾处不需要实际的insn，
+则可以生成一条将操作数的结果复制到其本身的insn。这样的insn将不会生成代码，
+但可以避免编译器中的问题。
+
+<!-- @end ifset -->
+<!-- @ifset INTERNALS -->
+<!-- @node Insn Splitting -->
+<!-- @section Defining How to Split Instructions -->
+<!-- @cindex insn splitting -->
+<!-- @cindex instruction splitting -->
+<!-- @cindex splitting instructions -->
+ </body></html>
+

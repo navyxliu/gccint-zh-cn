@@ -1,0 +1,120 @@
+<html lang="zh">
+<head>
+<title>Files - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Type-Information.html#Type-Information" title="Type Information">
+<link rel="prev" href="GGC-Roots.html#GGC-Roots" title="GGC Roots">
+<link rel="next" href="Invoking-the-garbage-collector.html#Invoking-the-garbage-collector" title="Invoking the garbage collector">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Files"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Invoking-the-garbage-collector.html#Invoking-the-garbage-collector">Invoking the garbage collector</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="GGC-Roots.html#GGC-Roots">GGC Roots</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Type-Information.html#Type-Information">Type Information</a>
+<hr>
+</div>
+
+<h3 class="section">22.3 包含类型信息的源文件</h3>
+
+<p><a name="index-generated-files-4970"></a><a name="index-files_002c-generated-4971"></a>
+<!-- Whenever you add @code{GTY} markers to a source file that previously -->
+<!-- had none, or create a new source file containing @code{GTY} markers, -->
+<!-- there are three things you need to do: -->
+只要向之前没有<code>GTY</code>标记的源文件里添加<code>GTY</code>标记，或者创建一个新的包含<code>GTY</code>标记的源文件，那么就有三件事情需要做：
+
+     <ol type=1 start=1>
+<li><!-- You need to add the file to the list of source files the type -->
+<!-- machinery scans.  There are four cases: -->
+需要将文件添加到类型系统要扫描的源文件列表中。有四种情况：
+
+          <ol type=a start=1>
+<li><!-- For a back-end file, this is usually done -->
+<!-- automatically; if not, you should add it to @code{target_gtfiles} in -->
+<!-- the appropriate port's entries in @file{config.gcc}. -->
+对于一个后端文件，通常会自动完成。如果没有，则需要将其添加到<samp><span class="file">config.gcc</span></samp>里相应移植平台的<code>target_gtfiles</code>中。
+
+          <li><!-- For files shared by all front ends, add the filename to the -->
+<!-- @code{GTFILES} variable in @file{Makefile.in}. -->
+对于所用前端共享的文件，将文件名添加到<samp><span class="file">Makefile.in</span></samp>里的<code>GTFILES</code>变量中。
+
+          <li><!-- For files that are part of one front end, add the filename to the -->
+<!-- @code{gtfiles} variable defined in the appropriate -->
+<!-- @file{config-lang.in}.  For C, the file is @file{c-config-lang.in}. -->
+<!-- Headers should appear before non-headers in this list. -->
+对于一个前端的文件，将文件名添加到在适当<samp><span class="file">config-lang.in</span></samp>里定义的<code>gtfiles</code>变量中。对于C，文件为<samp><span class="file">c-config-lang.in</span></samp>。
+
+          <li><!-- For files that are part of some but not all front ends, add the -->
+<!-- filename to the @code{gtfiles} variable of @emph{all} the front ends -->
+<!-- that use it. -->
+对于是一部分而不是所有的前端的文件，将文件名添加到<em>所有</em>使用它的前端的<code>gtfiles</code>变量中。
+          </ol>
+
+     <li><!-- If the file was a header file, you'll need to check that it's included -->
+<!-- in the right place to be visible to the generated files.  For a back-end -->
+<!-- header file, this should be done automatically.  For a front-end header -->
+<!-- file, it needs to be included by the same file that includes -->
+<!-- @file{gtype-@var{lang}.h}.  For other header files, it needs to be -->
+<!-- included in @file{gtype-desc.c}, which is a generated file, so add it to -->
+<!-- @code{ifiles} in @code{open_base_file} in @file{gengtype.c}. -->
+如果是头文件，则需要检查是否被包含在正确的位置，使得对于生成文件为可见的。对于一个后端文件，这应该是自动完成的。对于前端的头文件，应该被包含<samp><span class="file">gtype-</span><var>lang</var><span class="file">.h</span></samp>的同一文件所包含。对于其它头文件，需要被包含在<samp><span class="file">gtype-desc.c</span></samp>中。<samp><span class="file">gtype-desc.c</span></samp>为生成文件，所以需要将头文件名添加到<samp><span class="file">gengtype.c</span></samp> 里的<code>open_base_file</code>里的<code>ifiles</code>中。
+
+     <!-- For source files that aren't header files, the machinery will generate a -->
+     <!-- header file that should be included in the source file you just changed. -->
+     <!-- The file will be called @file{gt-@var{path}.h} where @var{path} is the -->
+     <!-- pathname relative to the @file{gcc} directory with slashes replaced by -->
+     <!-- @verb{|-|}, so for example the header file to be included in -->
+     <!-- @file{cp/parser.c} is called @file{gt-cp-parser.c}.  The -->
+     <!-- generated header file should be included after everything else in the -->
+     <!-- source file.  Don't forget to mention this file as a dependency in the -->
+     <!-- @file{Makefile}! -->
+     <p>对于不是头文件的源文件，类型机构将会生成一个头文件，并且该头文件应该被包含在所修改的源文件中。文件名为 <samp><span class="file">gt-</span><var>path</var><span class="file">.h</span></samp>，其中<var>path</var>是相对于<samp><span class="file">gcc</span></samp>目录的路径名，并且由<tt>-</tt>来替换斜线。例如，要被包含在<samp><span class="file">cp/parser.c</span></samp>中的头文件命名为<samp><span class="file">gt-cp-parser.c</span></samp>。生成的头文件应该被包含在源文件所有其它内容之后。不要忘记将该文件在<samp><span class="file">Makefile</span></samp>中作为一个依赖条件！
+
+      </ol>
+
+<!-- For language frontends, there is another file that needs to be included -->
+<!-- somewhere.  It will be called @file{gtype-@var{lang}.h}, where -->
+<!-- @var{lang} is the name of the subdirectory the language is contained in. -->
+ <p>对于语言前端，还有另一个文件需要在某处被包含。其为<samp><span class="file">gtype-</span><var>lang</var><span class="file">.h</span></samp>，其中<var>lang</var>是语言子目录的名字。
+
+<!-- Plugins can add additional root tables.  Run the @code{gengtype} -->
+<!-- utility in plugin mode as @code{gengtype -P pluginout.h @var{source-dir} -->
+<!-- @var{file-list} @var{plugin*.c}} with your plugin files -->
+<!-- @var{plugin*.c} using @code{GTY} to generate the @var{pluginout.h} file. -->
+<!-- The GCC build tree is needed to be present in that mode. -->
+ <p>插件可以增加额外的root表。在插件模式下，通过命令<code>gengtype -P pluginout.h </code><var>source-dir</var> <var>file-list</var> <var>plugin*.c</var>来运行<code>gengtype</code>工具，针对使用<code>GTY</code>的插件文件<var>plugin*.c</var>，生成<var>pluginout.h</var>文件。
+
+<!-- @node Invoking the garbage collector -->
+<!-- @section How to invoke the garbage collector -->
+ </body></html>
+

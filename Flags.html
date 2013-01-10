@@ -1,0 +1,474 @@
+<html lang="zh">
+<head>
+<title>Flags - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="RTL.html#RTL" title="RTL">
+<link rel="prev" href="Special-Accessors.html#Special-Accessors" title="Special Accessors">
+<link rel="next" href="Machine-Modes.html#Machine-Modes" title="Machine Modes">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Flags"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Machine-Modes.html#Machine-Modes">Machine Modes</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Special-Accessors.html#Special-Accessors">Special Accessors</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="RTL.html#RTL">RTL</a>
+<hr>
+</div>
+
+<h3 class="section">10.5 RTL表达式中的标记</h3>
+
+<p><a name="index-flags-in-RTL-expression-1758"></a>
+<!-- RTL expressions contain several flags (one-bit bit-fields) -->
+<!-- that are used in certain types of expression.  Most often they -->
+<!-- are accessed with the following macros, which expand into lvalues. -->
+RTL表达式包含几个标记（位域），用于特定类型的表达式。通常它们使用下列的宏来访问，并被扩展为左值。
+
+     
+<a name="index-CONSTANT_005fPOOL_005fADDRESS_005fP-1759"></a>
+<a name="index-g_t_0040code_007bsymbol_005fref_007d-and-_0040samp_007b_002fu_007d-1760"></a>
+<a name="index-g_t_0040code_007bunchanging_007d_002c-in-_0040code_007bsymbol_005fref_007d-1761"></a>
+<dl><dt><code>CONSTANT_POOL_ADDRESS_P (</code><var>x</var><code>)</code><dd><!-- Nonzero in a @code{symbol_ref} if it refers to part of the current -->
+<!-- function's constant pool.  For most targets these addresses are in a -->
+<!-- @code{.rodata} section entirely separate from the function, but for -->
+<!-- some targets the addresses are close to the beginning of the function. -->
+<!-- In either case GCC assumes these addresses can be addressed directly, -->
+<!-- perhaps with the help of base registers. -->
+<!-- Stored in the @code{unchanging} field and printed as @samp{/u}. -->
+位于<code>symbol_ref</code>中，如果其引用了当前函数的常量池中的一部分，则非零。对于大多数目标机器，这些地址在<code>.rodata</code>段中，与函数完全分离，但是对于有些目标机器，这些地址是靠近函数起始处。不管哪种情况，GCC都假设这些地址可以被直接寻址，或者通过基址寄存器。其被存储在<code>unchanging</code>域，打印输出为&lsquo;<samp><span class="samp">/u</span></samp>&rsquo;。
+
+     <p><a name="index-RTL_005fCONST_005fCALL_005fP-1762"></a><a name="index-g_t_0040code_007bcall_005finsn_007d-and-_0040samp_007b_002fu_007d-1763"></a><a name="index-g_t_0040code_007bunchanging_007d_002c-in-_0040code_007bcall_005finsn_007d-1764"></a><br><dt><code>RTL_CONST_CALL_P (</code><var>x</var><code>)</code><dd><!-- In a @code{call_insn} indicates that the insn represents a call to a -->
+<!-- const function.  Stored in the @code{unchanging} field and printed as -->
+<!-- @samp{/u}. -->
+位于<code>call_insn</code>中，表明该insn表示一个对const函数的调用。存储在<code>unchanging</code>域，打印输出为&lsquo;<samp><span class="samp">/u</span></samp>&rsquo;。
+
+     <p><a name="index-RTL_005fPURE_005fCALL_005fP-1765"></a><a name="index-g_t_0040code_007bcall_005finsn_007d-and-_0040samp_007b_002fi_007d-1766"></a><a name="index-g_t_0040code_007breturn_005fval_007d_002c-in-_0040code_007bcall_005finsn_007d-1767"></a><br><dt><code>RTL_PURE_CALL_P (</code><var>x</var><code>)</code><dd><!-- In a @code{call_insn} indicates that the insn represents a call to a -->
+<!-- pure function.  Stored in the @code{return_val} field and printed as -->
+<!-- @samp{/i}. -->
+位于<code>call_insn</code>中，表明该insn表示一个对pure函数的调用。存储在<code>return_val</code>域，打印输出为&lsquo;<samp><span class="samp">/i</span></samp>&rsquo;。
+
+     <p><a name="index-RTL_005fCONST_005fOR_005fPURE_005fCALL_005fP-1768"></a><a name="index-g_t_0040code_007bcall_005finsn_007d-and-_0040samp_007b_002fu_007d-or-_0040samp_007b_002fi_007d-1769"></a><br><dt><code>RTL_CONST_OR_PURE_CALL_P (</code><var>x</var><code>)</code><dd><!-- In a @code{call_insn}, true if @code{RTL_CONST_CALL_P} or -->
+<!-- @code{RTL_PURE_CALL_P} is true. -->
+位于<code>call_insn</code>中，如果<code>RTL_CONST_CALL_P</code>或者<code>RTL_PURE_CALL_P</code>为真，则其为真。
+
+     <p><a name="index-RTL_005fLOOPING_005fCONST_005fOR_005fPURE_005fCALL_005fP-1770"></a><a name="index-g_t_0040code_007bcall_005finsn_007d-and-_0040samp_007b_002fc_007d-1771"></a><a name="index-g_t_0040code_007bcall_007d_002c-in-_0040code_007bcall_005finsn_007d-1772"></a><br><dt><code>RTL_LOOPING_CONST_OR_PURE_CALL_P (</code><var>x</var><code>)</code><dd><!-- In a @code{call_insn} indicates that the insn represents a possibly -->
+<!-- infinite looping call to a const or pure function.  Stored in the -->
+<!-- @code{call} field and printed as @samp{/c}.  Only true if one of -->
+<!-- @code{RTL_CONST_CALL_P} or @code{RTL_PURE_CALL_P} is true. -->
+位于<code>call_insn</code>中，表明该insn表示一个对const或者pure函数，可能是无限循环的调用。存储在<code>call</code>域，打印输出为&lsquo;<samp><span class="samp">/c</span></samp>&rsquo;。只有当<code>RTL_CONST_CALL_P</code>或者<code>RTL_PURE_CALL_P</code>为真时，其才为真。
+
+     <p><a name="index-INSN_005fANNULLED_005fBRANCH_005fP-1773"></a><a name="index-g_t_0040code_007bjump_005finsn_007d-and-_0040samp_007b_002fu_007d-1774"></a><a name="index-g_t_0040code_007bcall_005finsn_007d-and-_0040samp_007b_002fu_007d-1775"></a><a name="index-g_t_0040code_007binsn_007d-and-_0040samp_007b_002fu_007d-1776"></a><a name="index-g_t_0040code_007bunchanging_007d_002c-in-_0040code_007bjump_005finsn_007d_002c-_0040code_007bcall_005finsn_007d-and-_0040code_007binsn_007d-1777"></a><br><dt><code>INSN_ANNULLED_BRANCH_P (</code><var>x</var><code>)</code><dd><!-- In a @code{jump_insn}, @code{call_insn}, or @code{insn} indicates -->
+<!-- that the branch is an annulling one.  See the discussion under -->
+<!-- @code{sequence} below.  Stored in the @code{unchanging} field and -->
+<!-- printed as @samp{/u}. -->
+位于<code>jump_insn</code>，<code>call_insn</code>或者<code>insn</code>中，表明该分支跳转被取消。参见下面关于<code>sequence</code>的讨论。存储在<code>unchanging</code>域，打印输出为&lsquo;<samp><span class="samp">/u</span></samp>&rsquo;。
+
+     <p><a name="index-INSN_005fDELETED_005fP-1778"></a><a name="index-g_t_0040code_007binsn_007d-and-_0040samp_007b_002fv_007d-1779"></a><a name="index-g_t_0040code_007bcall_005finsn_007d-and-_0040samp_007b_002fv_007d-1780"></a><a name="index-g_t_0040code_007bjump_005finsn_007d-and-_0040samp_007b_002fv_007d-1781"></a><a name="index-g_t_0040code_007bcode_005flabel_007d-and-_0040samp_007b_002fv_007d-1782"></a><a name="index-g_t_0040code_007bbarrier_007d-and-_0040samp_007b_002fv_007d-1783"></a><a name="index-g_t_0040code_007bnote_007d-and-_0040samp_007b_002fv_007d-1784"></a><a name="index-g_t_0040code_007bvolatil_007d_002c-in-_0040code_007binsn_007d_002c-_0040code_007bcall_005finsn_007d_002c-_0040code_007bjump_005finsn_007d_002c-_0040code_007bcode_005flabel_007d_002c-_0040code_007bbarrier_007d_002c-and-_0040code_007bnote_007d-1785"></a><br><dt><code>INSN_DELETED_P (</code><var>x</var><code>)</code><dd><!-- In an @code{insn}, @code{call_insn}, @code{jump_insn}, @code{code_label}, -->
+<!-- @code{barrier}, or @code{note}, -->
+<!-- nonzero if the insn has been deleted.  Stored in the -->
+<!-- @code{volatil} field and printed as @samp{/v}. -->
+位于<code>insn</code>, <code>call_insn</code>, <code>jump_insn</code>, <code>code_label</code>, <code>barrier</code>或<code>note</code>中，如果该insn被删除掉，则非零。存储在<code>volatil</code>域，打印输出为&lsquo;<samp><span class="samp">/v</span></samp>&rsquo;。
+
+     <p><a name="index-INSN_005fFROM_005fTARGET_005fP-1786"></a><a name="index-g_t_0040code_007binsn_007d-and-_0040samp_007b_002fs_007d-1787"></a><a name="index-g_t_0040code_007bjump_005finsn_007d-and-_0040samp_007b_002fs_007d-1788"></a><a name="index-g_t_0040code_007bcall_005finsn_007d-and-_0040samp_007b_002fs_007d-1789"></a><a name="index-g_t_0040code_007bin_005fstruct_007d_002c-in-_0040code_007binsn_007d-and-_0040code_007bjump_005finsn_007d-and-_0040code_007bcall_005finsn_007d-1790"></a><br><dt><code>INSN_FROM_TARGET_P (</code><var>x</var><code>)</code><dd><!-- In an @code{insn} or @code{jump_insn} or @code{call_insn} in a delay -->
+<!-- slot of a branch, indicates that the insn -->
+<!-- is from the target of the branch.  If the branch insn has -->
+<!-- @code{INSN_ANNULLED_BRANCH_P} set, this insn will only be executed if -->
+<!-- the branch is taken.  For annulled branches with -->
+<!-- @code{INSN_FROM_TARGET_P} clear, the insn will be executed only if the -->
+<!-- branch is not taken.  When @code{INSN_ANNULLED_BRANCH_P} is not set, -->
+<!-- this insn will always be executed.  Stored in the @code{in_struct} -->
+<!-- field and printed as @samp{/s}. -->
+位于<code>insn</code>，<code>jump_insn</code>或者<code>call_insn</code>中，在分支延迟槽中，表明该insn是来自分支跳转的目标。如果分支insn设置了<code>INSN_ANNULLED_BRANCH_P</code>，则该insn只有当进行分支跳转的时候，才被执行。对于被取消的分支，如果是清除了<code>INSN_FROM_TARGET_P</code>，则insn只有当没有进行分支跳转的时候，才被执行。当<code>INSN_ANNULLED_BRANCH_P</code>没有被设置，该insn将总是被执行。存储在<code>in_struct</code>域，打印输出为&lsquo;<samp><span class="samp">/s</span></samp>&rsquo;。
+
+     <p><a name="index-LABEL_005fPRESERVE_005fP-1791"></a><a name="index-g_t_0040code_007bcode_005flabel_007d-and-_0040samp_007b_002fi_007d-1792"></a><a name="index-g_t_0040code_007bnote_007d-and-_0040samp_007b_002fi_007d-1793"></a><a name="index-g_t_0040code_007bin_005fstruct_007d_002c-in-_0040code_007bcode_005flabel_007d-and-_0040code_007bnote_007d-1794"></a><br><dt><code>LABEL_PRESERVE_P (</code><var>x</var><code>)</code><dd><!-- In a @code{code_label} or @code{note}, indicates that the label is referenced by -->
+<!-- code or data not visible to the RTL of a given function. -->
+<!-- Labels referenced by a non-local goto will have this bit set.  Stored -->
+<!-- in the @code{in_struct} field and printed as @samp{/s}. -->
+位于<code>code_label</code>或者<code>note</code>中，表明被代码或者数据引用的该标号，对于给定的函数RTL不可见。通过非局部goto引用的标号，将设置该位。存储在<code>in_struct</code>域中，打印输出为&lsquo;<samp><span class="samp">/s</span></samp>&rsquo;。
+
+     <p><a name="index-LABEL_005fREF_005fNONLOCAL_005fP-1795"></a><a name="index-g_t_0040code_007blabel_005fref_007d-and-_0040samp_007b_002fv_007d-1796"></a><a name="index-g_t_0040code_007breg_005flabel_007d-and-_0040samp_007b_002fv_007d-1797"></a><a name="index-g_t_0040code_007bvolatil_007d_002c-in-_0040code_007blabel_005fref_007d-and-_0040code_007breg_005flabel_007d-1798"></a><br><dt><code>LABEL_REF_NONLOCAL_P (</code><var>x</var><code>)</code><dd><!-- In @code{label_ref} and @code{reg_label} expressions, nonzero if this is -->
+<!-- a reference to a non-local label. -->
+<!-- Stored in the @code{volatil} field and printed as @samp{/v}. -->
+位于<code>label_ref</code>和<code>reg_label</code>表达式中，如果其为对一个非局部标号的引用，则非零。存储在<code>volatil</code>域中，打印输出为&lsquo;<samp><span class="samp">/v</span></samp>&rsquo;。
+
+     <p><a name="index-MEM_005fIN_005fSTRUCT_005fP-1799"></a><a name="index-g_t_0040code_007bmem_007d-and-_0040samp_007b_002fs_007d-1800"></a><a name="index-g_t_0040code_007bin_005fstruct_007d_002c-in-_0040code_007bmem_007d-1801"></a><br><dt><code>MEM_IN_STRUCT_P (</code><var>x</var><code>)</code><dd><!-- In @code{mem} expressions, nonzero for reference to an entire structure, -->
+<!-- union or array, or to a component of one.  Zero for references to a -->
+<!-- scalar variable or through a pointer to a scalar.  If both this flag and -->
+<!-- @code{MEM_SCALAR_P} are clear, then we don't know whether this @code{mem} -->
+<!-- is in a structure or not.  Both flags should never be simultaneously set. -->
+<!-- Stored in the @code{in_struct} field and printed as @samp{/s}. -->
+位于<code>mem</code>表达式中，对于引用一整个结构体，联合体，数组，或者是它们的一部分，则非零。如果是引用一个标量变量，或者是标量指针，则为零。如果该标记和<code>MEM_SCALAR_P</code>都被清除，则我们无法知道该<code>mem</code>是否在一个结构体中。这两个标记不要被同时设置。存储在<code>in_struct</code>域中，打印输出为&lsquo;<samp><span class="samp">/s</span></samp>&rsquo;。
+
+     <p><a name="index-MEM_005fKEEP_005fALIAS_005fSET_005fP-1802"></a><a name="index-g_t_0040code_007bmem_007d-and-_0040samp_007b_002fj_007d-1803"></a><a name="index-g_t_0040code_007bjump_007d_002c-in-_0040code_007bmem_007d-1804"></a><br><dt><code>MEM_KEEP_ALIAS_SET_P (</code><var>x</var><code>)</code><dd><!-- In @code{mem} expressions, 1 if we should keep the alias set for this -->
+<!-- mem unchanged when we access a component.  Set to 1, for example, when we -->
+<!-- are already in a non-addressable component of an aggregate. -->
+<!-- Stored in the @code{jump} field and printed as @samp{/j}. -->
+位于<code>mem</code>表达式中，如果为1，则表明当访问一个部件时，应该保持该mem的别名集合不变。例如，当在一个聚合体的不可寻址部件中的时候，将其设为1。存储在<code>jump</code>域中，打印输出为&lsquo;<samp><span class="samp">/j</span></samp>&rsquo;。
+
+     <p><a name="index-MEM_005fSCALAR_005fP-1805"></a><a name="index-g_t_0040code_007bmem_007d-and-_0040samp_007b_002fi_007d-1806"></a><a name="index-g_t_0040code_007breturn_005fval_007d_002c-in-_0040code_007bmem_007d-1807"></a><br><dt><code>MEM_SCALAR_P (</code><var>x</var><code>)</code><dd><!-- In @code{mem} expressions, nonzero for reference to a scalar known not -->
+<!-- to be a member of a structure, union, or array.  Zero for such -->
+<!-- references and for indirections through pointers, even pointers pointing -->
+<!-- to scalar types.  If both this flag and @code{MEM_IN_STRUCT_P} are clear, -->
+<!-- then we don't know whether this @code{mem} is in a structure or not. -->
+<!-- Both flags should never be simultaneously set. -->
+<!-- Stored in the @code{return_val} field and printed as @samp{/i}. -->
+位于<code>mem</code>表达式中，如果引用的标量，被已知不是结构体，联合体或者数组的成员，则为非零。如果是这样的引用，或者通过指针的间接引用，即便是指向标量类型，则为零，如果该标记和<code>MEM_IN_STRUCT_P</code>都被清除，则我们无法知道该<code>mem</code>是否为一个结构体。这两个标记不要被同时设置。存储在<code>return_val</code>域中，打印输出为&lsquo;<samp><span class="samp">/i</span></samp>&rsquo;。
+
+     <p><a name="index-MEM_005fVOLATILE_005fP-1808"></a><a name="index-g_t_0040code_007bmem_007d-and-_0040samp_007b_002fv_007d-1809"></a><a name="index-g_t_0040code_007basm_005finput_007d-and-_0040samp_007b_002fv_007d-1810"></a><a name="index-g_t_0040code_007basm_005foperands_007d-and-_0040samp_007b_002fv_007d-1811"></a><a name="index-g_t_0040code_007bvolatil_007d_002c-in-_0040code_007bmem_007d_002c-_0040code_007basm_005foperands_007d_002c-and-_0040code_007basm_005finput_007d-1812"></a><br><dt><code>MEM_VOLATILE_P (</code><var>x</var><code>)</code><dd><!-- In @code{mem}, @code{asm_operands}, and @code{asm_input} expressions, -->
+<!-- nonzero for volatile memory references. -->
+<!-- Stored in the @code{volatil} field and printed as @samp{/v}. -->
+位于<code>mem</code>, <code>asm_operands</code>和<code>asm_input</code>表达式中，对于volatile内存引用，为非零。存储在<code>volatil</code>域中，打印输出为&lsquo;<samp><span class="samp">/v</span></samp>&rsquo;。
+
+     <p><a name="index-MEM_005fNOTRAP_005fP-1813"></a><a name="index-g_t_0040code_007bmem_007d-and-_0040samp_007b_002fc_007d-1814"></a><a name="index-g_t_0040code_007bcall_007d_002c-in-_0040code_007bmem_007d-1815"></a><br><dt><code>MEM_NOTRAP_P (</code><var>x</var><code>)</code><dd><!-- In @code{mem}, nonzero for memory references that will not trap. -->
+<!-- Stored in the @code{call} field and printed as @samp{/c}. -->
+位于<code>mem</code>中，对于不会产生陷阱的内存引用，为非零。存储在<code>call</code>域中，打印输出为&lsquo;<samp><span class="samp">/c</span></samp>&rsquo;。
+
+     <p><a name="index-MEM_005fPOINTER-1816"></a><a name="index-g_t_0040code_007bmem_007d-and-_0040samp_007b_002ff_007d-1817"></a><a name="index-g_t_0040code_007bframe_005frelated_007d_002c-in-_0040code_007bmem_007d-1818"></a><br><dt><code>MEM_POINTER (</code><var>x</var><code>)</code><dd><!-- Nonzero in a @code{mem} if the memory reference holds a pointer. -->
+<!-- Stored in the @code{frame_related} field and printed as @samp{/f}. -->
+位于<code>mem</code>中，如果内存引用存放了一个指针，则非零。存储在<code>frame_related</code>域中，打印输出为&lsquo;<samp><span class="samp">/f</span></samp>&rsquo;。
+
+     <p><a name="index-REG_005fFUNCTION_005fVALUE_005fP-1819"></a><a name="index-g_t_0040code_007breg_007d-and-_0040samp_007b_002fi_007d-1820"></a><a name="index-g_t_0040code_007breturn_005fval_007d_002c-in-_0040code_007breg_007d-1821"></a><br><dt><code>REG_FUNCTION_VALUE_P (</code><var>x</var><code>)</code><dd><!-- Nonzero in a @code{reg} if it is the place in which this function's -->
+<!-- value is going to be returned.  (This happens only in a hard -->
+<!-- register.)  Stored in the @code{return_val} field and printed as -->
+<!-- @samp{/i}. -->
+位于<code>reg</code>中，如果其为存放函数返回值的地方，则非零。（这只发生在硬件寄存器中。）存储在<code>return_val</code>域中，打印输出为&lsquo;<samp><span class="samp">/i</span></samp>&rsquo;。
+
+     <p><a name="index-REG_005fPOINTER-1822"></a><a name="index-g_t_0040code_007breg_007d-and-_0040samp_007b_002ff_007d-1823"></a><a name="index-g_t_0040code_007bframe_005frelated_007d_002c-in-_0040code_007breg_007d-1824"></a><br><dt><code>REG_POINTER (</code><var>x</var><code>)</code><dd><!-- Nonzero in a @code{reg} if the register holds a pointer.  Stored in the -->
+<!-- @code{frame_related} field and printed as @samp{/f}. -->
+位于<code>reg</code>中，如果寄存器存放一个指针，则非零。存储在<code>frame_related</code>域中，打印输出为&lsquo;<samp><span class="samp">/f</span></samp>&rsquo;。
+
+     <p><a name="index-REG_005fUSERVAR_005fP-1825"></a><a name="index-g_t_0040code_007breg_007d-and-_0040samp_007b_002fv_007d-1826"></a><a name="index-g_t_0040code_007bvolatil_007d_002c-in-_0040code_007breg_007d-1827"></a><br><dt><code>REG_USERVAR_P (</code><var>x</var><code>)</code><dd><!-- In a @code{reg}, nonzero if it corresponds to a variable present in -->
+<!-- the user's source code.  Zero for temporaries generated internally by -->
+<!-- the compiler.  Stored in the @code{volatil} field and printed as -->
+<!-- @samp{/v}. -->
+位于<code>reg</code>中，如果其对应于用户源代码中出现的一个变量，则非零。对于编译器内部生成的临时对象，则为零。存储在<code>volatil</code>域中，打印输出为&lsquo;<samp><span class="samp">/v</span></samp>&rsquo;。
+
+     <p>The same hard register may be used also for collecting the values of
+functions called by this one, but <code>REG_FUNCTION_VALUE_P</code> is zero
+in this kind of use.
+
+     <p><a name="index-RTX_005fFRAME_005fRELATED_005fP-1828"></a><a name="index-g_t_0040code_007binsn_007d-and-_0040samp_007b_002ff_007d-1829"></a><a name="index-g_t_0040code_007bcall_005finsn_007d-and-_0040samp_007b_002ff_007d-1830"></a><a name="index-g_t_0040code_007bjump_005finsn_007d-and-_0040samp_007b_002ff_007d-1831"></a><a name="index-g_t_0040code_007bbarrier_007d-and-_0040samp_007b_002ff_007d-1832"></a><a name="index-g_t_0040code_007bset_007d-and-_0040samp_007b_002ff_007d-1833"></a><a name="index-g_t_0040code_007bframe_005frelated_007d_002c-in-_0040code_007binsn_007d_002c-_0040code_007bcall_005finsn_007d_002c-_0040code_007bjump_005finsn_007d_002c-_0040code_007bbarrier_007d_002c-and-_0040code_007bset_007d-1834"></a><br><dt><code>RTX_FRAME_RELATED_P (</code><var>x</var><code>)</code><dd><!-- Nonzero in an @code{insn}, @code{call_insn}, @code{jump_insn}, -->
+<!-- @code{barrier}, or @code{set} which is part of a function prologue -->
+<!-- and sets the stack pointer, sets the frame pointer, or saves a register. -->
+<!-- This flag should also be set on an instruction that sets up a temporary -->
+<!-- register to use in place of the frame pointer. -->
+<!-- Stored in the @code{frame_related} field and printed as @samp{/f}. -->
+位于<code>insn</code>, <code>call_insn</code>, <code>jump_insn</code>, <code>barrier</code>, 或者<code>set</code>中，如果其为函数序言的一部分，用来设置栈指针，帧指针，或者保存寄存器，则为非零。对于设置用于帧指针的临时寄存器的指令，该标记也应被设置。存储在<code>frame_related</code>域中，打印输出为&lsquo;<samp><span class="samp">/f</span></samp>&rsquo;。
+
+     <!-- In particular, on RISC targets where there are limits on the sizes of -->
+     <!-- immediate constants, it is sometimes impossible to reach the register -->
+     <!-- save area directly from the stack pointer.  In that case, a temporary -->
+     <!-- register is used that is near enough to the register save area, and the -->
+     <!-- Canonical Frame Address, i.e., DWARF2's logical frame pointer, register -->
+     <!-- must (temporarily) be changed to be this temporary register.  So, the -->
+     <!-- instruction that sets this temporary register must be marked as -->
+     <!-- @code{RTX_FRAME_RELATED_P}. -->
+     <p>特别的，在一些RISC目标机器上，对于立即数常量的大小有限制，有时不能直接通过栈指针来到达寄存器的保存区域。这种情况下，一个足够接近寄存器保存区域的临时寄存器被使用，并且正则帧地址（Canonical Frame Address）寄存器，即DWARF2的逻辑帧指针寄存器，必须（临时的）被改成该临时寄存器。所以，设置该临时寄存器的指令必须被标记为<code>RTX_FRAME_RELATED_P</code>。
+
+     <!-- If the marked instruction is overly complex (defined in terms of what -->
+     <!-- @code{dwarf2out_frame_debug_expr} can handle), you will also have to -->
+     <!-- create a @code{REG_FRAME_RELATED_EXPR} note and attach it to the -->
+     <!-- instruction.  This note should contain a simple expression of the -->
+     <!-- computation performed by this instruction, i.e., one that -->
+     <!-- @code{dwarf2out_frame_debug_expr} can handle. -->
+     <p>如果被标记的指令过于复杂（跟据<code>dwarf2out_frame_debug_expr</code>能否处理，而定义的术语），则你还必须要创建一个<code>REG_FRAME_RELATED_EXPR</code>注解，并附加在该指令上。该注解应该包含一个该指令执行计算的简单表达式，即<code>dwarf2out_frame_debug_expr</code>可以处理的。
+
+     <!-- This flag is required for exception handling support on targets with RTL -->
+     <!-- prologues. -->
+     <p>在带有RTL序言的目标机器上，提供异常处理的支持时，会用到该标记。
+
+     <p><a name="index-MEM_005fREADONLY_005fP-1835"></a><a name="index-g_t_0040code_007bmem_007d-and-_0040samp_007b_002fu_007d-1836"></a><a name="index-g_t_0040code_007bunchanging_007d_002c-in-_0040code_007bmem_007d-1837"></a><br><dt><code>MEM_READONLY_P (</code><var>x</var><code>)</code><dd><!-- Nonzero in a @code{mem}, if the memory is statically allocated and read-only. -->
+位于<code>mem</code>中，如果内存是静态分配并且只读的，则非零。
+
+     <!-- Read-only in this context means never modified during the lifetime of the -->
+     <!-- program, not necessarily in ROM or in write-disabled pages.  A common -->
+     <!-- example of the later is a shared library's global offset table.  This -->
+     <!-- table is initialized by the runtime loader, so the memory is technically -->
+     <!-- writable, but after control is transfered from the runtime loader to the -->
+     <!-- application, this memory will never be subsequently modified. -->
+     <p>在该上下文中只读，意味着在程序的生命周期中不会被修改，但是不必要是在ROM或者不可写的页中。对于后者，一个常见的例子，是共享库的全局偏移表。该表由运行时加载器初始化，所以内存在技术上是可写的，但是当控制从运行时加载器转移给应用程序时，该内存将不再被修改。
+
+     <!-- Stored in the @code{unchanging} field and printed as @samp{/u}. -->
+     <p>存储在<code>unchanging</code>域中，打印输出为&lsquo;<samp><span class="samp">/u</span></samp>&rsquo;。
+
+     <p><a name="index-SCHED_005fGROUP_005fP-1838"></a><a name="index-g_t_0040code_007binsn_007d-and-_0040samp_007b_002fs_007d-1839"></a><a name="index-g_t_0040code_007bcall_005finsn_007d-and-_0040samp_007b_002fs_007d-1840"></a><a name="index-g_t_0040code_007bjump_005finsn_007d-and-_0040samp_007b_002fs_007d-1841"></a><a name="index-g_t_0040code_007bin_005fstruct_007d_002c-in-_0040code_007binsn_007d_002c-_0040code_007bjump_005finsn_007d-and-_0040code_007bcall_005finsn_007d-1842"></a><br><dt><code>SCHED_GROUP_P (</code><var>x</var><code>)</code><dd><!-- During instruction scheduling, in an @code{insn}, @code{call_insn} or -->
+<!-- @code{jump_insn}, indicates that the -->
+<!-- previous insn must be scheduled together with this insn.  This is used to -->
+<!-- ensure that certain groups of instructions will not be split up by the -->
+<!-- instruction scheduling pass, for example, @code{use} insns before -->
+<!-- a @code{call_insn} may not be separated from the @code{call_insn}. -->
+<!-- Stored in the @code{in_struct} field and printed as @samp{/s}. -->
+在指令调度过程中，位于<code>insn</code>, <code>call_insn</code>或者<code>jump_insn</code>中，表明前一个insn必须与该insn一起调度。这用来确保特定的指令组不会被指令调度过程分隔开。例如，在<code>call_insn</code>之前的<code>use</code> insn不可以从<code>call_insn</code>中分开。存储在<code>in_struct</code>域中，打印输出为&lsquo;<samp><span class="samp">/s</span></samp>&rsquo;。
+
+     <p><a name="index-SET_005fIS_005fRETURN_005fP-1843"></a><a name="index-g_t_0040code_007binsn_007d-and-_0040samp_007b_002fj_007d-1844"></a><a name="index-g_t_0040code_007bjump_007d_002c-in-_0040code_007binsn_007d-1845"></a><br><dt><code>SET_IS_RETURN_P (</code><var>x</var><code>)</code><dd><!-- For a @code{set}, nonzero if it is for a return. -->
+<!-- Stored in the @code{jump} field and printed as @samp{/j}. -->
+对于<code>set</code>，如果是针对一个return，则非零。存储在<code>jump</code>域中，打印输出为&lsquo;<samp><span class="samp">/j</span></samp>&rsquo;。
+
+     <p><a name="index-SIBLING_005fCALL_005fP-1846"></a><a name="index-g_t_0040code_007bcall_005finsn_007d-and-_0040samp_007b_002fj_007d-1847"></a><a name="index-g_t_0040code_007bjump_007d_002c-in-_0040code_007bcall_005finsn_007d-1848"></a><br><dt><code>SIBLING_CALL_P (</code><var>x</var><code>)</code><dd><!-- For a @code{call_insn}, nonzero if the insn is a sibling call. -->
+<!-- Stored in the @code{jump} field and printed as @samp{/j}. -->
+对于<code>call_insn</code>，如果该insn为一个sibling call，则非零。存储在<code>jump</code>域中，打印输出为&lsquo;<samp><span class="samp">/j</span></samp>&rsquo;。
+
+     <p><a name="index-STRING_005fPOOL_005fADDRESS_005fP-1849"></a><a name="index-g_t_0040code_007bsymbol_005fref_007d-and-_0040samp_007b_002ff_007d-1850"></a><a name="index-g_t_0040code_007bframe_005frelated_007d_002c-in-_0040code_007bsymbol_005fref_007d-1851"></a><br><dt><code>STRING_POOL_ADDRESS_P (</code><var>x</var><code>)</code><dd><!-- For a @code{symbol_ref} expression, nonzero if it addresses this function's -->
+<!-- string constant pool. -->
+<!-- Stored in the @code{frame_related} field and printed as @samp{/f}. -->
+对于一个<code>symbol_ref</code>表达式，如果其为对该函数的字符串常量池的寻址，则非零。存储在<code>frame_related</code>域中，打印输出为&lsquo;<samp><span class="samp">/f</span></samp>&rsquo;。
+
+     <p><a name="index-SUBREG_005fPROMOTED_005fUNSIGNED_005fP-1852"></a><a name="index-g_t_0040code_007bsubreg_007d-and-_0040samp_007b_002fu_007d-and-_0040samp_007b_002fv_007d-1853"></a><a name="index-g_t_0040code_007bunchanging_007d_002c-in-_0040code_007bsubreg_007d-1854"></a><a name="index-g_t_0040code_007bvolatil_007d_002c-in-_0040code_007bsubreg_007d-1855"></a><br><dt><code>SUBREG_PROMOTED_UNSIGNED_P (</code><var>x</var><code>)</code><dd><!-- Returns a value greater then zero for a @code{subreg} that has -->
+<!-- @code{SUBREG_PROMOTED_VAR_P} nonzero if the object being referenced is kept -->
+<!-- zero-extended, zero if it is kept sign-extended, and less then zero if it is -->
+<!-- extended some other way via the @code{ptr_extend} instruction. -->
+<!-- Stored in the @code{unchanging} -->
+<!-- field and @code{volatil} field, printed as @samp{/u} and @samp{/v}. -->
+<!-- This macro may only be used to get the value it may not be used to change -->
+<!-- the value.  Use @code{SUBREG_PROMOTED_UNSIGNED_SET} to change the value. -->
+如果<code>subreg</code>对于<code>SUBREG_PROMOTED_VAR_P</code>为非零，并且被引用的对象为零扩展，则返回一个大于零的值；如果保持为符号扩展，则为零；如果是通过<code>ptr_extend</code>指令，进行某种其它方式的扩展，则小于零。存储在<code>unchanging</code>域和<code>volatil</code>域中，打印输出为&lsquo;<samp><span class="samp">/u</span></samp>&rsquo;和&lsquo;<samp><span class="samp">/v</span></samp>&rsquo;。该宏只用于获得值，不能用于修改值。使用<code>SUBREG_PROMOTED_UNSIGNED_SET</code>来修改值。
+
+     <p><a name="index-SUBREG_005fPROMOTED_005fUNSIGNED_005fSET-1856"></a><a name="index-g_t_0040code_007bsubreg_007d-and-_0040samp_007b_002fu_007d-1857"></a><a name="index-g_t_0040code_007bunchanging_007d_002c-in-_0040code_007bsubreg_007d-1858"></a><a name="index-g_t_0040code_007bvolatil_007d_002c-in-_0040code_007bsubreg_007d-1859"></a><br><dt><code>SUBREG_PROMOTED_UNSIGNED_SET (</code><var>x</var><code>)</code><dd><!-- Set the @code{unchanging} and @code{volatil} fields in a @code{subreg} -->
+<!-- to reflect zero, sign, or other extension.  If @code{volatil} is -->
+<!-- zero, then @code{unchanging} as nonzero means zero extension and as -->
+<!-- zero means sign extension.  If @code{volatil} is nonzero then some -->
+<!-- other type of extension was done via the @code{ptr_extend} instruction. -->
+设置<code>subreg</code>中的<code>unchanging</code>和<code>volatil</code>域，来反映零扩展，符号扩展，或其它扩展。如果<code>volatil</code>为零，然后如果<code>unchanging</code>为非零，则意味着零扩展，如果为零，则意味着符号扩展。如果<code>volatil</code>为非零，则通过<code>ptr_extend</code>指令使用了其它某种扩展。
+
+     <p><a name="index-SUBREG_005fPROMOTED_005fVAR_005fP-1860"></a><a name="index-g_t_0040code_007bsubreg_007d-and-_0040samp_007b_002fs_007d-1861"></a><a name="index-g_t_0040code_007bin_005fstruct_007d_002c-in-_0040code_007bsubreg_007d-1862"></a><br><dt><code>SUBREG_PROMOTED_VAR_P (</code><var>x</var><code>)</code><dd><!-- Nonzero in a @code{subreg} if it was made when accessing an object that -->
+<!-- was promoted to a wider mode in accord with the @code{PROMOTED_MODE} machine -->
+<!-- description macro (@pxref{Storage Layout}).  In this case, the mode of -->
+<!-- the @code{subreg} is the declared mode of the object and the mode of -->
+<!-- @code{SUBREG_REG} is the mode of the register that holds the object. -->
+<!-- Promoted variables are always either sign- or zero-extended to the wider -->
+<!-- mode on every assignment.  Stored in the @code{in_struct} field and -->
+<!-- printed as @samp{/s}. -->
+位于<code>subreg</code>中，如果当访问一个被提升为符合机器描述宏<code>PROMOTED_MODE</code>的(参见<a href="Storage-Layout.html#Storage-Layout">Storage Layout</a>)，宽机器模式的对象时，则非零。这种情况下，<code>subreg</code>的机器模式为对象被声明的机器模式，<code>SUBREG_REG</code>的机器模式为存放该对象的寄存器的机器模式。被提升的变量，在每个赋值中，总是被符号扩展或者零扩展成宽机器模式。存储在<code>in_struct</code>域中，打印输出为&lsquo;<samp><span class="samp">/s</span></samp>&rsquo;。
+
+     <p><a name="index-SYMBOL_005fREF_005fUSED-1863"></a><a name="index-g_t_0040code_007bused_007d_002c-in-_0040code_007bsymbol_005fref_007d-1864"></a><br><dt><code>SYMBOL_REF_USED (</code><var>x</var><code>)</code><dd><!-- In a @code{symbol_ref}, indicates that @var{x} has been used.  This is -->
+<!-- normally only used to ensure that @var{x} is only declared external -->
+<!-- once.  Stored in the @code{used} field. -->
+位于<code>symbol_ref</code>中，表明<var>x</var>已经被使用。这通常只用于确保<var>x</var>只在外部被声明一次。存储在<code>used</code>中。
+
+     <p><a name="index-SYMBOL_005fREF_005fWEAK-1865"></a><a name="index-g_t_0040code_007bsymbol_005fref_007d-and-_0040samp_007b_002fi_007d-1866"></a><a name="index-g_t_0040code_007breturn_005fval_007d_002c-in-_0040code_007bsymbol_005fref_007d-1867"></a><br><dt><code>SYMBOL_REF_WEAK (</code><var>x</var><code>)</code><dd><!-- In a @code{symbol_ref}, indicates that @var{x} has been declared weak. -->
+<!-- Stored in the @code{return_val} field and printed as @samp{/i}. -->
+位于<code>symbol_ref</code>中，表明<var>x</var>已经被声明为weak。存储在<code>return_val</code>域中，打印输出为&lsquo;<samp><span class="samp">/i</span></samp>&rsquo;。
+
+     <p><a name="index-SYMBOL_005fREF_005fFLAG-1868"></a><a name="index-g_t_0040code_007bsymbol_005fref_007d-and-_0040samp_007b_002fv_007d-1869"></a><a name="index-g_t_0040code_007bvolatil_007d_002c-in-_0040code_007bsymbol_005fref_007d-1870"></a><br><dt><code>SYMBOL_REF_FLAG (</code><var>x</var><code>)</code><dd><!-- In a @code{symbol_ref}, this is used as a flag for machine-specific purposes. -->
+<!-- Stored in the @code{volatil} field and printed as @samp{/v}. -->
+位于<code>symbol_ref</code>中，用于机器特定目的的标记。存储在<code>volatil</code>域中，打印输出为&lsquo;<samp><span class="samp">/v</span></samp>&rsquo;。
+
+     <!-- Most uses of @code{SYMBOL_REF_FLAG} are historic and may be subsumed -->
+     <!-- by @code{SYMBOL_REF_FLAGS}.  Certainly use of @code{SYMBOL_REF_FLAGS} -->
+     <!-- is mandatory if the target requires more than one bit of storage. -->
+     <p>大多对<code>SYMBOL_REF_FLAG</code>的使用，是历史性的，并且可以通过<code>SYMBOL_REF_FLAGS</code>来归类。当然，如果目标机器需要多于一个位的存储时，对<code>SYMBOL_REF_FLAGS</code>的使用是强制的。
+
+     <p><a name="index-PREFETCH_005fSCHEDULE_005fBARRIER_005fP-1871"></a><a name="index-g_t_0040code_007bprefetch_007d-and-_0040samp_007b_002fv_007d-1872"></a><a name="index-g_t_0040code_007bvolatile_007d_002c-in-_0040code_007bprefetch_007d-1873"></a><br><dt><code>PREFETCH_SCHEDULE_BARRIER_P (</code><var>x</var><code>)</code><dd><!-- In a @code{prefetch}, indicates that the prefetch is a scheduling barrier. -->
+<!-- No other INSNs will be moved over it. -->
+<!-- Stored in the @code{volatil} field and printed as @samp{/v}. -->
+</dl>
+
+<!-- These are the fields to which the above macros refer: -->
+ <p>这些是上面的宏所引用的域：
+
+     
+<a name="index-call-1874"></a>
+<a name="index-g_t_0040samp_007b_002fc_007d-in-RTL-dump-1875"></a>
+<dl><dt><code>call</code><dd><!-- In a @code{mem}, 1 means that the memory reference will not trap. -->
+在<code>mem</code>中，1表示该内存引用不会有陷阱。
+
+     <!-- In a @code{call}, 1 means that this pure or const call may possibly -->
+     <!-- infinite loop. -->
+     <p>在<code>call</code>中，1表示该pure或者const调用，可能为无限循环。
+
+     <!-- In an RTL dump, this flag is represented as @samp{/c}. -->
+     <p>在RTL转储中，该标记被表示为&lsquo;<samp><span class="samp">/c</span></samp>&rsquo;。
+
+     <p><a name="index-frame_005frelated-1876"></a><a name="index-g_t_0040samp_007b_002ff_007d-in-RTL-dump-1877"></a><br><dt><code>frame_related</code><dd><!-- In an @code{insn} or @code{set} expression, 1 means that it is part of -->
+<!-- a function prologue and sets the stack pointer, sets the frame pointer, -->
+<!-- saves a register, or sets up a temporary register to use in place of the -->
+<!-- frame pointer. -->
+在<code>insn</code>或者<code>set</code>表达式中，1表示其为函数序言的一部分，设置栈寄存器，设置帧寄存器，保存寄存器，或者设置一个用于帧寄存器的临时寄存器。
+
+     <!-- In @code{reg} expressions, 1 means that the register holds a pointer. -->
+     <p>在<code>reg</code>表达式中，1表示该寄存器存放一个指针。
+
+     <!-- In @code{mem} expressions, 1 means that the memory reference holds a pointer. -->
+     <p>在<code>mem</code>表达式中，1表示该内存引用存放一个指针。
+
+     <!-- In @code{symbol_ref} expressions, 1 means that the reference addresses -->
+     <!-- this function's string constant pool. -->
+     <p>在<code>symbol_ref</code>表达式中，1表示该引用是对函数的字符串常量池的寻址。
+
+     <!-- In an RTL dump, this flag is represented as @samp{/f}. -->
+     <p>在RTL转储中，该标记被表示为&lsquo;<samp><span class="samp">/f</span></samp>&rsquo;。
+
+     <p><a name="index-in_005fstruct-1878"></a><a name="index-g_t_0040samp_007b_002fs_007d-in-RTL-dump-1879"></a><br><dt><code>in_struct</code><dd><!-- In @code{mem} expressions, it is 1 if the memory datum referred to is -->
+<!-- all or part of a structure or array; 0 if it is (or might be) a scalar -->
+<!-- variable.  A reference through a C pointer has 0 because the pointer -->
+<!-- might point to a scalar variable.  This information allows the compiler -->
+<!-- to determine something about possible cases of aliasing. -->
+在<code>mem</code>表达式中，如果所引用的内存数据为整个结构体或者数组，或者一部分，其为1；如果为（或者可能为）一个标量变量。则为0。通过C指针的引用，为0，因为指针可以指向一个标量变量。该信息允许编译器来确定别名的可能情况。
+
+     <!-- In @code{reg} expressions, it is 1 if the register has its entire life -->
+     <!-- contained within the test expression of some loop. -->
+     <p>在<code>reg</code>表达式中，如果寄存器整个生命期都包含在某个循环的测试表达式中，则为1。
+
+     <!-- In @code{subreg} expressions, 1 means that the @code{subreg} is accessing -->
+     <!-- an object that has had its mode promoted from a wider mode. -->
+     <p>在<code>subreg</code>表达式中，1表示<code>subreg</code>在访问一个从更宽的机器模式进行提升的对象。
+
+     <!-- In @code{label_ref} expressions, 1 means that the referenced label is -->
+     <!-- outside the innermost loop containing the insn in which the @code{label_ref} -->
+     <!-- was found. -->
+     <p>在<code>label_ref</code>表达式中，1表示被引用的标号位于包含发现<code>label_ref</code>的insn的最内层循环的外面。
+
+     <!-- In @code{code_label} expressions, it is 1 if the label may never be deleted. -->
+     <!-- This is used for labels which are the target of non-local gotos.  Such a -->
+     <!-- label that would have been deleted is replaced with a @code{note} of type -->
+     <!-- @code{NOTE_INSN_DELETED_LABEL}. -->
+     <p>在<code>code_label</code>表达式中，如果标号不能被删除，则为1。这用于其为非局部goto的目标的标号。对于已经被删除的这样的标号，使用类型为<code>NOTE_INSN_DELETED_LABEL</code>的<code>note</code>来替换。
+
+     <!-- In an @code{insn} during dead-code elimination, 1 means that the insn is -->
+     <!-- dead code. -->
+     <p>在<code>insn</code>中，在死代码消除阶段，1表示该insn为死代码。
+
+     <!-- In an @code{insn} or @code{jump_insn} during reorg for an insn in the -->
+     <!-- delay slot of a branch, -->
+     <!-- 1 means that this insn is from the target of the branch. -->
+     <p>在<code>insn</code>或者<code>jump_insn</code>中，在针对分支延迟槽中insn的reorg阶段，1表示该insn来自分支跳转的目标。
+
+     <!-- In an @code{insn} during instruction scheduling, 1 means that this insn -->
+     <!-- must be scheduled as part of a group together with the previous insn. -->
+     <p>在<code>insn</code>中，在指令调度阶段，1表示该insn必须与之前的insn一起进行调度。
+
+     <!-- In an RTL dump, this flag is represented as @samp{/s}. -->
+     <p>在RTL转储中，该标记被表示为&lsquo;<samp><span class="samp">/s</span></samp>&rsquo;。
+
+     <p><a name="index-return_005fval-1880"></a><a name="index-g_t_0040samp_007b_002fi_007d-in-RTL-dump-1881"></a><br><dt><code>return_val</code><dd><!-- In @code{reg} expressions, 1 means the register contains -->
+<!-- the value to be returned by the current function.  On -->
+<!-- machines that pass parameters in registers, the same register number -->
+<!-- may be used for parameters as well, but this flag is not set on such -->
+<!-- uses. -->
+在<code>reg</code>表达式中，1表示寄存器包含了当且函数的返回值。对于在寄存器中传递参数的机器上，同一个寄存器编号也可以被用作参数，但是这种情况下，该标记不被设置。
+
+     <!-- In @code{mem} expressions, 1 means the memory reference is to a scalar -->
+     <!-- known not to be a member of a structure, union, or array. -->
+     <p>在<code>mem</code>中，1表示内存引用为一个已知不为结构体，联合体，数组的成员的标量。
+
+     <!-- In @code{symbol_ref} expressions, 1 means the referenced symbol is weak. -->
+     <p>在<code>symbol_ref</code>表达式中，1表示被引用的符号为weak。
+
+     <!-- In @code{call} expressions, 1 means the call is pure. -->
+     <p>在<code>call</code>表达式中，1表示调用是pure。
+
+     <!-- In an RTL dump, this flag is represented as @samp{/i}. -->
+     <p>在RTL转储中，该标记被表示为&lsquo;<samp><span class="samp">/i</span></samp>&rsquo;。
+
+     <p><a name="index-jump-1882"></a><a name="index-g_t_0040samp_007b_002fj_007d-in-RTL-dump-1883"></a><br><dt><code>jump</code><dd><!-- In a @code{mem} expression, 1 means we should keep the alias set for this -->
+<!-- mem unchanged when we access a component. -->
+在<code>mem</code>表达式中，1表示当访问一个部件时，应该保持该mem的别名集不变。
+
+     <!-- In a @code{set}, 1 means it is for a return. -->
+     <p>在<code>set</code>中，1表示其为一个return。
+
+     <!-- In a @code{call_insn}, 1 means it is a sibling call. -->
+     <p>在<code>call_insn</code>中，1表示其为一个sibling call。
+
+     <!-- In an RTL dump, this flag is represented as @samp{/j}. -->
+     <p>在RTL转储中，该标记被表示为&lsquo;<samp><span class="samp">/j</span></samp>&rsquo;。
+
+     <p><a name="index-unchanging-1884"></a><a name="index-g_t_0040samp_007b_002fu_007d-in-RTL-dump-1885"></a><br><dt><code>unchanging</code><dd><!-- In @code{reg} and @code{mem} expressions, 1 means -->
+<!-- that the value of the expression never changes. -->
+在<code>reg</code>和<code>mem</code>表达式中，1表示表达式的值不会改变。
+
+     <!-- In @code{subreg} expressions, it is 1 if the @code{subreg} references an -->
+     <!-- unsigned object whose mode has been promoted to a wider mode. -->
+     <p>在<code>subreg</code>表达式中，如果<code>subreg</code>引用了机器模式已经被提升为一个宽模式的无符号对象，则为1。
+
+     <!-- In an @code{insn} or @code{jump_insn} in the delay slot of a branch -->
+     <!-- instruction, 1 means an annulling branch should be used. -->
+     <p>在分支指令延迟槽中的<code>insn</code>或<code>jump_insn</code>中，1表示将使用一个被取消的分支。
+
+     <!-- In a @code{symbol_ref} expression, 1 means that this symbol addresses -->
+     <!-- something in the per-function constant pool. -->
+     <p>在<code>symbol_ref</code>表达式中，1表示该符号对函数的常量池进行寻址。
+
+     <!-- In a @code{call_insn} 1 means that this instruction is a call to a const -->
+     <!-- function. -->
+     <p>在<code>call_insn</code>中，1表示该指令为对const函数的调用。
+
+     <!-- In an RTL dump, this flag is represented as @samp{/u}. -->
+     <p>在RTL转储中，该标记被表示为&lsquo;<samp><span class="samp">/u</span></samp>&rsquo;。
+
+     <p><a name="index-used-1886"></a><br><dt><code>used</code><dd><!-- This flag is used directly (without an access macro) at the end of RTL -->
+<!-- generation for a function, to count the number of times an expression -->
+<!-- appears in insns.  Expressions that appear more than once are copied, -->
+<!-- according to the rules for shared structure (@pxref{Sharing}). -->
+该标记在函数的RTL生成阶段的结尾被直接使用（不通过访问宏），来计数表达式在insns中出现的次数。出现次数大于一的表达式，根据共享结构的规则（参见<a href="Sharing.html#Sharing">Sharing</a>），被复制。
+
+     <!-- For a @code{reg}, it is used directly (without an access macro) by the -->
+     <!-- leaf register renumbering code to ensure that each register is only -->
+     <!-- renumbered once. -->
+     <p>对于<code>reg</code>，其被叶子寄存器重编号代码直接使用（不通过访问宏），来确保每个寄存器只被重编号一次。
+
+     <!-- In a @code{symbol_ref}, it indicates that an external declaration for -->
+     <!-- the symbol has already been written. -->
+     <p>在<code>symbol_ref</code>中，其表示该符号的外部声明已经被书写了。
+
+     <p><a name="index-volatil-1887"></a><a name="index-g_t_0040samp_007b_002fv_007d-in-RTL-dump-1888"></a><br><dt><code>volatil</code><dd><a name="index-volatile-memory-references-1889"></a><!-- In a @code{mem}, @code{asm_operands}, or @code{asm_input} -->
+<!-- expression, it is 1 if the memory -->
+<!-- reference is volatile.  Volatile memory references may not be deleted, -->
+<!-- reordered or combined. -->
+在<code>mem</code>, <code>asm_operands</code>或者<code>asm_input</code>表达式中，如果内存引用是volatile的，则为1。volatile的内存引用不可以被删除，重排或者合并。
+
+     <!-- In a @code{symbol_ref} expression, it is used for machine-specific -->
+     <!-- purposes. -->
+     <p>在<code>symbol_ref</code>表达式中，其用于机器特定的目的。
+
+     <!-- In a @code{reg} expression, it is 1 if the value is a user-level variable. -->
+     <!-- 0 indicates an internal compiler temporary. -->
+     <p>在<code>reg</code>表达式中，如果值为用户级的变量，则为1。0表示为内部的编译器临时对象。
+
+     <!-- In an @code{insn}, 1 means the insn has been deleted. -->
+     <p>在<code>insn</code>中，1表示该insn已经被删除。
+
+     <!-- In @code{label_ref} and @code{reg_label} expressions, 1 means a reference -->
+     <!-- to a non-local label. -->
+     <p>在<code>label_ref</code>和<code>reg_label</code>表达式中，1表示对非局部标号的引用。
+
+     <p>In <code>prefetch</code> expressions, 1 means that the containing insn is a
+scheduling barrier.
+
+     <!-- In an RTL dump, this flag is represented as @samp{/v}. -->
+     <p>在RTL转储中，该标记被表示为&lsquo;<samp><span class="samp">/v</span></samp>&rsquo;。
+</dl>
+
+<!-- @node Machine Modes -->
+<!-- @section Machine Modes -->
+ </body></html>
+

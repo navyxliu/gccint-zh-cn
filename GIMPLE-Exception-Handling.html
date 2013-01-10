@@ -1,0 +1,97 @@
+<html lang="zh">
+<head>
+<title>GIMPLE Exception Handling - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="GIMPLE.html#GIMPLE" title="GIMPLE">
+<link rel="prev" href="GIMPLE-instruction-set.html#GIMPLE-instruction-set" title="GIMPLE instruction set">
+<link rel="next" href="Temporaries.html#Temporaries" title="Temporaries">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="GIMPLE-Exception-Handling"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Temporaries.html#Temporaries">Temporaries</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="GIMPLE-instruction-set.html#GIMPLE-instruction-set">GIMPLE instruction set</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="GIMPLE.html#GIMPLE">GIMPLE</a>
+<hr>
+</div>
+
+<h3 class="section">12.3 异常处理</h3>
+
+<p><a name="index-GIMPLE-Exception-Handling-2718"></a>
+<!-- Other exception handling constructs are represented using -->
+<!-- @code{GIMPLE_TRY_CATCH}.  @code{GIMPLE_TRY_CATCH} has two operands.  The -->
+<!-- first operand is a sequence of statements to execute.  If executing -->
+<!-- these statements does not throw an exception, then the second operand -->
+<!-- is ignored.  Otherwise, if an exception is thrown, then the second -->
+<!-- operand of the @code{GIMPLE_TRY_CATCH} is checked.  The second -->
+<!-- operand may have the following forms: -->
+其它异常处理结构使用<code>GIMPLE_TRY_CATCH</code>来表示。<code>GIMPLE_TRY_CATCH</code>有两个操作数。第一个操作数为一个要执行的语句序列。如果执行这些语句并没有抛出异常，则第二个操作数被忽略。否则，如果有异常被抛出，则<code>GIMPLE_TRY_CATCH</code>的第二个操作数将被检查。第二个操作数可以具有以下形式：
+
+     <ol type=1 start=1>
+
+     <!-- @item A sequence of statements to execute.  When an exception occurs, -->
+     <!-- these statements are executed, and then the exception is rethrown. -->
+     <li>一个要执行的语句序列。当发生异常时，这些语句被执行，然后异常被重新抛出。
+
+     <!-- @item A sequence of @code{GIMPLE_CATCH} statements.  Each -->
+     <!-- @code{GIMPLE_CATCH} has a list of applicable exception types and -->
+     <!-- handler code.  If the thrown exception matches one of the caught -->
+     <!-- types, the associated handler code is executed.  If the handler -->
+     <!-- code falls off the bottom, execution continues after the original -->
+     <!-- @code{GIMPLE_TRY_CATCH}. -->
+     <li>一个<code>GIMPLE_CATCH</code>语句序列。每个<code>GIMPLE_CATCH</code>有一个可适用的异常类型列表和处理代码。如果被抛出的异常匹配其中一个类型，则相关的处理代码被执行。如果处理代码执行到结尾并结束，则在最初的<code>GIMPLE_TRY_CATCH</code>之后继续执行。
+
+     <!-- @item A @code{GIMPLE_EH_FILTER} statement.  This has a list of -->
+     <!-- permitted exception types, and code to handle a match failure.  If the -->
+     <!-- thrown exception does not match one of the allowed types, the -->
+     <!-- associated match failure code is executed.  If the thrown exception -->
+     <!-- does match, it continues unwinding the stack looking for the next -->
+     <!-- handler. -->
+     <li>一条<code>GIMPLE_EH_FILTER</code>语句。具有一个允许的异常类型列表，和当匹配失败时的处理代码。如果被抛出的异常不匹配所允许的类型之一，则相关的匹配失败代码会被执行。如果抛出的异常确实匹配，则继续查找下一个处理。
+
+      </ol>
+
+<!-- Currently throwing an exception is not directly represented in -->
+<!-- GIMPLE, since it is implemented by calling a function.  At some -->
+<!-- point in the future we will want to add some way to express that -->
+<!-- the call will throw an exception of a known type. -->
+ <p>目前抛出异常并不直接用GIMPLE来表示，而是通过调用一个函数来实现。将来的某个时候，我们将增加某种方式来表示抛出已知类型的异常的调用。
+
+<!-- Just before running the optimizers, the compiler lowers the -->
+<!-- high-level EH constructs above into a set of @samp{goto}s, magic -->
+<!-- labels, and EH regions.  Continuing to unwind at the end of a -->
+<!-- cleanup is represented with a @code{GIMPLE_RESX}. -->
+ <p>就在运行优化器之前，编译器将高级别的EH结构下降为一组&lsquo;<samp><span class="samp">goto</span></samp>&rsquo;，魔术标号，以及EH区域。
+
+ </body></html>
+

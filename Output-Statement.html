@@ -1,0 +1,170 @@
+<html lang="zh">
+<head>
+<title>Output Statement - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Machine-Desc.html#Machine-Desc" title="Machine Desc">
+<link rel="prev" href="Output-Template.html#Output-Template" title="Output Template">
+<link rel="next" href="Predicates.html#Predicates" title="Predicates">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Output-Statement"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Predicates.html#Predicates">Predicates</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Output-Template.html#Output-Template">Output Template</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Machine-Desc.html#Machine-Desc">Machine Desc</a>
+<hr>
+</div>
+
+<h3 class="section">16.6 用于汇编输出的C语句</h3>
+
+<p><a name="index-output-statements-3232"></a><a name="index-C-statements-for-assembler-output-3233"></a><a name="index-generating-assembler-output-3234"></a>
+经常，单个固定的模板字符串，不能够为单个指令模式所识别的所有情况都能产生正确，
+有效的汇编代码。例如，操作码可以依赖于操作数类别；或者一些不适宜的操作数组合
+可能需要额外的机器指令。
+
+<!-- If the output control string starts with a @samp{@@}, then it is actually -->
+<!-- a series of templates, each on a separate line.  (Blank lines and -->
+<!-- leading spaces and tabs are ignored.)  The templates correspond to the -->
+<!-- pattern's constraint alternatives (@pxref{Multi-Alternative}).  For example, -->
+<!-- if a target machine has a two-address add instruction @samp{addr} to add -->
+<!-- into a register and another @samp{addm} to add a register to memory, you -->
+<!-- might write this pattern: -->
+ <p>如果输出控制字符串起始于 &lsquo;<samp><span class="samp">@</span></samp>&rsquo;，则其实际为一系列模板，每一个单独一行。
+（空行，以及开头的空格和tab被忽略掉。）这些模板对应于模式的各个constraint
+（参见<a href="Multi_002dAlternative.html#Multi_002dAlternative">Multi-Alternative</a>）。例如，如果一个目标机有一个二址（two-address）
+加法指令 &lsquo;<samp><span class="samp">addr</span></samp>&rsquo;相加到寄存器中，另外还有一个 &lsquo;<samp><span class="samp">addm</span></samp>&rsquo; 将寄存器的值相加
+到内存中，你可能会这样写模式：
+
+<pre class="smallexample">     (define_insn "addsi3"
+       [(set (match_operand:SI 0 "general_operand" "=r,m")
+             (plus:SI (match_operand:SI 1 "general_operand" "0,0")
+                      (match_operand:SI 2 "general_operand" "g,r")))]
+       ""
+       "@
+        addr %2,%0
+        addm %2,%0")
+</pre>
+ <!-- @cindex @code{*} in template -->
+<!-- @cindex asterisk in template -->
+<!-- If the output control string starts with a @samp{*}, then it is not an -->
+<!-- output template but rather a piece of C program that should compute a -->
+<!-- template.  It should execute a @code{return} statement to return the -->
+<!-- template-string you want.  Most such templates use C string literals, which -->
+<!-- require doublequote characters to delimit them.  To include these -->
+<!-- doublequote characters in the string, prefix each one with @samp{\}. -->
+ <p><a name="index-g_t_0040code_007b_002a_007d-in-template-3235"></a><a name="index-asterisk-in-template-3236"></a>如果输出控制字符串起始于 &lsquo;<samp><span class="samp">*</span></samp>&rsquo;，则其不是一个输出模板，而是一个C程序片段并且
+能够计算出一个模板。其应该执行一个 <code>return</code> 语句来返回你想要的模板字符串。
+大多数这样的模板使用C字符串文字，需要用双引号包含起来。如果要在字符串中包含这
+些双引号，可以在前面加上 &lsquo;<samp><span class="samp">\</span></samp>&rsquo;。
+
+<!-- If the output control string is written as a brace block instead of a -->
+<!-- double-quoted string, it is automatically assumed to be C code.  In that -->
+<!-- case, it is not necessary to put in a leading asterisk, or to escape the -->
+<!-- doublequotes surrounding C string literals. -->
+ <p>如果输出控制串写成一个花括号块，而不是双引号的字符串，则其被自动认为是C代码。
+这种情况下，则不必要有的起始的星号，以及转义C字符串文字中的双引号。
+
+<!-- The operands may be found in the array @code{operands}, whose C data type -->
+<!-- is @code{rtx []}. -->
+ <p>操作数可以为数组 <code>operands</code>，其C数据类型为 <code>rtx []</code>。
+
+<!-- It is very common to select different ways of generating assembler code -->
+<!-- based on whether an immediate operand is within a certain range.  Be -->
+<!-- careful when doing this, because the result of @code{INTVAL} is an -->
+<!-- integer on the host machine.  If the host machine has more bits in an -->
+<!-- @code{int} than the target machine has in the mode in which the constant -->
+<!-- will be used, then some of the bits you get from @code{INTVAL} will be -->
+<!-- superfluous.  For proper results, you must carefully disregard the -->
+<!-- values of those bits. -->
+ <p>一种常见的情况是，根据立即数是否在一个特定范围内来选择生成汇编代码的方式。在做
+这种事情的时候要仔细，因为 <code>INTVAL</code> 的结果是一个主机上的整形。如果主机的
+<code>int</code> 比目标机上的具有更多的位，则从 <code>INTVAL</code> 中的得到的一些位将会是
+多余的。要得到正确的结果，必须仔细的忽视掉那些位的值。
+
+<!-- @findex output_asm_insn -->
+<!-- It is possible to output an assembler instruction and then go on to output -->
+<!-- or compute more of them, using the subroutine @code{output_asm_insn}.  This -->
+<!-- receives two arguments: a template-string and a vector of operands.  The -->
+<!-- vector may be @code{operands}, or it may be another array of @code{rtx} -->
+<!-- that you declare locally and initialize yourself. -->
+ <p><a name="index-output_005fasm_005finsn-3237"></a>有可能输出一个汇编指令，然后使用子程序 <code>output_asm_insn</code> 来继续输出或者计
+算更多的。其接收两个参数：一个模板字符串和一个操作数向量。向量可以是
+<code>operands</code>，或者是另一个声明为局部的并且自己初始化的 <code>rtx</code> 数组。
+
+<!-- @findex which_alternative -->
+<!-- When an insn pattern has multiple alternatives in its constraints, often -->
+<!-- the appearance of the assembler code is determined mostly by which alternative -->
+<!-- was matched.  When this is so, the C code can test the variable -->
+<!-- @code{which_alternative}, which is the ordinal number of the alternative -->
+<!-- that was actually satisfied (0 for the first, 1 for the second alternative, -->
+<!-- etc.). -->
+ <p><a name="index-which_005falternative-3238"></a>当一个insn模式有多个可选择的constraint时，则汇编代码经常主要是由所匹配的constraint选择来决
+定。如果是这样，C代码可以测试变量 <code>which_alternative</code>，其为实际满足条件的
+constraint选择的序号（0为第一个，1位第二个选择，以此类推）。
+
+<!-- For example, suppose there are two opcodes for storing zero, @samp{clrreg} -->
+<!-- for registers and @samp{clrmem} for memory locations.  Here is how -->
+<!-- a pattern could use @code{which_alternative} to choose between them: -->
+ <p>例如，假设有两个操作码来存储0，&lsquo;<samp><span class="samp">clrreg</span></samp>&rsquo; 用于寄存器，&lsquo;<samp><span class="samp">clrmem</span></samp>&rsquo; 用于内存
+地址。这个模式实现了如何能够使用 &lsquo;<samp><span class="samp">which_alternative</span></samp>&rsquo; 来选择它们：
+
+<pre class="smallexample">     (define_insn ""
+       [(set (match_operand:SI 0 "general_operand" "=r,m")
+             (const_int 0))]
+       ""
+       {
+       return (which_alternative == 0
+               ? "clrreg %0" : "clrmem %0");
+       })
+</pre>
+ <!-- The example above, where the assembler code to generate was -->
+<!-- @emph{solely} determined by the alternative, could also have been specified -->
+<!-- as follows, having the output control string start with a @samp{@@}: -->
+ <p>对于上面的例子，要生成的汇编代码 <em>只是</em> 由alternative来决定，则还可以写成
+如下形式，使用起始于 &lsquo;<samp><span class="samp">@</span></samp>&rsquo; 的输出控制串：
+
+<pre class="smallexample">     (define_insn ""
+       [(set (match_operand:SI 0 "general_operand" "=r,m")
+             (const_int 0))]
+       ""
+       "@
+        clrreg %0
+        clrmem %0")
+</pre>
+ <!-- @node Predicates -->
+<!-- @section Predicates -->
+<!-- @cindex predicates -->
+<!-- @cindex operand predicates -->
+<!-- @cindex operator predicates -->
+ </body></html>
+

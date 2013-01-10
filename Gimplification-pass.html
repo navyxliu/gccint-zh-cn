@@ -1,0 +1,88 @@
+<html lang="zh">
+<head>
+<title>Gimplification pass - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Passes.html#Passes" title="Passes">
+<link rel="prev" href="Parsing-pass.html#Parsing-pass" title="Parsing pass">
+<link rel="next" href="Pass-manager.html#Pass-manager" title="Pass manager">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Gimplification-pass"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Pass-manager.html#Pass-manager">Pass manager</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Parsing-pass.html#Parsing-pass">Parsing pass</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Passes.html#Passes">Passes</a>
+<hr>
+</div>
+
+<h3 class="section">9.2 Gimplification过程</h3>
+
+<p><a name="index-gimplification-1682"></a><a name="index-GIMPLE-1683"></a><!-- @dfn{Gimplification} is a whimsical term for the process of converting -->
+<!-- the intermediate representation of a function into the GIMPLE language -->
+<!-- (CROSSREF).  The term stuck, and so words like ``gimplification'', -->
+<!-- ``gimplify'', ``gimplifier'' and the like are sprinkled throughout this -->
+<!-- section of code. -->
+<dfn>Gimplification</dfn>是一个离奇的术语，用来表示将函数的中间表示转换为GIMPLE语言的过程。The term stuck，所以像“gimplification”, “gimplify”, “gimplifier” 等类似的单词会分布在这部分代码中。
+
+ <p><a name="index-GENERIC-1684"></a><!-- While a front end may certainly choose to generate GIMPLE directly if -->
+<!-- it chooses, this can be a moderately complex process unless the -->
+<!-- intermediate language used by the front end is already fairly simple. -->
+<!-- Usually it is easier to generate GENERIC trees plus extensions -->
+<!-- and let the language-independent gimplifier do most of the work. -->
+当然，尽管前端可以选择直接生成GIMPLE，但如果这样，则处理起来可能会有些复杂，除非前端使用的中间语言非常简单。通常生成GENERIC树以及其扩展会相对容易些，并且让语言独立的gimplifier来多大部分的工作。
+
+ <p><a name="index-gimplify_005ffunction_005ftree-1685"></a><a name="index-gimplify_005fexpr-1686"></a><a name="index-lang_005fhooks_002egimplify_005fexpr-1687"></a><!-- The main entry point to this pass is @code{gimplify_function_tree} -->
+<!-- located in @file{gimplify.c}.  From here we process the entire -->
+<!-- function gimplifying each statement in turn.  The main workhorse -->
+<!-- for this pass is @code{gimplify_expr}.  Approximately everything -->
+<!-- passes through here at least once, and it is from here that we -->
+<!-- invoke the @code{lang_hooks.gimplify_expr} callback. -->
+这个过程的主入口点是<code>gimplify_function_tree</code>，位于<samp><span class="file">gimplify.c</span></samp>中。我们从这里处理整个函数，依次的对每条语句进行gimplify。这个过程的主要工作是<code>gimplify_expr</code>。几乎每个处理都需要经过这里一次，并且我们是从这里来调用<code>lang_hooks.gimplify_expr</code>回调的。
+
+<!-- The callback should examine the expression in question and return -->
+<!-- @code{GS_UNHANDLED} if the expression is not a language specific -->
+<!-- construct that requires attention.  Otherwise it should alter the -->
+<!-- expression in some way to such that forward progress is made toward -->
+<!-- producing valid GIMPLE@.  If the callback is certain that the -->
+<!-- transformation is complete and the expression is valid GIMPLE, it -->
+<!-- should return @code{GS_ALL_DONE}.  Otherwise it should return -->
+<!-- @code{GS_OK}, which will cause the expression to be processed again. -->
+<!-- If the callback encounters an error during the transformation (because -->
+<!-- the front end is relying on the gimplification process to finish -->
+<!-- semantic checks), it should return @code{GS_ERROR}. -->
+ <p>回调函数应该考虑检查表达式，并且当表达式不是一个需要注意的语言特定的结构，则返回<code>GS_UNHANDLES</code>。否则，应该通过某种方式修改表达式使得可以产生合法的GIMPLE。如果回调函数确定已经完全转换，并且表达式是合法的GIMPLE，则应该返回<code>GS_ALL_DONE</code>。否则，应该返回<code>GS_OK</code>，这将会使得表达式会被再次处理。如果回调函数在转换过程中遇到一个错误（因为前端依赖于gimplification处理来完成语义检测），则应该返回<code>GS_ERROR</code>。
+
+<!-- @node Pass manager -->
+<!-- @section Pass manager -->
+ </body></html>
+

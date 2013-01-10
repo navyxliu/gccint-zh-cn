@@ -1,0 +1,142 @@
+<html lang="zh">
+<head>
+<title>Incdec - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="RTL.html#RTL" title="RTL">
+<link rel="prev" href="Side-Effects.html#Side-Effects" title="Side Effects">
+<link rel="next" href="Assembler.html#Assembler" title="Assembler">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Incdec"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Assembler.html#Assembler">Assembler</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Side-Effects.html#Side-Effects">Side Effects</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="RTL.html#RTL">RTL</a>
+<hr>
+</div>
+
+<h3 class="section">10.16 地址中嵌入的副作用</h3>
+
+<p><a name="index-RTL-preincrement-2204"></a><a name="index-RTL-postincrement-2205"></a><a name="index-RTL-predecrement-2206"></a><a name="index-RTL-postdecrement-2207"></a>
+<!-- Six special side-effect expression codes appear as memory addresses. -->
+有六个特定的副作用表达式代码作为内存地址出现。
+
+     
+<a name="index-pre_005fdec-2208"></a>
+<dl><dt><code>(pre_dec:</code><var>m</var> <var>x</var><code>)</code><dd><!-- Represents the side effect of decrementing @var{x} by a standard -->
+<!-- amount and represents also the value that @var{x} has after being -->
+<!-- decremented.  @var{x} must be a @code{reg} or @code{mem}, but most -->
+<!-- machines allow only a @code{reg}.  @var{m} must be the machine mode -->
+<!-- for pointers on the machine in use.  The amount @var{x} is decremented -->
+<!-- by is the length in bytes of the machine mode of the containing memory -->
+<!-- reference of which this expression serves as the address.  Here is an -->
+<!-- example of its use: -->
+表示该副作用为，<var>x</var>递减一个标准的数量，并且还表示了递减后的<var>x</var>的值。<var>x</var>必须为一个<code>reg</code>或者<code>mem</code>，但是大多数机器只允许<code>reg</code>。<var>m</var>必须为机器所使用的指针的机器模式。<var>x</var>被递减的数量为，所包含的内存引用的机器模式的长度，以字节为单位。这里有一个关于用法的例子：
+
+     <pre class="smallexample">          (mem:DF (pre_dec:SI (reg:SI 39)))
+</pre>
+     <p class="noindent"><!-- This says to decrement pseudo register 39 by the length of a @code{DFmode} -->
+<!-- value and use the result to address a @code{DFmode} value. -->
+这说明将伪寄存器39递减一个<code>DFmode</code>值的长度，并将结果用来对一个<code>DFmode</code>值进行寻址。
+
+     <p><a name="index-pre_005finc-2209"></a><br><dt><code>(pre_inc:</code><var>m</var> <var>x</var><code>)</code><dd><!-- Similar, but specifies incrementing @var{x} instead of decrementing it. -->
+类似的，用来说明递增<var>x</var>。
+
+     <p><a name="index-post_005fdec-2210"></a><br><dt><code>(post_dec:</code><var>m</var> <var>x</var><code>)</code><dd><!-- Represents the same side effect as @code{pre_dec} but a different -->
+<!-- value.  The value represented here is the value @var{x} has @i{before} -->
+<!-- being decremented. -->
+表示与<code>pre_dec</code>相同的副作用，但表示不同的值。这里表示的值为递减<i>之前</i>的<var>x</var>的值。
+
+     <p><a name="index-post_005finc-2211"></a><br><dt><code>(post_inc:</code><var>m</var> <var>x</var><code>)</code><dd><!-- Similar, but specifies incrementing @var{x} instead of decrementing it. -->
+类似的，用来说明递增<var>x</var>。
+
+     <p><a name="index-post_005fmodify-2212"></a><br><dt><code>(post_modify:</code><var>m</var> <var>x</var> <var>y</var><code>)</code><dd><!-- Represents the side effect of setting @var{x} to @var{y} and -->
+<!-- represents @var{x} before @var{x} is modified.  @var{x} must be a -->
+<!-- @code{reg} or @code{mem}, but most machines allow only a @code{reg}. -->
+<!-- @var{m} must be the machine mode for pointers on the machine in use. -->
+表示该副作用为，将<var>x</var>设置为<var>y</var>，并且表示<var>x</var>被修改之前的值。<var>x</var>必须为一个<code>reg</code>或者<code>mem</code>，但是大多数机器只允许<code>reg</code>。<var>m</var>必须为机器所使用的指针的机器模式。
+
+     <!-- The expression @var{y} must be one of three forms: -->
+     <!-- @code{(plus:@var{m} @var{x} @var{z})}, -->
+     <!-- @code{(minus:@var{m} @var{x} @var{z})}, or -->
+     <!-- @code{(plus:@var{m} @var{x} @var{i})}, -->
+     <!-- where @var{z} is an index register and @var{i} is a constant. -->
+     <p>表达式<var>y</var>必须为下列三种形式之一：
+<code>(plus:</code><var>m</var> <var>x</var> <var>z</var><code>)</code>,
+<code>(minus:</code><var>m</var> <var>x</var> <var>z</var><code>)</code>, 或者
+<code>(plus:</code><var>m</var> <var>x</var> <var>i</var><code>)</code>,
+其中<var>z</var>为一个索引寄存器，<var>i</var>为一个常量。
+
+     <!-- Here is an example of its use: -->
+     <p>这里为一个有关用法的例子：
+
+     <pre class="smallexample">          (mem:SF (post_modify:SI (reg:SI 42) (plus (reg:SI 42)
+                                                    (reg:SI 48))))
+</pre>
+     <!-- This says to modify pseudo register 42 by adding the contents of pseudo -->
+     <!-- register 48 to it, after the use of what ever 42 points to. -->
+     <p>这说明在使用了伪寄存器42曾经指向的值之后，将伪寄存器42修改为，加上其伪寄存器48的内容，
+
+     <p><a name="index-pre_005fmodify-2213"></a><br><dt><code>(pre_modify:</code><var>m</var> <var>x</var> <var>expr</var><code>)</code><dd><!-- Similar except side effects happen before the use. -->
+类似的，表示副作用在使用之前开始有效。
+</dl>
+
+<!-- These embedded side effect expressions must be used with care.  Instruction -->
+<!-- patterns may not use them.  Until the @samp{flow} pass of the compiler, -->
+<!-- they may occur only to represent pushes onto the stack.  The @samp{flow} -->
+<!-- pass finds cases where registers are incremented or decremented in one -->
+<!-- instruction and used as an address shortly before or after; these cases are -->
+<!-- then transformed to use pre- or post-increment or -decrement. -->
+ <p>这些嵌入的副作用表达式在使用时要小心。指令模式可以不使用它们。在到达编译器的&lsquo;<samp><span class="samp">flow</span></samp>&rsquo; pass之前，它们可能只出现在用于表示压栈。&lsquo;<samp><span class="samp">flow</span></samp>&rsquo; pass查找寄存器在一条指令中被递增或递减，并且在之前或者之后被作为地址使用的情况；这些情况然后被转换成使用前增（减）或后增（减）。
+
+<!-- If a register used as the operand of these expressions is used in -->
+<!-- another address in an insn, the original value of the register is used. -->
+<!-- Uses of the register outside of an address are not permitted within the -->
+<!-- same insn as a use in an embedded side effect expression because such -->
+<!-- insns behave differently on different machines and hence must be treated -->
+<!-- as ambiguous and disallowed. -->
+ <p>如果这些表达式中作为操作数的寄存器，在一个insn中的另一个地址中使用，则会使用寄存器的原始的值。在地址之外使用寄存器是不被允许的，因为这样的insn在不同的机器上行为是不同的，因此会有歧义。
+
+<!-- An instruction that can be represented with an embedded side effect -->
+<!-- could also be represented using @code{parallel} containing an additional -->
+<!-- @code{set} to describe how the address register is altered.  This is not -->
+<!-- done because machines that allow these operations at all typically -->
+<!-- allow them wherever a memory address is called for.  Describing them as -->
+<!-- additional parallel stores would require doubling the number of entries -->
+<!-- in the machine description. -->
+ <p>可以被表示成具有嵌入副作用的指令，也可以被表示成使用<code>parallel</code>，包含一个额外的<code>set</code>来描述地址寄存器如何被修改。
+
+<!-- @node Assembler -->
+<!-- @section Assembler Instructions as Expressions -->
+ </body></html>
+

@@ -1,0 +1,146 @@
+<html lang="zh">
+<head>
+<title>CC0 Condition Codes - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Condition-Code.html#Condition-Code" title="Condition Code">
+<link rel="next" href="MODE_005fCC-Condition-Codes.html#MODE_005fCC-Condition-Codes" title="MODE_CC Condition Codes">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="CC0-Condition-Codes"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="MODE_005fCC-Condition-Codes.html#MODE_005fCC-Condition-Codes">MODE_CC Condition Codes</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Condition-Code.html#Condition-Code">Condition Code</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.16.1 使用 <code>(cc0)</code> 表示条件码</h4>
+
+<p><a name="index-cc0-4320"></a>
+<a name="index-cc_005fstatus-4321"></a><!-- The file @file{conditions.h} defines a variable @code{cc_status} to -->
+<!-- describe how the condition code was computed (in case the interpretation of -->
+<!-- the condition code depends on the instruction that it was set by).  This -->
+<!-- variable contains the RTL expressions on which the condition code is -->
+<!-- currently based, and several standard flags. -->
+文件<samp><span class="file">conditions.h</span></samp>定义了变量<code>cc_status</code>，
+用来描述条件代码如何被计算（对于条件代码的解释取决于设置它的指令的情况）。
+该变量包含了条件码目前基于的RTL表达式，以及一些标准的标记。
+
+<!-- Sometimes additional machine-specific flags must be defined in the machine -->
+<!-- description header file.  It can also add additional machine-specific -->
+<!-- information by defining @code{CC_STATUS_MDEP}. -->
+ <p>有时额外的机器特定的标记必须被定义，在机器描述头文件中。
+其还可以增加额外的机器特定信息，通过定义<code>CC_STATUS_MDEP</code>。
+
+<div class="defun">
+&mdash; Macro: <b>CC_STATUS_MDEP</b><var><a name="index-CC_005fSTATUS_005fMDEP-4322"></a></var><br>
+<blockquote><!-- C code for a data type which is used for declaring the @code{mdep} -->
+     <!-- component of @code{cc_status}.  It defaults to @code{int}. -->
+      <p>一个数据类型的C代码，其用于声明<code>cc_status</code>的<code>mdep</code>部件。
+缺省为<code>int</code>。
+
+     <!-- This macro is not used on machines that do not use @code{cc0}. -->
+      <p>该宏在不使用<code>cc0</code>的机器上不被使用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CC_STATUS_MDEP_INIT</b><var><a name="index-CC_005fSTATUS_005fMDEP_005fINIT-4323"></a></var><br>
+<blockquote><!-- A C expression to initialize the @code{mdep} field to ``empty''. -->
+     <!-- The default definition does nothing, since most machines don't use -->
+     <!-- the field anyway.  If you want to use the field, you should probably -->
+     <!-- define this macro to initialize it. -->
+      <p>一个C表达式，用来初始化<code>mdep</code>域为“空”。缺省定义不做任何事，
+因为大多数机器不使用该域。如果你想使用该域，则可能应该定义该宏来初始化它。
+
+     <!-- This macro is not used on machines that do not use @code{cc0}. -->
+      <p>该宏在不使用<code>cc0</code>的机器上不被使用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>NOTICE_UPDATE_CC</b> (<var>exp, insn</var>)<var><a name="index-NOTICE_005fUPDATE_005fCC-4324"></a></var><br>
+<blockquote><!-- A C compound statement to set the components of @code{cc_status} -->
+     <!-- appropriately for an insn @var{insn} whose body is @var{exp}.  It is -->
+     <!-- this macro's responsibility to recognize insns that set the condition -->
+     <!-- code as a byproduct of other activity as well as those that explicitly -->
+     <!-- set @code{(cc0)}. -->
+      <p>一个C复合语句，用来适当的为主体为<var>exp</var>的<var>insn</var>，
+设置<code>cc_status</code>的部件。
+该宏负责识别insn将条件码设置作为副产品以及显示的set <code>(cc0)</code>。
+
+     <!-- This macro is not used on machines that do not use @code{cc0}. -->
+      <p>该宏在不使用<code>cc0</code>的机器上不被使用。
+
+     <!-- If there are insns that do not set the condition code but do alter -->
+     <!-- other machine registers, this macro must check to see whether they -->
+     <!-- invalidate the expressions that the condition code is recorded as -->
+     <!-- reflecting.  For example, on the 68000, insns that store in address -->
+     <!-- registers do not set the condition code, which means that usually -->
+     <!-- @code{NOTICE_UPDATE_CC} can leave @code{cc_status} unaltered for such -->
+     <!-- insns.  But suppose that the previous insn set the condition code -->
+     <!-- based on location @samp{a4@@(102)} and the current insn stores a new -->
+     <!-- value in @samp{a4}.  Although the condition code is not changed by -->
+     <!-- this, it will no longer be true that it reflects the contents of -->
+     <!-- @samp{a4@@(102)}.  Therefore, @code{NOTICE_UPDATE_CC} must alter -->
+     <!-- @code{cc_status} in this case to say that nothing is known about the -->
+     <!-- condition code value. -->
+      <p>如果insn不设置条件码，但修改其它机器寄存器，
+则该宏必须检查它们是否使得记录条件码的表达式变为无效。例如，在68000上，
+在地址寄存器上存储insn不设置条件码，
+其意味着通常<code>NOTICE_UPDATE_CC</code>对于这样的insn可以不修改<code>cc_status</code>。
+但是假设之前的insn将条件码设成基于位置&lsquo;<samp><span class="samp">a4@(102)</span></samp>&rsquo;，
+并且当前insn在&lsquo;<samp><span class="samp">a4</span></samp>&rsquo;上存储了一个新值。虽然条件码没有被改变，
+但其不再为真，因为其反映了&lsquo;<samp><span class="samp">a4@(102)</span></samp>&rsquo;的内容。因此对于这种情况，
+<code>NOTICE_UPDATE_CC</code>必须修改<code>cc_status</code>，来表示条件码值不可知。
+
+     <!-- The definition of @code{NOTICE_UPDATE_CC} must be prepared to deal -->
+     <!-- with the results of peephole optimization: insns whose patterns are -->
+     <!-- @code{parallel} RTXs containing various @code{reg}, @code{mem} or -->
+     <!-- constants which are just the operands.  The RTL structure of these -->
+     <!-- insns is not sufficient to indicate what the insns actually do.  What -->
+     <!-- @code{NOTICE_UPDATE_CC} should do when it sees one is just to run -->
+     <!-- @code{CC_STATUS_INIT}. -->
+      <p><code>NOTICE_UPDATE_CC</code>的定义必须要准备处理窥孔优化的结果：
+insn的指令模式为<code>parallel</code> RTXs，其包含了不同的<code>reg</code>，
+<code>mem</code>或者常量操作数。这些insn的RTL结构体不足以表明insn实际要做的事情。
+<code>NOTICE_UPDATE_CC</code>应该做的是当遇到这样的，就直接运行<code>CC_STATUS_INIT</code>。
+
+     <!-- A possible definition of @code{NOTICE_UPDATE_CC} is to call a function -->
+     <!-- that looks at an attribute (@pxref{Insn Attributes}) named, for example, -->
+     <!-- @samp{cc}.  This avoids having detailed information about patterns in -->
+     <!-- two places, the @file{md} file and in @code{NOTICE_UPDATE_CC}. -->
+      <p><code>NOTICE_UPDATE_CC</code>可能的定义为调用一个函数，
+来查看一个属性（参见<a href="Insn-Attributes.html#Insn-Attributes">Insn Attributes</a>），例如名为&lsquo;<samp><span class="samp">cc</span></samp>&rsquo;。这避免了在两个地方，
+<samp><span class="file">md</span></samp>文件和<code>NOTICE_UPDATE_CC</code>中具有指令模式的详细信息。
+</p></blockquote></div>
+
+ </body></html>
+

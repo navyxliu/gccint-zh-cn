@@ -1,0 +1,341 @@
+<html lang="zh">
+<head>
+<title>Option properties - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Options.html#Options" title="Options">
+<link rel="prev" href="Option-file-format.html#Option-file-format" title="Option file format">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Option-properties"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Option-file-format.html#Option-file-format">Option file format</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Options.html#Options">Options</a>
+<hr>
+</div>
+
+<h3 class="section">8.2 选项属性</h3>
+
+<!-- The second field of an option record can specify any of the following -->
+<!-- properties.  When an option takes an argument, it is enclosed in parentheses -->
+<!-- following the option property name.  The parser that handles option files -->
+<!-- is quite simplistic, and will be tricked by any nested parentheses within -->
+<!-- the argument text itself; in this case, the entire option argument can -->
+<!-- be wrapped in curly braces within the parentheses to demarcate it, e.g.: -->
+<pre class="smallexample">     Condition({defined (USE_CYGWIN_LIBSTDCXX_WRAPPERS)})
+</pre>
+ <p>选项记录的第二个域可以指定下列属性：
+
+     <dl>
+<dt><code>Common</code><dd><!-- The option is available for all languages and targets. -->
+选项对所有语言和目标都有效。
+
+     <br><dt><code>Target</code><dd><!-- The option is available for all languages but is target-specific. -->
+选项对所有语言都有效，但是目标特定的。
+
+     <br><dt><code>Driver</code><dd><!-- The option is handled by the compiler driver using code not shared -->
+<!-- with the compilers proper (@file{cc1} etc.). -->
+
+     <br><dt><var>language</var><dd><!-- The option is available when compiling for the given language. -->
+当编译给定语言时，选项有效。
+
+     <!-- It is possible to specify several different languages for the same -->
+     <!-- option.  Each @var{language} must have been declared by an earlier -->
+     <!-- @code{Language} record.  @xref{Option file format}. -->
+     <p>可以为多个不同的语言指定同一个选项。每个语言<var>language</var>必须已经被之前的<code>Language</code>记录声明过。参见<a href="Option-file-format.html#Option-file-format">Option file format</a>。
+
+     <br><dt><code>RejectDriver</code><dd><!-- The option is only handled by the compilers proper (@file{cc1} etc.)@: -->
+<!-- and should not be accepted by the driver. -->
+该选项仅被 （<samp><span class="file">cc1</span></samp>.） 之类编译器属性使用，不应该被driver接受。
+
+     <br><dt><code>RejectNegative</code><dd><!-- The option does not have a ``no-'' form.  All options beginning with -->
+<!-- ``f'', ``W'' or ``m'' are assumed to have a ``no-'' form unless this -->
+<!-- property is used. -->
+选项没有“no-”形式。所有由“f”，“W”或者“m”开始的选项都被假设具有“no-”形式，除非使用这个属性。
+
+     <br><dt><code>Negative(</code><var>othername</var><code>)</code><dd><!-- The option will turn off another option @var{othername}, which is -->
+<!-- the option name with the leading ``-'' removed.  This chain action will -->
+<!-- propagate through the @code{Negative} property of the option to be -->
+<!-- turned off. -->
+选项将会关掉另一个选项<var>othername</var>，这是去掉前导符“-”的选项名字。这会通过<code>Negative</code>属性来传播一连串的选项关闭行为。
+
+     <br><dt><code>Joined</code><dt><code>Separate</code><dd><!-- The option takes a mandatory argument.  @code{Joined} indicates -->
+<!-- that the option and argument can be included in the same @code{argv} -->
+<!-- entry (as with @code{-mflush-func=@var{name}}, for example). -->
+<!-- @code{Separate} indicates that the option and argument can be -->
+<!-- separate @code{argv} entries (as with @code{-o}).  An option is -->
+<!-- allowed to have both of these properties. -->
+选项接受一个强制参数。<code>Joined</code>指示选项和参数可以被包含在同一个<code>argv</code>项中（例如 <code>-mflush-func=</code><var>name</var>）。<code>Separate</code>指示选项和参数可以为分开的<code>argv</code>项（如<code>-o</code>）。一个选项允许同时具有这两个属性。
+
+     <br><dt><code>JoinedOrMissing</code><dd><!-- The option takes an optional argument.  If the argument is given, -->
+<!-- it will be part of the same @code{argv} entry as the option itself. -->
+
+     <!-- This property cannot be used alongside @code{Joined} or @code{Separate}. -->
+     <p>选项接受一个可选参数。如果参数给出，则会作为选项本身的<code>argv</code>项的一部分。
+
+     <p>该属性不能和<code>Joined</code>或<code>Separate</code>一起使用。
+
+     <br><dt><code>MissingArgError(</code><var>message</var><code>)</code><dd><!-- For an option marked @code{Joined} or @code{Separate}, the message -->
+<!-- @var{message} will be used as an error message if the mandatory -->
+<!-- argument is missing; for options without @code{MissingArgError}, a -->
+<!-- generic error message is used.  @var{message} should contain a single -->
+<!-- @samp{%qs} format, which will be used to format the name of the option -->
+<!-- passed. -->
+如果一个选项被标记为 <code>Joined</code> 或 <code>Separate</code>，在强制性参数丢失的时候 <var>message</var> 将被当作错误信息，没有 <code>MissingArgError</code> 的选项将会使用通用错误。<var>message</var> 应该包含一个单独的 &lsquo;<samp><span class="samp">%qs</span></samp>&rsquo; 格式，用来格式化传入的参数。
+
+     <br><dt><code>Args(</code><var>n</var><code>)</code><dd><!-- For an option marked @code{Separate}, indicate that it takes @var{n} -->
+<!-- arguments.  The default is 1. -->
+如果一个选项被标记为 <code>Separate</code>，通过 <var>n</var> 来区分他，默认是1。
+
+     <br><dt><code>UInteger</code><dd><!-- The option's argument is a non-negative integer.  The option parser -->
+<!-- will check and convert the argument before passing it to the relevant -->
+<!-- option handler.  @code{UInteger} should also be used on options like -->
+<!-- @code{-falign-loops} where both @code{-falign-loops} and -->
+<!-- @code{-falign-loops}=@var{n} are supported to make sure the saved -->
+<!-- options are given a full integer. -->
+选项的参数是一个非负整数。选项解析器将会在传给选项处理前检测并转换参数。
+
+     <br><dt><code>NoDriverArg</code><dd><!-- For an option marked @code{Separate}, the option only takes an -->
+<!-- argument in the compiler proper, not in the driver.  This is for -->
+<!-- compatibility with existing options that are used both directly and -->
+<!-- via @option{-Wp,}; new options should not have this property. -->
+如果一个选项标记为 <code>Separate</code>，该选项仅对编译器有效，而对driver无效。主要是为 <samp><span class="option">-Wp,</span></samp> 之类的参数兼容性考虑，新选项没有这个属性了。
+
+     <br><dt><code>Var(</code><var>var</var><code>)</code><dd><!-- The state of this option should be stored in variable @var{var} -->
+<!-- (actually a macro for @code{global_options.x_@var{var}}). -->
+<!-- The way that the state is stored depends on the type of option: -->
+该选项的状态将被存储在变量<var>var</var>(actually a macro for <code>global_options.x_</code><var>var</var>)中。存储状态的方式取决于选项的类型：
+
+          <ul>
+<li><!-- If the option uses the @code{Mask} or @code{InverseMask} properties, -->
+<!-- @var{var} is the integer variable that contains the mask. -->
+如果使用了<code>Mask</code>或者<code>InverseMask</code>属性，则<var>var</var>为包含
+mask的整数变量。
+
+          <li><!-- If the option is a normal on/off switch, @var{var} is an integer -->
+<!-- variable that is nonzero when the option is enabled.  The options -->
+<!-- parser will set the variable to 1 when the positive form of the -->
+<!-- option is used and 0 when the ``no-'' form is used. -->
+如果选项是一个正常的on/off开关，则<var>var</var>为整数变量，并且当启用该选项时其值为非零。当使用选项的正面形式时，选项解析器会把变量置为1，当使用“no-”形式的时候，置为0。
+
+          <li><!-- If the option takes an argument and has the @code{UInteger} property, -->
+<!-- @var{var} is an integer variable that stores the value of the argument. -->
+如果选项接受一个参数，并且具有<code>UInteger</code>属性，则<var>var</var>为整数变量，并且存储了参数的值。
+
+          <li><!-- If the option takes an argument and has the @code{Enum} property, -->
+<!-- @var{var} is a variable (type given in the @code{Type} property of the -->
+<!-- @samp{Enum} record whose @code{Name} property has the same argument as -->
+<!-- the @code{Enum} property of this option) that stores the value of the -->
+<!-- argument. -->
+如果该选项接受一个参数，并具有 <code>Enum</code>属性，
+<var>var</var> 是一个用来存储参数值的变量（&lsquo;<samp><span class="samp">Enum</span></samp>&rsquo;记录中的 <code>Name</code> 属性和 <code>Enum</code> 属性拥有同样参数的 <code>Type</code> 属性中的给定类型）。
+
+          <li><!-- If the option has the @code{Defer} property, @var{var} is a pointer to -->
+<!-- a @code{VEC(cl_deferred_option,heap)} that stores the option for later -->
+<!-- processing.  (@var{var} is declared with type @code{void *} and needs -->
+<!-- to be cast to @code{VEC(cl_deferred_option,heap)} before use.) -->
+如果选项中有<code>Defer</code>属性，<var>var</var> 是一个指向用来存储后续过程使用的选项 <code>VEC(cl_deferred_option,heap)</code> 指针。（<var>var</var>被声明成 <code>void *</code> 类型，并且在使用之前需要转化成 <code>VEC(cl_deferred_option,heap)</code>）
+
+          <li><!-- Otherwise, if the option takes an argument, @var{var} is a pointer to -->
+<!-- the argument string.  The pointer will be null if the argument is optional -->
+<!-- and wasn't given. -->
+否则，如果选项接受一个参数，则<var>var</var>为指向参数字符串的指针。如果参数是可选的并且没有给出，则该指针将为null。
+</ul>
+
+     <!-- The option-processing script will usually zero-initialize @var{var}. -->
+     <p>选项处理脚本通常把 <var>var</var> 初始化为0。
+<!-- You can modify this behavior using @code{Init}. -->
+你可以通过修改 <code>Init</code> 来到达修改默认行为的目的。
+
+     <br><dt><code>Var(</code><var>var</var><code>, </code><var>set</var><code>)</code><dd><!-- The option controls an integer variable @var{var} and is active when -->
+<!-- @var{var} equals @var{set}.  The option parser will set @var{var} to -->
+<!-- @var{set} when the positive form of the option is used and @code{!@var{set}} -->
+<!-- when the ``no-'' form is used. -->
+选项控制一个整数变量<var>var</var>，并且当<var>var</var>等于<var>set</var>时起作用。当使用选项的正面形式时，选项解析器会把变量置为<var>set</var>，当使用“no-”形式的时候，置为<code>!</code><var>set</var>。
+
+     <!-- @var{var} is declared in the same way as for the single-argument form -->
+     <!-- described above. -->
+     <p><var>var</var>的声明方式与上面描述的单一参数形式的具有相同的方式。
+
+     <br><dt><code>Init(</code><var>value</var><code>)</code><dd><!-- The variable specified by the @code{Var} property should be statically -->
+<!-- initialized to @var{value}.  If more than one option using the same -->
+<!-- variable specifies @code{Init}, all must specify the same initializer. -->
+由属性<code>Var</code>指定的变量应该被静态初始化为<var>value</var>。
+
+     <br><dt><code>Mask(</code><var>name</var><code>)</code><dd><!-- The option is associated with a bit in the @code{target_flags} -->
+<!-- variable (@pxref{Run-time Target}) and is active when that bit is set. -->
+<!-- You may also specify @code{Var} to select a variable other than -->
+<!-- @code{target_flags}. -->
+选项与<code>target_flags</code>变量（参见<a href="Run_002dtime-Target.html#Run_002dtime-Target">Run-time Target</a>）中的一个位相关联，并且当该位被置位时才起作用。你还可以指定<code>Var</code>去选择一个变量，而不只是<code>target_flags</code>。
+
+     <!-- The options-processing script will automatically allocate a unique bit -->
+     <!-- for the option.  If the option is attached to @samp{target_flags}, -->
+     <!-- the script will set the macro @code{MASK_@var{name}} to the appropriate -->
+     <!-- bitmask.  It will also declare a @code{TARGET_@var{name}} macro that has -->
+     <!-- the value 1 when the option is active and 0 otherwise.  If you use @code{Var} -->
+     <!-- to attach the option to a different variable, the associated macros are -->
+     <!-- called @code{OPTION_MASK_@var{name}} and @code{OPTION_@var{name}} respectively. -->
+     <p>选项处理脚本将会自动为选项分配一个唯一的位。如果选项与&lsquo;<samp><span class="samp">target_flags</span></samp>&rsquo;关联，则脚本会将宏<code>MASK_</code><var>name</var>设为合适的位掩码。它还会声明一个<code>TARGET_</code><var>name</var>宏，当选项起作用时其值为1，否则为0。如果使用<var>Var</var>将选项关联到不同的变量上，则相关的宏分别叫做<code>OPTION_MASK_</code><var>name</var>和<code>OPTION_</code><var>name</var>。
+
+     <!-- You can disable automatic bit allocation using @code{MaskExists}. -->
+     <p>可以使用 <code>MaskExists</code> 来禁止自动位分配。
+
+     <br><dt><code>InverseMask(</code><var>othername</var><code>)</code><dt><code>InverseMask(</code><var>othername</var><code>, </code><var>thisname</var><code>)</code><dd><!-- The option is the inverse of another option that has the -->
+<!-- @code{Mask(@var{othername})} property.  If @var{thisname} is given, -->
+<!-- the options-processing script will declare a @code{TARGET_@var{thisname}} -->
+<!-- macro that is 1 when the option is active and 0 otherwise. -->
+选项是具有<code>Mask(</code><var>othername</var><code>)</code>属性的另一个选项的反面。如果给出了<var>thisname</var>，则选项处理脚本会声明一个<code>TARGET_</code><var>thisname</var>宏，当选项起作用时其为1，否则为0。
+
+     <br><dt><code>MaskExists</code><dd><!-- The mask specified by the @code{Mask} property already exists. -->
+<!-- No @code{MASK} or @code{TARGET} definitions should be added to -->
+<!-- @file{options.h} in response to this option record. -->
+由<code>Mask</code>属性指定的掩码已经存在。这样，就不会有<code>MASK</code>和<code>TARGET</code>定义被增加到<samp><span class="file">options.h</span></samp>中。
+
+     <!-- The main purpose of this property is to support synonymous options. -->
+     <!-- The first option should use @samp{Mask(@var{name})} and the others -->
+     <!-- should use @samp{Mask(@var{name}) MaskExists}. -->
+     <p>该属性的主要目的用来支持同义选项。第一个选项应该使用&lsquo;<samp><span class="samp">Mask(</span><var>name</var><span class="samp">)</span></samp>&rsquo;并且其它的应该使用&lsquo;<samp><span class="samp">Mask(</span><var>name</var><span class="samp">) MaskExists</span></samp>&rsquo;。
+
+     <br><dt><code>Enum(</code><var>name</var><code>)</code><dd><!-- The option's argument is a string from the set of strings associated -->
+<!-- with the corresponding @samp{Enum} record.  The string is checked and -->
+<!-- converted to the integer specified in the corresponding -->
+<!-- @samp{EnumValue} record before being passed to option handlers. -->
+
+     <p>该选项的参数是一个&lsquo;<samp><span class="samp">Enum</span></samp>&rsquo; 记录中对应的字符串。在纪录传递选项处理之前，该字符串被选中并根据 &lsquo;<samp><span class="samp">EnumValue</span></samp>&rsquo;中的值转化为相应整数。
+
+     <br><dt><code>Defer</code><dd><!-- The option should be stored in a vector, specified with @code{Var}, -->
+<!-- for later processing. -->
+这个选项应该存储为一个向量，和 <code>Var</code> 一样，在后续过程中使用。
+
+     <br><dt><code>Alias(</code><var>opt</var><code>)</code><dt><code>Alias(</code><var>opt</var><code>, </code><var>arg</var><code>)</code><dt><code>Alias(</code><var>opt</var><code>, </code><var>posarg</var><code>, </code><var>negarg</var><code>)</code><dd><!-- The option is an alias for @option{-@var{opt}}.  In the first form, -->
+<!-- any argument passed to the alias is considered to be passed to -->
+<!-- @option{-@var{opt}}, and @option{-@var{opt}} is considered to be -->
+<!-- negated if the alias is used in negated form.  In the second form, the -->
+<!-- alias may not be negated or have an argument, and @var{posarg} is -->
+<!-- considered to be passed as an argument to @option{-@var{opt}}.  In the -->
+<!-- third form, the alias may not have an argument, if the alias is used -->
+<!-- in the positive form then @var{posarg} is considered to be passed to -->
+<!-- @option{-@var{opt}}, and if the alias is used in the negative form -->
+<!-- then @var{negarg} is considered to be passed to @option{-@var{opt}}. -->
+别名的选项 <samp><span class="option">-</span><var>opt</var></samp>。第一种形式，被传递给别名的任何参数被认为传递给了<samp><span class="option">-</span><var>opt</var></samp>，<samp><span class="option">-</span><var>opt</var></samp> 被认为是否定形式如果别名是否定形式。第二种形式，别名可能不是否定或者没有任何参数，并且 <var>posarg</var> 被认为当作一个参数传递给 <samp><span class="option">-</span><var>opt</var></samp>。第三中形式，别名可能没有任何参数，如果别名被在积极形式中使用，则 <var>posarg</var> 被视为传递给<samp><span class="option">-</span><var>opt</var></samp>，并且如果别名被在否定形式中使用，则 <var>negarg</var> 被视为传递给<samp><span class="option">-</span><var>opt</var></samp>。
+
+     <!-- Aliases should not specify @code{Var} or @code{Mask} or -->
+     <!-- @code{UInteger}.  Aliases should normally specify the same languages -->
+     <!-- as the target of the alias; the flags on the target will be used to -->
+     <!-- determine any diagnostic for use of an option for the wrong language, -->
+     <!-- while those on the alias will be used to identify what command-line -->
+     <!-- text is the option and what text is any argument to that option. -->
+     <p>别名不应该被制定为<code>Var</code> 或 <code>Mask</code> 或 <code>UInteger</code>。别名通常应该被制定为相同语言，然而这些别名在命令行是不被区分的。
+
+     <!-- When an @code{Alias} definition is used for an option, driver specs do -->
+     <!-- not need to handle it and no @samp{OPT_} enumeration value is defined -->
+     <!-- for it; only the canonical form of the option will be seen in those -->
+     <!-- places. -->
+     <p>当 <code>Alias</code> 定义被一个选项使用的时候，driver specs不必做处理，并且没有对应 &lsquo;<samp><span class="samp">OPT_</span></samp>&rsquo; 枚举值被定义，仅传统形式下的选项是可见的。
+
+     <br><dt><code>Ignore</code><dd><!-- This option is ignored apart from printing any warning specified using -->
+<!-- @code{Warn}.  The option will not be seen by specs and no @samp{OPT_} -->
+<!-- enumeration value is defined for it. -->
+该选项在使用 <code>Warn</code> 时被忽略，该选项在specs中不可见，并且没有 &lsquo;<samp><span class="samp">OPT_</span></samp>&rsquo; 对应的值。
+
+     <br><dt><code>SeparateAlias</code><dd><!-- For an option marked with @code{Joined}, @code{Separate} and -->
+<!-- @code{Alias}, the option only acts as an alias when passed a separate -->
+<!-- argument; with a joined argument it acts as a normal option, with an -->
+<!-- @samp{OPT_} enumeration value.  This is for compatibility with the -->
+<!-- Java @option{-d} option and should not be used for new options. -->
+如果一个选项被标记为 <code>Joined</code>，<code>Separate</code> 和 <code>Alias</code>，该选项将仅作为一个传递分割参数时的时别名，每个参数就是一个普通选项，可以取 &lsquo;<samp><span class="samp">OPT_</span></samp>&rsquo; 枚举值。因为兼容原因保留的Java <samp><span class="option">-d</span></samp> 选项应该不再被使用。
+
+     <br><dt><code>Warn(</code><var>message</var><code>)</code><dd><!-- If this option is used, output the warning @var{message}. -->
+<!-- @var{message} is a format string, either taking a single operand with -->
+<!-- a @samp{%qs} format which is the option name, or not taking any -->
+<!-- operands, which is passed to the @samp{warning} function.  If an alias -->
+<!-- is marked @code{Warn}, the target of the alias must not also be marked -->
+<!-- @code{Warn}. -->
+如果使用了该选项，输出警告信息 <var>message</var>。<var>message</var> 是一串格式化的字符串，要么是一个 &lsquo;<samp><span class="samp">%qs</span></samp>&rsquo; 格式的单操作数选项名，要么是传递给 &lsquo;<samp><span class="samp">warning</span></samp>&rsquo; 函数的多操作数组合。如果一个别名被标记成 <code>Warn</code> 了，那么该别名的目标也应该被标记成 <code>Warn</code>。
+
+     <br><dt><code>Report</code><dd><!-- The state of the option should be printed by @option{-fverbose-asm}. -->
+选项的说明应该通过<samp><span class="option">-fverbose-asm</span></samp>来打印。
+
+     <br><dt><code>Warning</code><dd><!-- This is a warning option and should be shown as such in -->
+<!-- @option{-help} output.  This flag does not currently affect anything -->
+<!-- other than @option{-help}. -->
+警告选项，<samp><span class="option">--help</span></samp> 输出中应该有相关内容。该参数目前无效。
+
+     <br><dt><code>Optimization</code><dd><!-- This is an optimization option.  It should be shown as such in -->
+<!-- @option{-help} output, and any associated variable named using -->
+<!-- @code{Var} should be saved and restored when the optimization level is -->
+changed with <code>optimize</code> attributes. 
+优化选项。<samp><span class="option">--help</span></samp> 输出中应该有相关内容，任何赋给该变量 <code>Var</code> 的值应该在优化等级  <code>optimize</code> 改变时被保存/恢复。
+
+     <br><dt><code>Undocumented</code><dd><!-- The option is deliberately missing documentation and should not -->
+<!-- be included in the @option{-help} output. -->
+选项有意的不提供文档，并且不应该包括在<samp><span class="option">--help</span></samp>输出中。
+
+     <br><dt><code>Condition(</code><var>cond</var><code>)</code><dd><!-- The option should only be accepted if preprocessor condition -->
+<!-- @var{cond} is true.  Note that any C declarations associated with the -->
+<!-- option will be present even if @var{cond} is false; @var{cond} simply -->
+<!-- controls whether the option is accepted and whether it is printed in -->
+<!-- the @option{-help} output. -->
+选项应该只在预处理程序条件<var>cond</var>为真时才被接受。注意即使<var>cond</var>为假时，任何与选项相关的C声明也会存在；<var>cond</var>只是简单的控制选项是否被接受，以及是否在<samp><span class="option">--help</span></samp>输出中被打印。
+
+     <br><dt><code>Save</code><dd><!-- Build the @code{cl_target_option} structure to hold a copy of the -->
+<!-- option, add the functions @code{cl_target_option_save} and -->
+<!-- @code{cl_target_option_restore} to save and restore the options. -->
+<code>cl_target_option</code> 结构保存了一个选项的副本，增加 <code>cl_target_option_save</code> 和<code>cl_target_option_restore</code> 函数用来保存和恢复这个选项。
+
+     <br><dt><code>SetByCombined</code><dd><!-- The option may also be set by a combined option such as -->
+<!-- @option{-ffast-math}.  This causes the @code{gcc_options} struct to -->
+<!-- have a field @code{frontend_set_@var{name}}, where @code{@var{name}} -->
+<!-- is the name of the field holding the value of this option (without the -->
+<!-- leading @code{x_}).  This gives the front end a way to indicate that -->
+<!-- the value has been set explicitly and should not be changed by the -->
+<!-- combined option.  For example, some front ends use this to prevent -->
+<!-- @option{-ffast-math} and @option{-fno-fast-math} from changing the -->
+<!-- value of @option{-fmath-errno} for languages that do not use -->
+<!-- @code{errno}. -->
+该选项也可以通过 <samp><span class="option">-ffast-math</span></samp> 一类的组合选项来设置。这导致 <code>gcc_options</code> 结构中保存一个 <code>frontend_set_</code><var>name</var> 域，其中 <var>name</var> 是当前保持的这个选项（没有前缀 <code>x_</code>）值的名字。这样，前端就可以有办法分辨显式设置，以及不能被组合选项改变值。
+例如，有些不直接使用 <code>errno</code> 的前端，通过使用 <samp><span class="option">-ffast-math</span></samp> 和 <samp><span class="option">-fno-fast-math</span></samp> 来改变 <samp><span class="option">-fmath-errno</span></samp> 的值。
+</dl>
+
+<!-- markers: CROSSREF BUG TODO -->
+<!-- Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, -->
+<!-- 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 -->
+<!-- Free Software Foundation, Inc. -->
+<!-- This is part of the GCC manual. -->
+<!-- For copying conditions, see the file gcc.texi. -->
+<!-- @node Passes -->
+<!-- @chapter Passes and Files of the Compiler -->
+<!-- @cindex passes and files of the compiler -->
+<!-- @cindex files and passes of the compiler -->
+<!-- @cindex compiler passes and files -->
+ </body></html>
+

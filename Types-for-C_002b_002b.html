@@ -1,0 +1,188 @@
+<html lang="zh">
+<head>
+<title>Types for C++ - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="C-and-C_002b_002b-Trees.html#C-and-C_002b_002b-Trees" title="C and C++ Trees">
+<link rel="next" href="Namespaces.html#Namespaces" title="Namespaces">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Types-for-C++"></a>
+<a name="Types-for-C_002b_002b"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Namespaces.html#Namespaces">Namespaces</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="C-and-C_002b_002b-Trees.html#C-and-C_002b_002b-Trees">C and C++ Trees</a>
+<hr>
+</div>
+
+<h4 class="subsection">11.10.1 C++类型</h4>
+
+<p><a name="index-UNKNOWN_005fTYPE-2574"></a><a name="index-TYPENAME_005fTYPE-2575"></a><a name="index-TYPEOF_005fTYPE-2576"></a><a name="index-cp_005ftype_005fquals-2577"></a><a name="index-TYPE_005fUNQUALIFIED-2578"></a><a name="index-TYPE_005fQUAL_005fCONST-2579"></a><a name="index-TYPE_005fQUAL_005fVOLATILE-2580"></a><a name="index-TYPE_005fQUAL_005fRESTRICT-2581"></a><a name="index-TYPE_005fMAIN_005fVARIANT-2582"></a><a name="index-qualified-type-2583"></a><a name="index-TYPE_005fSIZE-2584"></a><a name="index-TYPE_005fALIGN-2585"></a><a name="index-TYPE_005fPRECISION-2586"></a><a name="index-TYPE_005fARG_005fTYPES-2587"></a><a name="index-TYPE_005fMETHOD_005fBASETYPE-2588"></a><a name="index-TYPE_005fPTRMEM_005fP-2589"></a><a name="index-TYPE_005fOFFSET_005fBASETYPE-2590"></a><a name="index-TREE_005fTYPE-2591"></a><a name="index-TYPE_005fCONTEXT-2592"></a><a name="index-TYPE_005fNAME-2593"></a><a name="index-TYPENAME_005fTYPE_005fFULLNAME-2594"></a><a name="index-TYPE_005fFIELDS-2595"></a><a name="index-TYPE_005fPTROBV_005fP-2596"></a>
+<!-- In C++, an array type is not qualified; rather the type of the array -->
+<!-- elements is qualified.  This situation is reflected in the intermediate -->
+<!-- representation.  The macros described here will always examine the -->
+<!-- qualification of the underlying element type when applied to an array -->
+<!-- type.  (If the element type is itself an array, then the recursion -->
+<!-- continues until a non-array type is found, and the qualification of this -->
+<!-- type is examined.)  So, for example, @code{CP_TYPE_CONST_P} will hold of -->
+<!-- the type @code{const int ()[7]}, denoting an array of seven @code{int}s. -->
+在C++中，数组类型没有被限定，而是数组元素的类型被限定。这种情况反映在中间表示中。这里描述的宏在应用到数组类型时，将总是检验元素类型的限定符。（如果元素类型本身是一个数组，则会递归执行只到找到非数组类型，并检验该类型的限定符）所以，例如，<code>CP_TYPE_CONST_P</code>当表示具有七个<code>int</code>的数组时，将持有<code>const int ()[7]</code>类型。
+
+<!-- The following functions and macros deal with cv-qualification of types: -->
+ <p>下列函数和宏处理cv-qualification的类型：
+     <dl>
+<dt><code>cp_type_quals</code><a name="index-cp_005ftype_005fquals-2597"></a><dd><!-- This function returns the set of type qualifiers applied to this type. -->
+<!-- This value is @code{TYPE_UNQUALIFIED} if no qualifiers have been -->
+<!-- applied.  The @code{TYPE_QUAL_CONST} bit is set if the type is -->
+<!-- @code{const}-qualified.  The @code{TYPE_QUAL_VOLATILE} bit is set if the -->
+<!-- type is @code{volatile}-qualified.  The @code{TYPE_QUAL_RESTRICT} bit is -->
+<!-- set if the type is @code{restrict}-qualified. -->
+该函数返回应用到该类型的类型限定符集。如果没有应用限定符则该值为<code>TYPE_UNQUALIFIED</code>。如果类型是<code>const</code>的，则会设置<code>TYPE_QUAL_CONST</code>位。如果类型是<code>volatile</code>的，则会设置<code>TYPE_QUAL_VOLATILE</code>位。如果类型是<code>restrict</code>的，则会设置<code>TYPE_QUAL_RESTRICT</code>位。
+
+     <br><dt><code>CP_TYPE_CONST_P</code><a name="index-CP_005fTYPE_005fCONST_005fP-2598"></a><dd><!-- This macro holds if the type is @code{const}-qualified. -->
+该宏当类型是<code>const</code>时有效。
+
+     <br><dt><code>CP_TYPE_VOLATILE_P</code><a name="index-CP_005fTYPE_005fVOLATILE_005fP-2599"></a><dd><!-- This macro holds if the type is @code{volatile}-qualified. -->
+该宏当类型是<code>volatile</code>时有效。
+
+     <br><dt><code>CP_TYPE_RESTRICT_P</code><a name="index-CP_005fTYPE_005fRESTRICT_005fP-2600"></a><dd><!-- This macro holds if the type is @code{restrict}-qualified. -->
+该宏当类型是<code>restrict</code>时有效。
+
+     <br><dt><code>CP_TYPE_CONST_NON_VOLATILE_P</code><a name="index-CP_005fTYPE_005fCONST_005fNON_005fVOLATILE_005fP-2601"></a><dd><!-- This predicate holds for a type that is @code{const}-qualified, but -->
+<!-- @emph{not} @code{volatile}-qualified; other cv-qualifiers are ignored as -->
+<!-- well: only the @code{const}-ness is tested. -->
+该断言当类型是<code>const</code>的，但<em>不是</em><code>volatile</code>的时有效。
+其它cv-qualifiers会被忽略，只测试<code>const</code>。
+
+ </dl>
+
+<!-- A few other macros and functions are usable with all types: -->
+ <p>一些其它的宏和函数可用于所有的类型：
+     <dl>
+<dt><code>TYPE_SIZE</code><a name="index-TYPE_005fSIZE-2602"></a><dd><!-- The number of bits required to represent the type, represented as an -->
+<!-- @code{INTEGER_CST}.  For an incomplete type, @code{TYPE_SIZE} will be -->
+<!-- @code{NULL_TREE}. -->
+类型表示所需要的位数，为一个<code>INTEGER_CST</code>。对于不完全类型，<code>TYPE_SIZE</code>将为<code>NULL_TREE</code>。
+
+     <br><dt><code>TYPE_ALIGN</code><a name="index-TYPE_005fALIGN-2603"></a><dd><!-- The alignment of the type, in bits, represented as an @code{int}. -->
+类型的对齐位数，为一个<code>int</code>。
+
+     <br><dt><code>TYPE_NAME</code><a name="index-TYPE_005fNAME-2604"></a><dd><!-- This macro returns a declaration (in the form of a @code{TYPE_DECL}) for -->
+<!-- the type.  (Note this macro does @emph{not} return an -->
+<!-- @code{IDENTIFIER_NODE}, as you might expect, given its name!)  You can -->
+<!-- look at the @code{DECL_NAME} of the @code{TYPE_DECL} to obtain the -->
+<!-- actual name of the type.  The @code{TYPE_NAME} will be @code{NULL_TREE} -->
+<!-- for a type that is not a built-in type, the result of a typedef, or a -->
+<!-- named class type. -->
+该宏返回类型的一个声明（按照<code>TYPE_DECL</code>的型式）。（注意该宏不返回<code>IDENTIFIER_NODE</code>）你可以查看<code>TYPE_DECL</code>的<code>DECL_NAME</code>来获得类型的实际的名字。<code>TYPE_NAME</code>将为<code>NULL_TREE</code>，对于不是内建类型的，typedef的，或者命名的class类型。
+
+     <br><dt><code>CP_INTEGRAL_TYPE</code><a name="index-CP_005fINTEGRAL_005fTYPE-2605"></a><dd><!-- This predicate holds if the type is an integral type.  Notice that in -->
+<!-- C++, enumerations are @emph{not} integral types. -->
+该断言有效，如果类型为一个整数类型。注意在C++中，枚举<em>不是</em>整数类型。
+
+     <br><dt><code>ARITHMETIC_TYPE_P</code><a name="index-ARITHMETIC_005fTYPE_005fP-2606"></a><dd><!-- This predicate holds if the type is an integral type (in the C++ sense) -->
+<!-- or a floating point type. -->
+该断言有效，如果类型为一个整数类型（按照c++的观点）或者一个浮点类型。
+
+     <br><dt><code>CLASS_TYPE_P</code><a name="index-CLASS_005fTYPE_005fP-2607"></a><dd><!-- This predicate holds for a class-type. -->
+该断言有效，对于一个class类型。
+
+     <br><dt><code>TYPE_BUILT_IN</code><a name="index-TYPE_005fBUILT_005fIN-2608"></a><dd><!-- This predicate holds for a built-in type. -->
+该断言有效，对于一个内建类型。
+
+     <br><dt><code>TYPE_PTRMEM_P</code><a name="index-TYPE_005fPTRMEM_005fP-2609"></a><dd><!-- This predicate holds if the type is a pointer to data member. -->
+该断言有效，如果类型为一个指向数据成员的指针。
+
+     <br><dt><code>TYPE_PTR_P</code><a name="index-TYPE_005fPTR_005fP-2610"></a><dd><!-- This predicate holds if the type is a pointer type, and the pointee is -->
+<!-- not a data member. -->
+该断言有效，如果类型为一个指针，而指向者不是一个数据成员。
+
+     <br><dt><code>TYPE_PTRFN_P</code><a name="index-TYPE_005fPTRFN_005fP-2611"></a><dd><!-- This predicate holds for a pointer to function type. -->
+该断言有效，对于一个执行函数类型的指针。
+
+     <br><dt><code>TYPE_PTROB_P</code><a name="index-TYPE_005fPTROB_005fP-2612"></a><dd><!-- This predicate holds for a pointer to object type.  Note however that it -->
+<!-- does not hold for the generic pointer to object type @code{void *}.  You -->
+<!-- may use @code{TYPE_PTROBV_P} to test for a pointer to object type as -->
+<!-- well as @code{void *}. -->
+该断言有效，对于一个指向object类型的指针。注意其对于指向object类型<code>void *</code>的通用指针无效。你可以使用<code>TYPE_PTROBV_P</code>来测试指针是指向object类型，同时也是<code>void *</code>。
+
+ </dl>
+
+<!-- The table below describes types specific to C and C++ as well as -->
+<!-- language-dependent info about GENERIC types. -->
+ <p>下表描述了C和C++特定的类型，以及GENERIC类型中语言相关的信息。
+
+     <dl>
+<dt><code>POINTER_TYPE</code><dd><!-- Used to represent pointer types, and pointer to data member types.  If -->
+<!-- @code{TREE_TYPE} -->
+<!-- is a pointer to data member type, then @code{TYPE_PTRMEM_P} will hold. -->
+<!-- For a pointer to data member type of the form @samp{T X::*}, -->
+<!-- @code{TYPE_PTRMEM_CLASS_TYPE} will be the type @code{X}, while -->
+<!-- @code{TYPE_PTRMEM_POINTED_TO_TYPE} will be the type @code{T}. -->
+用来表示指针类型，以及指向数据成员的指针类型。<code>TREE_TYPE</code>给出了所指向的类型。如果类型为一个指向数据成员的指针，则<code>TYPE_PTRMEM_P</code>成立。对于一个指向&lsquo;<samp><span class="samp">T X::*</span></samp>&rsquo;形式的数据成员类型的指针，<code>TYPE_PTRMEM_CLASS_TYPE</code>将为类型<code>X</code>，而<code>TYPE_PTRMEM_POINTED_TO_TYPE</code>为类型<code>T</code>。
+
+     <br><dt><code>RECORD_TYPE</code><dd><!-- Used to represent @code{struct} and @code{class} types in C and C++.  If -->
+<!-- @code{TYPE_PTRMEMFUNC_P} holds, then this type is a pointer-to-member -->
+<!-- type.  In that case, the @code{TYPE_PTRMEMFUNC_FN_TYPE} is a -->
+<!-- @code{POINTER_TYPE} pointing to a @code{METHOD_TYPE}.  The -->
+<!-- @code{METHOD_TYPE} is the type of a function pointed to by the -->
+<!-- pointer-to-member function.  If @code{TYPE_PTRMEMFUNC_P} does not hold, -->
+<!-- this type is a class type.  For more information, @pxref{Classes}. -->
+用来表示<code>struct</code>和<code>class</code>类型，以及指向成员函数和其它语言中类似结构的指针。<code>TYPE_FIELDS</code>包含了该类型中包含的项，其可以为<code>FIELD_DECL</code>, <code>VAR_DECL</code>, <code>CONST_DECL</code>或<code>TYPE_DECL</code>。你不能假设类型中的域之间的顺序，以及它们是否有重叠。如果<code>TYPE_PTRMEMFUNC_P</code>成立，则该类型为一个指向成员（pointer-to-member）的类型。这种情况下，<code>TYPE_PTRMEMFUNC_FN_TYPE</code>为一个<code>POINTER_TYPE</code>，指向一个<code>METHOD_TYPE</code>。<code>METHOD_TYPE</code>为由pointer-to-member函数指向的函数的类型。如果<code>TYPE_PTRMEMFUNC_P</code>不成立，则该类型为一个class类型。更多信息，参见<a href="Classes.html#Classes">Classes</a>。
+
+     <br><dt><code>UNKNOWN_TYPE</code><dd><!-- This node is used to represent a type the knowledge of which is -->
+<!-- insufficient for a sound processing. -->
+该节点用来表示一个类型，其信息不足以进行合理的处理。
+
+     <br><dt><code>TYPENAME_TYPE</code><dd><!-- Used to represent a construct of the form @code{typename T::A}.  The -->
+<!-- @code{TYPE_CONTEXT} is @code{T}; the @code{TYPE_NAME} is an -->
+<!-- @code{IDENTIFIER_NODE} for @code{A}.  If the type is specified via a -->
+<!-- template-id, then @code{TYPENAME_TYPE_FULLNAME} yields a -->
+<!-- @code{TEMPLATE_ID_EXPR}.  The @code{TREE_TYPE} is non-@code{NULL} if the -->
+<!-- node is implicitly generated in support for the implicit typename -->
+<!-- extension; in which case the @code{TREE_TYPE} is a type node for the -->
+<!-- base-class. -->
+用于表示<code>typename T::A</code>。<code>TYPE_CONTEXT</code>为<code>T</code>；<code>TYPE_NAME</code>为<code>A</code>的<code>IDENTIFIER_NODE</code>。如果类型通过模板id指定，则<code>TYPENAME_TYPE_FULLNAME</code>产生一个<code>TEMPLATE_ID_EXPR</code>。如果节点是被隐式的生成，用来支持隐式类型名扩展，则<code>TREE_TYPE</code>不为<code>NULL</code>；这种情况下，<code>TREE_TYPE</code>为基类的类型节点。
+
+     <br><dt><code>TYPEOF_TYPE</code><dd><!-- Used to represent the @code{__typeof__} extension.  The -->
+<!-- @code{TYPE_FIELDS} is the expression the type of which is being -->
+<!-- represented. -->
+用于表示<code>__typeof__</code>扩展。<code>TYPE_FIELDS</code>为被表示的类型的表达式。
+</dl>
+
+<!--  -->
+<!-- Namespaces -->
+<!--  -->
+<!-- @node Namespaces -->
+<!-- @subsection Namespaces -->
+ </body></html>
+

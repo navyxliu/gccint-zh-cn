@@ -1,0 +1,78 @@
+<html lang="zh">
+<head>
+<title>Troubleshooting - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Type-Information.html#Type-Information" title="Type Information">
+<link rel="prev" href="Invoking-the-garbage-collector.html#Invoking-the-garbage-collector" title="Invoking the garbage collector">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Troubleshooting"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Invoking-the-garbage-collector.html#Invoking-the-garbage-collector">Invoking the garbage collector</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Type-Information.html#Type-Information">Type Information</a>
+<hr>
+</div>
+
+<h3 class="section">22.5 垃圾分配器相关的疑难解答</h3>
+
+<p><a name="index-garbage-collector_002c-troubleshooting-4974"></a>
+<!-- With the current garbage collector implementation, most issues should -->
+<!-- show up as GCC compilation errors.  Some of the most commonly -->
+<!-- encountered issues are described below. -->
+对于现在的垃圾搜集器实现，大部分问题会作为GCC编译错误来出现。下面描述了一些最常见的问题。
+
+     <ul>
+<!-- @item Gengtype does not produce allocators for a @code{GTY}-marked type. -->
+<!-- Gengtype checks if there is at least one possible path from GC roots to -->
+<!-- at least one instance of each type before outputting allocators.  If -->
+<!-- there is no such path, the @code{GTY} markers will be ignored and no -->
+<!-- allocators will be output.  Solve this by making sure that there exists -->
+<!-- at least one such path.  If creating it is unfeasible or raises a ``code -->
+<!-- smell'', consider if you really must use GC for allocating such type. -->
+<li>Gengtype没有为<code>GTY</code>标记的类型创建分配器。Gengtype会在输出分配器之前，检查是否至少有一个从GC roots到每个类型的实例之间的路径。如果没有这样的路径，<code>GTY</code>标记将会被忽略，并且不会输出分配器。解决该问题，需要确保存在至少一条这样的路径。如果创建这样的路径不可行或者会产生代码意味，则需要考虑一下你是否真的必须使用GC来分配该类型。
+
+     <!-- @item Link-time errors about undefined @code{gt_ggc_r_foo_bar} and -->
+     <!-- similarly-named symbols.  Check if your @file{foo_bar} source file has -->
+     <!-- @code{#include "gt-foo_bar.h"} as its very last line. -->
+     <li>在链接时出现关于未定义的<code>gt_ggc_r_foo_bar</code>和类似命名符号的错误。检查一下你的<samp><span class="file">foo_bar</span></samp>源文件是否将<code>#include "gt-foo_bar.h"</code>放在了最后一行。
+
+ </ul>
+
+<!-- Copyright (c) 2009, 2010 Free Software Foundation, Inc. -->
+<!-- Free Software Foundation, Inc. -->
+<!-- This is part of the GCC manual. -->
+<!-- For copying conditions, see the file gcc.texi. -->
+<!-- @node Plugins -->
+<!-- @chapter Plugins -->
+ </body></html>
+

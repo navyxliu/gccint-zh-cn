@@ -1,0 +1,104 @@
+<html lang="zh">
+<head>
+<title>Libgcc - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="prev" href="Interface.html#Interface" title="Interface">
+<link rel="next" href="Languages.html#Languages" title="Languages">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Libgcc"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Languages.html#Languages">Languages</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Interface.html#Interface">Interface</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
+<hr>
+</div>
+
+<h2 class="chapter">4 GCC低级运行时库</h2>
+
+<!-- GCC provides a low-level runtime library, @file{libgcc.a} or -->
+<!-- @file{libgcc_s.so.1} on some platforms.  GCC generates calls to -->
+<!-- routines in this library automatically, whenever it needs to perform -->
+<!-- some operation that is too complicated to emit inline code for. -->
+<p>GCC在一些平台上提供了一个低级运行时库，<samp><span class="file">libgcc.a</span></samp> 或者<samp><span class="file">libgcc_s.so.1</span></samp>。每当需要执行某些过于复杂而无法通过生成内嵌代码来实现的操作时，GCC便会自动生成对该库中的例程的调用。
+
+<!-- Most of the routines in @code{libgcc} handle arithmetic operations -->
+<!-- that the target processor cannot perform directly.  This includes -->
+<!-- integer multiply and divide on some machines, and all floating-point -->
+<!-- and fixed-point operations on other machines.  @code{libgcc} also includes -->
+<!-- routines for exception handling, and a handful of miscellaneous operations. -->
+ <p>大多数<code>libgcc</code>中的例程用来处理目标处理器不能直接执行的算术运算。这包括一些机器上的整数乘除，以及其它一些机器上的所有浮点和定点运算。<code>libgcc</code> 还包括异常处理，以及少数其它操作。
+
+<!-- Some of these routines can be defined in mostly machine-independent C@. -->
+<!-- Others must be hand-written in assembly language for each processor -->
+<!-- that needs them. -->
+ <p>这些例程中有一些能够用机器独立的C来定义。其余的只能用汇编为每个需要它们的处理器手写了。
+
+<!-- GCC will also generate calls to C library routines, such as -->
+<!-- @code{memcpy} and @code{memset}, in some cases.  The set of routines -->
+<!-- that GCC may possibly use is documented in @ref{Other -->
+<!-- Builtins,,,gcc, Using the GNU Compiler Collection (GCC)}. -->
+ <p>在一些情况下，GCC还会生成对C库例程的调用，像<code>memcpy</code>和<code>memset</code>。GCC可能使用的例程集在<a href="../gcc/Other-Builtins.html#Other-Builtins">Other Builtins</a>中有介绍。
+
+<!-- These routines take arguments and return values of a specific machine -->
+<!-- mode, not a specific C type.  @xref{Machine Modes}, for an explanation -->
+<!-- of this concept.  For illustrative purposes, in this chapter the -->
+<!-- floating point type @code{float} is assumed to correspond to @code{SFmode}; -->
+<!-- @code{double} to @code{DFmode}; and @code{@w{long double}} to both -->
+<!-- @code{TFmode} and @code{XFmode}.  Similarly, the integer types @code{int} -->
+<!-- and @code{@w{unsigned int}} correspond to @code{SImode}; @code{long} and -->
+<!-- @code{@w{unsigned long}} to @code{DImode}; and @code{@w{long long}} and -->
+<!-- @code{@w{unsigned long long}} to @code{TImode}. -->
+ <p>这些例程接受参数并且返回特定机器模式的值，而不是特定的C类型。关于这方面的概念解释，参见<a href="Machine-Modes.html#Machine-Modes">Machine Modes</a>。为了便于说明，在这章中浮点类型<code>float</code>被假设为对应于<code>SFmode</code>；<code>double</code>对应于<code>DFmode</code>；以及<code>long&nbsp;double<!-- /@w --></code>对应于<code>TFmode</code>和<code>XFmode</code>。类似的，整数类型<code>int</code>和<code>unsigned&nbsp;int<!-- /@w --></code>对应于<code>SImode</code>；<code>long</code>和<code>unsigned&nbsp;long<!-- /@w --></code>对应于DImode；以及<code>long&nbsp;long<!-- /@w --></code>和<code>unsigned&nbsp;long&nbsp;long<!-- /@w --></code>对应于<code>TImode</code>。
+
+<!-- @menu -->
+<!-- * Integer library routines:: -->
+<!-- * Soft float library routines:: -->
+<!-- * Decimal float library routines:: -->
+<!-- * Fixed-point fractional library routines:: -->
+<!-- * Exception handling routines:: -->
+<!-- * Miscellaneous routines:: -->
+<!-- @end menu -->
+<ul class="menu">
+<li><a accesskey="1" href="Integer-library-routines.html#Integer-library-routines">Integer library routines</a>
+<li><a accesskey="2" href="Soft-float-library-routines.html#Soft-float-library-routines">Soft float library routines</a>
+<li><a accesskey="3" href="Decimal-float-library-routines.html#Decimal-float-library-routines">Decimal float library routines</a>
+<li><a accesskey="4" href="Fixed_002dpoint-fractional-library-routines.html#Fixed_002dpoint-fractional-library-routines">Fixed-point fractional library routines</a>
+<li><a accesskey="5" href="Exception-handling-routines.html#Exception-handling-routines">Exception handling routines</a>
+<li><a accesskey="6" href="Miscellaneous-routines.html#Miscellaneous-routines">Miscellaneous routines</a>
+</ul>
+
+<!-- @node Integer library routines -->
+<!-- @section Routines for integer arithmetic -->
+ </body></html>
+

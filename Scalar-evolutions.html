@@ -1,0 +1,118 @@
+<html lang="zh">
+<head>
+<title>Scalar evolutions - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Loop-Analysis-and-Representation.html#Loop-Analysis-and-Representation" title="Loop Analysis and Representation">
+<link rel="prev" href="LCSSA.html#LCSSA" title="LCSSA">
+<link rel="next" href="loop_002div.html#loop_002div" title="loop-iv">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Scalar-evolutions"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="loop_002div.html#loop_002div">loop-iv</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="LCSSA.html#LCSSA">LCSSA</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Loop-Analysis-and-Representation.html#Loop-Analysis-and-Representation">Loop Analysis and Representation</a>
+<hr>
+</div>
+
+<h3 class="section">14.5 标量演化</h3>
+
+<p><a name="index-Scalar-evolutions-3126"></a><a name="index-IV-analysis-on-GIMPLE-3127"></a>
+<!-- Scalar evolutions (SCEV) are used to represent results of induction -->
+<!-- variable analysis on GIMPLE@.  They enable us to represent variables with -->
+<!-- complicated behavior in a simple and consistent way (we only use it to -->
+<!-- express values of polynomial induction variables, but it is possible to -->
+<!-- extend it).  The interfaces to SCEV analysis are declared in -->
+<!-- @file{tree-scalar-evolution.h}.  To use scalar evolutions analysis, -->
+<!-- @code{scev_initialize} must be used.  To stop using SCEV, -->
+<!-- @code{scev_finalize} should be used.  SCEV analysis caches results in -->
+<!-- order to save time and memory.  This cache however is made invalid by -->
+<!-- most of the loop transformations, including removal of code.  If such a -->
+<!-- transformation is performed, @code{scev_reset} must be called to clean -->
+<!-- the caches. -->
+标量演化（SCEV）用来表示在GIMPLE之上的归纳变量分析结果。它使得我们能够通过简单一致的方式来表示具有复杂性为的变量（我们只使用它来表示多项式归纳变量的值，但是是可以进一步扩展的）。SCEV分析的接口声明在<samp><span class="file">tree-scalar-evolution.h</span></samp>中。要使用标量演化分析，则必须使用<code>scev_initialize</code>。要停止使用SCEV，则使用<code>scev_finalize</code>。为了节省时间和内存，SCEV分析会缓存结果。但是这些缓存会被大多数循环转换变为无效，包括代码移除。如果执行了这样的转换，则必须调用<code>scev_reset</code>来清除缓存。
+
+<!-- Given an SSA name, its behavior in loops can be analyzed using the -->
+<!-- @code{analyze_scalar_evolution} function.  The returned SCEV however -->
+<!-- does not have to be fully analyzed and it may contain references to -->
+<!-- other SSA names defined in the loop.  To resolve these (potentially -->
+<!-- recursive) references, @code{instantiate_parameters} or -->
+<!-- @code{resolve_mixers} functions must be used. -->
+<!-- @code{instantiate_parameters} is useful when you use the results of SCEV -->
+<!-- only for some analysis, and when you work with whole nest of loops at -->
+<!-- once.  It will try replacing all SSA names by their SCEV in all loops, -->
+<!-- including the super-loops of the current loop, thus providing a complete -->
+<!-- information about the behavior of the variable in the loop nest. -->
+<!-- @code{resolve_mixers} is useful if you work with only one loop at a -->
+<!-- time, and if you possibly need to create code based on the value of the -->
+<!-- induction variable.  It will only resolve the SSA names defined in the -->
+<!-- current loop, leaving the SSA names defined outside unchanged, even if -->
+<!-- their evolution in the outer loops is known. -->
+ <p>给定一个SSA名字，
+能够使用<code>analyze_scalar_evolution</code>函数来分析它在循环中的行为。然而返回的SCEV不需要被完全分析，并且它可以包含对其它定义在循环中的SSA名字的引用。必须使用<code>instantiate_parameters</code>或者<code>resolve_mixers</code>函数来解决这些（潜在的递归）引用。当你将SCEV的结果只用于某种分析时，并且一次工作于整个循环嵌套时，<code>instantiate_parameters</code>会很有用。它将尝试替换所有的SSA名字，用它们在所有循环中的SCEV，包括当前循环的外层循环，因此提供了在循环嵌套中的变量行为的完全信息。当你一次只工作于一个循环，并且可能需要根据归约变量的值来创建代码时，<code>resolve_mixers</code>会很有用。它会只解决定义在当前循环中的SSA名字，而保留外面定义的SSA名字不变，即使它们在外循环中的演化是已知的。
+
+<!-- The SCEV is a normal tree expression, except for the fact that it may -->
+<!-- contain several special tree nodes.  One of them is -->
+<!-- @code{SCEV_NOT_KNOWN}, used for SSA names whose value cannot be -->
+<!-- expressed.  The other one is @code{POLYNOMIAL_CHREC}.  Polynomial chrec -->
+<!-- has three arguments - base, step and loop (both base and step may -->
+<!-- contain further polynomial chrecs).  Type of the expression and of base -->
+<!-- and step must be the same.  A variable has evolution -->
+<!-- @code{POLYNOMIAL_CHREC(base, step, loop)} if it is (in the specified -->
+<!-- loop) equivalent to @code{x_1} in the following example -->
+ <p>SCEV是一个标准的树表达式，除去实际上它可以包含多个特定的树节点。<code>SCEV_NOT_KNOWN</code>为其中之一，用于值无法被表示的SSA名字。另一个是<code>POLYNOMIAL_CHREC</code>。多项式chrec有三个参数—— base，step和loop（base和step都可以进一步包含多项式chrecs）。表达式，base和step的类型必须相同。在下面的例子中，如果变量（在特定的循环中）等于<code>x_1</code>，则具有演化<code>POLYNOMIAL_CHREC(base, step, loop)</code>。
+
+<pre class="smallexample">     while (...)
+       {
+         x_1 = phi (base, x_2);
+         x_2 = x_1 + step;
+       }
+</pre>
+ <!-- Note that this includes the language restrictions on the operations. -->
+<!-- For example, if we compile C code and @code{x} has signed type, then the -->
+<!-- overflow in addition would cause undefined behavior, and we may assume -->
+<!-- that this does not happen.  Hence, the value with this SCEV cannot -->
+<!-- overflow (which restricts the number of iterations of such a loop). -->
+ <p>注意这包括操作数上的语言限制。例如，如果我们编译C代码，并且<code>x</code>具有有符号类型，那么加法溢出将会产生未定义行为，并且我们可以假设这并没有发生。因此，SCEV的值不能溢出。
+
+<!-- In many cases, one wants to restrict the attention just to affine -->
+<!-- induction variables.  In this case, the extra expressive power of SCEV -->
+<!-- is not useful, and may complicate the optimizations.  In this case, -->
+<!-- @code{simple_iv} function may be used to analyze a value - the result -->
+<!-- is a loop-invariant base and step. -->
+ <p>许多情况下，只是想放射归约变量。这时，额外的SCEV的表达式幂就没有用处，并且可能会使优化变得复杂。这时，可以使用<code>simple_iv</code>函数来分析一个值——结果为循环不变量base和step。
+
+<!-- @node loop-iv -->
+<!-- @section IV analysis on RTL -->
+ </body></html>
+

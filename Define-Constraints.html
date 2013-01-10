@@ -1,0 +1,256 @@
+<html lang="zh">
+<head>
+<title>Define Constraints - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Constraints.html#Constraints" title="Constraints">
+<link rel="prev" href="Machine-Constraints.html#Machine-Constraints" title="Machine Constraints">
+<link rel="next" href="C-Constraint-Interface.html#C-Constraint-Interface" title="C Constraint Interface">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Define-Constraints"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="C-Constraint-Interface.html#C-Constraint-Interface">C Constraint Interface</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Machine-Constraints.html#Machine-Constraints">Machine Constraints</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Constraints.html#Constraints">Constraints</a>
+<hr>
+</div>
+
+<h4 class="subsection">16.8.7 定义机器特定的约束</h4>
+
+<p><a name="index-defining-constraints-3323"></a><a name="index-constraints_002c-defining-3324"></a>
+<!-- Machine-specific constraints fall into two categories: register and -->
+<!-- non-register constraints.  Within the latter category, constraints -->
+<!-- which allow subsets of all possible memory or address operands should -->
+<!-- be specially marked, to give @code{reload} more information. -->
+机器特定的约束分为两类：寄存器约束和非寄存器约束。在后者中， 如果约束允许所有可能的内存或地址操作数，则应该被专门标记出来， 以便给<code>reload</code>更多信息。
+
+<!-- Machine-specific constraints can be given names of arbitrary length, -->
+<!-- but they must be entirely composed of letters, digits, underscores -->
+<!-- (@samp{_}), and angle brackets (@samp{< >}).  Like C identifiers, they -->
+<!-- must begin with a letter or underscore. -->
+ <p>机器特定的约束可以给定任意长度的名字，但是它们全部由字母，数字， 下划线（&lsquo;<samp><span class="samp">_</span></samp>&rsquo;）和三角括号（&lsquo;<samp><span class="samp">&lt; &gt;</span></samp>&rsquo;）组成。跟C标识符类似， 它们必须起始于字母或者下划线。
+
+<!-- In order to avoid ambiguity in operand constraint strings, no -->
+<!-- constraint can have a name that begins with any other constraint's -->
+<!-- name.  For example, if @code{x} is defined as a constraint name, -->
+<!-- @code{xy} may not be, and vice versa.  As a consequence of this rule, -->
+<!-- no constraint may begin with one of the generic constraint letters: -->
+<!-- @samp{E F V X g i m n o p r s}. -->
+ <p>为了避免操作数约束字符串的混淆，约束的名字不能起始于任何其它约束的名字。 例如，如果<code>x</code>被定义为一个约束名，则不可以定义<code>xy</code>，反之依然。 按照这个规则，所有约束都不能起始于通用约束字母：&lsquo;<samp><span class="samp">E F V X g i m n o p r s</span></samp>&rsquo;。
+
+<!-- Register constraints correspond directly to register classes. -->
+<!-- @xref{Register Classes}.  There is thus not much flexibility in their -->
+<!-- definitions. -->
+ <p>寄存器约束直接对应于寄存器类别。参见<a href="Register-Classes.html#Register-Classes">Register Classes</a>。 因此它们的定义没有太多的灵活性。
+
+<!-- @deffn {MD Expression} define_register_constraint name regclass docstring -->
+<!-- All three arguments are string constants. -->
+<!-- @var{name} is the name of the constraint, as it will appear in -->
+<!-- @code{match_operand} expressions.  If @var{name} is a multi-letter -->
+<!-- constraint its length shall be the same for all constraints starting -->
+<!-- with the same letter.  @var{regclass} can be either the -->
+<!-- name of the corresponding register class (@pxref{Register Classes}), -->
+<!-- or a C expression which evaluates to the appropriate register class. -->
+<!-- If it is an expression, it must have no side effects, and it cannot -->
+<!-- look at the operand.  The usual use of expressions is to map some -->
+<!-- register constraints to @code{NO_REGS} when the register class -->
+<!-- is not available on a given subarchitecture. -->
+<!-- @var{docstring} is a sentence documenting the meaning of the -->
+<!-- constraint.  Docstrings are explained further below. -->
+<!-- @end deffn -->
+<div class="defun">
+&mdash; MD Expression: <b>define_register_constraint</b><var> name regclass docstring<a name="index-define_005fregister_005fconstraint-3325"></a></var><br>
+<blockquote><p>这三个参数都是字符串常量。<var>name</var>为约束的名字， 将在<code>match_operand</code>表达式中出现。如果<var>name</var>为多个字母的约束， 则它的长度应该与所有起始与同一字母的约束相同。 <var>regclass</var>可以为相应的寄存器类别的名字(参见<a href="Register-Classes.html#Register-Classes">Register Classes</a>)， 或者一个C表达式，其值为合适的寄存器类别。如果为表达式，其必须不具有副作用， 并且不能查看操作数。通常使用表达式是为了当寄存器类别对于给定的子体系结构无效时， 将一些寄存器约束映射为<code>NO_REGS</code>。
+
+      <p><var>docstring</var>为一条语句，介绍了约束的含义。这将在下面做进一步的解释。
+</p></blockquote></div>
+
+<!-- Non-register constraints are more like predicates: the constraint -->
+<!-- definition gives a Boolean expression which indicates whether the -->
+<!-- constraint matches. -->
+ <p>非寄存器的约束更加像断言：约束定义给出一个布尔表达式，其指示是否约束匹配。
+
+<!-- @deffn {MD Expression} define_constraint name docstring exp -->
+<!-- The @var{name} and @var{docstring} arguments are the same as for -->
+<!-- @code{define_register_constraint}, but note that the docstring comes -->
+<!-- immediately after the name for these expressions.  @var{exp} is an RTL -->
+<!-- expression, obeying the same rules as the RTL expressions in predicate -->
+<!-- definitions.  @xref{Defining Predicates}, for details.  If it -->
+<!-- evaluates true, the constraint matches; if it evaluates false, it -->
+<!-- doesn't. Constraint expressions should indicate which RTL codes they -->
+<!-- might match, just like predicate expressions. -->
+<!-- @code{match_test} C expressions have access to the -->
+<!-- following variables: -->
+<!-- @table @var -->
+<!-- @item op -->
+<!-- The RTL object defining the operand. -->
+<!-- @item mode -->
+<!-- The machine mode of @var{op}. -->
+<!-- @item ival -->
+<!-- @samp{INTVAL (@var{op})}, if @var{op} is a @code{const_int}. -->
+<!-- @item hval -->
+<!-- @samp{CONST_DOUBLE_HIGH (@var{op})}, if @var{op} is an integer -->
+<!-- @code{const_double}. -->
+<!-- @item lval -->
+<!-- @samp{CONST_DOUBLE_LOW (@var{op})}, if @var{op} is an integer -->
+<!-- @code{const_double}. -->
+<!-- @item rval -->
+<!-- @samp{CONST_DOUBLE_REAL_VALUE (@var{op})}, if @var{op} is a floating-point -->
+<!-- @code{const_double}. -->
+<!-- @end table -->
+<!-- The @var{*val} variables should only be used once another piece of the -->
+<!-- expression has verified that @var{op} is the appropriate kind of RTL -->
+<!-- object. -->
+<!-- @end deffn -->
+<div class="defun">
+&mdash; MD Expression: <b>define_constraint</b><var> name docstring exp<a name="index-define_005fconstraint-3326"></a></var><br>
+<blockquote><p><var>name</var>和<var>docstring</var>参数与<code>define_register_constraint</code>的相同， 但是注意docstring直接跟随name之后。<var>exp</var>为一个RTL表达式， 遵循在断言定义中相同的规则。详情参见<a href="Defining-Predicates.html#Defining-Predicates">Defining Predicates</a>。如果求得为真， 则约束匹配；如果求得为假，则不匹配。约束表达式应该指示出它们可能匹配的RTL， 就像断言表达式一样。
+
+      <p>C表达式<code>match_test</code>，可以访问下列变量：
+
+          <dl>
+<dt><var>op</var><dd>定义操作数的RTL对象。
+<br><dt><var>mode</var><dd><var>op</var>的机器模式。
+<br><dt><var>ival</var><dd>&lsquo;<samp><span class="samp">INTVAL (</span><var>op</var><span class="samp">)</span></samp>&rsquo;, 如果<var>op</var>为<code>const_int</code>。
+<br><dt><var>hval</var><dd>&lsquo;<samp><span class="samp">CONST_DOUBLE_HIGH (</span><var>op</var><span class="samp">)</span></samp>&rsquo;, 如果<var>op</var>为整数<code>const_double</code>。
+<br><dt><var>lval</var><dd>&lsquo;<samp><span class="samp">CONST_DOUBLE_LOW (</span><var>op</var><span class="samp">)</span></samp>&rsquo;, 如果<var>op</var>为整数<code>const_double</code>。
+<br><dt><var>rval</var><dd>&lsquo;<samp><span class="samp">CONST_DOUBLE_REAL_VALUE (</span><var>op</var><span class="samp">)</span></samp>&rsquo;,
+如果<var>op</var>为浮点<code>const_double</code>。
+</dl>
+
+      <p>变量<var>*val</var>应该只在表达式的其它部分已经验证了<var>op</var>为合适类型的RTL对象时， 才被使用。
+</p></blockquote></div>
+
+<!-- Most non-register constraints should be defined with -->
+<!-- @code{define_constraint}.  The remaining two definition expressions -->
+<!-- are only appropriate for constraints that should be handled specially -->
+<!-- by @code{reload} if they fail to match. -->
+ <p>大多数非寄存器约束应该使用<code>define_constraint</code>来定义。 其余的两个定义表达式只适合当约束匹配失败时，应该由<code>reload</code>单独处理的约束。
+
+<!-- @deffn {MD Expression} define_memory_constraint name docstring exp -->
+<!-- Use this expression for constraints that match a subset of all memory -->
+<!-- operands: that is, @code{reload} can make them match by converting the -->
+<!-- operand to the form @samp{@w{(mem (reg @var{X}))}}, where @var{X} is a -->
+<!-- base register (from the register class specified by -->
+<!-- @code{BASE_REG_CLASS}, @pxref{Register Classes}). -->
+<!-- For example, on the S/390, some instructions do not accept arbitrary -->
+<!-- memory references, but only those that do not make use of an index -->
+<!-- register.  The constraint letter @samp{Q} is defined to represent a -->
+<!-- memory address of this type.  If @samp{Q} is defined with -->
+<!-- @code{define_memory_constraint}, a @samp{Q} constraint can handle any -->
+<!-- memory operand, because @code{reload} knows it can simply copy the -->
+<!-- memory address into a base register if required.  This is analogous to -->
+<!-- the way an @samp{o} constraint can handle any memory operand. -->
+<!-- The syntax and semantics are otherwise identical to -->
+<!-- @code{define_constraint}. -->
+<!-- @end deffn -->
+<div class="defun">
+&mdash; MD Expression: <b>define_memory_constraint</b><var> name docstring exp<a name="index-define_005fmemory_005fconstraint-3327"></a></var><br>
+<blockquote><p>使用该表达式来定义匹配所有内存操作数的子集的约束：也就是， <code>reload</code>能够通过将操作数转换为&lsquo;<samp><span class="samp">(mem&nbsp;(reg&nbsp;</span><var>X</var><span class="samp">))<!-- /@w --></span></samp>&rsquo;的形式使得它们 匹配。其中<var>X</var>为基址寄存器（通过<code>BASE_REG_CLASS</code>指定的寄存器类别，参见<a href="Register-Classes.html#Register-Classes">Register Classes</a>）。
+
+      <p>例如，在S/390上，一些指令不接受任意的内存引用，只接受那些不使用索引寄存器的。 约束字母&lsquo;<samp><span class="samp">Q</span></samp>&rsquo;被定义用来表示这个类型的内存地址。 如果&lsquo;<samp><span class="samp">Q</span></samp>&rsquo;使用<code>define_memory_constraint</code>定义， 则&lsquo;<samp><span class="samp">Q</span></samp>&rsquo;约束可以处理任意内存操作数，因为<code>reload</code>知道在需要的时候， 它可以简单的将内存地址复制到基址寄存器中。 这与&lsquo;<samp><span class="samp">o</span></samp>&rsquo;约束可以处理任意内存操作数的方式类似。
+
+      <p>语法和语义在其它方面都与<code>define_constraint</code>相同。
+</p></blockquote></div>
+
+<!-- @deffn {MD Expression} define_address_constraint name docstring exp -->
+<!-- Use this expression for constraints that match a subset of all address -->
+<!-- operands: that is, @code{reload} can make the constraint match by -->
+<!-- converting the operand to the form @samp{@w{(reg @var{X})}}, again -->
+<!-- with @var{X} a base register. -->
+<!-- Constraints defined with @code{define_address_constraint} can only be -->
+<!-- used with the @code{address_operand} predicate, or machine-specific -->
+<!-- predicates that work the same way.  They are treated analogously to -->
+<!-- the generic @samp{p} constraint. -->
+<!-- The syntax and semantics are otherwise identical to -->
+<!-- @code{define_constraint}. -->
+<!-- @end deffn -->
+<div class="defun">
+&mdash; MD Expression: <b>define_address_constraint</b><var> name docstring exp<a name="index-define_005faddress_005fconstraint-3328"></a></var><br>
+<blockquote><p>使用该表达式来定义匹配所有地址操作数的子集的约束：也就是，
+<code>reload</code>能够通过将操作数转换为&lsquo;<samp><span class="samp">(reg&nbsp;</span><var>X</var><span class="samp">)<!-- /@w --></span></samp>&rsquo;的形式使得它们匹配。
+同样<var>X</var>为基址寄存器。
+
+      <p>使用<code>define_address_constraint</code>定义的约束只能用于<code>address_operand</code>断言
+，或者机器特定的同样方式的断言。它们与通用的&lsquo;<samp><span class="samp">p</span></samp>&rsquo;约束类似。
+
+      <p>语法和语义在其它方面都与<code>define_constraint</code>相同。
+</p></blockquote></div>
+
+<!-- For historical reasons, names beginning with the letters @samp{G H} -->
+<!-- are reserved for constraints that match only @code{const_double}s, and -->
+<!-- names beginning with the letters @samp{I J K L M N O P} are reserved -->
+<!-- for constraints that match only @code{const_int}s.  This may change in -->
+<!-- the future.  For the time being, constraints with these names must be -->
+<!-- written in a stylized form, so that @code{genpreds} can tell you did -->
+<!-- it correctly: -->
+ <p>由于历史的原因，
+起始于字母&lsquo;<samp><span class="samp">G H</span></samp>&rsquo;的名字被保留为只匹配<code>const_double</code>的约束，
+起始与字母&lsquo;<samp><span class="samp">I J K L M N O P</span></samp>&rsquo;被保留为只匹配<code>const_int</code>的约束。
+这在将来可能会改变。暂时的，这些名字的约束必须使用固定形式来书写，
+以便<code>genpreds</code>能够辨别出你在做正确的事情：
+
+<pre class="smallexample">     (define_constraint "[<var>GHIJKLMNOP</var>]..."
+       "<var>doc</var>..."
+       (and (match_code "const_int")  ; <code>const_double</code><span class="roman"> for G/H</span>
+            <var>condition</var>...))            ; <span class="roman">usually a </span><code>match_test</code>
+</pre>
+ <!-- the semicolons line up in the formatted manual -->
+<!-- It is fine to use names beginning with other letters for constraints -->
+<!-- that match @code{const_double}s or @code{const_int}s. -->
+ <p>可以使用起始于其它字母的名字来定义匹配<code>const_double</code>或<code>const_int</code>的约束。
+
+<!-- Each docstring in a constraint definition should be one or more complete -->
+<!-- sentences, marked up in Texinfo format.  @emph{They are currently unused.} -->
+<!-- In the future they will be copied into the GCC manual, in @ref{Machine -->
+<!-- Constraints}, replacing the hand-maintained tables currently found in -->
+<!-- that section.  Also, in the future the compiler may use this to give -->
+<!-- more helpful diagnostics when poor choice of @code{asm} constraints -->
+<!-- causes a reload failure. -->
+ <p>在约束定义中的每个docstring应该是一条或多条完整的语句，使用Texinfo格式来标记。
+它们目前没有被使用。在将来，它们将被复制到 GCC手册中，在机器约束这一章节，
+用来替换手工维护的表格。而且，将来编译器可以使用其来给出更多有帮助的诊断信息，
+当过少的<code>asm</code>约束选择造成重载失败时。
+
+<!-- If you put the pseudo-Texinfo directive @samp{@@internal} at the -->
+<!-- beginning of a docstring, then (in the future) it will appear only in -->
+<!-- the internals manual's version of the machine-specific constraint tables. -->
+<!-- Use this for constraints that should not appear in @code{asm} statements. -->
+ <p>如果你在docstring的起始出放入伪Texinfo指令&lsquo;<samp><span class="samp">@internal</span></samp>&rsquo;，
+则（在将来）其将只出现在internals手册版本的机器特定约束表中。
+这可以用于不应该出现在<code>asm</code>语句中的约束。
+
+<!-- @node C Constraint Interface -->
+<!-- @subsection Testing constraints from C -->
+ </body></html>
+

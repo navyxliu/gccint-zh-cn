@@ -1,0 +1,148 @@
+<html lang="zh">
+<head>
+<title>Jump Patterns - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Machine-Desc.html#Machine-Desc" title="Machine Desc">
+<link rel="prev" href="Dependent-Patterns.html#Dependent-Patterns" title="Dependent Patterns">
+<link rel="next" href="Looping-Patterns.html#Looping-Patterns" title="Looping Patterns">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Jump-Patterns"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Looping-Patterns.html#Looping-Patterns">Looping Patterns</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Dependent-Patterns.html#Dependent-Patterns">Dependent Patterns</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Machine-Desc.html#Machine-Desc">Machine Desc</a>
+<hr>
+</div>
+
+<h3 class="section">16.12 定义跳转指令模式</h3>
+
+<p><a name="index-jump-instruction-patterns-3581"></a><a name="index-defining-jump-instruction-patterns-3582"></a>
+<!-- GCC does not assume anything about how the machine realizes jumps. -->
+<!-- The machine description should define a single pattern, usually -->
+<!-- a @code{define_expand}, which expands to all the required insns. -->
+<!-- Usually, this would be a comparison insn to set the condition code -->
+<!-- and a separate branch insn testing the condition code and branching -->
+<!-- or not according to its value.  For many machines, however, -->
+<!-- separating compares and branches is limiting, which is why the -->
+<!-- more flexible approach with one @code{define_expand} is used in GCC. -->
+<!-- The machine description becomes clearer for architectures that -->
+<!-- have compare-and-branch instructions but no condition code.  It also -->
+<!-- works better when different sets of comparison operators are supported -->
+<!-- by different kinds of conditional branches (e.g. integer vs. floating-point), -->
+<!-- or by conditional branches with respect to conditional stores. -->
+<!-- Two separate insns are always used if the machine description represents -->
+<!-- a condition code register using the legacy RTL expression @code{(cc0)}, -->
+<!-- and on most machines that use a separate condition code register -->
+<!-- (@pxref{Condition Code}).  For machines that use @code{(cc0)}, in -->
+<!-- fact, the set and use of the condition code must be separate and -->
+<!-- adjacent@footnote{@code{note} insns can separate them, though.}, thus -->
+<!-- allowing flags in @code{cc_status} to be used (@pxref{Condition Code}) and -->
+<!-- so that the comparison and branch insns could be located from each other -->
+<!-- by using the functions @code{prev_cc0_setter} and @code{next_cc0_user}. -->
+<!-- Even in this case having a single entry point for conditional branches -->
+<!-- is advantageous, because it handles equally well the case where a single -->
+<!-- comparison instruction records the results of both signed and unsigned -->
+<!-- comparison of the given operands (with the branch insns coming in distinct -->
+<!-- signed and unsigned flavors) as in the x86 or SPARC, and the case where -->
+<!-- there are distinct signed and unsigned compare instructions and only -->
+<!-- one set of conditional branch instructions as in the PowerPC. -->
+对于大多数机器，GCC假设该机器具有一个条件码。
+比较insn根据给定操作数的有符号和无符号比较的结果来设定条件码。
+单独的分支insn测试条件代码，并根据它的值进行分支跳转。
+分支insn分为不同的有符号和无符号的。
+许多通用机器，像VAX，68000和32000都按这种方式工作。
+
+ <p>一些机器具有截然不同的有符号和无符号比较指令，并且只有一套条件分支指令。
+处理这些机器最容易的方法为保持它们不变，直到最后写汇编代码的阶段。
+这时，当输出比较指令的代码时，查看一下使用<code>next_cc0_user (insn)</code>的分支。
+（）如果RTL得出其为一个无符号分支，则输出一个无符号比较；
+否则输出一个有符号比较。当分支本身被输出时，你可以将有符号和无符号分支视为等同的。
+
+ <p>之所以可以这样做，是因为GCC总是生成一对连续的RTL insn，
+可能由<code>note</code> insn分隔，一个用于设置条件代码，一个用于测试，
+并保持这对insn不被改变，直到最后。
+
+ <p>要使用该技术，你必须定义机器描述宏<code>NOTICE_UPDATE_CC</code>，
+来做<code>CC_STATUS_INIT</code>；换句话说，没有多余的比较指令。
+
+ <p>一些机器具有比较分支指令，并且没有条件码。对它们可以使用类似的技术。
+当该要“输出”一个比较指令时，将它的操作数记录在两个静态变量中。
+当输出随后的条件码分支指令时，实际上输出了一个使用已记录的操作数的比较分支指令。
+
+ <p>它还用于定义比较分支指令的指令模式。在优化编译中，
+比较和分支指令对将根据这些指令模式被组合。但是如果优化不要求的时候，
+这是不会发生的。所以你必须针对你定义的任何特定指令模式额外使用上面的一种解决方式。
+
+ <p>在许多RISC机器上，大多数指令不影响条件码，并且甚至会没有一个单独的条件码寄存器。
+在这些机器上，限制条件码的定义和使用为邻近的insn是不必要的，
+并且还会阻止一些重要的优化。例如，在IBM RS/6000上，对于分支将会有一个延迟，
+除非条件码寄存器在条件分支的三条指令前被设置。
+如果不允许将条件码寄存器的定义和使用分开，则指令调度器将无法执行该优化。
+
+ <p>在这些机器上，不要使用<code>(cc0)</code>，而是使用寄存器来表示条件代码。
+如果该机器有一个特定的条件代码寄存器，则使用硬件寄存器。
+如果条件代码或者比较结果可以被放在任意的通用寄存器中，
+或者有多个条件寄存器，则使用伪寄存器。
+
+ <p><a name="index-prev_005fcc0_005fsetter-3583"></a><a name="index-next_005fcc0_005fuser-3584"></a>在一些机器上，所生成的分支指令类型可以依赖于条件代码所产生的方式；
+例如，在68k和SPARC上，直接从加法或减法指令来设置条件代码，
+这并不像测试指令那样，不会清除溢出位，
+所以不同的分支指令必须用于某些条件分支。对于使用<code>(cc0)</code>的机器，
+对条件代码的设置和使用必须是邻近的（只有<code>note</code> insn分隔），
+以允许在<code>cc_status</code>中的标记被使用。（参见条件码）并且，
+比较分支insn可以互相定位，通过使用函数<code>prev_cc0_setter</code>和<code>next_cc0_user</code>。
+
+ <p>但是，这在不使用<code>(cc0)</code>的机器上是不一样的。
+在这些机器上，并不会假设比较分支指令是邻近的，上面的方法不可用。
+替换的，我们使用条件码寄存器的机器模式来记录条件码寄存器的不同格式。
+
+ <p>用于存储条件码值的寄存器应该具有<code>MODE_CC</code>类别的一个机器模式。
+通常，其为<code>CCmode</code>。如果需要额外的机器模式
+（正如上面提到的SPARC中加法例子），
+则在<samp><var>machine</var><span class="file">-modes.def</span></samp>中定义它们（参见条件码）。
+还要定义<code>SELECT_CC_MODE</code>来选择给定比较操作数的机器模式。
+
+ <p>如果知道在RTL生成过程中，将需要不同的机器模式
+（例如，如果机器具有单独的比较指令，针对有符号和无符号），
+则它们可以在那个时候被指定。
+
+ <p>如果是在指令合成时需要不同的机器模式，
+则宏<code>SELECT_CC_MODE</code>用来确定哪个机器模式作为比较结果。
+指令模式应该使用该模式来书写。要支持上面讨论的SPARC的加法，
+我们具有指令模式
+
+<!-- @node Looping Patterns -->
+<!-- @section Defining Looping Instruction Patterns -->
+ </body></html>
+

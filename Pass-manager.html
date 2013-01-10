@@ -1,0 +1,91 @@
+<html lang="zh">
+<head>
+<title>Pass manager - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Passes.html#Passes" title="Passes">
+<link rel="prev" href="Gimplification-pass.html#Gimplification-pass" title="Gimplification pass">
+<link rel="next" href="Tree-SSA-passes.html#Tree-SSA-passes" title="Tree SSA passes">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Pass-manager"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Tree-SSA-passes.html#Tree-SSA-passes">Tree SSA passes</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Gimplification-pass.html#Gimplification-pass">Gimplification pass</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Passes.html#Passes">Passes</a>
+<hr>
+</div>
+
+<h3 class="section">9.3 过程管理器</h3>
+
+<!-- The pass manager is located in @file{passes.c}, @file{tree-optimize.c} -->
+<!-- and @file{tree-pass.h}. -->
+<!-- Its job is to run all of the individual passes in the correct order, -->
+<!-- and take care of standard bookkeeping that applies to every pass. -->
+<p>过程管理器在<samp><span class="file">passes.c</span></samp>，<samp><span class="file">tree-optimize.c</span></samp>和<samp><span class="file">tree-pass.h</span></samp>中。它的工作是按照正确的顺序来运行所有单独的过程，并且处理应用到每个过程的标准薄记（standard bookkeeping）。
+
+<!-- The theory of operation is that each pass defines a structure that -->
+<!-- represents everything we need to know about that pass-when it -->
+<!-- should be run, how it should be run, what intermediate language -->
+<!-- form or on-the-side data structures it needs.  We register the pass -->
+<!-- to be run in some particular order, and the pass manager arranges -->
+<!-- for everything to happen in the correct order. -->
+ <p>工作原理是每个过程定义了一个结构体，用来表示我们需要知道的关于该过程的每件事情——应该什时候运行，应该如何运行，需要什么中间语言或者附加的数据结构。我们按照某种特定的运行顺序来注册过程，过程管理器来安排所有的事情都按正确的顺序发生。
+
+<!-- The actuality doesn't completely live up to the theory at present. -->
+<!-- Command-line switches and @code{timevar_id_t} enumerations must still -->
+<!-- be defined elsewhere.  The pass manager validates constraints but does -->
+<!-- not attempt to (re-)generate data structures or lower intermediate -->
+<!-- language form based on the requirements of the next pass.  Nevertheless, -->
+<!-- what is present is useful, and a far sight better than nothing at all. -->
+ <p>目前实际的实现并不是完全做到了理论上所描述的。命令行开关和<code>timevar_id_t</code>枚举还必须定义在其它地方。过程管理器。。。不管怎样，现在的实现是有用的，比没有强。
+
+<!-- Each pass should have a unique name. -->
+<!-- Each pass may have its own dump file (for GCC debugging purposes). -->
+<!-- Passes with a name starting with a star do not dump anything. -->
+<!-- Sometimes passes are supposed to share a dump file / option name. -->
+<!-- To still give these unique names, you can use a prefix that is delimited -->
+<!-- by a space from the part that is used for the dump file / option name. -->
+<!-- E.g. When the pass name is "ud dce", the name used for dump file/options -->
+<!-- is "dce". -->
+ <p>每一个过程应该有一个唯一的名字。每一个过程可以有自己的倾印档 (为了除错用)。名字以星号开头的过程不会倾印任何东西。有时，不同的过程会需要共享倾印档或是选项名。
+为了让这些过程仍有唯一的名字，你可以用一个前缀加上空白，再加上倾印档或是选项名做为过程的名字。例如：当一个过程的名字是 "ud dce"，其倾印档或选项名即为 "dce"。
+
+<!-- TODO: describe the global variables set up by the pass manager, -->
+<!-- and a brief description of how a new pass should use it. -->
+<!-- I need to look at what info RTL passes use first@enddots{} -->
+ <p>TODO：描述由过程管理器建立的全局变量，以及对一个新的过程应该如何使用该变量。
+
+<!-- @node Tree SSA passes -->
+<!-- @section Tree SSA passes -->
+ </body></html>
+

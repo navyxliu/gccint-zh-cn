@@ -1,0 +1,609 @@
+<html lang="zh">
+<head>
+<title>Register Arguments - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Stack-and-Calling.html#Stack-and-Calling" title="Stack and Calling">
+<link rel="prev" href="Stack-Arguments.html#Stack-Arguments" title="Stack Arguments">
+<link rel="next" href="Scalar-Return.html#Scalar-Return" title="Scalar Return">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Register-Arguments"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Scalar-Return.html#Scalar-Return">Scalar Return</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Stack-Arguments.html#Stack-Arguments">Stack Arguments</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Stack-and-Calling.html#Stack-and-Calling">Stack and Calling</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.10.7 在寄存器中传递参数</h4>
+
+<p><a name="index-arguments-in-registers-4133"></a><a name="index-registers-arguments-4134"></a>
+<!-- This section describes the macros which let you control how various -->
+<!-- types of arguments are passed in registers or how they are arranged in -->
+<!-- the stack. -->
+这节描述了让你控制不同类型的参数如何在寄存器中传递，或者它们如何被安排在栈中的宏。
+
+<div class="defun">
+&mdash; Target Hook: rtx <b>TARGET_FUNCTION_ARG</b> (<var>cumulative_args_t ca, enum machine_mode mode, const_tree type, bool named</var>)<var><a name="index-TARGET_005fFUNCTION_005fARG-4135"></a></var><br>
+<blockquote><!-- Return an RTX indicating whether a function argument is passed in a -->
+     <!-- register and if so, which register. -->
+      <p>返回一个RTX表明函数的参数是否在寄存器中传递，以及在那个寄存器中传递。
+
+     <!-- The arguments are @var{ca}, which summarizes all the previous -->
+     <!-- arguments; @var{mode}, the machine mode of the argument; @var{type}, -->
+     <!-- the data type of the argument as a tree node or 0 if that is not known -->
+     <!-- (which happens for C support library functions); and @var{named}, -->
+     <!-- which is @code{true} for an ordinary argument and @code{false} for -->
+     <!-- nameless arguments that correspond to @samp{@dots{}} in the called -->
+     <!-- function's prototype.  @var{type} can be an incomplete type if a -->
+     <!-- syntax error has previously occurred. -->
+      <p>参数为<var>ca</var>，其总结了所有之前的参数；<var>mode</var>，参数的机器模式；<var>type</var>，参数的数据类型，作为一个树节点或者0如果不知道（这发生于C支持库的函数）；<var>named</var>，其为<code>true</code>对于普通参数，<code>false</code>对于无名参数，对应于在被调用函数原型中的&lsquo;<samp><span class="samp">...</span></samp>&rsquo;。<var>type</var>可以为一个不完全类型，如果之前产生了语法错误。
+
+     <!-- The return value of the expression is usually either a @code{reg} RTX for the -->
+     <!-- hard register in which to pass the argument, or zero to pass the -->
+     <!-- argument on the stack. -->
+      <p>返回值表达式通常为一个在其中传递参数的硬件寄存器的<code>reg</code> RTX，或者0，在栈上传递参数。
+
+     <!-- The value of the expression can also be a @code{parallel} RTX@.  This is -->
+     <!-- used when an argument is passed in multiple locations.  The mode of the -->
+     <!-- @code{parallel} should be the mode of the entire argument.  The -->
+     <!-- @code{parallel} holds any number of @code{expr_list} pairs; each one -->
+     <!-- describes where part of the argument is passed.  In each -->
+     <!-- @code{expr_list} the first operand must be a @code{reg} RTX for the hard -->
+     <!-- register in which to pass this part of the argument, and the mode of the -->
+     <!-- register RTX indicates how large this part of the argument is.  The -->
+     <!-- second operand of the @code{expr_list} is a @code{const_int} which gives -->
+     <!-- the offset in bytes into the entire argument of where this part starts. -->
+     <!-- As a special exception the first @code{expr_list} in the @code{parallel} -->
+     <!-- RTX may have a first operand of zero.  This indicates that the entire -->
+     <!-- argument is also stored on the stack. -->
+      <p>表达式的值也可以为一个<code>parallel</code> RTX。这用于当参数在多个位置传递的时候。<code>parallel</code>的机器模式应该为整个参数的机器模式。<code>parallel</code>保存了任意数目的<code>expr_list</code>对；每一个描述了该部分参数在哪里传递，<code>reg</code> RTX的机器模式指示了该部分的参数有多大。<code>expr_list</code>的第二个操作数为一个const_int，其给出了该部分起始处与整个参数的偏移字节数。作为一个特例，<code>parallel</code> RTX中的第一个<code>expr_list</code>的第一个操作数可以为0。
+这意味着整个参数也在栈中存储。
+
+     <!-- The last time this hook is called, it is called with @code{MODE == -->
+     <!-- VOIDmode}, and its result is passed to the @code{call} or @code{call_value} -->
+     <!-- pattern as operands 2 and 3 respectively. -->
+      <p>该宏最后一次被调用的时候，<code>MODE == VOIDmode</code>，并且结果被传递给<code>call</code>或者<code>call_value</code>指令模式，分别作为其操作数2和3。
+
+      <p><a name="index-g_t_0040file_007bstdarg_002eh_007d-and-register-arguments-4136"></a><!-- The usual way to make the ISO library @file{stdarg.h} work on a machine -->
+<!-- where some arguments are usually passed in registers, is to cause -->
+<!-- nameless arguments to be passed on the stack instead.  This is done -->
+<!-- by making @code{TARGET_FUNCTION_ARG} return 0 whenever @var{named} is 0. -->
+通常使ISO库<samp><span class="file">stdarg.h</span></samp>在一些参数在寄存器中传递的机器上工作的方法，是使无名参数在栈上传递。这通过使<code>TARGET_FUNCTION_ARG</code>当<var>named</var>为<code>false</code>时返回0来实现。
+
+     <!-- @cindex @code{TARGET_MUST_PASS_IN_STACK}, and @code{TARGET_FUNCTION_ARG} -->
+     <!-- @cindex @code{REG_PARM_STACK_SPACE}, and @code{TARGET_FUNCTION_ARG} -->
+     <!-- You may use the hook @code{targetm.calls.must_pass_in_stack} -->
+     <!-- in the definition of this macro to determine if this argument is of a -->
+     <!-- type that must be passed in the stack.  If @code{REG_PARM_STACK_SPACE} -->
+     <!-- is not defined and @code{TARGET_FUNCTION_ARG} returns nonzero for such an -->
+     <!-- argument, the compiler will abort.  If @code{REG_PARM_STACK_SPACE} is -->
+     <!-- defined, the argument will be computed in the stack and then loaded into -->
+     <!-- a register. -->
+      <p>你可以在该宏的定义中，使用钩子<code>targetm.calls.must_pass_in_stack</code>来确定该参数是否为一个必须在栈中传递的类型。如果<code>REG_PARM_STACK_SPACE</code>没有定义并且<code>TARGET_FUNCTION_ARG</code>对于这样的参数返回非0，则编译器会abort。如果<code>REG_PARM_STACK_SPACE</code>被定义，则参数会在栈中计算并且然后加载到寄存器中。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_MUST_PASS_IN_STACK</b> (<var>enum machine_mode mode, const_tree type</var>)<var><a name="index-TARGET_005fMUST_005fPASS_005fIN_005fSTACK-4137"></a></var><br>
+<blockquote><!-- This target hook should return @code{true} if we should not pass @var{type} -->
+     <!-- solely in registers.  The file @file{expr.h} defines a -->
+     <!-- definition that is usually appropriate, refer to @file{expr.h} for additional -->
+     <!-- documentation. -->
+      <p>该target钩子应该返回<code>true</code>，如果我们不应该只在寄存器中传递<var>type</var>。文件<samp><span class="file">expr.h</span></samp>中有一个定义，其通常是合适的，更多的文档请参考<samp><span class="file">expr.h</span></samp>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: rtx <b>TARGET_FUNCTION_INCOMING_ARG</b> (<var>cumulative_args_t ca, enum machine_mode mode, const_tree type, bool named</var>)<var><a name="index-TARGET_005fFUNCTION_005fINCOMING_005fARG-4138"></a></var><br>
+<blockquote><!-- Define this hook if the target machine has ``register windows'', so -->
+     <!-- that the register in which a function sees an arguments is not -->
+     <!-- necessarily the same as the one in which the caller passed the -->
+     <!-- argument. -->
+      <p>定义该钩子函数，如果target机器具有“寄存器窗口”，这样函数看到的参数寄存器没有必要与调用者传递参数的寄存器相同。
+
+     <!-- For such machines, @code{TARGET_FUNCTION_ARG} computes the register in which -->
+     <!-- the caller passes the value, and @code{TARGET_FUNCTION_INCOMING_ARG} should -->
+     <!-- be defined in a similar fashion to tell the function being called -->
+     <!-- where the arguments will arrive. -->
+      <p>对于这样的机器，<code>TARGET_FUNCTION_ARG</code>计算调用者传递值的寄存器，<code>TARGET_FUNCTION_INCOMING_ARG</code>应该按照类似的方式定义，来告诉被调用的函数参数在哪里到来。
+
+     <!-- If @code{TARGET_FUNCTION_INCOMING_ARG} is not defined, @code{TARGET_FUNCTION_ARG} -->
+     <!-- serves both purposes. -->
+      <p>如果<code>TARGET_FUNCTION_INCOMING_ARG</code>没有定义，则<code>TARGET_FUNCTION_ARG</code>具有这两种用途。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_ARG_PARTIAL_BYTES</b> (<var>cumulative_args_t cum, enum machine_mode mode, tree type, bool named</var>)<var><a name="index-TARGET_005fARG_005fPARTIAL_005fBYTES-4139"></a></var><br>
+<blockquote><!-- This target hook returns the number of bytes at the beginning of an -->
+     <!-- argument that must be put in registers.  The value must be zero for -->
+     <!-- arguments that are passed entirely in registers or that are entirely -->
+     <!-- pushed on the stack. -->
+      <p>该target钩子返回在参数的起始处必须被放入寄存器的字节数。值必须为0对于参数全部放在寄存器中或者全部压入栈中。
+
+     <!-- On some machines, certain arguments must be passed partially in -->
+     <!-- registers and partially in memory.  On these machines, typically the -->
+     <!-- first few words of arguments are passed in registers, and the rest -->
+     <!-- on the stack.  If a multi-word argument (a @code{double} or a -->
+     <!-- structure) crosses that boundary, its first few words must be passed -->
+     <!-- in registers and the rest must be pushed.  This macro tells the -->
+     <!-- compiler when this occurs, and how many bytes should go in registers. -->
+      <p>一些机器上，特定的参数必须部分在寄存器中传递并且部分在内存中传递。在这些机器上，通常参数的起始一些字在寄存器中传递，其余的在栈上。如果一个多字的参数（<code>double</code>或者结构体）跨越了边界，则其起始的一些字必须在寄存器中传递并且剩余的被压栈。该宏告诉编译器这种情况什么时候发生，以及多少字节应该在寄存器中。
+
+     <!-- @code{TARGET_FUNCTION_ARG} for these arguments should return the first -->
+     <!-- register to be used by the caller for this argument; likewise -->
+     <!-- @code{TARGET_FUNCTION_INCOMING_ARG}, for the called function. -->
+      <p><code>TARGET_FUNCTION_ARG</code>对于这些参数应该返回第一个寄存器，被调用者用于该参数；通常<code>TARGET_FUNCTION_INCOMING_ARG</code>用于被调用的函数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_PASS_BY_REFERENCE</b> (<var>cumulative_args_t *cum, enum machine_mode mode, const_tree type, bool named</var>)<var><a name="index-TARGET_005fPASS_005fBY_005fREFERENCE-4140"></a></var><br>
+<blockquote><!-- This target hook should return @code{true} if an argument at the -->
+     <!-- position indicated by @var{cum} should be passed by reference.  This -->
+     <!-- predicate is queried after target independent reasons for being -->
+     <!-- passed by reference, such as @code{TREE_ADDRESSABLE (type)}. -->
+      <p>该target钩子应该返回<code>true</code>，如果<var>cum</var>所指示的位置的参数应该按照引用的方式来传递。
+
+     <!-- If the hook returns true, a copy of that argument is made in memory and a -->
+     <!-- pointer to the argument is passed instead of the argument itself. -->
+     <!-- The pointer is passed in whatever way is appropriate for passing a pointer -->
+     <!-- to that type. -->
+      <p>如果钩子返回真，则参数的副本在内存中产生并且指向参数的指针被替代参数本身来传递。指针按照传递该类型的指针的方式来传递。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_CALLEE_COPIES</b> (<var>cumulative_args_t *cum, enum machine_mode mode, const_tree type, bool named</var>)<var><a name="index-TARGET_005fCALLEE_005fCOPIES-4141"></a></var><br>
+<blockquote><!-- The function argument described by the parameters to this hook is -->
+     <!-- known to be passed by reference.  The hook should return true if the -->
+     <!-- function argument should be copied by the callee instead of copied -->
+     <!-- by the caller. -->
+      <p>由该钩子的参数所描述的函数的参数已知为通过引用来传递的。钩子应该返回真，如果函数参数应该由被调用者复制，而不是调用者。
+
+     <!-- For any argument for which the hook returns true, if it can be -->
+     <!-- determined that the argument is not modified, then a copy need -->
+     <!-- not be generated. -->
+      <p>对于任何该钩子返回真的参数，如果其可以被确定参数没有被修改，则不需要产生副本。
+
+     <!-- The default version of this hook always returns false. -->
+      <p>该钩子的缺省版本总是返回假。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CUMULATIVE_ARGS</b><var><a name="index-CUMULATIVE_005fARGS-4142"></a></var><br>
+<blockquote><!-- A C type for declaring a variable that is used as the first argument of -->
+     <!-- @code{FUNCTION_ARG} and other related values.  For some target machines, -->
+     <!-- the type @code{int} suffices and can hold the number of bytes of -->
+     <!-- argument so far. -->
+     <!-- 一个C类型，用来声明一个变量，被用作@code{FUNCTION_ARG}的第一个参数以及其它相关的值。对于一些target机器，类型@code{int}可以满足并且目前可以保持参数的字节数。 -->
+      <p>A C type for declaring a variable that is used as the first argument
+of <code>TARGET_FUNCTION_ARG</code> and other related values.  For some
+target machines, the type <code>int</code> suffices and can hold the number
+of bytes of argument so far.
+
+     <!-- There is no need to record in @code{CUMULATIVE_ARGS} anything about the -->
+     <!-- arguments that have been passed on the stack.  The compiler has other -->
+     <!-- variables to keep track of that.  For target machines on which all -->
+     <!-- arguments are passed on the stack, there is no need to store anything in -->
+     <!-- @code{CUMULATIVE_ARGS}; however, the data structure must exist and -->
+     <!-- should not be empty, so use @code{int}. -->
+      <p>不需要在<code>CUMULATIVE_ARGS</code>中记录任何已经在栈中传递的参数的信息。
+编译器有其它变量来记录。对于所有参数在栈上传递的target机器，
+不需要在<code>CUMULATIVE_ARGS</code>中保存任何事物；然而，
+数据结构体必须存在并且不能为空，因此可以使用<code>int</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>OVERRIDE_ABI_FORMAT</b> (<var>fndecl</var>)<var><a name="index-OVERRIDE_005fABI_005fFORMAT-4143"></a></var><br>
+<blockquote><p>If defined, this macro is called before generating any code for a
+function, but after the <var>cfun</var> descriptor for the function has been
+created.  The back end may use this macro to update <var>cfun</var> to
+reflect an ABI other than that which would normally be used by default. 
+If the compiler is generating code for a compiler-generated function,
+<var>fndecl</var> may be <code>NULL</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INIT_CUMULATIVE_ARGS</b> (<var>cum, fntype, libname, fndecl, n_named_args</var>)<var><a name="index-INIT_005fCUMULATIVE_005fARGS-4144"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) for initializing the variable -->
+     <!-- @var{cum} for the state at the beginning of the argument list.  The -->
+     <!-- variable has type @code{CUMULATIVE_ARGS}.  The value of @var{fntype} -->
+     <!-- is the tree node for the data type of the function which will receive -->
+     <!-- the args, or 0 if the args are to a compiler support library function. -->
+     <!-- For direct calls that are not libcalls, @var{fndecl} contain the -->
+     <!-- declaration node of the function.  @var{fndecl} is also set when -->
+     <!-- @code{INIT_CUMULATIVE_ARGS} is used to find arguments for the function -->
+     <!-- being compiled.  @var{n_named_args} is set to the number of named -->
+     <!-- arguments, including a structure return address if it is passed as a -->
+     <!-- parameter, when making a call.  When processing incoming arguments, -->
+     <!-- @var{n_named_args} is set to @minus{}1. -->
+      <p>一条C语句（没有分号），用于初始化变量<var>cum</var>，在参数列表的起始处。
+变量具有类型<code>CUMULATIVE_ARGS</code>。<var>fntype</var>的值为树节点，
+为将要接受参数的函数的数据类型，或者为0如果参数是传给编译器支持库的函数。
+对于直接调用，没有libcall，<var>fndecl</var>包含了被编译的函数。
+<var>fndecl</var>在当<code>INIT_CUMULATIVE_ARGS</code>被用于查找被编译的函数的参数时，
+也被设置。<var>n_named_args</var>被设为命名参数的个数，包括一个结构体返回地址，
+如果其作为参数被传递。当处理流入参数时，<var>n_named_args</var>被设为-1。
+
+     <!-- When processing a call to a compiler support library function, -->
+     <!-- @var{libname} identifies which one.  It is a @code{symbol_ref} rtx which -->
+     <!-- contains the name of the function, as a string.  @var{libname} is 0 when -->
+     <!-- an ordinary C function call is being processed.  Thus, each time this -->
+     <!-- macro is called, either @var{libname} or @var{fntype} is nonzero, but -->
+     <!-- never both of them at once. -->
+      <p>当处理对编译器支持库的函数的调用时，<var>libname</var>指示了为哪一个函数。
+其为一个<code>symbol_ref</code> rtx，包含了函数的名字，作为字符串。<var>libname</var>为0，
+当一个普通C函数被处理。因此，每次该宏被调用时，
+或者<var>libname</var>或者<var>fntype</var>为非 0，但不会同时非0。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INIT_CUMULATIVE_LIBCALL_ARGS</b> (<var>cum, mode, libname</var>)<var><a name="index-INIT_005fCUMULATIVE_005fLIBCALL_005fARGS-4145"></a></var><br>
+<blockquote><!-- Like @code{INIT_CUMULATIVE_ARGS} but only used for outgoing libcalls, -->
+     <!-- it gets a @code{MODE} argument instead of @var{fntype}, that would be -->
+     <!-- @code{NULL}.  @var{indirect} would always be zero, too.  If this macro -->
+     <!-- is not defined, @code{INIT_CUMULATIVE_ARGS (cum, NULL_RTX, libname, -->
+     <!-- 0)} is used instead. -->
+      <p>类似于<code>INIT_CUMULATIVE_ARGS</code>，但只用于流出的libcall，
+其接受一个<code>MODE</code>参数而不是<var>fntype</var>。如果该宏没有定义，
+则使用<code>INIT_CUMULATIVE_ARGS (cum, NULL_RTX, libname,0)</code>来替代。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INIT_CUMULATIVE_INCOMING_ARGS</b> (<var>cum, fntype, libname</var>)<var><a name="index-INIT_005fCUMULATIVE_005fINCOMING_005fARGS-4146"></a></var><br>
+<blockquote><!-- Like @code{INIT_CUMULATIVE_ARGS} but overrides it for the purposes of -->
+     <!-- finding the arguments for the function being compiled.  If this macro is -->
+     <!-- undefined, @code{INIT_CUMULATIVE_ARGS} is used instead. -->
+      <p>类似于<code>INIT_CUMULATIVE_ARGS</code>，但会覆盖其，用于查找被编译的函数的参数。
+如果该宏没有被定义，则使用<code>INIT_CUMULATIVE_ARGS</code>来替代。
+
+     <!-- The value passed for @var{libname} is always 0, since library routines -->
+     <!-- with special calling conventions are never compiled with GCC@.  The -->
+     <!-- argument @var{libname} exists for symmetry with -->
+     <!-- @code{INIT_CUMULATIVE_ARGS}. -->
+     <!-- could use "this macro" in place of @code{INIT_CUMULATIVE_ARGS}, maybe. -->
+     <!-- mew 5feb93   i switched the order of the sentences.  -mew 10feb93 -->
+      <p>传递给<var>libname</var>的值总是为0，因为库函数具有特定的调用约定，从来不被GCC编译。
+参数<var>libname</var>的存在是为了与<code>INIT_CUMULATIVE_ARGS</code>对称。
+</p></blockquote></div>
+
+<!-- A C statement (sans semicolon) to update the summarizer variable -->
+<!-- @var{cum} to advance past an argument in the argument list.  The -->
+<!-- values @var{mode}, @var{type} and @var{named} describe that argument. -->
+<!-- Once this is done, the variable @var{cum} is suitable for analyzing -->
+<!-- the @emph{following} argument with @code{FUNCTION_ARG}, etc. -->
+<!-- 一条C语句（没有分号），来更新总结变量@var{cum}来在参数列表中前进一个参数。 -->
+<!-- 值@var{mode}, @var{type}和@var{named}描述了那个参数。一旦执行后， -->
+<!-- 变量@var{cum}便适合分析随后的参数。 -->
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_FUNCTION_ARG_ADVANCE</b> (<var>cumulative_args_t ca, enum machine_mode mode, const_tree type, bool named</var>)<var><a name="index-TARGET_005fFUNCTION_005fARG_005fADVANCE-4147"></a></var><br>
+<blockquote><p>This hook updates the summarizer variable pointed to by <var>ca</var> to
+advance past an argument in the argument list.  The values <var>mode</var>,
+<var>type</var> and <var>named</var> describe that argument.  Once this is done,
+the variable <var>cum</var> is suitable for analyzing the <em>following</em>
+argument with <code>TARGET_FUNCTION_ARG</code>, etc.
+
+     <!-- This hook need not do anything if the argument in question was passed -->
+     <!-- on the stack.  The compiler knows how to track the amount of stack space -->
+     <!-- used for arguments without any special help. -->
+      <p>该钩子函数不需要做任何事情，如果要询问的参数是在栈中传递的。
+编译器知道如何追踪用于参数的栈空间，不需要任何特殊帮助。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FUNCTION_ARG_OFFSET</b> (<var>mode, type</var>)<var><a name="index-FUNCTION_005fARG_005fOFFSET-4148"></a></var><br>
+<blockquote><p>If defined, a C expression that is the number of bytes to add to the
+offset of the argument passed in memory.  This is needed for the SPU,
+which passes <code>char</code> and <code>short</code> arguments in the preferred
+slot that is in the middle of the quad word instead of starting at the
+top. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FUNCTION_ARG_PADDING</b> (<var>mode, type</var>)<var><a name="index-FUNCTION_005fARG_005fPADDING-4149"></a></var><br>
+<blockquote><!-- If defined, a C expression which determines whether, and in which direction, -->
+     <!-- to pad out an argument with extra space.  The value should be of type -->
+     <!-- @code{enum direction}: either @code{upward} to pad above the argument, -->
+     <!-- @code{downward} to pad below, or @code{none} to inhibit padding. -->
+      <p>如果被定义，则为一个C表达式，其确定是否使用额外的空间来填补参数，
+以及按照什么方向。值应该为类型<code>enum direction</code>：或者<code>upward</code>，
+向上填补参数，<code>downward</code>向下，或者<code>none</code>不进行填补。
+
+     <!-- The @emph{amount} of padding is always just enough to reach the next -->
+     <!-- multiple of @code{TARGET_FUNCTION_ARG_BOUNDARY}; this macro does not -->
+     <!-- control it. -->
+     <!-- 填补的数目总是刚足够达到下一个@code{TARGET_FUNCTION_ARG_BOUNDARY}的倍数； -->
+     <!-- 该宏不进行控制。 -->
+      <p>The <em>amount</em> of padding is not controlled by this macro, but by the
+target hook <code>TARGET_FUNCTION_ARG_ROUND_BOUNDARY</code>.  It is
+always just enough to reach the next multiple of that boundary.
+
+     <!-- This macro has a default definition which is right for most systems. -->
+     <!-- For little-endian machines, the default is to pad upward.  For -->
+     <!-- big-endian machines, the default is to pad downward for an argument of -->
+     <!-- constant size shorter than an @code{int}, and upward otherwise. -->
+      <p>该宏具有一个缺省定义，其对大多数系统是对的。对于小端机器，缺省为向上填补。
+对于大端机器，缺省为如果参数的大小比<code>int</code>短则向下填补，否则向上。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>PAD_VARARGS_DOWN</b><var><a name="index-PAD_005fVARARGS_005fDOWN-4150"></a></var><br>
+<blockquote><!-- If defined, a C expression which determines whether the default -->
+     <!-- implementation of va_arg will attempt to pad down before reading the -->
+     <!-- next argument, if that argument is smaller than its aligned space as -->
+     <!-- controlled by @code{PARM_BOUNDARY}.  If this macro is not defined, all such -->
+     <!-- arguments are padded down if @code{BYTES_BIG_ENDIAN} is true. -->
+      <p>如果定义，则为一个C表达式，其确定va_arg的缺省实现是否会尝试向下填补，
+在读取下一个参数之前，如果那个参数比<code>PARM_BOUNDARY</code>所控制的对齐空间要小。
+如果该宏没有定义，则所有这样的参数都被向下填补，
+如果<code>BYTES_BIG_ENDIAN</code>为真。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>BLOCK_REG_PADDING</b> (<var>mode, type, first</var>)<var><a name="index-BLOCK_005fREG_005fPADDING-4151"></a></var><br>
+<blockquote><!-- Specify padding for the last element of a block move between registers and -->
+     <!-- memory.  @var{first} is nonzero if this is the only element.  Defining this -->
+     <!-- macro allows better control of register function parameters on big-endian -->
+     <!-- machines, without using @code{PARALLEL} rtl.  In particular, -->
+     <!-- @code{MUST_PASS_IN_STACK} need not test padding and mode of types in -->
+     <!-- registers, as there is no longer a "wrong" part of a register;  For example, -->
+     <!-- a three byte aggregate may be passed in the high part of a register if so -->
+     <!-- required. -->
+      <p>指定了寄存器和内存间移动的块的最后一个元素的填补。<var>first</var>为非0，
+如果这是唯一的元素。定义该宏，允许更好的处理在大端机器上寄存器函数参数，
+不使用<code>PARALLEL</code> rtl。特别的，
+<code>MUST_PASS_IN_STACK</code>不需要测试填充和寄存器中的类型的机器模式，
+因为在寄存器中不在有“错误的”部分；例如，
+一个三字节的聚合类型可能在寄存器的高部传递，如果需要的话。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FUNCTION_ARG_BOUNDARY</b> (<var>mode, type</var>)<var><a name="index-FUNCTION_005fARG_005fBOUNDARY-4152"></a></var><br>
+<blockquote><!-- If defined, a C expression that gives the alignment boundary, in bits, -->
+     <!-- of an argument with the specified mode and type.  If it is not defined, -->
+     <!-- @code{PARM_BOUNDARY} is used for all arguments. -->
+      <p>如果定义，为一个C表达式，其给出了指定的mode和type的参数的对齐边界位数。
+如果没有定义，则<code>PARM_BOUNDARY</code>用于所有参数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: unsigned int <b>TARGET_FUNCTION_ARG_BOUNDARY</b> (<var>enum machine_mode mode, const_tree type</var>)<var><a name="index-TARGET_005fFUNCTION_005fARG_005fBOUNDARY-4153"></a></var><br>
+<blockquote><p>This hook returns the alignment boundary, in bits, of an argument
+with the specified mode and type.  The default hook returns
+<code>PARM_BOUNDARY</code> for all arguments. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: unsigned int <b>TARGET_FUNCTION_ARG_ROUND_BOUNDARY</b> (<var>enum machine_mode mode, const_tree type</var>)<var><a name="index-TARGET_005fFUNCTION_005fARG_005fROUND_005fBOUNDARY-4154"></a></var><br>
+<blockquote><p>Normally, the size of an argument is rounded up to <code>PARM_BOUNDARY</code>,
+which is the default value for this hook.  You can define this hook to
+return a different value if an argument size must be rounded to a larger
+value. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FUNCTION_ARG_REGNO_P</b> (<var>regno</var>)<var><a name="index-FUNCTION_005fARG_005fREGNO_005fP-4155"></a></var><br>
+<blockquote><!-- A C expression that is nonzero if @var{regno} is the number of a hard -->
+     <!-- register in which function arguments are sometimes passed.  This does -->
+     <!-- @emph{not} include implicit arguments such as the static chain and -->
+     <!-- the structure-value address.  On many machines, no registers can be -->
+     <!-- used for this purpose since all function arguments are pushed on the -->
+     <!-- stack. -->
+      <p>一个C表达式，其为非0，如果<var>regno</var>为硬件寄存器的编号，
+函数参数有时在其中传递。这不包括隐式参数，像静态链和结构体值的地址。
+在许多机器上，没有寄存器可以用于此目的，因为所有函数参数都被压到栈上。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_SPLIT_COMPLEX_ARG</b> (<var>const_tree type</var>)<var><a name="index-TARGET_005fSPLIT_005fCOMPLEX_005fARG-4156"></a></var><br>
+<blockquote><!-- This hook should return true if parameter of type @var{type} are passed -->
+     <!-- as two scalar parameters.  By default, GCC will attempt to pack complex -->
+     <!-- arguments into the target's word size.  Some ABIs require complex arguments -->
+     <!-- to be split and treated as their individual components.  For example, on -->
+     <!-- AIX64, complex floats should be passed in a pair of floating point -->
+     <!-- registers, even though a complex float would fit in one 64-bit floating -->
+     <!-- point register. -->
+      <p>该钩子应该返回真，如果参数<var>type</var>作为两个标量参数传递。缺省的，
+GCC将尝试将复数参数打包成target的字大小。
+一些ABI要求复数参数要被拆分开并且作为单独的部分对待。例如，在AIX64上，
+复数浮点应该在一对浮点寄存器中传递，即使复数浮点可以适合一个64位的浮点寄存器。
+
+     <!-- The default value of this hook is @code{NULL}, which is treated as always -->
+     <!-- false. -->
+      <p>该钩子的缺省值为<code>NULL</code>，其被最为假来对待。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_BUILD_BUILTIN_VA_LIST</b> (<var>void</var>)<var><a name="index-TARGET_005fBUILD_005fBUILTIN_005fVA_005fLIST-4157"></a></var><br>
+<blockquote><!-- This hook returns a type node for @code{va_list} for the target. -->
+     <!-- The default version of the hook returns @code{void*}. -->
+      <p>该钩子返回一个target的<code>va_list</code>的类型节点。缺省版本返回<code>void*</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_ENUM_VA_LIST_P</b> (<var>int idx, const char **pname, tree *ptree</var>)<var><a name="index-TARGET_005fENUM_005fVA_005fLIST_005fP-4158"></a></var><br>
+<blockquote><p>This target hook is used in function <code>c_common_nodes_and_builtins</code>
+to iterate through the target specific builtin types for va_list. The
+variable <var>idx</var> is used as iterator. <var>pname</var> has to be a pointer
+to a <code>const char *</code> and <var>ptree</var> a pointer to a <code>tree</code> typed
+variable. 
+The arguments <var>pname</var> and <var>ptree</var> are used to store the result of
+this macro and are set to the name of the va_list builtin type and its
+internal type. 
+If the return value of this macro is zero, then there is no more element. 
+Otherwise the <var>IDX</var> should be increased for the next call of this
+macro to iterate through all types. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_FN_ABI_VA_LIST</b> (<var>tree fndecl</var>)<var><a name="index-TARGET_005fFN_005fABI_005fVA_005fLIST-4159"></a></var><br>
+<blockquote><p>This hook returns the va_list type of the calling convention specified by
+<var>fndecl</var>. 
+The default version of this hook returns <code>va_list_type_node</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_CANONICAL_VA_LIST_TYPE</b> (<var>tree type</var>)<var><a name="index-TARGET_005fCANONICAL_005fVA_005fLIST_005fTYPE-4160"></a></var><br>
+<blockquote><p>This hook returns the va_list type of the calling convention specified by the
+type of <var>type</var>. If <var>type</var> is not a valid va_list type, it returns
+<code>NULL_TREE</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_FN_ABI_VA_LIST</b> (<var>tree fndecl</var>)<var><a name="index-TARGET_005fFN_005fABI_005fVA_005fLIST-4161"></a></var><br>
+<blockquote><p>This hook returns the va_list type of the calling convention specified by
+<var>fndecl</var>. 
+The default version of this hook returns <code>va_list_type_node</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_CANONICAL_VA_LIST_TYPE</b> (<var>tree type</var>)<var><a name="index-TARGET_005fCANONICAL_005fVA_005fLIST_005fTYPE-4162"></a></var><br>
+<blockquote><p>This hook returns the va_list type of the calling convention specified by the
+type of <var>type</var>. If <var>type</var> is not a valid va_list type, it returns
+<code>NULL_TREE</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_GIMPLIFY_VA_ARG_EXPR</b> (<var>tree valist, tree type, gimple_seq *pre_p, gimple_seq *post_p</var>)<var><a name="index-TARGET_005fGIMPLIFY_005fVA_005fARG_005fEXPR-4163"></a></var><br>
+<blockquote><!-- This hook performs target-specific gimplification of -->
+     <!-- @code{VA_ARG_EXPR}.  The first two parameters correspond to the -->
+     <!-- arguments to @code{va_arg}; the latter two are as in -->
+     <!-- @code{gimplify.c:gimplify_expr}. -->
+      <p>该钩子执行target特定的<code>VA_ARG_EXPR</code>的gimplification。
+前两个参数对应于<code>va_arg</code>的参数；后两个作为<code>gimplify.c:gimplify_expr</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_VALID_POINTER_MODE</b> (<var>enum machine_mode mode</var>)<var><a name="index-TARGET_005fVALID_005fPOINTER_005fMODE-4164"></a></var><br>
+<blockquote><!-- Define this to return nonzero if the port can handle pointers -->
+     <!-- with machine mode @var{mode}.  The default version of this -->
+     <!-- hook returns true for both @code{ptr_mode} and @code{Pmode}. -->
+      <p>定义该钩子返回非0，如果port可以处理具有机器模式<var>mode</var>的指针。
+缺省版本对于<code>ptr_mode</code>和<code>Pmode</code>都返回真。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_REF_MAY_ALIAS_ERRNO</b> (<var>struct ao_ref_s *ref</var>)<var><a name="index-TARGET_005fREF_005fMAY_005fALIAS_005fERRNO-4165"></a></var><br>
+<blockquote><p>Define this to return nonzero if the memory reference <var>ref</var>  may alias with the system C library errno location.  The default  version of this hook assumes the system C library errno location  is either a declaration of type int or accessed by dereferencing  a pointer to int. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_SCALAR_MODE_SUPPORTED_P</b> (<var>enum machine_mode mode</var>)<var><a name="index-TARGET_005fSCALAR_005fMODE_005fSUPPORTED_005fP-4166"></a></var><br>
+<blockquote><!-- Define this to return nonzero if the port is prepared to handle -->
+     <!-- insns involving scalar mode @var{mode}.  For a scalar mode to be -->
+     <!-- considered supported, all the basic arithmetic and comparisons -->
+     <!-- must work. -->
+      <p>定义该钩子来返回非0，如果port准备好了处理涉及标量机器模式<var>mode</var>的insn。
+对于被考虑支持的一个标量机器模式，所有的基本算术和比较都必须能工作。
+
+     <!-- The default version of this hook returns true for any mode -->
+     <!-- required to handle the basic C types (as defined by the port). -->
+     <!-- Included here are the double-word arithmetic supported by the -->
+     <!-- code in @file{optabs.c}. -->
+      <p>缺省版本返回真，对于任何要求处理基本C类型（被port定义）的机器模式。
+包括在<samp><span class="file">optabs.c</span></samp>中的代码支持的双字算术。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_VECTOR_MODE_SUPPORTED_P</b> (<var>enum machine_mode mode</var>)<var><a name="index-TARGET_005fVECTOR_005fMODE_005fSUPPORTED_005fP-4167"></a></var><br>
+<blockquote><!-- Define this to return nonzero if the port is prepared to handle -->
+     <!-- insns involving vector mode @var{mode}.  At the very least, it -->
+     <!-- must have move patterns for this mode. -->
+      <p>定义该钩子来返回非0，如果port准备好了处理涉及向量模式<var>mode</var>的insn。
+最起码，其必须有该机器模式的move指令模式。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_ARRAY_MODE_SUPPORTED_P</b> (<var>enum machine_mode mode, unsigned HOST_WIDE_INT nelems</var>)<var><a name="index-TARGET_005fARRAY_005fMODE_005fSUPPORTED_005fP-4168"></a></var><br>
+<blockquote><p>Return true if GCC should try to use a scalar mode to store an array
+of <var>nelems</var> elements, given that each element has mode <var>mode</var>. 
+Returning true here overrides the usual <code>MAX_FIXED_MODE</code> limit
+and allows GCC to use any defined integer mode.
+
+      <p>One use of this hook is to support vector load and store operations
+that operate on several homogeneous vectors.  For example, ARM NEON
+has operations like:
+
+     <pre class="smallexample">          int8x8x3_t vld3_s8 (const int8_t *)
+</pre>
+      <p>where the return type is defined as:
+
+     <pre class="smallexample">          typedef struct int8x8x3_t
+          {
+            int8x8_t val[3];
+          } int8x8x3_t;
+</pre>
+      <p>If this hook allows <code>val</code> to have a scalar mode, then
+<code>int8x8x3_t</code> can have the same mode.  GCC can then store
+<code>int8x8x3_t</code>s in registers rather than forcing them onto the stack. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_SMALL_REGISTER_CLASSES_FOR_MODE_P</b> (<var>enum machine_mode mode</var>)<var><a name="index-TARGET_005fSMALL_005fREGISTER_005fCLASSES_005fFOR_005fMODE_005fP-4169"></a></var><br>
+<blockquote><p>Define this to return nonzero for machine modes for which the port has
+small register classes.  If this target hook returns nonzero for a given
+<var>mode</var>, the compiler will try to minimize the lifetime of registers
+in <var>mode</var>.  The hook may be called with <code>VOIDmode</code> as argument. 
+In this case, the hook is expected to return nonzero if it returns nonzero
+for any mode.
+
+      <p>On some machines, it is risky to let hard registers live across arbitrary
+insns.  Typically, these machines have instructions that require values
+to be in specific registers (like an accumulator), and reload will fail
+if the required hard register is used for another purpose across such an
+insn.
+
+      <p>Passes before reload do not know which hard registers will be used
+in an instruction, but the machine modes of the registers set or used in
+the instruction are already known.  And for some machines, register
+classes are small for, say, integer registers but not for floating point
+registers.  For example, the AMD x86-64 architecture requires specific
+registers for the legacy x86 integer instructions, but there are many
+SSE registers for floating point operations.  On such targets, a good
+strategy may be to return nonzero from this hook for <code>INTEGRAL_MODE_P</code>
+machine modes but zero for the SSE register classes.
+
+      <p>The default version of this hook returns false for any mode.  It is always
+safe to redefine this hook to return with a nonzero value.  But if you
+unnecessarily define it, you will reduce the amount of optimizations
+that can be performed in some cases.  If you do not define this hook
+to return a nonzero value when it is required, the compiler will run out
+of spill registers and print a fatal error message. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: unsigned int <b>TARGET_FLAGS_REGNUM</b><var><a name="index-TARGET_005fFLAGS_005fREGNUM-4170"></a></var><br>
+<blockquote><p>If the target has a dedicated flags register, and it needs to use the post-reload comparison elimination pass, then this value should be set appropriately. 
+</p></blockquote></div>
+
+<!-- @node Scalar Return -->
+<!-- @subsection How Scalar Function Values Are Returned -->
+ </body></html>
+

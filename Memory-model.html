@@ -1,0 +1,89 @@
+<html lang="zh">
+<head>
+<title>Memory model - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Tree-SSA.html#Tree-SSA" title="Tree SSA">
+<link rel="prev" href="Alias-analysis.html#Alias-analysis" title="Alias analysis">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Memory-model"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Alias-analysis.html#Alias-analysis">Alias analysis</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Tree-SSA.html#Tree-SSA">Tree SSA</a>
+<hr>
+</div>
+
+<h3 class="section">13.5 内存模型</h3>
+
+<p><a name="index-memory-model-3119"></a>
+<!-- The memory model used by the middle-end models that of the C/C++ -->
+<!-- languages.  The middle-end has the notion of an effective type -->
+<!-- of a memory region which is used for type-based alias analysis. -->
+
+ <p>中端（middle-end）使用的是C/C++的内存模型。一块内存区域可能对应一个有效的类型（effective type），这种类型的概念被用于基于类型的别名分析（TBAA）。
+
+<!-- The following is a refinement of ISO C99 6.5/6, clarifying the block copy case -->
+<!-- to follow common sense and extending the concept of a dynamic effective -->
+<!-- type to objects with a declared type as required for C++. -->
+ <p>下面是ISO C99 6.5/6的一个改进，澄清了块拷贝（block copy）操作以符合人们的常规理解，并且扩展了动态有效类型（dynamic effective type）的概念，包含了C++中带声明类型的对象。
+
+<pre class="smallexample">     <!-- The effective type of an object for an access to its stored value is -->
+     <!-- the declared type of the object or the effective type determined by -->
+     <!-- a previous store to it.  If a value is stored into an object through -->
+     <!-- an lvalue having a type that is not a character type, then the -->
+     <!-- type of the lvalue becomes the effective type of the object for that -->
+     <!-- access and for subsequent accesses that do not modify the stored value. -->
+     
+     当访问一个对象的值时，其有效类型是这个对象声明的类型，或是上次存储的值的有效类型。如果一个值是通过一个非字节类型（character type）的lvalue保存在对象中的，那么从这次访问开始直到对象的值被修改之前，对象的有效类型与lvalue相同。
+     
+     <!-- If a value is copied into an object using @code{memcpy} or @code{memmove}, -->
+     <!-- or is copied as an array of character type, then the effective type -->
+     <!-- of the modified object for that access and for subsequent accesses that -->
+     <!-- do not modify the value is undetermined.  For all other accesses to an -->
+     <!-- object, the effective type of the object is simply the type of the -->
+     <!-- lvalue used for the access. -->
+     
+     如果一个值是通过<code>memcpy</code>或<code>memmove</code>复制给对象的，或者是通过字节类型数组复制的，那么从被修改开始到下一次被修改之前，对象的有效类型是不确定的（undetermined）。其它所有对一个对象的访问，其有效类型都是用于访问的lvalue的类型。
+     
+</pre>
+ <!-- Copyright (c) 2006, 2007, 2008 Free Software Foundation, Inc. -->
+<!-- Free Software Foundation, Inc. -->
+<!-- This is part of the GCC manual. -->
+<!-- For copying conditions, see the file gcc.texi. -->
+<!--  -->
+<!-- Loop Representation -->
+<!--  -->
+<!-- @node Loop Analysis and Representation -->
+<!-- @chapter Analysis and Representation of Loops -->
+ </body></html>
+

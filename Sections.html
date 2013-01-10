@@ -1,0 +1,570 @@
+<html lang="zh">
+<head>
+<title>Sections - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Target-Macros.html#Target-Macros" title="Target Macros">
+<link rel="prev" href="Scheduling.html#Scheduling" title="Scheduling">
+<link rel="next" href="PIC.html#PIC" title="PIC">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Sections"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="PIC.html#PIC">PIC</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Scheduling.html#Scheduling">Scheduling</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Target-Macros.html#Target-Macros">Target Macros</a>
+<hr>
+</div>
+
+<h3 class="section">17.19 将输出划分到section中（Texts, Data, <small class="dots">...</small>）</h3>
+
+<!-- the above section title is WAY too long.  maybe cut the part between -->
+<!-- the (...)?  -mew 10feb93 -->
+<!-- An object file is divided into sections containing different types of -->
+<!-- data.  In the most common case, there are three sections: the @dfn{text -->
+<!-- section}, which holds instructions and read-only data; the @dfn{data -->
+<!-- section}, which holds initialized writable data; and the @dfn{bss -->
+<!-- section}, which holds uninitialized data.  Some systems have other kinds -->
+<!-- of sections. -->
+<p>目标文件被划分到包含不同类型数据的section中。大多数情况下，
+有三个section：<dfn>text section</dfn>，存放指令和只读数据；<dfn>data section</dfn>，
+存放初始化的可写数据；<dfn>bss section</dfn>，存放未初始化的数据。
+一些系统还具有其它类型的section。
+
+<!-- @file{varasm.c} provides several well-known sections, such as -->
+<!-- @code{text_section}, @code{data_section} and @code{bss_section}. -->
+<!-- The normal way of controlling a @code{@var{foo}_section} variable -->
+<!-- is to define the associated @code{@var{FOO}_SECTION_ASM_OP} macro, -->
+<!-- as described below.  The macros are only read once, when @file{varasm.c} -->
+<!-- initializes itself, so their values must be run-time constants. -->
+<!-- They may however depend on command-line flags. -->
+ <p><samp><span class="file">varasm.c</span></samp>提供了一些已知的section，例如<code>text_section</code>,
+<code>data_section</code>和<code>bss_section</code>。
+通常控制一个<var>foo</var><code>_section</code>变量的方式是定义一个相关联的
+宏<var>FOO</var><code>_SECTION_ASM_OP</code>，正如下面将要描述的。
+宏只在<samp><span class="file">varasm.c</span></samp>初始化时被读一次，
+所以它们的值必须为运行时常量。不过它们可以依赖于命令行标记。
+
+<!-- @emph{Note:} Some run-time files, such @file{crtstuff.c}, also make -->
+<!-- use of the @code{@var{FOO}_SECTION_ASM_OP} macros, and expect them -->
+<!-- to be string literals. -->
+ <p>注意：一些运行时文件，例如<samp><span class="file">crtstuff.c</span></samp>，
+也使用<var>FOO</var><code>_SECTION_ASM_OP</code>宏，并且将它们作为字符串文字。
+
+<!-- Some assemblers require a different string to be written every time a -->
+<!-- section is selected.  If your assembler falls into this category, you -->
+<!-- should define the @code{TARGET_ASM_INIT_SECTIONS} hook and use -->
+<!-- @code{get_unnamed_section} to set up the sections. -->
+ <p>一些汇编器要求每次选择section时，都要写入一个不同的字符串。
+如果你的汇编器属于这类，
+你应该定义<code>TARGET_ASM_INIT_SECTIONS</code>钩子并使用
+<code>get_unnamed_section</code>来建立section。
+
+<!-- You must always create a @code{text_section}, either by defining -->
+<!-- @code{TEXT_SECTION_ASM_OP} or by initializing @code{text_section} -->
+<!-- in @code{TARGET_ASM_INIT_SECTIONS}.  The same is true of -->
+<!-- @code{data_section} and @code{DATA_SECTION_ASM_OP}.  If you do not -->
+<!-- create a distinct @code{readonly_data_section}, the default is to -->
+<!-- reuse @code{text_section}. -->
+ <p>你必须总是创建一个<code>text_section</code>，
+或者通过定义<code>TEXT_SECTION_ASM_OP</code>，
+或者通过在<code>TARGET_ASM_INIT_SECTIONS</code>中初始化<code>text_section</code>。
+同样对于<code>data_section</code>和<code>DATA_SECTION_ASM_OP</code>。
+如果你没有创建一个独立的<code>readonly_data_section</code>，
+则缺省使用<code>text_section</code>。
+
+<!-- All the other @file{varasm.c} sections are optional, and are null -->
+<!-- if the target does not provide them. -->
+ <p>所有其他<samp><span class="file">varasm.c</span></samp> section都是可选的，如果target不提供则为null。
+
+<div class="defun">
+&mdash; Macro: <b>TEXT_SECTION_ASM_OP</b><var><a name="index-TEXT_005fSECTION_005fASM_005fOP-4409"></a></var><br>
+<blockquote><!-- A C expression whose value is a string, including spacing, containing the -->
+     <!-- assembler operation that should precede instructions and read-only data. -->
+     <!-- Normally @code{"\t.text"} is right. -->
+      <p>一个C表达式，值为一个字符串，包括空格，
+其包含了在指令和只读数据之前的汇编操作。通常为<code>"\t.text"</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>HOT_TEXT_SECTION_NAME</b><var><a name="index-HOT_005fTEXT_005fSECTION_005fNAME-4410"></a></var><br>
+<blockquote><!-- If defined, a C string constant for the name of the section containing most -->
+     <!-- frequently executed functions of the program.  If not defined, GCC will provide -->
+     <!-- a default definition if the target supports named sections. -->
+      <p>如果定义，则为一个C字符串常量，为包含最频繁被执行的程序的函数的section名字。
+如果没有定义，GCC将会提供一个缺省定义，如果target支持命名section。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>UNLIKELY_EXECUTED_TEXT_SECTION_NAME</b><var><a name="index-UNLIKELY_005fEXECUTED_005fTEXT_005fSECTION_005fNAME-4411"></a></var><br>
+<blockquote><!-- If defined, a C string constant for the name of the section containing unlikely -->
+     <!-- executed functions in the program. -->
+      <p>如果定义，则为一个C字符串常量，为包含程序中不太可能被执行的函数的section名字。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DATA_SECTION_ASM_OP</b><var><a name="index-DATA_005fSECTION_005fASM_005fOP-4412"></a></var><br>
+<blockquote><!-- A C expression whose value is a string, including spacing, containing the -->
+     <!-- assembler operation to identify the following data as writable initialized -->
+     <!-- data.  Normally @code{"\t.data"} is right. -->
+      <p>一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为可写的初始化数据的汇编操作。通常为<code>"\t.data"</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SDATA_SECTION_ASM_OP</b><var><a name="index-SDATA_005fSECTION_005fASM_005fOP-4413"></a></var><br>
+<blockquote><!-- If defined, a C expression whose value is a string, including spacing, -->
+     <!-- containing the assembler operation to identify the following data as -->
+     <!-- initialized, writable small data. -->
+      <p>如果定义，则为一个C表达式，值为一个字符串，包括空格，其包含了标识后续的数据为初始化的，可写的小数据的汇编操作。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>READONLY_DATA_SECTION_ASM_OP</b><var><a name="index-READONLY_005fDATA_005fSECTION_005fASM_005fOP-4414"></a></var><br>
+<blockquote><!-- A C expression whose value is a string, including spacing, containing the -->
+     <!-- assembler operation to identify the following data as read-only initialized -->
+     <!-- data. -->
+      <p>一个C表达式，值为一个字符串，包括空格，其包含了标识后续的数据为只读的初始化数据的汇编操作。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>BSS_SECTION_ASM_OP</b><var><a name="index-BSS_005fSECTION_005fASM_005fOP-4415"></a></var><br>
+<blockquote><!-- If defined, a C expression whose value is a string, including spacing, -->
+     <!-- containing the assembler operation to identify the following data as -->
+     <!-- uninitialized global data.  If not defined, and -->
+     <!-- @code{ASM_OUTPUT_ALIGNED_BSS} not defined, -->
+     <!-- uninitialized global data will be output in the data section if -->
+     <!-- @option{-fno-common} is passed, otherwise @code{ASM_OUTPUT_COMMON} will be -->
+     <!-- used. -->
+      <p>如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为未初始化的，global数据的汇编操作。如果没有定义，
+并且<code>ASM_OUTPUT_ALIGNED_BSS</code>也都没有定义，
+则为初始化的global数据将被输出在data section，如果使用了<samp><span class="option">-fno-common</span></samp>，否则将使用<code>ASM_OUTPUT_COMMON</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SBSS_SECTION_ASM_OP</b><var><a name="index-SBSS_005fSECTION_005fASM_005fOP-4416"></a></var><br>
+<blockquote><!-- If defined, a C expression whose value is a string, including spacing, -->
+     <!-- containing the assembler operation to identify the following data as -->
+     <!-- uninitialized, writable small data. -->
+      <p>如果定义，则为一个C表达式，值为一个字符串，包括空格，其包含了标识后续的数据为未初始化的，可写的小数据的汇编操作。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TLS_COMMON_ASM_OP</b><var><a name="index-TLS_005fCOMMON_005fASM_005fOP-4417"></a></var><br>
+<blockquote><!-- If defined, a C expression whose value is a string containing the -->
+     <!-- assembler operation to identify the following data as thread-local -->
+     <!-- common data.  The default is @code{".tls_common"}. -->
+      <p>如果定义，则为一个C表达式，值为一个字符串，包含用来验证接下来的数据是线形局部共有的汇编操作。缺省值是 <code>".tls_common"</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TLS_SECTION_ASM_FLAG</b><var><a name="index-TLS_005fSECTION_005fASM_005fFLAG-4418"></a></var><br>
+<blockquote><p>If defined, a C expression whose value is a character constant
+containing the flag used to mark a section as a TLS section.  The
+default is <code>'T'</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INIT_SECTION_ASM_OP</b><var><a name="index-INIT_005fSECTION_005fASM_005fOP-4419"></a></var><br>
+<blockquote><!-- If defined, a C expression whose value is a string, including spacing, -->
+     <!-- containing the assembler operation to identify the following data as -->
+     <!-- initialization code.  If not defined, GCC will assume such a section does -->
+     <!-- not exist.  This section has no corresponding @code{init_section} -->
+     <!-- variable; it is used entirely in runtime code. -->
+      <p>如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为初始化代码的汇编操作。如果没有定义，
+GCC将假设这样的section不存在。该section没有相应的<code>init_section</code>变量；
+其完全在运行时代码中使用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FINI_SECTION_ASM_OP</b><var><a name="index-FINI_005fSECTION_005fASM_005fOP-4420"></a></var><br>
+<blockquote><!-- If defined, a C expression whose value is a string, including spacing, -->
+     <!-- containing the assembler operation to identify the following data as -->
+     <!-- finalization code.  If not defined, GCC will assume such a section does -->
+     <!-- not exist.  This section has no corresponding @code{fini_section} -->
+     <!-- variable; it is used entirely in runtime code. -->
+      <p>如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为结束代码的汇编操作。如果没有定义，
+GCC将假设这样的section不存在。该section没有相应的<code>fini_section</code>变量；
+其完全在运行时代码中使用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>INIT_ARRAY_SECTION_ASM_OP</b><var><a name="index-INIT_005fARRAY_005fSECTION_005fASM_005fOP-4421"></a></var><br>
+<blockquote><!-- If defined, a C expression whose value is a string, including spacing, -->
+     <!-- containing the assembler operation to identify the following data as -->
+     <!-- part of the @code{.init_array} (or equivalent) section.  If not -->
+     <!-- defined, GCC will assume such a section does not exist.  Do not define -->
+     <!-- both this macro and @code{INIT_SECTION_ASM_OP}. -->
+      <p>如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为<code>.init_array</code>（或相当的） section的一部分的
+汇编操作。如果没有定义，GCC将假设这样的section不存在。
+不要同时定义该宏和<code>INIT_SECTION_ASM_OP</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FINI_ARRAY_SECTION_ASM_OP</b><var><a name="index-FINI_005fARRAY_005fSECTION_005fASM_005fOP-4422"></a></var><br>
+<blockquote><!-- If defined, a C expression whose value is a string, including spacing, -->
+     <!-- containing the assembler operation to identify the following data as -->
+     <!-- part of the @code{.fini_array} (or equivalent) section.  If not -->
+     <!-- defined, GCC will assume such a section does not exist.  Do not define -->
+     <!-- both this macro and @code{FINI_SECTION_ASM_OP}. -->
+      <p>如果定义，则为一个C表达式，值为一个字符串，包括空格，
+其包含了标识后续的数据为<code>.fini_array</code>（或相当的） section的一部分的
+汇编操作。如果没有定义，GCC将假设这样的section不存在。
+不要同时定义该宏和<code>FINI_SECTION_ASM_OP</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CRT_CALL_STATIC_FUNCTION</b> (<var>section_op, function</var>)<var><a name="index-CRT_005fCALL_005fSTATIC_005fFUNCTION-4423"></a></var><br>
+<blockquote><!-- If defined, an ASM statement that switches to a different section -->
+     <!-- via @var{section_op}, calls @var{function}, and switches back to -->
+     <!-- the text section.  This is used in @file{crtstuff.c} if -->
+     <!-- @code{INIT_SECTION_ASM_OP} or @code{FINI_SECTION_ASM_OP} to calls -->
+     <!-- to initialization and finalization functions from the init and fini -->
+     <!-- sections.  By default, this macro uses a simple function call.  Some -->
+     <!-- ports need hand-crafted assembly code to avoid dependencies on -->
+     <!-- registers initialized in the function prologue or to ensure that -->
+     <!-- constant pools don't end up too far way in the text section. -->
+      <p>如果定义，为一个ASM语句，其通过<var>section_op</var>来切换到不同的section，
+调用<var>function</var>，然后切换回到text section。这在<samp><span class="file">crtstuff.c</span></samp>中使用，
+如果<code>INIT_SECTION_ASM_OP</code>或<code>FINI_SECTION_ASM_OP</code>从init和
+fini section中调用初始化和结束函数。缺省下，该宏使用简单的函数调用。
+一些port需要手工的代码来避免在函数前奏中对寄存器初始化的依赖，
+或者确保常量池在text section中不要结束的太远。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_LIBGCC_SDATA_SECTION</b><var><a name="index-TARGET_005fLIBGCC_005fSDATA_005fSECTION-4424"></a></var><br>
+<blockquote><!-- If defined, a string which names the section into which small -->
+     <!-- variables defined in crtstuff and libgcc should go.  This is useful -->
+     <!-- when the target has options for optimizing access to small data, and -->
+     <!-- you want the crtstuff and libgcc routines to be conservative in what -->
+     <!-- they expect of your application yet liberal in what your application -->
+     <!-- expects.  For example, for targets with a @code{.sdata} section (like -->
+     <!-- MIPS), you could compile crtstuff with @code{-G 0} so that it doesn't -->
+     <!-- require small data support from your application, but use this macro -->
+     <!-- to put small data into @code{.sdata} so that your application can -->
+     <!-- access these variables whether it uses small data or not. -->
+      <p>如果定义，则为一个字符串，
+其命名了在crtstuff和libgcc中定义的小变量应该存放的section。
+这在target具有选项来优化访问小数据的时候很有用。例如，
+对于具有<code>.sdata</code> section（像MIPS）的target，
+你可以使用<code>-G 0</code>来编译crtstuff，使得其不需要小数据的支持，
+但是使用该宏将小数据放到<code>.sdata</code>中，
+这样你的应用程序不管是否使用小数据，都可以访问到这些变量。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>FORCE_CODE_SECTION_ALIGN</b><var><a name="index-FORCE_005fCODE_005fSECTION_005fALIGN-4425"></a></var><br>
+<blockquote><!-- If defined, an ASM statement that aligns a code section to some -->
+     <!-- arbitrary boundary.  This is used to force all fragments of the -->
+     <!-- @code{.init} and @code{.fini} sections to have to same alignment -->
+     <!-- and thus prevent the linker from having to add any padding. -->
+      <p>如果定义，则为一个ASM语句，其将code section对齐到某个任意的边界。
+这用于使得所有<code>.init</code>和<code>.fini</code> section的fragment都具有同样的对齐，
+这样就可以阻止连接器增加任何padding。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>JUMP_TABLES_IN_TEXT_SECTION</b><var><a name="index-JUMP_005fTABLES_005fIN_005fTEXT_005fSECTION-4426"></a></var><br>
+<blockquote><!-- Define this macro to be an expression with a nonzero value if jump -->
+     <!-- tables (for @code{tablejump} insns) should be output in the text -->
+     <!-- section, along with the assembler instructions.  Otherwise, the -->
+     <!-- readonly data section is used. -->
+      <p>定义该宏为一个表达式，具有非零值，如果跳转表（对于<code>tablejump</code> insn）
+应该被输出到text secton中，以及汇编指令。否则，使用只读data section。
+
+     <!-- This macro is irrelevant if there is no separate readonly data section. -->
+      <p>如果没有独立的只读data section，则该宏不相关。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_INIT_SECTIONS</b> (<var>void</var>)<var><a name="index-TARGET_005fASM_005fINIT_005fSECTIONS-4427"></a></var><br>
+<blockquote><!-- Define this hook if you need to do something special to set up the -->
+     <!-- @file{varasm.c} sections, or if your target has some special sections -->
+     <!-- of its own that you need to create. -->
+      <p>定义该钩子，如果你需要在建立<samp><span class="file">varasm.c</span></samp> section时做一些特殊的处理，
+或者你的target具有一些特殊的section需要创建。
+
+     <!-- GCC calls this hook after processing the command line, but before writing -->
+     <!-- any assembly code, and before calling any of the section-returning hooks -->
+     <!-- described below. -->
+      <p>GCC在处理完命令行之后，在写任何汇编代码之前，
+并在调用任何下面描述的返回section的钩子之前调用该钩子。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: int <b>TARGET_ASM_RELOC_RW_MASK</b> (<var>void</var>)<var><a name="index-TARGET_005fASM_005fRELOC_005fRW_005fMASK-4428"></a></var><br>
+<blockquote><!-- Return a mask describing how relocations should be treated when -->
+     <!-- selecting sections.  Bit 1 should be set if global relocations -->
+     <!-- should be placed in a read-write section; bit 0 should be set if -->
+     <!-- local relocations should be placed in a read-write section. -->
+      <p>返回一个掩码，用来描述当选择section时，应该如何对待重定位。
+如果全局重定位应该放在读写section中，则应该设置位1；
+如果局部重定位应该被放在读写section中，则应该设置位0。
+
+     <!-- The default version of this function returns 3 when @option{-fpic} -->
+     <!-- is in effect, and 0 otherwise.  The hook is typically redefined -->
+     <!-- when the target cannot support (some kinds of) dynamic relocations -->
+     <!-- in read-only sections even in executables. -->
+      <p>该函数的缺省版本返回3，当<samp><span class="option">-fpic</span></samp>有效时，否则返回0。
+当target不支持（某种）在只读section中，甚至在可执行程序中的动态重定位时，
+通常会重定义该钩子。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: section * <b>TARGET_ASM_SELECT_SECTION</b> (<var>tree exp, int reloc, unsigned HOST_WIDE_INT align</var>)<var><a name="index-TARGET_005fASM_005fSELECT_005fSECTION-4429"></a></var><br>
+<blockquote><!-- Return the section into which @var{exp} should be placed.  You can -->
+     <!-- assume that @var{exp} is either a @code{VAR_DECL} node or a constant of -->
+     <!-- some sort.  @var{reloc} indicates whether the initial value of @var{exp} -->
+     <!-- requires link-time relocations.  Bit 0 is set when variable contains -->
+     <!-- local relocations only, while bit 1 is set for global relocations. -->
+     <!-- @var{align} is the constant alignment in bits. -->
+      <p>返回<var>exp</var>应该被放入的section。
+你可以假设<var>exp</var>为<code>VAR_DECL</code>节点或者一个常量。
+<var>reloc</var>指示<var>exp</var>的初始化值是否需要连接时重定位。
+当变量只包含局部重定位时位0被设置，对于全局重定位位1被设置。
+<var>align</var>为常量对齐位数。
+
+     <!-- The default version of this function takes care of putting read-only -->
+     <!-- variables in @code{readonly_data_section}. -->
+      <p>该函数的缺省版本只关心将只读变量放到<code>readonly_data_section</code>中。
+
+     <!-- See also @var{USE_SELECT_SECTION_FOR_FUNCTIONS}. -->
+      <p>参见<var>USE_SELECT_SECTION_FOR_FUNCTIONS</var>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>USE_SELECT_SECTION_FOR_FUNCTIONS</b><var><a name="index-USE_005fSELECT_005fSECTION_005fFOR_005fFUNCTIONS-4430"></a></var><br>
+<blockquote><!-- Define this macro if you wish TARGET_ASM_SELECT_SECTION to be called -->
+     <!-- for @code{FUNCTION_DECL}s as well as for variables and constants. -->
+      <p>如果你希望对于<code>FUNCTION_DECL</code>，
+将会调用TARGET_ASM_SELECT_SECTION，则定义该宏。同样对于变量和常量。
+
+     <!-- In the case of a @code{FUNCTION_DECL}, @var{reloc} will be zero if the -->
+     <!-- function has been determined to be likely to be called, and nonzero if -->
+     <!-- it is unlikely to be called. -->
+      <p>对于<code>FUNCTION_DECL</code>，<var>reloc</var>将为0，如果函数被确定有可能被调用，
+非零如果其不能被调用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_UNIQUE_SECTION</b> (<var>tree decl, int reloc</var>)<var><a name="index-TARGET_005fASM_005fUNIQUE_005fSECTION-4431"></a></var><br>
+<blockquote><!-- Build up a unique section name, expressed as a @code{STRING_CST} node, -->
+     <!-- and assign it to @samp{DECL_SECTION_NAME (@var{decl})}. -->
+     <!-- As with @code{TARGET_ASM_SELECT_SECTION}, @var{reloc} indicates whether -->
+     <!-- the initial value of @var{exp} requires link-time relocations. -->
+      <p>构建一个唯一的section名，使用<code>STRING_CST</code>节点表示，
+并赋值为&lsquo;<samp><span class="samp">DECL_SECTION_NAME (</span><var>decl</var><span class="samp">)</span></samp>&rsquo;。
+跟<code>TARGET_ASM_SELECT_SECTION</code>一样，
+<var>reloc</var>指示<var>exp</var>的初始化值是否需要连接时重定位。
+
+     <!-- The default version of this function appends the symbol name to the -->
+     <!-- ELF section name that would normally be used for the symbol.  For -->
+     <!-- example, the function @code{foo} would be placed in @code{.text.foo}. -->
+     <!-- Whatever the actual target object format, this is often good enough. -->
+      <p>该函数的缺省版本向ELF section名中追加一个符号名。例如，
+函数<code>foo</code>将被放在<code>.text.foo</code>中。
+这对于实际的target目标格式通常是可以的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: section * <b>TARGET_ASM_FUNCTION_RODATA_SECTION</b> (<var>tree decl</var>)<var><a name="index-TARGET_005fASM_005fFUNCTION_005fRODATA_005fSECTION-4432"></a></var><br>
+<blockquote><!-- Return the readonly data section associated with -->
+     <!-- @samp{DECL_SECTION_NAME (@var{decl})}. -->
+     <!-- The default version of this function selects @code{.gnu.linkonce.r.name} if -->
+     <!-- the function's section is @code{.gnu.linkonce.t.name}, @code{.rodata.name} -->
+     <!-- if function is in @code{.text.name}, and the normal readonly-data section -->
+     <!-- otherwise. -->
+      <p>返回与&lsquo;<samp><span class="samp">DECL_SECTION_NAME (</span><var>decl</var><span class="samp">)</span></samp>&rsquo;关联的只读data section。
+该函数的缺省版本选择<code>.gnu.linkonce.r.name</code>，
+如果函数的section为<code>.gnu.linkonce.t.name</code>，
+<code>.rodata.name</code>如果函数在<code>.text.name</code>中，
+否则为通常的只读data section。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: const char * <b>TARGET_ASM_MERGEABLE_RODATA_PREFIX</b><var><a name="index-TARGET_005fASM_005fMERGEABLE_005fRODATA_005fPREFIX-4433"></a></var><br>
+<blockquote><p>Usually, the compiler uses the prefix <code>".rodata"</code> to construct
+section names for mergeable constant data.  Define this macro to override
+the string if a different section name should be used. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: section * <b>TARGET_ASM_SELECT_RTX_SECTION</b> (<var>enum machine_mode mode, rtx x, unsigned HOST_WIDE_INT align</var>)<var><a name="index-TARGET_005fASM_005fSELECT_005fRTX_005fSECTION-4434"></a></var><br>
+<blockquote><!-- Return the section into which a constant @var{x}, of mode @var{mode}, -->
+     <!-- should be placed.  You can assume that @var{x} is some kind of -->
+     <!-- constant in RTL@.  The argument @var{mode} is redundant except in the -->
+     <!-- case of a @code{const_int} rtx.  @var{align} is the constant alignment -->
+     <!-- in bits. -->
+      <p>返回具有机器模式mode的常量x应该放入的section。
+你可以假设<var>x</var>为RTL形式的某种常量。参数<var>mode</var>除了<code>const_int</code>之外，
+是冗余的。<var>align</var>为常量对齐位数。
+
+     <!-- The default version of this function takes care of putting symbolic -->
+     <!-- constants in @code{flag_pic} mode in @code{data_section} and everything -->
+     <!-- else in @code{readonly_data_section}. -->
+      <p>该函数的缺省版本考虑将符号常量<code>flag_pic</code>模式的，放在<code>data_section</code>中，
+其它放在<code>readonly_data_section</code>中。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_MANGLE_DECL_ASSEMBLER_NAME</b> (<var>tree decl, tree id</var>)<var><a name="index-TARGET_005fMANGLE_005fDECL_005fASSEMBLER_005fNAME-4435"></a></var><br>
+<blockquote><!-- Define this hook if you need to postprocess the assembler name generated -->
+     <!-- by target-independent code.  The @var{id} provided to this hook will be -->
+     <!-- the computed name (e.g., the macro @code{DECL_NAME} of the @var{decl} in C, -->
+     <!-- or the mangled name of the @var{decl} in C++).  The return value of the -->
+     <!-- hook is an @code{IDENTIFIER_NODE} for the appropriate mangled name on -->
+     <!-- your target system.  The default implementation of this hook just -->
+     <!-- returns the @var{id} provided. -->
+      <p>定义该钩子，如果你需要处理由target无关的代码生成的汇编名。
+提供给该钩子的<var>id</var>将为被计算的名字（例如C中的<code>DECL_NAME</code>宏，
+或者C++中的mangled name）。该钩子的返回值为一个<code>IDENTIFIER_NODE</code>。
+该钩子的缺省实现只是返回提供的<var>id</var>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ENCODE_SECTION_INFO</b> (<var>tree decl, rtx rtl, int new_decl_p</var>)<var><a name="index-TARGET_005fENCODE_005fSECTION_005fINFO-4436"></a></var><br>
+<blockquote><!-- Define this hook if references to a symbol or a constant must be -->
+     <!-- treated differently depending on something about the variable or -->
+     <!-- function named by the symbol (such as what section it is in). -->
+      <p>定义该钩子，如果对符号或者常量的引用必须根据符号所命名的变量或者函数来不同处理
+（例如其在哪个section中）。
+
+     <!-- The hook is executed immediately after rtl has been created for -->
+     <!-- @var{decl}, which may be a variable or function declaration or -->
+     <!-- an entry in the constant pool.  In either case, @var{rtl} is the -->
+     <!-- rtl in question.  Do @emph{not} use @code{DECL_RTL (@var{decl})} -->
+     <!-- in this hook; that field may not have been initialized yet. -->
+      <p>钩子在为<var>decl</var>创建<var>rtl</var>之后立即被执行，
+<var>decl</var>可能为一个变量或者函数声明，或者常量池的入口。<em>不要</em>在该钩子中
+使用<code>DECL_RTL (</code><var>decl</var><code>)</code>；那个域可能还没有被初始化。
+
+     <!-- In the case of a constant, it is safe to assume that the rtl is -->
+     <!-- a @code{mem} whose address is a @code{symbol_ref}.  Most decls -->
+     <!-- will also have this form, but that is not guaranteed.  Global -->
+     <!-- register variables, for instance, will have a @code{reg} for their -->
+     <!-- rtl.  (Normally the right thing to do with such unusual rtl is -->
+     <!-- leave it alone.) -->
+      <p>对于常量，可以假设rtl为一个<code>mem</code>，其地址为一个 <code>symbol_ref</code>。
+大多数decl将具有这种形式，但不被保证。全局寄存器变量，例如，
+它们的rtl将具有一个<code>reg</code>。（对于这样不寻常的rtl通常是将其放在一边）。
+
+     <!-- The @var{new_decl_p} argument will be true if this is the first time -->
+     <!-- that @code{TARGET_ENCODE_SECTION_INFO} has been invoked on this decl.  It will -->
+     <!-- be false for subsequent invocations, which will happen for duplicate -->
+     <!-- declarations.  Whether or not anything must be done for the duplicate -->
+     <!-- declaration depends on whether the hook examines @code{DECL_ATTRIBUTES}. -->
+     <!-- @var{new_decl_p} is always true when the hook is called for a constant. -->
+      <p>参数<var>new_decl_p</var>将为真，
+如果这是第一次对于该decl调用<code>TARGET_ENCODE_SECTION_INFO</code>。
+对于后续的调用其将为假，这放生在复制的声明中。对于复制声明，是否需要做什么，
+取决于钩子是否检查<code>DECL_ATTRIBUTES</code>。当钩子对于常量被调用，
+则<var>new_decl_p</var>总为真。
+
+     <!-- @cindex @code{SYMBOL_REF_FLAG}, in @code{TARGET_ENCODE_SECTION_INFO} -->
+     <!-- The usual thing for this hook to do is to record flags in the -->
+     <!-- @code{symbol_ref}, using @code{SYMBOL_REF_FLAG} or @code{SYMBOL_REF_FLAGS}. -->
+     <!-- Historically, the name string was modified if it was necessary to -->
+     <!-- encode more than one bit of information, but this practice is now -->
+     <!-- discouraged; use @code{SYMBOL_REF_FLAGS}. -->
+      <p>该钩子通常做的事情是记录<code>symbol_ref</code>中的标记，
+使用<code>SYMBOL_REF_FLAG</code>或<code>SYMBOL_REF_FLAGS</code>。
+
+     <!-- The default definition of this hook, @code{default_encode_section_info} -->
+     <!-- in @file{varasm.c}, sets a number of commonly-useful bits in -->
+     <!-- @code{SYMBOL_REF_FLAGS}.  Check whether the default does what you need -->
+     <!-- before overriding it. -->
+      <p>该钩子的缺省定义，<samp><span class="file">varasm.c</span></samp>中的<code>default_encode_section_info</code>，
+设置了<code>SYMBOL_REF_FLAGS</code>中通常有用的位。
+在覆盖它之前检查缺省代码是否做了你所需要的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: const char * <b>TARGET_STRIP_NAME_ENCODING</b> (<var>const char *name</var>)<var><a name="index-TARGET_005fSTRIP_005fNAME_005fENCODING-4437"></a></var><br>
+<blockquote><!-- Decode @var{name} and return the real name part, sans -->
+     <!-- the characters that @code{TARGET_ENCODE_SECTION_INFO} -->
+     <!-- may have added. -->
+      <p>解析<var>name</var>并返回真实的名字部分，
+没有<code>TARGET_ENCODE_SECTION_INFO</code>可能加进去的字符。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_IN_SMALL_DATA_P</b> (<var>const_tree exp</var>)<var><a name="index-TARGET_005fIN_005fSMALL_005fDATA_005fP-4438"></a></var><br>
+<blockquote><!-- Returns true if @var{exp} should be placed into a ``small data'' section. -->
+     <!-- The default version of this hook always returns false. -->
+      <p>返回真，如果<var>exp</var>应该被放到“小数据”section中。该钩子的缺省版本总是返回假。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_HAVE_SRODATA_SECTION</b><var><a name="index-TARGET_005fHAVE_005fSRODATA_005fSECTION-4439"></a></var><br>
+<blockquote><!-- Contains the value true if the target places read-only -->
+     <!-- ``small data'' into a separate section.  The default value is false. -->
+      <p>如果target将只读“小数据”放到单独的section中，则包含值为真。缺省值为假。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_PROFILE_BEFORE_PROLOGUE</b> (<var>void</var>)<var><a name="index-TARGET_005fPROFILE_005fBEFORE_005fPROLOGUE-4440"></a></var><br>
+<blockquote><p>It returns true if target wants profile code emitted before prologue.
+
+      <p>The default version of this hook use the target macro
+<code>PROFILE_BEFORE_PROLOGUE</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_BINDS_LOCAL_P</b> (<var>const_tree exp</var>)<var><a name="index-TARGET_005fBINDS_005fLOCAL_005fP-4441"></a></var><br>
+<blockquote><!-- Returns true if @var{exp} names an object for which name resolution -->
+     <!-- rules must resolve to the current ``module'' (dynamic shared library -->
+     <!-- or executable image). -->
+      <p>返回真，如果<var>exp</var>命名了一个对象，其名字解析规则必须
+
+     <!-- The default version of this hook implements the name resolution rules -->
+     <!-- for ELF, which has a looser model of global name binding than other -->
+     <!-- currently supported object file formats. -->
+      <p>该钩子的缺省版本实现了ELF的名字解析规则，
+其具有一个比目前支持的其它目标文件格式较松散的全局名字绑定模型。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_HAVE_TLS</b><var><a name="index-TARGET_005fHAVE_005fTLS-4442"></a></var><br>
+<blockquote><!-- Contains the value true if the target supports thread-local storage. -->
+     <!-- The default value is false. -->
+      <p>如果target支持thread-local storage，则包含值为真。缺省值为假。
+</p></blockquote></div>
+
+<!-- @node PIC -->
+<!-- @section Position Independent Code -->
+ </body></html>
+

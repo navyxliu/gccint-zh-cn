@@ -1,0 +1,699 @@
+<html lang="zh">
+<head>
+<title>LTO - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="prev" href="Plugins.html#Plugins" title="Plugins">
+<link rel="next" href="Funding.html#Funding" title="Funding">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="LTO"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Funding.html#Funding">Funding</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Plugins.html#Plugins">Plugins</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
+<hr>
+</div>
+
+<h2 class="chapter">24 链接时优化</h2>
+
+<p><a name="index-lto-4976"></a><a name="index-whopr-4977"></a><a name="index-wpa-4978"></a><a name="index-ltrans-4979"></a>
+<!-- @section Design Overview -->
+
+<h3 class="section">24.1 设计简介</h3>
+
+<!-- Link time optimization is implemented as a GCC front end for a -->
+<!-- bytecode representation of GIMPLE that is emitted in special sections -->
+<!-- of @code{.o} files.  Currently, LTO support is enabled in most -->
+<!-- ELF-based systems, as well as darwin, cygwin and mingw systems. -->
+<p>链接时优化是作为一个GIMPLE字节码表示的前段实现的，这些字节码就存在于<code>.o</code>文件的特殊section。目前，LTO已经支持大多数基于ELF文件格式的系统，也支持darwin，cygwin和mingw这样的系统。
+
+<!-- Since GIMPLE bytecode is saved alongside final object code, object -->
+<!-- files generated with LTO support are larger than regular object files. -->
+<!-- This ``fat'' object format makes it easy to integrate LTO into -->
+<!-- existing build systems, as one can, for instance, produce archives of -->
+<!-- the files.  Additionally, one might be able to ship one set of fat -->
+<!-- objects which could be used both for development and the production of -->
+<!-- optimized builds.  A, perhaps surprising, side effect of this feature -->
+<!-- is that any mistake in the toolchain that leads to LTO information not -->
+<!-- being used (e.g.@: an older @code{libtool} calling @code{ld} directly). -->
+<!-- This is both an advantage, as the system is more robust, and a -->
+<!-- disadvantage, as the user is not informed that the optimization has -->
+<!-- been disabled. -->
+ <p>由于GIMPLE字节码保存在最后的目标文件中，所以支持LTO的目标文件比一般的目标文件大一些。采用这样“大”目标文件格式，LTO功能容易被集成到现有的编译器构建系统中，例如，在构建文件的档案时。
+
+<!-- The current implementation only produces ``fat'' objects, effectively -->
+<!-- doubling compilation time and increasing file sizes up to 5x the -->
+<!-- original size.  This hides the problem that some tools, such as -->
+<!-- @code{ar} and @code{nm}, need to understand symbol tables of LTO -->
+<!-- sections.  These tools were extended to use the plugin infrastructure, -->
+<!-- and with these problems solved, GCC will also support ``slim'' objects -->
+<!-- consisting of the intermediate code alone. -->
+ <p>现在的实现方式只有一种，就是是产生"肥胖"对象文件，虽然这样不仅会让编译时间翻倍，而且会让文件大小增长五倍，但是这样的实现方式掩盖了一个问题，就是一些工具比如<code>ar</code> 和 <code>nm</code>需要理解LTO section的符号表。这些工具可以被扩展以使用插件功能，而且，随着这些问题的解决，GCC会支持仅由中间代码组成的"苗条"对象文件。
+
+<!-- At the highest level, LTO splits the compiler in two.  The first half -->
+<!-- (the ``writer'') produces a streaming representation of all the -->
+<!-- internal data structures needed to optimize and generate code.  This -->
+<!-- includes declarations, types, the callgraph and the GIMPLE representation -->
+<!-- of function bodies. -->
+ <p>从高层次来看，LTO把编译器分割为两个部分。前半部分("写者")产生以流形式表达的所有代码优化和生成需要的内部数据结构。这其中包括函数的声明，类型，调用图和GIMPLE表达。
+
+<!-- When @option{-flto} is given during compilation of a source file, the -->
+<!-- pass manager executes all the passes in @code{all_lto_gen_passes}. -->
+<!-- Currently, this phase is composed of two IPA passes: -->
+ <p>当编译源文件使用了选项<samp><span class="option">-flto</span></samp>，pass管理器在<code>all_lto_gen_passes</code>中执行所有的pass。现在，这个阶段有两个IPA pass组成:
+
+     <ul>
+<li><code>pass_ipa_lto_gimple_out</code>
+<!-- This pass executes the function @code{lto_output} in -->
+<!-- @file{lto-streamer-out.c}, which traverses the call graph encoding -->
+<!-- every reachable declaration, type and function.  This generates a -->
+<!-- memory representation of all the file sections described below. -->
+这个pass执行了<samp><span class="file">lto-streamer-out.c</span></samp>的函数<code>lto_output</code>。这个函数遍历调用图中的每一个可达的声明，类型和函数。这样就生成了所有如下所述的文件段的内存表示。
+
+     <li><code>pass_ipa_lto_finish_out</code>
+<!-- This pass executes the function @code{produce_asm_for_decls} in -->
+<!-- @file{lto-streamer-out.c}, which takes the memory image built in the -->
+<!-- previous pass and encodes it in the corresponding ELF file sections. -->
+这个pass执行<samp><span class="file">lto-streamer-out.c</span></samp>中的<code>produce_asm_for_decls</code>函数，这个函数把上一个pass构建的内存表示编码保存到相应的ELF的文件段中。
+</ul>
+
+<!-- The second half of LTO support is the ``reader''.  This is implemented -->
+<!-- as the GCC front end @file{lto1} in @file{lto/lto.c}.  When -->
+<!-- @file{collect2} detects a link set of @code{.o}/@code{.a} files with -->
+<!-- LTO information and the @option{-flto} is enabled, it invokes -->
+<!-- @file{lto1} which reads the set of files and aggregates them into a -->
+<!-- single translation unit for optimization.  The main entry point for -->
+<!-- the reader is @file{lto/lto.c}:@code{lto_main}. -->
+ <p>LTO的下半个部分是"读者"。这个部分是作为GCC的前端<samp><span class="file">lto/lto.c</span></samp>文件<samp><span class="file">lto1</span></samp>实现的。当<samp><span class="file">collect2</span></samp>检查出链接文件集合<code>.o</code>/<code>.a</code>具有LTO信息，而且选项<samp><span class="option">-flto</span></samp>被打开，它就调用<samp><span class="file">lto1</span></samp>，<samp><span class="file">lto1</span></samp>读入一些文件，把它们聚集成为一个单独的为优化的翻译单元。这个读入功能的主入口点是<samp><span class="file">lto/lto.c</span></samp>文件的<code>lto_main</code>函数。
+
+<!-- @subsection LTO modes of operation -->
+<h4 class="subsection">24.1.1 链接时优化操作的模式</h4>
+
+<!-- One of the main goals of the GCC link-time infrastructure was to allow -->
+<!-- effective compilation of large programs.  For this reason GCC implements two -->
+<!-- link-time compilation modes. -->
+<p>GCC的链接时基础设施的一个主要目标就是能够有效地编译大程序。由于这个原因，GCC实现了两种链接时编译的模式
+     <ol type=1 start=1>
+<!-- @item	@emph{LTO mode}, in which the whole program is read into the -->
+<!-- compiler at link-time and optimized in a similar way as if it -->
+<!-- were a single source-level compilation unit. -->
+<li><em>LTO 模式</em>,在这种模式下，整个程序在链接时刻被读入编译器，然后就像对一个源代码级别的编译单元，进行优化。
+
+     <!-- @item	@emph{WHOPR or partitioned mode}, designed to utilize multiple -->
+     <!-- CPUs and/or a distributed compilation environment to quickly link -->
+     <!-- large applications.  WHOPR stands for WHOle Program optimizeR (not to -->
+     <!-- be confused with the semantics of @option{-fwhole-program}).  It -->
+     <!-- partitions the aggregated callgraph from many different @code{.o} -->
+     <!-- files and distributes the compilation of the sub-graphs to different -->
+     <!-- CPUs. -->
+     <li><em>WHOPR 或分区模式</em>，这样的设计是为了利用多个CPU和/或分布式编译环境来链接大的应用程序。WHOPR代表"全部程序优化"(不要被<samp><span class="option">-fwhole-program</span></samp>的语义所疑惑)。  它对从许多不同的<code>.o</code>文件中产生聚集的调用图进行分块，然后把这些分块后的子图分布到不同的CPU进行编译。
+
+     <!-- Note that distributed compilation is not implemented yet, but since -->
+     <!-- the parallelism is facilitated via generating a @code{Makefile}, it -->
+     <!-- would be easy to implement. -->
+     <p>注意分布式编译现在还没有实现，但是由于并行化只是利用生成的一个<code>Makefile</code>，所以并行编译容易实现。
+      </ol>
+
+<!-- WHOPR splits LTO into three main stages: -->
+ <p>WHOPR 把LTO分成了三个主要阶段:
+     <ol type=1 start=1>
+<!-- @item Local generation (LGEN) -->
+<li>局部生成 (LGEN)
+<!-- This stage executes in parallel.  Every file in the program is compiled -->
+<!-- into the intermediate language and packaged together with the local -->
+<!-- call-graph and summary information.  This stage is the same for both -->
+<!-- the LTO and WHOPR compilation mode. -->
+这个阶段是并行执行的。程序中的每一个文件被编译成为一种中间表达语言，并且和局部的调用图和总计信息包装在一起。这个阶段对于LTO和WHOPR编译模式是相同的。
+
+     <!-- @item Whole Program Analysis (WPA) -->
+     <li>全程序分析 (WPA)
+<!-- WPA is performed sequentially.  The global call-graph is generated, and -->
+<!-- a global analysis procedure makes transformation decisions.  The global -->
+<!-- call-graph is partitioned to facilitate parallel optimization during -->
+<!-- phase 3.  The results of the WPA stage are stored into new object files -->
+<!-- which contain the partitions of program expressed in the intermediate -->
+<!-- language and the optimization decisions. -->
+WPA是顺序执行的，生成一个全局调用图，并且有一个全局分析过程来做转换的决定。在第三阶段，全局调用图被分块，以方便并行优化。WPA阶段的结果保存在新的目标文件中，这些新的文件包含用中间语言表示的分块程序和一些优化的决定。
+
+     <!-- @item Local transformations (LTRANS) -->
+     <li>局部转换 (LTRANS)
+<!-- This stage executes in parallel.  All the decisions made during phase 2 -->
+<!-- are implemented locally in each partitioned object file, and the final -->
+<!-- object code is generated.  Optimizations which cannot be decided -->
+<!-- efficiently during the phase 2 may be performed on the local -->
+<!-- call-graph partitions. -->
+这个阶段也是并行执行的。所有在阶段二做的决定在每个分块目标文件上实现，并且生成最后的目标代码。无法在第二阶段高效进行的优化可能会在局部分块调用图上进行。
+      </ol>
+
+<!-- WHOPR can be seen as an extension of the usual LTO mode of -->
+<!-- compilation.  In LTO, WPA and LTRANS are executed within a single -->
+<!-- execution of the compiler, after the whole program has been read into -->
+<!-- memory. -->
+ <p>WHOPR可以被看作为普通LTO编译模式的扩展。在LTO模式，当所有程序被读进内存后，WPA和LTRANS在一次编译器运行中运行。
+
+<!-- When compiling in WHOPR mode, the callgraph is partitioned during -->
+<!-- the WPA stage.  The whole program is split into a given number of -->
+<!-- partitions of roughly the same size.  The compiler tries to -->
+<!-- minimize the number of references which cross partition boundaries. -->
+<!-- The main advantage of WHOPR is to allow the parallel execution of -->
+<!-- LTRANS stages, which are the most time-consuming part of the -->
+<!-- compilation process.  Additionally, it avoids the need to load the -->
+<!-- whole program into memory. -->
+ <p>当在WHOPR编译模式中时，在WPA阶段，调用图被分块。整个程序被分割为大小基本一致的若干分块。编译器尽量减少跨越分块边缘的引用。WHOPR的主要有点是允许并行执行LTRANS阶段，而这个阶段有恰恰是整个编译过程中最耗时的部分。例外，它也避免了把整个程序全部加载到内存。
+
+<!-- @section LTO file sections -->
+<h3 class="section">24.2 链接时优化的文件部分</h3>
+
+<!-- LTO information is stored in several ELF sections inside object files. -->
+<!-- Data structures and enum codes for sections are defined in -->
+<!-- @file{lto-streamer.h}. -->
+<p>LTO的信息保存在目标文件的几个段里边。这些段相关的数据结构和枚举代码定义在文件<samp><span class="file">lto-streamer.h</span></samp>。
+
+<!-- These sections are emitted from @file{lto-streamer-out.c} and mapped -->
+<!-- in all at once from @file{lto/lto.c}:@code{lto_file_read}.  The -->
+<!-- individual functions dealing with the reading/writing of each section -->
+<!-- are described below. -->
+ <p>这些段从<samp><span class="file">lto-streamer-out.c</span></samp>中生成，并且从<samp><span class="file">lto/lto.c</span></samp>的函数<code>lto_file_read</code>一次性映射。处理每个段的读写的单个函数，在下边描述。
+
+     <ul>
+<!-- @item Command line options (@code{.gnu.lto_.opts}) -->
+<li>命令行选项 (<code>.gnu.lto_.opts</code>)
+<!-- This section contains the command line options used to generate the -->
+<!-- object files.  This is used at link time to determine the optimization -->
+<!-- level and other settings when they are not explicitly specified at the -->
+<!-- linker command line. -->
+这个段包含了用来生成目标文件的命令行选项。这个段被用来在链接时刻决定优化级别和其他的设置，当这些信息都没有在连接器的命令行中显示地设置。
+
+     <p>Currently, GCC does not support combining LTO object files compiled
+with different set of the command line options into a single binary. 
+At link time, the options given on the command line and the options
+saved on all the files in a link-time set are applied globally.  No
+attempt is made at validating the combination of flags (other than the
+usual validation done by option processing).  This is implemented in
+现在，GCC不再支持把编译的LTO对象文件跟不同的命令行操作集合结合到一个单独的二进制文件中。链接时的命令行参数和配置文件参数是全局通用的。在合并参数时不会执行验证操作（除了处理参数时做的惯例验证）。这个实现在
+<samp><span class="file">lto/lto.c</span></samp>:<code>lto_read_all_file_options</code>.
+
+     <!-- @item Symbol table (@code{.gnu.lto_.symtab}) -->
+     <li>符号表 (<code>.gnu.lto_.symtab</code>)
+
+     <!-- This table replaces the ELF symbol table for functions and variables -->
+     <!-- represented in the LTO IL.  Symbols used and exported by the optimized -->
+     <!-- assembly code of ``fat'' objects might not match the ones used and -->
+     <!-- exported by the intermediate code.  This table is necessary because -->
+     <!-- the intermediate code is less optimized and thus requires a separate -->
+     <!-- symbol table. -->
+     <p>这个表替换了LTO中间语言表示的函数和变量的ELF符号表。被"肥胖"对象的优化的汇编代码使用和导出的符号也许并不能匹配由中间代码使用和导出的符号。这个表已经足够了因为中间代码还没有充分优化，所以需要一个单独的符号表。
+
+     <!-- Additionally, the binary code in the ``fat'' object will lack a call -->
+     <!-- to a function, since the call was optimized out at compilation time -->
+     <!-- after the intermediate language was streamed out.  In some special -->
+     <!-- cases, the same optimization may not happen during link-time -->
+     <!-- optimization.  This would lead to an undefined symbol if only one -->
+     <!-- symbol table was used. -->
+     <p>另外，"肥胖"对象中的二进制代码缺少对一个函数的调用，因为在中间代码被序列化后，调用在编译时间优化掉了。在一些特殊情况下，同样的优化可能在链接时优化不会发生。如果使用一个符号表，会导致一个未定义的符号。
+
+     <!-- The symbol table is emitted in -->
+     <p>这个符号表产生于
+<samp><span class="file">lto-streamer-out.c</span></samp>:<code>produce_symtab</code>.
+
+     <!-- @item Global declarations and types (@code{.gnu.lto_.decls}) -->
+     <li>全局声明和类型 (<code>.gnu.lto_.decls</code>)
+
+     <!-- This section contains an intermediate language dump of all -->
+     <!-- declarations and types required to represent the callgraph, static -->
+     <!-- variables and top-level debug info. -->
+     <p>这个段包括了中间语言表示的所有声明和类型，这些都是需要表示调用图，静态变量和顶级的调试信息。
+
+     <!-- The contents of this section are emitted in -->
+     <!-- @file{lto-streamer-out.c}:@code{produce_asm_for_decls}.  Types and -->
+     <!-- symbols are emitted in a topological order that preserves the sharing -->
+     <!-- of pointers when the file is read back in -->
+     <!-- (@file{lto.c}:@code{read_cgraph_and_symbols}). -->
+     <p>这个段的内容由<samp><span class="file">lto-streamer-out.c</span></samp>:<code>produce_asm_for_decls</code>产生。类型和符号按照拓扑顺序生成，为了在文件被再次读入的时候，共享指针。
+
+     <!-- @item The callgraph (@code{.gnu.lto_.cgraph}) -->
+     <li>调用图 (<code>.gnu.lto_.cgraph</code>)
+
+     <!-- This section contains the basic data structure used by the GCC -->
+     <!-- inter-procedural optimization infrastructure.  This section stores an -->
+     <!-- annotated multi-graph which represents the functions and call sites as -->
+     <!-- well as the variables, aliases and top-level @code{asm} statements. -->
+     <p>这个段包含了GCC过程间优化基础设施所使用的数据结构。这个段存储了一个有注释的多图，来表示函数和调用位置，以及变量，别名和顶级<code>asm</code>语句。
+
+     <!-- This section is emitted in -->
+     <!-- @file{lto-streamer-out.c}:@code{output_cgraph} and read in -->
+     <!-- @file{lto-cgraph.c}:@code{input_cgraph}. -->
+     <p>这个段由<samp><span class="file">lto-streamer-out.c</span></samp>:<code>output_cgraph</code>生成，由<samp><span class="file">lto-cgraph.c</span></samp>:<code>input_cgraph</code>读入。
+
+     <!-- @item IPA references (@code{.gnu.lto_.refs}) -->
+     <li>IPA 引用 (<code>.gnu.lto_.refs</code>)
+
+     <!-- This section contains references between function and static -->
+     <!-- variables.  It is emitted by @file{lto-cgraph.c}:@code{output_refs} -->
+     <!-- and read by @file{lto-cgraph.c}:@code{input_refs}. -->
+     <p>这个段包含函数和静态变量之间的引用。这个段由<samp><span class="file">lto-cgraph.c</span></samp>:<code>output_refs</code>产生，被<samp><span class="file">lto-cgraph.c</span></samp>:<code>input_refs</code>读入。
+
+     <!-- @item Function bodies (@code{.gnu.lto_.function_body.<name>}) -->
+     <li>函数体 (<code>.gnu.lto_.function_body.&lt;name&gt;</code>)
+
+     <!-- This section contains function bodies in the intermediate language -->
+     <!-- representation.  Every function body is in a separate section to allow -->
+     <!-- copying of the section independently to different object files or -->
+     <!-- reading the function on demand. -->
+     <p>这个段包含了在中间语言表示的函数体。没一个函数体都在一个单独的段，这样可以独立地拷贝这个段到不同的目标文件，或者随需地读入函数。
+
+     <!-- Functions are emitted in -->
+     <!-- @file{lto-streamer-out.c}:@code{output_function} and read in -->
+     <!-- @file{lto-streamer-in.c}:@code{input_function}. -->
+     <p>函数由<samp><span class="file">lto-streamer-out.c</span></samp>:<code>output_function</code>生成，由<samp><span class="file">lto-streamer-in.c</span></samp>:<code>input_function</code>读入。
+
+     <!-- @item Static variable initializers (@code{.gnu.lto_.vars}) -->
+     <li>静态变量初始化 (<code>.gnu.lto_.vars</code>)
+
+     <!-- This section contains all the symbols in the global variable pool.  It -->
+     <!-- is emitted by @file{lto-cgraph.c}:@code{output_varpool} and read in -->
+     <!-- @file{lto-cgraph.c}:@code{input_cgraph}. -->
+     <p>这个段包含了全局变量池的所有的符号。由<samp><span class="file">lto-cgraph.c</span></samp>:<code>output_varpool</code> 产生，并由<samp><span class="file">lto-cgraph.c</span></samp>:<code>input_cgraph</code>读入。
+
+     <!-- @item Summaries and optimization summaries used by IPA passes -->
+     <!-- (@code{.gnu.lto_.<xxx>}, where @code{<xxx>} is one of @code{jmpfuncs}, -->
+     <!-- @code{pureconst} or @code{reference}) -->
+     <li>IPA遍用到的总计信息和优化总计信息
+(<code>.gnu.lto_.&lt;xxx&gt;</code>，这里<code>&lt;xxx&gt;</code>是<code>jmpfuncs</code>，<code>pureconst</code>，或<code>reference</code>其中的一种。
+
+     <!-- These sections are used by IPA passes that need to emit summary -->
+     <!-- information during LTO generation to be read and aggregated at -->
+     <!-- link time.  Each pass is responsible for implementing two pass manager -->
+     <!-- hooks: one for writing the summary and another for reading it in.  The -->
+     <!-- format of these sections is entirely up to each individual pass.  The -->
+     <!-- only requirement is that the writer and reader hooks agree on the -->
+     <!-- format. -->
+     <p>这些段都会被IPA使用，生成总计信息，在LTO生成阶段读入，最后在链接时间整合。每一遍都负责实现两个遍管理器钩子函数:一个用来写总计信息，一个用来读入总计信息。信息格式完全由每个遍来决定。唯一的要求就是写部分和读部分在格式上保持一致。
+
+ </ul>
+
+<!-- @section Using summary information in IPA passes -->
+<h3 class="section">24.3 在IPA遍中使用总计信息</h3>
+
+<!-- Programs are represented internally as a @emph{callgraph} (a -->
+<!-- multi-graph where nodes are functions and edges are call sites) -->
+<!-- and a @emph{varpool} (a list of static and external variables in -->
+<!-- the program). -->
+<p>程序在内部表示为<em>调用图</em> (一种多图，节点代表函数，边代表函数调用位置)和一个<em>变量池</em> (一个程序静态变量和外部变量的链表)。
+
+<!-- The inter-procedural optimization is organized as a sequence of -->
+<!-- individual passes, which operate on the callgraph and the -->
+<!-- varpool.  To make the implementation of WHOPR possible, every -->
+<!-- inter-procedural optimization pass is split into several stages -->
+<!-- that are executed at different times during WHOPR compilation: -->
+ <p>过程间优化是由一系列pass组成，这些遍都会操作调用图和变量池。为了使得WHOPR的实现可能，每一个过程间优化遍都被分为几个在WHOPR编译不同时间执行的阶段:
+
+     <ul>
+<!-- @item LGEN time -->
+<li>LGEN 时间段
+          <ol type=1 start=1>
+<!-- @item @emph{Generate summary} (@code{generate_summary} in -->
+<!-- @code{struct ipa_opt_pass_d}).  This stage analyzes every function -->
+<!-- body and variable initializer is examined and stores relevant -->
+<!-- information into a pass-specific data structure. -->
+<li><em>生成总计信息</em> (<code>struct ipa_opt_pass_d</code>中的<code>generate_summary</code>)。这个阶段分析每一个函数体，变量初始化代码被检查，并且把相关信息保存在一个这一遍的数据结构中。
+
+          <!-- @item @emph{Write summary} (@code{write_summary} in -->
+          <!-- @code{struct ipa_opt_pass_d}).  This stage writes all the -->
+          <!-- pass-specific information generated by @code{generate_summary}. -->
+          <!-- Summaries go into their own @code{LTO_section_*} sections that -->
+          <!-- have to be declared in @file{lto-streamer.h}:@code{enum -->
+          <!-- lto_section_type}.  A new section is created by calling -->
+          <!-- @code{create_output_block} and data can be written using the -->
+          <!-- @code{lto_output_*} routines. -->
+          <li><em>写入总计信息</em> (<code>struct ipa_opt_pass_d</code>中的<code>write_summary</code>)。这个阶段把所有的由<code>generate_summary</code>生成的信息写入。这些总计信息被写到它们各自的<code>LTO_section_*</code> 段。这些段必须在<samp><span class="file">lto-streamer.h</span></samp>:<code>enum lto_section_type</code>声明。调用<code>create_output_block</code>可以创建一个新段，使用<code>lto_output_*</code>函数写入数据。
+
+          </ol>
+
+     <!-- @item WPA time -->
+     <li>WPA 时间段
+          <ol type=1 start=1>
+<!-- @item @emph{Read summary} (@code{read_summary} in -->
+<!-- @code{struct ipa_opt_pass_d}).  This stage reads all the -->
+<!-- pass-specific information in exactly the same order that it was -->
+<!-- written by @code{write_summary}. -->
+<li><em>读入总计信息</em> (<code>struct ipa_opt_pass_d</code>中的<code>read_summary</code>)。这个阶段读入所有的与该遍有关的信息，顺序和通过<code>write_summary</code>写入的顺序一致。
+<!-- @item @emph{Execute} (@code{execute} in @code{struct -->
+<!-- opt_pass}).  This performs inter-procedural propagation.  This -->
+<!-- must be done without actual access to the individual function -->
+<!-- bodies or variable initializers.  Typically, this results in a -->
+<!-- transitive closure operation over the summary information of all -->
+<!-- the nodes in the callgraph. -->
+<li><em>执行</em> (<code>execute</code> in <code>struct opt_pass</code>)。这个步骤做了过程间的信息繁殖。这个操作必须不能有对单个函数体或者变量初始化函数的实际访问。典型地，这个导致了一个在调用图的所有节点的总计信息的传递闭包操作。
+
+          <!-- @item @emph{Write optimization summary} -->
+          <!-- (@code{write_optimization_summary} in @code{struct -->
+          <!-- ipa_opt_pass_d}).  This writes the result of the inter-procedural -->
+          <!-- propagation into the object file.  This can use the same data -->
+          <!-- structures and helper routines used in @code{write_summary}. -->
+          <li><em>记录优化总计信息</em>
+(<code>write_optimization_summary</code> 在<code>struct ipa_opt_pass_d</code>)。它把过程间繁殖信息记录到目标文件。它和<code>write_summary</code>使用了同样的数据结构和函数。
+          </ol>
+
+     <!-- @item LTRANS time -->
+     <li>LTRANS 时间段
+          <ol type=1 start=1>
+<!-- @item @emph{Read optimization summary} -->
+<!-- (@code{read_optimization_summary} in @code{struct -->
+<!-- ipa_opt_pass_d}).  The counterpart to -->
+<!-- @code{write_optimization_summary}.  This reads the interprocedural -->
+<!-- optimization decisions in exactly the same format emitted by -->
+<!-- @code{write_optimization_summary}. -->
+<li><em>读入优化总计信息</em>
+(<code>read_optimization_summary</code> in <code>struct ipa_opt_pass_d</code>)。对应于<code>write_optimization_summary</code>。它读入<code>write_optimization_summary</code>输出的过程间优化决定。
+
+          <!-- @item @emph{Transform} (@code{function_transform} and -->
+          <!-- @code{variable_transform} in @code{struct ipa_opt_pass_d}). -->
+          <!-- The actual function bodies and variable initializers are updated -->
+          <!-- based on the information passed down from the @emph{Execute} stage. -->
+          <li><em>Transform</em> (<code>struct ipa_opt_pass_d</code> 中的<code>function_transform</code> 和 <code>variable_transform</code>)。
+实际的函数体和变量初始化函数根据从<em>执行</em>阶段专递下来的信息来更新。
+
+          </ol>
+</ul>
+
+<!-- The implementation of the inter-procedural passes are shared -->
+<!-- between LTO, WHOPR and classic non-LTO compilation. -->
+ <p>过程间的多遍优化是在LTO, WHOPR 和典型的非LTO编译之间共享的。
+
+     <ul>
+<!-- @item During the traditional file-by-file mode every pass executes its -->
+<!-- own @emph{Generate summary}, @emph{Execute}, and @emph{Transform} -->
+<!-- stages within the single execution context of the compiler. -->
+<li>在传统的一个文件接一个文件的编译模式中，每一遍都在单个的编译器运行环境中执行它自己的<em>Generate summary</em>阶段，<em>Execute</em>阶段和<em>Transform</em>阶段。
+
+     <!-- @item In LTO compilation mode, every pass uses @emph{Generate -->
+     <!-- summary} and @emph{Write summary} stages at compilation time, -->
+     <!-- while the @emph{Read summary}, @emph{Execute}, and -->
+     <!-- @emph{Transform} stages are executed at link time. -->
+     <p>在LTO编译模式下，每一遍在编译时间使用<em>Generate summary</em> 阶段和<em>Write summary</em>阶段，然而<em>Read summary</em>阶段，<em>Execute</em>阶段和<em>Transform</em> 在链接时间执行。
+
+     <!-- @item In WHOPR mode all stages are used. -->
+     <li>在WHOPR模式，所有阶段都会被使用。
+
+ </ul>
+
+<!-- To simplify development, the GCC pass manager differentiates -->
+<!-- between normal inter-procedural passes and small inter-procedural -->
+<!-- passes.  A @emph{small inter-procedural pass} -->
+<!-- (@code{SIMPLE_IPA_PASS}) is a pass that does -->
+<!-- everything at once and thus it can not be executed during WPA in -->
+<!-- WHOPR mode.  It defines only the @emph{Execute} stage and during -->
+<!-- this stage it accesses and modifies the function bodies.  Such -->
+<!-- passes are useful for optimization at LGEN or LTRANS time and are -->
+<!-- used, for example, to implement early optimization before writing -->
+<!-- object files.  The simple inter-procedural passes can also be used -->
+<!-- for easier prototyping and development of a new inter-procedural -->
+<!-- pass. -->
+ <p>为了简化开发，GCC遍管理器区分了正常过程间分析的遍和小过程间分析的遍。一个<em>小过程间分析的遍</em>(<code>SIMPLE_IPA_PASS</code>)是立刻把所有的事情都做了，所以它不能在WHOPR模式的WPA期间执行。它只定义了<em>Execute</em>阶段和在这个阶段，它访问和修改的函数体。这样的遍对已在LGEN时候和LTRANS时候的优化是有用的，而且可以被用来实现在写入目标文件之前的早期优化。这些简单的过程间分析遍也可以被用作一个新的过程间分析遍的早期圆形和开发。
+
+<h4 class="subsection">24.3.1 Virtual clones</h4>
+
+<!-- One of the main challenges of introducing the WHOPR compilation -->
+<!-- mode was addressing the interactions between optimization passes. -->
+<!-- In LTO compilation mode, the passes are executed in a sequence, -->
+<!-- each of which consists of analysis (or @emph{Generate summary}), -->
+<!-- propagation (or @emph{Execute}) and @emph{Transform} stages. -->
+<!-- Once the work of one pass is finished, the next pass sees the -->
+<!-- updated program representation and can execute.  This makes the -->
+<!-- individual passes dependent on each other. -->
+<p>引入WHOPR编译模式的一个主要挑战就是处理由各个优化遍之间的交互带来的问题。在LTO编译模式，所有的优化遍顺序执行，每一个优化遍都由分析阶段(或者<em>Generate summary</em>)，扩展(或者<em>Execute</em>)阶段和<em>转换</em>阶段组成。一个优化遍的工作完成了，下一个优化遍就看到了更新过了程序表达，然后就执行。这杨就使得每一个优化遍都独立于其它优化遍。
+
+<!-- In WHOPR mode all passes first execute their @emph{Generate -->
+<!-- summary} stage.  Then summary writing marks the end of the LGEN -->
+<!-- stage.  At WPA time, -->
+<!-- the summaries are read back into memory and all passes run the -->
+<!-- @emph{Execute} stage.  Optimization summaries are streamed and -->
+<!-- sent to LTRANS, where all the passes execute the @emph{Transform} -->
+<!-- stage. -->
+ <p>在WHOPR模式下，所有优化遍都先执行它们的<em>Generate summary</em>阶段。
+
+<!-- Most optimization passes split naturally into analysis, -->
+<!-- @propagation and transformation stages.  But some do not.  The -->
+<!-- main problem arises when one pass performs changes and the -->
+<!-- following pass gets confused by seeing different callgraphs -->
+<!-- between the @emph{Transform} stage and the @emph{Generate summary} -->
+<!-- or @emph{Execute} stage.  This means that the passes are required -->
+<!-- to communicate their decisions with each other. -->
+ <p>大多数优化遍会自然地分为分析，传播和转换三个阶段，但是有些优化遍不是。当一个优化遍做出了修改，而后边的优化遍就会在<em>Transform</em>阶段和<em>Generate summary</em>阶段看到的不同调用图而感到疑惑，这样问题就出来了。这就意味着优化遍之间需要相互交互它们的决定。
+
+<!-- To facilitate this communication, the GCC callgraph -->
+<!-- infrastructure implements @emph{virtual clones}, a method of -->
+<!-- representing the changes performed by the optimization passes in -->
+<!-- the callgraph without needing to update function bodies. -->
+ <p>为了方便这样的决定交互，GCC的调用图基础实现了<em>virtual clone</em>，这个方法可以表示优化遍对调用图做的修改，而不需要改变函数体。
+
+<!-- A @emph{virtual clone} in the callgraph is a function that has no -->
+<!-- associated body, just a description of how to create its body based -->
+<!-- on a different function (which itself may be a virtual clone). -->
+ <p>调用图中的一个<em>virtual clone</em>就是一个函数，但是没有相关的函数体。它只是一个描述如何根据一个不同的函数（这个函数本身也可能是一个virtual clone）来创建它的函数体。
+
+<!-- The description of function modifications includes adjustments to -->
+<!-- the function's signature (which allows, for example, removing or -->
+<!-- adding function arguments), substitutions to perform on the -->
+<!-- function body, and, for inlined functions, a pointer to the -->
+<!-- function that it will be inlined into. -->
+ <p>对一个函数的修改的描述包括了函数签名的调整（它允许，比如，删除或者添加函数参数），在函数体上的替换，和指向内联函数的指针会被内联到函数体。
+
+<!-- It is also possible to redirect any edge of the callgraph from a -->
+<!-- function to its virtual clone.  This implies updating of the call -->
+<!-- site to adjust for the new function signature. -->
+ <p>调用图中的一个边有可能从一个函数指向它的virtual clone。这样就意味着更新call site用来调整新的函数签名。
+
+<!-- Most of the transformations performed by inter-procedural -->
+<!-- optimizations can be represented via virtual clones.  For -->
+<!-- instance, a constant propagation pass can produce a virtual clone -->
+<!-- of the function which replaces one of its arguments by a -->
+<!-- constant.  The inliner can represent its decisions by producing a -->
+<!-- clone of a function whose body will be later integrated into -->
+<!-- a given function. -->
+ <p>大多数过程间优化所做的变换都可以用virtual clone代表。例如，常量传播优化可以给函数创造一个virtual clone，其把其中一个参数替换为一个常数。内联函数优化可以用制造一个函数的克隆，然后把这个克隆集成到某个特定函数中去。
+
+<!-- Using @emph{virtual clones}, the program can be easily updated -->
+<!-- during the @emph{Execute} stage, solving most of pass interactions -->
+<!-- problems that would otherwise occur during @emph{Transform}. -->
+ <p>使用<em>virtual clone</em>，程序可以被容易地更新在<em>Execute</em>更新，这样也可以解决优化遍的交互的大部分问题，否则，会在<em>Transform</em>阶段发生这些问题。
+
+<!-- Virtual clones are later materialized in the LTRANS stage and -->
+<!-- turned into real functions.  Passes executed after the virtual -->
+<!-- clone were introduced also perform their @emph{Transform} stage -->
+<!-- on new functions, so for a pass there is no significant -->
+<!-- difference between operating on a real function or a virtual -->
+<!-- clone introduced before its @emph{Execute} stage. -->
+ <p>Virtual clone 在 LTRANS 阶段和转向实函数的时候是延后处理的。在引入 virtual clone 并且对新函数执行完 <em>Transform</em> 阶段后执行，因此对于一个 pass 来说在 <em>Execute</em> 阶段之前操作一个实函数和 virtual clone 是没有区别的。
+
+<!-- Optimization passes then work on virtual clones introduced before -->
+<!-- their @emph{Execute} stage as if they were real functions.  The -->
+<!-- only difference is that clones are not visible during the -->
+<!-- @emph{Generate Summary} stage. -->
+ <p>然后优化遍会对在执行阶段之前引入的<em>virtual clone</em> ，当作真正的函数，进行优化。这些<em>virtual clone</em>和真正的函数的区别就是他们在<em>Generate Summary</em>阶段不可见。
+
+<!-- To keep function summaries updated, the callgraph interface -->
+<!-- allows an optimizer to register a callback that is called every -->
+<!-- time a new clone is introduced as well as when the actual -->
+<!-- function or variable is generated or when a function or variable -->
+<!-- is removed.  These hooks are registered in the @emph{Generate -->
+<!-- summary} stage and allow the pass to keep its information intact -->
+<!-- until the @emph{Execute} stage.  The same hooks can also be -->
+<!-- registered during the @emph{Execute} stage to keep the -->
+<!-- optimization summaries updated for the @emph{Transform} stage. -->
+ <p>为了保证函数摘要的更新，调用图接口允许优化器注册 callback，这个 callback 在每次引入新的克隆，生成实函数或变量或者删除函数或者变量的时候调用。在<em>Generate summary</em>阶段注册这些钩子并且允许保存完整信息直到<em>Execute</em>阶段。在<em>Execute</em>阶段也可以注册相同的钩子用来为<em>Transform</em>阶段保存更新的优化摘要。
+
+<!-- @subsection IPA references -->
+<h4 class="subsection">24.3.2 IPA 引用</h4>
+
+<!-- GCC represents IPA references in the callgraph.  For a function -->
+<!-- or variable @code{A}, the @emph{IPA reference} is a list of all -->
+<!-- locations where the address of @code{A} is taken and, when -->
+<!-- @code{A} is a variable, a list of all direct stores and reads -->
+<!-- to/from @code{A}.  References represent an oriented multi-graph on -->
+<!-- the union of nodes of the callgraph and the varpool.  See -->
+<!-- @file{ipa-reference.c}:@code{ipa_reference_write_optimization_summary} -->
+<!-- and -->
+<!-- @file{ipa-reference.c}:@code{ipa_reference_read_optimization_summary} -->
+<!-- for details. -->
+<p>GCC在调用图中表现IPA的引用。对已一个函数或者变量 <code>A</code>，<em>IPA reference</em> 就是一个所有使用地址<code>A</code>的代码位置的列表。如果<code>A</code>是一个变量，这个列表就是所有直接对<code>A</code>读写的代码位置。References represent an oriented multi-graph on the union of nodes of the callgraph and the varpool.  参见<samp><span class="file">ipa-reference.c</span></samp>:<code>ipa_reference_write_optimization_summary</code>和<samp><span class="file">ipa-reference.c</span></samp>:<code>ipa_reference_read_optimization_summary</code>。
+
+<!-- @subsection Jump functions -->
+<h4 class="subsection">24.3.3 跳转功能</h4>
+
+<!-- Suppose that an optimization pass sees a function @code{A} and it -->
+<!-- knows the values of (some of) its arguments.  The @emph{jump -->
+<!-- function} describes the value of a parameter of a given function -->
+<!-- call in function @code{A} based on this knowledge. -->
+<p>假设优化过程遇到函数 <code>A</code> 并且知道它的（一些）参数的值，跳转功能会根据已有的知识确定函数 <code>A</code> 中给定函数调用的参数的值。
+
+<!-- Jump functions are used by several optimizations, such as the -->
+<!-- inter-procedural constant propagation pass and the -->
+<!-- devirtualization pass.  The inliner also uses jump functions to -->
+<!-- perform inlining of callbacks. -->
+ <p>跳转函数在一些优化中都有用到，比如过程间静态传递过程和解虚拟化过程。内联函数优化也使用跳转功能来实现内联回调。
+
+<!-- @section Whole program assumptions, linker plugin and symbol visibilities -->
+<h3 class="section">24.4 完整程序的假设，链接器插件和符号可见性</h3>
+
+<!-- Link-time optimization gives relatively minor benefits when used -->
+<!-- alone.  The problem is that propagation of inter-procedural -->
+<!-- information does not work well across functions and variables -->
+<!-- that are called or referenced by other compilation units (such as -->
+<!-- from a dynamically linked library).  We say that such functions -->
+<!-- are variables are @emph{externally visible}. -->
+<p>链接时优化在单独使用的时候，得到的收益相对较小。这个问题是因为过程间优化信息的传播对于那些在别的编译单元（比如动态链接库）调用或者引用的函数和变量效果不好。我们称这样的函数和变量为<em>外部可见</em>。
+
+<!-- To make the situation even more difficult, many applications -->
+<!-- organize themselves as a set of shared libraries, and the default -->
+<!-- ELF visibility rules allow one to overwrite any externally -->
+<!-- visible symbol with a different symbol at runtime.  This -->
+<!-- basically disables any optimizations across such functions and -->
+<!-- variables, because the compiler cannot be sure that the function -->
+<!-- body it is seeing is the same function body that will be used at -->
+<!-- runtime.  Any function or variable not declared @code{static} in -->
+<!-- the sources degrades the quality of inter-procedural -->
+<!-- optimization. -->
+ <p>很多应用程序都会把自己组织成一些共享库，而且缺省的ELF符号可见性规则允许在运行时，用别的符号覆盖任意外部可见的符号。这样就是使得情况更加复杂。这样就基本上关闭了在这些函数和变量上进行优化的可能，因为编译器不能确定它所看到的函数体是否和在运行时使用的函数体一致。任何在代码中没有声明为<code>static</code> 函数或者变量都会降低过程间优化的质量。
+
+<!-- To avoid this problem the compiler must assume that it sees the -->
+<!-- whole program when doing link-time optimization.  Strictly -->
+<!-- speaking, the whole program is rarely visible even at link-time. -->
+<!-- Standard system libraries are usually linked dynamically or not -->
+<!-- provided with the link-time information.  In GCC, the whole -->
+<!-- program option (@option{-fwhole-program}) asserts that every -->
+<!-- function and variable defined in the current compilation -->
+<!-- unit is static, except for function @code{main} (note: at -->
+<!-- link time, the current unit is the union of all objects compiled -->
+<!-- with LTO).  Since some functions and variables need to -->
+<!-- be referenced externally, for example by another DSO or from an -->
+<!-- assembler file, GCC also provides the function and variable -->
+<!-- attribute @code{externally_visible} which can be used to disable -->
+<!-- the effect of @option{-fwhole-program} on a specific symbol. -->
+ <p>为了避免这个问题，编译器必须认为在进行链接时优化时，它能够看到程序的所有部分。严格地说，即时在链接时刻，程序的所有部分也是不容易得到的。标准系统库通常都是动态链接，或者不会在程序链接时刻提供信息。在GCC，全局程序优化选项(<samp><span class="option">-fwhole-program</span></samp>)断定每一个在当前编译单元中定义的函数和变量都是静态的，除了函数 <code>main</code> （注：在链接时刻，当前编译单元就是所用使用LTO编译的对象）。犹豫一些函数和变量需要被外部引用，比如被另一个DSO引用或者汇编文件使用，GCC也为这些函数和变量提供属性<code>externally_visible</code>。这个属性可以用来关闭选项<samp><span class="option">-fwhole-program</span></samp>对某个特定符号带来的效果。
+
+<!-- The whole program mode assumptions are slightly more complex in -->
+<!-- C++, where inline functions in headers are put into @emph{COMDAT} -->
+<!-- sections.  COMDAT function and variables can be defined by -->
+<!-- multiple object files and their bodies are unified at link-time -->
+<!-- and dynamic link-time.  COMDAT functions are changed to local only -->
+<!-- when their address is not taken and thus un-sharing them with a -->
+<!-- library is not harmful.  COMDAT variables always remain externally -->
+<!-- visible, however for readonly variables it is assumed that their -->
+<!-- initializers cannot be overwritten by a different value. -->
+ <p>全局程序优化在C++程序中，假设就更加复杂。因为C++头文件中的内联函数都被放到了<em>COMDAT</em>段中。COMDAT函数和对象可以被多个目标文件定义，而且他们的函数体在链接时刻和动态链接时刻被统一起来。COMDAT函数只有当地址没有taken，才能被改变为局部函数。COMDAT变量一直是外部可见的，但是对于只读变量，it is assumed that their initializers cannot be overwritten by a different value.
+
+<!-- GCC provides the function and variable attribute -->
+<!-- @code{visibility} that can be used to specify the visibility of -->
+<!-- externally visible symbols (or alternatively an -->
+<!-- @option{-fdefault-visibility} command line option).  ELF defines -->
+<!-- the @code{default}, @code{protected}, @code{hidden} and -->
+<!-- @code{internal} visibilities. -->
+ <p>GCC 给函数和变量提供了属性<code>visibility</code>，可以设置外部可见呼号的可见性 （或者在命令行中使用选项<samp><span class="option">-fdefault-visibility</span></samp> 来改变）。ELF标准定义了<code>default</code>，<code>protected</code>, <code>hidden</code> 和 <code>internal</code> 这集中可见性。
+
+<!-- The most commonly used is visibility is @code{hidden}.  It -->
+<!-- specifies that the symbol cannot be referenced from outside of -->
+<!-- the current shared library.  Unfortunately, this information -->
+<!-- cannot be used directly by the link-time optimization in the -->
+<!-- compiler since the whole shared library also might contain -->
+<!-- non-LTO objects and those are not visible to the compiler. -->
+ <p>可见性<code>hidden</code>是最通常使用的。它设定了符号不能被当前共享库以外的部分引用。不幸的是，这个信息不能被链接时优化直接使用，因为全部的空想看可能包含非LTO对象，而且这些对象对编译器不可见。
+
+<!-- GCC solves this problem using linker plugins.  A @emph{linker -->
+<!-- plugin} is an interface to the linker that allows an external -->
+<!-- program to claim the ownership of a given object file.  The linker -->
+<!-- then performs the linking procedure by querying the plugin about -->
+<!-- the symbol table of the claimed objects and once the linking -->
+<!-- decisions are complete, the plugin is allowed to provide the -->
+<!-- final object file before the actual linking is made.  The linker -->
+<!-- plugin obtains the symbol resolution information which specifies -->
+<!-- which symbols provided by the claimed objects are bound from the -->
+<!-- rest of a binary being linked. -->
+ <p>GCC 使用连接器插件来解决这个问题。A <em>linker plugin</em>是一个到连接器的接口，这个接口允许外部程序要求一个指定目标文件的所有权。在链接器执行链接过程中，链接器询问插件，要求目标文件的符号表。一旦链接决定完成，插件可以在真正的链接之前，提供最后的目标文件。链接器插件获得了符号解析的信息，这些信息指定了由要求的目标文件提供的哪些符号被绑定到正在链接的二进制文件的别的部分。
+
+<!-- Currently, the linker plugin  works only in combination -->
+<!-- with the Gold linker, but a GNU ld implementation is under -->
+<!-- development. -->
+ <p>目前，链接器插件仅仅和Gold链接器能一起工作，但是GNU ld的实现正在开发中。
+
+<!-- GCC is designed to be independent of the rest of the toolchain -->
+<!-- and aims to support linkers without plugin support.  For this -->
+<!-- reason it does not use the linker plugin by default.  Instead, -->
+<!-- the object files are examined by @command{collect2} before being -->
+<!-- passed to the linker and objects found to have LTO sections are -->
+<!-- passed to @command{lto1} first.  This mode does not work for -->
+<!-- library archives.  The decision on what object files from the -->
+<!-- archive are needed depends on the actual linking and thus GCC -->
+<!-- would have to implement the linker itself.  The resolution -->
+<!-- information is missing too and thus GCC needs to make an educated -->
+<!-- guess based on @option{-fwhole-program}.  Without the linker -->
+<!-- plugin GCC also assumes that symbols are declared @code{hidden} -->
+<!-- and not referred by non-LTO code by default. -->
+ <p>GCC被设计成为独立于工具链其他部分，而且为了支持没有插件支持的链接器。由于这个原因，GCC缺省不使用链接器插件。目标文件先被<samp><span class="command">collect2</span></samp>检查，然后送到链接器。在这个过程中，如果目标文件中发现含有LTO段，会被首先送到 <samp><span class="command">lto1</span></samp> 。这样的模式不适用于库档案。决定什么目标文件来源于档案，取决于实际的链接，所以GCC必须已经实现了链接器，才能知道。解析信息也丢失了，所以GCC需要基于<samp><span class="option">-fwhole-program</span></samp>做一个合理的猜测。没有链接器插件，GCC也可以认为缺省情况下，符号被声明为<code>hidden</code>，没有被非LTO代码引用。
+
+<!-- @section Internal flags controlling @code{lto1} -->
+<h3 class="section">24.5 控制<code>lto1</code>的内部标记</h3>
+
+<!-- The following flags are passed into @command{lto1} and are not -->
+<!-- meant to be used directly from the command line. -->
+<p>下边这些标记会传递给<samp><span class="command">lto1</span></samp>，而且不会直接来自于命令行。
+
+     <ul>
+<li>-fwpa
+<a name="index-fwpa-4980"></a><!-- This option runs the serial part of the link-time optimizer -->
+<!-- performing the inter-procedural propagation (WPA mode).  The -->
+<!-- compiler reads in summary information from all inputs and -->
+<!-- performs an analysis based on summary information only.  It -->
+<!-- generates object files for subsequent runs of the link-time -->
+<!-- optimizer where individual object files are optimized using both -->
+<!-- summary information from the WPA mode and the actual function -->
+<!-- bodies.  It then drives the LTRANS phase. -->
+这个选项运行链接时刻优化器的串行部分，进行过程间扩展（WPA模式）。编译器从所有输入中读入总计信息，并且仅基于这些总计信息进行分析。这个步骤为下边的链接时刻优化器的运行生成了目标文件。链接时刻优化器下边的运行会使用来自WPA模式的总计信息和实际函数体信息进行优化。然后，驱动LTRANS阶段。
+
+     <li>-fltrans
+<a name="index-fltrans-4981"></a><!-- This option runs the link-time optimizer in the -->
+<!-- local-transformation (LTRANS) mode, which reads in output from a -->
+<!-- previous run of the LTO in WPA mode.  In the LTRANS mode, LTO -->
+<!-- optimizes an object and produces the final assembly. -->
+这个选项使得链接时刻优化器运行在局部转换(LTRANS)模式。在这个模式下，链接时刻优化器读入上一遍WPA模式的输出。在LTRANS模式，链接时刻优化器优化完一个目标文件后，生成最后的汇编程序。
+
+     <li>-fltrans-output-list=<var>file</var>
+<a name="index-fltrans_002doutput_002dlist-4982"></a><!-- This option specifies a file to which the names of LTRANS output -->
+<!-- files are written.  This option is only meaningful in conjunction -->
+<!-- with @option{-fwpa}. -->
+这个选项指定了一个文件，用来记录LTRANS输出的文件名。这个选项只有和<samp><span class="option">-fwpa</span></samp>一起使用才有意义。
+</ul>
+
+ </body></html>
+

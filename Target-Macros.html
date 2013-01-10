@@ -1,0 +1,135 @@
+<html lang="zh">
+<head>
+<title>Target Macros - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="prev" href="Machine-Desc.html#Machine-Desc" title="Machine Desc">
+<link rel="next" href="Host-Config.html#Host-Config" title="Host Config">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Target-Macros"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Host-Config.html#Host-Config">Host Config</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Machine-Desc.html#Machine-Desc">Machine Desc</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
+<hr>
+</div>
+
+<h2 class="chapter">17 目标机描述宏和函数</h2>
+
+<p><a name="index-machine-description-macros-3737"></a><a name="index-target-description-macros-3738"></a><a name="index-macros_002c-target-description-3739"></a><a name="index-g_t_0040file_007btm_002eh_007d-macros-3740"></a>
+<!-- In addition to the file @file{@var{machine}.md}, a machine description -->
+<!-- includes a C header file conventionally given the name -->
+<!-- @file{@var{machine}.h} and a C source file named @file{@var{machine}.c}. -->
+<!-- The header file defines numerous macros that convey the information -->
+<!-- about the target machine that does not fit into the scheme of the -->
+<!-- @file{.md} file.  The file @file{tm.h} should be a link to -->
+<!-- @file{@var{machine}.h}.  The header file @file{config.h} includes -->
+<!-- @file{tm.h} and most compiler source files include @file{config.h}.  The -->
+<!-- source file defines a variable @code{targetm}, which is a structure -->
+<!-- containing pointers to functions and data relating to the target -->
+<!-- machine.  @file{@var{machine}.c} should also contain their definitions, -->
+<!-- if they are not defined elsewhere in GCC, and other functions called -->
+<!-- through the macros defined in the @file{.h} file. -->
+除了文件<samp><var>machine</var><span class="file">.md</span></samp>，机器描述还包括一个通常名为<samp><var>machine</var><span class="file">.h</span></samp>的C头文件和一个名为<samp><var>machine</var><span class="file">.c</span></samp>的C源文件。头文件定义了大量的宏，用来传达不适合于<samp><span class="file">.md</span></samp>文件框架的目标机器信息。文件<samp><span class="file">tm.h</span></samp>应该为<samp><var>machine</var><span class="file">.h</span></samp>的一个链接。头文件<samp><span class="file">config.h</span></samp>包含<samp><span class="file">tm.h</span></samp>，并且大多数编译器源文件包含<samp><span class="file">config.h</span></samp>。源文件定义了变量<code>targetm</code>，其为一个包含了与目标机器相关的函数指针和数据的结构体。如果它们没有在GCC中的其它地方定义，<samp><var>machine</var><span class="file">.c</span></samp>还应该包含它们的定义，其它通过宏调用的函数在<samp><span class="file">.h</span></samp>文件中定义。
+
+<!-- @menu -->
+<!-- * Target Structure::    The @code{targetm} variable. -->
+<!-- * Driver::              Controlling how the driver runs the compilation passes. -->
+<!-- * Run-time Target::     Defining @samp{-m} options like @option{-m68000} and @option{-m68020}. -->
+<!-- * Per-Function Data::   Defining data structures for per-function information. -->
+<!-- * Storage Layout::      Defining sizes and alignments of data. -->
+<!-- * Type Layout::         Defining sizes and properties of basic user data types. -->
+<!-- * Registers::           Naming and describing the hardware registers. -->
+<!-- * Register Classes::    Defining the classes of hardware registers. -->
+<!-- * Old Constraints::     The old way to define machine-specific constraints. -->
+<!-- * Stack and Calling::   Defining which way the stack grows and by how much. -->
+<!-- * Varargs::             Defining the varargs macros. -->
+<!-- * Trampolines::         Code set up at run time to enter a nested function. -->
+<!-- * Library Calls::       Controlling how library routines are implicitly called. -->
+<!-- * Addressing Modes::    Defining addressing modes valid for memory operands. -->
+<!-- * Anchored Addresses::  Defining how @option{-fsection-anchors} should work. -->
+<!-- * Condition Code::      Defining how insns update the condition code. -->
+<!-- * Costs::               Defining relative costs of different operations. -->
+<!-- * Scheduling::          Adjusting the behavior of the instruction scheduler. -->
+<!-- * Sections::            Dividing storage into text, data, and other sections. -->
+<!-- * PIC::                 Macros for position independent code. -->
+<!-- * Assembler Format::    Defining how to write insns and pseudo-ops to output. -->
+<!-- * Debugging Info::      Defining the format of debugging output. -->
+<!-- * Floating Point::      Handling floating point for cross-compilers. -->
+<!-- * Mode Switching::      Insertion of mode-switching instructions. -->
+<!-- * Target Attributes::   Defining target-specific uses of @code{__attribute__}. -->
+<!-- * Emulated TLS::        Emulated TLS support. -->
+<!-- * MIPS Coprocessors::   MIPS coprocessor support and how to customize it. -->
+<!-- * PCH Target::          Validity checking for precompiled headers. -->
+<!-- * C++ ABI::             Controlling C++ ABI changes. -->
+<!-- * Named Address Spaces:: Adding support for named address spaces -->
+<!-- * Misc::                Everything else. -->
+<!-- @end menu -->
+<ul class="menu">
+<li><a accesskey="1" href="Target-Structure.html#Target-Structure">Target Structure</a>: 	<code>targetm</code>变量
+<li><a accesskey="2" href="Driver.html#Driver">Driver</a>: 		控制驱动程序如何运行编译过程
+<li><a accesskey="3" href="Run_002dtime-Target.html#Run_002dtime-Target">Run-time Target</a>: 	定义像<samp><span class="option">-m68000</span></samp>和<samp><span class="option">-m68020</span></samp>这样的&lsquo;<samp><span class="samp">-m</span></samp>&rsquo;选项
+<li><a accesskey="4" href="Per_002dFunction-Data.html#Per_002dFunction-Data">Per-Function Data</a>: 	定义每个函数的信息的数据结构体
+<li><a accesskey="5" href="Storage-Layout.html#Storage-Layout">Storage Layout</a>: 	定义数据的大小和对齐方式
+<li><a accesskey="6" href="Type-Layout.html#Type-Layout">Type Layout</a>: 		定义基本用户数据类型的大小和属性
+<li><a accesskey="7" href="Registers.html#Registers">Registers</a>: 		命名和描述硬件寄存器
+<li><a accesskey="8" href="Register-Classes.html#Register-Classes">Register Classes</a>: 	定义硬件寄存器的类别
+<li><a accesskey="9" href="Old-Constraints.html#Old-Constraints">Old Constraints</a>: 	定义机器特定约束的旧方式
+<li><a href="Stack-and-Calling.html#Stack-and-Calling">Stack and Calling</a>: 	定义栈增长的方式和数量
+<li><a href="Varargs.html#Varargs">Varargs</a>: 		定义varargs宏
+<li><a href="Trampolines.html#Trampolines">Trampolines</a>: 		运行时建立的进入嵌套函数的代码
+<li><a href="Library-Calls.html#Library-Calls">Library Calls</a>: 	控制库函数如何被隐式调用
+<li><a href="Addressing-Modes.html#Addressing-Modes">Addressing Modes</a>: 	定义对内存操作数有效的寻址方式
+<li><a href="Anchored-Addresses.html#Anchored-Addresses">Anchored Addresses</a>: 	定义<samp><span class="option">-fsection-anchors</span></samp>如何工作
+<li><a href="Condition-Code.html#Condition-Code">Condition Code</a>: 	定义insns如何更新条件代码
+<li><a href="Costs.html#Costs">Costs</a>: 		定义不同操作的相对开销
+<li><a href="Scheduling.html#Scheduling">Scheduling</a>: 		调整指令调度器的行为
+<li><a href="Sections.html#Sections">Sections</a>: 		将存储拆分到代码，数据和其它的段
+<li><a href="PIC.html#PIC">PIC</a>: 			位置无关代码的宏
+<li><a href="Assembler-Format.html#Assembler-Format">Assembler Format</a>: 	定义如何输出insns和伪操作
+<li><a href="Debugging-Info.html#Debugging-Info">Debugging Info</a>: 	定义调试输出的格式
+<li><a href="Floating-Point.html#Floating-Point">Floating Point</a>: 	处理交叉编译器的浮点
+<li><a href="Mode-Switching.html#Mode-Switching">Mode Switching</a>: 	插入模式切换指令
+<li><a href="Target-Attributes.html#Target-Attributes">Target Attributes</a>: 	定义目标机特定的<code>__attribute__</code>用法
+<li><a href="Emulated-TLS.html#Emulated-TLS">Emulated TLS</a>: 	模拟对TLS的支持
+<li><a href="MIPS-Coprocessors.html#MIPS-Coprocessors">MIPS Coprocessors</a>: 	对MIPS协处理器的支持，以及如何自定义
+<li><a href="PCH-Target.html#PCH-Target">PCH Target</a>: 		对预编译头文件的有效性检查
+<li><a href="C_002b_002b-ABI.html#C_002b_002b-ABI">C++ ABI</a>: 		控制C++ ABI的变动
+<li><a href="Named-Address-Spaces.html#Named-Address-Spaces">Named Address Spaces</a>:  Adding support for named address spaces
+<li><a href="Misc.html#Misc">Misc</a>: 		其它
+</ul>
+
+<!-- @node Target Structure -->
+<!-- @section The Global @code{targetm} Variable -->
+ </body></html>
+

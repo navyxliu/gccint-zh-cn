@@ -1,0 +1,673 @@
+<html lang="zh">
+<head>
+<title>Insns - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="RTL.html#RTL" title="RTL">
+<link rel="prev" href="Debug-Information.html#Debug-Information" title="Debug Information">
+<link rel="next" href="Calls.html#Calls" title="Calls">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Insns"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Calls.html#Calls">Calls</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Debug-Information.html#Debug-Information">Debug Information</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="RTL.html#RTL">RTL</a>
+<hr>
+</div>
+
+<h3 class="section">10.19 Insns</h3>
+
+<p><a name="index-insns-2219"></a>
+<!-- The RTL representation of the code for a function is a doubly-linked -->
+<!-- chain of objects called @dfn{insns}.  Insns are expressions with -->
+<!-- special codes that are used for no other purpose.  Some insns are -->
+<!-- actual instructions; others represent dispatch tables for @code{switch} -->
+<!-- statements; others represent labels to jump to or various sorts of -->
+<!-- declarative information. -->
+一个函数的代码的RTL表示是一个被称作<dfn>insns</dfn>对象的双向链表。insn只不过是具有特定代码的表达式。有些insn是实际的指令；有些用来表示<code>switch</code>语句的派遣表。有些用来表示要调转的标号或者不同类别的声明信息。
+
+<!-- In addition to its own specific data, each insn must have a unique -->
+<!-- id-number that distinguishes it from all other insns in the current -->
+<!-- function (after delayed branch scheduling, copies of an insn with the -->
+<!-- same id-number may be present in multiple places in a function, but -->
+<!-- these copies will always be identical and will only appear inside a -->
+<!-- @code{sequence}), and chain pointers to the preceding and following -->
+<!-- insns.  These three fields occupy the same position in every insn, -->
+<!-- independent of the expression code of the insn.  They could be accessed -->
+<!-- with @code{XEXP} and @code{XINT}, but instead three special macros are -->
+<!-- always used: -->
+ <p>除了本身特定的数据，每个insn必须有一个唯一的id号用来区别当前函数中其它的insn（经过分支延迟调度之后，具有相同id号的一个insn 的拷贝，可能会出现在一个函数中的多个地方，但是这些拷贝总是同样的，并且只是出现在一个<code>sequence</code>中），以及指向前面和后面insn的链表指针。这三个域在每个insn中占有相同的位置，并且独立于insn的表达式代码。它们可以通过<code>XEXP</code>和<code>XINT</code>来访问，不过，有三个特定的宏经常会被使用：
+
+     
+<a name="index-INSN_005fUID-2220"></a>
+<dl><dt><code>INSN_UID (</code><var>i</var><code>)</code><dd><!-- Accesses the unique id of insn @var{i}. -->
+访问insn <var>i</var>的唯一id。
+
+     <p><a name="index-PREV_005fINSN-2221"></a><br><dt><code>PREV_INSN (</code><var>i</var><code>)</code><dd><!-- Accesses the chain pointer to the insn preceding @var{i}. -->
+<!-- If @var{i} is the first insn, this is a null pointer. -->
+访问指向<var>i</var>之前的insn的链表指针。如果<var>i</var>是第一个insn，则是一个null指针。
+
+     <p><a name="index-NEXT_005fINSN-2222"></a><br><dt><code>NEXT_INSN (</code><var>i</var><code>)</code><dd><!-- Accesses the chain pointer to the insn following @var{i}. -->
+<!-- If @var{i} is the last insn, this is a null pointer. -->
+访问指向<var>i</var>之后的insn的链表指针。如果<var>i</var>是最后一个insn，则是一个null指针。
+
+ </dl>
+
+ <p><a name="index-get_005finsns-2223"></a><a name="index-get_005flast_005finsn-2224"></a><!-- The first insn in the chain is obtained by calling @code{get_insns}; the -->
+<!-- last insn is the result of calling @code{get_last_insn}.  Within the -->
+<!-- chain delimited by these insns, the @code{NEXT_INSN} and -->
+<!-- @code{PREV_INSN} pointers must always correspond: if @var{insn} is not -->
+<!-- the first insn, -->
+链表中的第一个insn可以通过调用<code>get_insns</code>获得；最后一个insn可以通过调用<code>get_last_insn</code>来获得。在由这些insn界定的链中，<code>NEXT_INSN</code>和<code>PREV_INSN</code>指针必须总是相当：如果<var>insn</var> 不是第一个insn，则
+
+<pre class="smallexample">     NEXT_INSN (PREV_INSN (<var>insn</var>)) == <var>insn</var>
+</pre>
+ <p class="noindent"><!-- is always true and if @var{insn} is not the last insn, -->
+总是真，并且如果<var>insn</var>不是最后一个insn，则
+
+<pre class="smallexample">     PREV_INSN (NEXT_INSN (<var>insn</var>)) == <var>insn</var>
+</pre>
+ <p class="noindent"><!-- is always true. -->
+总是真。
+
+<!-- After delay slot scheduling, some of the insns in the chain might be -->
+<!-- @code{sequence} expressions, which contain a vector of insns.  The value -->
+<!-- of @code{NEXT_INSN} in all but the last of these insns is the next insn -->
+<!-- in the vector; the value of @code{NEXT_INSN} of the last insn in the vector -->
+<!-- is the same as the value of @code{NEXT_INSN} for the @code{sequence} in -->
+<!-- which it is contained.  Similar rules apply for @code{PREV_INSN}. -->
+ <p>在延迟槽调度之后，在链中的一些insn可能为<code>sequence</code>表达式，其包含了一个insn向量。这个向量中除了最后一个insn之外，其它insn的<code>NEXT_INSN</code>的值都是向量中的下一个insn；向量中的最后一个insn的<code>NEXT_INSN</code>的值，等于包含<code>sequence</code>的insn的<code>NEXT_INSN</code>的值。对于<code>PREV_INSN</code>，也有类似的规则。
+
+<!-- This means that the above invariants are not necessarily true for insns -->
+<!-- inside @code{sequence} expressions.  Specifically, if @var{insn} is the -->
+<!-- first insn in a @code{sequence}, @code{NEXT_INSN (PREV_INSN (@var{insn}))} -->
+<!-- is the insn containing the @code{sequence} expression, as is the value -->
+<!-- of @code{PREV_INSN (NEXT_INSN (@var{insn}))} if @var{insn} is the last -->
+<!-- insn in the @code{sequence} expression.  You can use these expressions -->
+<!-- to find the containing @code{sequence} expression. -->
+ <p>这意味着上面的恒等式，对于在<code>sequence</code>表达式中的insn不需要成立。特别是，如果<var>insn</var>为<code>sequence</code>中的第一个insn，则<code>NEXT_INSN (PREV_INSN (</code><var>insn</var><code>))</code>为包含<code>sequence</code>表达式的insn，同样如果<var>insn</var>为<code>sequence</code>中的最后一个insn，则<code>PREV_INSN (NEXT_INSN (</code><var>insn</var><code>))</code>的值也是如此。你可以使用这些表达式来查找包含<code>sequence</code>的insn。
+
+<!-- Every insn has one of the following expression codes: -->
+ <p>每个insn都具有下列六种表达式代码中的一个：
+
+     
+<a name="index-insn-2225"></a>
+<dl><dt><code>insn</code><dd><!-- The expression code @code{insn} is used for instructions that do not jump -->
+<!-- and do not do function calls.  @code{sequence} expressions are always -->
+<!-- contained in insns with code @code{insn} even if one of those insns -->
+<!-- should jump or do function calls. -->
+表达式代码<code>insn</code>用于不进行跳转和函数调用的指令。<code>sequence</code>表达式总是包含在表达式代码为<code>insn</code>的insn中，即使它们中的一个insn是跳转或者函数调用。
+
+     <!-- Insns with code @code{insn} have four additional fields beyond the three -->
+     <!-- mandatory ones listed above.  These four are described in a table below. -->
+     <p>表达式代码为<code>insn</code>的insn，除了上面列出的三个必须的域以外，还具有四个额外的域。这四个域在后面的表中有描述。
+
+     <p><a name="index-jump_005finsn-2226"></a><br><dt><code>jump_insn</code><dd><!-- The expression code @code{jump_insn} is used for instructions that may -->
+<!-- jump (or, more generally, may contain @code{label_ref} expressions to -->
+<!-- which @code{pc} can be set in that instruction).  If there is an -->
+<!-- instruction to return from the current function, it is recorded as a -->
+<!-- @code{jump_insn}. -->
+表达式代码<code>jump_insn</code>用于可能执行跳转（或者，更一般的讲，指令中可能包含了<code>label_ref</code>表达式，并用其来设置<code>pc</code>）的指令。如果有一条从当前函数返回的指令，则其被记录为<code>jump_insn</code>。
+
+     <p><a name="index-JUMP_005fLABEL-2227"></a><!-- @code{jump_insn} insns have the same extra fields as @code{insn} insns, -->
+<!-- accessed in the same way and in addition contain a field -->
+<!-- @code{JUMP_LABEL} which is defined once jump optimization has completed. -->
+<code>jump_insn</code>具有跟<code>insn</code>相同的额外的域，并使用同样的方式来访问，除此之外，还包含了一个域<code>JUMP_LABEL</code>，其当执行完跳转优化后被定义。
+
+     <!-- For simple conditional and unconditional jumps, this field contains -->
+     <!-- the @code{code_label} to which this insn will (possibly conditionally) -->
+     <!-- branch.  In a more complex jump, @code{JUMP_LABEL} records one of the -->
+     <!-- labels that the insn refers to; other jump target labels are recorded -->
+     <!-- as @code{REG_LABEL_TARGET} notes.  The exception is @code{addr_vec} -->
+     <!-- and @code{addr_diff_vec}, where @code{JUMP_LABEL} is @code{NULL_RTX} -->
+     <!-- and the only way to find the labels is to scan the entire body of the -->
+     <!-- insn. -->
+     <p>对于简单的条件跳转和无条件跳转，该域包含了该insn将（可能有条件的）分支跳转到的<code>code_label</code>。在更复杂的跳转中，<code>JUMP_LABEL</code>记录了insn引用的其中一个标号；其它跳转目标标号作为<code>REG_LABEL_TARGET</code>注解来记录。<code>addr_vec</code>和<code>addr_diff_vec</code>是例外的情况，对此，<code>JUMP_LABEL</code>为<code>NULL_RTX</code>，而只有扫描整个insn体干才能找到标号。
+
+     <!-- Return insns count as jumps, but since they do not refer to any -->
+     <!-- labels, their @code{JUMP_LABEL} is @code{NULL_RTX}. -->
+     <p>返回指令insn作为跳转看待，但由于它们并不引用任何标号，所以它们的<code>JUMP_LABEL</code>为<code>NULL_RTX</code>。
+
+     <p><a name="index-call_005finsn-2228"></a><br><dt><code>call_insn</code><dd><!-- The expression code @code{call_insn} is used for instructions that may do -->
+<!-- function calls.  It is important to distinguish these instructions because -->
+<!-- they imply that certain registers and memory locations may be altered -->
+<!-- unpredictably. -->
+表达式代码<code>call_insn</code>用于可能执行函数调用的指令。区分这些指令是很重要的，因为它们意味着特定的寄存器和内存位置可以被不可预知的方式改变。
+
+     <p><a name="index-CALL_005fINSN_005fFUNCTION_005fUSAGE-2229"></a><!-- @code{call_insn} insns have the same extra fields as @code{insn} insns, -->
+<!-- accessed in the same way and in addition contain a field -->
+<!-- @code{CALL_INSN_FUNCTION_USAGE}, which contains a list (chain of -->
+<!-- @code{expr_list} expressions) containing @code{use} and @code{clobber} -->
+<!-- expressions that denote hard registers and @code{MEM}s used or -->
+<!-- clobbered by the called function. -->
+<code>call_insn</code>具有与<code>insn</code>相同的额外的域，并使用相同的方式访问，除此之外，还包含一个域<code>CALL_INSN_FUNCTION_USAGE</code>，其包含了一个列表（<code>expr_list</code>表达式链），包含了<code>use</code>和<code>clobber</code>表达式，表示了被调用函数使用和破坏的硬件寄存器和<code>MEM</code>。
+
+     <!-- A @code{MEM} generally points to a stack slots in which arguments passed -->
+     <!-- to the libcall by reference (@pxref{Register Arguments, -->
+     <!-- TARGET_PASS_BY_REFERENCE}) are stored.  If the argument is -->
+     <!-- caller-copied (@pxref{Register Arguments, TARGET_CALLEE_COPIES}), -->
+     <!-- the stack slot will be mentioned in @code{CLOBBER} and @code{USE} -->
+     <!-- entries; if it's callee-copied, only a @code{USE} will appear, and the -->
+     <!-- @code{MEM} may point to addresses that are not stack slots. -->
+     <p>一个<code>MEM</code>通常指向一个栈槽，参数在其中按照引用方式（参见<a href="Register-Arguments.html#Register-Arguments">TARGET_PASS_BY_REFERENCE</a>）传递给libcall。如果参数是caller-copied（参见<a href="Register-Arguments.html#Register-Arguments">TARGET_CALLEE_COPIES</a>），则栈槽会在<code>CLOBBER</code>和<code>USE</code>中被提到；如果是callee-copied，则只会出现<code>USE</code>，并且<code>MEM</code>可能指向不是栈槽的地址。
+
+     <!-- @code{CLOBBER}ed registers in this list augment registers specified in -->
+     <!-- @code{CALL_USED_REGISTERS} (@pxref{Register Basics}). -->
+     <p>在列表中，被<code>CLOBBER</code>的寄存器，增加了在<code>CALL_USED_REGISTERS</code>中描述的寄存器（参见<a href="Register-Basics.html#Register-Basics">Register Basics</a>）。
+
+     <p><a name="index-code_005flabel-2230"></a><a name="index-CODE_005fLABEL_005fNUMBER-2231"></a><br><dt><code>code_label</code><dd><!-- A @code{code_label} insn represents a label that a jump insn can jump -->
+<!-- to.  It contains two special fields of data in addition to the three -->
+<!-- standard ones.  @code{CODE_LABEL_NUMBER} is used to hold the @dfn{label -->
+<!-- number}, a number that identifies this label uniquely among all the -->
+<!-- labels in the compilation (not just in the current function). -->
+<!-- Ultimately, the label is represented in the assembler output as an -->
+<!-- assembler label, usually of the form @samp{L@var{n}} where @var{n} is -->
+<!-- the label number. -->
+<code>code_label</code> insn表示一个跳转insn可以跳转到的标号。除了三个标准的域以为，其还包含两个特定的域。<code>CODE_LABEL_NUMBER</code>用于存放<dfn>label number</dfn>，在编译过程中，唯一标识该标号。最终，标号在汇编输出中作为汇编标号来表示，通常的形式为&lsquo;<samp><span class="samp">L</span><var>n</var></samp>&rsquo;，其中<var>n</var>为标号编号。
+
+     <!-- When a @code{code_label} appears in an RTL expression, it normally -->
+     <!-- appears within a @code{label_ref} which represents the address of -->
+     <!-- the label, as a number. -->
+     <p>当<code>code_label</code>出现在RTL表达式中，其通常出现在<code>label_ref</code>中，其表示了标号的地址，为一个编号。
+
+     <!-- Besides as a @code{code_label}, a label can also be represented as a -->
+     <!-- @code{note} of type @code{NOTE_INSN_DELETED_LABEL}. -->
+     <p>除了作为<code>code_label</code>以外，标号还可以作为类型为<code>NOTE_INSN_DELETED_LABEL</code>的<code>note</code>来表示。
+
+     <p><a name="index-LABEL_005fNUSES-2232"></a><!-- The field @code{LABEL_NUSES} is only defined once the jump optimization -->
+<!-- phase is completed.  It contains the number of times this label is -->
+<!-- referenced in the current function. -->
+域<code>LABEL_NUSES</code>只当完成跳转优化过程后才被定义。其包含了在当前函数中，该标号被引用的次数。
+
+     <p><a name="index-LABEL_005fKIND-2233"></a><a name="index-SET_005fLABEL_005fKIND-2234"></a><a name="index-LABEL_005fALT_005fENTRY_005fP-2235"></a><a name="index-alternate-entry-points-2236"></a><!-- The field @code{LABEL_KIND} differentiates four different types of -->
+<!-- labels: @code{LABEL_NORMAL}, @code{LABEL_STATIC_ENTRY}, -->
+<!-- @code{LABEL_GLOBAL_ENTRY}, and @code{LABEL_WEAK_ENTRY}.  The only labels -->
+<!-- that do not have type @code{LABEL_NORMAL} are @dfn{alternate entry -->
+<!-- points} to the current function.  These may be static (visible only in -->
+<!-- the containing translation unit), global (exposed to all translation -->
+<!-- units), or weak (global, but can be overridden by another symbol with the -->
+<!-- same name). -->
+域<code>LABEL_KIND</code>用来区分四种不同类型的标号：<code>LABEL_NORMAL</code>，<code>LABEL_STATIC_ENTRY</code>，<code>LABEL_GLOBAL_ENTRY</code>和<code>LABEL_WEAK_ENTRY</code>。唯一不具有类型<code>LABEL_NORMAL</code>的标号，为当前函数的<dfn>alternate entry points</dfn>。这些可以为static（只在当前转换单元中可见），global（对所有的转换单元可见）或者weak（全局的，但是可以被另一个具有相同名字的符号覆盖）。
+
+     <!-- Much of the compiler treats all four kinds of label identically.  Some -->
+     <!-- of it needs to know whether or not a label is an alternate entry point; -->
+     <!-- for this purpose, the macro @code{LABEL_ALT_ENTRY_P} is provided.  It is -->
+     <!-- equivalent to testing whether @samp{LABEL_KIND (label) == LABEL_NORMAL}. -->
+     <!-- The only place that cares about the distinction between static, global, -->
+     <!-- and weak alternate entry points, besides the front-end code that creates -->
+     <!-- them, is the function @code{output_alternate_entry_point}, in -->
+     <!-- @file{final.c}. -->
+     <p>编译器大多将所有四种标号同等对待。有些地方需要知道标号是否为候选入口点；为此，提供了宏<code>LABEL_ALT_ENTRY_P</code>。其等价于测试是否&lsquo;<samp><span class="samp">LABEL_KIND (label) == LABEL_NORMAL</span></samp>&rsquo;。除了前端创建static，global和weak alternate entry points的代码以外，其它唯一关心它们的区别的地方是<samp><span class="file">final.c</span></samp>文件中的函数<code>output_alternate_entry_point</code>。
+
+     <!-- To set the kind of a label, use the @code{SET_LABEL_KIND} macro. -->
+     <p>使用宏<code>SET_LABEL_KIND</code>来设置标号的种类。
+
+     <p><a name="index-barrier-2237"></a><br><dt><code>barrier</code><dd><!-- Barriers are placed in the instruction stream when control cannot flow -->
+<!-- past them.  They are placed after unconditional jump instructions to -->
+<!-- indicate that the jumps are unconditional and after calls to -->
+<!-- @code{volatile} functions, which do not return (e.g., @code{exit}). -->
+<!-- They contain no information beyond the three standard fields. -->
+栅栏被放在指令流中，控制无法经过的地方。它们被放在无条件跳转指令的后面，表示跳转是无条件的，以及对<code>volatile</code>函数的调用之后，表示不会返回（例如，<code>exit</code>）。除了三个标准的域以外，不包含其它信息。
+
+     <p><a name="index-note-2238"></a><a name="index-NOTE_005fLINE_005fNUMBER-2239"></a><a name="index-NOTE_005fSOURCE_005fFILE-2240"></a><br><dt><code>note</code><dd><!-- @code{note} insns are used to represent additional debugging and -->
+<!-- declarative information.  They contain two nonstandard fields, an -->
+<!-- integer which is accessed with the macro @code{NOTE_LINE_NUMBER} and a -->
+<!-- string accessed with @code{NOTE_SOURCE_FILE}. -->
+<code>note</code> insns用于表示额外的调试和说明信息。它们包含两个非标准的域，一个使用宏<code>NOTE_LINE_NUMBER</code>访问的整数，以及一个使用<code>NOTE_SOURCE_FILE</code>访问的字符串。
+
+     <!-- If @code{NOTE_LINE_NUMBER} is positive, the note represents the -->
+     <!-- position of a source line and @code{NOTE_SOURCE_FILE} is the source file name -->
+     <!-- that the line came from.  These notes control generation of line -->
+     <!-- number data in the assembler output. -->
+     <p>如果<code>NOTE_LINE_NUMBER</code>是正的，则注解表示源文件行号，并且<code>NOTE_SOURCE_FILE</code>为源文件名。这些注解控制在汇编输出中的生成行号数据。
+
+     <!-- Otherwise, @code{NOTE_LINE_NUMBER} is not really a line number but a -->
+     <!-- code with one of the following values (and @code{NOTE_SOURCE_FILE} -->
+     <!-- must contain a null pointer): -->
+     <p>否则，<code>NOTE_LINE_NUMBER</code>不是一个行号，而是一个具有下列值之一的代码（并且<code>NOTE_SOURCE_FILE</code>必须包含一个空指针）：
+
+          
+<a name="index-NOTE_005fINSN_005fDELETED-2241"></a>
+<dl><dt><code>NOTE_INSN_DELETED</code><dd><!-- Such a note is completely ignorable.  Some passes of the compiler -->
+<!-- delete insns by altering them into notes of this kind. -->
+这样的注解被完全忽略掉。编译器的一些过程会通过将insn修改成这种类型的注解，来删除insn。
+
+          <p><a name="index-NOTE_005fINSN_005fDELETED_005fLABEL-2242"></a><br><dt><code>NOTE_INSN_DELETED_LABEL</code><dd><!-- This marks what used to be a @code{code_label}, but was not used for other -->
+<!-- purposes than taking its address and was transformed to mark that no -->
+<!-- code jumps to it. -->
+标记了曾经为<code>code_label</code>，但现在只用于获得其地址，并且没有代码会跳转到这里。
+
+          <p><a name="index-NOTE_005fINSN_005fBLOCK_005fBEG-2243"></a><a name="index-NOTE_005fINSN_005fBLOCK_005fEND-2244"></a><br><dt><code>NOTE_INSN_BLOCK_BEG</code><dt><code>NOTE_INSN_BLOCK_END</code><dd><!-- These types of notes indicate the position of the beginning and end -->
+<!-- of a level of scoping of variable names.  They control the output -->
+<!-- of debugging information. -->
+这些类型的注解表示处于变量名作用域的起始和结束。它们控制调试信息的输出。
+
+          <p><a name="index-NOTE_005fINSN_005fEH_005fREGION_005fBEG-2245"></a><a name="index-NOTE_005fINSN_005fEH_005fREGION_005fEND-2246"></a><br><dt><code>NOTE_INSN_EH_REGION_BEG</code><dt><code>NOTE_INSN_EH_REGION_END</code><dd><!-- These types of notes indicate the position of the beginning and end of a -->
+<!-- level of scoping for exception handling.  @code{NOTE_BLOCK_NUMBER} -->
+<!-- identifies which @code{CODE_LABEL} or @code{note} of type -->
+<!-- @code{NOTE_INSN_DELETED_LABEL} is associated with the given region. -->
+这些类型的注解表示处于异常处理作用域的起始和结束。<code>NOTE_BLOCK_NUMBER</code>标识了哪一个类型为<code>NOTE_INSN_DELETED_LABEL</code>的<code>CODE_LABEL</code>或<code>note</code>与给定的区域相关联。
+
+          <p><a name="index-NOTE_005fINSN_005fLOOP_005fBEG-2247"></a><a name="index-NOTE_005fINSN_005fLOOP_005fEND-2248"></a><br><dt><code>NOTE_INSN_LOOP_BEG</code><dt><code>NOTE_INSN_LOOP_END</code><dd><!-- These types of notes indicate the position of the beginning and end -->
+<!-- of a @code{while} or @code{for} loop.  They enable the loop optimizer -->
+<!-- to find loops quickly. -->
+这些类型的注解表示处于<code>while</code>或者<code>for</code>循环的起始和结束。它们使得循环优化可以快速的发现循环。
+
+          <p><a name="index-NOTE_005fINSN_005fLOOP_005fCONT-2249"></a><br><dt><code>NOTE_INSN_LOOP_CONT</code><dd><!-- Appears at the place in a loop that @code{continue} statements jump to. -->
+出现在循环中<code>continue</code>语句跳转的地方。
+
+          <p><a name="index-NOTE_005fINSN_005fLOOP_005fVTOP-2250"></a><br><dt><code>NOTE_INSN_LOOP_VTOP</code><dd><!-- This note indicates the place in a loop where the exit test begins for -->
+<!-- those loops in which the exit test has been duplicated.  This position -->
+<!-- becomes another virtual start of the loop when considering loop -->
+<!-- invariants. -->
+该注解表示循环中退出测试（exit test）起始的地方，并且退出测试在循环中被复制。当考虑循环不变量时，该位置为循环的另一个虚拟起始点。
+
+          <p><a name="index-NOTE_005fINSN_005fFUNCTION_005fBEG-2251"></a><br><dt><code>NOTE_INSN_FUNCTION_BEG</code><dd><!-- Appears at the start of the function body, after the function -->
+<!-- prologue. -->
+出现在函数序言之后，函数体的起始处。
+
+          <p><a name="index-NOTE_005fINSN_005fVAR_005fLOCATION-2252"></a><a name="index-NOTE_005fVAR_005fLOCATION-2253"></a><br><dt><code>NOTE_INSN_VAR_LOCATION</code><dd><!-- This note is used to generate variable location debugging information. -->
+<!-- It indicates that the user variable in its @code{VAR_LOCATION} operand -->
+<!-- is at the location given in the RTL expression, or holds a value that -->
+<!-- can be computed by evaluating the RTL expression from that static -->
+<!-- point in the program up to the next such note for the same user -->
+<!-- variable. -->
+</dl>
+
+     <!-- These codes are printed symbolically when they appear in debugging dumps. -->
+     <p>在调试转储中，这些代码被符号化的打印。
+
+     <p><a name="index-debug_005finsn-2254"></a><a name="index-INSN_005fVAR_005fLOCATION-2255"></a><br><dt><code>debug_insn</code><dd><!-- The expression code @code{debug_insn} is used for pseudo-instructions -->
+<!-- that hold debugging information for variable tracking at assignments -->
+<!-- (see @option{-fvar-tracking-assignments} option).  They are the RTL -->
+<!-- representation of @code{GIMPLE_DEBUG} statements -->
+<!-- (@ref{@code{GIMPLE_DEBUG}}), with a @code{VAR_LOCATION} operand that -->
+<!-- binds a user variable tree to an RTL representation of the -->
+<!-- @code{value} in the corresponding statement.  A @code{DEBUG_EXPR} in -->
+<!-- it stands for the value bound to the corresponding -->
+<!-- @code{DEBUG_EXPR_DECL}. -->
+表达式代码<code>debug_insn</code>用于存放赋值中变量跟踪（variable tracking）调试信息的伪指令（参见<samp><span class="option">-fvar-tracking-assignments</span></samp>选项）。它们是<code>GIMPLE_DEBUG</code>语句的RTL表示（<a href="GIMPLE_005fDEBUG.html#GIMPLE_005fDEBUG">GIMPLE_DEBUG</a>），使用<code>VAR_LOCATION</code>操作数将用户变量tree与相应语句中<code>value</code>的RTL表示绑定在一起。其中的<code>DEBUG_EXPR</code>表示绑定到相应<code>DEBUG_EXPR_DECL</code>的值。
+
+     <!-- Throughout optimization passes, binding information is kept in -->
+     <!-- pseudo-instruction form, so that, unlike notes, it gets the same -->
+     <!-- treatment and adjustments that regular instructions would.  It is the -->
+     <!-- variable tracking pass that turns these pseudo-instructions into var -->
+     <!-- location notes, analyzing control flow, value equivalences and changes -->
+     <!-- to registers and memory referenced in value expressions, propagating -->
+     <!-- the values of debug temporaries and determining expressions that can -->
+     <!-- be used to compute the value of each user variable at as many points -->
+     <!-- (ranges, actually) in the program as possible. -->
+     <p>在整个优化passes中，绑定信息是按照伪指令的形式进行保存，所以，不像注解（notes），它与常规指令具有相同的待遇。变量跟踪pass会将这些伪指令转换为变量位置注解，会分析控制流，分析值等价信息和值表达式中引用的寄存器和内存的变化，传播调试临时变量的值，并确定可以用来计算程序中尽可能多的点（实际上是域）上的每个用户变量的值的表达式。
+
+     <!-- Unlike @code{NOTE_INSN_VAR_LOCATION}, the value expression in an -->
+     <!-- @code{INSN_VAR_LOCATION} denotes a value at that specific point in the -->
+     <!-- program, rather than an expression that can be evaluated at any later -->
+     <!-- point before an overriding @code{VAR_LOCATION} is encountered.  E.g., -->
+     <!-- if a user variable is bound to a @code{REG} and then a subsequent insn -->
+     <!-- modifies the @code{REG}, the note location would keep mapping the user -->
+     <!-- variable to the register across the insn, whereas the insn location -->
+     <!-- would keep the variable bound to the value, so that the variable -->
+     <!-- tracking pass would emit another location note for the variable at the -->
+     <!-- point in which the register is modified. -->
+     <p>不像<code>NOTE_INSN_VAR_LOCATION</code>，<code>INSN_VAR_LOCATION</code>中的值表达式是表示程序中指定点的值，不可以在该点之后，<code>VAR_LOCATION</code>之前的任意点上进行求值。例如，如果一个用户变量绑定到一个<code>REG</code>，然后后续的insn修改了<code>REG</code>，则注解位置会继续将用户变量映射到寄存器，而insn位置则会继续将变量绑定到值上，所以，变量跟踪pass会为变量产成另一个位置注解，指定寄存器被修改的点。
+</dl>
+
+ <p><a name="index-g_t_0040code_007bTImode_007d_002c-in-_0040code_007binsn_007d-2256"></a><a name="index-g_t_0040code_007bHImode_007d_002c-in-_0040code_007binsn_007d-2257"></a><a name="index-g_t_0040code_007bQImode_007d_002c-in-_0040code_007binsn_007d-2258"></a><!-- The machine mode of an insn is normally @code{VOIDmode}, but some -->
+<!-- phases use the mode for various purposes. -->
+insn的机器模式通常为<code>VOIDmode</code>，但有些阶段出于不同的目的而使用其它机器模式。
+
+<!-- The common subexpression elimination pass sets the mode of an insn to -->
+<!-- @code{QImode} when it is the first insn in a block that has already -->
+<!-- been processed. -->
+ <p>公共子表达式消除过程将一个insn的机器模式设为<code>QImode</code>，当其为已经被处理过的块中的第一个insn时。
+
+<!-- The second Haifa scheduling pass, for targets that can multiple issue, -->
+<!-- sets the mode of an insn to @code{TImode} when it is believed that the -->
+<!-- instruction begins an issue group.  That is, when the instruction -->
+<!-- cannot issue simultaneously with the previous.  This may be relied on -->
+<!-- by later passes, in particular machine-dependent reorg. -->
+ <p>第二次Haifa调度过程中，对于可以多发射的目标机，当insn被认为是一个发射组合中的起始指令时，将其机器模式设为<code>TImode</code>。也就是说，该指令不能和之前的指令同时发射。这可以在后面的过程中用到，特别是机器特定的reorg。
+
+<!-- Here is a table of the extra fields of @code{insn}, @code{jump_insn} -->
+<!-- and @code{call_insn} insns: -->
+ <p>下面的表中列出了<code>insn</code>, <code>jump_insn</code>和<code>call_insn</code>的其它域：
+
+     
+<a name="index-PATTERN-2259"></a>
+<dl><dt><code>PATTERN (</code><var>i</var><code>)</code><dd><!-- An expression for the side effect performed by this insn.  This must be -->
+<!-- one of the following codes: @code{set}, @code{call}, @code{use}, -->
+<!-- @code{clobber}, @code{return}, @code{simple_return}, @code{asm_input}, @code{asm_output}, -->
+<!-- @code{addr_vec}, @code{addr_diff_vec}, @code{trap_if}, @code{unspec}, -->
+<!-- @code{unspec_volatile}, @code{parallel}, @code{cond_exec}, or @code{sequence}.  If it is a @code{parallel}, -->
+<!-- each element of the @code{parallel} must be one these codes, except that -->
+<!-- @code{parallel} expressions cannot be nested and @code{addr_vec} and -->
+<!-- @code{addr_diff_vec} are not permitted inside a @code{parallel} expression. -->
+一个表达式，为该insn执行的副作用。必须为下列代码中的一个：<code>set</code>, <code>call</code>, <code>use</code>, <code>clobber</code>, <code>return</code>, <code>simple_return</code>, <code>asm_input</code>, <code>asm_output</code>, <code>addr_vec</code>, <code>addr_diff_vec</code>, <code>trap_if</code>, <code>unspec</code>, <code>unspec_volatile</code>, <code>parallel</code>, <code>cond_exec</code>或<code>sequence</code>。如果其为<code>parallel</code>，则<code>parallel</code>中的每个元素必须是这些代码中的一个，并且，<code>parallel</code>表达式不能被嵌套，<code>addr_vec</code>和<code>addr_diff_vec</code>不允许在<code>parallel</code>表达式中。
+
+     <p><a name="index-INSN_005fCODE-2260"></a><br><dt><code>INSN_CODE (</code><var>i</var><code>)</code><dd><!-- An integer that says which pattern in the machine description matches -->
+<!-- this insn, or @minus{}1 if the matching has not yet been attempted. -->
+一个整数，说明机器描述中的哪一个指令模式匹配该insn，或者，如果还没有进行匹配，则为&minus;1。
+
+     <!-- Such matching is never attempted and this field remains @minus{}1 on an insn -->
+     <!-- whose pattern consists of a single @code{use}, @code{clobber}, -->
+     <!-- @code{asm_input}, @code{addr_vec} or @code{addr_diff_vec} expression. -->
+     <p>对于指令模式由单个<code>use</code>, <code>clobber</code>, <code>asm_input</code>, <code>addr_vec</code> 或 <code>addr_diff_vec</code>表达式组成的insn，则不会进行这样的匹配，并且该域保持为&minus;1。
+
+     <p><a name="index-asm_005fnoperands-2261"></a><!-- Matching is also never attempted on insns that result from an @code{asm} -->
+<!-- statement.  These contain at least one @code{asm_operands} expression. -->
+<!-- The function @code{asm_noperands} returns a non-negative value for -->
+<!-- such insns. -->
+对于来自<code>asm</code>语句的insn，也不会进行指令模式匹配。这些至少包含了一个<code>asm_operands</code>表达式。函数<code>asm_noperands</code>为这样的insn返回一个非负的值。
+
+     <!-- In the debugging output, this field is printed as a number followed by -->
+     <!-- a symbolic representation that locates the pattern in the @file{md} -->
+     <!-- file as some small positive or negative offset from a named pattern. -->
+     <p>在调试输出中，该域被打印成一个数字，紧随一个符号表示，用来定位在<samp><span class="file">md</span></samp>中的指令模式，数字表示相对命名指令模式的正的或者负的偏移量。
+
+     <p><a name="index-LOG_005fLINKS-2262"></a><br><dt><code>LOG_LINKS (</code><var>i</var><code>)</code><dd><!-- A list (chain of @code{insn_list} expressions) giving information about -->
+<!-- dependencies between instructions within a basic block.  Neither a jump -->
+<!-- nor a label may come between the related insns.  These are only used by -->
+<!-- the schedulers and by combine.  This is a deprecated data structure. -->
+<!-- Def-use and use-def chains are now preferred. -->
+一个列表（<code>insn_list</code>表达式链），给出了基本块中指令之间的依赖信息。相关联的insn之间不会有跳转或者标号。这些只被用于指令调度和组合。这是一个不被推荐的数据结构。现在推荐使用def-use和use-def链。
+
+     <p><a name="index-REG_005fNOTES-2263"></a><br><dt><code>REG_NOTES (</code><var>i</var><code>)</code><dd><!-- A list (chain of @code{expr_list} and @code{insn_list} expressions) -->
+<!-- giving miscellaneous information about the insn.  It is often -->
+<!-- information pertaining to the registers used in this insn. -->
+一个列表（<code>expr_list</code>和<code>insn_list</code>表达式链），给出了insn的其它信息。通常为从属于该insn使用的寄存器的信息。
+</dl>
+
+<!-- The @code{LOG_LINKS} field of an insn is a chain of @code{insn_list} -->
+<!-- expressions.  Each of these has two operands: the first is an insn, -->
+<!-- and the second is another @code{insn_list} expression (the next one in -->
+<!-- the chain).  The last @code{insn_list} in the chain has a null pointer -->
+<!-- as second operand.  The significant thing about the chain is which -->
+<!-- insns appear in it (as first operands of @code{insn_list} -->
+<!-- expressions).  Their order is not significant. -->
+ <p>insn的<code>LOG_LINKS</code>域为<code>insn_list</code>表达式链。每一个都具有两个操作数：第一个为insn，第二个为另一个<code>insn_list</code>表达式（链中的下一个）。链中的最后一个<code>insn_list</code>的第二个操作数为空指针。对于表达式链，重要的是有哪些insn（<code>insn_list</code>表达式的第一个操作数）。它们的顺序并不重要。
+
+<!-- This list is originally set up by the flow analysis pass; it is a null -->
+<!-- pointer until then.  Flow only adds links for those data dependencies -->
+<!-- which can be used for instruction combination.  For each insn, the flow -->
+<!-- analysis pass adds a link to insns which store into registers values -->
+<!-- that are used for the first time in this insn. -->
+ <p>该列表最初由流分析过程建立；在此之前还只是空指针。流分析只将那些可以用于指令合并的数据依赖，加入到列表中。
+
+<!-- The @code{REG_NOTES} field of an insn is a chain similar to the -->
+<!-- @code{LOG_LINKS} field but it includes @code{expr_list} expressions in -->
+<!-- addition to @code{insn_list} expressions.  There are several kinds of -->
+<!-- register notes, which are distinguished by the machine mode, which in a -->
+<!-- register note is really understood as being an @code{enum reg_note}. -->
+<!-- The first operand @var{op} of the note is data whose meaning depends on -->
+<!-- the kind of note. -->
+ <p>insn的<code>REG_NOTES</code>域是一个类似于<code>LOG_LINKS</code>域的链，不过除了<code>insn_list</code>表达式，其还包含<code>expr_list</code>表达式。有多种寄存器注解，其通过机器模式区分。注解的第一个操作数<var>op</var>的含义依赖注解的种类。
+
+ <p><a name="index-REG_005fNOTE_005fKIND-2264"></a><a name="index-PUT_005fREG_005fNOTE_005fKIND-2265"></a><!-- The macro @code{REG_NOTE_KIND (@var{x})} returns the kind of -->
+<!-- register note.  Its counterpart, the macro @code{PUT_REG_NOTE_KIND -->
+<!-- (@var{x}, @var{newkind})} sets the register note type of @var{x} to be -->
+<!-- @var{newkind}. -->
+宏<code>REG_NOTE_KIND (</code><var>x</var><code>)</code>返回寄存器注解的种类。宏<code>PUT_REG_NOTE_KIND (</code><var>x</var><code>, </code><var>newkind</var><code>)</code>将<var>x</var>的寄存器注解类型设置为<var>newkind</var>。
+
+<!-- Register notes are of three classes: They may say something about an -->
+<!-- input to an insn, they may say something about an output of an insn, or -->
+<!-- they may create a linkage between two insns.  There are also a set -->
+<!-- of values that are only used in @code{LOG_LINKS}. -->
+ <p>寄存器注解有三种类别：可以用来说明insn的输入，可以用来说明insn的输出，或者可以用来创建两个insn之间的连接。还有一个值集，只用于<code>LOG_LINKS</code>中。
+
+<!-- These register notes annotate inputs to an insn: -->
+ <p>这些注解用来说明insn的输入：
+
+     
+<a name="index-REG_005fDEAD-2266"></a>
+<dl><dt><code>REG_DEAD</code><dd><!-- The value in @var{op} dies in this insn; that is to say, altering the -->
+<!-- value immediately after this insn would not affect the future behavior -->
+<!-- of the program. -->
+<var>op</var>中的值在该insn中死掉；也就是说，紧接这个insn之后，修改该值将不会影响程序将来的行为。
+
+     <!-- It does not follow that the register @var{op} has no useful value after -->
+     <!-- this insn since @var{op} is not necessarily modified by this insn. -->
+     <!-- Rather, no subsequent instruction uses the contents of @var{op}. -->
+     <p>这并不是说从该insn之后，寄存器<var>op</var>就没有有用的值了。而是说，后续的指令不会用到<var>op</var>的内容。
+
+     <p><a name="index-REG_005fUNUSED-2267"></a><br><dt><code>REG_UNUSED</code><dd><!-- The register @var{op} being set by this insn will not be used in a -->
+<!-- subsequent insn.  This differs from a @code{REG_DEAD} note, which -->
+<!-- indicates that the value in an input will not be used subsequently. -->
+<!-- These two notes are independent; both may be present for the same -->
+<!-- register. -->
+被该insn设置的寄存器<var>op</var>，将不会在后续的insn中使用。这与<code>REG_DEAD</code>注解不同，后者表示输入中的值将不会被后续insn使用。这两个注解是不相关的；可能会都出现在同一个寄存器中。
+
+     <p><a name="index-REG_005fINC-2268"></a><br><dt><code>REG_INC</code><dd><!-- The register @var{op} is incremented (or decremented; at this level -->
+<!-- there is no distinction) by an embedded side effect inside this insn. -->
+<!-- This means it appears in a @code{post_inc}, @code{pre_inc}, -->
+<!-- @code{post_dec} or @code{pre_dec} expression. -->
+寄存器<var>op</var>由于insn中嵌入的副作用，而被递增（或递减）。这意味着其出现在<code>post_inc</code>, <code>pre_inc</code>, <code>post_dec</code>或<code>pre_dec</code>表达式中。
+
+     <p><a name="index-REG_005fNONNEG-2269"></a><br><dt><code>REG_NONNEG</code><dd><!-- The register @var{op} is known to have a nonnegative value when this -->
+<!-- insn is reached.  This is used so that decrement and branch until zero -->
+<!-- instructions, such as the m68k dbra, can be matched. -->
+寄存器<var>op</var>在到达该insn的时候，被已知为具有一个非负的值。对于递减并分支跳转，直到为零的指令，例如m68k dbra，可以用来进行匹配。
+
+     <!-- The @code{REG_NONNEG} note is added to insns only if the machine -->
+     <!-- description has a @samp{decrement_and_branch_until_zero} pattern. -->
+     <p><code>REG_NONNEG</code>注解，只有当机器描述具有&lsquo;<samp><span class="samp">decrement_and_branch_until_zero</span></samp>&rsquo;指令模式的时候，才被加到insn中。
+
+     <p><a name="index-REG_005fLABEL_005fOPERAND-2270"></a><br><dt><code>REG_LABEL_OPERAND</code><dd><!-- This insn uses @var{op}, a @code{code_label} or a @code{note} of type -->
+<!-- @code{NOTE_INSN_DELETED_LABEL}, but is not a @code{jump_insn}, or it -->
+<!-- is a @code{jump_insn} that refers to the operand as an ordinary -->
+<!-- operand.  The label may still eventually be a jump target, but if so -->
+<!-- in an indirect jump in a subsequent insn.  The presence of this note -->
+<!-- allows jump optimization to be aware that @var{op} is, in fact, being -->
+<!-- used, and flow optimization to build an accurate flow graph. -->
+该insn使用<var>op</var>，一个类型为<code>NOTE_INSN_DELETED_LABEL</code>的<code>code_label</code>或者<code>note</code>，但是不为<code>jump_insn</code>。或者，其为一个将操作数作为普通操作数的<code>jump_insn</code>。标号最终也可以为跳转目标，但这是在后续insn的间接跳转中。该注解使得跳转优化知道<var>op</var>实际上被使用了，从而流优化可以创建一个精确的流图。
+
+     <p><a name="index-REG_005fLABEL_005fTARGET-2271"></a><br><dt><code>REG_LABEL_TARGET</code><dd><!-- This insn is a @code{jump_insn} but not an @code{addr_vec} or -->
+<!-- @code{addr_diff_vec}.  It uses @var{op}, a @code{code_label} as a -->
+<!-- direct or indirect jump target.  Its purpose is similar to that of -->
+<!-- @code{REG_LABEL_OPERAND}.  This note is only present if the insn has -->
+<!-- multiple targets; the last label in the insn (in the highest numbered -->
+<!-- insn-field) goes into the @code{JUMP_LABEL} field and does not have a -->
+<!-- @code{REG_LABEL_TARGET} note.  @xref{Insns, JUMP_LABEL}. -->
+该insn为一个<code>jump_insn</code>，但不是<code>addr_vec</code>和<code>addr_diff_vec</code>。其使用<var>op</var>，一个<code>code_label</code>，作为直接或间接跳转的目标。其用途与<code>REG_LABEL_OPERAND</code>类似。该注解只存在于当insn具有多个目标的时候；insn中的最后一个标号（在最高编号的insn域中），放到<code>JUMP_LABEL</code>域中，并且没有<code>REG_LABEL_TARGET</code>。参见<a href="Insns.html#Insns">JUMP_LABEL</a>.
+
+     <p><a name="index-REG_005fCROSSING_005fJUMP-2272"></a><br><dt><code>REG_CROSSING_JUMP</code><dd><!-- This insn is a branching instruction (either an unconditional jump or -->
+<!-- an indirect jump) which crosses between hot and cold sections, which -->
+<!-- could potentially be very far apart in the executable.  The presence -->
+<!-- of this note indicates to other optimizations that this branching -->
+<!-- instruction should not be ``collapsed'' into a simpler branching -->
+<!-- construct.  It is used when the optimization to partition basic blocks -->
+<!-- into hot and cold sections is turned on. -->
+该insn为一个分支指令（无条件跳转或者间接跳转），其穿越了热代码段和冷代码段，并可能潜在的位于可执行程序中非常远的部分。该注解用来指示其它优化，表示该分支指令不应该被折叠为简单的分支结构。其用于当优化将基本块分成热代码段和冷代码段的时候。
+
+     <p><a name="index-REG_005fSETJMP-2273"></a><br><dt><code>REG_SETJMP</code><dd><!-- Appears attached to each @code{CALL_INSN} to @code{setjmp} or a -->
+<!-- related function. -->
+附加在每个针对<code>setjmp</code>或者相关的函数的<code>CALL_INSN</code>上。
+
+ </dl>
+
+<!-- The following notes describe attributes of outputs of an insn: -->
+ <p>下列注解描述了有关insn的输出的属性：
+
+     
+<a name="index-REG_005fEQUIV-2274"></a>
+<a name="index-REG_005fEQUAL-2275"></a>
+<dl><dt><code>REG_EQUIV</code><dt><code>REG_EQUAL</code><dd><!-- This note is only valid on an insn that sets only one register and -->
+<!-- indicates that that register will be equal to @var{op} at run time; the -->
+<!-- scope of this equivalence differs between the two types of notes.  The -->
+<!-- value which the insn explicitly copies into the register may look -->
+<!-- different from @var{op}, but they will be equal at run time.  If the -->
+<!-- output of the single @code{set} is a @code{strict_low_part} expression, -->
+<!-- the note refers to the register that is contained in @code{SUBREG_REG} -->
+<!-- of the @code{subreg} expression. -->
+该注解只用在只设置一个寄存器的insn上，用来表示那个寄存器在运行时等价于<var>op</var>；该等值的作用域根据两种类型的注解而有所不同。insn显式的复制进寄存器的值可能看起来与<var>op</var>不同，但它们将在运行时相等。如果单个<code>set</code>的输出为一个<code>strict_low_part</code>表达式，则注解是用于<code>subreg</code>表达式<code>SUBREG_REG</code>所包含的寄存器。
+
+     <!-- For @code{REG_EQUIV}, the register is equivalent to @var{op} throughout -->
+     <!-- the entire function, and could validly be replaced in all its -->
+     <!-- occurrences by @var{op}.  (``Validly'' here refers to the data flow of -->
+     <!-- the program; simple replacement may make some insns invalid.)  For -->
+     <!-- example, when a constant is loaded into a register that is never -->
+     <!-- assigned any other value, this kind of note is used. -->
+     <p>对于<code>REG_EQUIV</code>，在整个函数中，寄存器都等价于<var>op</var>，并且可以在其所有出现的地方被<var>op</var>有效替换。（有效，这里是指程序的数据流；简单的替换可能会使得某些insn无效。）例如，当一个常量被加载到一个寄存器中，并且寄存器不再被赋予任何其它值，则会使用这种注解。
+
+     <!-- When a parameter is copied into a pseudo-register at entry to a function, -->
+     <!-- a note of this kind records that the register is equivalent to the stack -->
+     <!-- slot where the parameter was passed.  Although in this case the register -->
+     <!-- may be set by other insns, it is still valid to replace the register -->
+     <!-- by the stack slot throughout the function. -->
+     <p>当在函数入口处，一个参数被复制到一个伪寄存器中时，这种的注解会用来记录该寄存器等价于传递参数的栈槽。虽然，这种情况下，寄存器可能被其它的insn设置，其也可以在整个函数中被栈槽来替换。
+
+     <!-- A @code{REG_EQUIV} note is also used on an instruction which copies a -->
+     <!-- register parameter into a pseudo-register at entry to a function, if -->
+     <!-- there is a stack slot where that parameter could be stored.  Although -->
+     <!-- other insns may set the pseudo-register, it is valid for the compiler to -->
+     <!-- replace the pseudo-register by stack slot throughout the function, -->
+     <!-- provided the compiler ensures that the stack slot is properly -->
+     <!-- initialized by making the replacement in the initial copy instruction as -->
+     <!-- well.  This is used on machines for which the calling convention -->
+     <!-- allocates stack space for register parameters.  See -->
+     <!-- @code{REG_PARM_STACK_SPACE} in @ref{Stack Arguments}. -->
+     <p><code>REG_EQUIV</code>注解还用于，在函数入口处，将一个寄存器参数复制到一个伪寄存器中的指令，如果存在一个参数本来应该被存放的栈槽。虽然其它insn可以设置该伪寄存器，但编译器还是可以在整个函数中，使用栈槽来替换伪寄存器，假设编译器可以确保栈槽被适当的初始化。这被用于调用约定为寄存器参数分配栈空间的机器上。参见<a href="Stack-Arguments.html#Stack-Arguments">Stack Arguments</a>中的<code>REG_PARM_STACK_SPACE</code>。
+
+     <!-- In the case of @code{REG_EQUAL}, the register that is set by this insn -->
+     <!-- will be equal to @var{op} at run time at the end of this insn but not -->
+     <!-- necessarily elsewhere in the function.  In this case, @var{op} -->
+     <!-- is typically an arithmetic expression.  For example, when a sequence of -->
+     <!-- insns such as a library call is used to perform an arithmetic operation, -->
+     <!-- this kind of note is attached to the insn that produces or copies the -->
+     <!-- final value. -->
+     <p>对于<code>REG_EQUAL</code>的情况，被该insn设置的寄存器，将在运行时，在该insn的结尾处，但不必要是函数的其它地方，等价与<var>op</var>。这种情况下，<var>op</var>通常为一个算术表达式。例如，当一个库调用的insn序列，被用在一个算术运算上，则该类的注解将被附加在产生或者复制最终值的insn上。
+
+     <!-- These two notes are used in different ways by the compiler passes. -->
+     <!-- @code{REG_EQUAL} is used by passes prior to register allocation (such as -->
+     <!-- common subexpression elimination and loop optimization) to tell them how -->
+     <!-- to think of that value.  @code{REG_EQUIV} notes are used by register -->
+     <!-- allocation to indicate that there is an available substitute expression -->
+     <!-- (either a constant or a @code{mem} expression for the location of a -->
+     <!-- parameter on the stack) that may be used in place of a register if -->
+     <!-- insufficient registers are available. -->
+     <p>这两个注解在编译器过程中，按照不同的方法来使用。<code>REG_EQUAL</code>用于寄存器分配之前的过程中（例如公共子表达式消除和循环优化），来告诉它们如何考虑那个值。<code>REG_EQUIV</code>注解用于寄存器分配，来表示存在一个可用的替换表达式（为栈上一个参数位置的常量或者<code>mem</code>表达式），其可以用在没有足够寄存器的地方。
+
+     <!-- Except for stack homes for parameters, which are indicated by a -->
+     <!-- @code{REG_EQUIV} note and are not useful to the early optimization -->
+     <!-- passes and pseudo registers that are equivalent to a memory location -->
+     <!-- throughout their entire life, which is not detected until later in -->
+     <!-- the compilation, all equivalences are initially indicated by an attached -->
+     <!-- @code{REG_EQUAL} note.  In the early stages of register allocation, a -->
+     <!-- @code{REG_EQUAL} note is changed into a @code{REG_EQUIV} note if -->
+     <!-- @var{op} is a constant and the insn represents the only set of its -->
+     <!-- destination register. -->
+     <p>除了为参数提供地方的栈以外，其它所有等值最初都是通过附加一个<code>REG_EQUAL</code>注解来表示。在寄存器分配的早期阶段，如果<var>op</var>是一个常量并且insn只表示对其目的寄存器进行设置，则<code>REG_EQUAL</code>被改变成<code>REG_EQUIV</code>注解。
+
+     <!-- Thus, compiler passes prior to register allocation need only check for -->
+     <!-- @code{REG_EQUAL} notes and passes subsequent to register allocation -->
+     <!-- need only check for @code{REG_EQUIV} notes. -->
+     <p>因此，寄存器分配之前的编译过程，只需要检查<code>REG_EQUAL</code>注解，而之后的编译过程只需要检查<code>REG_EQUIV</code>注解。
+</dl>
+
+<!-- These notes describe linkages between insns.  They occur in pairs: one -->
+<!-- insn has one of a pair of notes that points to a second insn, which has -->
+<!-- the inverse note pointing back to the first insn. -->
+ <p>这些注解描述了insn之间的联系。它们成对的出现：一个insn具有一对注解，其中之一用来指向第二个insn，并且第二个insn也由一个反过来指向第一个insn的注解。
+
+     
+<a name="index-REG_005fCC_005fSETTER-2276"></a>
+<a name="index-REG_005fCC_005fUSER-2277"></a>
+<dl><dt><code>REG_CC_SETTER</code><dt><code>REG_CC_USER</code><dd><!-- On machines that use @code{cc0}, the insns which set and use @code{cc0} -->
+<!-- set and use @code{cc0} are adjacent.  However, when branch delay slot -->
+<!-- filling is done, this may no longer be true.  In this case a -->
+<!-- @code{REG_CC_USER} note will be placed on the insn setting @code{cc0} to -->
+<!-- point to the insn using @code{cc0} and a @code{REG_CC_SETTER} note will -->
+<!-- be placed on the insn using @code{cc0} to point to the insn setting -->
+<!-- @code{cc0}. -->
+在使用<code>cc0</code>的机器上，设置和使用<code>cc0</code>的insns是相邻的。然而，当做完分支延迟槽填充之后，就不一定是这样的了。这种情况下，<code>REG_CC_USER</code>注解将被放在设置<code>cc0</code>的insn上，来指向使用<code>cc0</code>的insn，并且<code>REG_CC_SETTER</code>注解将被放在使用<code>cc0</code>的insn上，来指向设置<code>cc0</code>的insn。
+</dl>
+
+<!-- These values are only used in the @code{LOG_LINKS} field, and indicate -->
+<!-- the type of dependency that each link represents.  Links which indicate -->
+<!-- a data dependence (a read after write dependence) do not use any code, -->
+<!-- they simply have mode @code{VOIDmode}, and are printed without any -->
+<!-- descriptive text. -->
+ <p>这些值只用在<code>LOG_LINKS</code>域，用来表示每个链接表示的依赖类型。表示一个数据依赖（写后读依赖）的链接，不使用任何代码，它们只是简单的具有<code>VOIDmode</code>模式，并在打印输出中没有任何描述文本。
+
+     
+<a name="index-REG_005fDEP_005fTRUE-2278"></a>
+<dl><dt><code>REG_DEP_TRUE</code><dd><!-- This indicates a true dependence (a read after write dependence). -->
+这表示一个真依赖（写后读依赖）。
+
+     <p><a name="index-REG_005fDEP_005fOUTPUT-2279"></a><br><dt><code>REG_DEP_OUTPUT</code><dd><!-- This indicates an output dependence (a write after write dependence). -->
+这表示一个输出依赖（写后写依赖）。
+
+     <p><a name="index-REG_005fDEP_005fANTI-2280"></a><br><dt><code>REG_DEP_ANTI</code><dd><!-- This indicates an anti dependence (a write after read dependence). -->
+这表示一个反依赖（读后写依赖）。
+
+ </dl>
+
+<!-- These notes describe information gathered from gcov profile data.  They -->
+<!-- are stored in the @code{REG_NOTES} field of an insn as an -->
+<!-- @code{expr_list}. -->
+ <p>这些注解描述了从gcov profile数据中搜集的信息。它们作为<code>expr_list</code>存储在insn的<code>REG_NOTES</code>域中。
+
+     
+<a name="index-REG_005fBR_005fPROB-2281"></a>
+<dl><dt><code>REG_BR_PROB</code><dd><!-- This is used to specify the ratio of branches to non-branches of a -->
+<!-- branch insn according to the profile data.  The value is stored as a -->
+<!-- value between 0 and REG_BR_PROB_BASE; larger values indicate a higher -->
+<!-- probability that the branch will be taken. -->
+用于指定分支跳转率，根据profile数据。值位于0和REG_BR_PROB_BASE之间；较大的值表示该分支更可能会被执行。
+
+     <p><a name="index-REG_005fBR_005fPRED-2282"></a><br><dt><code>REG_BR_PRED</code><dd><!-- These notes are found in JUMP insns after delayed branch scheduling -->
+<!-- has taken place.  They indicate both the direction and the likelihood -->
+<!-- of the JUMP@.  The format is a bitmask of ATTR_FLAG_* values. -->
+这些注解在JUMP insn中，并出现在延迟分支调度之后。它们表示JUMP的方向和可能性。格式为ATTR_FLAG_*值的掩码。
+
+     <p><a name="index-REG_005fFRAME_005fRELATED_005fEXPR-2283"></a><br><dt><code>REG_FRAME_RELATED_EXPR</code><dd><!-- This is used on an RTX_FRAME_RELATED_P insn wherein the attached expression -->
+<!-- is used in place of the actual insn pattern.  This is done in cases where -->
+<!-- the pattern is either complex or misleading. -->
+用在RTX_FRAME_RELATED_P insn上，其附加的表达式被用在实际的insn模式上。这用于指令模式过于复杂或者产生误解的情况。
+
+ </dl>
+
+<!-- For convenience, the machine mode in an @code{insn_list} or -->
+<!-- @code{expr_list} is printed using these symbolic codes in debugging dumps. -->
+ <p>为方便起见，在<code>insn_list</code>或者<code>expr_list</code>中的机器模式，在调试转储中使用这些符号化的代码来打印。
+
+ <p><a name="index-insn_005flist-2284"></a><a name="index-expr_005flist-2285"></a><!-- The only difference between the expression codes @code{insn_list} and -->
+<!-- @code{expr_list} is that the first operand of an @code{insn_list} is -->
+<!-- assumed to be an insn and is printed in debugging dumps as the insn's -->
+<!-- unique id; the first operand of an @code{expr_list} is printed in the -->
+<!-- ordinary way as an expression. -->
+表达式代码<code>insn_list</code>和<code>expr_list</code>之间的唯一区别是，<code>insn_list</code>的第一个操作数被假设为一个insn，并在调试转储中作为insn的唯一id来打印；而<code>expr_list</code>的第一个操作数作为表达式，按照普通的方式来打印。
+
+<!-- @node Calls -->
+<!-- @section RTL Representation of Function-Call Insns -->
+ </body></html>
+

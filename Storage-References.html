@@ -1,0 +1,125 @@
+<html lang="zh">
+<head>
+<title>Storage References - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Expression-trees.html#Expression-trees" title="Expression trees">
+<link rel="prev" href="Constant-expressions.html#Constant-expressions" title="Constant expressions">
+<link rel="next" href="Unary-and-Binary-Expressions.html#Unary-and-Binary-Expressions" title="Unary and Binary Expressions">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Storage-References"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Unary-and-Binary-Expressions.html#Unary-and-Binary-Expressions">Unary and Binary Expressions</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Constant-expressions.html#Constant-expressions">Constant expressions</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Expression-trees.html#Expression-trees">Expression trees</a>
+<hr>
+</div>
+
+<h4 class="subsection">11.6.2 存储引用</h4>
+
+<p><a name="index-ADDR_005fEXPR-2431"></a><a name="index-INDIRECT_005fREF-2432"></a><a name="index-MEM_005fREF-2433"></a><a name="index-ARRAY_005fREF-2434"></a><a name="index-ARRAY_005fRANGE_005fREF-2435"></a><a name="index-TARGET_005fMEM_005fREF-2436"></a><a name="index-COMPONENT_005fREF-2437"></a>
+     <dl>
+<dt><code>ARRAY_REF</code><dd><!-- These nodes represent array accesses.  The first operand is the array; -->
+<!-- the second is the index.  To calculate the address of the memory -->
+<!-- accessed, you must scale the index by the size of the type of the array -->
+<!-- elements.  The type of these expressions must be the type of a component of -->
+<!-- the array.  The third and fourth operands are used after gimplification -->
+<!-- to represent the lower bound and component size but should not be used -->
+<!-- directly; call @code{array_ref_low_bound} and @code{array_ref_element_size} -->
+<!-- instead. -->
+这些节点表示对数组的访问。第一个操作数为数组；第二个为索引。要计算被访问内存的地址，你必须要根据比例，用数组元素的类型大小来乘以索引。这些表达式的类型必须为数组元素的类型。第三和第四个操作数在gimplification之后使用，来表示下界和元素大小；但是不要直接使用它们，相应的，调用<code>array_ref_low_bound</code>和<code>array_ref_element_size</code>。
+
+     <br><dt><code>ARRAY_RANGE_REF</code><dd><!-- These nodes represent access to a range (or ``slice'') of an array.  The -->
+<!-- operands are the same as that for @code{ARRAY_REF} and have the same -->
+<!-- meanings.  The type of these expressions must be an array whose component -->
+<!-- type is the same as that of the first operand.  The range of that array -->
+<!-- type determines the amount of data these expressions access. -->
+这些节点表示对数组的一个范围（或者说切片）的访问。操作数与<code>ARRAY_REF</code>相同，并具有相同的含义。这些表达式的类型必须是一个数组，其元素的类型与第一个操作数的类型相同。数组类型的范围决定了这些表达式访问的数据数目。
+
+     <br><dt><code>TARGET_MEM_REF</code><dd><!-- These nodes represent memory accesses whose address directly map to -->
+<!-- an addressing mode of the target architecture.  The first argument -->
+<!-- is @code{TMR_SYMBOL} and must be a @code{VAR_DECL} of an object with -->
+<!-- a fixed address.  The second argument is @code{TMR_BASE} and the -->
+<!-- third one is @code{TMR_INDEX}.  The fourth argument is -->
+<!-- @code{TMR_STEP} and must be an @code{INTEGER_CST}.  The fifth -->
+<!-- argument is @code{TMR_OFFSET} and must be an @code{INTEGER_CST}. -->
+<!-- Any of the arguments may be NULL if the appropriate component -->
+<!-- does not appear in the address.  Address of the @code{TARGET_MEM_REF} -->
+<!-- is determined in the following way. -->
+这些节点表示内存访问，并且其地址直接映射到目标体系结构的寻址模式。第一个参数为<code>TMR_SYMBOL</code>，并且必须为具有固定地址的对象的<code>VAR_DECL</code>。第二个参数为<code>TMR_BASE</code>，第三个为<code>TMR_INDEX</code>。第四个参数为<code>TMR_STEP</code>，并且必须为<code>INTEGER_CST</code>。第五个参数为<code>TMR_OFFSET</code>，并且必须为<code>INTEGER_CST</code>。如果相应的部分没有在地址中出现，则参数可以为NULL。<code>TARGET_MEM_REF</code>的地址通过下列方法来确定。
+
+     <pre class="smallexample">          &amp;TMR_SYMBOL + TMR_BASE + TMR_INDEX * TMR_STEP + TMR_OFFSET
+</pre>
+     <!-- The sixth argument is the reference to the original memory access, which -->
+     <!-- is preserved for the purposes of the RTL alias analysis.  The seventh -->
+     <!-- argument is a tag representing the results of tree level alias analysis. -->
+     <p>第六个参数为对原始内存访问的引用，其被保留下来，用于RTL别名分析。第七个参数为一个标记，表示tree级的别名分析的结果。
+
+     <br><dt><code>ADDR_EXPR</code><dd><!-- These nodes are used to represent the address of an object.  (These -->
+<!-- expressions will always have pointer or reference type.)  The operand may -->
+<!-- be another expression, or it may be a declaration. -->
+这些节点用于表示对象的地址。（这些表达式将总是具有指针或引用类型。）操作数或者为表达式，或者可以是一个声明。
+
+     <!-- As an extension, GCC allows users to take the address of a label.  In -->
+     <!-- this case, the operand of the @code{ADDR_EXPR} will be a -->
+     <!-- @code{LABEL_DECL}.  The type of such an expression is @code{void*}. -->
+     <p>作为扩展，GCC运行用户使用标号的地址。这种情况下，<code>ADDR_EXPR</code>的操作数将为<code>LABEL_DECL</code>。这样的表达式的类型是<code>void*</code>。
+
+     <!-- If the object addressed is not an lvalue, a temporary is created, and -->
+     <!-- the address of the temporary is used. -->
+     <p>如果求址的对象不是左值，则创建一个临时的，并使用临时对象的地址。
+
+     <br><dt><code>INDIRECT_REF</code><dd><!-- These nodes are used to represent the object pointed to by a pointer. -->
+<!-- The operand is the pointer being dereferenced; it will always have -->
+<!-- pointer or reference type. -->
+这些节点用来表示由指针指向的对象。操作数是被dereferenced的指针；其总是具有指针或引用类型。
+
+     <br><dt><code>MEM_REF</code><dd>These nodes are used to represent the object pointed to by a pointer
+offset by a constant. 
+The first operand is the pointer being dereferenced; it will always have
+pointer or reference type.  The second operand is a pointer constant. 
+Its type is specifying the type to be used for type-based alias analysis.
+
+     <br><dt><code>COMPONENT_REF</code><dd><!-- These nodes represent non-static data member accesses.  The first -->
+<!-- operand is the object (rather than a pointer to it); the second operand -->
+<!-- is the @code{FIELD_DECL} for the data member.  The third operand represents -->
+<!-- the byte offset of the field, but should not be used directly; call -->
+<!-- @code{component_ref_field_offset} instead. -->
+这些节点表示对non-static数据成员的访问。第一个操作数为对象（而不是指向它的指针）；第二个操作数为数据成员的<code>FIELD_DECL</code>。第三个操作数表示域的字节偏移量，但不要直接使用；相应的，调用<code>component_ref_field_offset</code>。
+
+ </dl>
+
+<!-- @node Unary and Binary Expressions -->
+<!-- @subsection Unary and Binary Expressions -->
+ </body></html>
+

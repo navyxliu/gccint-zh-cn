@@ -1,0 +1,156 @@
+<html lang="zh">
+<head>
+<title>Front End - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="gcc-Directory.html#gcc-Directory" title="gcc Directory">
+<link rel="prev" href="Documentation.html#Documentation" title="Documentation">
+<link rel="next" href="Back-End.html#Back-End" title="Back End">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Front-End"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Back-End.html#Back-End">Back End</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Documentation.html#Documentation">Documentation</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="gcc-Directory.html#gcc-Directory">gcc Directory</a>
+<hr>
+</div>
+
+<h4 class="subsection">6.3.8 语言前端剖析</h4>
+
+<!-- A front end for a language in GCC has the following parts: -->
+<p>在GCC中，一个语言前端包括以下几部分：
+
+     <ul>
+<li><!-- A directory @file{@var{language}} under @file{gcc} containing source -->
+<!-- files for that front end.  @xref{Front End Directory, , The Front End -->
+<!-- @file{@var{language}} Directory}, for details. -->
+位于<samp><span class="file">gcc</span></samp>之下的<samp><var>language</var></samp>目录，其包含了那个前端的源文件。详情参见<a href="Front-End-Directory.html#Front-End-Directory">The Front End <samp><var>language</var></samp> Directory</a>。
+<li><!-- A mention of the language in the list of supported languages in -->
+<!-- @file{gcc/doc/install.texi}. -->
+在<samp><span class="file">gcc/doc/install.texi</span></samp>中的支持语言列表里，对该语言的提及。
+<li><!-- A mention of the name under which the language's runtime library is -->
+<!-- recognized by @option{-enable-shared=@var{package}} in the -->
+<!-- documentation of that option in @file{gcc/doc/install.texi}. -->
+在<samp><span class="file">gcc/doc/install.texi</span></samp>中的选项介绍里，对语言运行时库的名字进行提及，其可以由<samp><span class="option">--enable-shared=</span><var>package</var></samp>来识别。
+<li><!-- A mention of any special prerequisites for building the front end in -->
+<!-- the documentation of prerequisites in @file{gcc/doc/install.texi}. -->
+在<samp><span class="file">gcc/doc/install.texi</span></samp>中的前提条件介绍里，对构建前端所需要的任何具体前提条件进行提及。
+<li><!-- Details of contributors to that front end in -->
+<!-- @file{gcc/doc/contrib.texi}.  If the details are in that front end's -->
+<!-- own manual then there should be a link to that manual's list in -->
+<!-- @file{contrib.texi}. -->
+在<samp><span class="file">gcc/doc/contrib.texi</span></samp>中，那个前端的贡献者的详细介绍。如果详细介绍是在那个前端自己的手册中，则在<samp><span class="file">contrib.texi</span></samp>中应该有一个指向那个手册列表的链接。
+<li><!-- Information about support for that language in -->
+<!-- @file{gcc/doc/frontends.texi}. -->
+在<samp><span class="file">gcc/doc/frontends.texi</span></samp>中，关于对那个语言的支持信息。
+<li><!-- Information about standards for that language, and the front end's -->
+<!-- support for them, in @file{gcc/doc/standards.texi}.  This may be a -->
+<!-- link to such information in the front end's own manual. -->
+在<samp><span class="file">gcc/doc/standards.texi</span></samp>中，关于那个语言的标准和前端对它们的支持信息。这可以为一个指向前端自己手册中这些信息的链接。
+<li><!-- Details of source file suffixes for that language and @option{-x -->
+<!-- @var{lang}} options supported, in @file{gcc/doc/invoke.texi}. -->
+在<samp><span class="file">gcc/doc/invoke.texi</span></samp>中，对那个语言的源文件后缀和所支持的<samp><span class="option">-x </span><var>lang</var></samp>选项进行详细介绍。
+<li><!-- Entries in @code{default_compilers} in @file{gcc.c} for source file -->
+<!-- suffixes for that language. -->
+在<samp><span class="file">gcc.c</span></samp>中的<code>default_compilers</code>里，针对那个语言的源文件后缀的项。
+<li><!-- Preferably testsuites, which may be under @file{gcc/testsuite} or -->
+<!-- runtime library directories.  FIXME: document somewhere how to write -->
+<!-- testsuite harnesses. -->
+适当的测试包，其可能在<samp><span class="file">gcc/testsuite</span></samp>下或者运行时库目录下。FIXME：介绍一下如何写测试包套件。
+<li><!-- Probably a runtime library for the language, outside the @file{gcc} -->
+<!-- directory.  FIXME: document this further. -->
+在<samp><span class="file">gcc</span></samp>目录之外，可能还有一个该语言的运行时库。FIXME：进一步介绍下。
+<li><!-- Details of the directories of any runtime libraries in -->
+<!-- @file{gcc/doc/sourcebuild.texi}. -->
+在<samp><span class="file">gcc/doc/sourcebuild.texi</span></samp>中，对任何运行时库的目录进行详细介绍。
+<li><!-- Check targets in @file{Makefile.def} for the top-level @file{Makefile} -->
+<!-- to check just the compiler or the compiler and runtime library for the -->
+<!-- language. -->
+在<samp><span class="file">Makefile.def</span></samp>中，为顶层<samp><span class="file">Makefile</span></samp>来检测目标机器，检测是否为只有编译器，或者有编译器和语言运行时库。
+</ul>
+
+<!-- If the front end is added to the official GCC source repository, the -->
+<!-- following are also necessary: -->
+ <p>如果前端是被加入到了官方的GCC源码库中，则还需要以下几部分：
+
+     <ul>
+<li><!-- At least one Bugzilla component for bugs in that front end and runtime -->
+<!-- libraries.  This category needs to be added to the Bugzilla database. -->
+至少有一个针对那个前端和运行时库的bug的Bugzilla部件。该类别需要被添加到Bugzilla数据库中。
+<li><!-- Normally, one or more maintainers of that front end listed in -->
+<!-- @file{MAINTAINERS}. -->
+通常，在<samp><span class="file">MAINTAINERS</span></samp>中列出那个前端的一个或多个维护者。
+<li><!-- Mentions on the GCC web site in @file{index.html} and -->
+<!-- @file{frontends.html}, with any relevant links on -->
+<!-- @file{readings.html}.  (Front ends that are not an official part of -->
+<!-- GCC may also be listed on @file{frontends.html}, with relevant links.) -->
+在GCC网站上的<samp><span class="file">index.html</span></samp>和<samp><span class="file">frontends.html</span></samp>中对该前端进行提及，并在<samp><span class="file">readings.html</span></samp>上给出任何相关链接。（不是GCC官方的前端也可以在<samp><span class="file">frontends.html</span></samp>中列出，并带有相关链接。）
+<li><!-- A news item on @file{index.html}, and possibly an announcement on the -->
+<!-- @email{gcc-announce@@gcc.gnu.org} mailing list. -->
+在<samp><span class="file">index.html</span></samp>中给出一条消息，并且可能在<a href="mailto:gcc-announce@gcc.gnu.org">gcc-announce@gcc.gnu.org</a>邮件组中的一个声明。
+<li><!-- The front end's manuals should be mentioned in -->
+<!-- @file{maintainer-scripts/update_web_docs_svn} (@pxref{Texinfo Manuals}) -->
+<!-- and the online manuals should be linked to from -->
+<!-- @file{onlinedocs/index.html}. -->
+前端手册应该在<samp><span class="file">maintainer-scripts/update_web_docs_svn</span></samp>(参见<a href="Texinfo-Manuals.html#Texinfo-Manuals">Texinfo Manuals</a>）中有记载，并且来自<samp><span class="file">onlinedocs/index.html</span></samp>的在线手册应该有相应链接。
+<li><!-- Any old releases or CVS repositories of the front end, before its -->
+<!-- inclusion in GCC, should be made available on the GCC FTP site -->
+<!-- @uref{ftp://gcc.gnu.org/pub/gcc/old-releases/}. -->
+在GCC包含该前端之前的任何旧的发行版本或CVS库版本，应该可以在GCC FTP站点<a href="ftp://gcc.gnu.org/pub/gcc/old-releases/">ftp://gcc.gnu.org/pub/gcc/old-releases/</a>上获得。
+<li><!-- The release and snapshot script @file{maintainer-scripts/gcc_release} -->
+<!-- should be updated to generate appropriate tarballs for this front end. -->
+<!-- The associated @file{maintainer-scripts/snapshot-README} and -->
+<!-- @file{maintainer-scripts/snapshot-index.html} files should be updated -->
+<!-- to list the tarballs and diffs for this front end. -->
+发行版和快照脚本<samp><span class="file">maintainer-scripts/gcc_release</span></samp>应该被更新为可以生成该前端的合适的tar包。相关的<samp><span class="file">maintainer-scripts/snapshot-README</span></samp>和<samp><span class="file">maintainer-scripts/snapshot-index.html</span></samp>文件应该被更新为可以列出该前端的tar包和diffs。
+<li><!-- If this front end includes its own version files that include the -->
+<!-- current date, @file{maintainer-scripts/update_version} should be -->
+<!-- updated accordingly. -->
+如果该前端包含自己的版本文件，其包含了当前日期，则<samp><span class="file">maintainer-scripts/update_version</span></samp>应该相应的被更新。
+</ul>
+
+<!-- @menu -->
+<!-- * Front End Directory::  The front end @file{@var{language}} directory. -->
+<!-- * Front End Config::     The front end @file{config-lang.in} file. -->
+<!-- * Front End Makefile::   The front end @file{Make-lang.in} file. -->
+<!-- @end menu -->
+<ul class="menu">
+<li><a accesskey="1" href="Front-End-Directory.html#Front-End-Directory">Front End Directory</a>:  前端<samp><var>language</var></samp>目录。
+<li><a accesskey="2" href="Front-End-Config.html#Front-End-Config">Front End Config</a>:   	前端<samp><span class="file">config-lang.in</span></samp>文件。
+<li><a accesskey="3" href="Front-End-Makefile.html#Front-End-Makefile">Front End Makefile</a>:   前端<samp><span class="file">Make-lang.in</span></samp>文件。
+</ul>
+
+<!-- @node Front End Directory -->
+<!-- @subsubsection The Front End @file{@var{language}} Directory -->
+ </body></html>
+

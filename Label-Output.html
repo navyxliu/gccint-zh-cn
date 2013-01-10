@@ -1,0 +1,804 @@
+<html lang="zh">
+<head>
+<title>Label Output - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Assembler-Format.html#Assembler-Format" title="Assembler Format">
+<link rel="prev" href="Uninitialized-Data.html#Uninitialized-Data" title="Uninitialized Data">
+<link rel="next" href="Initialization.html#Initialization" title="Initialization">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Label-Output"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Initialization.html#Initialization">Initialization</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Uninitialized-Data.html#Uninitialized-Data">Uninitialized Data</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Assembler-Format.html#Assembler-Format">Assembler Format</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.21.4 标号的生成和输出</h4>
+
+<!-- prevent bad page break with this line -->
+<!-- This is about outputting labels. -->
+<p>这节是关于标号输出的。
+
+ <p><a name="index-assemble_005fname-4508"></a>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_LABEL</b> (<var>stream, name</var>)<var><a name="index-ASM_005fOUTPUT_005fLABEL-4509"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} the assembler definition of a label named @var{name}. -->
+     <!-- Use the expression @code{assemble_name (@var{stream}, @var{name})} to -->
+     <!-- output the name itself; before and after that, output the additional -->
+     <!-- assembler syntax for defining the name, and a newline.  A default -->
+     <!-- definition of this macro is provided which is correct for most systems. -->
+      <p>一条C语句（没有分号），
+用来将名字为<var>name</var>的标号的汇编定义输出到stdio流<var>stream</var>中。
+使用表达式<code>assemble_name (</code><var>stream</var><code>, </code><var>name</var><code>)</code>来输出name本身；
+在此之前和之后，输出定义name的额外的汇编语法，以及换行。
+该宏的缺省定义被提供，其对于多数系统都是正确的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_FUNCTION_LABEL</b> (<var>stream, name, decl</var>)<var><a name="index-ASM_005fOUTPUT_005fFUNCTION_005fLABEL-4510"></a></var><br>
+<blockquote><p>A C statement (sans semicolon) to output to the stdio stream
+<var>stream</var> the assembler definition of a label named <var>name</var> of
+a function. 
+Use the expression <code>assemble_name (</code><var>stream</var><code>, </code><var>name</var><code>)</code> to
+output the name itself; before and after that, output the additional
+assembler syntax for defining the name, and a newline.  A default
+definition of this macro is provided which is correct for most systems.
+
+      <p>If this macro is not defined, then the function name is defined in the
+usual manner as a label (by means of <code>ASM_OUTPUT_LABEL</code>). 
+</p></blockquote></div>
+
+ <p><a name="index-assemble_005fname_005fraw-4511"></a>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_INTERNAL_LABEL</b> (<var>stream, name</var>)<var><a name="index-ASM_005fOUTPUT_005fINTERNAL_005fLABEL-4512"></a></var><br>
+<blockquote><!-- Identical to @code{ASM_OUTPUT_LABEL}, except that @var{name} is known -->
+     <!-- to refer to a compiler-generated label.  The default definition uses -->
+     <!-- @code{assemble_name_raw}, which is like @code{assemble_name} except -->
+     <!-- that it is more efficient. -->
+      <p>等同于<code>ASM_OUTPUT_LABEL</code>，除了<var>name</var>为已知的，引用了编译器生成的标号。
+缺省定义使用<code>assemble_name_raw</code>，其类似于<code>assemble_name</code>，
+只不过更加高效。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SIZE_ASM_OP</b><var><a name="index-SIZE_005fASM_005fOP-4513"></a></var><br>
+<blockquote><!-- A C string containing the appropriate assembler directive to specify the -->
+     <!-- size of a symbol, without any arguments.  On systems that use ELF, the -->
+     <!-- default (in @file{config/elfos.h}) is @samp{"\t.size\t"}; on other -->
+     <!-- systems, the default is not to define this macro. -->
+      <p>一个C字符串，包含了适当的汇编伪指令，用于指定符号的大小，不需要任何参数。
+在使用ELF的系统上，缺省为（在<samp><span class="file">config/elfos.h</span></samp>中）&lsquo;<samp><span class="samp">"\t.size\t"</span></samp>&rsquo;；
+在其它系统上，缺省为不定义该宏。
+
+     <!-- Define this macro only if it is correct to use the default definitions -->
+     <!-- of @code{ASM_OUTPUT_SIZE_DIRECTIVE} and @code{ASM_OUTPUT_MEASURED_SIZE} -->
+     <!-- for your system.  If you need your own custom definitions of those -->
+     <!-- macros, or if you do not need explicit symbol sizes at all, do not -->
+     <!-- define this macro. -->
+      <p>只有在你的系统上可以正确的使用<code>ASM_OUTPUT_SIZE_DIRECTIVE</code>和
+<code>ASM_OUTPUT_MEASURED_SIZE</code>的缺省定义时，才定义该宏。
+如果对于那些宏，你需要自己特定的定义，或者如果你根本不需要显式的符号大小，
+则不要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_SIZE_DIRECTIVE</b> (<var>stream, name, size</var>)<var><a name="index-ASM_005fOUTPUT_005fSIZE_005fDIRECTIVE-4514"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} a directive telling the assembler that the size of the -->
+     <!-- symbol @var{name} is @var{size}.  @var{size} is a @code{HOST_WIDE_INT}. -->
+     <!-- If you define @code{SIZE_ASM_OP}, a default definition of this macro is -->
+     <!-- provided. -->
+      <p>一条C语句（没有分号），用来将一条伪指令输出到stdio流<var>stream</var>中，
+以告诉汇编器符号<var>name</var>的大小为<var>size</var>。<var>size</var>为<code>HOST_WIDE_INT</code>。
+如果你定义了<code>SIZE_ASM_OP</code>，则该宏的缺省定义会被提供。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_MEASURED_SIZE</b> (<var>stream, name</var>)<var><a name="index-ASM_005fOUTPUT_005fMEASURED_005fSIZE-4515"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} a directive telling the assembler to calculate the size of -->
+     <!-- the symbol @var{name} by subtracting its address from the current -->
+     <!-- address. -->
+      <p>一条C语句（没有分号），用来将一条伪指令输出到stdio流<var>stream</var>中，
+以告诉汇编器通过从当前地址减去符号<var>name</var>的地址，来计算符号的大小。
+
+     <!-- If you define @code{SIZE_ASM_OP}, a default definition of this macro is -->
+     <!-- provided.  The default assumes that the assembler recognizes a special -->
+     <!-- @samp{.} symbol as referring to the current address, and can calculate -->
+     <!-- the difference between this and another symbol.  If your assembler does -->
+     <!-- not recognize @samp{.} or cannot do calculations with it, you will need -->
+     <!-- to redefine @code{ASM_OUTPUT_MEASURED_SIZE} to use some other technique. -->
+      <p>如果你定义了<code>SIZE_ASM_OP</code>，则该宏的缺省定义会被提供。
+缺省定义假设汇编器可以识别特殊的&lsquo;<samp><span class="samp">.</span></samp>&rsquo;符号，作为引用当前地址，
+并能够计算该处和其它符号的差。如果你的汇编器不识别&lsquo;<samp><span class="samp">.</span></samp>&rsquo;，或者不能计算差，
+你需要重定义<code>ASM_OUTPUT_MEASURED_SIZE</code>来使用其它技术。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TYPE_ASM_OP</b><var><a name="index-TYPE_005fASM_005fOP-4516"></a></var><br>
+<blockquote><!-- A C string containing the appropriate assembler directive to specify the -->
+     <!-- type of a symbol, without any arguments.  On systems that use ELF, the -->
+     <!-- default (in @file{config/elfos.h}) is @samp{"\t.type\t"}; on other -->
+     <!-- systems, the default is not to define this macro. -->
+      <p>一个C字符串，包含了适当的汇编伪指令，用于指定符号的类型，不需要任何参数。
+在使用ELF的系统上，缺省为（在<samp><span class="file">config/elfos.h</span></samp>中）&lsquo;<samp><span class="samp">"\t.type\t"</span></samp>&rsquo;；
+在其它系统上，缺省为不定义该宏。
+
+     <!-- Define this macro only if it is correct to use the default definition of -->
+     <!-- @code{ASM_OUTPUT_TYPE_DIRECTIVE} for your system.  If you need your own -->
+     <!-- custom definition of this macro, or if you do not need explicit symbol -->
+     <!-- types at all, do not define this macro. -->
+      <p>只有在你的系统上可以正确的使用<code>ASM_OUTPUT_TYPE_DIRECTIVE</code>的缺省定义时，
+才定义该宏。如果对于该宏，你需要自己特定的定义，
+或者如果你根本不需要显式的符号类型，则不要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TYPE_OPERAND_FMT</b><var><a name="index-TYPE_005fOPERAND_005fFMT-4517"></a></var><br>
+<blockquote><!-- A C string which specifies (using @code{printf} syntax) the format of -->
+     <!-- the second operand to @code{TYPE_ASM_OP}.  On systems that use ELF, the -->
+     <!-- default (in @file{config/elfos.h}) is @samp{"@@%s"}; on other systems, -->
+     <!-- the default is not to define this macro. -->
+      <p>一个C字符串，
+指定了<code>TYPE_ASM_OP</code>的第二个操作数的格式（使用<code>printf</code>语法）。
+在使用ELF的系统上，缺省为（在<samp><span class="file">config/elfos.h</span></samp>中）&lsquo;<samp><span class="samp">"@%s"</span></samp>&rsquo;；
+在其它系统上，缺省为不定义该宏。
+
+     <!-- Define this macro only if it is correct to use the default definition of -->
+     <!-- @code{ASM_OUTPUT_TYPE_DIRECTIVE} for your system.  If you need your own -->
+     <!-- custom definition of this macro, or if you do not need explicit symbol -->
+     <!-- types at all, do not define this macro. -->
+      <p>只有在你的系统上可以正确的使用<code>ASM_OUTPUT_TYPE_DIRECTIVE</code>的缺省定义时，
+才定义该宏。如果对于该宏，你需要自己特定的定义，
+或者如果你根本不需要显式的符号类型，则不要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_TYPE_DIRECTIVE</b> (<var>stream, type</var>)<var><a name="index-ASM_005fOUTPUT_005fTYPE_005fDIRECTIVE-4518"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} a directive telling the assembler that the type of the -->
+     <!-- symbol @var{name} is @var{type}.  @var{type} is a C string; currently, -->
+     <!-- that string is always either @samp{"function"} or @samp{"object"}, but -->
+     <!-- you should not count on this. -->
+      <p>一条C语句（没有分号），用以将一条伪指令输出到stdio流<var>stream</var>中，
+以告诉汇编器符号<var>name</var>的类型为<var>type</var>。<var>type</var>是一个C字符串；
+目前该字符串总是&lsquo;<samp><span class="samp">"function"</span></samp>&rsquo;或者&lsquo;<samp><span class="samp">"object"</span></samp>&rsquo;，但你不要依赖于此。
+
+     <!-- If you define @code{TYPE_ASM_OP} and @code{TYPE_OPERAND_FMT}, a default -->
+     <!-- definition of this macro is provided. -->
+      <p>如果你定义了<code>TYPE_ASM_OP</code>和<code>TYPE_OPERAND_FMT</code>，
+则该宏的缺省定义会被提供。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_DECLARE_FUNCTION_NAME</b> (<var>stream, name, decl</var>)<var><a name="index-ASM_005fDECLARE_005fFUNCTION_005fNAME-4519"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} any text necessary for declaring the name @var{name} of a -->
+     <!-- function which is being defined.  This macro is responsible for -->
+     <!-- outputting the label definition (perhaps using -->
+     <!-- @code{ASM_OUTPUT_FUNCTION_LABEL}).  The argument @var{decl} is the -->
+     <!-- @code{FUNCTION_DECL} tree node representing the function. -->
+      <p>一条C语句（没有分号），用以将任何声明被定义的函数名字<var>name</var>所需要的文本，
+输出到stdio流<var>stream</var>中。
+该宏负责输出标号定义（或者使用<code>ASM_OUTPUT_LABEL</code>）。
+参数<var>decl</var>为表示函数的<code>FUNCTION_DECL</code>树结点。
+
+     <!-- If this macro is not defined, then the function name is defined in the -->
+     <!-- usual manner as a label (by means of @code{ASM_OUTPUT_FUNCTION_LABEL}). -->
+      <p>如果该宏没有被定义，
+则函数名被作为标号按照通常的方式来定义（使用<code>ASM_OUTPUT_LABEL</code>）。
+
+     <!-- You may wish to use @code{ASM_OUTPUT_TYPE_DIRECTIVE} in the definition -->
+     <!-- of this macro. -->
+      <p>你可能希望在定义该宏时使用<code>ASM_OUTPUT_TYPE_DIRECTIVE</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_DECLARE_FUNCTION_SIZE</b> (<var>stream, name, decl</var>)<var><a name="index-ASM_005fDECLARE_005fFUNCTION_005fSIZE-4520"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} any text necessary for declaring the size of a function -->
+     <!-- which is being defined.  The argument @var{name} is the name of the -->
+     <!-- function.  The argument @var{decl} is the @code{FUNCTION_DECL} tree node -->
+     <!-- representing the function. -->
+      <p>一条C语句（没有分号），用以将任何声明被定义的函数的大小所需要的文本，
+输出到stdio流<var>stream</var>中。参数<var>name</var>为函数的名字。
+参数<var>decl</var>为表示函数的<code>FUNCTION_DECL</code>树结点。
+
+     <!-- If this macro is not defined, then the function size is not defined. -->
+      <p>如果该宏没有被定义，则函数大小没有被定义。
+
+     <!-- You may wish to use @code{ASM_OUTPUT_MEASURED_SIZE} in the definition -->
+     <!-- of this macro. -->
+      <p>你可能希望在定义该宏时使用<code>ASM_OUTPUT_MEASURED_SIZE</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_DECLARE_OBJECT_NAME</b> (<var>stream, name, decl</var>)<var><a name="index-ASM_005fDECLARE_005fOBJECT_005fNAME-4521"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} any text necessary for declaring the name @var{name} of an -->
+     <!-- initialized variable which is being defined.  This macro must output the -->
+     <!-- label definition (perhaps using @code{ASM_OUTPUT_LABEL}).  The argument -->
+     <!-- @var{decl} is the @code{VAR_DECL} tree node representing the variable. -->
+      <p>一条C语句（没有分号），
+用以将任何声明被定义的初始化变量名字<var>name</var>所需要的文本，
+输出到stdio流<var>stream</var>中。
+该宏必须输出标号定义（可能使用<code>ASM_OUTPUT_LABEL</code>）。
+参数<var>decl</var>为表示变量的<code>VAR_DECL</code>树结点。
+
+     <!-- If this macro is not defined, then the variable name is defined in the -->
+     <!-- usual manner as a label (by means of @code{ASM_OUTPUT_LABEL}). -->
+      <p>如果该宏没有被定义，
+则变量名被作为标号按照通常的方式来定义（使用<code>ASM_OUTPUT_LABEL</code>）。
+
+     <!-- You may wish to use @code{ASM_OUTPUT_TYPE_DIRECTIVE} and/or -->
+     <!-- @code{ASM_OUTPUT_SIZE_DIRECTIVE} in the definition of this macro. -->
+      <p>你可能希望在定义该宏时使用<code>ASM_OUTPUT_TYPE_DIRECTIVE</code>和/或<code>ASM_OUTPUT_SIZE_DIRECTIVE</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_DECLARE_CONSTANT_NAME</b> (<var>FILE *file, const char *name, const_tree expr, HOST_WIDE_INT size</var>)<var><a name="index-TARGET_005fASM_005fDECLARE_005fCONSTANT_005fNAME-4522"></a></var><br>
+<blockquote><p>A target hook to output to the stdio stream <var>file</var> any text necessary
+for declaring the name <var>name</var> of a constant which is being defined.  This
+target hook is responsible for outputting the label definition (perhaps using
+<code>assemble_label</code>).  The argument <var>exp</var> is the value of the constant,
+and <var>size</var> is the size of the constant in bytes.  The <var>name</var>
+will be an internal label.
+
+      <p>The default version of this target hook, define the <var>name</var> in the
+usual manner as a label (by means of <code>assemble_label</code>).
+
+      <p>You may wish to use <code>ASM_OUTPUT_TYPE_DIRECTIVE</code> in this target hook. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_DECLARE_REGISTER_GLOBAL</b> (<var>stream, decl, regno, name</var>)<var><a name="index-ASM_005fDECLARE_005fREGISTER_005fGLOBAL-4523"></a></var><br>
+<blockquote><p>A C statement (sans semicolon) to output to the stdio stream
+<var>stream</var> any text necessary for claiming a register <var>regno</var>
+for a global variable <var>decl</var> with name <var>name</var>.
+
+      <p>If you don't define this macro, that is equivalent to defining it to do
+nothing. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_DECLARE_REGISTER_GLOBAL</b> (<var>stream, decl, regno, name</var>)<var><a name="index-ASM_005fDECLARE_005fREGISTER_005fGLOBAL-4524"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} any text necessary for claiming a register @var{regno} -->
+     <!-- for a global variable @var{decl} with name @var{name}. -->
+      <p>一条C语句（没有分号），用以将任何为具有名字<var>name</var>的全局变量声明一个寄存器<var>regno</var>所需要的文本，输出到stdio流<var>stream</var>中。
+
+     <!-- If you don't define this macro, that is equivalent to defining it to do -->
+     <!-- nothing. -->
+      <p>如果没有定义该宏，则相当于定义其什么都不做。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_FINISH_DECLARE_OBJECT</b> (<var>stream, decl, toplevel, atend</var>)<var><a name="index-ASM_005fFINISH_005fDECLARE_005fOBJECT-4525"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to finish up declaring a variable name -->
+     <!-- once the compiler has processed its initializer fully and thus has had a -->
+     <!-- chance to determine the size of an array when controlled by an -->
+     <!-- initializer.  This is used on systems where it's necessary to declare -->
+     <!-- something about the size of the object. -->
+      <p>一条C语句（没有分号），用于在编译器完全处理了初始化者之后，
+来完成声明一个变量名，这样当数组的大小由初始化者控制的时候，
+就有机会来确定数组的大小。这用于需要声明对象的大小的系统上。
+
+     <!-- If you don't define this macro, that is equivalent to defining it to do -->
+     <!-- nothing. -->
+      <p>如果没有定义该宏，则相当于定义其什么都不做。
+
+     <!-- You may wish to use @code{ASM_OUTPUT_SIZE_DIRECTIVE} and/or -->
+     <!-- @code{ASM_OUTPUT_MEASURED_SIZE} in the definition of this macro. -->
+      <p>你可能希望在定义该宏时使用<code>ASM_OUTPUT_SIZE_DIRECTIVE</code>和/或<code>ASM_OUTPUT_MEASURED_SIZE</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_GLOBALIZE_LABEL</b> (<var>FILE *stream, const char *name</var>)<var><a name="index-TARGET_005fASM_005fGLOBALIZE_005fLABEL-4526"></a></var><br>
+<blockquote><!-- This target hook is a function to output to the stdio stream -->
+     <!-- @var{stream} some commands that will make the label @var{name} global; -->
+     <!-- that is, available for reference from other files. -->
+      <p>该target钩子为一个函数，用于将一些命令输出到stdio流<var>stream</var>中，
+从而使得标号<var>name</var>为全局的；也就是，可以从其它文件中引用。
+
+     <!-- The default implementation relies on a proper definition of -->
+     <!-- @code{GLOBAL_ASM_OP}. -->
+      <p>缺省实现依赖于<code>GLOBAL_ASM_OP</code>的适当定义。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_GLOBALIZE_DECL_NAME</b> (<var>FILE *stream, tree decl</var>)<var><a name="index-TARGET_005fASM_005fGLOBALIZE_005fDECL_005fNAME-4527"></a></var><br>
+<blockquote><!-- This target hook is a function to output to the stdio stream -->
+     <!-- @var{stream} some commands that will make the name associated with @var{decl} -->
+     <!-- global; that is, available for reference from other files. -->
+      <p>该target钩子为一个函数，用于将一些命令输出到stdio流<var>stream</var>中，
+从而使得<var>decl</var>相关联的名字为全局的；也就是，可以从其它文件中引用。
+
+     <!-- The default implementation uses the TARGET_ASM_GLOBALIZE_LABEL target hook. -->
+      <p>缺省实现使用TARGET_ASM_GLOBALIZE_LABEL target钩子。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_WEAKEN_LABEL</b> (<var>stream, name</var>)<var><a name="index-ASM_005fWEAKEN_005fLABEL-4528"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} some commands that will make the label @var{name} weak; -->
+     <!-- that is, available for reference from other files but only used if -->
+     <!-- no other definition is available.  Use the expression -->
+     <!-- @code{assemble_name (@var{stream}, @var{name})} to output the name -->
+     <!-- itself; before and after that, output the additional assembler syntax -->
+     <!-- for making that name weak, and a newline. -->
+      <p>一条C语句（没有分号），用于将一些命令输出到stdio流<var>stream</var>中，
+从而使得标号<var>name</var>为弱的；也就是，可以从其它文件中引用，
+但只有在没有其它定义的时候。
+使用表达式<code>assemble_name (</code><var>stream</var><code>, </code><var>name</var><code>)</code>来输出name本身；
+在此之前和之后，输出使得name为弱的额外的汇编语法，以及换行。
+
+     <!-- If you don't define this macro or @code{ASM_WEAKEN_DECL}, GCC will not -->
+     <!-- support weak symbols and you should not define the @code{SUPPORTS_WEAK} -->
+     <!-- macro. -->
+      <p>如果没有定义该宏或者<code>ASM_WEAKEN_DECL</code>，
+GCC将不支持弱符号并且你不要定义宏<code>SUPPORTS_WEAK</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_WEAKEN_DECL</b> (<var>stream, decl, name, value</var>)<var><a name="index-ASM_005fWEAKEN_005fDECL-4529"></a></var><br>
+<blockquote><!-- Combines (and replaces) the function of @code{ASM_WEAKEN_LABEL} and -->
+     <!-- @code{ASM_OUTPUT_WEAK_ALIAS}, allowing access to the associated function -->
+     <!-- or variable decl.  If @var{value} is not @code{NULL}, this C statement -->
+     <!-- should output to the stdio stream @var{stream} assembler code which -->
+     <!-- defines (equates) the weak symbol @var{name} to have the value -->
+     <!-- @var{value}.  If @var{value} is @code{NULL}, it should output commands -->
+     <!-- to make @var{name} weak. -->
+      <p>组合（并替换）了函数<code>ASM_WEAKEN_LABEL</code>和<code>ASM_OUTPUT_WEAK_ALIAS</code>，
+允许访问相关的函数或变量decl。如果<var>value</var>不为<code>NULL</code>，
+该C语句应该将定义弱符号<var>name</var>具有值<var>value</var>的汇编代码，
+输出到stdio流<var>stream</var>中。如果<var>value</var>为<code>NULL</code>，
+其应该输出命令来使得<var>name</var>为弱的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_WEAKREF</b> (<var>stream, decl, name, value</var>)<var><a name="index-ASM_005fOUTPUT_005fWEAKREF-4530"></a></var><br>
+<blockquote><!-- Outputs a directive that enables @var{name} to be used to refer to -->
+     <!-- symbol @var{value} with weak-symbol semantics.  @code{decl} is the -->
+     <!-- declaration of @code{name}. -->
+      <p>输出一条伪指令，使得<var>name</var>被用来使用弱符号语义引用符号<var>value</var>。
+<code>decl</code>为<code>name</code>的声明。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SUPPORTS_WEAK</b><var><a name="index-SUPPORTS_005fWEAK-4531"></a></var><br>
+<blockquote><!-- A preprocessor constant expression which evaluates to true if the target -->
+     <!-- supports weak symbols. -->
+      <p>一个预处理常量表达式，如果target支持弱符号，则求值为真。
+
+     <!-- If you don't define this macro, @file{defaults.h} provides a default -->
+     <!-- definition.  If either @code{ASM_WEAKEN_LABEL} or @code{ASM_WEAKEN_DECL} -->
+     <!-- is defined, the default definition is @samp{1}; otherwise, it is @samp{0}. -->
+      <p>如果你没有定义该宏，<samp><span class="file">defaults.h</span></samp>会提供一个缺省的定义。
+如果<code>ASM_WEAKEN_LABEL</code>或者<code>ASM_WEAKEN_DECL</code>被定义，
+则缺省定义为&lsquo;<samp><span class="samp">1</span></samp>&rsquo;；否则为&lsquo;<samp><span class="samp">0</span></samp>&rsquo;。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_SUPPORTS_WEAK</b><var><a name="index-TARGET_005fSUPPORTS_005fWEAK-4532"></a></var><br>
+<blockquote><p>A C expression which evaluates to true if the target supports weak symbols.
+
+      <p>If you don't define this macro, <samp><span class="file">defaults.h</span></samp> provides a default
+definition.  The default definition is &lsquo;<samp><span class="samp">(SUPPORTS_WEAK)</span></samp>&rsquo;.  Define
+this macro if you want to control weak symbol support with a compiler
+flag such as <samp><span class="option">-melf</span></samp>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>MAKE_DECL_ONE_ONLY</b> (<var>decl</var>)<var><a name="index-MAKE_005fDECL_005fONE_005fONLY-4533"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to mark @var{decl} to be emitted as a -->
+     <!-- public symbol such that extra copies in multiple translation units will -->
+     <!-- be discarded by the linker.  Define this macro if your object file -->
+     <!-- format provides support for this concept, such as the @samp{COMDAT} -->
+     <!-- section flags in the Microsoft Windows PE/COFF format, and this support -->
+     <!-- requires changes to @var{decl}, such as putting it in a separate section. -->
+      <p>一条C语句（没有分号），用来标记<var>decl</var>作为public符号生成，
+这样在多个转换单元中额外的副本将被连接器丢弃。
+如果你的目标文件格式提供了这样的支持，
+例如在Microsoft Windows PE/COFF格式中的&lsquo;<samp><span class="samp">COMDAT</span></samp>&rsquo; section标记，
+并且这种支持需要对<var>decl</var>进行改动，例如将其放到独立的section中，则定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>SUPPORTS_ONE_ONLY</b><var><a name="index-SUPPORTS_005fONE_005fONLY-4534"></a></var><br>
+<blockquote><!-- A C expression which evaluates to true if the target supports one-only -->
+     <!-- semantics. -->
+      <p>一个C表达式，如果target支持one-only语义，则其求值为真。
+
+     <!-- If you don't define this macro, @file{varasm.c} provides a default -->
+     <!-- definition.  If @code{MAKE_DECL_ONE_ONLY} is defined, the default -->
+     <!-- definition is @samp{1}; otherwise, it is @samp{0}.  Define this macro if -->
+     <!-- you want to control one-only symbol support with a compiler flag, or if -->
+     <!-- setting the @code{DECL_ONE_ONLY} flag is enough to mark a declaration to -->
+     <!-- be emitted as one-only. -->
+      <p>如果你没有定义该宏，<samp><span class="file">varasm.c</span></samp>会提供一个缺省的定义。
+如果<code>MAKE_DECL_ONE_ONLY</code>被定义，则缺省定义为&lsquo;<samp><span class="samp">1</span></samp>&rsquo;；否则为&lsquo;<samp><span class="samp">0</span></samp>&rsquo;。
+如果你想使用编译器标记来控制one-only符号的支持，
+或者如果设置<code>DECL_ONE_ONLY</code>标记就足以标记声明被作为one-only生成时，
+定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_ASSEMBLE_VISIBILITY</b> (<var>tree decl, int visibility</var>)<var><a name="index-TARGET_005fASM_005fASSEMBLE_005fVISIBILITY-4535"></a></var><br>
+<blockquote><!-- This target hook is a function to output to @var{asm_out_file} some -->
+     <!-- commands that will make the symbol(s) associated with @var{decl} have -->
+     <!-- hidden, protected or internal visibility as specified by @var{visibility}. -->
+      <p>该target钩子为一个函数，用来将一些命令输出到<var>asm_out_file</var>，
+其将使得与<var>decl</var>相关的符号具有通过<var>visibility</var>指定的隐藏，
+保护或者内部可见的属性。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_WEAK_NOT_IN_ARCHIVE_TOC</b><var><a name="index-TARGET_005fWEAK_005fNOT_005fIN_005fARCHIVE_005fTOC-4536"></a></var><br>
+<blockquote><!-- A C expression that evaluates to true if the target's linker expects -->
+     <!-- that weak symbols do not appear in a static archive's table of contents. -->
+     <!-- The default is @code{0}. -->
+      <p>一个C表达式，如果target的连接器期望弱符号不出现在静态归档的目录表中，
+则其求值为真。缺省为<code>0</code>。
+
+     <!-- Leaving weak symbols out of an archive's table of contents means that, -->
+     <!-- if a symbol will only have a definition in one translation unit and -->
+     <!-- will have undefined references from other translation units, that -->
+     <!-- symbol should not be weak.  Defining this macro to be nonzero will -->
+     <!-- thus have the effect that certain symbols that would normally be weak -->
+     <!-- (explicit template instantiations, and vtables for polymorphic classes -->
+     <!-- with noninline key methods) will instead be nonweak. -->
+      <p>将弱符号置于归档的目录表之外，意味着如果符号将只在一个转换单元中有一个定义，
+并且有从其它转换单元中进行未定义的引用，则该符号将不为弱的。定义该宏为非零，
+将使得这样通常为弱的符号成为非弱的。
+
+     <!-- The C++ ABI requires this macro to be zero.  Define this macro for -->
+     <!-- targets where full C++ ABI compliance is impossible and where linker -->
+     <!-- restrictions require weak symbols to be left out of a static archive's -->
+     <!-- table of contents. -->
+      <p>C++ ABI要求该宏为0。当target不能完全遵守C++ ABI，
+并且连接器要求弱符号在静态归档的目录表外面时，定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_EXTERNAL</b> (<var>stream, decl, name</var>)<var><a name="index-ASM_005fOUTPUT_005fEXTERNAL-4537"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} any text necessary for declaring the name of an external -->
+     <!-- symbol named @var{name} which is referenced in this compilation but -->
+     <!-- not defined.  The value of @var{decl} is the tree node for the -->
+     <!-- declaration. -->
+      <p>一条C语句（没有分号），
+用于将声明在该编译中被引用但没有被定义的外部符号名字<var>name</var>，
+所需要的任何文本输出到stdio流<var>stream</var>中。<var>decl</var>的值为声明的树结点。
+
+     <!-- This macro need not be defined if it does not need to output anything. -->
+     <!-- The GNU assembler and most Unix assemblers don't require anything. -->
+      <p>如果不需要输出任何东西，则不需要定义该宏。
+GNU汇编器和大多数Unix汇编器不需要做任何事情。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_EXTERNAL_LIBCALL</b> (<var>rtx symref</var>)<var><a name="index-TARGET_005fASM_005fEXTERNAL_005fLIBCALL-4538"></a></var><br>
+<blockquote><!-- This target hook is a function to output to @var{asm_out_file} an assembler -->
+     <!-- pseudo-op to declare a library function name external.  The name of the -->
+     <!-- library function is given by @var{symref}, which is a @code{symbol_ref}. -->
+      <p>该target钩子是一个函数，用于将一条汇编伪指令输出到<var>asm_out_file</var>中，
+用以声明一个库函数名字为外部的。库函数的名字由<var>symref</var>给出，
+<var>symref</var>为一个<code>symbol_ref</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_MARK_DECL_PRESERVED</b> (<var>const char *symbol</var>)<var><a name="index-TARGET_005fASM_005fMARK_005fDECL_005fPRESERVED-4539"></a></var><br>
+<blockquote><!-- This target hook is a function to output to @var{asm_out_file} an assembler -->
+     <!-- directive to annotate @var{symbol} as used.  The Darwin target uses the -->
+     <!-- .no_dead_code_strip directive. -->
+      <p>该target钩子为一个函数，用于将一条汇编伪指令输出到<var>asm_out_file</var>中，
+用以注释使用的符号。Darwin target使用.no_dead_code_strip伪指令。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_LABELREF</b> (<var>stream, name</var>)<var><a name="index-ASM_005fOUTPUT_005fLABELREF-4540"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} a reference in assembler syntax to a label named -->
+     <!-- @var{name}.  This should add @samp{_} to the front of the name, if that -->
+     <!-- is customary on your operating system, as it is in most Berkeley Unix -->
+     <!-- systems.  This macro is used in @code{assemble_name}. -->
+      <p>一条C语句（没有分号），
+用于将名为<var>name</var>的标号的引用的汇编语法输出到stdio流<var>stream</var>中。
+这应该在name前加上&lsquo;<samp><span class="samp">_</span></samp>&rsquo;。该宏用于<code>assemble_name</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: tree <b>TARGET_MANGLE_ASSEMBLER_NAME</b> (<var>const char *name</var>)<var><a name="index-TARGET_005fMANGLE_005fASSEMBLER_005fNAME-4541"></a></var><br>
+<blockquote><p>Given a symbol <var>name</var>, perform same mangling as <code>varasm.c</code>'s <code>assemble_name</code>, but in memory rather than to a file stream, returning result as an <code>IDENTIFIER_NODE</code>.  Required for correct LTO symtabs.  The default implementation calls the <code>TARGET_STRIP_NAME_ENCODING</code> hook and then prepends the <code>USER_LABEL_PREFIX</code>, if any. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_SYMBOL_REF</b> (<var>stream, sym</var>)<var><a name="index-ASM_005fOUTPUT_005fSYMBOL_005fREF-4542"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output a reference to -->
+     <!-- @code{SYMBOL_REF} @var{sym}.  If not defined, @code{assemble_name} -->
+     <!-- will be used to output the name of the symbol.  This macro may be used -->
+     <!-- to modify the way a symbol is referenced depending on information -->
+     <!-- encoded by @code{TARGET_ENCODE_SECTION_INFO}. -->
+      <p>一条C语句（没有分号），用于输出对<code>SYMBOL_REF</code> <var>sym</var>的引用。
+如果没有定义，<code>assemble_name</code>将被用来输出符号的名字。
+该宏可以用于修改符号被引用的方式，根据<code>TARGET_ENCODE_SECTION_INFO</code>的信息。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_LABEL_REF</b> (<var>stream, buf</var>)<var><a name="index-ASM_005fOUTPUT_005fLABEL_005fREF-4543"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output a reference to @var{buf}, the -->
+     <!-- result of @code{ASM_GENERATE_INTERNAL_LABEL}.  If not defined, -->
+     <!-- @code{assemble_name} will be used to output the name of the symbol. -->
+     <!-- This macro is not used by @code{output_asm_label}, or the @code{%l} -->
+     <!-- specifier that calls it; the intention is that this macro should be set -->
+     <!-- when it is necessary to output a label differently when its address is -->
+     <!-- being taken. -->
+      <p>一条C语句（没有分号），用于输出对<code>ASM_GENERATE_INTERNAL_LABEL</code>的结果，
+<var>buf</var>的引用。如果没有定义，<code>assemble_name</code>将被用来输出符号的名字。
+该宏不被调用它的<code>output_asm_label</code>或者<code>%l</code>指示符使用；
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_INTERNAL_LABEL</b> (<var>FILE *stream, const char *prefix, unsigned long labelno</var>)<var><a name="index-TARGET_005fASM_005fINTERNAL_005fLABEL-4544"></a></var><br>
+<blockquote><!-- A function to output to the stdio stream @var{stream} a label whose -->
+     <!-- name is made from the string @var{prefix} and the number @var{labelno}. -->
+      <p>一个函数，将标号输出到stdio流<var>stream</var>中，
+标号的名字由字符串<var>prefix</var>和编号<var>labelno</var>组成。
+
+     <!-- It is absolutely essential that these labels be distinct from the labels -->
+     <!-- used for user-level functions and variables.  Otherwise, certain programs -->
+     <!-- will have name conflicts with internal labels. -->
+      <p>当然这些标号应该与用户级别函数和变量使用的标号不同。
+否则，程序将具有与内部标号的命名冲突。
+
+     <!-- It is desirable to exclude internal labels from the symbol table of the -->
+     <!-- object file.  Most assemblers have a naming convention for labels that -->
+     <!-- should be excluded; on many systems, the letter @samp{L} at the -->
+     <!-- beginning of a label has this effect.  You should find out what -->
+     <!-- convention your system uses, and follow it. -->
+      <p>通常要求内部标号不包含在目标文件的符号表中。大多数汇编器具有命名约定，
+来处理这些标号。在许多系统上，位于标号的起始处的字母&lsquo;<samp><span class="samp">L</span></samp>&rsquo;，具有这样的效果。
+你应该找到你的系统使用的约定，并遵守。
+
+     <!-- The default version of this function utilizes @code{ASM_GENERATE_INTERNAL_LABEL}. -->
+      <p>该函数的缺省版本利用<code>ASM_GENERATE_INTERNAL_LABEL</code>了。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_DEBUG_LABEL</b> (<var>stream, prefix, num</var>)<var><a name="index-ASM_005fOUTPUT_005fDEBUG_005fLABEL-4545"></a></var><br>
+<blockquote><!-- A C statement to output to the stdio stream @var{stream} a debug info -->
+     <!-- label whose name is made from the string @var{prefix} and the number -->
+     <!-- @var{num}.  This is useful for VLIW targets, where debug info labels -->
+     <!-- may need to be treated differently than branch target labels.  On some -->
+     <!-- systems, branch target labels must be at the beginning of instruction -->
+     <!-- bundles, but debug info labels can occur in the middle of instruction -->
+     <!-- bundles. -->
+      <p>一条C语句，用来将调试信息标号输出到stdio流<var>stream</var>中，
+标号的名字由字符串<var>prefix</var>和编号<var>num</var>组成。这对VLIW target很有用，
+因为调试信息标号可能需要与分支目标标号进行不同的处理。在一些系统上，
+分支目标标号必须在指令束的起始处，但是调试信息标号可以出现在指令束的中间。
+
+     <!-- If this macro is not defined, then @code{(*targetm.asm_out.internal_label)} will be -->
+     <!-- used. -->
+      <p>如果该宏没有被定义，则会使用<code>(*targetm.asm_out.internal_label)</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_GENERATE_INTERNAL_LABEL</b> (<var>string, prefix, num</var>)<var><a name="index-ASM_005fGENERATE_005fINTERNAL_005fLABEL-4546"></a></var><br>
+<blockquote><!-- A C statement to store into the string @var{string} a label whose name -->
+     <!-- is made from the string @var{prefix} and the number @var{num}. -->
+      <p>一条C语句，用于将标号存储到字符串<var>string</var>中，
+标号的名字由字符串<var>prefix</var>和编号<var>num</var>组成。
+
+      <p>This string, when output subsequently by <code>assemble_name</code>, should
+produce the output that <code>(*targetm.asm_out.internal_label)</code> would produce
+with the same <var>prefix</var> and <var>num</var>.
+
+     <!-- If the string begins with @samp{*}, then @code{assemble_name} will -->
+     <!-- output the rest of the string unchanged.  It is often convenient for -->
+     <!-- @code{ASM_GENERATE_INTERNAL_LABEL} to use @samp{*} in this way.  If the -->
+     <!-- string doesn't start with @samp{*}, then @code{ASM_OUTPUT_LABELREF} gets -->
+     <!-- to output the string, and may change it.  (Of course, -->
+     <!-- @code{ASM_OUTPUT_LABELREF} is also part of your machine description, so -->
+     <!-- you should know what it does on your machine.) -->
+      <p>如果字符串起始于&lsquo;<samp><span class="samp">*</span></samp>&rsquo;，
+则<code>assemble_name</code>将按照不改变剩余字符串的方式被输出。
+这对于<code>ASM_GENERATE_INTERNAL_LABEL</code>非常方便。
+如果字符串不起始于&lsquo;<samp><span class="samp">*</span></samp>&rsquo;，则会使用<code>ASM_OUTPUT_LABELREF</code>来输出字符串，
+并且可能会做改变。（当然，<code>ASM_OUTPUT_LABELREF</code>也是你的机器描述的一部分，
+所以你知道它在你的机器上做了什么。）
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_FORMAT_PRIVATE_NAME</b> (<var>outvar, name, number</var>)<var><a name="index-ASM_005fFORMAT_005fPRIVATE_005fNAME-4547"></a></var><br>
+<blockquote><!-- A C expression to assign to @var{outvar} (which is a variable of type -->
+     <!-- @code{char *}) a newly allocated string made from the string -->
+     <!-- @var{name} and the number @var{number}, with some suitable punctuation -->
+     <!-- added.  Use @code{alloca} to get space for the string. -->
+      <p>一个C表达式，给<var>outvar</var>（类型为<code>char *</code>*的变量）
+赋值一个新分配的字符串，该字符串由字符串<var>name</var>和编号<var>number</var>组成，
+并增加适当的标点符号。使用<code>alloca</code>为字符串获得空间。
+
+     <!-- The string will be used as an argument to @code{ASM_OUTPUT_LABELREF} to -->
+     <!-- produce an assembler label for an internal static variable whose name is -->
+     <!-- @var{name}.  Therefore, the string must be such as to result in valid -->
+     <!-- assembler code.  The argument @var{number} is different each time this -->
+     <!-- macro is executed; it prevents conflicts between similarly-named -->
+     <!-- internal static variables in different scopes. -->
+      <p>字符串将被<code>ASM_OUTPUT_LABELREF</code>作为参数使用，
+来产生一个名字为<var>name</var>的内部静态变量的汇编标号。
+因此，字符串必须为有效的汇编代码。参数<var>number</var>在每次执行该宏时都不相同；
+其使得在不同作用域下的内部静态变量的名字不会有冲突。
+
+     <!-- Ideally this string should not be a valid C identifier, to prevent any -->
+     <!-- conflict with the user's own symbols.  Most assemblers allow periods -->
+     <!-- or percent signs in assembler symbols; putting at least one of these -->
+     <!-- between the name and the number will suffice. -->
+      <p>理想情况下，该字符串应该不是一个有效的C标识符，
+以阻止任何与用户自己的符号的冲突。大多数汇编器运行点或者百分号在汇编符号中；
+在名字和编号之间加入至少一个这样的字符便可以。
+
+     <!-- If this macro is not defined, a default definition will be provided -->
+     <!-- which is correct for most systems. -->
+      <p>如果该宏没有被定义，一个缺省的定义将被提供，其在大多数系统上都是正确的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_DEF</b> (<var>stream, name, value</var>)<var><a name="index-ASM_005fOUTPUT_005fDEF-4548"></a></var><br>
+<blockquote><!-- A C statement to output to the stdio stream @var{stream} assembler code -->
+     <!-- which defines (equates) the symbol @var{name} to have the value @var{value}. -->
+      <p>一条C语句，用于将定义符号<var>name</var>具有值<var>value</var>的汇编代码输出到stdio流<var>stream</var>中。
+
+      <p><a name="index-SET_005fASM_005fOP-4549"></a><!-- If @code{SET_ASM_OP} is defined, a default definition is provided which is -->
+<!-- correct for most systems. -->
+如果定义了<code>SET_ASM_OP</code>，一个缺省的定义将被提供，
+其在大多数系统上都是正确的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_DEF_FROM_DECLS</b> (<var>stream, decl_of_name, decl_of_value</var>)<var><a name="index-ASM_005fOUTPUT_005fDEF_005fFROM_005fDECLS-4550"></a></var><br>
+<blockquote><!-- A C statement to output to the stdio stream @var{stream} assembler code -->
+     <!-- which defines (equates) the symbol whose tree node is @var{decl_of_name} -->
+     <!-- to have the value of the tree node @var{decl_of_value}.  This macro will -->
+     <!-- be used in preference to @samp{ASM_OUTPUT_DEF} if it is defined and if -->
+     <!-- the tree nodes are available. -->
+      <p>一条C语句，用于将定义树结点为<var>decl_of_name</var>的符号，
+具有树结点<var>decl_of_value</var>的值的汇编代码输出到stdio流<var>stream</var>中。
+该宏将优先于`ASM_OUTPUT_DEF'被使用，如果其被定义，并且如果树结点有效。
+
+      <p><a name="index-SET_005fASM_005fOP-4551"></a><!-- If @code{SET_ASM_OP} is defined, a default definition is provided which is -->
+<!-- correct for most systems. -->
+如果定义了<code>SET_ASM_OP</code>，一个缺省的定义将被提供，
+其在大多数系统上都是正确的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TARGET_DEFERRED_OUTPUT_DEFS</b> (<var>decl_of_name, decl_of_value</var>)<var><a name="index-TARGET_005fDEFERRED_005fOUTPUT_005fDEFS-4552"></a></var><br>
+<blockquote><!-- A C statement that evaluates to true if the assembler code which defines -->
+     <!-- (equates) the symbol whose tree node is @var{decl_of_name} to have the value -->
+     <!-- of the tree node @var{decl_of_value} should be emitted near the end of the -->
+     <!-- current compilation unit.  The default is to not defer output of defines. -->
+     <!-- This macro affects defines output by @samp{ASM_OUTPUT_DEF} and -->
+     <!-- @samp{ASM_OUTPUT_DEF_FROM_DECLS}. -->
+      <p>一条C语句，如果定义树结点为<var>decl_of_name</var>的符号具有树结点为
+<var>decl_of_value</var>的值的汇编代码，应该在当前编译单元结尾处被生成，
+则求值为真。缺省为不推迟定义的输出。
+该宏影响`ASM_OUTPUT_DEF' 和 `ASM_OUTPUT_DEF_FROM_DECLS'的定义输出。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_WEAK_ALIAS</b> (<var>stream, name, value</var>)<var><a name="index-ASM_005fOUTPUT_005fWEAK_005fALIAS-4553"></a></var><br>
+<blockquote><!-- A C statement to output to the stdio stream @var{stream} assembler code -->
+     <!-- which defines (equates) the weak symbol @var{name} to have the value -->
+     <!-- @var{value}.  If @var{value} is @code{NULL}, it defines @var{name} as -->
+     <!-- an undefined weak symbol. -->
+      <p>一条C语句，用来将定义弱符号<var>name</var>具有值<var>value</var>的汇编代码输出
+到stdio流<var>stream</var>中。如果<var>value</var>为<code>NULL</code>，
+其定义<var>name</var>为未定义的符号。
+
+     <!-- Define this macro if the target only supports weak aliases; define -->
+     <!-- @code{ASM_OUTPUT_DEF} instead if possible. -->
+      <p>如果target只支持弱别名时，定义该宏；否则尽量定义<code>ASM_OUTPUT_DEF</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>OBJC_GEN_METHOD_LABEL</b> (<var>buf, is_inst, class_name, cat_name, sel_name</var>)<var><a name="index-OBJC_005fGEN_005fMETHOD_005fLABEL-4554"></a></var><br>
+<blockquote><!-- Define this macro to override the default assembler names used for -->
+     <!-- Objective-C methods. -->
+      <p>定义该宏来覆盖缺省的用于Objective-C方法的汇编名。
+
+     <!-- The default name is a unique method number followed by the name of the -->
+     <!-- class (e.g.@: @samp{_1_Foo}).  For methods in categories, the name of -->
+     <!-- the category is also included in the assembler name (e.g.@: -->
+     <!-- @samp{_1_Foo_Bar}). -->
+      <p>缺省名为一个唯一的方法编号，跟随class的名字（例如&lsquo;<samp><span class="samp">_1_Foo</span></samp>&rsquo;）。
+对于在category中的方法，category也包含在汇编名中（例如&lsquo;<samp><span class="samp">_1_Foo_Bar</span></samp>&rsquo;）。
+
+     <!-- These names are safe on most systems, but make debugging difficult since -->
+     <!-- the method's selector is not present in the name.  Therefore, particular -->
+     <!-- systems define other ways of computing names. -->
+      <p>这些名字在大多数系统上是安全的，但是使得调试变得困难，
+因为方法selector不在名字中。因此一些特定的系统定义了其它计算名字的方式。
+
+     <!-- @var{buf} is an expression of type @code{char *} which gives you a -->
+     <!-- buffer in which to store the name; its length is as long as -->
+     <!-- @var{class_name}, @var{cat_name} and @var{sel_name} put together, plus -->
+     <!-- 50 characters extra. -->
+      <p><var>buf</var>为<code>char *</code>类型的表达式，给出一个缓存来存储名字；
+其长度等于<var>class_name</var>，<var>cat_name</var>和<var>sel_name</var>的和，
+再加上额外的50个字符。
+
+     <!-- The argument @var{is_inst} specifies whether the method is an instance -->
+     <!-- method or a class method; @var{class_name} is the name of the class; -->
+     <!-- @var{cat_name} is the name of the category (or @code{NULL} if the method is not -->
+     <!-- in a category); and @var{sel_name} is the name of the selector. -->
+      <p>参数<var>is_inst</var>指定了方法是一个实例方法，还是一个类方法；
+<var>class_name</var>为类的名字；<var>cat_name</var>为category的名字（或者为空，
+如果方法不在category中）；<var>sel_name</var>为selector的名字。
+
+     <!-- On systems where the assembler can handle quoted names, you can use this -->
+     <!-- macro to provide more human-readable names. -->
+      <p>在汇编器可以处理带引号的名字的系统上，你可以使用该宏来提供更加可读的名字。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_DECLARE_CLASS_REFERENCE</b> (<var>stream, name</var>)<var><a name="index-ASM_005fDECLARE_005fCLASS_005fREFERENCE-4555"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} commands to declare that the label @var{name} is an -->
+     <!-- Objective-C class reference.  This is only needed for targets whose -->
+     <!-- linkers have special support for NeXT-style runtimes. -->
+      <p>一条C语句（没有分号），用于将命令输出到stdio流<var>stream</var>中，
+来声明标号<var>name</var>为Objective-C class引用。
+这只在连接器具有对NeXT-style运行时的特殊支持的target上需要。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_DECLARE_UNRESOLVED_REFERENCE</b> (<var>stream, name</var>)<var><a name="index-ASM_005fDECLARE_005fUNRESOLVED_005fREFERENCE-4556"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} commands to declare that the label @var{name} is an -->
+     <!-- unresolved Objective-C class reference.  This is only needed for targets -->
+     <!-- whose linkers have special support for NeXT-style runtimes. -->
+      <p>一条C语句（没有分号），用于将命令输出到stdio流<var>stream</var>中，
+来声明标号<var>name</var>为未解决的Objective-C class引用。
+这只在连接器具有对NeXT-style运行时的特殊支持的target上需要。
+</p></blockquote></div>
+
+<!-- @node Initialization -->
+<!-- @subsection How Initialization Functions Are Handled -->
+ </body></html>
+

@@ -1,0 +1,108 @@
+<html lang="zh">
+<head>
+<title>GENERIC - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="prev" href="Passes.html#Passes" title="Passes">
+<link rel="next" href="GIMPLE.html#GIMPLE" title="GIMPLE">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="GENERIC"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="GIMPLE.html#GIMPLE">GIMPLE</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Passes.html#Passes">Passes</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
+<hr>
+</div>
+
+<h2 class="chapter">11 GENERIC</h2>
+
+<p><a name="index-GENERIC-2307"></a>
+<!-- The purpose of GENERIC is simply to provide a -->
+<!-- language-independent way of representing an entire function in -->
+<!-- trees.  To this end, it was necessary to add a few new tree codes -->
+<!-- to the back end, but most everything was already there.  If you -->
+<!-- can express it with the codes in @code{gcc/tree.def}, it's -->
+<!-- GENERIC@. -->
+GENERIC的目的是简单的提供一个使用tree来表示整个函数的语言无关的方式。为此，之前需要为后端增加一些新的tree代码，但是大多数东西都已经存在。如果你可以使用<code>gcc/tree.def</code>中的代码来表示，则其即为GENERIC。
+
+<!-- Early on, there was a great deal of debate about how to think -->
+<!-- about statements in a tree IL@.  In GENERIC, a statement is -->
+<!-- defined as any expression whose value, if any, is ignored.  A -->
+<!-- statement will always have @code{TREE_SIDE_EFFECTS} set (or it -->
+<!-- will be discarded), but a non-statement expression may also have -->
+<!-- side effects.  A @code{CALL_EXPR}, for instance. -->
+ <p>早期，有一个很大的争论，关于如何在tree IL级别来考虑语句。在GENERIC中，一条语句被定义为任意的表达式，其值，如果存在，被忽略。语句总是设置<code>TREE_SIDE_EFFECTS</code>，不过一个非语句的表达式也可以具有副作用。例如，<code>CALL_EXPR</code>。
+
+<!-- It would be possible for some local optimizations to work on the -->
+<!-- GENERIC form of a function; indeed, the adapted tree inliner -->
+<!-- works fine on GENERIC, but the current compiler performs inlining -->
+<!-- after lowering to GIMPLE (a restricted form described in the next -->
+<!-- section). Indeed, currently the frontends perform this lowering -->
+<!-- before handing off to @code{tree_rest_of_compilation}, but this -->
+<!-- seems inelegant. -->
+ <p>对于一些局部优化，可以在函数的GENERIC形式上进行工作；的确，被改写的tree内联在GENERIC上可以很好的工作，不过目前编译器是在下降到GIMPLE（一个严格的形式，在下节有描述）之后，才执行内联的。确实，目前前端是在移交给<code>tree_rest_of_compilation</code>之前，来执行该下降，不过这看起来不太优雅。
+
+<!-- @menu -->
+<!-- * Deficiencies::                Topics net yet covered in this document. -->
+<!-- * Tree overview::               All about @code{tree}s. -->
+<!-- * Types::                       Fundamental and aggregate types. -->
+<!-- * Declarations::                Type declarations and variables. -->
+<!-- * Attributes::                  Declaration and type attributes. -->
+<!-- * Expressions: Expression trees.            Operating on data. -->
+<!-- * Statements::                  Control flow and related trees. -->
+<!-- * Functions::           	Function bodies, linkage, and other aspects. -->
+<!-- * Language-dependent trees::    Topics and trees specific to language front ends. -->
+<!-- * C and C++ Trees::     	Trees specific to C and C++. -->
+<!-- * Java Trees:: 	                Trees specific to Java. -->
+<!-- @end menu -->
+<ul class="menu">
+<li><a accesskey="1" href="Deficiencies.html#Deficiencies">Deficiencies</a>:                 在该文档中没有涵盖的专题
+<li><a accesskey="2" href="Tree-overview.html#Tree-overview">Tree overview</a>:                所有关于<code>tree</code>的
+<li><a accesskey="3" href="Types.html#Types">Types</a>:                        基本类型和聚合类型
+<li><a accesskey="4" href="Declarations.html#Declarations">Declarations</a>:                 类型声明和变量
+<li><a accesskey="5" href="Attributes.html#Attributes">Attributes</a>:                   声明和类型属性
+<li><a accesskey="6" href="Expression-trees.html#Expression-trees">Expressions</a>:             数据操作
+<li><a accesskey="7" href="Statements.html#Statements">Statements</a>:                   控制流和相关的tree。
+<li><a accesskey="8" href="Functions.html#Functions">Functions</a>:            	函数体，链接，以及其它方面
+<li><a accesskey="9" href="Language_002ddependent-trees.html#Language_002ddependent-trees">Language-dependent trees</a>:     语言前端特定的话题和tree
+<li><a href="C-and-C_002b_002b-Trees.html#C-and-C_002b_002b-Trees">C and C++ Trees</a>:      	C和C++特定的tree
+<li><a href="Java-Trees.html#Java-Trees">Java Trees</a>:  	                Java特定的tree
+</ul>
+
+<!--  -->
+<!-- Deficiencies -->
+<!--  -->
+<!-- @node Deficiencies -->
+<!-- @section Deficiencies -->
+ </body></html>
+

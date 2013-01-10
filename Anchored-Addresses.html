@@ -1,0 +1,145 @@
+<html lang="zh">
+<head>
+<title>Anchored Addresses - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Target-Macros.html#Target-Macros" title="Target Macros">
+<link rel="prev" href="Addressing-Modes.html#Addressing-Modes" title="Addressing Modes">
+<link rel="next" href="Condition-Code.html#Condition-Code" title="Condition Code">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Anchored-Addresses"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Condition-Code.html#Condition-Code">Condition Code</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Addressing-Modes.html#Addressing-Modes">Addressing Modes</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Target-Macros.html#Target-Macros">Target Macros</a>
+<hr>
+</div>
+
+<h3 class="section">17.15 锚定的地址</h3>
+
+<p><a name="index-anchored-addresses-4313"></a><a name="index-g_t_0040option_007b_002dfsection_002danchors_007d-4314"></a>
+<!-- GCC usually addresses every static object as a separate entity. -->
+<!-- For example, if we have: -->
+GCC通常将每一个静态对象作为一个单独的实体来寻址。例如，如果我们有：
+
+<pre class="smallexample">     static int a, b, c;
+     int foo (void) { return a + b + c; }
+</pre>
+ <!-- the code for @code{foo} will usually calculate three separate symbolic -->
+<!-- addresses: those of @code{a}, @code{b} and @code{c}.  On some targets, -->
+<!-- it would be better to calculate just one symbolic address and access -->
+<!-- the three variables relative to it.  The equivalent pseudocode would -->
+<!-- be something like: -->
+ <p><code>foo</code>的代码通常会计算三个独立的符号地址：<code>a</code>，<code>b</code>和<code>c</code>的。
+在一些target上，只计算一个符号地址并且通过相对地址来访问这三个变量会更好些。
+等价的伪代码可能为：
+
+<pre class="smallexample">     int foo (void)
+     {
+       register int *xr = &amp;x;
+       return xr[&amp;a - &amp;x] + xr[&amp;b - &amp;x] + xr[&amp;c - &amp;x];
+     }
+</pre>
+ <!-- (which isn't valid C).  We refer to shared addresses like @code{x} as -->
+<!-- ``section anchors''.  Their use is controlled by @option{-fsection-anchors}. -->
+ <p>（这不是有效的C）。我们称像<code>x</code>这样的共享地址为“section anchors”。
+它们的用法由<samp><span class="option">-fsection-anchors</span></samp>控制。
+
+<!-- The hooks below describe the target properties that GCC needs to know -->
+<!-- in order to make effective use of section anchors.  It won't use -->
+<!-- section anchors at all unless either @code{TARGET_MIN_ANCHOR_OFFSET} -->
+<!-- or @code{TARGET_MAX_ANCHOR_OFFSET} is set to a nonzero value. -->
+ <p>下面的钩子描述了GCC需要知道的target属性，以便有效利用section anchors。
+除非<code>TARGET_MIN_ANCHOR_OFFSET</code>或<code>TARGET_MAX_ANCHOR_OFFSET</code>
+被设为一个非0的值，否则section anchors根本不会被使用。
+
+<div class="defun">
+&mdash; Target Hook: HOST_WIDE_INT <b>TARGET_MIN_ANCHOR_OFFSET</b><var><a name="index-TARGET_005fMIN_005fANCHOR_005fOFFSET-4315"></a></var><br>
+<blockquote><!-- The minimum offset that should be applied to a section anchor. -->
+     <!-- On most targets, it should be the smallest offset that can be -->
+     <!-- applied to a base register while still giving a legitimate address -->
+     <!-- for every mode.  The default value is 0. -->
+      <p>应该应用到section anchor的最小偏移量。在大多数target上，
+其应该为可以应用到基址寄存器并且对每种机器模式都可以给出合法地址的最小偏移量。
+缺省值为0。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: HOST_WIDE_INT <b>TARGET_MAX_ANCHOR_OFFSET</b><var><a name="index-TARGET_005fMAX_005fANCHOR_005fOFFSET-4316"></a></var><br>
+<blockquote><!-- Like @code{TARGET_MIN_ANCHOR_OFFSET}, but the maximum (inclusive) -->
+     <!-- offset that should be applied to section anchors.  The default -->
+     <!-- value is 0. -->
+      <p>类似<code>TARGET_MIN_ANCHOR_OFFSET</code>，
+但是为可以应用到section anchors的最大(包括)偏移量。缺省为0。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_OUTPUT_ANCHOR</b> (<var>rtx x</var>)<var><a name="index-TARGET_005fASM_005fOUTPUT_005fANCHOR-4317"></a></var><br>
+<blockquote><!-- Write the assembly code to define section anchor @var{x}, which is a -->
+     <!-- @code{SYMBOL_REF} for which @samp{SYMBOL_REF_ANCHOR_P (@var{x})} is true. -->
+     <!-- The hook is called with the assembly output position set to the beginning -->
+     <!-- of @code{SYMBOL_REF_BLOCK (@var{x})}. -->
+      <p>写汇编代码来定义section anchor <var>x</var>，其为一个<code>SYMBOL_REF</code>，
+并且&lsquo;<samp><span class="samp">SYMBOL_REF_ANCHOR_P (</span><var>x</var><span class="samp">)</span></samp>&rsquo;为真。该钩子被调用时，
+汇编输出位置被设为<code>SYMBOL_REF_BLOCK (</code><var>x</var><code>)</code>的起始处。
+
+     <!-- If @code{ASM_OUTPUT_DEF} is available, the hook's default definition uses -->
+     <!-- it to define the symbol as @samp{. + SYMBOL_REF_BLOCK_OFFSET (@var{x})}. -->
+     <!-- If @code{ASM_OUTPUT_DEF} is not available, the hook's default definition -->
+     <!-- is @code{NULL}, which disables the use of section anchors altogether. -->
+      <p>如果<code>ASM_OUTPUT_DEF</code>可用，
+则钩子的缺省定义使用它来定义符号为&lsquo;<samp><span class="samp">. + SYMBOL_REF_BLOCK_OFFSET (</span><var>x</var><span class="samp">)</span></samp>&rsquo;。
+如果<code>ASM_OUTPUT_DEF</code>不可用，则钩子的缺省定义为<code>NULL</code>，
+其禁止了section anchors的使用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_USE_ANCHORS_FOR_SYMBOL_P</b> (<var>const_rtx x</var>)<var><a name="index-TARGET_005fUSE_005fANCHORS_005fFOR_005fSYMBOL_005fP-4318"></a></var><br>
+<blockquote><!-- Return true if GCC should attempt to use anchors to access @code{SYMBOL_REF} -->
+     <!-- @var{x}.  You can assume @samp{SYMBOL_REF_HAS_BLOCK_INFO_P (@var{x})} and -->
+     <!-- @samp{!SYMBOL_REF_ANCHOR_P (@var{x})}. -->
+      <p>返回真，如果GCC应该尝试使用anchors来访问<code>SYMBOL_REF</code> <var>x</var>。
+你可以假设&lsquo;<samp><span class="samp">SYMBOL_REF_HAS_BLOCK_INFO_P (</span><var>x</var><span class="samp">)</span></samp>&rsquo;和
+&lsquo;<samp><span class="samp">!SYMBOL_REF_ANCHOR_P (</span><var>x</var><span class="samp">)</span></samp>&rsquo;。
+
+     <!-- The default version is correct for most targets, but you might need to -->
+     <!-- intercept this hook to handle things like target-specific attributes -->
+     <!-- or target-specific sections. -->
+      <p>缺省版本对于大多数target都正确，
+但是你可能需要截取该钩子来处理target特定的属性或者target特定的section。
+</p></blockquote></div>
+
+<!-- @node Condition Code -->
+<!-- @section Condition Code Status -->
+ </body></html>
+

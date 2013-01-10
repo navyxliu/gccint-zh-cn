@@ -1,0 +1,96 @@
+<html lang="zh">
+<head>
+<title>Liveness information - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Control-Flow.html#Control-Flow" title="Control Flow">
+<link rel="prev" href="Maintaining-the-CFG.html#Maintaining-the-CFG" title="Maintaining the CFG">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Liveness-information"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Maintaining-the-CFG.html#Maintaining-the-CFG">Maintaining the CFG</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Control-Flow.html#Control-Flow">Control Flow</a>
+<hr>
+</div>
+
+<h3 class="section">15.5 活跃信息</h3>
+
+<p><a name="index-Liveness-representation-3201"></a><!-- Liveness information is useful to determine whether some register is -->
+<!-- ``live'' at given point of program, i.e.@: that it contains a value that -->
+<!-- may be used at a later point in the program.  This information is -->
+<!-- used, for instance, during register allocation, as the pseudo -->
+<!-- registers only need to be assigned to a unique hard register or to a -->
+<!-- stack slot if they are live.  The hard registers and stack slots may -->
+<!-- be freely reused for other values when a register is dead. -->
+活跃信息有助于确定某个寄存器在程序的给定点是否是“活跃”的，即其包含的值可能在之后的地方被使用。例如，这些信息会在寄存器分配中被用到，因为伪寄存器只有在活跃的时候才需要被分配给唯一的硬件寄存器或者栈槽。当寄存器是“死”的时候，硬件寄存器和栈槽则可以被自如的重用于其它值。
+
+<!-- Liveness information is available in the back end starting with -->
+<!-- @code{pass_df_initialize} and ending with @code{pass_df_finish}.  Three -->
+<!-- flavors of live analysis are available: With @code{LR}, it is possible -->
+<!-- to determine at any point @code{P} in the function if the register may be -->
+<!-- used on some path from @code{P} to the end of the function.  With -->
+<!-- @code{UR}, it is possible to determine if there is a path from the -->
+<!-- beginning of the function to @code{P} that defines the variable. -->
+<!-- @code{LIVE} is the intersection of the @code{LR} and @code{UR} and a -->
+<!-- variable is live at @code{P} if there is both an assignment that reaches -->
+<!-- it from the beginning of the function and a use that can be reached on -->
+<!-- some path from @code{P} to the end of the function. -->
+ <p>从<code>pass_df_initialize</code>起始到<code>pass_df_finish</code>结束之间，活跃信息在后端是有效的。有三种活跃分析：<code>LR</code>，能够确定在函数的任意点<code>P</code>，寄存器是否会在从<code>P</code>到函数结束之间的某处被使用。<code>UR</code>，能够确定是否从函数的起始到P之间定义了变量。<code>LIVE</code>是<code>LR</code>和<code>UR</code>的交集，变量在<code>P</code>点是活跃的，如果同时从函数的开始到现在存在一个赋值，并且从<code>P</code>到函数的结束之间存在对其的使用。
+
+<!-- In general @code{LIVE} is the most useful of the three.  The macros -->
+<!-- @code{DF_[LR,UR,LIVE]_[IN,OUT]} can be used to access this information. -->
+<!-- The macros take a basic block number and return a bitmap that is indexed -->
+<!-- by the register number.  This information is only guaranteed to be up to -->
+<!-- date after calls are made to @code{df_analyze}.  See the file -->
+<!-- @code{df-core.c} for details on using the dataflow. -->
+ <p>通常这三种信息里，<code>LIVE</code>最有帮助。宏<code>DF_[LR,UR,LIVE]_[IN,OUT]</code>可以用来访问这些信息。这些宏接受一个基本块号，并返回一个以寄存器号为索引的位图。该信息只保证截至在调用<code>df_analyze</code>之后是最新的。关于使用数据流的详细信息参见<samp><span class="file">df-core.c</span></samp>文件。
+
+ <p><a name="index-REG_005fDEAD_002c-REG_005fUNUSED-3202"></a><!-- The liveness information is stored partly in the RTL instruction stream -->
+<!-- and partly in the flow graph.  Local information is stored in the -->
+<!-- instruction stream: Each instruction may contain @code{REG_DEAD} notes -->
+<!-- representing that the value of a given register is no longer needed, or -->
+<!-- @code{REG_UNUSED} notes representing that the value computed by the -->
+<!-- instruction is never used.  The second is useful for instructions -->
+<!-- computing multiple values at once. -->
+活跃信息有一部分存储在RTL指令流里，一部分存储在流程图里。局部信息存在指令流中：每条指令可以包含<code>REG_DEAD</code>注解（note），来表示给定寄存器的值已经不再被需要了，或者<code>REG_UNUSED</code>注解，来表示由指令计算所得的值从来没有被使用。第二个可以有助于指令一次计算多值。
+
+<!-- Copyright (C) 1988, 1989, 1992, 1993, 1994, 1996, 1998, 1999, 2000, 2001, -->
+<!-- 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010 -->
+<!-- Free Software Foundation, Inc. -->
+<!-- This is part of the GCC manual. -->
+<!-- For copying conditions, see the file gcc.texi. -->
+<!-- @node Machine Desc -->
+<!-- @chapter Machine Descriptions -->
+<!-- @cindex machine descriptions -->
+ </body></html>
+

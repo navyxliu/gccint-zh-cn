@@ -1,0 +1,307 @@
+<html lang="zh">
+<head>
+<title>Data Output - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Assembler-Format.html#Assembler-Format" title="Assembler Format">
+<link rel="prev" href="File-Framework.html#File-Framework" title="File Framework">
+<link rel="next" href="Uninitialized-Data.html#Uninitialized-Data" title="Uninitialized Data">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Data-Output"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Uninitialized-Data.html#Uninitialized-Data">Uninitialized Data</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="File-Framework.html#File-Framework">File Framework</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Assembler-Format.html#Assembler-Format">Assembler Format</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.21.2 数据的输出</h4>
+
+<div class="defun">
+&mdash; Target Hook: const char * <b>TARGET_ASM_BYTE_OP</b><var><a name="index-TARGET_005fASM_005fBYTE_005fOP-4474"></a></var><br>
+&mdash; Target Hook: const char * <b>TARGET_ASM_ALIGNED_HI_OP</b><var><a name="index-TARGET_005fASM_005fALIGNED_005fHI_005fOP-4475"></a></var><br>
+&mdash; Target Hook: const char * <b>TARGET_ASM_ALIGNED_SI_OP</b><var><a name="index-TARGET_005fASM_005fALIGNED_005fSI_005fOP-4476"></a></var><br>
+&mdash; Target Hook: const char * <b>TARGET_ASM_ALIGNED_DI_OP</b><var><a name="index-TARGET_005fASM_005fALIGNED_005fDI_005fOP-4477"></a></var><br>
+&mdash; Target Hook: const char * <b>TARGET_ASM_ALIGNED_TI_OP</b><var><a name="index-TARGET_005fASM_005fALIGNED_005fTI_005fOP-4478"></a></var><br>
+&mdash; Target Hook: const char * <b>TARGET_ASM_UNALIGNED_HI_OP</b><var><a name="index-TARGET_005fASM_005fUNALIGNED_005fHI_005fOP-4479"></a></var><br>
+&mdash; Target Hook: const char * <b>TARGET_ASM_UNALIGNED_SI_OP</b><var><a name="index-TARGET_005fASM_005fUNALIGNED_005fSI_005fOP-4480"></a></var><br>
+&mdash; Target Hook: const char * <b>TARGET_ASM_UNALIGNED_DI_OP</b><var><a name="index-TARGET_005fASM_005fUNALIGNED_005fDI_005fOP-4481"></a></var><br>
+&mdash; Target Hook: const char * <b>TARGET_ASM_UNALIGNED_TI_OP</b><var><a name="index-TARGET_005fASM_005fUNALIGNED_005fTI_005fOP-4482"></a></var><br>
+<blockquote><!-- These hooks specify assembly directives for creating certain kinds -->
+     <!-- of integer object.  The @code{TARGET_ASM_BYTE_OP} directive creates a -->
+     <!-- byte-sized object, the @code{TARGET_ASM_ALIGNED_HI_OP} one creates an -->
+     <!-- aligned two-byte object, and so on.  Any of the hooks may be -->
+     <!-- @code{NULL}, indicating that no suitable directive is available. -->
+      <p>这些钩子指定了用于创建特定类型的整数对象的汇编伪指令。
+<code>TARGET_ASM_BYTE_OP</code>伪指令创建一个字节大小的对象，
+<code>TARGET_ASM_ALIGNED_HI_OP</code>创建一个两个字节对齐的对象，等等。
+这些钩子都可以为<code>NULL</code>，这表示没有合适的伪指令。
+
+     <!-- The compiler will print these strings at the start of a new line, -->
+     <!-- followed immediately by the object's initial value.  In most cases, -->
+     <!-- the string should contain a tab, a pseudo-op, and then another tab. -->
+      <p>编译器将在一个新行中的起始处打印这些字符串，随后紧跟对象的初始化值。
+大多数情况下，字符串应该包含一个tab，一个伪操作符，然后是另一个tab。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_ASM_INTEGER</b> (<var>rtx x, unsigned int size, int aligned_p</var>)<var><a name="index-TARGET_005fASM_005fINTEGER-4483"></a></var><br>
+<blockquote><!-- The @code{assemble_integer} function uses this hook to output an -->
+     <!-- integer object.  @var{x} is the object's value, @var{size} is its size -->
+     <!-- in bytes and @var{aligned_p} indicates whether it is aligned.  The -->
+     <!-- function should return @code{true} if it was able to output the -->
+     <!-- object.  If it returns false, @code{assemble_integer} will try to -->
+     <!-- split the object into smaller parts. -->
+      <p>函数<code>assemble_integer</code>使用该钩子来输出一个整数对象。<var>x</var>为对象的值，
+<var>size</var>为它的以字节为单位的大小，<var>aligned_p</var>指示其是否为对齐的。
+函数应该返回真，如果它能够输出对象。如果返回假，
+则<code>assemble_integer</code>将尝试把对象分割为更小的部分。
+
+     <!-- The default implementation of this hook will use the -->
+     <!-- @code{TARGET_ASM_BYTE_OP} family of strings, returning @code{false} -->
+     <!-- when the relevant string is @code{NULL}. -->
+      <p>该钩子的缺省实现将使用<code>TARGET_ASM_BYTE_OP</code>字符串家族，
+当相应字符串为<code>NULL</code>时返回假。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_ASM_OUTPUT_ADDR_CONST_EXTRA</b> (<var>FILE *file, rtx x</var>)<var><a name="index-TARGET_005fASM_005fOUTPUT_005fADDR_005fCONST_005fEXTRA-4484"></a></var><br>
+<blockquote><p>A target hook to recognize <var>rtx</var> patterns that <code>output_addr_const</code>
+can't deal with, and output assembly code to <var>file</var> corresponding to
+the pattern <var>x</var>.  This may be used to allow machine-dependent
+<code>UNSPEC</code>s to appear within constants.
+
+      <p>If target hook fails to recognize a pattern, it must return <code>false</code>,
+so that a standard error message is printed.  If it prints an error message
+itself, by calling, for example, <code>output_operand_lossage</code>, it may just
+return <code>true</code>. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>OUTPUT_ADDR_CONST_EXTRA</b> (<var>stream, x, fail</var>)<var><a name="index-OUTPUT_005fADDR_005fCONST_005fEXTRA-4485"></a></var><br>
+<blockquote><!-- A C statement to recognize @var{rtx} patterns that -->
+     <!-- @code{output_addr_const} can't deal with, and output assembly code to -->
+     <!-- @var{stream} corresponding to the pattern @var{x}.  This may be used to -->
+     <!-- allow machine-dependent @code{UNSPEC}s to appear within constants. -->
+      <p>一条C语句用来识别<code>output_addr_const</code>不能处理的<var>rtx</var>模式，
+并输出汇编代码到模式<var>x</var>对应的<var>stream</var>中。
+这可以用来允许在常量中出现机器相关的<code>UNSPEC</code>。
+
+     <!-- If @code{OUTPUT_ADDR_CONST_EXTRA} fails to recognize a pattern, it must -->
+     <!-- @code{goto fail}, so that a standard error message is printed.  If it -->
+     <!-- prints an error message itself, by calling, for example, -->
+     <!-- @code{output_operand_lossage}, it may just complete normally. -->
+      <p>如果<code>OUTPUT_ADDR_CONST_EXTRA</code>没有能够识别出指令模式，
+其必须<code>goto fail</code>， 这样就会打印出一个标准错误消息。
+如果其本身打印了一个错误消息，
+例如通过调用<code>output_operand_lossage</code>，其可以正常的结束。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_ASCII</b> (<var>stream, ptr, len</var>)<var><a name="index-ASM_005fOUTPUT_005fASCII-4486"></a></var><br>
+<blockquote><!-- A C statement to output to the stdio stream @var{stream} an assembler -->
+     <!-- instruction to assemble a string constant containing the @var{len} -->
+     <!-- bytes at @var{ptr}.  @var{ptr} will be a C expression of type -->
+     <!-- @code{char *} and @var{len} a C expression of type @code{int}. -->
+      <p>一条C语句，用来输出到stdio流<var>stream</var>中一条汇编指令，
+以组合一个在<var>ptr</var>处包含<var>len</var>个字节的字符串常量。
+<var>ptr</var>将为一个<code>char *</code>类型的C表达式，
+<var>len</var>为一个<code>int</code>型的C表达式。
+
+     <!-- If the assembler has a @code{.ascii} pseudo-op as found in the -->
+     <!-- Berkeley Unix assembler, do not define the macro -->
+     <!-- @code{ASM_OUTPUT_ASCII}. -->
+      <p>如果汇编器具有一个<code>.ascii</code>伪指令，正如在Berkeley Unix汇编器上的，
+则不要定义宏<code>ASM_OUTPUT_ASCII</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_FDESC</b> (<var>stream, decl, n</var>)<var><a name="index-ASM_005fOUTPUT_005fFDESC-4487"></a></var><br>
+<blockquote><!-- A C statement to output word @var{n} of a function descriptor for -->
+     <!-- @var{decl}.  This must be defined if @code{TARGET_VTABLE_USES_DESCRIPTORS} -->
+     <!-- is defined, and is otherwise unused. -->
+      <p>一条C语句，用来输出<var>decl</var>的函数描述符的字<var>n</var>。
+这必须在定义<code>TARGET_VTABLE_USES_DESCRIPTORS</code>时被定义，否则将不起作用。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>CONSTANT_POOL_BEFORE_FUNCTION</b><var><a name="index-CONSTANT_005fPOOL_005fBEFORE_005fFUNCTION-4488"></a></var><br>
+<blockquote><!-- You may define this macro as a C expression.  You should define the -->
+     <!-- expression to have a nonzero value if GCC should output the constant -->
+     <!-- pool for a function before the code for the function, or a zero value if -->
+     <!-- GCC should output the constant pool after the function.  If you do -->
+     <!-- not define this macro, the usual case, GCC will output the constant -->
+     <!-- pool before the function. -->
+      <p>你可以定义该宏为一个C表达式。你应该定义表达式具有非零值，
+如果GCC应该在输出函数的代码前，输出常量池，或者定义为0，
+如果GCC应该在函数后输出常量池。如果你不定义该宏，则通常情况下，
+GCC将在函数前输出常量池。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_POOL_PROLOGUE</b> (<var>file, funname, fundecl, size</var>)<var><a name="index-ASM_005fOUTPUT_005fPOOL_005fPROLOGUE-4489"></a></var><br>
+<blockquote><!-- A C statement to output assembler commands to define the start of the -->
+     <!-- constant pool for a function.  @var{funname} is a string giving -->
+     <!-- the name of the function.  Should the return type of the function -->
+     <!-- be required, it can be obtained via @var{fundecl}.  @var{size} -->
+     <!-- is the size, in bytes, of the constant pool that will be written -->
+     <!-- immediately after this call. -->
+      <p>一条C语句，用来输出汇编命令，以定义函数的常量池的起始。
+<var>funname</var>为一个字符串，给定了函数的名字。如果需要函数的返回类型，
+则可以通过<var>fundecl</var>来获得。
+<var>size</var>为在该调用之后要立即写入的常量池的大小，以字节为单位。
+
+     <!-- If no constant-pool prefix is required, the usual case, this macro need -->
+     <!-- not be defined. -->
+      <p>通常情况下，如果不需要常量池前缀，该宏不需要被定义。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_SPECIAL_POOL_ENTRY</b> (<var>file, x, mode, align, labelno, jumpto</var>)<var><a name="index-ASM_005fOUTPUT_005fSPECIAL_005fPOOL_005fENTRY-4490"></a></var><br>
+<blockquote><!-- A C statement (with or without semicolon) to output a constant in the -->
+     <!-- constant pool, if it needs special treatment.  (This macro need not do -->
+     <!-- anything for RTL expressions that can be output normally.) -->
+      <p>一条C语句（带有或者不带有分号），用来输出一个常量在常量池中，
+如果其需要特殊的处理。（该宏对于可以正常输出的RTL表达式不需要做任何事情。）
+
+     <!-- The argument @var{file} is the standard I/O stream to output the -->
+     <!-- assembler code on.  @var{x} is the RTL expression for the constant to -->
+     <!-- output, and @var{mode} is the machine mode (in case @var{x} is a -->
+     <!-- @samp{const_int}).  @var{align} is the required alignment for the value -->
+     <!-- @var{x}; you should output an assembler directive to force this much -->
+     <!-- alignment. -->
+      <p>参数<var>file</var>为将汇编代码输出到的标准I/O流。<var>x</var>为要输出的常量的RTL表达式，
+<var>mode</var>为机器模式（用于<var>x</var>为&lsquo;<samp><span class="samp">const_int</span></samp>&rsquo;时）。
+<var>align</var>为值<var>x</var>所需要的对齐；你应该输出一个汇编伪指令来执行该对齐。
+
+     <!-- The argument @var{labelno} is a number to use in an internal label for -->
+     <!-- the address of this pool entry.  The definition of this macro is -->
+     <!-- responsible for outputting the label definition at the proper place. -->
+     <!-- Here is how to do this: -->
+      <p>参数<var>labelno</var>为该池中实体的地址的内部标号的编号。
+该宏的定义负责在合适的地方输出标号的定义。这里有一个实现的例子：
+
+     <pre class="smallexample">          <code>(*targetm.asm_out.internal_label)</code> (<var>file</var>, "LC", <var>labelno</var>);
+</pre>
+      <!-- When you output a pool entry specially, you should end with a -->
+     <!-- @code{goto} to the label @var{jumpto}.  This will prevent the same pool -->
+     <!-- entry from being output a second time in the usual manner. -->
+      <p>当你专门输出一个池中实体时，你应该结束于一个<code>goto</code>，
+以跳转到标号<var>jumpto</var>。这将阻止相同的池中实体通过通常的方式被再一次输出。
+
+     <!-- You need not define this macro if it would do nothing. -->
+      <p>如果不做任何事情，则不要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_POOL_EPILOGUE</b> (<var>file funname fundecl size</var>)<var><a name="index-ASM_005fOUTPUT_005fPOOL_005fEPILOGUE-4491"></a></var><br>
+<blockquote><!-- A C statement to output assembler commands to at the end of the constant -->
+     <!-- pool for a function.  @var{funname} is a string giving the name of the -->
+     <!-- function.  Should the return type of the function be required, you can -->
+     <!-- obtain it via @var{fundecl}.  @var{size} is the size, in bytes, of the -->
+     <!-- constant pool that GCC wrote immediately before this call. -->
+      <p>一条C语句，用来输出汇编命令到函数常量池的结尾。<var>funname</var>为一个字符串，
+给出了函数的名字。如果需要函数的返回类型，可以通过<var>fundecl</var>来获得。
+<var>size</var>为GCC在该调用之前立即写入的常量池的大小，以字节为单位。
+
+     <!-- If no constant-pool epilogue is required, the usual case, you need not -->
+     <!-- define this macro. -->
+      <p>通常情况下，如果不需要常量池结束语，则不需要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>IS_ASM_LOGICAL_LINE_SEPARATOR</b> (<var>C, STR</var>)<var><a name="index-IS_005fASM_005fLOGICAL_005fLINE_005fSEPARATOR-4492"></a></var><br>
+<blockquote><!-- Define this macro as a C expression which is nonzero if @var{C} is -->
+     <!-- used as a logical line separator by the assembler.  @var{STR} points -->
+     <!-- to the position in the string where @var{C} was found; this can be used if -->
+     <!-- a line separator uses multiple characters. -->
+      <p>定义该宏为一个C表达式，其为非零，如果<var>C</var>被汇编器用作逻辑行分隔符。
+<var>STR</var>指向在字符串中<var>C</var>被发现的位置；
+这可以用于行分隔符使用多个字符的时候。
+
+     <!-- If you do not define this macro, the default is that only -->
+     <!-- the character @samp{;} is treated as a logical line separator. -->
+      <p>如果你不定义该宏，则缺省的为只将字符&lsquo;<samp><span class="samp">;</span></samp>&rsquo;作为逻辑行的分隔符。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: const char * <b>TARGET_ASM_OPEN_PAREN</b><var><a name="index-TARGET_005fASM_005fOPEN_005fPAREN-4493"></a></var><br>
+&mdash; Target Hook: const char * <b>TARGET_ASM_CLOSE_PAREN</b><var><a name="index-TARGET_005fASM_005fCLOSE_005fPAREN-4494"></a></var><br>
+<blockquote><!-- These target hooks are C string constants, describing the syntax in the -->
+     <!-- assembler for grouping arithmetic expressions.  If not overridden, they -->
+     <!-- default to normal parentheses, which is correct for most assemblers. -->
+      <p>这些target钩子为C字符串常量，描述了算术表达式组合的汇编语法。
+如果没有被覆盖，它们缺省为通常的括号，这对大多数汇编器都是正确的。
+</p></blockquote></div>
+
+<!-- These macros are provided by @file{real.h} for writing the definitions -->
+<!-- of @code{ASM_OUTPUT_DOUBLE} and the like: -->
+ <p>这些宏由<samp><span class="file">real.h</span></samp>提供，用于写<code>ASM_OUTPUT_DOUBLE</code>等的定义：
+
+<div class="defun">
+&mdash; Macro: <b>REAL_VALUE_TO_TARGET_SINGLE</b> (<var>x, l</var>)<var><a name="index-REAL_005fVALUE_005fTO_005fTARGET_005fSINGLE-4495"></a></var><br>
+&mdash; Macro: <b>REAL_VALUE_TO_TARGET_DOUBLE</b> (<var>x, l</var>)<var><a name="index-REAL_005fVALUE_005fTO_005fTARGET_005fDOUBLE-4496"></a></var><br>
+&mdash; Macro: <b>REAL_VALUE_TO_TARGET_LONG_DOUBLE</b> (<var>x, l</var>)<var><a name="index-REAL_005fVALUE_005fTO_005fTARGET_005fLONG_005fDOUBLE-4497"></a></var><br>
+&mdash; Macro: <b>REAL_VALUE_TO_TARGET_DECIMAL32</b> (<var>x, l</var>)<var><a name="index-REAL_005fVALUE_005fTO_005fTARGET_005fDECIMAL32-4498"></a></var><br>
+&mdash; Macro: <b>REAL_VALUE_TO_TARGET_DECIMAL64</b> (<var>x, l</var>)<var><a name="index-REAL_005fVALUE_005fTO_005fTARGET_005fDECIMAL64-4499"></a></var><br>
+&mdash; Macro: <b>REAL_VALUE_TO_TARGET_DECIMAL128</b> (<var>x, l</var>)<var><a name="index-REAL_005fVALUE_005fTO_005fTARGET_005fDECIMAL128-4500"></a></var><br>
+<blockquote><!-- These translate @var{x}, of type @code{REAL_VALUE_TYPE}, to the -->
+     <!-- target's floating point representation, and store its bit pattern in -->
+     <!-- the variable @var{l}.  For @code{REAL_VALUE_TO_TARGET_SINGLE} and -->
+     <!-- @code{REAL_VALUE_TO_TARGET_DECIMAL32}, this variable should be a -->
+     <!-- simple @code{long int}.  For the others, it should be an array of -->
+     <!-- @code{long int}.  The number of elements in this array is determined -->
+     <!-- by the size of the desired target floating point data type: 32 bits of -->
+     <!-- it go in each @code{long int} array element.  Each array element holds -->
+     <!-- 32 bits of the result, even if @code{long int} is wider than 32 bits -->
+     <!-- on the host machine. -->
+      <p>这些将类型为<code>REAL_VALUE_TYPE</code>的<var>x</var>，转换为target的浮点表示，
+并将其存储在变量<var>l</var>中。
+对于<code>REAL_VALUE_TO_TARGET_SINGLE</code>和<code>REAL_VALUE_TO_TARGET_DECIMAL32</code>，
+该变量应该为一个简单的<code>long int</code>。对于其它的，
+其应该为一个<code>long int</code>的数组。
+该数组的元素个数由所需要的target浮点数据类型的大小决定：
+每个<code>long int</code>数组元素有32位。每个数组元素存放32位的结果，
+即使<code>long int</code>在host机器上比32位宽。
+
+     <!-- The array element values are designed so that you can print them out -->
+     <!-- using @code{fprintf} in the order they should appear in the target -->
+     <!-- machine's memory. -->
+      <p>数组元素值被设计成，
+可以使用<code>fprintf</code>按照在target机器内存中的顺序来打印它们。
+</p></blockquote></div>
+
+<!-- @node Uninitialized Data -->
+<!-- @subsection Output of Uninitialized Variables -->
+ </body></html>
+

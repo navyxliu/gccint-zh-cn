@@ -1,0 +1,206 @@
+<html lang="zh">
+<head>
+<title>Classes - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="C-and-C_002b_002b-Trees.html#C-and-C_002b_002b-Trees" title="C and C++ Trees">
+<link rel="prev" href="Namespaces.html#Namespaces" title="Namespaces">
+<link rel="next" href="Functions-for-C_002b_002b.html#Functions-for-C_002b_002b" title="Functions for C++">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Classes"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Functions-for-C_002b_002b.html#Functions-for-C_002b_002b">Functions for C++</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Namespaces.html#Namespaces">Namespaces</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="C-and-C_002b_002b-Trees.html#C-and-C_002b_002b-Trees">C and C++ Trees</a>
+<hr>
+</div>
+
+<h4 class="subsection">11.10.3 类</h4>
+
+<p><a name="index-class_002c-scope-2620"></a><a name="index-RECORD_005fTYPE-2621"></a><a name="index-UNION_005fTYPE-2622"></a><a name="index-CLASSTYPE_005fDECLARED_005fCLASS-2623"></a><a name="index-TYPE_005fBINFO-2624"></a><a name="index-BINFO_005fTYPE-2625"></a><a name="index-TYPE_005fFIELDS-2626"></a><a name="index-TYPE_005fVFIELD-2627"></a><a name="index-TYPE_005fMETHODS-2628"></a>
+<!-- Besides namespaces, the other high-level scoping construct in C++ is the -->
+<!-- class.  (Throughout this manual the term @dfn{class} is used to mean the -->
+<!-- types referred to in the ANSI/ISO C++ Standard as classes; these include -->
+<!-- types defined with the @code{class}, @code{struct}, and @code{union} -->
+<!-- keywords.) -->
+除了命名空间以外，C++中另一个高层次的作用域结构是类。
+（在该手册中，术语<dfn>class</dfn>用来表示ANSI/ISO C++标准中的<code>class</code>类型；
+这包括用<code>class</code>, <code>struct</code>和<code>union</code>关键字定义的类型。）
+
+<!-- A class type is represented by either a @code{RECORD_TYPE} or a -->
+<!-- @code{UNION_TYPE}.  A class declared with the @code{union} tag is -->
+<!-- represented by a @code{UNION_TYPE}, while classes declared with either -->
+<!-- the @code{struct} or the @code{class} tag are represented by -->
+<!-- @code{RECORD_TYPE}s.  You can use the @code{CLASSTYPE_DECLARED_CLASS} -->
+<!-- macro to discern whether or not a particular type is a @code{class} as -->
+<!-- opposed to a @code{struct}.  This macro will be true only for classes -->
+<!-- declared with the @code{class} tag. -->
+ <p>类的类型被表示为<code>RECORD_TYPE</code>或者<code>UNION_TYPE</code>。
+使用<code>union</code>标签声明的类由<code>UNION_TYPE</code>来表示，
+而使用<code>struct</code>或者<code>class</code>标签声明的类由<code>RECORD_TYPE</code>来表示。
+可以使用<code>CLASSTYPE_DECLARED_CLASS</code>宏来判定一个特定类型是
+<code>class</code>的还是<code>struct</code>的。
+该宏只在类使用<code>class</code>标签声明时才为真。
+
+<!-- Almost all non-function members are available on the @code{TYPE_FIELDS} -->
+<!-- list.  Given one member, the next can be found by following the -->
+<!-- @code{TREE_CHAIN}.  You should not depend in any way on the order in -->
+<!-- which fields appear on this list.  All nodes on this list will be -->
+<!-- @samp{DECL} nodes.  A @code{FIELD_DECL} is used to represent a non-static -->
+<!-- data member, a @code{VAR_DECL} is used to represent a static data -->
+<!-- member, and a @code{TYPE_DECL} is used to represent a type.  Note that -->
+<!-- the @code{CONST_DECL} for an enumeration constant will appear on this -->
+<!-- list, if the enumeration type was declared in the class.  (Of course, -->
+<!-- the @code{TYPE_DECL} for the enumeration type will appear here as well.) -->
+<!-- There are no entries for base classes on this list.  In particular, -->
+<!-- there is no @code{FIELD_DECL} for the ``base-class portion'' of an -->
+<!-- object. -->
+ <p>几乎所有非函数的成员都在<code>TYPE_FIELDS</code>列表中。
+给出一个成员，可以通过<code>TREE_CHAIN</code>来找到下一个。
+不要依赖于在该链表中出现的域的顺序。链表中的所有节点将为&lsquo;<samp><span class="samp">DECL</span></samp>&rsquo;节点。
+<code>FIELD_DECL</code>用于表示非静态数据成员，<code>VAR_DECL</code>用于表示静态数据成员，
+而<code>TYPE_DECL</code>用于表示类型。注意如果在类中声明了枚举类型，
+则用于枚举常量的<code>CONST_DECL</code>将会出现在该链表中。
+（当然，枚举类型的<code>TYPE_DECL</code>也会出现。）链表中没有基类的实体。
+特别是，对于一个对象的基类部分“base-class portion”，没有<code>FIELD_DECL</code>。
+
+<!-- The @code{TYPE_VFIELD} is a compiler-generated field used to point to -->
+<!-- virtual function tables.  It may or may not appear on the -->
+<!-- @code{TYPE_FIELDS} list.  However, back ends should handle the -->
+<!-- @code{TYPE_VFIELD} just like all the entries on the @code{TYPE_FIELDS} -->
+<!-- list. -->
+ <p><code>TYPE_VFIELD</code>是编译器生成的域用于指向虚函数表。
+它有可能会出现在<code>TYPE_FIELDS</code>链表中。
+然而，后端应该处理<code>TYPE_VFIELD</code>，
+就像<code>TYPE_FIELDS</code>链表中所有其它实体一样。
+
+<!-- The function members are available on the @code{TYPE_METHODS} list. -->
+<!-- Again, subsequent members are found by following the @code{TREE_CHAIN} -->
+<!-- field.  If a function is overloaded, each of the overloaded functions -->
+<!-- appears; no @code{OVERLOAD} nodes appear on the @code{TYPE_METHODS} -->
+<!-- list.  Implicitly declared functions (including default constructors, -->
+<!-- copy constructors, assignment operators, and destructors) will appear on -->
+<!-- this list as well. -->
+ <p>函数成员在<code>TYPE_METHODS</code>链表中。
+同样，后续成员可以通过<code>TREE_CHAIN</code>域来找到。
+如果函数是重载的，每个重载函数都会出现；
+<code>OVERLOAD</code>节点不会出现在<code>TYPE_METHODS</code>链表上。
+隐式声明的函数（包括缺省构造函数，复制构造函数，赋值操作和析构函数）
+也会出现在该链表中。
+
+<!-- Every class has an associated @dfn{binfo}, which can be obtained with -->
+<!-- @code{TYPE_BINFO}.  Binfos are used to represent base-classes.  The -->
+<!-- binfo given by @code{TYPE_BINFO} is the degenerate case, whereby every -->
+<!-- class is considered to be its own base-class.  The base binfos for a -->
+<!-- particular binfo are held in a vector, whose length is obtained with -->
+<!-- @code{BINFO_N_BASE_BINFOS}.  The base binfos themselves are obtained -->
+<!-- with @code{BINFO_BASE_BINFO} and @code{BINFO_BASE_ITERATE}.  To add a -->
+<!-- new binfo, use @code{BINFO_BASE_APPEND}.  The vector of base binfos can -->
+<!-- be obtained with @code{BINFO_BASE_BINFOS}, but normally you do not need -->
+<!-- to use that.  The class type associated with a binfo is given by -->
+<!-- @code{BINFO_TYPE}.  It is not always the case that @code{BINFO_TYPE -->
+<!-- (TYPE_BINFO (x))}, because of typedefs and qualified types.  Neither is -->
+<!-- it the case that @code{TYPE_BINFO (BINFO_TYPE (y))} is the same binfo as -->
+<!-- @code{y}.  The reason is that if @code{y} is a binfo representing a -->
+<!-- base-class @code{B} of a derived class @code{D}, then @code{BINFO_TYPE -->
+<!-- (y)} will be @code{B}, and @code{TYPE_BINFO (BINFO_TYPE (y))} will be -->
+<!-- @code{B} as its own base-class, rather than as a base-class of @code{D}. -->
+ <p>每个类都具有一个相关的<dfn>binfo</dfn>，其能够通过<code>TYPE_BINFO</code>获得。
+Binfos用于表示基类。由<code>TYPE_BINFO</code>给出的binfo是退化情况，
+让每个类被考虑为它自己的基类。
+
+<!-- The access to a base type can be found with @code{BINFO_BASE_ACCESS}. -->
+<!-- This will produce @code{access_public_node}, @code{access_private_node} -->
+<!-- or @code{access_protected_node}.  If bases are always public, -->
+<!-- @code{BINFO_BASE_ACCESSES} may be @code{NULL}. -->
+ <p>对基类型的访问可以通过<code>BINFO_BASE_ACCESS</code>。
+这将产生<code>access_public_node</code>, <code>access_private_node</code>或
+<code>access_protected_node</code>。
+如果基类总是public的，<code>BINFO_BASE_ACCESSES</code>可以为<code>NULL</code>。
+
+<!-- @code{BINFO_VIRTUAL_P} is used to specify whether the binfo is inherited -->
+<!-- virtually or not.  The other flags, @code{BINFO_MARKED_P} and -->
+<!-- @code{BINFO_FLAG_1} to @code{BINFO_FLAG_6} can be used for language -->
+<!-- specific use. -->
+ <p><code>BINFO_VIRTUAL_P</code>用于指定binfo是否为虚继承。
+其它标识，<code>BINFO_MARKED_P</code>和
+<code>BINFO_FLAG_1</code>到<code>BINFO_FLAG_6</code>可以用于语言特定用途。
+
+<!-- The following macros can be used on a tree node representing a class-type. -->
+ <p>下列宏可以用在表示class类型的树节点上。
+
+     <dl>
+<dt><code>LOCAL_CLASS_P</code><a name="index-LOCAL_005fCLASS_005fP-2629"></a><dd><!-- This predicate holds if the class is local class @emph{i.e.}@: declared -->
+<!-- inside a function body. -->
+该断言当是局部类时有效，即在函数体内声明的类。
+
+     <br><dt><code>TYPE_POLYMORPHIC_P</code><a name="index-TYPE_005fPOLYMORPHIC_005fP-2630"></a><dd><!-- This predicate holds if the class has at least one virtual function -->
+<!-- (declared or inherited). -->
+该断言当类至少具有一个虚函数（声明的或者继承的）时有效。
+
+     <br><dt><code>TYPE_HAS_DEFAULT_CONSTRUCTOR</code><a name="index-TYPE_005fHAS_005fDEFAULT_005fCONSTRUCTOR-2631"></a><dd><!-- This predicate holds whenever its argument represents a class-type with -->
+<!-- default constructor. -->
+该断言当参数表示具有缺省构造函数的class类型时有效。
+
+     <br><dt><code>CLASSTYPE_HAS_MUTABLE</code><a name="index-CLASSTYPE_005fHAS_005fMUTABLE-2632"></a><dt><code>TYPE_HAS_MUTABLE_P</code><a name="index-TYPE_005fHAS_005fMUTABLE_005fP-2633"></a><dd><!-- These predicates hold for a class-type having a mutable data member. -->
+这些断言表示了一个class-type具有mutable数据成员。
+
+     <br><dt><code>CLASSTYPE_NON_POD_P</code><a name="index-CLASSTYPE_005fNON_005fPOD_005fP-2634"></a><dd><!-- This predicate holds only for class-types that are not PODs. -->
+该断言表示了不是POD的class-types。
+
+     <br><dt><code>TYPE_HAS_NEW_OPERATOR</code><a name="index-TYPE_005fHAS_005fNEW_005fOPERATOR-2635"></a><dd><!-- This predicate holds for a class-type that defines -->
+<!-- @code{operator new}. -->
+该断言表示一个class-type定义了<code>operator new</code>。
+
+     <br><dt><code>TYPE_HAS_ARRAY_NEW_OPERATOR</code><a name="index-TYPE_005fHAS_005fARRAY_005fNEW_005fOPERATOR-2636"></a><dd><!-- This predicate holds for a class-type for which -->
+<!-- @code{operator new[]} is defined. -->
+该断言表示一个class-type定义了<code>operator new[]</code>。
+
+     <br><dt><code>TYPE_OVERLOADS_CALL_EXPR</code><a name="index-TYPE_005fOVERLOADS_005fCALL_005fEXPR-2637"></a><dd><!-- This predicate holds for class-type for which the function call -->
+<!-- @code{operator()} is overloaded. -->
+该断言表示class-type重载了函数调用<code>operator()</code>。
+
+     <br><dt><code>TYPE_OVERLOADS_ARRAY_REF</code><a name="index-TYPE_005fOVERLOADS_005fARRAY_005fREF-2638"></a><dd><!-- This predicate holds for a class-type that overloads -->
+<!-- @code{operator[]} -->
+该断言表示class-type重载了<code>operator[]</code>。
+
+     <br><dt><code>TYPE_OVERLOADS_ARROW</code><a name="index-TYPE_005fOVERLOADS_005fARROW-2639"></a><dd><!-- This predicate holds for a class-type for which @code{operator->} is -->
+<!-- overloaded. -->
+该断言表示class-type重载了<code>operator-&gt;</code>。
+
+ </dl>
+
+<!-- @node Functions for C++ -->
+<!-- @subsection Functions for C++ -->
+ </body></html>
+

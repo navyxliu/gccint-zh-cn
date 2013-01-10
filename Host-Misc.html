@@ -1,0 +1,112 @@
+<html lang="zh">
+<head>
+<title>Host Misc - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Host-Config.html#Host-Config" title="Host Config">
+<link rel="prev" href="Filesystem.html#Filesystem" title="Filesystem">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Host-Misc"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Filesystem.html#Filesystem">Filesystem</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Host-Config.html#Host-Config">Host Config</a>
+<hr>
+</div>
+
+<h3 class="section">18.3 关于主机的其它杂项</h3>
+
+<p><a name="index-configuration-file-4914"></a><a name="index-g_t_0040file_007bxm_002d_0040var_007bmachine_007d_002eh_007d-4915"></a>
+     <dl>
+<dt><code>FATAL_EXIT_CODE</code><a name="index-FATAL_005fEXIT_005fCODE-4916"></a><dd><!-- A C expression for the status code to be returned when the compiler -->
+<!-- exits after serious errors.  The default is the system-provided macro -->
+<!-- @samp{EXIT_FAILURE}, or @samp{1} if the system doesn't define that -->
+<!-- macro.  Define this macro only if these defaults are incorrect. -->
+一个C表达式，作为当编译器发生严重错误退出时，所返回的状态码。缺省值为系统提供的宏&lsquo;<samp><span class="samp">EXIT_FAILURE</span></samp>&rsquo;，或者如果系统没有定义此宏时为&lsquo;<samp><span class="samp">1</span></samp>&rsquo;。只在这些缺省值不正确的时候，才定义该宏。
+
+     <br><dt><code>SUCCESS_EXIT_CODE</code><a name="index-SUCCESS_005fEXIT_005fCODE-4917"></a><dd><!-- A C expression for the status code to be returned when the compiler -->
+<!-- exits without serious errors.  (Warnings are not serious errors.)  The -->
+<!-- default is the system-provided macro @samp{EXIT_SUCCESS}, or @samp{0} if -->
+<!-- the system doesn't define that macro.  Define this macro only if these -->
+<!-- defaults are incorrect. -->
+一个C表达式，作为当编译器没有发生严重错误而退出时，所返回的状态码。（警告不属于严重错误。）缺省值为系统提供的宏&lsquo;<samp><span class="samp">EXIT_SUCCESS</span></samp>&rsquo;，或者如果系统没有定义此宏时为&lsquo;<samp><span class="samp">0</span></samp>&rsquo;。只在这些缺省值不正确的时候，才定义该宏。
+
+     <br><dt><code>USE_C_ALLOCA</code><a name="index-USE_005fC_005fALLOCA-4918"></a><dd><!-- Define this macro if GCC should use the C implementation of @code{alloca} -->
+<!-- provided by @file{libiberty.a}.  This only affects how some parts of the -->
+<!-- compiler itself allocate memory.  It does not change code generation. -->
+定义该宏，如果GCC应该使用<samp><span class="file">libiberty.a</span></samp>提供的C实现的<code>alloca</code>。这只影响编译器本身的一些部分的内存分配。并不改变代码生成。
+
+     <!-- When GCC is built with a compiler other than itself, the C @code{alloca} -->
+     <!-- is always used.  This is because most other implementations have serious -->
+     <!-- bugs.  You should define this macro only on a system where no -->
+     <!-- stack-based @code{alloca} can possibly work.  For instance, if a system -->
+     <!-- has a small limit on the size of the stack, GCC's builtin @code{alloca} -->
+     <!-- will not work reliably. -->
+     <p>当GCC通过其它编译器而不是它本身来构建时，C <code>alloca</code>总是被使用。这是因为大多其它实现都具有严重的bug。应该只在基于栈的<code>alloca</code>可能无法工作的系统上定义该宏。例如，如果系统在栈的大小上有一个小额限制，则GCC内建的<code>alloca</code>将无法可靠的工作。
+
+     <br><dt><code>COLLECT2_HOST_INITIALIZATION</code><a name="index-COLLECT2_005fHOST_005fINITIALIZATION-4919"></a><dd><!-- If defined, a C statement (sans semicolon) that performs host-dependent -->
+<!-- initialization when @code{collect2} is being initialized. -->
+如果定义，则为一个C语句（没有分号），当<code>collect2</code>被初始化时，执行主机相关的初始化。
+
+     <br><dt><code>GCC_DRIVER_HOST_INITIALIZATION</code><a name="index-GCC_005fDRIVER_005fHOST_005fINITIALIZATION-4920"></a><dd><!-- If defined, a C statement (sans semicolon) that performs host-dependent -->
+<!-- initialization when a compilation driver is being initialized. -->
+如果定义，则为一个C语句（没有分号），当编译驱动器被初始化时，执行主机相关的初始化。
+
+     <br><dt><code>HOST_LONG_LONG_FORMAT</code><a name="index-HOST_005fLONG_005fLONG_005fFORMAT-4921"></a><dd><!-- If defined, the string used to indicate an argument of type @code{long -->
+<!-- long} to functions like @code{printf}.  The default value is -->
+<!-- @code{"ll"}. -->
+如果定义，则为一个字符串，用于表示像<code>printf</code>这样的函数的<code>long long</code>类型参数。缺省值为<code>"ll"</code>。
+
+     <br><dt><code>HOST_LONG_FORMAT</code><a name="index-HOST_005fLONG_005fFORMAT-4922"></a><dd><!-- If defined, the string used to indicate an argument of type @code{long} -->
+<!-- to functions like @code{printf}.  The default value is @code{"l"}. -->
+如果定义，则为一个字符串，用于表示像<code>printf</code>这样的函数的<code>long</code>类型参数。缺省值为<code>"l"</code>。
+
+     <br><dt><code>HOST_PTR_PRINTF</code><a name="index-HOST_005fPTR_005fPRINTF-4923"></a><dd><!-- If defined, the string used to indicate an argument of type @code{void *} -->
+<!-- to functions like @code{printf}.  The default value is @code{"%p"}. -->
+如果定义，则为一个字符串，用于表示像<code>printf</code>这样的函数的<code>void *</code>类型参数。缺省值为<code>"%p"</code>。
+
+ </dl>
+
+<!-- In addition, if @command{configure} generates an incorrect definition of -->
+<!-- any of the macros in @file{auto-host.h}, you can override that -->
+<!-- definition in a host configuration header.  If you need to do this, -->
+<!-- first see if it is possible to fix @command{configure}. -->
+ <p>另外，如果<samp><span class="command">configure</span></samp>在<samp><span class="file">auto-host.h</span></samp>中生成了任何不正确的宏定义，你可以在一个主机配置头文件中覆盖那个定义。如果你需要这么做，请首先看看是否可以去修补<samp><span class="command">configure</span></samp>。
+
+<!-- Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, -->
+<!-- 1999, 2000, 2001, 2003, 2004, 2005, 2008 Free Software Foundation, Inc. -->
+<!-- This is part of the GCC manual. -->
+<!-- For copying conditions, see the file gcc.texi. -->
+<!-- @node Fragments -->
+<!-- @chapter Makefile Fragments -->
+ </body></html>
+

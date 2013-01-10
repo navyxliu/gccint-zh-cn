@@ -1,0 +1,91 @@
+<html lang="zh">
+<head>
+<title>Temporaries - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="GIMPLE.html#GIMPLE" title="GIMPLE">
+<link rel="prev" href="GIMPLE-Exception-Handling.html#GIMPLE-Exception-Handling" title="GIMPLE Exception Handling">
+<link rel="next" href="Operands.html#Operands" title="Operands">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Temporaries"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Operands.html#Operands">Operands</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="GIMPLE-Exception-Handling.html#GIMPLE-Exception-Handling">GIMPLE Exception Handling</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="GIMPLE.html#GIMPLE">GIMPLE</a>
+<hr>
+</div>
+
+<h3 class="section">12.4 Temporaries</h3>
+
+<p><a name="index-Temporaries-2719"></a>
+<!-- When gimplification encounters a subexpression that is too -->
+<!-- complex, it creates a new temporary variable to hold the value of -->
+<!-- the subexpression, and adds a new statement to initialize it -->
+<!-- before the current statement. These special temporaries are known -->
+<!-- as @samp{expression temporaries}, and are allocated using -->
+<!-- @code{get_formal_tmp_var}.  The compiler tries to always evaluate -->
+<!-- identical expressions into the same temporary, to simplify -->
+<!-- elimination of redundant calculations. -->
+当gimplification遇到一个过于复杂的子表达式的时候，会创建一个新的临时变量来存放子表达式的值，并且在当前语句之前，增加一条新的语句对其初始化。这些特殊的临时对象被称作&lsquo;<samp><span class="samp">expression temporaries</span></samp>&rsquo;，并使用<code>get_formal_tmp_var</code>来分配。编译器总是尝试将相等的表达式放到同一个临时对象中，来简化冗余计算消除。
+
+<!-- We can only use expression temporaries when we know that it will -->
+<!-- not be reevaluated before its value is used, and that it will not -->
+<!-- be otherwise modified@footnote{These restrictions are derived -->
+<!-- from those in Morgan 4.8.}. Other temporaries can be allocated -->
+<!-- using @code{get_initialized_tmp_var} or @code{create_tmp_var}. -->
+ <p>只有当我们知道在使用表达式临时对象的值之前，其不会被重新求值的时候，才可以使用，否则其将不能被修改<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a>。其它临时对象可以使用<code>get_initialized_tmp_var</code>或<code>create_tmp_var</code>来分配。
+
+<!-- Currently, an expression like @code{a = b + 5} is not reduced any -->
+<!-- further.  We tried converting it to something like -->
+ <p>目前，像<code>a = b + 5</code>这样的表达式没有被进一步简化。我们曾经尝试将其转换成型如
+
+<pre class="smallexample">     T1 = b + 5;
+     a = T1;
+</pre>
+ <!-- but this bloated the representation for minimal benefit.  However, a -->
+<!-- variable which must live in memory cannot appear in an expression; its -->
+<!-- value is explicitly loaded into a temporary first.  Similarly, storing -->
+<!-- the value of an expression to a memory variable goes through a -->
+<!-- temporary. -->
+ <p>的样子。但这会使表示变得膨胀，而无法获益。然而，必须在内存中的变量不能出现在表达式中；其值先被显式的加载到一个临时对象中。类似的，将表达式的值存放到内存变量中，也要通过一个临时对象。
+
+<!-- @node Operands -->
+<!-- @section Operands -->
+ <div class="footnote">
+<hr>
+<h4>Footnotes</h4><p class="footnote"><small>[<a name="fn-1" href="#fnd-1">1</a>]</small> 这些限制源自Morgan 4.8.</p>
+
+ <hr></div>
+
+ </body></html>
+

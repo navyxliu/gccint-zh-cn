@@ -1,0 +1,432 @@
+<html lang="zh">
+<head>
+<title>Simple Constraints - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Constraints.html#Constraints" title="Constraints">
+<link rel="next" href="Multi_002dAlternative.html#Multi_002dAlternative" title="Multi-Alternative">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Simple-Constraints"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Multi_002dAlternative.html#Multi_002dAlternative">Multi-Alternative</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Constraints.html#Constraints">Constraints</a>
+<hr>
+</div>
+
+<h4 class="subsection">16.8.1 简单约束</h4>
+
+<p><a name="index-g_t_00e7_00ae_0080_00e5_008d_0095_00e7_00ba_00a6_00e6_009d_009f-3268"></a>
+<!-- The simplest kind of constraint is a string full of letters, each of -->
+<!-- which describes one kind of operand that is permitted.  Here are -->
+<!-- the letters that are allowed: -->
+最简单的约束种类是一个由字母组成的字符串， 每个字母描述一种所允许的操作数。这里是所允许的字母：
+
+<!-- @table @asis -->
+<!-- @item whitespace -->
+<!-- Whitespace characters are ignored and can be inserted at any position -->
+<!-- except the first.  This enables each alternative for different operands to -->
+<!-- be visually aligned in the machine description even if they have different -->
+<!-- number of constraints and modifiers. -->
+     <dl>
+<dt>whitespace<dd>空格字符将被忽略，并且可以插到除了起始处的任何地方。这使得机器描述中， 不同操作数的每个可选项可以被可视化的对齐，即使它们具有不同数目的约束和修饰符。
+
+     <!-- @cindex @samp{m} in constraint -->
+     <!-- @cindex memory references in constraints -->
+     <!-- @item @samp{m} -->
+     <!-- A memory operand is allowed, with any kind of address that the machine -->
+     <!-- supports in general. -->
+     <!-- Note that the letter used for the general memory constraint can be -->
+     <!-- re-defined by a back end using the @code{TARGET_MEM_CONSTRAINT} macro. -->
+     <p><a name="index-g_t_0040samp_007bm_007d-in-constraint-3269"></a><a name="index-memory-references-in-constraints-3270"></a><br><dt>&lsquo;<samp><span class="samp">m</span></samp>&rsquo;<dd>内存操作数将被允许，包括机器支持的任何寻址方式。
+
+     <!-- @cindex offsettable address -->
+     <!-- @cindex @samp{o} in constraint -->
+     <!-- @item @samp{o} -->
+     <!-- A memory operand is allowed, but only if the address is -->
+     <!-- @dfn{offsettable}.  This means that adding a small integer (actually, -->
+     <!-- the width in bytes of the operand, as determined by its machine mode) -->
+     <!-- may be added to the address and the result is also a valid memory -->
+     <!-- address. -->
+     <p><a name="index-offsettable-address-3271"></a><a name="index-g_t_0040samp_007bo_007d-in-constraint-3272"></a><br><dt>&lsquo;<samp><span class="samp">o</span></samp>&rsquo;<dd>内存操作数将被允许，但只有当地址为偏移表的时候。 这意味着可以对地址加上一个小的整数(实际上,是为操作数的数个字节宽度, 这由它的机器模式决定),其结果也为一个有效的内存地址。
+
+     <!-- @cindex autoincrement/decrement addressing -->
+     <!-- For example, an address which is constant is offsettable; so is an -->
+     <!-- address that is the sum of a register and a constant (as long as a -->
+     <!-- slightly larger constant is also within the range of address-offsets -->
+     <!-- supported by the machine); but an autoincrement or autodecrement -->
+     <!-- address is not offsettable.  More complicated indirect/indexed -->
+     <!-- addresses may or may not be offsettable depending on the other -->
+     <!-- addressing modes that the machine supports. -->
+     <p><a name="index-autoincrement_002fdecrement-addressing-3273"></a>例如，地址为常数的为一个偏移表；所以地址为一个寄存器和常数（只要常数在机器所支持 的地址偏移范围）的和；但是递增或者递减地址不是偏移表。更加复杂的间接/索引地址可 能是或者可能不是偏移表，这取决于机器支持的其它寻址模式。
+
+     <!-- Note that in an output operand which can be matched by another -->
+     <!-- operand, the constraint letter @samp{o} is valid only when accompanied -->
+     <!-- by both @samp{<} (if the target machine has predecrement addressing) -->
+     <!-- and @samp{>} (if the target machine has preincrement addressing). -->
+     <!-- @cindex @samp{V} in constraint -->
+     <!-- @item @samp{V} -->
+     <!-- A memory operand that is not offsettable.  In other words, anything that -->
+     <!-- would fit the @samp{m} constraint but not the @samp{o} constraint. -->
+     <p><a name="index-g_t_0040samp_007bV_007d-in-constraint-3274"></a><br><dt>&lsquo;<samp><span class="samp">V</span></samp>&rsquo;<dd>一个不是offsettable的内存操作数。换句话说， 任何适合&lsquo;<samp><span class="samp">m</span></samp>&rsquo;约束但不是&lsquo;<samp><span class="samp">o</span></samp>&rsquo;约束的。
+
+     <!-- @cindex @samp{<} in constraint -->
+     <!-- @item @samp{<} -->
+     <!-- A memory operand with autodecrement addressing (either predecrement or -->
+     <!-- postdecrement) is allowed.  In inline @code{asm} this constraint is only -->
+     <!-- allowed if the operand is used exactly once in an instruction that can -->
+     <!-- handle the side-effects.  Not using an operand with @samp{<} in constraint -->
+     <!-- string in the inline @code{asm} pattern at all or using it in multiple -->
+     <!-- instructions isn't valid, because the side-effects wouldn't be performed -->
+     <!-- or would be performed more than once.  Furthermore, on some targets -->
+     <!-- the operand with @samp{<} in constraint string must be accompanied by -->
+     <!-- special instruction suffixes like @code{%U0} instruction suffix on PowerPC -->
+     <!-- or @code{%P0} on IA-64. -->
+     <p><a name="index-g_t_0040samp_007b_003c_007d-in-constraint-3275"></a><br><dt>&lsquo;<samp><span class="samp">&lt;</span></samp>&rsquo;<dd>允许具有自动减量寻址（先减或者后减）的内存操作数。
+
+     <!-- @cindex @samp{>} in constraint -->
+     <!-- @item @samp{>} -->
+     <!-- A memory operand with autoincrement addressing (either preincrement or -->
+     <!-- postincrement) is allowed.  In inline @code{asm} the same restrictions -->
+     <!-- as for @samp{<} apply. -->
+     <p><a name="index-g_t_0040samp_007b_003e_007d-in-constraint-3276"></a><br><dt>&lsquo;<samp><span class="samp">&gt;</span></samp>&rsquo;<dd>允许具有自动增量寻址（先增或者后增）的内存操作数。
+
+     <!-- @cindex @samp{r} in constraint -->
+     <!-- @cindex registers in constraints -->
+     <!-- @item @samp{r} -->
+     <!-- A register operand is allowed provided that it is in a general -->
+     <!-- register. -->
+     <p><a name="index-g_t_0040samp_007br_007d-in-constraint-3277"></a><a name="index-registers-in-constraints-3278"></a><br><dt>&lsquo;<samp><span class="samp">r</span></samp>&rsquo;<dd>允许为通用寄存器的寄存器操作数。
+
+     <!-- @cindex constants in constraints -->
+     <!-- @cindex @samp{i} in constraint -->
+     <!-- @item @samp{i} -->
+     <!-- An immediate integer operand (one with constant value) is allowed. -->
+     <!-- This includes symbolic constants whose values will be known only at -->
+     <!-- assembly time or later. -->
+     <p><a name="index-constants-in-constraints-3279"></a><a name="index-g_t_0040samp_007bi_007d-in-constraint-3280"></a><br><dt>&lsquo;<samp><span class="samp">i</span></samp>&rsquo;<dd>立即数（具有常数值）将被允许。这包括符号常量， 其值将在汇编时候或者更晚的时候才被知道。
+
+     <!-- @cindex @samp{n} in constraint -->
+     <!-- @item @samp{n} -->
+     <!-- An immediate integer operand with a known numeric value is allowed. -->
+     <!-- Many systems cannot support assembly-time constants for operands less -->
+     <!-- than a word wide.  Constraints for these operands should use @samp{n} -->
+     <!-- rather than @samp{i}. -->
+     <p><a name="index-g_t_0040samp_007bn_007d-in-constraint-3281"></a><br><dt>&lsquo;<samp><span class="samp">n</span></samp>&rsquo;<dd>立即数，其具有已知的数值。 许多系统不支持汇编时间常量作为小于一个字的宽度的操作数。 这些操作数的约束应该为&lsquo;<samp><span class="samp">n</span></samp>&rsquo;而不是&lsquo;<samp><span class="samp">i</span></samp>&rsquo;。
+
+     <!-- @cindex @samp{I} in constraint -->
+     <!-- @item @samp{I}, @samp{J}, @samp{K}, @dots{} @samp{P} -->
+     <!-- Other letters in the range @samp{I} through @samp{P} may be defined in -->
+     <!-- a machine-dependent fashion to permit immediate integer operands with -->
+     <!-- explicit integer values in specified ranges.  For example, on the -->
+     <!-- 68000, @samp{I} is defined to stand for the range of values 1 to 8. -->
+     <!-- This is the range permitted as a shift count in the shift -->
+     <!-- instructions. -->
+     <p><a name="index-g_t_0040samp_007bI_007d-in-constraint-3282"></a><br><dt>&lsquo;<samp><span class="samp">I</span></samp>&rsquo;, &lsquo;<samp><span class="samp">J</span></samp>&rsquo;, &lsquo;<samp><span class="samp">K</span></samp>&rsquo;, <small class="dots">...</small> &lsquo;<samp><span class="samp">P</span></samp>&rsquo;<dd>从&lsquo;<samp><span class="samp">I</span></samp>&rsquo;到&lsquo;<samp><span class="samp">P</span></samp>&rsquo;的其它字母可以被定义为机器特定的， 用来运行立即数具有显示指定范围的整数值。例如，在68000上， &lsquo;<samp><span class="samp">I</span></samp>&rsquo;被定义为代表1到8的值。这是在移位指令中被允许作为移位数的范围。
+
+     <!-- @cindex @samp{E} in constraint -->
+     <!-- @item @samp{E} -->
+     <!-- An immediate floating operand (expression code @code{const_double}) is -->
+     <!-- allowed, but only if the target floating point format is the same as -->
+     <!-- that of the host machine (on which the compiler is running). -->
+     <p><a name="index-g_t_0040samp_007bE_007d-in-constraint-3283"></a><br><dt>&lsquo;<samp><span class="samp">E</span></samp>&rsquo;<dd>浮点立即数（表达式代码为<code>const_double</code>）， 但是必须target浮点格式与host机器（编译器运行的机器）的相同才行。
+
+     <!-- @cindex @samp{F} in constraint -->
+     <!-- @item @samp{F} -->
+     <!-- An immediate floating operand (expression code @code{const_double} or -->
+     <!-- @code{const_vector}) is allowed. -->
+     <p><a name="index-g_t_0040samp_007bF_007d-in-constraint-3284"></a><br><dt>&lsquo;<samp><span class="samp">F</span></samp>&rsquo;<dd>浮点立即数（表达式代码为<code>const_double</code>或者<code>const_vector</code>）。
+
+     <!-- @cindex @samp{G} in constraint -->
+     <!-- @cindex @samp{H} in constraint -->
+     <!-- @item @samp{G}, @samp{H} -->
+     <!-- @samp{G} and @samp{H} may be defined in a machine-dependent fashion to -->
+     <!-- permit immediate floating operands in particular ranges of values. -->
+     <p><a name="index-g_t_0040samp_007bG_007d-in-constraint-3285"></a><a name="index-g_t_0040samp_007bH_007d-in-constraint-3286"></a><br><dt>&lsquo;<samp><span class="samp">G</span></samp>&rsquo;, &lsquo;<samp><span class="samp">H</span></samp>&rsquo;<dd>&lsquo;<samp><span class="samp">G</span></samp>&rsquo;和&lsquo;<samp><span class="samp">H</span></samp>&rsquo;可以被定义为机器特定的方式来允许浮点立即数具有特定范围的值。
+
+     <!-- @cindex @samp{s} in constraint -->
+     <!-- @item @samp{s} -->
+     <!-- An immediate integer operand whose value is not an explicit integer is -->
+     <!-- allowed. -->
+     <p><a name="index-g_t_0040samp_007bs_007d-in-constraint-3287"></a><br><dt>&lsquo;<samp><span class="samp">s</span></samp>&rsquo;<dd>整数立即数，其值不是一个显式的整数。
+
+     <!-- This might appear strange; if an insn allows a constant operand with a -->
+     <!-- value not known at compile time, it certainly must allow any known -->
+     <!-- value.  So why use @samp{s} instead of @samp{i}?  Sometimes it allows -->
+     <!-- better code to be generated. -->
+     <p>这可能有点奇怪；如果insn允许常量操作数具有在编译时不可知的值， 它当然必须允许任何可知的值。所以为什么用&lsquo;<samp><span class="samp">s</span></samp>&rsquo;，而不是&lsquo;<samp><span class="samp">i</span></samp>&rsquo;能？有时候， 它会允许生成更好的代码。
+
+     <!-- For example, on the 68000 in a fullword instruction it is possible to -->
+     <!-- use an immediate operand; but if the immediate value is between @minus{}128 -->
+     <!-- and 127, better code results from loading the value into a register and -->
+     <!-- using the register.  This is because the load into the register can be -->
+     <!-- done with a @samp{moveq} instruction.  We arrange for this to happen -->
+     <!-- by defining the letter @samp{K} to mean ``any integer outside the -->
+     <!-- range @minus{}128 to 127'', and then specifying @samp{Ks} in the operand -->
+     <!-- constraints. -->
+     <p>例如，在68000上的全字指令，有可能使用一个立即数操作数； 但是如果立即数的值是处于-128和127之间，更好的代码是将值加载到寄存器中， 使用寄存器。这是因为加载到寄存器中可以由&lsquo;<samp><span class="samp">moveq</span></samp>&rsquo;指令来完成。 我们对此通过定义字母&lsquo;<samp><span class="samp">K</span></samp>&rsquo;来表示任意范围超出-128和127的整数， 然后在操作数约束中指定&lsquo;<samp><span class="samp">Ks</span></samp>&rsquo;。
+
+     <!-- @cindex @samp{g} in constraint -->
+     <!-- @item @samp{g} -->
+     <!-- Any register, memory or immediate integer operand is allowed, except for -->
+     <!-- registers that are not general registers. -->
+     <p><a name="index-g_t_0040samp_007bg_007d-in-constraint-3288"></a><br><dt>&lsquo;<samp><span class="samp">g</span></samp>&rsquo;<dd>任何寄存器，内存或整数立即数，除了不是通用寄存器的寄存器。
+
+     <!-- @cindex @samp{X} in constraint -->
+     <!-- @item @samp{X} -->
+     <!-- @ifset INTERNALS -->
+     <!-- Any operand whatsoever is allowed, even if it does not satisfy -->
+     <!-- @code{general_operand}.  This is normally used in the constraint of -->
+     <!-- a @code{match_scratch} when certain alternatives will not actually -->
+     <!-- require a scratch register. -->
+     <!-- @end ifset -->
+     <!-- @ifclear INTERNALS -->
+     <!-- Any operand whatsoever is allowed. -->
+     <!-- @end ifclear -->
+     <p><a name="index-g_t_0040samp_007bX_007d-in-constraint-3289"></a><br><dt>&lsquo;<samp><span class="samp">X</span></samp>&rsquo;<dd>任何操作数都被允许，即使其不满足<code>general_operand</code>。 这通常用于<code>match_scratch</code>的约束中，当一些的可选项实际上不需要scratch寄存器的时候。
+
+     <!-- @cindex @samp{0} in constraint -->
+     <!-- @cindex digits in constraint -->
+     <!-- @item @samp{0}, @samp{1}, @samp{2}, @dots{} @samp{9} -->
+     <!-- An operand that matches the specified operand number is allowed.  If a -->
+     <!-- digit is used together with letters within the same alternative, the -->
+     <!-- digit should come last. -->
+     <p><a name="index-g_t_0040samp_007b0_007d-in-constraint-3290"></a><a name="index-digits-in-constraint-3291"></a><br><dt>&lsquo;<samp><span class="samp">0</span></samp>&rsquo;, &lsquo;<samp><span class="samp">1</span></samp>&rsquo;, &lsquo;<samp><span class="samp">2</span></samp>&rsquo;, <small class="dots">...</small> &lsquo;<samp><span class="samp">9</span></samp>&rsquo;<dd>匹配指定操作数编号的操作数。如果数字与字母一起使用，则数字应该放在最后。
+
+     <!-- This number is allowed to be more than a single digit.  If multiple -->
+     <!-- digits are encountered consecutively, they are interpreted as a single -->
+     <!-- decimal integer.  There is scant chance for ambiguity, since to-date -->
+     <!-- it has never been desirable that @samp{10} be interpreted as matching -->
+     <!-- either operand 1 @emph{or} operand 0.  Should this be desired, one -->
+     <!-- can use multiple alternatives instead. -->
+     <p>该编号允许多于单个数字。如果多个数字连续的在一起， 则它们被解析为一个单独的十进制整数。很少会因此产生不明确，因为到目前为止， 还没有想要将&lsquo;<samp><span class="samp">10</span></samp>&rsquo;解析为匹配操作数1或者0的。如果有这样的需要， 则可以使用多个可选项来替代。
+
+     <!-- @cindex matching constraint -->
+     <!-- @cindex constraint, matching -->
+     <!-- This is called a @dfn{matching constraint} and what it really means is -->
+     <!-- that the assembler has only a single operand that fills two roles -->
+     <!-- @ifset INTERNALS -->
+     <!-- considered separate in the RTL insn.  For example, an add insn has two -->
+     <!-- input operands and one output operand in the RTL, but on most CISC -->
+     <!-- @end ifset -->
+     <!-- @ifclear INTERNALS -->
+     <!-- which @code{asm} distinguishes.  For example, an add instruction uses -->
+     <!-- two input operands and an output operand, but on most CISC -->
+     <!-- @end ifclear -->
+     <!-- machines an add instruction really has only two operands, one of them an -->
+     <!-- input-output operand: -->
+     <p><a name="index-matching-constraint-3292"></a><a name="index-constraint_002c-matching-3293"></a>这被称为匹配约束，其实际上是指汇编器只有一个单独的操作数， 却在RTL insn中扮演两个角色。例如，add insn在RTL中具有两个输入操作数和一个输出操作数，
+但是多数CISC机器上，add指令实际上只有两个操作数，其中一个为输入输出操作数：
+
+     <pre class="smallexample">          addl #35,r12
+</pre>
+     <!-- Matching constraints are used in these circumstances. -->
+     <!-- More precisely, the two operands that match must include one input-only -->
+     <!-- operand and one output-only operand.  Moreover, the digit must be a -->
+     <!-- smaller number than the number of the operand that uses it in the -->
+     <!-- constraint. -->
+     <p>匹配约束被用于这些情况。更确切的说， 匹配的两个操作数必须包括一个只作输入的操作数和一个只作输出的操作数。
+
+     <!-- @ifset INTERNALS -->
+     <!-- For operands to match in a particular case usually means that they -->
+     <!-- are identical-looking RTL expressions.  But in a few special cases -->
+     <!-- specific kinds of dissimilarity are allowed.  For example, @code{*x} -->
+     <!-- as an input operand will match @code{*x++} as an output operand. -->
+     <!-- For proper results in such cases, the output template should always -->
+     <!-- use the output-operand's number when printing the operand. -->
+     <!-- @end ifset -->
+     <!-- @cindex load address instruction -->
+     <!-- @cindex push address instruction -->
+     <!-- @cindex address constraints -->
+     <!-- @cindex @samp{p} in constraint -->
+     <!-- @item @samp{p} -->
+     <!-- An operand that is a valid memory address is allowed.  This is -->
+     <!-- for ``load address'' and ``push address'' instructions. -->
+     <p><a name="index-load-address-instruction-3294"></a><a name="index-push-address-instruction-3295"></a><a name="index-address-constraints-3296"></a><a name="index-g_t_0040samp_007bp_007d-in-constraint-3297"></a><br><dt>&lsquo;<samp><span class="samp">p</span></samp>&rsquo;<dd>允许一个为有效内存地址的操作数。这用于“加载地址”和“地址压栈”指令。
+
+     <!-- @findex address_operand -->
+     <!-- @samp{p} in the constraint must be accompanied by @code{address_operand} -->
+     <!-- as the predicate in the @code{match_operand}.  This predicate interprets -->
+     <!-- the mode specified in the @code{match_operand} as the mode of the memory -->
+     <!-- reference for which the address would be valid. -->
+     <p><a name="index-address_005foperand-3298"></a>约束中的&lsquo;<samp><span class="samp">p</span></samp>&rsquo;必须由<code>match_operand</code>中的作为断言的<code>address_operand</code>协同工作。该断言将<code>match_operand</code>中指定的机器模式解析为地址有效的内存引用的机器模式。
+
+     <!-- @cindex other register constraints -->
+     <!-- @cindex extensible constraints -->
+     <!-- @item @var{other-letters} -->
+     <!-- Other letters can be defined in machine-dependent fashion to stand for -->
+     <!-- particular classes of registers or other arbitrary operand types. -->
+     <!-- @samp{d}, @samp{a} and @samp{f} are defined on the 68000/68020 to stand -->
+     <!-- for data, address and floating point registers. -->
+     <!-- @end table -->
+     <p><a name="index-other-register-constraints-3299"></a><a name="index-extensible-constraints-3300"></a><br><dt><var>other-letters</var><dd>其它字母可以采用机器相关的方式被定义，用于代表寄存器的特定类别或者其它任意的操作数类型。&lsquo;<samp><span class="samp">d</span></samp>&rsquo;, &lsquo;<samp><span class="samp">a</span></samp>&rsquo;和&lsquo;<samp><span class="samp">f</span></samp>&rsquo;在68000/68020被定义用来代表数据，地址和浮点寄存器。
+</dl>
+
+<!-- @ifset INTERNALS -->
+<!-- In order to have valid assembler code, each operand must satisfy -->
+<!-- its constraint.  But a failure to do so does not prevent the pattern -->
+<!-- from applying to an insn.  Instead, it directs the compiler to modify -->
+<!-- the code so that the constraint will be satisfied.  Usually this is -->
+<!-- done by copying an operand into a register. -->
+<!-- Contrast, therefore, the two instruction patterns that follow: -->
+ <p>为了具有有效的汇编代码，每个操作数必须满足它的约束。但是如果不满足的话，也不会阻止将该指令模式应用到insn上。替代的，它会指示编译器去修改代码以至于约束将被满足。通常，这是通过将一个操作数复制到寄存器中来完成的。
+
+ <p>因此，对比下面的两条指令模式：
+
+<pre class="smallexample">     (define_insn ""
+       [(set (match_operand:SI 0 "general_operand" "=r")
+             (plus:SI (match_dup 0)
+                      (match_operand:SI 1 "general_operand" "r")))]
+       ""
+       "...")
+</pre>
+ <p class="noindent"><!-- which has two operands, one of which must appear in two places, and -->
+其具有两个操作数，其中一个必须出现在两个位置，
+
+<pre class="smallexample">     (define_insn ""
+       [(set (match_operand:SI 0 "general_operand" "=r")
+             (plus:SI (match_operand:SI 1 "general_operand" "0")
+                      (match_operand:SI 2 "general_operand" "r")))]
+       ""
+       "...")
+</pre>
+ <!-- which has three operands, two of which are required by a constraint to be -->
+<!-- identical.  If we are considering an insn of the form -->
+ <p>其具有三个操作数，其中两个通过约束被要求为是相同的。如果我们考虑如下形式的一条insn
+
+<pre class="smallexample">     (insn <var>n</var> <var>prev</var> <var>next</var>
+       (set (reg:SI 3)
+            (plus:SI (reg:SI 6) (reg:SI 109)))
+       ...)
+</pre>
+ <p class="noindent"><!-- the first pattern would not apply at all, because this insn does not -->
+<!-- contain two identical subexpressions in the right place.  The pattern would -->
+<!-- say, ``That does not look like an add instruction; try other patterns''. -->
+<!-- The second pattern would say, ``Yes, that's an add instruction, but there -->
+<!-- is something wrong with it''.  It would direct the reload pass of the -->
+<!-- compiler to generate additional insns to make the constraint true.  The -->
+<!-- results might look like this: -->
+第一个指令模式将根本不会被应用，因为该insn不在合适的地方包含两个相同的子表达式。指令模式会说“这看起来不像是一条加法指令；试一下其它模式”。第二个指令模式将会说，“是的，这是一条加法指令，但是有些问题”。它将指使编译器的重载过程生成额外的insn，使得约束为真。结果可能看起来像：
+
+<pre class="smallexample">     (insn <var>n2</var> <var>prev</var> <var>n</var>
+       (set (reg:SI 3) (reg:SI 6))
+       ...)
+     
+     (insn <var>n</var> <var>n2</var> <var>next</var>
+       (set (reg:SI 3)
+            (plus:SI (reg:SI 3) (reg:SI 109)))
+       ...)
+</pre>
+ <!-- It is up to you to make sure that each operand, in each pattern, has -->
+<!-- constraints that can handle any RTL expression that could be present for -->
+<!-- that operand.  (When multiple alternatives are in use, each pattern must, -->
+<!-- for each possible combination of operand expressions, have at least one -->
+<!-- alternative which can handle that combination of operands.)  The -->
+<!-- constraints don't need to @emph{allow} any possible operand-when this is -->
+<!-- the case, they do not constrain-but they must at least point the way to -->
+<!-- reloading any possible operand so that it will fit. -->
+ <p>你必须确保每个操作数，在每个指令模式中，具有能够处理可能会出现的任何RTL表达式的约束。（当使用多个可选项时，每个指令模式，对于每个可能的操作数表达式组合，必须至少具有一个可选项可以处理该操作数的组合。）约束不需要允许任何可能的操作数——如果是这种情况，它们就不做约束了——但是它们必须至少指出可以加载任何可能操作数，使得适合约束的方法。
+
+<!-- @itemize @bullet -->
+<!-- @item -->
+<!-- If the constraint accepts whatever operands the predicate permits, -->
+<!-- there is no problem: reloading is never necessary for this operand. -->
+<!-- For example, an operand whose constraints permit everything except -->
+<!-- registers is safe provided its predicate rejects registers. -->
+<!-- An operand whose predicate accepts only constant values is safe -->
+<!-- provided its constraints include the letter @samp{i}.  If any possible -->
+<!-- constant value is accepted, then nothing less than @samp{i} will do; -->
+<!-- if the predicate is more selective, then the constraints may also be -->
+<!-- more selective. -->
+     <ul>
+<li>如果约束接受断言允许的任何操作数，则没有问题：重载对于该操作数将没有必要。
+
+     <p>例如，操作数对于它的约束允许除了寄存器以外的任何事物，如果它的断言不接受寄存器的话，这样是安全的。
+
+     <p>操作数对于断言只接受常量时，如果它的约束包含字母&lsquo;<samp><span class="samp">i</span></samp>&rsquo;，则是安全的。如果任何可能的常量都被接受，则可以使用&lsquo;<samp><span class="samp">i</span></samp>&rsquo;；如果断言具有更多的选择性，则约束也可以具有更多的选择性。
+
+     <!-- @item -->
+     <!-- Any operand expression can be reloaded by copying it into a register. -->
+     <!-- So if an operand's constraints allow some kind of register, it is -->
+     <!-- certain to be safe.  It need not permit all classes of registers; the -->
+     <!-- compiler knows how to copy a register into another register of the -->
+     <!-- proper class in order to make an instruction valid. -->
+     <li>任何操作数表达式可以通过复制到寄存器中来进行重载。所以如果一个操作数的约束允许某种寄存器，其当然是安全的。它不需要允许所有类型的寄存器；编译器知道为了使指令有效，如何将一个寄存器复制到另一个合适类别的寄存器中。
+
+     <!-- @cindex nonoffsettable memory reference -->
+     <!-- @cindex memory reference, nonoffsettable -->
+     <!-- @item -->
+     <!-- A nonoffsettable memory reference can be reloaded by copying the -->
+     <!-- address into a register.  So if the constraint uses the letter -->
+     <!-- @samp{o}, all memory references are taken care of. -->
+     <p><a name="index-nonoffsettable-memory-reference-3301"></a><a name="index-memory-reference_002c-nonoffsettable-3302"></a><li>非偏移表的内存引用可以通过将地址复制到寄存器中来重载。所以如果约束使用字母&lsquo;<samp><span class="samp">o</span></samp>&rsquo;，则所有内存引用将被照顾到。
+
+     <!-- @item -->
+     <!-- A constant operand can be reloaded by allocating space in memory to -->
+     <!-- hold it as preinitialized data.  Then the memory reference can be used -->
+     <!-- in place of the constant.  So if the constraint uses the letters -->
+     <!-- @samp{o} or @samp{m}, constant operands are not a problem. -->
+     <li>常量操作数可以通过在内存中分配空间作为预先被初始化的数据来重载。然后可以使用内存引用。所以如果约束使用字母&lsquo;<samp><span class="samp">o</span></samp>&rsquo;或者&lsquo;<samp><span class="samp">m</span></samp>&rsquo;，则常量操作数不是问题。
+
+     <!-- @item -->
+     <!-- If the constraint permits a constant and a pseudo register used in an insn -->
+     <!-- was not allocated to a hard register and is equivalent to a constant, -->
+     <!-- the register will be replaced with the constant.  If the predicate does -->
+     <!-- not permit a constant and the insn is re-recognized for some reason, the -->
+     <!-- compiler will crash.  Thus the predicate must always recognize any -->
+     <!-- objects allowed by the constraint. -->
+     <!-- @end itemize -->
+     <li>如果约束允许的常量和伪寄存器没有被分配到硬件寄存器中，并且等价于一个常量，则寄存器将被常量替换。如果断言不允许常量并且insn出于某种原因被识别了，则编译器将会崩溃。因此断言必须总是能够识别任何被约束允许的对象。
+</ul>
+
+<!-- If the operand's predicate can recognize registers, but the constraint does -->
+<!-- not permit them, it can make the compiler crash.  When this operand happens -->
+<!-- to be a register, the reload pass will be stymied, because it does not know -->
+<!-- how to copy a register temporarily into memory. -->
+<!-- If the predicate accepts a unary operator, the constraint applies to the -->
+<!-- operand.  For example, the MIPS processor at ISA level 3 supports an -->
+<!-- instruction which adds two registers in @code{SImode} to produce a -->
+<!-- @code{DImode} result, but only if the registers are correctly sign -->
+<!-- extended.  This predicate for the input operands accepts a -->
+<!-- @code{sign_extend} of an @code{SImode} register.  Write the constraint -->
+<!-- to indicate the type of register that is required for the operand of the -->
+<!-- @code{sign_extend}. -->
+<!-- @end ifset -->
+ <p>如果操作数的断言能够识别寄存器，但是约束不允许它们，则能够使编译器崩溃。当该操作数正好是寄存器时，重载过程将被打乱，因为它不知道如何将寄存器临时复制到内存中。
+
+ <p>如果断言接受一元操作符，约束将被应用到操作数上。例如，MIPS处理器在ISA3级时，支持一条指令，其将两个<code>SImode</code>的寄存器相加产生一个 <code>DImode</code>的结果，但是必须寄存器能够被正确的符号扩展。该断言对于输入操作数接受一个<code>SImode</code>寄存器的<code>sign_extend</code>。将约束写成指示寄存器的类型需要为<code>sign_extend</code>的操作数。
+
+<!-- @node Multi-Alternative -->
+<!-- @subsection Multiple Alternative Constraints -->
+<!-- @cindex multiple alternative constraints -->
+ </body></html>
+

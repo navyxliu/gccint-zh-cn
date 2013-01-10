@@ -1,0 +1,165 @@
+<html lang="zh">
+<head>
+<title>Insn Lengths - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Insn-Attributes.html#Insn-Attributes" title="Insn Attributes">
+<link rel="prev" href="Attr-Example.html#Attr-Example" title="Attr Example">
+<link rel="next" href="Constant-Attributes.html#Constant-Attributes" title="Constant Attributes">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Insn-Lengths"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Constant-Attributes.html#Constant-Attributes">Constant Attributes</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Attr-Example.html#Attr-Example">Attr Example</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Insn-Attributes.html#Insn-Attributes">Insn Attributes</a>
+<hr>
+</div>
+
+<h4 class="subsection">16.19.5 计算一个Insn的长度</h4>
+
+<p><a name="index-insn-lengths_002c-computing-3674"></a><a name="index-computing-the-length-of-an-insn-3675"></a>
+<!-- For many machines, multiple types of branch instructions are provided, each -->
+<!-- for different length branch displacements.  In most cases, the assembler -->
+<!-- will choose the correct instruction to use.  However, when the assembler -->
+<!-- cannot do so, GCC can when a special attribute, the @code{length} -->
+<!-- attribute, is defined.  This attribute must be defined to have numeric -->
+<!-- values by specifying a null string in its @code{define_attr}. -->
+<!-- In the case of the @code{length} attribute, two additional forms of -->
+<!-- arithmetic terms are allowed in test expressions: -->
+许多机器提供了多种类型的分支指令，针对于不同长度的分支位移。多数情况下，
+汇编器会选择使用正确的指令。但是，当汇编器无法做到的时候，如果一个特殊的属性，
+<code>length</code>属性，被定义，则可以由GCC来完成。
+该属性必须通过在它的<code>define_attr</code>中指定一个空字符串，
+从而被定义成具有数字值。
+
+ <p>对于<code>length</code>属性，在test表达式中允许两个额外形式的算术术语：
+
+<!-- @table @code -->
+<!-- @cindex @code{match_dup} and attributes -->
+<!-- @item (match_dup @var{n}) -->
+<!-- This refers to the address of operand @var{n} of the current insn, which -->
+<!-- must be a @code{label_ref}. -->
+<!-- @cindex @code{pc} and attributes -->
+<!-- @item (pc) -->
+<!-- This refers to the address of the @emph{current} insn.  It might have -->
+<!-- been more consistent with other usage to make this the address of the -->
+<!-- @emph{next} insn but this would be confusing because the length of the -->
+<!-- current insn is to be computed. -->
+<!-- @end table -->
+     
+<a name="index-g_t_0040code_007bmatch_005fdup_007d-and-attributes-3676"></a>
+<dl><dt><code>(match_dup </code><var>n</var><code>)</code><dd>这是指当前insn的操作数<var>n</var>的地址，其必须为一个<code>label_ref</code>。
+
+     <p><a name="index-g_t_0040code_007bpc_007d-and-attributes-3677"></a><br><dt><code>(pc)</code><dd>这是指当前insn的地址。或许可以将其设为下一个insn的地址，
+从而跟其它地方的用法一致，但是这样容易引起混淆，因为还要计算当前insn的长度。
+</dl>
+
+<!-- @cindex @code{addr_vec}, length of -->
+<!-- @cindex @code{addr_diff_vec}, length of -->
+<!-- For normal insns, the length will be determined by value of the -->
+<!-- @code{length} attribute.  In the case of @code{addr_vec} and -->
+<!-- @code{addr_diff_vec} insn patterns, the length is computed as -->
+<!-- the number of vectors multiplied by the size of each vector. -->
+<!-- Lengths are measured in addressable storage units (bytes). -->
+<!-- The following macros can be used to refine the length computation: -->
+ <p><a name="index-g_t_0040code_007baddr_005fvec_007d_002c-length-of-3678"></a><a name="index-g_t_0040code_007baddr_005fdiff_005fvec_007d_002c-length-of-3679"></a>对于通常的insn，长度将由<code>length</code>属性的值来确定。
+对于<code>addr_vec</code>和<code>addr_diff_vec</code>的insn模式，
+长度通过向量数乘于每个向量的大小来计算获得。
+
+ <p>长度按照可寻址的存储单元（字节）来度量。
+
+ <p>下列宏可以用于改进长度计算：
+
+<!-- @table @code -->
+<!-- @findex ADJUST_INSN_LENGTH -->
+<!-- @item ADJUST_INSN_LENGTH (@var{insn}, @var{length}) -->
+<!-- If defined, modifies the length assigned to instruction @var{insn} as a -->
+<!-- function of the context in which it is used.  @var{length} is an lvalue -->
+<!-- that contains the initially computed length of the insn and should be -->
+<!-- updated with the correct length of the insn. -->
+<!-- This macro will normally not be required.  A case in which it is -->
+<!-- required is the ROMP@.  On this machine, the size of an @code{addr_vec} -->
+<!-- insn must be increased by two to compensate for the fact that alignment -->
+<!-- may be required. -->
+<!-- @end table -->
+     
+<a name="index-ADJUST_005fINSN_005fLENGTH-3680"></a>
+<dl><dt><code>ADJUST_INSN_LENGTH (</code><var>insn</var><code>, </code><var>length</var><code>)</code><dd>如果定义，则在上下文中作为函数来使用，用于修改赋予指令<var>insn</var>的长度。
+<var>length</var>为一个lvalue（左值）包含了最初计算的insn长度并将使用insn的正确长度来更新。
+
+     <p>该宏通常并不需要。一种使用它的情况为ROMP。在这个机器上，
+一个<code>addr_vec</code> insn的大小必须被加2用于补偿可能需要的指令对齐。
+</dl>
+
+<!-- @findex get_attr_length -->
+<!-- The routine that returns @code{get_attr_length} (the value of the -->
+<!-- @code{length} attribute) can be used by the output routine to -->
+<!-- determine the form of the branch instruction to be written, as the -->
+<!-- example below illustrates. -->
+<!-- As an example of the specification of variable-length branches, consider -->
+<!-- the IBM 360.  If we adopt the convention that a register will be set to -->
+<!-- the starting address of a function, we can jump to labels within 4k of -->
+<!-- the start using a four-byte instruction.  Otherwise, we need a six-byte -->
+<!-- sequence to load the address from memory and then branch to it. -->
+<!-- On such a machine, a pattern for a branch instruction might be specified -->
+<!-- as follows: -->
+ <p><a name="index-get_005fattr_005flength-3681"></a>返回<code>get_attr_length</code>（<code>length</code>属性的值）的程序，
+可以被输出程序用来确定将要写入的分支指令的形式，正如下面的例子。
+
+ <p>作为一个指定可变长度分支的例子，可以考虑一下IBM360。
+如果我们采用寄存器将被设为函数起始地址这样的约定，
+我们则可以使用一个4字节的指令来跳转到4K范围的标号。
+否则，我们需要一个6字节的序列来从内存加载地址并然后分支到那里。
+
+ <p>对于这样的机器，可以按照如下的方式来指定一个分支指令模式：
+
+<pre class="smallexample">     (define_insn "jump"
+       [(set (pc)
+             (label_ref (match_operand 0 "" "")))]
+       ""
+     {
+        return (get_attr_length (insn) == 4
+                ? "b %l0" : "l r15,=a(%l0); br r15");
+     }
+       [(set (attr "length")
+             (if_then_else (lt (match_dup 0) (const_int 4096))
+                           (const_int 4)
+                           (const_int 6)))])
+</pre>
+ <!-- @end ifset -->
+<!-- @ifset INTERNALS -->
+<!-- @node Constant Attributes -->
+<!-- @subsection Constant Attributes -->
+<!-- @cindex constant attributes -->
+ </body></html>
+

@@ -1,0 +1,144 @@
+<html lang="zh">
+<head>
+<title>GIMPLE_WITH_CLEANUP_EXPR - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Tuple-specific-accessors.html#Tuple-specific-accessors" title="Tuple specific accessors">
+<link rel="prev" href="GIMPLE_005fTRY.html#GIMPLE_005fTRY" title="GIMPLE_TRY">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="GIMPLE_WITH_CLEANUP_EXPR"></a>
+<a name="GIMPLE_005fWITH_005fCLEANUP_005fEXPR"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="GIMPLE_005fTRY.html#GIMPLE_005fTRY">GIMPLE_TRY</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Tuple-specific-accessors.html#Tuple-specific-accessors">Tuple specific accessors</a>
+<hr>
+</div>
+
+<h4 class="subsection">12.7.28 <code>GIMPLE_WITH_CLEANUP_EXPR</code></h4>
+
+<p><a name="index-g_t_0040code_007bGIMPLE_005fWITH_005fCLEANUP_005fEXPR_007d-3028"></a>
+
+<div class="defun">
+&mdash; GIMPLE function: gimple <b>gimple_build_wce</b> (<var>gimple_seq cleanup</var>)<var><a name="index-gimple_005fbuild_005fwce-3029"></a></var><br>
+<blockquote><p>构建一条<code>GIMPLE_WITH_CLEANUP_EXPR</code>语句。<code>CLEANUP</code>为一个清除表达式。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: gimple_seq <b>gimple_wce_cleanup</b> (<var>gimple g</var>)<var><a name="index-gimple_005fwce_005fcleanup-3030"></a></var><br>
+<blockquote><p>返回清除语句<code>G</code>的清除序列。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: void <b>gimple_wce_set_cleanup</b> (<var>gimple g, gimple_seq cleanup</var>)<var><a name="index-gimple_005fwce_005fset_005fcleanup-3031"></a></var><br>
+<blockquote><p>将<code>CLEANUP</code>设置为<code>G</code>的清除序列。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: bool <b>gimple_wce_cleanup_eh_only</b> (<var>gimple g</var>)<var><a name="index-gimple_005fwce_005fcleanup_005feh_005fonly-3032"></a></var><br>
+<blockquote><p>返回<code>WCE</code>元组的<code>CLEANUP_EH_ONLY</code>标记。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; GIMPLE function: void <b>gimple_wce_set_cleanup_eh_only</b> (<var>gimple g, bool eh_only_p</var>)<var><a name="index-gimple_005fwce_005fset_005fcleanup_005feh_005fonly-3033"></a></var><br>
+<blockquote><p>为<code>WCE</code>元组设置<code>CLEANUP_EH_ONLY</code>标记。
+</p></blockquote></div>
+
+<!-- @node GIMPLE sequences -->
+<!-- @section GIMPLE sequences -->
+<!-- @cindex GIMPLE sequences -->
+<!-- GIMPLE sequences are the tuple equivalent of @code{STATEMENT_LIST}'s -->
+<!-- used in @code{GENERIC}.  They are used to chain statements together, and -->
+<!-- when used in conjunction with sequence iterators, provide a -->
+<!-- framework for iterating through statements. -->
+<!-- GIMPLE sequences are of type struct @code{gimple_sequence}, but are more -->
+<!-- commonly passed by reference to functions dealing with sequences. -->
+<!-- The type for a sequence pointer is @code{gimple_seq} which is the same -->
+<!-- as struct @code{gimple_sequence} *.  When declaring a local sequence, -->
+<!-- you can define a local variable of type struct @code{gimple_sequence}. -->
+<!-- When declaring a sequence allocated on the garbage collected -->
+<!-- heap, use the function @code{gimple_seq_alloc} documented below. -->
+<!-- There are convenience functions for iterating through sequences -->
+<!-- in the section entitled Sequence Iterators. -->
+<!-- Below is a list of functions to manipulate and query sequences. -->
+<!-- @deftypefn {GIMPLE function} void gimple_seq_add_stmt (gimple_seq *seq, gimple g) -->
+<!-- Link a gimple statement to the end of the sequence *@code{SEQ} if @code{G} is -->
+<!-- not @code{NULL}.  If *@code{SEQ} is @code{NULL}, allocate a sequence before linking. -->
+<!-- @end deftypefn -->
+<!-- @deftypefn {GIMPLE function} void gimple_seq_add_seq (gimple_seq *dest, gimple_seq src) -->
+<!-- Append sequence @code{SRC} to the end of sequence *@code{DEST} if @code{SRC} is not -->
+<!-- @code{NULL}.  If *@code{DEST} is @code{NULL}, allocate a new sequence before -->
+<!-- appending. -->
+<!-- @end deftypefn -->
+<!-- @deftypefn {GIMPLE function} gimple_seq gimple_seq_deep_copy (gimple_seq src) -->
+<!-- Perform a deep copy of sequence @code{SRC} and return the result. -->
+<!-- @end deftypefn -->
+<!-- @deftypefn {GIMPLE function} gimple_seq gimple_seq_reverse (gimple_seq seq) -->
+<!-- Reverse the order of the statements in the sequence @code{SEQ}.  Return -->
+<!-- @code{SEQ}. -->
+<!-- @end deftypefn -->
+<!-- @deftypefn {GIMPLE function} gimple gimple_seq_first (gimple_seq s) -->
+<!-- Return the first statement in sequence @code{S}. -->
+<!-- @end deftypefn -->
+<!-- @deftypefn {GIMPLE function} gimple gimple_seq_last (gimple_seq s) -->
+<!-- Return the last statement in sequence @code{S}. -->
+<!-- @end deftypefn -->
+<!-- @deftypefn {GIMPLE function} void gimple_seq_set_last (gimple_seq s, gimple last) -->
+<!-- Set the last statement in sequence @code{S} to the statement in @code{LAST}. -->
+<!-- @end deftypefn -->
+<!-- @deftypefn {GIMPLE function} void gimple_seq_set_first (gimple_seq s, gimple first) -->
+<!-- Set the first statement in sequence @code{S} to the statement in @code{FIRST}. -->
+<!-- @end deftypefn -->
+<!-- @deftypefn {GIMPLE function} void gimple_seq_init (gimple_seq s) -->
+<!-- Initialize sequence @code{S} to an empty sequence. -->
+<!-- @end deftypefn -->
+<!-- @deftypefn {GIMPLE function} gimple_seq gimple_seq_alloc (void) -->
+<!-- Allocate a new sequence in the garbage collected store and return -->
+<!-- it. -->
+<!-- @end deftypefn -->
+<!-- @deftypefn {GIMPLE function} void gimple_seq_copy (gimple_seq dest, gimple_seq src) -->
+<!-- Copy the sequence @code{SRC} into the sequence @code{DEST}. -->
+<!-- @end deftypefn -->
+<!-- @deftypefn {GIMPLE function} bool gimple_seq_empty_p (gimple_seq s) -->
+<!-- Return true if the sequence @code{S} is empty. -->
+<!-- @end deftypefn -->
+<!-- @deftypefn {GIMPLE function} gimple_seq bb_seq (basic_block bb) -->
+<!-- Returns the sequence of statements in @code{BB}. -->
+<!-- @end deftypefn -->
+<!-- @deftypefn {GIMPLE function} void set_bb_seq (basic_block bb, gimple_seq seq) -->
+<!-- Sets the sequence of statements in @code{BB} to @code{SEQ}. -->
+<!-- @end deftypefn -->
+<!-- @deftypefn {GIMPLE function} bool gimple_seq_singleton_p (gimple_seq seq) -->
+<!-- Determine whether @code{SEQ} contains exactly one statement. -->
+<!-- @end deftypefn -->
+ </body></html>
+

@@ -1,0 +1,329 @@
+<html lang="zh">
+<head>
+<title>Types - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="GENERIC.html#GENERIC" title="GENERIC">
+<link rel="prev" href="Tree-overview.html#Tree-overview" title="Tree overview">
+<link rel="next" href="Declarations.html#Declarations" title="Declarations">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Types"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Declarations.html#Declarations">Declarations</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Tree-overview.html#Tree-overview">Tree overview</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="GENERIC.html#GENERIC">GENERIC</a>
+<hr>
+</div>
+
+<h3 class="section">11.3 类型</h3>
+
+<p><a name="index-type-2337"></a><a name="index-pointer-2338"></a><a name="index-reference-2339"></a><a name="index-fundamental-type-2340"></a><a name="index-array-2341"></a><a name="index-VOID_005fTYPE-2342"></a><a name="index-INTEGER_005fTYPE-2343"></a><a name="index-TYPE_005fMIN_005fVALUE-2344"></a><a name="index-TYPE_005fMAX_005fVALUE-2345"></a><a name="index-REAL_005fTYPE-2346"></a><a name="index-FIXED_005fPOINT_005fTYPE-2347"></a><a name="index-COMPLEX_005fTYPE-2348"></a><a name="index-ENUMERAL_005fTYPE-2349"></a><a name="index-BOOLEAN_005fTYPE-2350"></a><a name="index-POINTER_005fTYPE-2351"></a><a name="index-REFERENCE_005fTYPE-2352"></a><a name="index-FUNCTION_005fTYPE-2353"></a><a name="index-METHOD_005fTYPE-2354"></a><a name="index-ARRAY_005fTYPE-2355"></a><a name="index-RECORD_005fTYPE-2356"></a><a name="index-UNION_005fTYPE-2357"></a><a name="index-UNKNOWN_005fTYPE-2358"></a><a name="index-OFFSET_005fTYPE-2359"></a><a name="index-TYPE_005fUNQUALIFIED-2360"></a><a name="index-TYPE_005fQUAL_005fCONST-2361"></a><a name="index-TYPE_005fQUAL_005fVOLATILE-2362"></a><a name="index-TYPE_005fQUAL_005fRESTRICT-2363"></a><a name="index-TYPE_005fMAIN_005fVARIANT-2364"></a><a name="index-qualified-type-2365"></a><a name="index-TYPE_005fSIZE-2366"></a><a name="index-TYPE_005fALIGN-2367"></a><a name="index-TYPE_005fPRECISION-2368"></a><a name="index-TYPE_005fARG_005fTYPES-2369"></a><a name="index-TYPE_005fMETHOD_005fBASETYPE-2370"></a><a name="index-TYPE_005fOFFSET_005fBASETYPE-2371"></a><a name="index-TREE_005fTYPE-2372"></a><a name="index-TYPE_005fCONTEXT-2373"></a><a name="index-TYPE_005fNAME-2374"></a><a name="index-TYPENAME_005fTYPE_005fFULLNAME-2375"></a><a name="index-TYPE_005fFIELDS-2376"></a><a name="index-TYPE_005fCANONICAL-2377"></a><a name="index-TYPE_005fSTRUCTURAL_005fEQUALITY_005fP-2378"></a><a name="index-SET_005fTYPE_005fSTRUCTURAL_005fEQUALITY-2379"></a>
+<!-- All types have corresponding tree nodes.  However, you should not assume -->
+<!-- that there is exactly one tree node corresponding to each type.  There -->
+<!-- are often multiple nodes corresponding to the same type. -->
+所有的类型都有相应的树节点。但是不要假设一个树节点就是正好对应于一个类型。经常有多个节点对应于相同的类型。
+
+<!-- For the most part, different kinds of types have different tree codes. -->
+<!-- (For example, pointer types use a @code{POINTER_TYPE} code while arrays -->
+<!-- use an @code{ARRAY_TYPE} code.)  However, pointers to member functions -->
+<!-- use the @code{RECORD_TYPE} code.  Therefore, when writing a -->
+<!-- @code{switch} statement that depends on the code associated with a -->
+<!-- particular type, you should take care to handle pointers to member -->
+<!-- functions under the @code{RECORD_TYPE} case label. -->
+ <p>在大多数情况下，不同种类的类型具有不同的树代码。（例如，指针类型使用<code>POINTER_TYPE</code>代码，而数组使用<code>ARRAY_TYPE</code>代码。）但是，指向成员函数的指针使用<code>RECORD_TYPE</code>代码。因此，当写与特定类型相关联的<code>switch</code>语句时，应该在<code>RECORD_TYPE</code> case标签下小心处理指向成员函数的指针。
+
+<!-- The following functions and macros deal with cv-qualification of types: -->
+     <dl>
+<dt><code>TYPE_MAIN_VARIANT</code><a name="index-TYPE_005fMAIN_005fVARIANT-2380"></a><dd><!-- This macro returns the unqualified version of a type.  It may be applied -->
+<!-- to an unqualified type, but it is not always the identity function in -->
+<!-- that case. -->
+该宏类型未限定的版本。可以用于一个未限定的类型，但这种情况下，并不总是标识符函数。
+</dl>
+
+<!-- A few other macros and functions are usable with all types: -->
+ <p>一些其它的宏和函数可用于所有的类型：
+     <dl>
+<dt><code>TYPE_SIZE</code><a name="index-TYPE_005fSIZE-2381"></a><dd><!-- The number of bits required to represent the type, represented as an -->
+<!-- @code{INTEGER_CST}.  For an incomplete type, @code{TYPE_SIZE} will be -->
+<!-- @code{NULL_TREE}. -->
+类型表示所需要的位数，为一个<code>INTEGER_CST</code>。
+对于不完全类型，<code>TYPE_SIZE</code>将为<code>NULL_TREE</code>。
+
+     <br><dt><code>TYPE_ALIGN</code><a name="index-TYPE_005fALIGN-2382"></a><dd><!-- The alignment of the type, in bits, represented as an @code{int}. -->
+类型的对齐位数，为一个<code>int</code>。
+
+     <br><dt><code>TYPE_NAME</code><a name="index-TYPE_005fNAME-2383"></a><dd><!-- This macro returns a declaration (in the form of a @code{TYPE_DECL}) for -->
+<!-- the type.  (Note this macro does @emph{not} return an -->
+<!-- @code{IDENTIFIER_NODE}, as you might expect, given its name!)  You can -->
+<!-- look at the @code{DECL_NAME} of the @code{TYPE_DECL} to obtain the -->
+<!-- actual name of the type.  The @code{TYPE_NAME} will be @code{NULL_TREE} -->
+<!-- for a type that is not a built-in type, the result of a typedef, or a -->
+<!-- named class type. -->
+该宏返回类型的一个声明（按照<code>TYPE_DECL</code>的型式）。（注意该宏不返回<code>IDENTIFIER_NODE</code>）你可以查看<code>TYPE_DECL</code>的<code>DECL_NAME</code>来获得类型的实际的名字。<code>TYPE_NAME</code>将为<code>NULL_TREE</code>，对于不是内建类型的，typedef的，或者命名的class类型。
+
+     <br><dt><code>TYPE_CANONICAL</code><a name="index-TYPE_005fCANONICAL-2384"></a><dd><!-- This macro returns the ``canonical'' type for the given type -->
+<!-- node. Canonical types are used to improve performance in the C++ and -->
+<!-- Objective-C++ front ends by allowing efficient comparison between two -->
+<!-- type nodes in @code{same_type_p}: if the @code{TYPE_CANONICAL} values -->
+<!-- of the types are equal, the types are equivalent; otherwise, the types -->
+<!-- are not equivalent. The notion of equivalence for canonical types is -->
+<!-- the same as the notion of type equivalence in the language itself. For -->
+<!-- instance, -->
+该宏为给定的类型节点返回“正则”类型。正则类型用于C++和Objective-C的前端，使得在<code>same_type_p</code>中，可以对两个类型进行高效的比较，从而提高性能：如果类型的<code>TYPE_CANONICAL</code>值相等，则类型是等价的；否则，类型不相等。关于正则类型的相等的概念，与在语言中类型相等的概念是一样的。例如，
+
+     <!-- When @code{TYPE_CANONICAL} is @code{NULL_TREE}, there is no canonical -->
+     <!-- type for the given type node. In this case, comparison between this -->
+     <!-- type and any other type requires the compiler to perform a deep, -->
+     <!-- ``structural'' comparison to see if the two type nodes have the same -->
+     <!-- form and properties. -->
+     <p>当<code>TYPE_CANONICAL</code>为<code>NULL_TREE</code>，则对于给定的类型节点，没有正则类型。这种情况下，比较该类型和任何其它类型，需要编译器执行深入的，“结构化的”比较，来看两个类型节点是否具有相同的形式和属性。
+
+     <!-- The canonical type for a node is always the most fundamental type in -->
+     <!-- the equivalence class of types. For instance, @code{int} is its own -->
+     <!-- canonical type. A typedef @code{I} of @code{int} will have @code{int} -->
+     <!-- as its canonical type. Similarly, @code{I*}@ and a typedef @code{IP}@ -->
+     <!-- (defined to @code{I*}) will has @code{int*} as their canonical -->
+     <!-- type. When building a new type node, be sure to set -->
+     <!-- @code{TYPE_CANONICAL} to the appropriate canonical type. If the new -->
+     <!-- type is a compound type (built from other types), and any of those -->
+     <!-- other types require structural equality, use -->
+     <!-- @code{SET_TYPE_STRUCTURAL_EQUALITY} to ensure that the new type also -->
+     <!-- requires structural equality. Finally, if for some reason you cannot -->
+     <!-- guarantee that @code{TYPE_CANONICAL} will point to the canonical type, -->
+     <!-- use @code{SET_TYPE_STRUCTURAL_EQUALITY} to make sure that the new -->
+     <!-- type-and any type constructed based on it-requires structural -->
+     <!-- equality. If you suspect that the canonical type system is -->
+     <!-- miscomparing types, pass @code{-param verify-canonical-types=1} to -->
+     <!-- the compiler or configure with @code{-enable-checking} to force the -->
+     <!-- compiler to verify its canonical-type comparisons against the -->
+     <!-- structural comparisons; the compiler will then print any warnings if -->
+     <!-- the canonical types miscompare. -->
+     <p>节点的正则类型，在等价的类型类别中，总是最根本的类型。例如，<code>int</code>为其自己的正则类型。<code>int</code>的自定义类型<code>I</code>，将<code>int</code>作为它的正则类型。类似的，<code>I*</code>和自定义类型<code>IP</code>（定义为<code>I*</code>），将<code>int*</code>作为它们的正则类型。当构建一个新的类型节点时，要记着将<code>TYPE_CANONICAL</code>设置为合适的正则类型。如果新类型为一个复合类型（从其它类型中构建的），并且那些类型中的任意一个需要进行结构化相等，则使用<code>SET_TYPE_STRUCTURAL_EQUALITY</code>来确保新的类型也需要结构化相等。最后，如果出于某种原因，你不能确保<code>TYPE_CANONICAL</code>能指向正则类型，则使用<code>SET_TYPE_STRUCTURAL_EQUALITY</code>来确保新的类型，任何基于它构建的类型，则需要结构化相等。如果你怀疑正则类型系统进行了错误的类型比较，则将<code>--param verify-canonical-types=1</code>传给编译器，或者使用<code>--enable-checking</code>来configure，强制编译器基于结构化比较来验证它的正则类型比较；如果正则类型比较有出入，则编译器将打印出警告信息。
+
+     <br><dt><code>TYPE_STRUCTURAL_EQUALITY_P</code><a name="index-TYPE_005fSTRUCTURAL_005fEQUALITY_005fP-2385"></a><dd><!-- This predicate holds when the node requires structural equality -->
+<!-- checks, e.g., when @code{TYPE_CANONICAL} is @code{NULL_TREE}. -->
+当节点需要进行结构相等检查的时候，该断言成立，例如，当<code>TYPE_CANONICAL</code>为<code>NULL_TREE</code>时。
+
+     <br><dt><code>SET_TYPE_STRUCTURAL_EQUALITY</code><a name="index-SET_005fTYPE_005fSTRUCTURAL_005fEQUALITY-2386"></a><dd><!-- This macro states that the type node it is given requires structural -->
+<!-- equality checks, e.g., it sets @code{TYPE_CANONICAL} to -->
+<!-- @code{NULL_TREE}. -->
+该宏规定给定的类型节点需要进行结构相等检查，例如，其将<code>TYPE_CANONICAL</code>设为<code>NULL_TREE</code>。
+
+     <br><dt><code>same_type_p</code><a name="index-same_005ftype_005fp-2387"></a><dd><!-- This predicate takes two types as input, and holds if they are the same -->
+<!-- type.  For example, if one type is a @code{typedef} for the other, or -->
+<!-- both are @code{typedef}s for the same type.  This predicate also holds if -->
+<!-- the two trees given as input are simply copies of one another; i.e., -->
+<!-- there is no difference between them at the source level, but, for -->
+<!-- whatever reason, a duplicate has been made in the representation.  You -->
+<!-- should never use @code{==} (pointer equality) to compare types; always -->
+<!-- use @code{same_type_p} instead. -->
+该断言接受两个类型作为输入，如果它们为相同的类型，则判断成立。例如，如果一个类型为另一个类型的<code>typedef</code>，或者这两个都为同一个类型的<code>typedef</code>。如果作为输入给定的两个tree，只是简单的为另一个的复制，则该断言也成立；即，它们在源代码级别没有差别，但是，出于某种原因，在表示的时候进行了复制。不要用<code>==</code>（pointer equality）来比较类型；要用<code>same_type_p</code>。
+</dl>
+
+<!-- Detailed below are the various kinds of types, and the macros that can -->
+<!-- be used to access them.  Although other kinds of types are used -->
+<!-- elsewhere in G++, the types described here are the only ones that you -->
+<!-- will encounter while examining the intermediate representation. -->
+ <p>下面详细介绍了各种类型，以及可以用来访问它们的宏。虽然有其它类型是在G++中用到，这里描述的类型将只是当你检查中间表示时会遇到的。
+
+     <dl>
+<dt><code>VOID_TYPE</code><dd><!-- Used to represent the @code{void} type. -->
+用于表示<code>void</code>类型。
+
+     <br><dt><code>INTEGER_TYPE</code><dd><!-- Used to represent the various integral types, including @code{char}, -->
+<!-- @code{short}, @code{int}, @code{long}, and @code{long long}.  This code -->
+<!-- is not used for enumeration types, nor for the @code{bool} type. -->
+<!-- The @code{TYPE_PRECISION} is the number of bits used in -->
+<!-- the representation, represented as an @code{unsigned int}.  (Note that -->
+<!-- in the general case this is not the same value as @code{TYPE_SIZE}; -->
+<!-- suppose that there were a 24-bit integer type, but that alignment -->
+<!-- requirements for the ABI required 32-bit alignment.  Then, -->
+<!-- @code{TYPE_SIZE} would be an @code{INTEGER_CST} for 32, while -->
+<!-- @code{TYPE_PRECISION} would be 24.)  The integer type is unsigned if -->
+<!-- @code{TYPE_UNSIGNED} holds; otherwise, it is signed. -->
+用来表示跟中整数类型，包括<code>char</code>，<code>short</code>，<code>int</code>，<code>long</code>和<code>long long</code>。该代码不用于枚举类型和<code>bool</code>类型。<code>TYPE_PRECISION</code>为用于表示该类型的位数，是一个<code>unsigned int</code>。（注意，通常情况它的值与<code>TYPE_SIZE</code>不相同；假设有一个24位的整数类型，但是ABI要求32位的对齐方式。则，<code>TYPE_SIZE</code>将为一个<code>INTEGER_CST</code>，32，而<code>TYPE_PRECISION</code>为24。）如果<code>TYPE_UNSIGNED</code>成立，则整数类型为无符号的；否则为有符号的。
+
+     <!-- The @code{TYPE_MIN_VALUE} is an @code{INTEGER_CST} for the smallest -->
+     <!-- integer that may be represented by this type.  Similarly, the -->
+     <!-- @code{TYPE_MAX_VALUE} is an @code{INTEGER_CST} for the largest integer -->
+     <!-- that may be represented by this type. -->
+     <p><code>TYPE_MIN_VALUE</code>为一个<code>INTEGER_CST</code>，是该类型可以表示的最小整数。类似的，<code>TYPE_MAX_VALUE</code>为一个<code>INTEGER_CST</code>，是该类型可以表示的最大整数。
+
+     <br><dt><code>REAL_TYPE</code><dd><!-- Used to represent the @code{float}, @code{double}, and @code{long -->
+<!-- double} types.  The number of bits in the floating-point representation -->
+<!-- is given by @code{TYPE_PRECISION}, as in the @code{INTEGER_TYPE} case. -->
+用来表示类型<code>float</code>，<code>double</code>和<code>long double</code>。跟<code>INTEGER_TYPE</code>的情况类型，用于浮点表示的位数由<code>TYPE_PRECISION</code>给出。
+
+     <br><dt><code>FIXED_POINT_TYPE</code><dd><!-- Used to represent the @code{short _Fract}, @code{_Fract}, @code{long -->
+<!-- _Fract}, @code{long long _Fract}, @code{short _Accum}, @code{_Accum}, -->
+<!-- @code{long _Accum}, and @code{long long _Accum} types.  The number of bits -->
+<!-- in the fixed-point representation is given by @code{TYPE_PRECISION}, -->
+<!-- as in the @code{INTEGER_TYPE} case.  There may be padding bits, fractional -->
+<!-- bits and integral bits.  The number of fractional bits is given by -->
+<!-- @code{TYPE_FBIT}, and the number of integral bits is given by @code{TYPE_IBIT}. -->
+<!-- The fixed-point type is unsigned if @code{TYPE_UNSIGNED} holds; otherwise, -->
+<!-- it is signed. -->
+<!-- The fixed-point type is saturating if @code{TYPE_SATURATING} holds; otherwise, -->
+<!-- it is not saturating. -->
+用来表示类型<code>short _Fract</code>, <code>_Fract</code>, <code>long _Fract</code>, <code>long long _Fract</code>, <code>short _Accum</code>, <code>_Accum</code>, <code>long _Accum</code>, 和 <code>long long _Accum</code>。跟<code>INTEGER_TYPE</code>的情况类型，用于定点表示的位数由<code>TYPE_PRECISION</code>给出。可能会有填充位，小数位和整数位。小数的位数由<code>TYPE_FBIT</code>给出，整数的位数由<code>TYPE_IBIT</code>给出。如果<code>TYPE_UNSIGNED</code>成立，则定点类型为无符号的；否则为有符号的。如果<code>TYPE_SATURATING</code>成立，则定点类型为饱和的；否则不是饱和的。
+
+     <br><dt><code>COMPLEX_TYPE</code><dd><!-- Used to represent GCC built-in @code{__complex__} data types.  The -->
+<!-- @code{TREE_TYPE} is the type of the real and imaginary parts. -->
+用来表示GCC内建的<code>__complex__</code>数据类型。<code>TREE_TYPE</code>为实部和虚部的类型。
+
+     <br><dt><code>ENUMERAL_TYPE</code><dd><!-- Used to represent an enumeration type.  The @code{TYPE_PRECISION} gives -->
+<!-- (as an @code{int}), the number of bits used to represent the type.  If -->
+<!-- there are no negative enumeration constants, @code{TYPE_UNSIGNED} will -->
+<!-- hold.  The minimum and maximum enumeration constants may be obtained -->
+<!-- with @code{TYPE_MIN_VALUE} and @code{TYPE_MAX_VALUE}, respectively; each -->
+<!-- of these macros returns an @code{INTEGER_CST}. -->
+用于表示枚举类型。<code>TYPE_PRECISION</code>给出了用于表示该类型的位数（为一个<code>int</code>）。如果没有负数的枚举常量，则<code>TYPE_UNSIGNED</code>成立。最小和最大的枚举常量，可以分别使用<code>TYPE_MIN_VALUE</code>和<code>TYPE_MAX_VALUE</code>获得；每个宏都返回一个<code>INTEGER_CST</code>。
+
+     <!-- The actual enumeration constants themselves may be obtained by looking -->
+     <!-- at the @code{TYPE_VALUES}.  This macro will return a @code{TREE_LIST}, -->
+     <!-- containing the constants.  The @code{TREE_PURPOSE} of each node will be -->
+     <!-- an @code{IDENTIFIER_NODE} giving the name of the constant; the -->
+     <!-- @code{TREE_VALUE} will be an @code{INTEGER_CST} giving the value -->
+     <!-- assigned to that constant.  These constants will appear in the order in -->
+     <!-- which they were declared.  The @code{TREE_TYPE} of each of these -->
+     <!-- constants will be the type of enumeration type itself. -->
+     <p>实际的枚举常量可以通过查看<code>TYPE_VALUES</code>来获得。该宏将返回一个<code>TREE_LIST</code>，包含了常量；<code>TREE_VALUE</code>将为一个<code>INTEGER_CST</code>，给出了赋予那个常量的值。这些常量将按照它们被声明的顺序出现。每个常量的<code>TREE_TYPE</code>，将为枚举类型本身的类型。
+
+     <br><dt><code>BOOLEAN_TYPE</code><dd><!-- Used to represent the @code{bool} type. -->
+用来表示<code>bool</code>类型。
+
+     <br><dt><code>POINTER_TYPE</code><dd><!-- Used to represent pointer types, and pointer to data member types.  The -->
+<!-- @code{TREE_TYPE} gives the type to which this type points. -->
+用来表示指针类型，以及指向数据成员的指针类型。<code>TREE_TYPE</code>给出了所指向的类型。如果类型为一个指向数据成员的指针，则<code>TYPE_PTRMEM_P</code>成立。对于一个指向&lsquo;<samp><span class="samp">T X::*</span></samp>&rsquo;形式的数据成员类型的指针，<code>TYPE_PTRMEM_CLASS_TYPE</code>将为类型<code>X</code>，而<code>TYPE_PTRMEM_POINTED_TO_TYPE</code>为类型<code>T</code>。
+
+     <br><dt><code>REFERENCE_TYPE</code><dd><!-- Used to represent reference types.  The @code{TREE_TYPE} gives the type -->
+<!-- to which this type refers. -->
+用来表示引用类型。<code>TREE_TYPE</code>给出了所引用的类型。
+
+     <br><dt><code>FUNCTION_TYPE</code><dd><!-- Used to represent the type of non-member functions and of static member -->
+<!-- functions.  The @code{TREE_TYPE} gives the return type of the function. -->
+<!-- The @code{TYPE_ARG_TYPES} are a @code{TREE_LIST} of the argument types. -->
+<!-- The @code{TREE_VALUE} of each node in this list is the type of the -->
+<!-- corresponding argument; the @code{TREE_PURPOSE} is an expression for the -->
+<!-- default argument value, if any.  If the last node in the list is -->
+<!-- @code{void_list_node} (a @code{TREE_LIST} node whose @code{TREE_VALUE} -->
+<!-- is the @code{void_type_node}), then functions of this type do not take -->
+<!-- variable arguments.  Otherwise, they do take a variable number of -->
+<!-- arguments. -->
+用来表示非成员函数和静态成员函数的类型。<code>TREE_TYPE</code>给出了函数的返回值类型。<code>TYPE_ARG_TYPES</code>为一个<code>TREE_LIST</code>，参数类型列表。该列表上的每个节点的<code>TREE_VALUE</code>为相应参数的类型；<code>TREE_PURPOSE</code>如果存在，则为缺省参数值的表达式。如果列表中的最后一个节点为<code>void_list_node</code>（一个<code>TREE_LIST</code>节点，其<code>TREE_VALUE</code>为<code>void_type_node</code>），则该类型的函数不接受可变参数。否则，它们是接受可变数目的参数。
+
+     <!-- Note that in C (but not in C++) a function declared like @code{void f()} -->
+     <!-- is an unprototyped function taking a variable number of arguments; the -->
+     <!-- @code{TYPE_ARG_TYPES} of such a function will be @code{NULL}. -->
+     <p>注意，在C（而不是C++）中，一个声明如<code>void f()</code>的函数，为一个无函数原型的函数，其接受可变数目的参数；这样的函数的<code>TYPE_ARG_TYPES</code>将为<code>NULL</code>。
+
+     <br><dt><code>METHOD_TYPE</code><dd><!-- Used to represent the type of a non-static member function.  Like a -->
+<!-- @code{FUNCTION_TYPE}, the return type is given by the @code{TREE_TYPE}. -->
+<!-- The type of @code{*this}, i.e., the class of which functions of this -->
+<!-- type are a member, is given by the @code{TYPE_METHOD_BASETYPE}.  The -->
+<!-- @code{TYPE_ARG_TYPES} is the parameter list, as for a -->
+<!-- @code{FUNCTION_TYPE}, and includes the @code{this} argument. -->
+用来表示非静态成员函数的类型。像<code>FUNCTION_TYPE</code>一样，返回值由<code>TREE_TYPE</code>给出。<code>*this</code>的类型，即，这个函数成员所在的类的类型，由<code>TYPE_METHOD_BASETYPE</code>给出。<code>TYPE_ARG_TYPES</code>为参数列表，就像<code>FUNCTION_TYPE</code>一样，包含<code>this</code>参数。
+
+     <br><dt><code>ARRAY_TYPE</code><dd><!-- Used to represent array types.  The @code{TREE_TYPE} gives the type of -->
+<!-- the elements in the array.  If the array-bound is present in the type, -->
+<!-- the @code{TYPE_DOMAIN} is an @code{INTEGER_TYPE} whose -->
+<!-- @code{TYPE_MIN_VALUE} and @code{TYPE_MAX_VALUE} will be the lower and -->
+<!-- upper bounds of the array, respectively.  The @code{TYPE_MIN_VALUE} will -->
+<!-- always be an @code{INTEGER_CST} for zero, while the -->
+<!-- @code{TYPE_MAX_VALUE} will be one less than the number of elements in -->
+<!-- the array, i.e., the highest value which may be used to index an element -->
+<!-- in the array. -->
+用于表示数组类型，<code>TREE_TYPE</code>给出了数组元素的类型。如果数组边界在类型中存在，则<code>TYPE_DOMAIN</code>为一个<code>INTEGER_TYPE</code>，它的<code>TYPE_MIN_VALUE</code>和<code>TYPE_MAX_VALUE</code>将分别为数组的下界和上界。<code>TYPE_MIN_VALUE</code>将总是为<code>INTEGER_CST</code>，0，而<code>TYPE_MAX_VALUE</code>将为数组元素数目减1，即可以用来索引数组元素的最大值。
+
+     <br><dt><code>RECORD_TYPE</code><dd><!-- Used to represent @code{struct} and @code{class} types, as well as -->
+<!-- pointers to member functions and similar constructs in other languages. -->
+<!-- @code{TYPE_FIELDS} contains the items contained in this type, each of -->
+<!-- which can be a @code{FIELD_DECL}, @code{VAR_DECL}, @code{CONST_DECL}, or -->
+<!-- @code{TYPE_DECL}.  You may not make any assumptions about the ordering -->
+<!-- of the fields in the type or whether one or more of them overlap. -->
+用来表示<code>struct</code>和<code>class</code>类型，以及指向成员函数和其它语言中类似结构的指针。<code>TYPE_FIELDS</code>包含了该类型中包含的项，其可以为<code>FIELD_DECL</code>, <code>VAR_DECL</code>, <code>CONST_DECL</code>或<code>TYPE_DECL</code>。你不能假设类型中的域之间的顺序，以及它们是否有重叠。
+
+     <br><dt><code>UNION_TYPE</code><dd><!-- Used to represent @code{union} types.  Similar to @code{RECORD_TYPE} -->
+<!-- except that all @code{FIELD_DECL} nodes in @code{TYPE_FIELD} start at -->
+<!-- bit position zero. -->
+用来表示<code>union</code>类型。类似于<code>RECORD_TYPE</code>，只不过在<code>TYPE_FIELD</code>中的所有<code>FIELD_DECL</code>起始于0位。
+
+     <br><dt><code>QUAL_UNION_TYPE</code><dd><!-- Used to represent part of a variant record in Ada.  Similar to -->
+<!-- @code{UNION_TYPE} except that each @code{FIELD_DECL} has a -->
+<!-- @code{DECL_QUALIFIER} field, which contains a boolean expression that -->
+<!-- indicates whether the field is present in the object.  The type will only -->
+<!-- have one field, so each field's @code{DECL_QUALIFIER} is only evaluated -->
+<!-- if none of the expressions in the previous fields in @code{TYPE_FIELDS} -->
+<!-- are nonzero.  Normally these expressions will reference a field in the -->
+<!-- outer object using a @code{PLACEHOLDER_EXPR}. -->
+用来表示Ada中的可变记录（variant record）的一部分。类似于<code>UNION_TYPE</code>，只不过每个<code>FIELD_DECL</code>具有一个<code>DECL_QUALIFIER</code>域，其包含了一个布尔表达式，用来指示该域是否在对象中存在。该类型将只有一个域，所以只有当<code>TYPE_FIELDS</code>中，先前的域中的表达式都不为零时，每个域的<code>DECL_QUALIFIER</code>才被求值。通常，这些表达式将使用<code>PLACEHOLDER_EXPR</code>引用外部对象的一个域。
+
+     <br><dt><code>LANG_TYPE</code><dd><!-- This node is used to represent a language-specific type.  The front -->
+<!-- end must handle it. -->
+该节点用来表示一个语言特定的类型。前端必须对它进行处理。
+
+     <br><dt><code>OFFSET_TYPE</code><dd><!-- This node is used to represent a pointer-to-data member.  For a data -->
+<!-- member @code{X::m} the @code{TYPE_OFFSET_BASETYPE} is @code{X} and the -->
+<!-- @code{TREE_TYPE} is the type of @code{m}. -->
+该节点用于表示一个pointer-to-data成员。对于一个数据成员<code>X::m</code>，则<code>TYPE_OFFSET_BASETYPE</code>为<code>X</code>，<code>TREE_TYPE</code>为 <code>m</code>类型.
+
+ </dl>
+
+<!-- There are variables whose values represent some of the basic types. -->
+<!-- These include: -->
+ <p>有些变量，它们的值表示基本的类型。这包括：
+     <dl>
+<dt><code>void_type_node</code><dd><!-- A node for @code{void}. -->
+<code>void</code>节点。
+
+     <br><dt><code>integer_type_node</code><dd><!-- A node for @code{int}. -->
+<code>int</code>节点。
+
+     <br><dt><code>unsigned_type_node.</code><dd><!-- A node for @code{unsigned int}. -->
+<code>unsigned int</code>节点。
+
+     <br><dt><code>char_type_node.</code><dd><!-- A node for @code{char}. -->
+<code>char</code>节点。
+</dl>
+ <!-- It may sometimes be useful to compare one of these variables with a type -->
+<!-- in hand, using @code{same_type_p}. -->
+有时使用<code>same_type_p</code>将这些变量和手头的类型进行比较会很有帮助。
+
+<!--  -->
+<!-- Declarations -->
+<!--  -->
+<!-- @node Declarations -->
+<!-- @section Declarations -->
+ </body></html>
+

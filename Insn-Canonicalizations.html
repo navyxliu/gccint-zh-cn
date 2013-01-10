@@ -1,0 +1,263 @@
+<html lang="zh">
+<head>
+<title>Insn Canonicalizations - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Machine-Desc.html#Machine-Desc" title="Machine Desc">
+<link rel="prev" href="Looping-Patterns.html#Looping-Patterns" title="Looping Patterns">
+<link rel="next" href="Expander-Definitions.html#Expander-Definitions" title="Expander Definitions">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Insn-Canonicalizations"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Looping-Patterns.html#Looping-Patterns">Looping Patterns</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Machine-Desc.html#Machine-Desc">Machine Desc</a>
+<hr>
+</div>
+
+<h3 class="section">16.14 指令规范化</h3>
+
+<p><a name="index-canonicalization-of-instructions-3587"></a><a name="index-insn-canonicalization-3588"></a>
+<!-- There are often cases where multiple RTL expressions could represent an -->
+<!-- operation performed by a single machine instruction.  This situation is -->
+<!-- most commonly encountered with logical, branch, and multiply-accumulate -->
+<!-- instructions.  In such cases, the compiler attempts to convert these -->
+<!-- multiple RTL expressions into a single canonical form to reduce the -->
+<!-- number of insn patterns required. -->
+<!-- In addition to algebraic simplifications, following canonicalizations -->
+<!-- are performed: -->
+经常会有多个RTL表达式可以表示由单个机器指令所执行的运算。该情况对于逻辑，
+分支和乘累加指令最常见。对于这样的情况，
+编译器尝试将这些多个RTL表达式转换为一个规范的形式，
+以减少对insn指令模式的需求数。
+
+ <p>除了进行代数简化以外，还执行了下面的规范化：
+
+<!-- @itemize @bullet -->
+<!-- @item -->
+<!-- For commutative and comparison operators, a constant is always made the -->
+<!-- second operand.  If a machine only supports a constant as the second -->
+<!-- operand, only patterns that match a constant in the second operand need -->
+<!-- be supplied. -->
+<!-- @item -->
+<!-- For associative operators, a sequence of operators will always chain -->
+<!-- to the left; for instance, only the left operand of an integer @code{plus} -->
+<!-- can itself be a @code{plus}.  @code{and}, @code{ior}, @code{xor}, -->
+<!-- @code{plus}, @code{mult}, @code{smin}, @code{smax}, @code{umin}, and -->
+<!-- @code{umax} are associative when applied to integers, and sometimes to -->
+<!-- floating-point. -->
+     <ul>
+<li>对于可交换指令和比较指令，总是将常量作为第二个操作数。
+如果机器只支持常量作为第二个操作数，
+则只需要提供匹配将常量作为第二个操作数的指令模式。
+
+     <li>对于结合性操作符，操作符序列总是向左方向链接；例如，一个整数<code>plus</code>，
+只有它的左操作数本身可以为一个<code>plus</code>。当应用到整数时，
+<code>and</code>, <code>ior</code>, <code>xor</code>, <code>plus</code>, <code>mult</code>, <code>smin</code>,
+<code>smax</code>, <code>umin</code>和<code>umax</code>为可结合的，对于浮点，这些有时为可结合的。
+
+     <!-- @item -->
+     <!-- @cindex @code{neg}, canonicalization of -->
+     <!-- @cindex @code{not}, canonicalization of -->
+     <!-- @cindex @code{mult}, canonicalization of -->
+     <!-- @cindex @code{plus}, canonicalization of -->
+     <!-- @cindex @code{minus}, canonicalization of -->
+     <!-- For these operators, if only one operand is a @code{neg}, @code{not}, -->
+     <!-- @code{mult}, @code{plus}, or @code{minus} expression, it will be the -->
+     <!-- first operand. -->
+     <!-- @item -->
+     <!-- In combinations of @code{neg}, @code{mult}, @code{plus}, and -->
+     <!-- @code{minus}, the @code{neg} operations (if any) will be moved inside -->
+     <!-- the operations as far as possible.  For instance, -->
+     <!-- @code{(neg (mult A B))} is canonicalized as @code{(mult (neg A) B)}, but -->
+     <!-- @code{(plus (mult (neg B) C) A)} is canonicalized as -->
+     <!-- @code{(minus A (mult B C))}. -->
+     <li><a name="index-g_t_0040code_007bneg_007d_002c-canonicalization-of-3589"></a><a name="index-g_t_0040code_007bnot_007d_002c-canonicalization-of-3590"></a><a name="index-g_t_0040code_007bmult_007d_002c-canonicalization-of-3591"></a><a name="index-g_t_0040code_007bplus_007d_002c-canonicalization-of-3592"></a><a name="index-g_t_0040code_007bminus_007d_002c-canonicalization-of-3593"></a>对于这些操作符，如果只有一个为<code>neg</code>, <code>not</code>,<code>mult</code>, <code>plus</code> 或
+<code>minus</code>表达式的操作数，则其将为第一个操作数。
+
+     <li>对于<code>neg</code>, <code>mult</code>, <code>plus</code>和<code>minus</code>的组合中，
+<code>neg</code>操作（如果存在）将被尽可能的移到内部。
+例如<code>(neg (mult A B))</code>将被规范为<code>(mult (neg A) B)</code>，
+但是<code>(plus (mult (neg A) B) C)</code>将被规范为<code>(minus A (mult B C))</code>。
+
+     <!-- @cindex @code{compare}, canonicalization of -->
+     <!-- @item -->
+     <!-- For the @code{compare} operator, a constant is always the second operand -->
+     <!-- if the first argument is a condition code register or @code{(cc0)}. -->
+     <!-- @item -->
+     <!-- An operand of @code{neg}, @code{not}, @code{mult}, @code{plus}, or -->
+     <!-- @code{minus} is made the first operand under the same conditions as -->
+     <!-- above. -->
+     <p><a name="index-g_t_0040code_007bcompare_007d_002c-canonicalization-of-3594"></a><li>对于<code>compare</code>运算符，在使用<code>cc0</code>（参见<a href="Jump-Patterns.html#Jump-Patterns">Jump Patterns</a>）的机器上，
+常量总是为第二个操作数。 在其它机器上，极少的情况下，
+编译器可能想使用常量作为第一个操作数来构建<code>compare</code>。但是，
+这些情况并不常见，所以不值得来提供匹配常量作为第一个操作数的指令模式，
+除非机器确实具有这样的指令。
+
+     <p>在与上面条件相同的情况下，<code>neg</code>, <code>not</code>, <code>mult</code>, <code>plus</code> 或
+<code>minus</code>的操作数被作为第一个操作数。
+
+     <!-- @item -->
+     <!-- @code{(ltu (plus @var{a} @var{b}) @var{b})} is converted to -->
+     <!-- @code{(ltu (plus @var{a} @var{b}) @var{a})}. Likewise with @code{geu} instead -->
+     <!-- of @code{ltu}. -->
+     <!-- @item -->
+     <!-- @code{(minus @var{x} (const_int @var{n}))} is converted to -->
+     <!-- @code{(plus @var{x} (const_int @var{-n}))}. -->
+     <!-- @item -->
+     <!-- Within address computations (i.e., inside @code{mem}), a left shift is -->
+     <!-- converted into the appropriate multiplication by a power of two. -->
+     <li><code>(ltu (plus </code><var>a</var> <var>b</var><code>) </code><var>b</var><code>)</code>被转换为
+<code>(ltu (plus </code><var>a</var> <var>b</var><code>) </code><var>a</var><code>)</code>。
+同样，使用<code>geu</code>来替换<code>ltu</code>。
+
+     <li><code>(minus </code><var>x</var><code> (const_int </code><var>n</var><code>))</code>被转换为
+<code>(plus </code><var>x</var><code> (const_int </code><var>-n</var><code>))</code>。
+
+     <li>在地址计算中（即，在<code>mem</code>中），左移操作被转换为与合适的2的幂相乘。
+
+     <!-- @cindex @code{ior}, canonicalization of -->
+     <!-- @cindex @code{and}, canonicalization of -->
+     <!-- @cindex De Morgan's law -->
+     <!-- @item -->
+     <!-- De Morgan's Law is used to move bitwise negation inside a bitwise -->
+     <!-- logical-and or logical-or operation.  If this results in only one -->
+     <!-- operand being a @code{not} expression, it will be the first one. -->
+     <!-- A machine that has an instruction that performs a bitwise logical-and of one -->
+     <!-- operand with the bitwise negation of the other should specify the pattern -->
+     <!-- for that instruction as -->
+     <!-- @smallexample -->
+     <!-- (define_insn "" -->
+     <!-- [(set (match_operand:@var{m} 0 @dots{}) -->
+     <!-- (and:@var{m} (not:@var{m} (match_operand:@var{m} 1 @dots{})) -->
+     <!-- (match_operand:@var{m} 2 @dots{})))] -->
+     <!-- "@dots{}" -->
+     <!-- "@dots{}") -->
+     <!-- @end smallexample -->
+     <!-- @noindent -->
+     <p><a name="index-g_t_0040code_007bior_007d_002c-canonicalization-of-3595"></a><a name="index-g_t_0040code_007band_007d_002c-canonicalization-of-3596"></a><a name="index-De-Morgan_0027s-law-3597"></a><li>De Morgan法则被用于在按位‘逻辑与’或着‘逻辑或’运算中，将位置反。
+如果该结果为<code>not</code>表达式的唯一的操作数，则其为第一个。
+
+     <p>具有执行按位‘逻辑与’，且其中一个操作数为一个按位求反的机器，
+应该为该指令指定如下的指令模式
+
+     <pre class="smallexample">          (define_insn ""
+            [(set (match_operand:<var>m</var> 0 ...)
+                  (and:<var>m</var> (not:<var>m</var> (match_operand:<var>m</var> 1 ...))
+                               (match_operand:<var>m</var> 2 ...)))]
+            "..."
+            "...")
+</pre>
+     <p class="noindent"><!-- Similarly, a pattern for a ``NAND'' instruction should be written -->
+<!-- @smallexample -->
+<!-- (define_insn "" -->
+<!-- [(set (match_operand:@var{m} 0 @dots{}) -->
+<!-- (ior:@var{m} (not:@var{m} (match_operand:@var{m} 1 @dots{})) -->
+<!-- (not:@var{m} (match_operand:@var{m} 2 @dots{}))))] -->
+<!-- "@dots{}" -->
+<!-- "@dots{}") -->
+<!-- @end smallexample -->
+<!-- In both cases, it is not necessary to include patterns for the many -->
+<!-- logically equivalent RTL expressions. -->
+类似的，“NAND”指令的指令模式应给被写为
+
+     <pre class="smallexample">          (define_insn ""
+            [(set (match_operand:<var>m</var> 0 ...)
+                  (ior:<var>m</var> (not:<var>m</var> (match_operand:<var>m</var> 1 ...))
+                               (not:<var>m</var> (match_operand:<var>m</var> 2 ...))))]
+            "..."
+            "...")
+</pre>
+     <p>对于这两种情况，都没必要包含许多逻辑上相同的RTL表达式。
+
+     <!-- @cindex @code{xor}, canonicalization of -->
+     <!-- @item -->
+     <!-- The only possible RTL expressions involving both bitwise exclusive-or -->
+     <!-- and bitwise negation are @code{(xor:@var{m} @var{x} @var{y})} -->
+     <!-- and @code{(not:@var{m} (xor:@var{m} @var{x} @var{y}))}. -->
+     <!-- @item -->
+     <!-- The sum of three items, one of which is a constant, will only appear in -->
+     <!-- the form -->
+     <!-- @smallexample -->
+     <!-- (plus:@var{m} (plus:@var{m} @var{x} @var{y}) @var{constant}) -->
+     <!-- @end smallexample -->
+     <p><a name="index-g_t_0040code_007bxor_007d_002c-canonicalization-of-3598"></a><li>涉及按位‘异或’和求反的唯一可能的RTL表达式为<code>(xor:</code><var>m</var> <var>x</var> <var>y</var><code>)</code>
+和<code>(not:</code><var>m</var><code> (xor:</code><var>m</var> <var>x</var> <var>y</var><code>))</code>。
+
+     <li>对于三项的和，其中一个为常量的，将使用如下形式
+
+     <pre class="smallexample">          (plus:<var>m</var> (plus:<var>m</var> <var>x</var> <var>y</var>) <var>constant</var>)
+</pre>
+     <li>在不使用<code>cc0</code>的机器上，
+<code>(compare </code><var>x</var><code> (const_int 0))</code>将被转换为<var>x</var>。
+
+     <!-- @cindex @code{zero_extract}, canonicalization of -->
+     <!-- @cindex @code{sign_extract}, canonicalization of -->
+     <!-- @item -->
+     <!-- Equality comparisons of a group of bits (usually a single bit) with zero -->
+     <!-- will be written using @code{zero_extract} rather than the equivalent -->
+     <!-- @code{and} or @code{sign_extract} operations. -->
+     <!-- @cindex @code{mult}, canonicalization of -->
+     <!-- @item -->
+     <!-- @code{(sign_extend:@var{m1} (mult:@var{m2} (sign_extend:@var{m2} @var{x}) -->
+     <!-- (sign_extend:@var{m2} @var{y})))} is converted to @code{(mult:@var{m1} -->
+     <!-- (sign_extend:@var{m1} @var{x}) (sign_extend:@var{m1} @var{y}))}, and likewise -->
+     <!-- for @code{zero_extend}. -->
+     <!-- @item -->
+     <!-- @code{(sign_extend:@var{m1} (mult:@var{m2} (ashiftrt:@var{m2} -->
+     <!-- @var{x} @var{s}) (sign_extend:@var{m2} @var{y})))} is converted -->
+     <!-- to @code{(mult:@var{m1} (sign_extend:@var{m1} (ashiftrt:@var{m2} -->
+     <!-- @var{x} @var{s})) (sign_extend:@var{m1} @var{y}))}, and likewise for -->
+     <!-- patterns using @code{zero_extend} and @code{lshiftrt}.  If the second -->
+     <!-- operand of @code{mult} is also a shift, then that is extended also. -->
+     <!-- This transformation is only applied when it can be proven that the -->
+     <!-- original operation had sufficient precision to prevent overflow. -->
+     <!-- @end itemize -->
+     <!-- Further canonicalization rules are defined in the function -->
+     <!-- @code{commutative_operand_precedence} in @file{gcc/rtlanal.c}. -->
+     <p><a name="index-g_t_0040code_007bzero_005fextract_007d_002c-canonicalization-of-3599"></a><a name="index-g_t_0040code_007bsign_005fextract_007d_002c-canonicalization-of-3600"></a><li>位组（通常是单个位）和0的相等比较，将使用<code>zero_extract</code>，
+而不是等价的<code>and</code>或者<code>sign_extract</code>运算。
+
+ </ul>
+
+ <p>更多的规范化规则都定义在<samp><span class="file">gcc/rtlanal.c</span></samp>里的函数<code>commutative_operand_precedence</code>中。
+
+<!-- @end ifset -->
+<!-- @ifset INTERNALS -->
+<!-- @node Expander Definitions -->
+<!-- @section Defining RTL Sequences for Code Generation -->
+<!-- @cindex expander definitions -->
+<!-- @cindex code generation RTL sequences -->
+<!-- @cindex defining RTL sequences for code generation -->
+ </body></html>
+

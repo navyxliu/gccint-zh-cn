@@ -1,0 +1,536 @@
+<html lang="zh">
+<head>
+<title>Plugins - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="prev" href="Type-Information.html#Type-Information" title="Type Information">
+<link rel="next" href="LTO.html#LTO" title="LTO">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Plugins"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="LTO.html#LTO">LTO</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Type-Information.html#Type-Information">Type Information</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
+<hr>
+</div>
+
+<h2 class="chapter">23 插件</h2>
+
+<p><a name="index-Plugins-4975"></a>
+<!-- @section Loading Plugins -->
+
+<h3 class="section">23.1 加载插件</h3>
+
+<!-- Plugins are supported on platforms that support @option{-ldl -->
+<!-- rdynamic}.  They are loaded by the compiler using @code{dlopen} -->
+<!-- and invoked at pre-determined locations in the compilation -->
+<!-- process. -->
+<p>在支持<samp><span class="option">-ldl -rdynamic</span></samp>的平台上，插件才被支持。它们由编译器使用<code>dlopen</code>来加载，并在编译过程中预先确定的位置进行调用。
+
+<!-- Plugins are loaded with -->
+ <p>使用
+
+ <p><samp><span class="option">-fplugin=/path/to/</span><var>name</var><span class="option">.so</span></samp> <samp><span class="option">-fplugin-arg-</span><var>name</var><span class="option">-</span><var>key1</var><span class="option">[=</span><var>value1</var><span class="option">]</span></samp>
+
+ <p>来加载插件。
+
+<!-- The plugin arguments are parsed by GCC and passed to respective -->
+<!-- plugins as key-value pairs. Multiple plugins can be invoked by -->
+<!-- specifying multiple @option{-fplugin} arguments. -->
+ <p>插件的参数由GCC解析，并按照“关键字-值”（key-value pairs）的方式传递给相应的插件。可以通过指定多个<samp><span class="option">-fplugin</span></samp>参数来调用多个插件。
+
+<!-- A plugin can be simply given by its short name (no dots or -->
+<!-- slashes). When simply passing @option{-fplugin=@var{name}}, the plugin is -->
+<!-- loaded from the @file{plugin} directory, so @option{-fplugin=@var{name}} is -->
+<!-- the same as @option{-fplugin=`gcc -print-file-name=plugin`/@var{name}.so}, -->
+<!-- using backquote shell syntax to query the @file{plugin} directory. -->
+ <p>可以直接使用简短的名字（没有点和斜杠）来指定一个插件。当只是简单的传递<samp><span class="option">-fplugin=</span><var>name</var></samp>时，插件会从<samp><span class="file">plugin</span></samp>目录下被加载，所以<samp><span class="option">-fplugin=</span><var>name</var></samp>等同于<samp><span class="option">-fplugin=`gcc -print-file-name=plugin`/</span><var>name</var><span class="option">.so</span></samp>，使用反引号shell语法来查询<samp><span class="file">plugin</span></samp>目录。
+
+<!-- @section Plugin API -->
+<h3 class="section">23.2 插件的API</h3>
+
+<!-- Plugins are activated by the compiler at specific events as defined in -->
+<!-- @file{gcc-plugin.h}.  For each event of interest, the plugin should -->
+<!-- call @code{register_callback} specifying the name of the event and -->
+<!-- address of the callback function that will handle that event. -->
+<p>插件由编译器在特定的事件上激活，这些事件在<samp><span class="file">gcc-plugin.h</span></samp>中定义。对于每个感兴趣的事件，插件应该调用<code>register_callback</code>来指定事件的名字，以及将要处理该事件的回调函数的地址。
+
+<!-- The header @file{gcc-plugin.h} must be the first gcc header to be included. -->
+ <p>头文件<samp><span class="file">gcc-plugin.h</span></samp>必须为第一个包含的gcc头文件。
+
+<!-- @subsection Plugin license check -->
+<h4 class="subsection">23.2.1 插件的版权检查</h4>
+
+<!-- Every plugin should define the global symbol @code{plugin_is_GPL_compatible} -->
+<!-- to assert that it has been licensed under a GPL-compatible license. -->
+<!-- If this symbol does not exist, the compiler will emit a fatal error -->
+<!-- and exit with the error message: -->
+<p>每个插件应该定义全局符号<code>plugin_is_GPL_compatible</code>来宣称其具有GPL兼容的版权。如果该符号不存在，则编译器会产生一个致命错误，并带着如下错误信息退出：
+
+<pre class="smallexample">     fatal error: plugin <var>name</var> is not licensed under a GPL-compatible license
+     <var>name</var>: undefined symbol: plugin_is_GPL_compatible
+     compilation terminated
+</pre>
+ <!-- The declared type of the symbol should be int, to match a forward declaration -->
+<!-- in @file{gcc-plugin.h} that suppresses C++ mangling.  It does not need to be in -->
+<!-- any allocated section, though.  The compiler merely asserts that -->
+<!-- the symbol exists in the global scope.  Something like this is enough: -->
+ <p>该符号的声明类型应该为int，从而匹配在<samp><span class="file">gcc-plugin.h</span></samp>中为了抑制C++ mangling的前向声明。它其实并不需要位于任何分配的section中。编译器仅仅是使用断言来确保该符号在全局作用域中存在。类似于这样的就可以：
+
+<pre class="smallexample">     int plugin_is_GPL_compatible;
+</pre>
+ <!-- @subsection Plugin initialization -->
+<h4 class="subsection">23.2.2 插件的初始化</h4>
+
+<!-- Every plugin should export a function called @code{plugin_init} that -->
+<!-- is called right after the plugin is loaded. This function is -->
+<!-- responsible for registering all the callbacks required by the plugin -->
+<!-- and do any other required initialization. -->
+<p>每个插件都应该导出一个叫做<code>plugin_init</code>的函数，其在插件刚被加载之后调用。该函数负责注册插件需要的所有回调，并做其它所需要的初始化。
+
+<!-- This function is called from @code{compile_file} right before invoking -->
+<!-- the parser.  The arguments to @code{plugin_init} are: -->
+ <p>该函数就在调用语法分析器之前，由<code>compile_file</code>来调用。<code>plugin_init</code>的参数为：
+
+     <ul>
+<!-- @item @code{plugin_info}: Plugin invocation information. -->
+<li><code>plugin_info</code>: 插件调用信息。
+<!-- @item @code{version}: GCC version. -->
+<li><code>version</code>: GCC版本。
+</ul>
+
+<!-- The @code{plugin_info} struct is defined as follows: -->
+ <p><code>plugin_info</code>结构体的定义如下：
+
+<pre class="smallexample">     struct plugin_name_args
+     {
+       char *base_name;              /* Short name of the plugin
+                                        (filename without .so suffix). */
+       const char *full_name;        /* Path to the plugin as specified with
+                                        -fplugin=. */
+       int argc;                     /* Number of arguments specified with
+                                        -fplugin-arg-.... */
+       struct plugin_argument *argv; /* Array of ARGC key-value pairs. */
+       const char *version;          /* Version string provided by plugin. */
+       const char *help;             /* Help string provided by plugin. */
+     }
+</pre>
+ <!-- If initialization fails, @code{plugin_init} must return a non-zero -->
+<!-- value.  Otherwise, it should return 0. -->
+ <p>如果初始化失败，<code>plugin_init</code>必须翻译一个非零的值。否则，其应该返回0。
+
+<!-- The version of the GCC compiler loading the plugin is described by the -->
+<!-- following structure: -->
+ <p>加载插件的GCC编译器的版本使用如下结构体来描述：
+
+<pre class="smallexample">     struct plugin_gcc_version
+     {
+       const char *basever;
+       const char *datestamp;
+       const char *devphase;
+       const char *revision;
+       const char *configuration_arguments;
+     };
+</pre>
+ <!-- The function @code{plugin_default_version_check} takes two pointers to -->
+<!-- such structure and compare them field by field. It can be used by the -->
+<!-- plugin's @code{plugin_init} function. -->
+ <p>函数<code>plugin_default_version_check</code>接受两个指向该结构的指针，并按照域来进行比较。其可以在插件的<code>plugin_init</code>函数中使用。
+
+<!-- The version of GCC used to compile the plugin can be found in the symbol -->
+<!-- @code{gcc_version} defined in the header @file{plugin-version.h}. The -->
+<!-- recommended version check to perform looks like -->
+ <p>用来编译插件的GCC版本可以在符号<code>gcc_version</code>中找到，该符号在头文件<samp><span class="file">plugin-version.h</span></samp>中定义。推荐使用如下的方式来进行版本检查：
+
+<pre class="smallexample">     #include "plugin-version.h"
+     ...
+     
+     int
+     plugin_init (struct plugin_name_args *plugin_info,
+                  struct plugin_gcc_version *version)
+     {
+       if (!plugin_default_version_check (version, &amp;gcc_version))
+         return 1;
+     
+     }
+</pre>
+ <!-- but you can also check the individual fields if you want a less strict check. -->
+ <p>不过，如果你想进行不太严格的检查，你还可以只检查单独的域。
+
+<!-- @subsection Plugin callbacks -->
+<h4 class="subsection">23.2.3 插件回调</h4>
+
+<!-- Callback functions have the following prototype: -->
+<p>回调函数具有如下的函数原型：
+
+<pre class="smallexample">     /* The prototype for a plugin callback function.
+          gcc_data  - event-specific data provided by GCC
+          user_data - plugin-specific data provided by the plug-in.  */
+     typedef void (*plugin_callback_func)(void *gcc_data, void *user_data);
+</pre>
+ <!-- Callbacks can be invoked at the following pre-determined events: -->
+ <p>回调函数可以在如下预定义的事件上被调用：
+
+<pre class="smallexample">     enum plugin_event
+     {
+       PLUGIN_PASS_MANAGER_SETUP,    /* To hook into pass manager.  */
+       PLUGIN_FINISH_TYPE,           /* After finishing parsing a type.  */
+       PLUGIN_FINISH_DECL,           /* After finishing parsing a declaration. */
+       PLUGIN_FINISH_UNIT,           /* Useful for summary processing.  */
+       PLUGIN_PRE_GENERICIZE,        /* Allows to see low level AST in C and C++ frontends.  */
+       PLUGIN_FINISH,                /* Called before GCC exits.  */
+       PLUGIN_INFO,                  /* Information about the plugin. */
+       PLUGIN_GGC_START,             /* Called at start of GCC Garbage Collection. */
+       PLUGIN_GGC_MARKING,           /* Extend the GGC marking. */
+       PLUGIN_GGC_END,               /* Called at end of GGC. */
+       PLUGIN_REGISTER_GGC_ROOTS,    /* Register an extra GGC root table. */
+       PLUGIN_REGISTER_GGC_CACHES,   /* Register an extra GGC cache table. */
+       PLUGIN_ATTRIBUTES,            /* Called during attribute registration */
+       PLUGIN_START_UNIT,            /* Called before processing a translation unit.  */
+       PLUGIN_PRAGMAS,               /* Called during pragma registration. */
+       /* Called before first pass from all_passes.  */
+       PLUGIN_ALL_PASSES_START,
+       /* Called after last pass from all_passes.  */
+       PLUGIN_ALL_PASSES_END,
+       /* Called before first ipa pass.  */
+       PLUGIN_ALL_IPA_PASSES_START,
+       /* Called after last ipa pass.  */
+       PLUGIN_ALL_IPA_PASSES_END,
+       /* Allows to override pass gate decision for current_pass.  */
+       PLUGIN_OVERRIDE_GATE,
+       /* Called before executing a pass.  */
+       PLUGIN_PASS_EXECUTION,
+       /* Called before executing subpasses of a GIMPLE_PASS in
+          execute_ipa_pass_list.  */
+       PLUGIN_EARLY_GIMPLE_PASSES_START,
+       /* Called after executing subpasses of a GIMPLE_PASS in
+          execute_ipa_pass_list.  */
+       PLUGIN_EARLY_GIMPLE_PASSES_END,
+       /* Called when a pass is first instantiated.  */
+       PLUGIN_NEW_PASS,
+     
+       PLUGIN_EVENT_FIRST_DYNAMIC    /* Dummy event used for indexing callback
+                                        array.  */
+     };
+</pre>
+ <!-- In addition, plugins can also look up the enumerator of a named event, -->
+<!-- and / or generate new events dynamically, by calling the function -->
+<!-- @code{get_named_event_id}. -->
+ <p>除此之外，插件还可以查找命名事件的枚举变量，并且/或者通过调用函数<code>get_named_event_id</code>来动态生成新的事件。
+
+<!-- To register a callback, the plugin calls @code{register_callback} with -->
+<!-- the arguments: -->
+ <p>要注册一个回调，插件使用如下参数来调用<code>register_callback</code>：
+
+     <ul>
+<!-- @item @code{char *name}: Plugin name. -->
+<li><code>char *name</code>: 插件的名字。
+<!-- @item @code{int event}: The event code. -->
+<li><code>int event</code>: 事件代码。
+<!-- @item @code{plugin_callback_func callback}: The function that handles @code{event}. -->
+<li><code>plugin_callback_func callback</code>: 处理<code>event</code>的函数。
+<!-- @item @code{void *user_data}: Pointer to plugin-specific data. -->
+<li><code>void *user_data</code>: 指向插件特定数据的指针。
+</ul>
+
+<!-- For the PLUGIN_PASS_MANAGER_SETUP, PLUGIN_INFO, PLUGIN_REGISTER_GGC_ROOTS -->
+<!-- and PLUGIN_REGISTER_GGC_CACHES pseudo-events the @code{callback} should be -->
+<!-- null, and the @code{user_data} is specific. -->
+ <p>对于PLUGIN_PASS_MANAGER_SETUP，PLUGIN_INFO，PLUGIN_REGISTER_GGC_ROOTS和PLUGIN_REGISTER_GGC_CACHES这些伪事件，<code>callback</code>应该为空，<code>user_data</code>为特定的。
+
+<!-- When the PLUGIN_PRAGMAS event is triggered (with a null -->
+<!-- pointer as data from GCC), plugins may register their own pragmas -->
+<!-- using functions like @code{c_register_pragma} or -->
+<!-- @code{c_register_pragma_with_expansion}. -->
+ <p>当PLUGIN_PRAGMAS事件被触发（使用一个空指针，作为来自GCC的数据），插件可以使用函数，像<code>c_register_pragma</code>或者<code>c_register_pragma_with_expansion</code>，来注册它们自己的pragma。
+
+<!-- @section Interacting with the pass manager -->
+<h3 class="section">23.3 与pass manager进行交互</h3>
+
+<!-- There needs to be a way to add/reorder/remove passes dynamically. This -->
+<!-- is useful for both analysis plugins (plugging in after a certain pass -->
+<!-- such as CFG or an IPA pass) and optimization plugins. -->
+<p>需要有一种方法来动态地增加/重排/移除pass。这对分析类型的插件（位于特定pass，例如CFG或者IPA pass，之后）和优化类型的插件都很有帮助。
+
+<!-- Basic support for inserting new passes or replacing existing passes is -->
+<!-- provided. A plugin registers a new pass with GCC by calling -->
+<!-- @code{register_callback} with the @code{PLUGIN_PASS_MANAGER_SETUP} -->
+<!-- event and a pointer to a @code{struct register_pass_info} object defined as follows -->
+ <p>现在已经提供了对插入新的pass或者替换现有pass的基本支持。要注册一个新的pass，插件可以通过使用<code>PLUGIN_PASS_MANAGER_SETUP</code>事件和指向如下定义的<code>struct register_pass_info</code>对象的指针，来调用<code>register_callback</code>：
+
+<pre class="smallexample">     enum pass_positioning_ops
+     {
+       PASS_POS_INSERT_AFTER,  // Insert after the reference pass.
+       PASS_POS_INSERT_BEFORE, // Insert before the reference pass.
+       PASS_POS_REPLACE        // Replace the reference pass.
+     };
+     
+     struct register_pass_info
+     {
+       struct opt_pass *pass;            /* New pass provided by the plugin.  */
+       const char *reference_pass_name;  /* Name of the reference pass for hooking
+                                            up the new pass.  */
+       int ref_pass_instance_number;     /* Insert the pass at the specified
+                                            instance number of the reference pass.  */
+                                         /* Do it for every instance if it is 0.  */
+       enum pass_positioning_ops pos_op; /* how to insert the new pass.  */
+     };
+     
+     
+     /* Sample plugin code that registers a new pass.  */
+     int
+     plugin_init (struct plugin_name_args *plugin_info,
+                  struct plugin_gcc_version *version)
+     {
+       struct register_pass_info pass_info;
+     
+       ...
+     
+       /* Code to fill in the pass_info object with new pass information.  */
+     
+       ...
+     
+       /* Register the new pass.  */
+       register_callback (plugin_info-&gt;base_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &amp;pass_info);
+     
+       ...
+     }
+</pre>
+ <!-- @section Interacting with the GCC Garbage Collector -->
+<h3 class="section">23.4 与GCC垃圾搜集器进行交互</h3>
+
+<!-- Some plugins may want to be informed when GGC (the GCC Garbage -->
+<!-- Collector) is running. They can register callbacks for the -->
+<!-- @code{PLUGIN_GGC_START} and @code{PLUGIN_GGC_END} events (for which -->
+<!-- the callback is called with a null @code{gcc_data}) to be notified of -->
+<!-- the start or end of the GCC garbage collection. -->
+<p>一些插件想要当GGC（GCC Garbage Collector）运行的时候被告知。它们可以为<code>PLUGIN_GGC_START</code>和<code>PLUGIN_GGC_END</code>事件注册回调函数，从而在GCC垃圾搜集开始和结束时被告知。
+
+<!-- Some plugins may need to have GGC mark additional data. This can be -->
+<!-- done by registering a callback (called with a null @code{gcc_data}) -->
+<!-- for the @code{PLUGIN_GGC_MARKING} event. Such callbacks can call the -->
+<!-- @code{ggc_set_mark} routine, preferably thru the @code{ggc_mark} macro -->
+<!-- (and conversely, these routines should usually not be used in plugins -->
+<!-- outside of the @code{PLUGIN_GGC_MARKING} event). -->
+ <p>一些插件可能需要GGC来标记额外的数据。这可以通过为<code>PLUGIN_GGC_MARKING</code>事件注册一个回调函数（使用为空的<code>gcc_data</code>）来完成。这样的回调可以调用<code>ggc_set_mark</code>例程，最好是通过<code>ggc_mark</code>宏（反过来，这些例程通常不应该在插件中，<code>PLUGIN_GGC_MARKING</code>事件之外使用）。
+
+<!-- Some plugins may need to add extra GGC root tables, e.g. to handle their own -->
+<!-- @code{GTY}-ed data. This can be done with the @code{PLUGIN_REGISTER_GGC_ROOTS} -->
+<!-- pseudo-event with a null callback and the extra root table (of type @code{struct -->
+<!-- ggc_root_tab*}) as @code{user_data}.  Plugins that want to use the -->
+<!-- @code{if_marked} hash table option can add the extra GGC cache tables generated -->
+<!-- by @code{gengtype} using the @code{PLUGIN_REGISTER_GGC_CACHES} pseudo-event with -->
+<!-- a null callback and the extra cache table (of type @code{struct ggc_cache_tab*}) -->
+<!-- as @code{user_data}.  Running the @code{gengtype -p @var{source-dir} -->
+<!-- @var{file-list} @var{plugin*.c} ...} utility generates these extra root tables. -->
+ <p>一些插件可能需要增加额外的GGC root表，例如，来处理它们自己的<code>GTY</code>数据。这可以通过使用<code>PLUGIN_REGISTER_GGC_ROOTS</code>伪事件来完成，使用一个空的回调和额外的（<code>struct ggc_root_tab*</code>类型的）root表作为<code>user_data</code>。想要使用<code>if_marked</code>哈希表选项的插件，可以增加额外的GGC cache表，这些是由<code>gengtype</code>使用<code>PLUGIN_REGISTER_GGC_CACHES</code>伪事件，一个空回调和作为<code>user_data</code>的额外的（<code>struct ggc_cache_tab*</code>类型的）cache表，来生成的。运行<code>gengtype -p </code><var>source-dir</var> <var>file-list</var> <var>plugin*.c</var><code> ...</code>来产生这些额外的root表。
+
+<!-- You should understand the details of memory management inside GCC -->
+<!-- before using @code{PLUGIN_GGC_MARKING}, @code{PLUGIN_REGISTER_GGC_ROOTS} -->
+<!-- or @code{PLUGIN_REGISTER_GGC_CACHES}. -->
+ <p>你在使用<code>PLUGIN_GGC_MARKING</code>，<code>PLUGIN_REGISTER_GGC_ROOTS</code>或者<code>PLUGIN_REGISTER_GGC_CACHES</code>之前，应该理解GCC内部的内存管理的详细情况。
+
+<!-- @section Giving information about a plugin -->
+<h3 class="section">23.5 给出插件的信息</h3>
+
+<!-- A plugin should give some information to the user about itself. This -->
+<!-- uses the following structure: -->
+<p>插件应该给用户提供自身的一些信息。这使用下列结构：
+
+<pre class="smallexample">     struct plugin_info
+     {
+       const char *version;
+       const char *help;
+     };
+</pre>
+ <!-- Such a structure is passed as the @code{user_data} by the plugin's -->
+<!-- init routine using @code{register_callback} with the -->
+<!-- @code{PLUGIN_INFO} pseudo-event and a null callback. -->
+ <p>这样的一个结构体作为<code>user_data</code>由插件的初始化例程来传递，并使用<code>register_callback</code>，<code>PLUGIN_INFO</code>伪事件和一个空回调。
+
+<!-- @section Registering custom attributes or pragmas -->
+<h3 class="section">23.6 注册自定义的attributes或者pragmas</h3>
+
+<!-- For analysis (or other) purposes it is useful to be able to add custom -->
+<!-- attributes or pragmas. -->
+<p>出于分析（或者其它）目的，能够增加自定义的attributes或者pragmas是有帮助的。
+
+<!-- The @code{PLUGIN_ATTRIBUTES} callback is called during attribute -->
+<!-- registration. Use the @code{register_attribute} function to register -->
+<!-- custom attributes. -->
+ <p><code>PLUGIN_ATTRIBUTES</code>回调在属性注册的时候被调用。使用<code>register_attribute</code>函数来注册自定义的属性。
+
+<pre class="smallexample">     /* Attribute handler callback */
+     static tree
+     handle_user_attribute (tree *node, tree name, tree args,
+                            int flags, bool *no_add_attrs)
+     {
+       return NULL_TREE;
+     }
+     
+     /* Attribute definition */
+     static struct attribute_spec user_attr =
+       { "user", 1, 1, false,  false, false, handle_user_attribute, false };
+     
+     /* Plugin callback called during attribute registration.
+     Registered with register_callback (plugin_name, PLUGIN_ATTRIBUTES, register_attributes, NULL)
+     */
+     static void
+     register_attributes (void *event_data, void *data)
+     {
+       warning (0, G_("Callback to register attributes"));
+       register_attribute (&amp;user_attr);
+     }
+     
+</pre>
+ <!-- The @code{PLUGIN_PRAGMAS} callback is called during pragmas -->
+<!-- registration. Use the @code{c_register_pragma} or -->
+<!-- @code{c_register_pragma_with_expansion} functions to register custom -->
+<!-- pragmas. -->
+ <p><code>PLUGIN_PRAGMAS</code>回调在pragmas注册的时候被调用。使用<code>c_register_pragma</code>或者<code>c_register_pragma_with_expansion</code>函数来注册自定义的pragmas。
+
+<pre class="smallexample">     /* Plugin callback called during pragmas registration. Registered with
+          register_callback (plugin_name, PLUGIN_PRAGMAS,
+                             register_my_pragma, NULL);
+     */
+     static void
+     register_my_pragma (void *event_data, void *data)
+     {
+       warning (0, G_("Callback to register pragmas"));
+       c_register_pragma ("GCCPLUGIN", "sayhello", handle_pragma_sayhello);
+     }
+</pre>
+ <!-- It is suggested to pass @code{"GCCPLUGIN"} (or a short name identifying -->
+<!-- your plugin) as the ``space'' argument of your pragma. -->
+ <p>建议传递<code>"GCCPLUGIN"</code>（或者一个简短的名字来标识你的插件）作为你的pragma的&ldquo;space&rdquo;参数。
+
+<!-- @section Recording information about pass execution -->
+<h3 class="section">23.7 记录pass的执行信息</h3>
+
+<!-- The event PLUGIN_PASS_EXECUTION passes the pointer to the executed pass -->
+<!-- (the same as current_pass) as @code{gcc_data} to the callback.  You can also -->
+<!-- inspect cfun to find out about which function this pass is executed for. -->
+<!-- Note that this event will only be invoked if the gate check (if -->
+<!-- applicable, modified by PLUGIN_OVERRIDE_GATE) succeeds. -->
+<!-- You can use other hooks, like @code{PLUGIN_ALL_PASSES_START}, -->
+<!-- @code{PLUGIN_ALL_PASSES_END}, @code{PLUGIN_ALL_IPA_PASSES_START}, -->
+<!-- @code{PLUGIN_ALL_IPA_PASSES_END}, @code{PLUGIN_EARLY_GIMPLE_PASSES_START}, -->
+<!-- and/or @code{PLUGIN_EARLY_GIMPLE_PASSES_END} to manipulate global state -->
+<!-- in your plugin(s) in order to get context for the pass execution. -->
+<p>事件PLUGIN_PASS_EXECUTION将指向被执行的pass的指针，作为<code>gcc_data</code>传递给回调函数。你还可以通过检查cfun来找到该pass所执行的函数。注意，该事件只有当入口检查（gate check）成功时，才会被调用。你可以在你的插件中使用其它钩子，像<code>PLUGIN_ALL_PASSES_START</code>，<code>PLUGIN_ALL_PASSES_END</code>，<code>PLUGIN_ALL_IPA_PASSES_START</code>，<code>PLUGIN_ALL_IPA_PASSES_END</code>，<code>PLUGIN_EARLY_GIMPLE_PASSES_START</code>，和/或<code>PLUGIN_EARLY_GIMPLE_PASSES_END</code>来操纵全局状态，以便获得pass执行的上下文。
+
+<!-- @section Controlling which passes are being run -->
+<h3 class="section">23.8 控制将要执行的pass</h3>
+
+<!-- After the original gate function for a pass is called, its result -->
+<!--  the gate status - is stored as an integer. -->
+<!-- Then the event @code{PLUGIN_OVERRIDE_GATE} is invoked, with a pointer -->
+<!-- to the gate status in the @code{gcc_data} parameter to the callback function. -->
+<!-- A nonzero value of the gate status means that the pass is to be executed. -->
+<!-- You can both read and write the gate status via the passed pointer. -->
+<p>在pass的原始的入口函数被调用之后，其结果，入口状态，作为整数被存储。然后事件<code>PLUGIN_OVERRIDE_GATE</code>被激起，在回调函数的<code>gcc_data</code>参数中使用一个指向入口状态的指针。一个非零值的入口状态意味着该pass将被执行。你可以同时通过传递的指针读取和改写入口状态。
+
+<!-- @section Keeping track of available passes -->
+<h3 class="section">23.9 跟踪可用的pass</h3>
+
+<!-- When your plugin is loaded, you can inspect the various -->
+<!-- pass lists to determine what passes are available.  However, other -->
+<!-- plugins might add new passes.  Also, future changes to GCC might cause -->
+<!-- generic passes to be added after plugin loading. -->
+<!-- When a pass is first added to one of the pass lists, the event -->
+<!-- @code{PLUGIN_NEW_PASS} is invoked, with the callback parameter -->
+<!-- @code{gcc_data} pointing to the new pass. -->
+<p>当你的插件被加载时，你可以检查各种pass列表来确定哪些pass是可用的。但是，其它插件可能会加入新的pass。而且，GCC将来可能会改成在插件加载之后添加通用的pass。当一个pass首次被增加到一个pass列表时，事件<code>PLUGIN_NEW_PASS</code>被激起，使用回调参数<code>gcc_data</code>指向新pass。
+
+<!-- @section Building GCC plugins -->
+<h3 class="section">23.10 构建GCC插件</h3>
+
+<!-- If plugins are enabled, GCC installs the headers needed to build a -->
+<!-- plugin (somewhere in the installation tree, e.g. under -->
+<!-- @file{/usr/local}).  In particular a @file{plugin/include} directory -->
+<!-- is installed, containing all the header files needed to build plugins. -->
+<p>如果启用了插件技术，GCC会安装需要构建插件的头文件（在安装路径中的某个地方，例如，位于<samp><span class="file">/usr/local</span></samp>）。特别的，<samp><span class="file">plugin/include</span></samp>目录会被安装，其包含了构建插件需要的所有头文件。
+
+<!-- On most systems, you can query this @code{plugin} directory by -->
+<!-- invoking @command{gcc -print-file-name=plugin} (replace if needed -->
+<!-- @command{gcc} with the appropriate program path). -->
+ <p>在大多系统上，你可以通过命令<samp><span class="command">gcc -print-file-name=plugin</span></samp>（如果需要，将<samp><span class="command">gcc</span></samp>替换为合适的程序路径）来查询该<code>plugin</code>目录。
+
+<!-- Inside plugins, this @code{plugin} directory name can be queried by -->
+<!-- calling @code{default_plugin_dir_name ()}. -->
+ <p>在插件内部，该<code>plugin</code>目录名可以通过调用<code>default_plugin_dir_name ()</code>来查询。
+
+<!-- Plugins may know, when they are compiled, the GCC version for which -->
+<!-- @file{plugin-version.h} is provided.  The constant macros -->
+<!-- @code{GCCPLUGIN_VERSION_MAJOR}, @code{GCCPLUGIN_VERSION_MINOR}, -->
+<!-- @code{GCCPLUGIN_VERSION_PATCHLEVEL}, @code{GCCPLUGIN_VERSION} are -->
+<!-- integer numbers, so a plugin could ensure it is built for GCC 4.7 with -->
+ <p>如果编译插件所用的 GCC 有提供<samp><span class="file">plugin-version.h</span></samp>，插件可以得知该 GCC 的版本号。常量巨集<code>GCCPLUGIN_VERSION_MAJOR</code>、<code>GCCPLUGIN_VERSION_MINOR</code>、<code>GCCPLUGIN_VERSION_PATCHLEVEL</code>和<code>GCCPLUGIN_VERSION</code>为整数值，可以借此确保目前是由 GCC 4.7 编译此插件。
+
+<pre class="smallexample">     #if GCCPLUGIN_VERSION != 4007
+     #error this GCC plugin is for GCC 4.7
+     #endif
+</pre>
+ <!-- The following GNU Makefile excerpt shows how to build a simple plugin: -->
+ <p>下列GNU Makefile摘抄片段展示了如何构建一个简单的插件：
+
+<pre class="smallexample">     GCC=gcc
+     PLUGIN_SOURCE_FILES= plugin1.c plugin2.c
+     PLUGIN_OBJECT_FILES= $(patsubst %.c,%.o,$(PLUGIN_SOURCE_FILES))
+     GCCPLUGINS_DIR:= $(shell $(GCC) -print-file-name=plugin)
+     CFLAGS+= -I$(GCCPLUGINS_DIR)/include -fPIC -O2
+     
+     plugin.so: $(PLUGIN_OBJECT_FILES)
+        $(GCC) -shared $^ -o $@
+</pre>
+ <!-- A single source file plugin may be built with @code{gcc -I`gcc -->
+<!-- print-file-name=plugin`/include -fPIC -shared -O2 plugin.c -o -->
+<!-- plugin.so}, using backquote shell syntax to query the @file{plugin} -->
+<!-- directory. -->
+ <p>单个文件的插件可以使用<code>gcc -I`gcc -print-file-name=plugin`/include -fPIC -shared -O2 plugin.c -o plugin.so</code>来构建，使用反引号shell语法来查询<samp><span class="file">plugin</span></samp>目录。
+
+<!-- When a plugin needs to use @command{gengtype}, be sure that both -->
+<!-- @file{gengtype} and @file{gtype.state} have the same version as the -->
+<!-- GCC for which the plugin is built. -->
+ <p>当插件需要使用<samp><span class="command">gengtype</span></samp>时，务必确认<samp><span class="file">gengtype</span></samp>和<samp><span class="file">gtype.state</span></samp>与建构插件所使用的 GCC 的版本相一致。
+
+<!-- Copyright (c) 2010 Free Software Foundation, Inc. -->
+<!-- Free Software Foundation, Inc. -->
+<!-- This is part of the GCC manual. -->
+<!-- For copying conditions, see the file gcc.texi. -->
+<!-- Contributed by Jan Hubicka <jh@suse.cz> and -->
+<!-- Diego Novillo <dnovillo@google.com> -->
+<!-- @node LTO -->
+<!-- @chapter Link Time Optimization -->
+ </body></html>
+

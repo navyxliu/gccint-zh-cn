@@ -1,0 +1,111 @@
+<html lang="zh">
+<head>
+<title>Profiling - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Stack-and-Calling.html#Stack-and-Calling" title="Stack and Calling">
+<link rel="prev" href="Function-Entry.html#Function-Entry" title="Function Entry">
+<link rel="next" href="Tail-Calls.html#Tail-Calls" title="Tail Calls">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Profiling"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Tail-Calls.html#Tail-Calls">Tail Calls</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Function-Entry.html#Function-Entry">Function Entry</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Stack-and-Calling.html#Stack-and-Calling">Stack and Calling</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.10.12 为profiling生成代码</h4>
+
+<p><a name="index-profiling_002c-code-generation-4215"></a>
+<!-- These macros will help you generate code for profiling. -->
+这些宏将帮助你为profiling生成代码。
+
+<div class="defun">
+&mdash; Macro: <b>FUNCTION_PROFILER</b> (<var>file, labelno</var>)<var><a name="index-FUNCTION_005fPROFILER-4216"></a></var><br>
+<blockquote><!-- A C statement or compound statement to output to @var{file} some -->
+     <!-- assembler code to call the profiling subroutine @code{mcount}. -->
+      <p>一条C语句或者复合语句，来输出到<var>file</var>中一些汇编代码，
+来调用profiling子程序<code>mcount</code>。
+
+      <p><a name="index-mcount-4217"></a><!-- The details of how @code{mcount} expects to be called are determined by -->
+<!-- your operating system environment, not by GCC@.  To figure them out, -->
+<!-- compile a small program for profiling using the system's installed C -->
+<!-- compiler and look at the assembler code that results. -->
+关于<code>mcount</code>期望如何被调用的细节，由你的操作系统环境来决定，
+而不是GCC。要弄清楚它们，可以编译一个小程序，
+使用系统安装的C编译进行profiling，并查看生成的汇编代码。
+
+     <!-- Older implementations of @code{mcount} expect the address of a counter -->
+     <!-- variable to be loaded into some register.  The name of this variable is -->
+     <!-- @samp{LP} followed by the number @var{labelno}, so you would generate -->
+     <!-- the name using @samp{LP%d} in a @code{fprintf}. -->
+      <p><code>mcount</code>的旧的实现，期望一个计数变量的地址被加载到某个寄存器中。
+该变量的名字为&lsquo;<samp><span class="samp">LP</span></samp>&rsquo;，后面跟随数字<var>labelno</var>，
+所以你应该生成该名字，在<code>fprintf</code>中使用&lsquo;<samp><span class="samp">LP%d</span></samp>&rsquo;。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>PROFILE_HOOK</b><var><a name="index-PROFILE_005fHOOK-4218"></a></var><br>
+<blockquote><!-- A C statement or compound statement to output to @var{file} some assembly -->
+     <!-- code to call the profiling subroutine @code{mcount} even the target does -->
+     <!-- not support profiling. -->
+      <p>一条C语句或者复合语句，来输出到<var>file</var>中一些汇编代码，
+来调用profiling子程序<code>mcount</code>，即使target不支持profiling。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>NO_PROFILE_COUNTERS</b><var><a name="index-NO_005fPROFILE_005fCOUNTERS-4219"></a></var><br>
+<blockquote><!-- Define this macro to be an expression with a nonzero value if the -->
+     <!-- @code{mcount} subroutine on your system does not need a counter variable -->
+     <!-- allocated for each function.  This is true for almost all modern -->
+     <!-- implementations.  If you define this macro, you must not use the -->
+     <!-- @var{labelno} argument to @code{FUNCTION_PROFILER}. -->
+      <p>定义该宏为一个表达式，具有一个非0的值，
+如果你系统上的<code>mcount</code>子程序不需要为每个函数分配一个计数变量。
+这对于大多数现代实现都是正确的。如果你定义了该宏，
+你一定不要使用<code>FUNCTION_PROFILER</code>的<var>labelno</var>参数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>PROFILE_BEFORE_PROLOGUE</b><var><a name="index-PROFILE_005fBEFORE_005fPROLOGUE-4220"></a></var><br>
+<blockquote><!-- Define this macro if the code for function profiling should come before -->
+     <!-- the function prologue.  Normally, the profiling code comes after. -->
+      <p>定义该宏，如果函数profiling的代码应该位于函数序言之前。
+通常profiling代码位于之后。
+</p></blockquote></div>
+
+<!-- @node Tail Calls -->
+<!-- @subsection Permitting tail calls -->
+ </body></html>
+

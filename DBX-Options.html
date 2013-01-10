@@ -1,0 +1,255 @@
+<html lang="zh">
+<head>
+<title>DBX Options - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Debugging-Info.html#Debugging-Info" title="Debugging Info">
+<link rel="prev" href="All-Debuggers.html#All-Debuggers" title="All Debuggers">
+<link rel="next" href="DBX-Hooks.html#DBX-Hooks" title="DBX Hooks">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="DBX-Options"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="DBX-Hooks.html#DBX-Hooks">DBX Hooks</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="All-Debuggers.html#All-Debuggers">All Debuggers</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Debugging-Info.html#Debugging-Info">Debugging Info</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.22.2 用于DBX输出的特定选项</h4>
+
+<!-- prevent bad page break with this line -->
+<!-- These are specific options for DBX output. -->
+<p>这些是用于DBX输出的特定选项。
+
+<div class="defun">
+&mdash; Macro: <b>DBX_DEBUGGING_INFO</b><var><a name="index-DBX_005fDEBUGGING_005fINFO-4646"></a></var><br>
+<blockquote><!-- Define this macro if GCC should produce debugging output for DBX -->
+     <!-- in response to the @option{-g} option. -->
+      <p>定义该宏，如果对于<samp><span class="option">-g</span></samp>选项，GCC应该产生DBX的调试输出。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>XCOFF_DEBUGGING_INFO</b><var><a name="index-XCOFF_005fDEBUGGING_005fINFO-4647"></a></var><br>
+<blockquote><!-- Define this macro if GCC should produce XCOFF format debugging output -->
+     <!-- in response to the @option{-g} option.  This is a variant of DBX format. -->
+      <p>定义该宏，如果对于<samp><span class="option">-g</span></samp>选项，GCC应该产生XCOFF格式的调试输出。
+这是DBX格式的变体。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DEFAULT_GDB_EXTENSIONS</b><var><a name="index-DEFAULT_005fGDB_005fEXTENSIONS-4648"></a></var><br>
+<blockquote><!-- Define this macro to control whether GCC should by default generate -->
+     <!-- GDB's extended version of DBX debugging information (assuming DBX-format -->
+     <!-- debugging information is enabled at all).  If you don't define the -->
+     <!-- macro, the default is 1: always generate the extended information -->
+     <!-- if there is any occasion to. -->
+      <p>定义该宏来控制GCC是否缺省的生成GDB的扩展版本DBX调试信息
+（假设是使用DBX格式的调试信息）。如果没有定义该宏，则缺省为1：
+如果可能的话，总是生成扩展信息。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DEBUG_SYMS_TEXT</b><var><a name="index-DEBUG_005fSYMS_005fTEXT-4649"></a></var><br>
+<blockquote><!-- Define this macro if all @code{.stabs} commands should be output while -->
+     <!-- in the text section. -->
+      <p>定义该宏，如果所有<code>.stabs</code>命令应该输出在text section中。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_STABS_OP</b><var><a name="index-ASM_005fSTABS_005fOP-4650"></a></var><br>
+<blockquote><!-- A C string constant, including spacing, naming the assembler pseudo op to -->
+     <!-- use instead of @code{"\t.stabs\t"} to define an ordinary debugging symbol. -->
+     <!-- If you don't define this macro, @code{"\t.stabs\t"} is used.  This macro -->
+     <!-- applies only to DBX debugging information format. -->
+      <p>一个C字符串常量，包括空格，
+命名了用来替代<code>"\t.stabs\t"</code>的汇编伪指令，
+来定义一个普通调试符号。
+如果没有定义该宏，则使用<code>"\t.stabs\t"</code>。
+该宏只用于DBX调试信息格式。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_STABD_OP</b><var><a name="index-ASM_005fSTABD_005fOP-4651"></a></var><br>
+<blockquote><!-- A C string constant, including spacing, naming the assembler pseudo op to -->
+     <!-- use instead of @code{"\t.stabd\t"} to define a debugging symbol whose -->
+     <!-- value is the current location.  If you don't define this macro, -->
+     <!-- @code{"\t.stabd\t"} is used.  This macro applies only to DBX debugging -->
+     <!-- information format. -->
+      <p>一个C字符串常量，包括空格，
+命名了用来替代<code>"\t.stabd\t"</code>的汇编伪指令，
+来定义一个普通调试符号。
+如果没有定义该宏，则使用<code>"\t.stabd\t"</code>。
+该宏只用于DBX调试信息格式。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_STABN_OP</b><var><a name="index-ASM_005fSTABN_005fOP-4652"></a></var><br>
+<blockquote><!-- A C string constant, including spacing, naming the assembler pseudo op to -->
+     <!-- use instead of @code{"\t.stabn\t"} to define a debugging symbol with no -->
+     <!-- name.  If you don't define this macro, @code{"\t.stabn\t"} is used.  This -->
+     <!-- macro applies only to DBX debugging information format. -->
+      <p>一个C字符串常量，包括空格，
+命名了用来替代<code>"\t.stabn\t"</code>的汇编伪指令，来定义一个普通调试符号。
+如果没有定义该宏，则使用<code>"\t.stabn\t"</code>。该宏只用于DBX调试信息格式。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_NO_XREFS</b><var><a name="index-DBX_005fNO_005fXREFS-4653"></a></var><br>
+<blockquote><!-- Define this macro if DBX on your system does not support the construct -->
+     <!-- @samp{xs@var{tagname}}.  On some systems, this construct is used to -->
+     <!-- describe a forward reference to a structure named @var{tagname}. -->
+     <!-- On other systems, this construct is not supported at all. -->
+      <p>定义该宏，如果DBX在你的系统上不支持&lsquo;<samp><span class="samp">xs</span><var>tagname</var></samp>&rsquo;结构。
+在一些系统上，该结构被用于描述对名字叫<var>tagname</var>的结构体的向前引用。
+在其它系统上，该结构根本不被支持。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_CONTIN_LENGTH</b><var><a name="index-DBX_005fCONTIN_005fLENGTH-4654"></a></var><br>
+<blockquote><!-- A symbol name in DBX-format debugging information is normally -->
+     <!-- continued (split into two separate @code{.stabs} directives) when it -->
+     <!-- exceeds a certain length (by default, 80 characters).  On some -->
+     <!-- operating systems, DBX requires this splitting; on others, splitting -->
+     <!-- must not be done.  You can inhibit splitting by defining this macro -->
+     <!-- with the value zero.  You can override the default splitting-length by -->
+     <!-- defining this macro as an expression for the length you desire. -->
+      <p>DBX格式的调试信息中的符号名被连续的处理
+（分成两个独立的<code>.stabs</code>指令）
+当其达到一个特定长度时（缺省为80个字符）。
+在一些操作系统上，DBX 要求做这样的分割；在其它上面，则不能进行分割。
+你可以通过定义该宏为0来约束分割。
+你可以覆盖缺省的分割长度，通过定义该宏为一个长度的表达式。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_CONTIN_CHAR</b><var><a name="index-DBX_005fCONTIN_005fCHAR-4655"></a></var><br>
+<blockquote><!-- Normally continuation is indicated by adding a @samp{\} character to -->
+     <!-- the end of a @code{.stabs} string when a continuation follows.  To use -->
+     <!-- a different character instead, define this macro as a character -->
+     <!-- constant for the character you want to use.  Do not define this macro -->
+     <!-- if backslash is correct for your system. -->
+      <p>通常通过在<code>.stabs</code>字符串的结尾增加一个&lsquo;<samp><span class="samp">\</span></samp>&rsquo;字符来表示连续的处理。
+要是用不用的字符，定义该宏为一个你想使用的字符常量。
+不要定义该宏，如果反斜杠在你的系统上是正确的。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_STATIC_STAB_DATA_SECTION</b><var><a name="index-DBX_005fSTATIC_005fSTAB_005fDATA_005fSECTION-4656"></a></var><br>
+<blockquote><!-- Define this macro if it is necessary to go to the data section before -->
+     <!-- outputting the @samp{.stabs} pseudo-op for a non-global static -->
+     <!-- variable. -->
+      <p>定义该宏，如果需要在为非全局的静态变量输出&lsquo;<samp><span class="samp">.stabs</span></samp>&rsquo;伪操作符之前进入data section。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_TYPE_DECL_STABS_CODE</b><var><a name="index-DBX_005fTYPE_005fDECL_005fSTABS_005fCODE-4657"></a></var><br>
+<blockquote><!-- The value to use in the ``code'' field of the @code{.stabs} directive -->
+     <!-- for a typedef.  The default is @code{N_LSYM}. -->
+      <p>对于typedef，<code>.stabs</code>指令的“code”域所使用的值。
+缺省为<code>N_LSYM</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_STATIC_CONST_VAR_CODE</b><var><a name="index-DBX_005fSTATIC_005fCONST_005fVAR_005fCODE-4658"></a></var><br>
+<blockquote><!-- The value to use in the ``code'' field of the @code{.stabs} directive -->
+     <!-- for a static variable located in the text section.  DBX format does not -->
+     <!-- provide any ``right'' way to do this.  The default is @code{N_FUN}. -->
+      <p>对于位于text section的静态变量，<code>.stabs</code>指令的“code”域所使用的值。
+DBX格式不提供任何正确是方式。缺省为<code>N_FUN</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_REGPARM_STABS_CODE</b><var><a name="index-DBX_005fREGPARM_005fSTABS_005fCODE-4659"></a></var><br>
+<blockquote><!-- The value to use in the ``code'' field of the @code{.stabs} directive -->
+     <!-- for a parameter passed in registers.  DBX format does not provide any -->
+     <!-- ``right'' way to do this.  The default is @code{N_RSYM}. -->
+      <p>对于寄存器中传递的参数，<code>.stabs</code>指令的“code”域所使用的值。
+DBX格式不提供任何正确是方式。缺省为<code>N_RSYM</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_REGPARM_STABS_LETTER</b><var><a name="index-DBX_005fREGPARM_005fSTABS_005fLETTER-4660"></a></var><br>
+<blockquote><!-- The letter to use in DBX symbol data to identify a symbol as a parameter -->
+     <!-- passed in registers.  DBX format does not customarily provide any way to -->
+     <!-- do this.  The default is @code{'P'}. -->
+      <p>在DBX符号数据中使用的字母，用来标识一个符号为在寄存器中传递的参数。
+DBX格式目前没有提供任何这样做的方式。缺省为<code>'P'</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_FUNCTION_FIRST</b><var><a name="index-DBX_005fFUNCTION_005fFIRST-4661"></a></var><br>
+<blockquote><!-- Define this macro if the DBX information for a function and its -->
+     <!-- arguments should precede the assembler code for the function.  Normally, -->
+     <!-- in DBX format, the debugging information entirely follows the assembler -->
+     <!-- code. -->
+      <p>定义该宏，如果对于函数和它的参数的DBX信息应该位于函数的汇编代码之前。
+通常，在DBX格式中，调试信息完全位于汇编代码之后。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_BLOCKS_FUNCTION_RELATIVE</b><var><a name="index-DBX_005fBLOCKS_005fFUNCTION_005fRELATIVE-4662"></a></var><br>
+<blockquote><!-- Define this macro, with value 1, if the value of a symbol describing -->
+     <!-- the scope of a block (@code{N_LBRAC} or @code{N_RBRAC}) should be -->
+     <!-- relative to the start of the enclosing function.  Normally, GCC uses -->
+     <!-- an absolute address. -->
+      <p>定义该宏为1，
+如果描述块（<code>N_LBRAC</code>或<code>N_RBRAC</code>）的作用域的符号的值，
+应该相对于函数括号的起始处。通常GCC使用绝对值。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_LINES_FUNCTION_RELATIVE</b><var><a name="index-DBX_005fLINES_005fFUNCTION_005fRELATIVE-4663"></a></var><br>
+<blockquote><!-- Define this macro, with value 1, if the value of a symbol indicating -->
+     <!-- the current line number (@code{N_SLINE}) should be relative to the -->
+     <!-- start of the enclosing function.  Normally, GCC uses an absolute address. -->
+      <p>定义该宏为1，如果指示当前行（<code>N_SLINE</code>）的符号的值，
+应该相对于函数括号的起始处。通常GCC使用绝对值。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DBX_USE_BINCL</b><var><a name="index-DBX_005fUSE_005fBINCL-4664"></a></var><br>
+<blockquote><!-- Define this macro if GCC should generate @code{N_BINCL} and -->
+     <!-- @code{N_EINCL} stabs for included header files, as on Sun systems.  This -->
+     <!-- macro also directs GCC to output a type number as a pair of a file -->
+     <!-- number and a type number within the file.  Normally, GCC does not -->
+     <!-- generate @code{N_BINCL} or @code{N_EINCL} stabs, and it outputs a single -->
+     <!-- number for a type number. -->
+      <p>定义该宏，
+如果GCC应该为被包含的头文件生成<code>N_BINCL</code>和<code>N_EINCL</code> stabs，
+如Sun系统。通常，GCC不生成<code>N_BINCL</code>或<code>N_EINCL</code> stabs。
+</p></blockquote></div>
+
+<!-- @node DBX Hooks -->
+<!-- @subsection Open-Ended Hooks for DBX Format -->
+ </body></html>
+

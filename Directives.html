@@ -1,0 +1,328 @@
+<html lang="zh">
+<head>
+<title>Directives - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Test-Directives.html#Test-Directives" title="Test Directives">
+<link rel="next" href="Selectors.html#Selectors" title="Selectors">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Directives"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Selectors.html#Selectors">Selectors</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Test-Directives.html#Test-Directives">Test Directives</a>
+<hr>
+</div>
+
+<h4 class="subsection">7.2.1 测试指令的语法和描述</h4>
+
+<!-- Test directives appear within comments in a test source file and begin -->
+<!-- with @code{dg-}.  Some of these are defined within DejaGnu and others -->
+<!-- are local to the GCC testsuite. -->
+<p>测试指令出现在测试源文件的注释中，并且起始于<code>dg-</code>。其中一些是在DejaGnu中定义的，其它的是局限于GCC测试包自己的。
+
+<!-- The order in which test directives appear in a test can be important: -->
+<!-- directives local to GCC sometimes override information used by the -->
+<!-- DejaGnu directives, which know nothing about the GCC directives, so the -->
+<!-- DejaGnu directives must precede GCC directives. -->
+ <p>测试中测试指令出现的顺序很重要：局限于GCC的指令有时会覆盖DejaGnu的指令使用的信息，并且其对GCC指令一无所知，所以DejaGnu指令必须在GCC指令之前。
+
+<!-- Several test directives include selectors (@pxref{Selectors, , }) -->
+<!-- which are usually preceded by the keyword @code{target} or @code{xfail}. -->
+ <p>个别测试指令包含了选择器，其通常由关键字<code>target</code>或<code>xfail</code>打头。
+
+<!-- @subsubsection Specify how to build the test -->
+<h5 class="subsubsection">7.2.1.1 指定如何构建测试</h5>
+
+     <dl>
+<dt><code>{ dg-do </code><var>do-what-keyword</var><code> [{ target/xfail </code><var>selector</var><code> }] }</code><dd><!-- @var{do-what-keyword} specifies how the test is compiled and whether -->
+<!-- it is executed.  It is one of: -->
+<var>do-what-keyword</var>指定了测试如何被编译，以及是否被执行。其为：
+
+          <dl>
+<dt><code>preprocess</code><dd><!-- Compile with @option{-E} to run only the preprocessor. -->
+使用<samp><span class="option">-E</span></samp>编译，从而只运行预处理器。
+<br><dt><code>compile</code><dd><!-- Compile with @option{-S} to produce an assembly code file. -->
+使用<samp><span class="option">-S</span></samp>编译，从而生成汇编代码文件。
+<br><dt><code>assemble</code><dd><!-- Compile with @option{-c} to produce a relocatable object file. -->
+使用<samp><span class="option">-c</span></samp>编译，从而生成可重定位的目标文件。
+<br><dt><code>link</code><dd><!-- Compile, assemble, and link to produce an executable file. -->
+编译，汇编，并连接，从而生成一个可执行文件。
+<br><dt><code>run</code><dd><!-- Produce and run an executable file, which is expected to return -->
+<!-- an exit code of 0. -->
+生成并运行一个可执行文件，并期望其返回的退出代码为0。
+</dl>
+
+     <!-- The default is @code{compile}.  That can be overridden for a set of -->
+     <!-- tests by redefining @code{dg-do-what-default} within the @code{.exp} -->
+     <!-- file for those tests. -->
+     <p>缺省情况为<code>compile</code>。可以通过在那些测试的<code>.exp</code>文件中重定义<code>dg-do-what-default</code>来覆盖这个值。
+
+     <!-- If the directive includes the optional @samp{@{ target @var{selector} @}} -->
+     <!-- then the test is skipped unless the target system matches the -->
+     <!-- @var{selector}. -->
+     <p>如果指令包含了可选的&lsquo;<samp><span class="samp">{ target </span><var>selector</var><span class="samp"> } </span></samp>&rsquo;，则除非目标系统被包含在目标三元组列表中，或者匹配有效目标关键字，否则测试将被跳过。
+
+     <!-- If @var{do-what-keyword} is @code{run} and the directive includes -->
+     <!-- the optional @samp{@{ xfail @var{selector} @}} and the selector is met -->
+     <!-- then the test is expected to fail.  The @code{xfail} clause is ignored -->
+     <!-- for other values of @var{do-what-keyword}; those tests can use -->
+     <!-- directive @code{dg-xfail-if}. -->
+     <p>如果运行了&lsquo;<samp><span class="samp">do-what-keyword</span></samp>&rsquo;并且指令包含了可选的&lsquo;<samp><span class="samp">{ xfail </span><var>selector</var><span class="samp"> }</span></samp>&rsquo;并且选择器匹配，则测试期望为失败。对于&lsquo;<samp><span class="samp">do-what-keyword</span></samp>&rsquo;的其它值，<code>xfail</code>子句会被忽略；那些测试可以使用指令<code>dg-xfail-if</code>。
+</dl>
+
+<h5 class="subsubsection">7.2.1.2 指定额外的编译器选项</h5>
+
+     <dl>
+<dt><code>{ dg-options </code><var>options</var><code> [{ target </code><var>selector</var><code> }] }</code><dd><!-- This DejaGnu directive provides a list of compiler options, to be used -->
+<!-- if the target system matches @var{selector}, that replace the default -->
+<!-- options used for this set of tests. -->
+该DejaGnu指令提供了一个编译器选项列表，用来在目标系统匹配<var>selector</var>的时候被使用，以替换这个测试集的缺省选项。
+
+     <br><dt><code>{ dg-add-options </code><var>feature</var><code> ... }</code><dd><!-- Add any compiler options that are needed to access certain features. -->
+<!-- This directive does nothing on targets that enable the features by -->
+<!-- default, or that don't provide them at all.  It must come after -->
+<!-- all @code{dg-options} directives. -->
+<!-- For supported values of @var{feature} see @ref{Add Options, ,}. -->
+增加任何访问特定特征所需要的编译器选项。该指令对使用缺省方式启用特征或者根本不提供特征的目标不做任何事情。其必须在所有<code>dg-options</code>指令之后。对于支持的<var>feature</var>值，参见<a href="Add-Options.html#Add-Options">Add Options</a>。
+
+     <br><dt><code>{ dg-additional-options </code><var>options</var><code> [{ target </code><var>selector</var><code> }] }</code><dd><!-- This directive provides a list of compiler options, to be used -->
+<!-- if the target system matches @var{selector}, that are added to the default -->
+<!-- options used for this set of tests. -->
+该指令提供一个编译器选项列表，当目标机器系统匹配时使用，并添加到这组测试所使用的缺省选项之后。
+</dl>
+
+<!-- @subsubsection Modify the test timeout value -->
+<h5 class="subsubsection">7.2.1.3 修改测试的超时时间值</h5>
+
+<!-- The normal timeout limit, in seconds, is found by searching the -->
+<!-- following in order: -->
+<p>通常的时间限制，以秒为单位，按照下列顺序来查找：
+
+     <ul>
+<!-- @item the value defined by an earlier @code{dg-timeout} directive in -->
+<!-- the test -->
+<li>由之前在测试程序中<code>dg-timeout</code>指令定义
+
+     <!-- @item variable @var{tool_timeout} defined by the set of tests -->
+     <li>由测试程序集定义的变量<var>tool_timeout</var>
+
+     <!-- @item @var{gcc},@var{timeout} set in the target board -->
+     <li>在目标板子上（target board）设置的<var>gcc</var>,<var>timeout</var>
+
+     <li>300
+</ul>
+
+     <dl>
+<dt><code>{ dg-timeout </code><var>n</var><code> [{target </code><var>selector</var><code> }] }</code><dd><!-- Set the time limit for the compilation and for the execution of the test -->
+<!-- to the specified number of seconds. -->
+将编译和执行测试的时间限制设置为指定的秒数。
+
+     <br><dt><code>{ dg-timeout-factor </code><var>x</var><code> [{ target </code><var>selector</var><code> }] }</code><dd><!-- Multiply the normal time limit for compilation and execution of the test -->
+<!-- by the specified floating-point factor. -->
+将编译和执行测试的通常时间限制乘以指定的浮点因子。
+</dl>
+
+<h5 class="subsubsection">7.2.1.4 对一些目标跳过测试</h5>
+
+     <dl>
+<dt><code>{ dg-skip-if </code><var>comment</var><code> { </code><var>selector</var><code> } [{ </code><var>include-opts</var><code> } [{ </code><var>exclude-opts</var><code> }]] }</code><dd><!-- Arguments @var{include-opts} and @var{exclude-opts} are lists in which -->
+<!-- each element is a string of zero or more GCC options. -->
+<!-- Skip the test if all of the following conditions are met: -->
+参数<var>include-opts</var>和<var>exclude-opts</var>是列表，其元素为零个或多个GCC选项组成的字符串。如果下列条件都满足则跳过该测试：
+          <ul>
+<!-- @item the test system is included in @var{selector} -->
+<li>测试系统包含在<var>selector</var>中。
+
+          <!-- @item for at least one of the option strings in @var{include-opts}, -->
+          <!-- every option from that string is in the set of options with which -->
+          <!-- the test would be compiled; use @samp{"*"} for an @var{include-opts} list -->
+          <!-- that matches any options; that is the default if @var{include-opts} is -->
+          <!-- not specified -->
+          <li>对于<var>include-opts</var>中的至少一个选项字符串，字符串中的每个选项都在编译测试所用到的选项集中；对于<var>include-opts</var>，使用&lsquo;<samp><span class="samp">"*"</span></samp>&rsquo;来匹配任何选项；其为<var>include-opts</var>没有被指定时的缺省方式。
+
+          <!-- @item for each of the option strings in @var{exclude-opts}, at least one -->
+          <!-- option from that string is not in the set of options with which the test -->
+          <!-- would be compiled; use @samp{""} for an empty @var{exclude-opts} list; -->
+          <!-- that is the default if @var{exclude-opts} is not specified -->
+          <li>对于<var>exclude-opts</var>中的每个选项字符串，字符串中至少一个选项不在编译测试所用到的选项集中；对于<var>exclude-opts</var>，使用&lsquo;<samp><span class="samp">""</span></samp>&rsquo;来表示空列表；其为<var>include-opts</var>没有被指定时的缺省方式。
+
+     </ul>
+
+     <!-- For example, to skip a test if option @code{-Os} is present: -->
+     <p>例如，如果当选项<code>-Os</code>存在时，则跳过测试：
+
+     <pre class="smallexample">          /* { dg-skip-if "" { *-*-* }  { "-Os" } { "" } } */
+</pre>
+     <!-- To skip a test if both options @code{-O2} and @code{-g} are present: -->
+     <p>如果选项<code>-O2</code>和<code>-g</code>都存在时，则跳过测试：
+
+     <pre class="smallexample">          /* { dg-skip-if "" { *-*-* }  { "-O2 -g" } { "" } } */
+</pre>
+     <!-- To skip a test if either @code{-O2} or @code{-O3} is present: -->
+     <p>如果选项<code>-O2</code>或者<code>-O3</code>存在，则跳过测试：
+
+     <pre class="smallexample">          /* { dg-skip-if "" { *-*-* }  { "-O2" "-O3" } { "" } } */
+</pre>
+     <!-- To skip a test unless option @code{-Os} is present: -->
+     <p>如果选项<code>-Os</code>不存在，则跳过测试：
+
+     <pre class="smallexample">          /* { dg-skip-if "" { *-*-* }  { "*" } { "-Os" } } */
+</pre>
+     <!-- To skip a test if either @code{-O2} or @code{-O3} is used with @code{-g} -->
+     <!-- but not if @code{-fpic} is also present: -->
+     <p>如果<code>-O2</code>或者<code>-O3</code>，和<code>-g</code>一起使用，并且<code>-fpic</code>不存在，则跳过测试：
+
+     <pre class="smallexample">          /* { dg-skip-if "" { *-*-* }  { "-O2 -g" "-O3 -g" } { "-fpic" } } */
+</pre>
+     <br><dt><code>{ dg-require-effective-target </code><var>keyword</var><code> [{ </code><var>selector</var><code> }] }</code><dd><!-- Skip the test if the test target, including current multilib flags, -->
+<!-- is not covered by the effective-target keyword. -->
+<!-- If the directive includes the optional @samp{@{ @var{selector} @}} -->
+<!-- then the effective-target test is only performed if the target system -->
+<!-- matches the @var{selector}. -->
+<!-- This directive must appear after any @code{dg-do} directive in the test -->
+<!-- and before any @code{dg-additional-sources} directive. -->
+<!-- @xref{Effective-Target Keywords, , }. -->
+如果测试目标，包括当前的multilib标记，没有被有效目标关键字覆盖，则跳过测试。如果该指令包括了可选的&lsquo;<samp><span class="samp">{ </span><var>selector</var><span class="samp"> }</span></samp>&rsquo;，则有效目标测试只有当目标系统匹配<var>selector</var>时，才被执行。该指令必须出现在测试中任何<code>dg-do</code>指令之后，以及任何<code>dg-additional-sources</code>指令之前。参见<a href="Effective_002dTarget-Keywords.html#Effective_002dTarget-Keywords">Effective-Target Keywords</a>。
+
+     <br><dt><code>{ dg-require-</code><var>support</var><code> args }</code><dd><!-- Skip the test if the target does not provide the required support. -->
+<!-- These directives must appear after any @code{dg-do} directive in the test -->
+<!-- and before any @code{dg-additional-sources} directive. -->
+<!-- They require at least one argument, which can be an empty string if the -->
+<!-- specific procedure does not examine the argument. -->
+<!-- @xref{Require Support, , }, for a complete list of these directives. -->
+如果目标机器没有提供所需的支持，则跳过测试。这些指令必须出现在test中任何<code>dg-do</code>指令之后，以及任何<code>dg-additional-sources</code>指令之前。它们需要至少一个参数，如果程序不检查参数，则可以为一个空字符串。对于这些指令的完整列表，参见<a href="Require-Support.html#Require-Support">Require Support</a>。
+</dl>
+
+<!-- @subsubsection Expect a test to fail for some targets -->
+<h5 class="subsubsection">7.2.1.5 对一些目标期望测试失败</h5>
+
+     <dl>
+<dt><code>{ dg-xfail-if </code><var>comment</var><code> { </code><var>selector</var><code> } [{ </code><var>include-opts</var><code> } [{ </code><var>exclude-opts</var><code> }]] }</code><dd><!-- Expect the test to fail if the conditions (which are the same as for -->
+<!-- @code{dg-skip-if}) are met.  This does not affect the execute step. -->
+如果条件（与<code>dg-skip-if</code>相同）满足，则期望测试失败。这不影响执行步骤。
+
+     <br><dt><code>{ dg-xfail-run-if </code><var>comment</var><code> { </code><var>selector</var><code> } [{ </code><var>include-opts</var><code> } [{ </code><var>exclude-opts</var><code> }]] }</code><dd><!-- Expect the execute step of a test to fail if the conditions (which are -->
+<!-- the same as for @code{dg-skip-if}) are met. -->
+如果条件（与<code>dg-skip-if</code>相同）满足，则期望测试的执行步骤失败。
+</dl>
+
+<!-- @subsubsection Expect the test executable to fail -->
+<h5 class="subsubsection">7.2.1.6 期望可执行测试程序运行失败</h5>
+
+     <dl>
+<dt><code>{ dg-shouldfail </code><var>comment</var><code> [{ </code><var>selector</var><code> } [{ </code><var>include-opts</var><code> } [{ </code><var>exclude-opts</var><code> }]]] }</code><dd><!-- Expect the test executable to return a nonzero exit status if the -->
+<!-- conditions (which are the same as for @code{dg-skip-if}) are met. -->
+如果条件（与<code>dg-skip-if</code>相同）满足，则期望测试的可执行程序返回一个非零的退出状态。
+</dl>
+
+<!-- @subsubsection Verify compiler messages -->
+<h5 class="subsubsection">7.2.1.7 验证编译器的消息</h5>
+
+     <dl>
+<dt><code>{ dg-error </code><var>regexp</var><code> [</code><var>comment</var><code> [{ target/xfail </code><var>selector</var><code> } [</code><var>line</var><code>] }]] }</code><dd><!-- This DejaGnu directive appears on a source line that is expected to get -->
+<!-- an error message, or else specifies the source line associated with the -->
+<!-- message.  If there is no message for that line or if the text of that -->
+<!-- message is not matched by @var{regexp} then the check fails and -->
+<!-- @var{comment} is included in the @code{FAIL} message.  The check does -->
+<!-- not look for the string @samp{error} unless it is part of @var{regexp}. -->
+该DejaGnu指令出现在期望得到错误消息的源代码行上，或者在其它地方来指定源代码行与该消息相关联。如果那行没有产生消息，或者如果消息文本与<var>regexp</var>不匹配，则检查失败并将<var>comment</var>包含在<code>FAIL</code>消息中。进行检查时，除非&lsquo;<samp><span class="samp">error</span></samp>&rsquo;为<var>regexp</var>的一部分，否则不对该字符串进行查看。
+
+     <br><dt><code>{ dg-warning </code><var>regexp</var><code> [</code><var>comment</var><code> [{ target/xfail </code><var>selector</var><code> } [</code><var>line</var><code>] }]] }</code><dd><!-- This DejaGnu directive appears on a source line that is expected to get -->
+<!-- a warning message, or else specifies the source line associated with the -->
+<!-- message.  If there is no message for that line or if the text of that -->
+<!-- message is not matched by @var{regexp} then the check fails and -->
+<!-- @var{comment} is included in the @code{FAIL} message.  The check does -->
+<!-- not look for the string @samp{warning} unless it is part of @var{regexp}. -->
+该DejaGnu指令出现在期望得到警告消息的源代码行上，或者在其它地方来指定源代码行与该消息相关联。如果那行没有产生消息，或者如果消息文本与<var>regexp</var>不匹配，则检查失败并将<var>comment</var>包含在<code>FAIL</code>消息中。进行检查时，除非&lsquo;<samp><span class="samp">warning</span></samp>&rsquo;为<var>regexp</var>的一部分，否则不对该字符串进行查看。
+
+     <br><dt><code>{ dg-message </code><var>regexp</var><code> [</code><var>comment</var><code> [{ target/xfail </code><var>selector</var><code> } [</code><var>line</var><code>] }]] }</code><dd><!-- The line is expected to get a message other than an error or warning. -->
+<!-- If there is no message for that line or if the text of that message is -->
+<!-- not matched by @var{regexp} then the check fails and @var{comment} is -->
+<!-- included in the @code{FAIL} message. -->
+该行期望得到一个错误或者警告之外的消息。如果那行没有产生消息，或者如果消息文本与<var>regexp</var>不匹配，则检查失败并将<var>comment</var>包含在<code>FAIL</code>消息中。
+
+     <br><dt><code>{ dg-bogus </code><var>regexp</var><code> [</code><var>comment</var><code> [{ target/xfail </code><var>selector</var><code> } [</code><var>line</var><code>] }]] }</code><dd><!-- This DejaGnu directive appears on a source line that should not get a -->
+<!-- message matching @var{regexp}, or else specifies the source line -->
+<!-- associated with the bogus message.  It is usually used with @samp{xfail} -->
+<!-- to indicate that the message is a known problem for a particular set of -->
+<!-- targets. -->
+该DejaGnu指令出现在不应该得到匹配<var>regexp</var>消息的源代码行上，或者在其它地方来指定源代码行与该消息相关联。其通常与&lsquo;<samp><span class="samp">xfail</span></samp>&rsquo;一起使用，来指示该消息为特定目标集下的已知问题。
+
+     <br><dt><code>{ dg-excess-errors </code><var>comment</var><code> [{ target/xfail </code><var>selector</var><code> }] }</code><dd><!-- This DejaGnu directive indicates that the test is expected to fail due -->
+<!-- to compiler messages that are not handled by @samp{dg-error}, -->
+<!-- @samp{dg-warning} or @samp{dg-bogus}.  For this directive @samp{xfail} -->
+<!-- has the same effect as @samp{target}. -->
+该DejaGnu指令，用来指示测试由于编译器消息没有被&lsquo;<samp><span class="samp">dg-error</span></samp>&rsquo;，&lsquo;<samp><span class="samp">dg-warning</span></samp>&rsquo;或&lsquo;<samp><span class="samp">dg-bogus</span></samp>&rsquo;处理，而期望为失败。对于该指令，&lsquo;<samp><span class="samp">xfail</span></samp>&rsquo;和&lsquo;<samp><span class="samp">target</span></samp>&rsquo;具有相同的效果。
+
+     <br><dt><code>{ dg-prune-output </code><var>regexp</var><code> }</code><dd><!-- Prune messages matching @var{regexp} from the test output. -->
+从测试输出中剪裁掉匹配<var>regexp</var>的消息。
+</dl>
+
+<!-- @subsubsection Verify output of the test executable -->
+<h5 class="subsubsection">7.2.1.8 验证可执行测试程序的输出</h5>
+
+     <dl>
+<dt><code>{ dg-output </code><var>regexp</var><code> [{ target/xfail </code><var>selector</var><code> }] }</code><dd><!-- This DejaGnu directive compares @var{regexp} to the combined output -->
+<!-- that the test executable writes to @file{stdout} and @file{stderr}. -->
+该DejaGnu指令用来对<var>regexp</var>，与可执行测试程序写入到<samp><span class="file">stdout</span></samp>和<samp><span class="file">stderr</span></samp>的组合输出进行比较。
+</dl>
+
+<!-- @subsubsection Specify additional files for a test -->
+<h5 class="subsubsection">7.2.1.9 为测试指定额外的文件</h5>
+
+     <dl>
+<dt><code>{ dg-additional-files "</code><var>filelist</var><code>" }</code><dd><!-- Specify additional files, other than source files, that must be copied -->
+<!-- to the system where the compiler runs. -->
+指定源文件之外的文件，其必须被复制到编译器运行的系统下。
+
+     <br><dt><code>{ dg-additional-sources "</code><var>filelist</var><code>" }</code><dd><!-- Specify additional source files to appear in the compile line -->
+<!-- following the main test file. -->
+指定额外的源文件，来出现在编译命令行中主测试文件之后。
+</dl>
+
+<!-- @subsubsection Add checks at the end of a test -->
+<h5 class="subsubsection">7.2.1.10 在测试结束之后增加检查</h5>
+
+     <dl>
+<dt><code>{ dg-final { </code><var>local-directive</var><code> } }</code><dd><!-- This DejaGnu directive is placed within a comment anywhere in the -->
+<!-- source file and is processed after the test has been compiled and run. -->
+<!-- Multiple @samp{dg-final} commands are processed in the order in which -->
+<!-- they appear in the source file.  @xref{Final Actions, , }, for a list -->
+<!-- of directives that can be used within @code{dg-final}. -->
+该DejaGnu指令可以放在源文件中任何位置的注释之中，当测试被编译和运行之后进行处理。多个<code>dg-final</code>命令则按照它们在源文件中出现的顺序进行处理。对于可以在<code>dg-final</code>中使用的指令列表，参见<a href="Final-Actions.html#Final-Actions">Final Actions</a>。
+</dl>
+
+<!-- @node Selectors -->
+<!-- @subsection Selecting targets to which a test applies -->
+ </body></html>
+

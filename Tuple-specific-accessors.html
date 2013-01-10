@@ -1,0 +1,84 @@
+<html lang="zh">
+<head>
+<title>Tuple specific accessors - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="GIMPLE.html#GIMPLE" title="GIMPLE">
+<link rel="prev" href="Manipulating-GIMPLE-statements.html#Manipulating-GIMPLE-statements" title="Manipulating GIMPLE statements">
+<link rel="next" href="GIMPLE-sequences.html#GIMPLE-sequences" title="GIMPLE sequences">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Tuple-specific-accessors"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="GIMPLE-sequences.html#GIMPLE-sequences">GIMPLE sequences</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Manipulating-GIMPLE-statements.html#Manipulating-GIMPLE-statements">Manipulating GIMPLE statements</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="GIMPLE.html#GIMPLE">GIMPLE</a>
+<hr>
+</div>
+
+<h3 class="section">12.7 元组特定访问方法</h3>
+
+<p><a name="index-Tuple-specific-accessors-2783"></a>
+
+<ul class="menu">
+<li><a accesskey="1" href="GIMPLE_005fASM.html#GIMPLE_005fASM">GIMPLE_ASM</a>
+<li><a accesskey="2" href="GIMPLE_005fASSIGN.html#GIMPLE_005fASSIGN">GIMPLE_ASSIGN</a>
+<li><a accesskey="3" href="GIMPLE_005fBIND.html#GIMPLE_005fBIND">GIMPLE_BIND</a>
+<li><a accesskey="4" href="GIMPLE_005fCALL.html#GIMPLE_005fCALL">GIMPLE_CALL</a>
+<li><a accesskey="5" href="GIMPLE_005fCATCH.html#GIMPLE_005fCATCH">GIMPLE_CATCH</a>
+<li><a accesskey="6" href="GIMPLE_005fCOND.html#GIMPLE_005fCOND">GIMPLE_COND</a>
+<li><a accesskey="7" href="GIMPLE_005fDEBUG.html#GIMPLE_005fDEBUG">GIMPLE_DEBUG</a>
+<li><a accesskey="8" href="GIMPLE_005fEH_005fFILTER.html#GIMPLE_005fEH_005fFILTER">GIMPLE_EH_FILTER</a>
+<li><a accesskey="9" href="GIMPLE_005fLABEL.html#GIMPLE_005fLABEL">GIMPLE_LABEL</a>
+<li><a href="GIMPLE_005fNOP.html#GIMPLE_005fNOP">GIMPLE_NOP</a>
+<li><a href="GIMPLE_005fOMP_005fATOMIC_005fLOAD.html#GIMPLE_005fOMP_005fATOMIC_005fLOAD">GIMPLE_OMP_ATOMIC_LOAD</a>
+<li><a href="GIMPLE_005fOMP_005fATOMIC_005fSTORE.html#GIMPLE_005fOMP_005fATOMIC_005fSTORE">GIMPLE_OMP_ATOMIC_STORE</a>
+<li><a href="GIMPLE_005fOMP_005fCONTINUE.html#GIMPLE_005fOMP_005fCONTINUE">GIMPLE_OMP_CONTINUE</a>
+<li><a href="GIMPLE_005fOMP_005fCRITICAL.html#GIMPLE_005fOMP_005fCRITICAL">GIMPLE_OMP_CRITICAL</a>
+<li><a href="GIMPLE_005fOMP_005fFOR.html#GIMPLE_005fOMP_005fFOR">GIMPLE_OMP_FOR</a>
+<li><a href="GIMPLE_005fOMP_005fMASTER.html#GIMPLE_005fOMP_005fMASTER">GIMPLE_OMP_MASTER</a>
+<li><a href="GIMPLE_005fOMP_005fORDERED.html#GIMPLE_005fOMP_005fORDERED">GIMPLE_OMP_ORDERED</a>
+<li><a href="GIMPLE_005fOMP_005fPARALLEL.html#GIMPLE_005fOMP_005fPARALLEL">GIMPLE_OMP_PARALLEL</a>
+<li><a href="GIMPLE_005fOMP_005fRETURN.html#GIMPLE_005fOMP_005fRETURN">GIMPLE_OMP_RETURN</a>
+<li><a href="GIMPLE_005fOMP_005fSECTION.html#GIMPLE_005fOMP_005fSECTION">GIMPLE_OMP_SECTION</a>
+<li><a href="GIMPLE_005fOMP_005fSECTIONS.html#GIMPLE_005fOMP_005fSECTIONS">GIMPLE_OMP_SECTIONS</a>
+<li><a href="GIMPLE_005fOMP_005fSINGLE.html#GIMPLE_005fOMP_005fSINGLE">GIMPLE_OMP_SINGLE</a>
+<li><a href="GIMPLE_005fPHI.html#GIMPLE_005fPHI">GIMPLE_PHI</a>
+<li><a href="GIMPLE_005fRESX.html#GIMPLE_005fRESX">GIMPLE_RESX</a>
+<li><a href="GIMPLE_005fRETURN.html#GIMPLE_005fRETURN">GIMPLE_RETURN</a>
+<li><a href="GIMPLE_005fSWITCH.html#GIMPLE_005fSWITCH">GIMPLE_SWITCH</a>
+<li><a href="GIMPLE_005fTRY.html#GIMPLE_005fTRY">GIMPLE_TRY</a>
+<li><a href="GIMPLE_005fWITH_005fCLEANUP_005fEXPR.html#GIMPLE_005fWITH_005fCLEANUP_005fEXPR">GIMPLE_WITH_CLEANUP_EXPR</a>
+</ul>
+
+ </body></html>
+

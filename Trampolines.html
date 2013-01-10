@@ -1,0 +1,210 @@
+<html lang="zh">
+<head>
+<title>Trampolines - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Target-Macros.html#Target-Macros" title="Target Macros">
+<link rel="prev" href="Varargs.html#Varargs" title="Varargs">
+<link rel="next" href="Library-Calls.html#Library-Calls" title="Library Calls">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Trampolines"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Library-Calls.html#Library-Calls">Library Calls</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Varargs.html#Varargs">Varargs</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Target-Macros.html#Target-Macros">Target Macros</a>
+<hr>
+</div>
+
+<h3 class="section">17.12 嵌套函数的蹦床</h3>
+
+<p><a name="index-trampolines-for-nested-functions-4236"></a><a name="index-nested-functions_002c-trampolines-for-4237"></a>
+<!-- A @dfn{trampoline} is a small piece of code that is created at run time -->
+<!-- when the address of a nested function is taken.  It normally resides on -->
+<!-- the stack, in the stack frame of the containing function.  These macros -->
+<!-- tell GCC how to generate code to allocate and initialize a -->
+<!-- trampoline. -->
+一个蹦床<dfn>trampoline</dfn>为在运行时，当使用嵌套函数的地址时，创建的一小块代码。其通常驻于栈上，在包含函数的栈帧中。这些宏告诉GCC如何生成代码来分配和初始化一个蹦床。
+
+<!-- The instructions in the trampoline must do two things: load a constant -->
+<!-- address into the static chain register, and jump to the real address of -->
+<!-- the nested function.  On CISC machines such as the m68k, this requires -->
+<!-- two instructions, a move immediate and a jump.  Then the two addresses -->
+<!-- exist in the trampoline as word-long immediate operands.  On RISC -->
+<!-- machines, it is often necessary to load each address into a register in -->
+<!-- two parts.  Then pieces of each address form separate immediate -->
+<!-- operands. -->
+ <p>在蹦床中的指令必须做两件事情：将一个常量地址加载到静态链寄存器中，并跳转到嵌套函数的实际地址。在CISC机器，像m68k上，这要求两条指令，一个move立即数和一个jump。然后两个地址存放在蹦床中作为字长的立即操作数。在RISC机器上，其通常需要分成两部分加载每个地址到寄存器中。然后地址的各部分形成独立的立即操作数。
+
+<!-- The code generated to initialize the trampoline must store the variable -->
+<!-- parts-the static chain value and the function address-into the -->
+<!-- immediate operands of the instructions.  On a CISC machine, this is -->
+<!-- simply a matter of copying each address to a memory reference at the -->
+<!-- proper offset from the start of the trampoline.  On a RISC machine, it -->
+<!-- may be necessary to take out pieces of the address and store them -->
+<!-- separately. -->
+ <p>用来初始化蹦床的代码必须将变量的组成部分——静态链值和函数地址——存储到指令的立即操作数中。在CISC机器上，这是简单的复制每个地址到一个内存引用，在蹦床起始处的合适偏移量上。在RISC机器上，其可能需要拿出部分地址并单独存储它们。
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_ASM_TRAMPOLINE_TEMPLATE</b> (<var>FILE *f</var>)<var><a name="index-TARGET_005fASM_005fTRAMPOLINE_005fTEMPLATE-4238"></a></var><br>
+<blockquote><p>This hook is called by <code>assemble_trampoline_template</code> to output,
+on the stream <var>f</var>, assembler code for a block of data that contains
+the constant parts of a trampoline.  This code should not include a
+label&mdash;the label is taken care of automatically.
+
+      <p>If you do not define this hook, it means no template is needed
+for the target.  Do not define this hook on systems where the block move
+code to copy the trampoline into place would be larger than the code
+to generate it on the spot. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TRAMPOLINE_SECTION</b><var><a name="index-TRAMPOLINE_005fSECTION-4239"></a></var><br>
+<blockquote><!-- Return the section into which the trampoline template is to be placed -->
+     <!-- (@pxref{Sections}).  The default value is @code{readonly_data_section}. -->
+      <p>返回蹦床模版被放入的section(参见<a href="Sections.html#Sections">Sections</a>)。
+缺省值为<code>readonly_data_section</code>。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TRAMPOLINE_SIZE</b><var><a name="index-TRAMPOLINE_005fSIZE-4240"></a></var><br>
+<blockquote><!-- A C expression for the size in bytes of the trampoline, as an integer. -->
+      <p>一个C表达式，蹦床的字节单位的大小，为整数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>TRAMPOLINE_ALIGNMENT</b><var><a name="index-TRAMPOLINE_005fALIGNMENT-4241"></a></var><br>
+<blockquote><!-- Alignment required for trampolines, in bits. -->
+      <p>蹦床需要的对齐，以位为单位。
+
+     <!-- If you don't define this macro, the value of @code{FUNCTION_ALIGNMENT} -->
+     <!-- is used for aligning trampolines. -->
+      <p>如果没有定义该宏，则使用<code>BIGGEST_ALIGNMENT</code>的值来对齐蹦床。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: void <b>TARGET_TRAMPOLINE_INIT</b> (<var>rtx m_tramp, tree fndecl, rtx static_chain</var>)<var><a name="index-TARGET_005fTRAMPOLINE_005fINIT-4242"></a></var><br>
+<blockquote><p>This hook is called to initialize a trampoline. 
+<var>m_tramp</var> is an RTX for the memory block for the trampoline; <var>fndecl</var>
+is the <code>FUNCTION_DECL</code> for the nested function; <var>static_chain</var> is an
+RTX for the static chain value that should be passed to the function
+when it is called.
+
+      <p>If the target defines <code>TARGET_ASM_TRAMPOLINE_TEMPLATE</code>, then the
+first thing this hook should do is emit a block move into <var>m_tramp</var>
+from the memory block returned by <code>assemble_trampoline_template</code>. 
+Note that the block move need only cover the constant parts of the
+trampoline.  If the target isolates the variable parts of the trampoline
+to the end, not all <code>TRAMPOLINE_SIZE</code> bytes need be copied.
+
+      <p>If the target requires any other actions, such as flushing caches or
+enabling stack execution, these actions should be performed after
+initializing the trampoline proper. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: rtx <b>TARGET_TRAMPOLINE_ADJUST_ADDRESS</b> (<var>rtx addr</var>)<var><a name="index-TARGET_005fTRAMPOLINE_005fADJUST_005fADDRESS-4243"></a></var><br>
+<blockquote><p>This hook should perform any machine-specific adjustment in
+the address of the trampoline.  Its argument contains the address of the
+memory block that was passed to <code>TARGET_TRAMPOLINE_INIT</code>.  In case
+the address to be used for a function call should be different from the
+address at which the template was stored, the different address should
+be returned; otherwise <var>addr</var> should be returned unchanged. 
+If this hook is not defined, <var>addr</var> will be used for function calls. 
+</p></blockquote></div>
+
+<!-- Implementing trampolines is difficult on many machines because they have -->
+<!-- separate instruction and data caches.  Writing into a stack location -->
+<!-- fails to clear the memory in the instruction cache, so when the program -->
+<!-- jumps to that location, it executes the old contents. -->
+ <p>在许多机器上实现蹦床是困难的，因为它们具有独立的指令和数据缓存。
+写到栈位置中使得无法清除指令缓存中的内存，所以当程序跳转到那个位置时，
+其执行了旧的内容。
+
+<!-- Here are two possible solutions.  One is to clear the relevant parts of -->
+<!-- the instruction cache whenever a trampoline is set up.  The other is to -->
+<!-- make all trampolines identical, by having them jump to a standard -->
+<!-- subroutine.  The former technique makes trampoline execution faster; the -->
+<!-- latter makes initialization faster. -->
+ <p>有两种可能的解决方法。一种是清除指令缓存的相关部分，当蹦床被建立的时候。
+另一种是使所有蹦床为等同的，通过使它们跳转到一个标准的子程序中。
+前者使得蹦床执行更快；后者使得初始化更快。
+
+<!-- To clear the instruction cache when a trampoline is initialized, define -->
+<!-- the following macro. -->
+ <p>要在初始化蹦床时清除指令缓存，定义下列宏。
+
+<div class="defun">
+&mdash; Macro: <b>CLEAR_INSN_CACHE</b> (<var>beg, end</var>)<var><a name="index-CLEAR_005fINSN_005fCACHE-4244"></a></var><br>
+<blockquote><!-- If defined, expands to a C expression clearing the @emph{instruction -->
+     <!-- cache} in the specified interval.  The definition of this macro would -->
+     <!-- typically be a series of @code{asm} statements.  Both @var{beg} and -->
+     <!-- @var{end} are both pointer expressions. -->
+      <p>如果被定义，将扩展为一个C表达式，在指定的间隔处来清除指令缓存。
+该宏的定义通常为一系列<code>asm</code>语句。<var>beg</var>和<var>end</var>都为指针表达式。
+</p></blockquote></div>
+
+<!-- To use a standard subroutine, define the following macro.  In addition, -->
+<!-- you must make sure that the instructions in a trampoline fill an entire -->
+<!-- cache line with identical instructions, or else ensure that the -->
+<!-- beginning of the trampoline code is always aligned at the same point in -->
+<!-- its cache line.  Look in @file{m68k.h} as a guide. -->
+ <p>要使用标准的子程序，定义下列宏。另外，
+你必须确信在蹦床中的指令使用相同的指令来填充整个缓存行，
+或者蹦床代码的起始处总是在缓存行的某点被对齐。查看<samp><span class="file">m68k.h</span></samp>作为参考。
+
+<div class="defun">
+&mdash; Macro: <b>TRANSFER_FROM_TRAMPOLINE</b><var><a name="index-TRANSFER_005fFROM_005fTRAMPOLINE-4245"></a></var><br>
+<blockquote><!-- Define this macro if trampolines need a special subroutine to do their -->
+     <!-- work.  The macro should expand to a series of @code{asm} statements -->
+     <!-- which will be compiled with GCC@.  They go in a library function named -->
+     <!-- @code{__transfer_from_trampoline}. -->
+      <p>定义该宏，如果蹦床需要一个特定的子程序来做它们的工作。
+该宏应该扩展为一系列的<code>asm</code>语句，其将由GCC来编译。
+它们放在名为<code>__transfer_from_trampoline</code>的库函数中。
+
+     <!-- If you need to avoid executing the ordinary prologue code of a compiled -->
+     <!-- C function when you jump to the subroutine, you can do so by placing a -->
+     <!-- special label of your own in the assembler code.  Use one @code{asm} -->
+     <!-- statement to generate an assembler label, and another to make the label -->
+     <!-- global.  Then trampolines can use that label to jump directly to your -->
+     <!-- special assembler code. -->
+      <p>如果当你跳转到子程序时，你需要避免普通的被编译的C函数的序言代码，
+你可以通过在汇编代码中放一个你自己的特定标号。
+使用一条<code>asm</code>语句来生成汇编标号，另一条语句使得标号为global的。
+然后蹦床可以使用该标号直接跳到你特定的汇编代码上。
+</p></blockquote></div>
+
+<!-- @node Library Calls -->
+<!-- @section Implicit Calls to Library Routines -->
+ </body></html>
+

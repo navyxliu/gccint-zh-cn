@@ -1,0 +1,2040 @@
+<html lang="zh">
+<head>
+<title>Standard Names - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Machine-Desc.html#Machine-Desc" title="Machine Desc">
+<link rel="prev" href="Constraints.html#Constraints" title="Constraints">
+<link rel="next" href="Pattern-Ordering.html#Pattern-Ordering" title="Pattern Ordering">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Standard-Names"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Pattern-Ordering.html#Pattern-Ordering">Pattern Ordering</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Constraints.html#Constraints">Constraints</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Machine-Desc.html#Machine-Desc">Machine Desc</a>
+<hr>
+</div>
+
+<h3 class="section">16.9 用于生成的标准指令模式名</h3>
+
+<p><a name="index-standard-pattern-names-3335"></a><a name="index-pattern-names-3336"></a><a name="index-names_002c-pattern-3337"></a>
+<!-- Here is a table of the instruction names that are meaningful in the RTL -->
+<!-- generation pass of the compiler.  Giving one of these names to an -->
+<!-- instruction pattern tells the RTL generation pass that it can use the -->
+<!-- pattern to accomplish a certain task. -->
+这里有一个在编译器的RTL生成过程中有意义的指令名称表，在指令模式中给定这些名字中的一个，则告诉RTL生成过程，其可以使用该指令模式来完成一个特定的任务。
+
+<!-- @table @asis -->
+<!-- @cindex @code{mov@var{m}} instruction pattern -->
+<!-- @item @samp{mov@var{m}} -->
+<!-- Here @var{m} stands for a two-letter machine mode name, in lowercase. -->
+<!-- This instruction pattern moves data with that machine mode from operand -->
+<!-- 1 to operand 0.  For example, @samp{movsi} moves full-word data. -->
+<!-- If operand 0 is a @code{subreg} with mode @var{m} of a register whose -->
+<!-- own mode is wider than @var{m}, the effect of this instruction is -->
+<!-- to store the specified value in the part of the register that corresponds -->
+<!-- to mode @var{m}.  Bits outside of @var{m}, but which are within the -->
+<!-- same target word as the @code{subreg} are undefined.  Bits which are -->
+<!-- outside the target word are left unchanged. -->
+<!-- This class of patterns is special in several ways.  First of all, each -->
+<!-- of these names up to and including full word size @emph{must} be defined, -->
+<!-- because there is no other way to copy a datum from one place to another. -->
+<!-- If there are patterns accepting operands in larger modes, -->
+<!-- @samp{mov@var{m}} must be defined for integer modes of those sizes. -->
+<!-- Second, these patterns are not used solely in the RTL generation pass. -->
+<!-- Even the reload pass can generate move insns to copy values from stack -->
+<!-- slots into temporary registers.  When it does so, one of the operands is -->
+<!-- a hard register and the other is an operand that can need to be reloaded -->
+<!-- into a register. -->
+     
+<a name="index-g_t_0040code_007bmov_0040var_007bm_007d_007d-instruction-pattern-3338"></a>
+<dl><dt>&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;<dd>这里<var>m</var>表示一个两字母的机器模式名字，小写。该指令模式将那种机器模式的数据从操作数1移送到操作数0。例如&lsquo;<samp><span class="samp">movsi</span></samp>&rsquo;移送整字数据。
+
+     <p>如果操作数0为一个寄存器的<code>subreg</code>，机器模式为<var>m</var>，寄存器自己的机器模式比<var>m</var>更宽，则该指令的效果是将指定的值存储在寄存器的对应于机器模式<var>m</var>的部分。<var>m</var>之外，且与<code>subreg</code>在同一个目标字中的位，为未定义。目标字以外的位保持不变。
+
+     <p>这类指令模式有几处特别的地方。首先，每个这些直到整字大小的名字，包括整字大小的，必须被定义，因为没有其它方式来从一个地方将数据复制到另一个地方。如果有接受更大机器模式的操作数的指令模式，则必须为那些大小的整数机器模式定义&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;。
+
+     <p>第二，这些指令模式不仅用在RTL生成过程。甚至重载过程可以生成move insn将值从栈槽复制到临时寄存器中。当这样的时候，其中一个操作数为硬件寄存器，另一个为需要被重载到寄存器中的操作数。
+
+     <!-- @findex force_reg -->
+     <!-- Therefore, when given such a pair of operands, the pattern must generate -->
+     <!-- RTL which needs no reloading and needs no temporary registers-no -->
+     <!-- registers other than the operands.  For example, if you support the -->
+     <!-- pattern with a @code{define_expand}, then in such a case the -->
+     <!-- @code{define_expand} mustn't call @code{force_reg} or any other such -->
+     <!-- function which might generate new pseudo registers. -->
+     <!-- This requirement exists even for subword modes on a RISC machine where -->
+     <!-- fetching those modes from memory normally requires several insns and -->
+     <!-- some temporary registers. -->
+     <p><a name="index-force_005freg-3339"></a>因此，当给定这样一对操作数时，指令模式必须生成不需要重载，并且不需要临时寄存器的RTL。例如，如果你使用一个<code>define_expand</code>来支持该指令模式，则这种情况下，<code>define_expand</code>一定不能调用<code>force_reg</code>或者任何其它可能生成新的伪寄存器的函数。
+
+     <p>甚至对于在RISC机器上的子字机器模式，从内存中获取这些机器模式通常需要多个insn和一些临时变量，该要求也存在。
+
+     <!-- @findex change_address -->
+     <!-- During reload a memory reference with an invalid address may be passed -->
+     <!-- as an operand.  Such an address will be replaced with a valid address -->
+     <!-- later in the reload pass.  In this case, nothing may be done with the -->
+     <!-- address except to use it as it stands.  If it is copied, it will not be -->
+     <!-- replaced with a valid address.  No attempt should be made to make such -->
+     <!-- an address into a valid address and no routine (such as -->
+     <!-- @code{change_address}) that will do so may be called.  Note that -->
+     <!-- @code{general_operand} will fail when applied to such an address. -->
+     <p><a name="index-change_005faddress-3340"></a>重载过程中，具有无效地址的内存引用可以被作为操作数。这样的地址将在重载过程的后面被替换成有效地址。这种情况下，可能对地址没有做任何事情，而只是使用它。如果其被复制，则将无法使用有效的地址进行替换。不要尝试将这样的地址变成有效的地址。注意，<code>general_operand</code>当应用到这样的地址的时候将会失败。
+
+     <!-- @findex reload_in_progress -->
+     <!-- The global variable @code{reload_in_progress} (which must be explicitly -->
+     <!-- declared if required) can be used to determine whether such special -->
+     <!-- handling is required. -->
+     <!-- The variety of operands that have reloads depends on the rest of the -->
+     <!-- machine description, but typically on a RISC machine these can only be -->
+     <!-- pseudo registers that did not get hard registers, while on other -->
+     <!-- machines explicit memory references will get optional reloads. -->
+     <!-- If a scratch register is required to move an object to or from memory, -->
+     <!-- it can be allocated using @code{gen_reg_rtx} prior to life analysis. -->
+     <!-- If there are cases which need scratch registers during or after reload, -->
+     <!-- you must provide an appropriate secondary_reload target hook. -->
+     <p><a name="index-reload_005fin_005fprogress-3341"></a>全局变量<code>reload_in_progress</code>（其必须被显式的声明）可以用来确定是否需要这样的特殊的处理。
+
+     <p>需要进行重载的操作数的种类取决于机器描述的其余部分，不过通常在RISC机器上，只有那些没有获得硬件寄存器的伪寄存器，而在其它机器上，显式的内存引用也有可能需要进行重载。
+
+     <p>如果一个scratch寄存器，被需要用来将一个对象与内存之间进行移送，则其可以活跃分析之前，使用<code>gen_reg_rtx</code>来进行分配。
+
+     <p>如果在重载过程中，或者之后，有需要scratch寄存器的情况，则你必须提供一个适当的secondary_reload目标钩子。
+
+     <!-- @findex can_create_pseudo_p -->
+     <!-- The macro @code{can_create_pseudo_p} can be used to determine if it -->
+     <!-- is unsafe to create new pseudo registers.  If this variable is nonzero, then -->
+     <!-- it is unsafe to call @code{gen_reg_rtx} to allocate a new pseudo. -->
+     <!-- The constraints on a @samp{mov@var{m}} must permit moving any hard -->
+     <!-- register to any other hard register provided that -->
+     <!-- @code{HARD_REGNO_MODE_OK} permits mode @var{m} in both registers and -->
+     <!-- @code{TARGET_REGISTER_MOVE_COST} applied to their classes returns a value -->
+     <!-- of 2. -->
+     <!-- It is obligatory to support floating point @samp{mov@var{m}} -->
+     <!-- instructions into and out of any registers that can hold fixed point -->
+     <!-- values, because unions and structures (which have modes @code{SImode} or -->
+     <!-- @code{DImode}) can be in those registers and they may have floating -->
+     <!-- point members. -->
+     <!-- There may also be a need to support fixed point @samp{mov@var{m}} -->
+     <!-- instructions in and out of floating point registers.  Unfortunately, I -->
+     <!-- have forgotten why this was so, and I don't know whether it is still -->
+     <!-- true.  If @code{HARD_REGNO_MODE_OK} rejects fixed point values in -->
+     <!-- floating point registers, then the constraints of the fixed point -->
+     <!-- @samp{mov@var{m}} instructions must be designed to avoid ever trying to -->
+     <!-- reload into a floating point register. -->
+     <p><a name="index-can_005fcreate_005fpseudo_005fp-3342"></a>宏<code>can_create_pseudo_p</code>可以用来确定创建一个新的伪寄存器是否不安全。如果该变量为非零，则调用<code>gen_reg_rtx</code>来分配一个新的伪寄存器是不安全的。
+
+     <p>&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;上的约束必须允许将任何硬件寄存器移送到任何其它硬件寄存器上，假设<code>HARD_REGNO_MODE_OK</code>在两个寄存器上都允许机器模式<var>m</var>，并且<code>REGISTER_MOVE_COST</code>应用到它们的类别上返回值2。
+
+     <p>必须提供浮点&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;指令，用于任何可以存放定点值的寄存器，因为联合体和结构体（具有机器模式<code>SImode</code>或<code>DImode</code>）可以在那些寄存器中，并且它们可以具有浮点成员。
+
+     <p>还需要支持定点&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;指令，用于浮点寄存器。不幸的是，我忘了为什么要这样，并且不知道这是否还是真的。如果<code>HARD_REGNO_MODE_OK</code>排斥在浮点寄存器中的定点值，则定点&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;指令的约束必须被设计成，避免尝试重载到一个浮点寄存器。
+
+     <!-- @cindex @code{reload_in} instruction pattern -->
+     <!-- @cindex @code{reload_out} instruction pattern -->
+     <!-- @item @samp{reload_in@var{m}} -->
+     <!-- @itemx @samp{reload_out@var{m}} -->
+     <!-- These named patterns have been obsoleted by the target hook -->
+     <!-- @code{secondary_reload}. -->
+     <!-- Like @samp{mov@var{m}}, but used when a scratch register is required to -->
+     <!-- move between operand 0 and operand 1.  Operand 2 describes the scratch -->
+     <!-- register.  See the discussion of the @code{SECONDARY_RELOAD_CLASS} -->
+     <!-- macro in @pxref{Register Classes}. -->
+     <!-- There are special restrictions on the form of the @code{match_operand}s -->
+     <!-- used in these patterns.  First, only the predicate for the reload -->
+     <!-- operand is examined, i.e., @code{reload_in} examines operand 1, but not -->
+     <!-- the predicates for operand 0 or 2.  Second, there may be only one -->
+     <!-- alternative in the constraints.  Third, only a single register class -->
+     <!-- letter may be used for the constraint; subsequent constraint letters -->
+     <!-- are ignored.  As a special exception, an empty constraint string -->
+     <!-- matches the @code{ALL_REGS} register class.  This may relieve ports -->
+     <!-- of the burden of defining an @code{ALL_REGS} constraint letter just -->
+     <!-- for these patterns. -->
+     <p><a name="index-g_t_0040code_007breload_005fin_007d-instruction-pattern-3343"></a><a name="index-g_t_0040code_007breload_005fout_007d-instruction-pattern-3344"></a><br><dt>&lsquo;<samp><span class="samp">reload_in</span><var>m</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">reload_out</span><var>m</var></samp>&rsquo;<dd>这些命名指令模式已经被目标钩子<code>secondary_reload</code>废弃。
+
+     <p>类似&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;，不过用于当需要使用scratch寄存器在操作数0和操作数1之间移送的时候。操作数2描述scratch寄存器。参见<a href="Register-Classes.html#Register-Classes">Register Classes</a>中对<code>SECONDARY_RELOAD_CLASS</code>宏的讨论。
+
+     <p>这些指令模式中的<code>match_operand</code>的形式，有一些特殊的限制。首先，只有重载操作数的断言才被检查，即<code>reload_in</code>检查操作数1，而不检查操作数0和2。第二，在约束中只能有一个可选项。第三，约束只能使用单个寄存器类别字母；后续的约束字母都被忽略。一个例外是，空的约束字符串匹配<code>ALL_REGS</code>寄存器类别。这可以减轻后端为这些指令模式定义<code>ALL_REGS</code>约束字母的负担。
+
+     <!-- @cindex @code{movstrict@var{m}} instruction pattern -->
+     <!-- @item @samp{movstrict@var{m}} -->
+     <!-- Like @samp{mov@var{m}} except that if operand 0 is a @code{subreg} -->
+     <!-- with mode @var{m} of a register whose natural mode is wider, -->
+     <!-- the @samp{movstrict@var{m}} instruction is guaranteed not to alter -->
+     <!-- any of the register except the part which belongs to mode @var{m}. -->
+     <p><a name="index-g_t_0040code_007bmovstrict_0040var_007bm_007d_007d-instruction-pattern-3345"></a><br><dt>&lsquo;<samp><span class="samp">movstrict</span><var>m</var></samp>&rsquo;<dd>类似&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;，只不过，如果操作数0为一个寄存器的机器模式为<var>m</var>的<code>subreg</code>，且寄存器的自然机器模式是较宽的，则&lsquo;<samp><span class="samp">movstrict</span><var>m</var></samp>&rsquo;指令保证不会修改属于机器模式<var>m</var>之外的寄存器的任何部分。
+
+     <!-- @cindex @code{movmisalign@var{m}} instruction pattern -->
+     <!-- @item @samp{movmisalign@var{m}} -->
+     <!-- This variant of a move pattern is designed to load or store a value -->
+     <!-- from a memory address that is not naturally aligned for its mode. -->
+     <!-- For a store, the memory will be in operand 0; for a load, the memory -->
+     <!-- will be in operand 1.  The other operand is guaranteed not to be a -->
+     <!-- memory, so that it's easy to tell whether this is a load or store. -->
+     <!-- This pattern is used by the autovectorizer, and when expanding a -->
+     <!-- @code{MISALIGNED_INDIRECT_REF} expression. -->
+     <p><a name="index-g_t_0040code_007bmovmisalign_0040var_007bm_007d_007d-instruction-pattern-3346"></a><br><dt>&lsquo;<samp><span class="samp">movmisalign</span><var>m</var></samp>&rsquo;<dd>该move指令模式的变体，被设计为从没有与其机器模式自然对齐的内存地址中加载和存储值。对于存储，内存将在操作数0中；对于加载，内存将在操作数1中。其它操作数保证不为内存，所以容易判别是加载还是存储。
+
+     <p>该指令模式用于向量化，当展开<code>MISALIGNED_INDIRECT_REF</code>表达式的时候。
+
+     <!-- @cindex @code{load_multiple} instruction pattern -->
+     <!-- @item @samp{load_multiple} -->
+     <!-- Load several consecutive memory locations into consecutive registers. -->
+     <!-- Operand 0 is the first of the consecutive registers, operand 1 -->
+     <!-- is the first memory location, and operand 2 is a constant: the -->
+     <!-- number of consecutive registers. -->
+     <!-- Define this only if the target machine really has such an instruction; -->
+     <!-- do not define this if the most efficient way of loading consecutive -->
+     <!-- registers from memory is to do them one at a time. -->
+     <!-- On some machines, there are restrictions as to which consecutive -->
+     <!-- registers can be stored into memory, such as particular starting or -->
+     <!-- ending register numbers or only a range of valid counts.  For those -->
+     <!-- machines, use a @code{define_expand} (@pxref{Expander Definitions}) -->
+     <!-- and make the pattern fail if the restrictions are not met. -->
+     <!-- Write the generated insn as a @code{parallel} with elements being a -->
+     <!-- @code{set} of one register from the appropriate memory location (you may -->
+     <!-- also need @code{use} or @code{clobber} elements).  Use a -->
+     <!-- @code{match_parallel} (@pxref{RTL Template}) to recognize the insn.  See -->
+     <!-- @file{rs6000.md} for examples of the use of this insn pattern. -->
+     <p><a name="index-g_t_0040code_007bload_005fmultiple_007d-instruction-pattern-3347"></a><br><dt>&lsquo;<samp><span class="samp">load_multiple</span></samp>&rsquo;<dd>将多个连续的内存位置加载到连续的寄存器中。操作数0为连续寄存器中的第一个，操作数1为第一个内存位置，操作数2为一个常量：连续寄存器的数目。
+
+     <p>只有当目标机器确实具有这样指令的时候才定义该指令模式；如果将内存加载到连续寄存器的最有效的方式，是每次加载一个，则 不用定义该指令模式。
+
+     <p>在一些机器上，对于哪些连续寄存器可以存储到内存中，会有一些限制，例如特定的起始寄存器或者结尾寄存器的编号，或者一个有效范围。对于那些机器，使用<code>define_expand</code> (参见<a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)，并当不符合限制的时候，将指令模式变成失败。
+
+     <p>将生成的insn写成一个<code>parallel</code>，其元素为一个从适当内存位置到寄存器的<code>set</code>（可能还需要<code>use</code>或元素<code>clobber</code>）。使用<code>match_parallel</code> (参见<a href="RTL-Template.html#RTL-Template">RTL Template</a>)来识别insn。关于使用该insn模式的例子，可以参见<samp><span class="file">rs6000.md</span></samp>。
+
+     <!-- @cindex @samp{store_multiple} instruction pattern -->
+     <!-- @item @samp{store_multiple} -->
+     <!-- Similar to @samp{load_multiple}, but store several consecutive registers -->
+     <!-- into consecutive memory locations.  Operand 0 is the first of the -->
+     <!-- consecutive memory locations, operand 1 is the first register, and -->
+     <!-- operand 2 is a constant: the number of consecutive registers. -->
+     <p>类似于&lsquo;<samp><span class="samp">load_multiple</span></samp>&rsquo;，不过是将多个连续的寄存器存储到连续的内存位置。操作数0为连续内存位置的第一个，操作数1为第一个寄存器，操作数2为常量：连续寄存器的数目。
+<a name="index-g_t_0040code_007bvec_005fload_005flanes_0040var_007bm_007d_0040var_007bn_007d_007d-instruction-pattern-3348"></a><br><dt>&lsquo;<samp><span class="samp">vec_load_lanes</span><var>m</var><var>n</var></samp>&rsquo;<dd>Perform an interleaved load of several vectors from memory operand 1
+into register operand 0.  Both operands have mode <var>m</var>.  The register
+operand is viewed as holding consecutive vectors of mode <var>n</var>,
+while the memory operand is a flat array that contains the same number
+of elements.  The operation is equivalent to:
+
+     <pre class="smallexample">          int c = GET_MODE_SIZE (<var>m</var>) / GET_MODE_SIZE (<var>n</var>);
+          for (j = 0; j &lt; GET_MODE_NUNITS (<var>n</var>); j++)
+            for (i = 0; i &lt; c; i++)
+              operand0[i][j] = operand1[j * c + i];
+</pre>
+     <p>For example, &lsquo;<samp><span class="samp">vec_load_lanestiv4hi</span></samp>&rsquo; loads 8 16-bit values
+from memory into a register of mode &lsquo;<samp><span class="samp">TI</span></samp>&rsquo;.  The register
+contains two consecutive vectors of mode &lsquo;<samp><span class="samp">V4HI</span></samp>&rsquo;.
+
+     <p>This pattern can only be used if:
+     <pre class="smallexample">          TARGET_ARRAY_MODE_SUPPORTED_P (<var>n</var>, <var>c</var>)
+</pre>
+     <p>is true.  GCC assumes that, if a target supports this kind of
+instruction for some mode <var>n</var>, it also supports unaligned
+loads for vectors of mode <var>n</var>.
+
+     <p><a name="index-g_t_0040code_007bvec_005fstore_005flanes_0040var_007bm_007d_0040var_007bn_007d_007d-instruction-pattern-3349"></a><br><dt>&lsquo;<samp><span class="samp">vec_store_lanes</span><var>m</var><var>n</var></samp>&rsquo;<dd>Equivalent to &lsquo;<samp><span class="samp">vec_load_lanes</span><var>m</var><var>n</var></samp>&rsquo;, with the memory
+and register operands reversed.  That is, the instruction is
+equivalent to:
+
+     <pre class="smallexample">          int c = GET_MODE_SIZE (<var>m</var>) / GET_MODE_SIZE (<var>n</var>);
+          for (j = 0; j &lt; GET_MODE_NUNITS (<var>n</var>); j++)
+            for (i = 0; i &lt; c; i++)
+              operand0[j * c + i] = operand1[i][j];
+</pre>
+     <p>for a memory operand 0 and register operand 1.
+
+     <p><a name="index-g_t_0040samp_007bstore_005fmultiple_007d-instruction-pattern-3350"></a><br><dt>&lsquo;<samp><span class="samp">store_multiple</span></samp>&rsquo;<dd>
+<!-- @cindex @code{vec_set@var{m}} instruction pattern -->
+<!-- @item @samp{vec_set@var{m}} -->
+<!-- Set given field in the vector value.  Operand 0 is the vector to modify, -->
+<!-- operand 1 is new value of field and operand 2 specify the field index. -->
+<a name="index-g_t_0040code_007bvec_005fset_0040var_007bm_007d_007d-instruction-pattern-3351"></a><br><dt>&lsquo;<samp><span class="samp">vec_set</span><var>m</var></samp>&rsquo;<dd>设置向量中给定的域。操作数0为要修改的向量，操作数1为域的新值，操作数2指定了域的索引。
+
+     <p><a name="index-g_t_0040code_007bvec_005fextract_0040var_007bm_007d_007d-instruction-pattern-3352"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract</span><var>m</var></samp>&rsquo;<dd><!-- Extract given field from the vector value.  Operand 1 is the vector, operand 2 -->
+<!-- specify field index and operand 0 place to store value into. -->
+从向量中抽取给定的域。操作数1为向量，操作数2指定了域索引，操作数0为存放值的地方。
+
+     <p><a name="index-g_t_0040code_007bvec_005fextract_005feven_0040var_007bm_007d_007d-instruction-pattern-3353"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract_even</span><var>m</var></samp>&rsquo;<dd><!-- Extract even elements from the input vectors (operand 1 and operand 2). -->
+<!-- The even elements of operand 2 are concatenated to the even elements of operand -->
+<!-- 1 in their original order. The result is stored in operand 0. -->
+<!-- The output and input vectors should have the same modes. -->
+从输入向量（操作数1和2）中，抽取偶数元素。操作数2的偶数元素按照它们原来的顺序，连结到操作数1的偶数元素后面。结果存储在操作数0中。输出和输入向量应该具有相同的模式。
+
+     <p><a name="index-g_t_0040code_007bvec_005fextract_005fodd_0040var_007bm_007d_007d-instruction-pattern-3354"></a><br><dt>&lsquo;<samp><span class="samp">vec_extract_odd</span><var>m</var></samp>&rsquo;<dd><!-- Extract odd elements from the input vectors (operand 1 and operand 2). -->
+<!-- The odd elements of operand 2 are concatenated to the odd elements of operand -->
+<!-- 1 in their original order. The result is stored in operand 0. -->
+<!-- The output and input vectors should have the same modes. -->
+从输入向量（操作数1和2）中，抽取奇数元素。操作数2的奇数元素按照它们原来的顺序，连结到操作数1的奇数元素后面。结果存储在操作数0中。输出和输入向量应该具有相同的模式。
+
+     <p><a name="index-g_t_0040code_007bvec_005finterleave_005fhigh_0040var_007bm_007d_007d-instruction-pattern-3355"></a><br><dt>&lsquo;<samp><span class="samp">vec_interleave_high</span><var>m</var></samp>&rsquo;<dd><!-- Merge high elements of the two input vectors into the output vector. The output -->
+<!-- and input vectors should have the same modes (@code{N} elements). The high -->
+<!-- @code{N/2} elements of the first input vector are interleaved with the high -->
+<!-- @code{N/2} elements of the second input vector. -->
+将两个输入向量的高部分元素合并到输入向量中。输出和输入向量应该具有相同的模式(<code>N</code>个元素)。第一个输入向量的高<code>N/2</code>个元素被第二个输入向量的高<code>N/2</code>个元素交错的插入。
+
+     <p><a name="index-g_t_0040code_007bvec_005finterleave_005flow_0040var_007bm_007d_007d-instruction-pattern-3356"></a><br><dt>&lsquo;<samp><span class="samp">vec_interleave_low</span><var>m</var></samp>&rsquo;<dd><!-- Merge low elements of the two input vectors into the output vector. The output -->
+<!-- and input vectors should have the same modes (@code{N} elements). The low -->
+<!-- @code{N/2} elements of the first input vector are interleaved with the low -->
+<!-- @code{N/2} elements of the second input vector. -->
+将两个输入向量的低部分元素合并到输入向量中。输出和输入向量应该具有相同的模式(<code>N</code>个元素)。第一个输入向量的低<code>N/2</code>个元素被第二个输入向量的低<code>N/2</code>个元素交错的插入。
+
+     <p><a name="index-g_t_0040code_007bvec_005finit_0040var_007bm_007d_007d-instruction-pattern-3357"></a><br><dt>&lsquo;<samp><span class="samp">vec_init</span><var>m</var></samp>&rsquo;<dd><!-- Initialize the vector to given values.  Operand 0 is the vector to initialize -->
+<!-- and operand 1 is parallel containing values for individual fields. -->
+将向量初始化为给定的值。操作数0为要初始化的向量，操作数1并行的包含每个域的值。
+
+     <p><a name="index-g_t_0040code_007bvcond_0040var_007bm_007d_0040var_007bn_007d_007d-instruction-pattern-3358"></a><br><dt>&lsquo;<samp><span class="samp">vcond</span><var>m</var><var>n</var></samp>&rsquo;<dd>Output a conditional vector move.  Operand 0 is the destination to
+receive a combination of operand 1 and operand 2, which are of mode <var>m</var>,
+dependent on the outcome of the predicate in operand 3 which is a
+vector comparison with operands of mode <var>n</var> in operands 4 and 5.  The
+modes <var>m</var> and <var>n</var> should have the same size.  Operand 0
+will be set to the value <var>op1</var> &amp; <var>msk</var> | <var>op2</var> &amp; ~<var>msk</var>
+where <var>msk</var> is computed by element-wise evaluation of the vector
+comparison with a truth value of all-ones and a false value of all-zeros.
+
+     <p><a name="index-g_t_0040code_007bpush_0040var_007bm_007d1_007d-instruction-pattern-3359"></a><br><dt>&lsquo;<samp><span class="samp">push</span><var>m</var><span class="samp">1</span></samp>&rsquo;<dd><!-- Output a push instruction.  Operand 0 is value to push.  Used only when -->
+<!-- @code{PUSH_ROUNDING} is defined.  For historical reason, this pattern may be -->
+<!-- missing and in such case an @code{mov} expander is used instead, with a -->
+<!-- @code{MEM} expression forming the push operation.  The @code{mov} expander -->
+<!-- method is deprecated. -->
+输出一个push指令。操作数0是压栈的值。只有当<code>PUSH_ROUNDING</code>被定义时，才被使用。出于历史原因，该指令模式可以缺失，这种情况下使用<code>mov</code>扩展来替代，并用<code>MEM</code>表达式来形成压栈运算。<code>mov</code>扩展方法不被推荐。
+
+     <p><a name="index-g_t_0040code_007badd_0040var_007bm_007d3_007d-instruction-pattern-3360"></a><br><dt>&lsquo;<samp><span class="samp">add</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd><!-- Add operand 2 and operand 1, storing the result in operand 0.  All operands -->
+<!-- must have mode @var{m}.  This can be used even on two-address machines, by -->
+<!-- means of constraints requiring operands 1 and 0 to be the same location. -->
+操作数2加上操作数1，将结果存储在操作数0中。所有操作数必须具有机器模式<var>m</var>。这也可以用于两地址机器上，通过约束来要求操作数1和0为相同的位置。
+
+     <p><a name="index-g_t_0040code_007bssadd_0040var_007bm_007d3_007d-instruction-pattern-3361"></a><a name="index-g_t_0040code_007busadd_0040var_007bm_007d3_007d-instruction-pattern-3362"></a><a name="index-g_t_0040code_007bsub_0040var_007bm_007d3_007d-instruction-pattern-3363"></a><a name="index-g_t_0040code_007bsssub_0040var_007bm_007d3_007d-instruction-pattern-3364"></a><a name="index-g_t_0040code_007bussub_0040var_007bm_007d3_007d-instruction-pattern-3365"></a><a name="index-g_t_0040code_007bmul_0040var_007bm_007d3_007d-instruction-pattern-3366"></a><a name="index-g_t_0040code_007bssmul_0040var_007bm_007d3_007d-instruction-pattern-3367"></a><a name="index-g_t_0040code_007busmul_0040var_007bm_007d3_007d-instruction-pattern-3368"></a><a name="index-g_t_0040code_007bdiv_0040var_007bm_007d3_007d-instruction-pattern-3369"></a><a name="index-g_t_0040code_007bssdiv_0040var_007bm_007d3_007d-instruction-pattern-3370"></a><a name="index-g_t_0040code_007budiv_0040var_007bm_007d3_007d-instruction-pattern-3371"></a><a name="index-g_t_0040code_007busdiv_0040var_007bm_007d3_007d-instruction-pattern-3372"></a><a name="index-g_t_0040code_007bmod_0040var_007bm_007d3_007d-instruction-pattern-3373"></a><a name="index-g_t_0040code_007bumod_0040var_007bm_007d3_007d-instruction-pattern-3374"></a><a name="index-g_t_0040code_007bumin_0040var_007bm_007d3_007d-instruction-pattern-3375"></a><a name="index-g_t_0040code_007bumax_0040var_007bm_007d3_007d-instruction-pattern-3376"></a><a name="index-g_t_0040code_007band_0040var_007bm_007d3_007d-instruction-pattern-3377"></a><a name="index-g_t_0040code_007bior_0040var_007bm_007d3_007d-instruction-pattern-3378"></a><a name="index-g_t_0040code_007bxor_0040var_007bm_007d3_007d-instruction-pattern-3379"></a><br><dt>&lsquo;<samp><span class="samp">ssadd</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usadd</span><var>m</var><span class="samp">3</span></samp>&rsquo;<br><dt>&lsquo;<samp><span class="samp">sub</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">sssub</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ussub</span><var>m</var><span class="samp">3</span></samp>&rsquo;<br><dt>&lsquo;<samp><span class="samp">mul</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssmul</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usmul</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">div</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssdiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">udiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usdiv</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">mod</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umod</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">umin</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umax</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">and</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ior</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">xor</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd><!-- Similar, for other arithmetic operations. -->
+类似的，用于其它算术运算。
+
+     <p><a name="index-g_t_0040code_007bfma_0040var_007bm_007d4_007d-instruction-pattern-3380"></a><br><dt>&lsquo;<samp><span class="samp">fma</span><var>m</var><span class="samp">4</span></samp>&rsquo;<dd>Multiply operand 2 and operand 1, then add operand 3, storing the
+result in operand 0.  All operands must have mode <var>m</var>.  This
+pattern is used to implement the <code>fma</code>, <code>fmaf</code>, and
+<code>fmal</code> builtin functions from the ISO C99 standard.  The
+<code>fma</code> operation may produce different results than doing the
+multiply followed by the add if the machine does not perform a
+rounding step between the operations.
+
+     <p><a name="index-g_t_0040code_007bfms_0040var_007bm_007d4_007d-instruction-pattern-3381"></a><br><dt>&lsquo;<samp><span class="samp">fms</span><var>m</var><span class="samp">4</span></samp>&rsquo;<dd>Like <code>fma</code><var>m</var><code>4</code>, except operand 3 subtracted from the
+product instead of added to the product.  This is represented
+in the rtl as
+
+     <pre class="smallexample">          (fma:<var>m</var> <var>op1</var> <var>op2</var> (neg:<var>m</var> <var>op3</var>))
+</pre>
+     <p><a name="index-g_t_0040code_007bfnma_0040var_007bm_007d4_007d-instruction-pattern-3382"></a><br><dt>&lsquo;<samp><span class="samp">fnma</span><var>m</var><span class="samp">4</span></samp>&rsquo;<dd>Like <code>fma</code><var>m</var><code>4</code> except that the intermediate product
+is negated before being added to operand 3.  This is represented
+in the rtl as
+
+     <pre class="smallexample">          (fma:<var>m</var> (neg:<var>m</var> <var>op1</var>) <var>op2</var> <var>op3</var>)
+</pre>
+     <p><a name="index-g_t_0040code_007bfnms_0040var_007bm_007d4_007d-instruction-pattern-3383"></a><br><dt>&lsquo;<samp><span class="samp">fnms</span><var>m</var><span class="samp">4</span></samp>&rsquo;<dd>Like <code>fms</code><var>m</var><code>4</code> except that the intermediate product
+is negated before subtracting operand 3.  This is represented
+in the rtl as
+
+     <pre class="smallexample">          (fma:<var>m</var> (neg:<var>m</var> <var>op1</var>) <var>op2</var> (neg:<var>m</var> <var>op3</var>))
+</pre>
+     <p><a name="index-g_t_0040code_007bmin_0040var_007bm_007d3_007d-instruction-pattern-3384"></a><a name="index-g_t_0040code_007bmax_0040var_007bm_007d3_007d-instruction-pattern-3385"></a><br><dt>&lsquo;<samp><span class="samp">smin</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">smax</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd><!-- Signed minimum and maximum operations.  When used with floating point, -->
+<!-- if both operands are zeros, or if either operand is @code{NaN}, then -->
+<!-- it is unspecified which of the two operands is returned as the result. -->
+有符号的最小值和最大值运算。当用于浮点，如果两个操作数都为零，或者有一个为<code>NaN</code>，则没有明确指定哪个操作数作为结果返回。
+
+     <p><a name="index-g_t_0040code_007breduc_005fsmin_005f_0040var_007bm_007d_007d-instruction-pattern-3386"></a><a name="index-g_t_0040code_007breduc_005fsmax_005f_0040var_007bm_007d_007d-instruction-pattern-3387"></a><br><dt>&lsquo;<samp><span class="samp">reduc_smin_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">reduc_smax_</span><var>m</var></samp>&rsquo;<dd><!-- Find the signed minimum/maximum of the elements of a vector. The vector is -->
+<!-- operand 1, and the scalar result is stored in the least significant bits of -->
+<!-- operand 0 (also a vector). The output and input vector should have the same -->
+<!-- modes. -->
+查找向量的有符号最小/最大元素。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
+
+     <p><a name="index-g_t_0040code_007breduc_005fumin_005f_0040var_007bm_007d_007d-instruction-pattern-3388"></a><a name="index-g_t_0040code_007breduc_005fumax_005f_0040var_007bm_007d_007d-instruction-pattern-3389"></a><br><dt>&lsquo;<samp><span class="samp">reduc_umin_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">reduc_umax_</span><var>m</var></samp>&rsquo;<dd><!-- Find the unsigned minimum/maximum of the elements of a vector. The vector is -->
+<!-- operand 1, and the scalar result is stored in the least significant bits of -->
+<!-- operand 0 (also a vector). The output and input vector should have the same -->
+<!-- modes. -->
+查找向量的无符号最小/最大元素。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
+
+     <p><a name="index-g_t_0040code_007breduc_005fsplus_005f_0040var_007bm_007d_007d-instruction-pattern-3390"></a><br><dt>&lsquo;<samp><span class="samp">reduc_splus_</span><var>m</var></samp>&rsquo;<dd><!-- Compute the sum of the signed elements of a vector. The vector is operand 1, -->
+<!-- and the scalar result is stored in the least significant bits of operand 0 -->
+<!-- (also a vector). The output and input vector should have the same modes. -->
+计算向量的有符号元素的和。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
+
+     <p><a name="index-g_t_0040code_007breduc_005fuplus_005f_0040var_007bm_007d_007d-instruction-pattern-3391"></a><br><dt>&lsquo;<samp><span class="samp">reduc_uplus_</span><var>m</var></samp>&rsquo;<dd><!-- Compute the sum of the unsigned elements of a vector. The vector is operand 1, -->
+<!-- and the scalar result is stored in the least significant bits of operand 0 -->
+<!-- (also a vector). The output and input vector should have the same modes. -->
+计算向量的无符号元素的和。向量为操作数1，标量结果存放在操作数0（也是一个向量）的最小有效位。输出和输入向量应该具有相同的模式。
+
+     <p><a name="index-g_t_0040code_007bsdot_005fprod_0040var_007bm_007d_007d-instruction-pattern-3392"></a><br><dt>&lsquo;<samp><span class="samp">sdot_prod</span><var>m</var></samp>&rsquo;<dd><a name="index-g_t_0040code_007budot_005fprod_0040var_007bm_007d_007d-instruction-pattern-3393"></a><br><dt>&lsquo;<samp><span class="samp">udot_prod</span><var>m</var></samp>&rsquo;<dd><!-- Compute the sum of the products of two signed/unsigned elements. -->
+<!-- Operand 1 and operand 2 are of the same mode. Their product, which is of a -->
+<!-- wider mode, is computed and added to operand 3. Operand 3 is of a mode equal or -->
+<!-- wider than the mode of the product. The result is placed in operand 0, which -->
+<!-- is of the same mode as operand 3. -->
+计算两个有符号/无符号元素乘积的和。操作数1和2为相同的模式。它们的乘积，为一个宽的模式，被计算并增加到操作数3上。操作数3的机器模式等于或宽于乘积的机器模式。结果被放在操作数0上，其与操作数3具有相同的机器模式。
+
+     <p><a name="index-g_t_0040code_007bssum_005fwiden_0040var_007bm3_007d_007d-instruction-pattern-3394"></a><br><dt>&lsquo;<samp><span class="samp">ssum_widen</span><var>m3</var></samp>&rsquo;<dd><a name="index-g_t_0040code_007busum_005fwiden_0040var_007bm3_007d_007d-instruction-pattern-3395"></a><br><dt>&lsquo;<samp><span class="samp">usum_widen</span><var>m3</var></samp>&rsquo;<dd><!-- Operands 0 and 2 are of the same mode, which is wider than the mode of -->
+<!-- operand 1. Add operand 1 to operand 2 and place the widened result in -->
+<!-- operand 0. (This is used express accumulation of elements into an accumulator -->
+<!-- of a wider mode.) -->
+操作数0和2具有相同的机器模式，其比操作数1的宽。将操作数1加上操作数2，并将加宽的结果放在操作数0中。（这用于表示元素累加到一个更宽模式的累加器中）
+
+     <p><a name="index-g_t_0040code_007bvec_005fshl_005f_0040var_007bm_007d_007d-instruction-pattern-3396"></a><a name="index-g_t_0040code_007bvec_005fshr_005f_0040var_007bm_007d_007d-instruction-pattern-3397"></a><br><dt>&lsquo;<samp><span class="samp">vec_shl_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_shr_</span><var>m</var></samp>&rsquo;<dd><!-- Whole vector left/right shift in bits. -->
+<!-- Operand 1 is a vector to be shifted. -->
+<!-- Operand 2 is an integer shift amount in bits. -->
+<!-- Operand 0 is where the resulting shifted vector is stored. -->
+<!-- The output and input vectors should have the same modes. -->
+整个向量向左/向右移位。操作数1为被移位的向量。操作数2为移位的位数。操作数0为移位后的结果向量被存储的地方。输出和输入向量应该具有相同的模式。
+
+     <p><a name="index-g_t_0040code_007bvec_005fpack_005ftrunc_005f_0040var_007bm_007d_007d-instruction-pattern-3398"></a><br><dt>&lsquo;<samp><span class="samp">vec_pack_trunc_</span><var>m</var></samp>&rsquo;<dd><!-- Narrow (demote) and merge the elements of two vectors. Operands 1 and 2 -->
+<!-- are vectors of the same mode having N integral or floating point elements -->
+<!-- of size S@.  Operand 0 is the resulting vector in which 2*N elements of -->
+<!-- size N/2 are concatenated after narrowing them down using truncation. -->
+变窄（降级）并合并两个向量的元素。操作数1和2为具有相同机器模式，N个，大小为S的整数或者浮点元素的向量。操作数0为结果向量，通过使用截取的方式，将它们变窄并连接成，2×N个大小为N/2的元素。
+
+     <p><a name="index-g_t_0040code_007bvec_005fpack_005fssat_005f_0040var_007bm_007d_007d-instruction-pattern-3399"></a><a name="index-g_t_0040code_007bvec_005fpack_005fusat_005f_0040var_007bm_007d_007d-instruction-pattern-3400"></a><br><dt>&lsquo;<samp><span class="samp">vec_pack_ssat_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_pack_usat_</span><var>m</var></samp>&rsquo;<dd><!-- Narrow (demote) and merge the elements of two vectors.  Operands 1 and 2 -->
+<!-- are vectors of the same mode having N integral elements of size S. -->
+<!-- Operand 0 is the resulting vector in which the elements of the two input -->
+<!-- vectors are concatenated after narrowing them down using signed/unsigned -->
+<!-- saturating arithmetic. -->
+变窄（降级）并合并两个向量的元素。操作数1和2为具有相同机器模式，N个，大小为S的整数元素的向量。操作数0为结果向量，通过使用有符号/无符号饱和算术的方式，将它们变窄并连接成。
+
+     <p><a name="index-g_t_0040code_007bvec_005fpack_005fsfix_005ftrunc_005f_0040var_007bm_007d_007d-instruction-pattern-3401"></a><a name="index-g_t_0040code_007bvec_005fpack_005fufix_005ftrunc_005f_0040var_007bm_007d_007d-instruction-pattern-3402"></a><br><dt>&lsquo;<samp><span class="samp">vec_pack_sfix_trunc_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_pack_ufix_trunc_</span><var>m</var></samp>&rsquo;<dd><!-- Narrow, convert to signed/unsigned integral type and merge the elements -->
+<!-- of two vectors.  Operands 1 and 2 are vectors of the same mode having N -->
+<!-- floating point elements of size S@.  Operand 0 is the resulting vector -->
+<!-- in which 2*N elements of size N/2 are concatenated. -->
+将两个向量的元素变窄，转成有符号/无符号整数类型并合并。操作数1和2为具有相同机器模式，N个，大小为S的浮点元素的向量。操作数0为结果向量，由2×N个大小为N/2的元素连接而成。
+
+     <p><a name="index-g_t_0040code_007bvec_005funpacks_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3403"></a><a name="index-g_t_0040code_007bvec_005funpacks_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3404"></a><br><dt>&lsquo;<samp><span class="samp">vec_unpacks_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_unpacks_lo_</span><var>m</var></samp>&rsquo;<dd><!-- Extract and widen (promote) the high/low part of a vector of signed -->
+<!-- integral or floating point elements.  The input vector (operand 1) has N -->
+<!-- elements of size S@.  Widen (promote) the high/low elements of the vector -->
+<!-- using signed or floating point extension and place the resulting N/2 -->
+<!-- values of size 2*S in the output vector (operand 0). -->
+抽取并变宽（提升），具有有符号整数或浮点元素的，向量的高/低部分。输入向量（操作数1）具有N个大小为S的元素。使用有符号或者浮点扩展，将向量的高/低元素进行变宽（提升），并将结果，N/2个大小为2*S的值，放在输出向量（操作数0）中。
+
+     <p><a name="index-g_t_0040code_007bvec_005funpacku_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3405"></a><a name="index-g_t_0040code_007bvec_005funpacku_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3406"></a><br><dt>&lsquo;<samp><span class="samp">vec_unpacku_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_unpacku_lo_</span><var>m</var></samp>&rsquo;<dd><!-- Extract and widen (promote) the high/low part of a vector of unsigned -->
+<!-- integral elements.  The input vector (operand 1) has N elements of size S. -->
+<!-- Widen (promote) the high/low elements of the vector using zero extension and -->
+<!-- place the resulting N/2 values of size 2*S in the output vector (operand 0). -->
+抽取并变宽（提升），具有无符号整数元素的，向量的高/低部分。输入向量（操作数1）具有N个大小为S的元素。使用零扩展，将向量的高/低元素进行变宽（提升），并将结果，N/2个大小为2*S的值，放在输出向量（操作数0）中。
+
+     <p><a name="index-g_t_0040code_007bvec_005funpacks_005ffloat_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3407"></a><a name="index-g_t_0040code_007bvec_005funpacks_005ffloat_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3408"></a><a name="index-g_t_0040code_007bvec_005funpacku_005ffloat_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3409"></a><a name="index-g_t_0040code_007bvec_005funpacku_005ffloat_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3410"></a><br><dt>&lsquo;<samp><span class="samp">vec_unpacks_float_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_unpacks_float_lo_</span><var>m</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">vec_unpacku_float_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_unpacku_float_lo_</span><var>m</var></samp>&rsquo;<dd><!-- Extract, convert to floating point type and widen the high/low part of a -->
+<!-- vector of signed/unsigned integral elements.  The input vector (operand 1) -->
+<!-- has N elements of size S@.  Convert the high/low elements of the vector using -->
+<!-- floating point conversion and place the resulting N/2 values of size 2*S in -->
+<!-- the output vector (operand 0). -->
+抽取具有有符号/无符号整数元素的，向量的高/低部分，并转换成浮点类型。输入向量（操作数1）具有N个大小为S的元素。使用浮点转换，将向量的高/低元素进行转换，并将结果，N/2个大小为2*S的值，放在输出向量（操作数0）中。
+
+     <p><a name="index-g_t_0040code_007bvec_005fwiden_005fumult_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3411"></a><a name="index-g_t_0040code_007bvec_005fwiden_005fumult_005flo_005f_005f_0040var_007bm_007d_007d-instruction-pattern-3412"></a><a name="index-g_t_0040code_007bvec_005fwiden_005fsmult_005fhi_005f_0040var_007bm_007d_007d-instruction-pattern-3413"></a><a name="index-g_t_0040code_007bvec_005fwiden_005fsmult_005flo_005f_0040var_007bm_007d_007d-instruction-pattern-3414"></a><br><dt>&lsquo;<samp><span class="samp">vec_widen_umult_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_widen_umult_lo_</span><var>m</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">vec_widen_smult_hi_</span><var>m</var></samp>&rsquo;, &lsquo;<samp><span class="samp">vec_widen_smult_lo_</span><var>m</var></samp>&rsquo;<dd><!-- Signed/Unsigned widening multiplication.  The two inputs (operands 1 and 2) -->
+<!-- are vectors with N signed/unsigned elements of size S@.  Multiply the high/low -->
+<!-- elements of the two vectors, and put the N/2 products of size 2*S in the -->
+<!-- output vector (operand 0). -->
+有符号/无符号加宽乘法。两个输入（操作数1和2）为，N个大小为S的有符号/无符号元素的向量。将两个向量的高/低元素相乘，并将N/2个大小为2×S的乘积放在输出向量（操作数0）中。
+
+     <!-- @cindex @code{mulhisi3} instruction pattern -->
+     <!-- @item @samp{mulhisi3} -->
+     <!-- Multiply operands 1 and 2, which have mode @code{HImode}, and store -->
+     <!-- a @code{SImode} product in operand 0. -->
+     <!-- @cindex @code{mulqihi3} instruction pattern -->
+     <!-- @cindex @code{mulsidi3} instruction pattern -->
+     <!-- @item @samp{mulqihi3}, @samp{mulsidi3} -->
+     <!-- Similar widening-multiplication instructions of other widths. -->
+     <!-- @cindex @code{umulqihi3} instruction pattern -->
+     <!-- @cindex @code{umulhisi3} instruction pattern -->
+     <!-- @cindex @code{umulsidi3} instruction pattern -->
+     <!-- @item @samp{umulqihi3}, @samp{umulhisi3}, @samp{umulsidi3} -->
+     <!-- Similar widening-multiplication instructions that do unsigned -->
+     <!-- multiplication. -->
+     <!-- @cindex @code{usmulqihi3} instruction pattern -->
+     <!-- @cindex @code{usmulhisi3} instruction pattern -->
+     <!-- @cindex @code{usmulsidi3} instruction pattern -->
+     <!-- @item @samp{usmulqihi3}, @samp{usmulhisi3}, @samp{usmulsidi3} -->
+     <!-- Similar widening-multiplication instructions that interpret the first -->
+     <!-- operand as unsigned and the second operand as signed, then do a signed -->
+     <!-- multiplication. -->
+     <!-- @cindex @code{smul@var{m}3_highpart} instruction pattern -->
+     <!-- @item @samp{smul@var{m}3_highpart} -->
+     <!-- Perform a signed multiplication of operands 1 and 2, which have mode -->
+     <!-- @var{m}, and store the most significant half of the product in operand 0. -->
+     <!-- The least significant half of the product is discarded. -->
+     <!-- @cindex @code{umul@var{m}3_highpart} instruction pattern -->
+     <!-- @item @samp{umul@var{m}3_highpart} -->
+     <!-- Similar, but the multiplication is unsigned. -->
+     <p><a name="index-g_t_0040code_007bmulhisi3_007d-instruction-pattern-3415"></a><br><dt>&lsquo;<samp><span class="samp">mulhisi3</span></samp>&rsquo;<dd>机器模式为<code>HImode</code>的操作数1和2相乘，并将<code>SImode</code>乘积放在操作数0中。
+
+     <p><a name="index-g_t_0040code_007bmulqihi3_007d-instruction-pattern-3416"></a><a name="index-g_t_0040code_007bmulsidi3_007d-instruction-pattern-3417"></a><br><dt>&lsquo;<samp><span class="samp">mulqihi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">mulsidi3</span></samp>&rsquo;<dd>类似的其它宽度的加宽乘法指令。
+
+     <p><a name="index-g_t_0040code_007bumulqihi3_007d-instruction-pattern-3418"></a><a name="index-g_t_0040code_007bumulhisi3_007d-instruction-pattern-3419"></a><a name="index-g_t_0040code_007bumulsidi3_007d-instruction-pattern-3420"></a><br><dt>&lsquo;<samp><span class="samp">umulqihi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umulhisi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">umulsidi3</span></samp>&rsquo;<dd>类似的加宽乘法指令，进行无符号乘法。
+
+     <p><a name="index-g_t_0040code_007busmulqihi3_007d-instruction-pattern-3421"></a><a name="index-g_t_0040code_007busmulhisi3_007d-instruction-pattern-3422"></a><a name="index-g_t_0040code_007busmulsidi3_007d-instruction-pattern-3423"></a><br><dt>&lsquo;<samp><span class="samp">usmulqihi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usmulhisi3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usmulsidi3</span></samp>&rsquo;<dd>类似的加宽乘法指令，将第一个操作数解析为无符号的，第二个为有符号的，然后进行有符号乘法。
+
+     <p><a name="index-g_t_0040code_007bsmul_0040var_007bm_007d3_005fhighpart_007d-instruction-pattern-3424"></a><br><dt>&lsquo;<samp><span class="samp">smul</span><var>m</var><span class="samp">3_highpart</span></samp>&rsquo;<dd>对机器模式为<var>m</var>的操作数1和2进行有符号乘法，并将乘积的最高有效的一半放在操作数0中。乘积的最低有效的一半被丢弃。
+
+     <p><a name="index-g_t_0040code_007bumul_0040var_007bm_007d3_005fhighpart_007d-instruction-pattern-3425"></a><br><dt>&lsquo;<samp><span class="samp">umul</span><var>m</var><span class="samp">3_highpart</span></samp>&rsquo;<dd>类似的，只不过乘法是无符号的。
+
+     <!-- @cindex @code{madd@var{m}@var{n}4} instruction pattern -->
+     <!-- @item @samp{madd@var{m}@var{n}4} -->
+     <!-- Multiply operands 1 and 2, sign-extend them to mode @var{n}, add -->
+     <!-- operand 3, and store the result in operand 0.  Operands 1 and 2 -->
+     <!-- have mode @var{m} and operands 0 and 3 have mode @var{n}. -->
+     <!-- Both modes must be integer or fixed-point modes and @var{n} must be twice -->
+     <!-- the size of @var{m}. -->
+     <!-- In other words, @code{madd@var{m}@var{n}4} is like -->
+     <!-- @code{mul@var{m}@var{n}3} except that it also adds operand 3. -->
+     <!-- These instructions are not allowed to @code{FAIL}. -->
+     <!-- @cindex @code{umadd@var{m}@var{n}4} instruction pattern -->
+     <!-- @item @samp{umadd@var{m}@var{n}4} -->
+     <!-- Like @code{madd@var{m}@var{n}4}, but zero-extend the multiplication -->
+     <!-- operands instead of sign-extending them. -->
+     <!-- @cindex @code{ssmadd@var{m}@var{n}4} instruction pattern -->
+     <!-- @item @samp{ssmadd@var{m}@var{n}4} -->
+     <!-- Like @code{madd@var{m}@var{n}4}, but all involved operations must be -->
+     <!-- signed-saturating. -->
+     <!-- @cindex @code{usmadd@var{m}@var{n}4} instruction pattern -->
+     <!-- @item @samp{usmadd@var{m}@var{n}4} -->
+     <!-- Like @code{umadd@var{m}@var{n}4}, but all involved operations must be -->
+     <!-- unsigned-saturating. -->
+     <p><a name="index-g_t_0040code_007bmadd_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3426"></a><br><dt>&lsquo;<samp><span class="samp">madd</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>将操作数1和2进行相乘，有符号扩展成机器模式<var>n</var>，加上操作数3，并将结果存放在操作数0中。操作数1和2具有机器模式<var>m</var>，操作数0和3具有机器模式<var>n</var>。两种机器模式必须都为整数或者浮点模式，并且<var>n</var>必须为<var>m</var>的两倍大小。
+
+     <p>换句话说，<code>madd</code><var>m</var><var>n</var><code>4</code>类似于<code>mul</code><var>m</var><var>n</var><code>3</code>，只不过其还加上操作数3。
+
+     <p>这些指令不允许执行<code>FAIL</code>。
+
+     <p><a name="index-g_t_0040code_007bumadd_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3427"></a><br><dt>&lsquo;<samp><span class="samp">umadd</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>madd</code><var>m</var><var>n</var><code>4</code>，只不过零扩展乘法操作数，而不是有符号扩展它们。
+
+     <p><a name="index-g_t_0040code_007bssmadd_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3428"></a><br><dt>&lsquo;<samp><span class="samp">ssmadd</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>madd</code><var>m</var><var>n</var><code>4</code>，不过所有的运算都必须是有符号饱和的。
+
+     <p><a name="index-g_t_0040code_007busmadd_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3429"></a><br><dt>&lsquo;<samp><span class="samp">usmadd</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>umadd</code><var>m</var><var>n</var><code>4</code>，不过所有的运算都必须是无符号饱和的。
+
+     <!-- @cindex @code{msub@var{m}@var{n}4} instruction pattern -->
+     <!-- @item @samp{msub@var{m}@var{n}4} -->
+     <!-- Multiply operands 1 and 2, sign-extend them to mode @var{n}, subtract the -->
+     <!-- result from operand 3, and store the result in operand 0.  Operands 1 and 2 -->
+     <!-- have mode @var{m} and operands 0 and 3 have mode @var{n}. -->
+     <!-- Both modes must be integer or fixed-point modes and @var{n} must be twice -->
+     <!-- the size of @var{m}. -->
+     <!-- In other words, @code{msub@var{m}@var{n}4} is like -->
+     <!-- @code{mul@var{m}@var{n}3} except that it also subtracts the result -->
+     <!-- from operand 3. -->
+     <!-- These instructions are not allowed to @code{FAIL}. -->
+     <!-- @cindex @code{umsub@var{m}@var{n}4} instruction pattern -->
+     <!-- @item @samp{umsub@var{m}@var{n}4} -->
+     <!-- Like @code{msub@var{m}@var{n}4}, but zero-extend the multiplication -->
+     <!-- operands instead of sign-extending them. -->
+     <!-- @cindex @code{ssmsub@var{m}@var{n}4} instruction pattern -->
+     <!-- @item @samp{ssmsub@var{m}@var{n}4} -->
+     <!-- Like @code{msub@var{m}@var{n}4}, but all involved operations must be -->
+     <!-- signed-saturating. -->
+     <!-- @cindex @code{usmsub@var{m}@var{n}4} instruction pattern -->
+     <!-- @item @samp{usmsub@var{m}@var{n}4} -->
+     <!-- Like @code{umsub@var{m}@var{n}4}, but all involved operations must be -->
+     <!-- unsigned-saturating. -->
+     <p><a name="index-g_t_0040code_007bmsub_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3430"></a><br><dt>&lsquo;<samp><span class="samp">msub</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>将操作数1和2相乘，有符号扩展为机器模式<var>n</var>，减去操作数3，并将结果存放在操作数0中。操作数1和2具有机器模式<var>m</var>，操作数0和3具有机器模式<var>n</var>。两种机器模式必须都为整数或者浮点模式，并且<var>n</var>必须为<var>m</var>的两倍大小。
+
+     <p>换句话说，<code>msub</code><var>m</var><var>n</var><code>4</code>类似于<code>mul</code><var>m</var><var>n</var><code>3</code>，只不过其还减去操作数3。
+
+     <p>这些指令不允许执行<code>FAIL</code>。
+
+     <p><a name="index-g_t_0040code_007bumsub_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3431"></a><br><dt>&lsquo;<samp><span class="samp">umsub</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>msub</code><var>m</var><var>n</var><code>4</code>，不过零扩展乘法操作数，而不是有符号扩展它们。
+
+     <p><a name="index-g_t_0040code_007bssmsub_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3432"></a><br><dt>&lsquo;<samp><span class="samp">ssmsub</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>msub</code><var>m</var><var>n</var><code>4</code>，不过所有的运算都必须是有符号饱和的。
+
+     <p><a name="index-g_t_0040code_007busmsub_0040var_007bm_007d_0040var_007bn_007d4_007d-instruction-pattern-3433"></a><br><dt>&lsquo;<samp><span class="samp">usmsub</span><var>m</var><var>n</var><span class="samp">4</span></samp>&rsquo;<dd>类似<code>umsub</code><var>m</var><var>n</var><code>4</code>，不过所有的运算都必须是无符号饱和的。
+
+     <!-- @cindex @code{divmod@var{m}4} instruction pattern -->
+     <!-- @item @samp{divmod@var{m}4} -->
+     <!-- Signed division that produces both a quotient and a remainder. -->
+     <!-- Operand 1 is divided by operand 2 to produce a quotient stored -->
+     <!-- in operand 0 and a remainder stored in operand 3. -->
+     <!-- For machines with an instruction that produces both a quotient and a -->
+     <!-- remainder, provide a pattern for @samp{divmod@var{m}4} but do not -->
+     <!-- provide patterns for @samp{div@var{m}3} and @samp{mod@var{m}3}.  This -->
+     <!-- allows optimization in the relatively common case when both the quotient -->
+     <!-- and remainder are computed. -->
+     <!-- If an instruction that just produces a quotient or just a remainder -->
+     <!-- exists and is more efficient than the instruction that produces both, -->
+     <!-- write the output routine of @samp{divmod@var{m}4} to call -->
+     <!-- @code{find_reg_note} and look for a @code{REG_UNUSED} note on the -->
+     <!-- quotient or remainder and generate the appropriate instruction. -->
+     <!-- @cindex @code{udivmod@var{m}4} instruction pattern -->
+     <!-- @item @samp{udivmod@var{m}4} -->
+     <!-- Similar, but does unsigned division. -->
+     <p><a name="index-g_t_0040code_007bdivmod_0040var_007bm_007d4_007d-instruction-pattern-3434"></a><br><dt>&lsquo;<samp><span class="samp">divmod</span><var>m</var><span class="samp">4</span></samp>&rsquo;<dd>有符号除法，同时产生商和余数。操作数1被操作数2除，产生商存储在操作数0中，余数存储在操作数3中。
+
+     <p>对于具有同时产生商和余数的指令的机器，提供&lsquo;<samp><span class="samp">divmod</span><var>m</var><span class="samp">4</span></samp>&rsquo;指令模式，但不要提供&lsquo;<samp><span class="samp">div</span><var>m</var><span class="samp">3</span></samp>&rsquo; 和 &lsquo;<samp><span class="samp">mod</span><var>m</var><span class="samp">3</span></samp>&rsquo;。这使得当商和余数都被计算的时候，可以优化成相对常见的情况。
+
+     <p>如果存在只产生商或者余数的指令，并且比都产生的指令更有效，则将&lsquo;<samp><span class="samp">divmod</span><var>m</var><span class="samp">4</span></samp>&rsquo;的输出例程写成调用<code>find_reg_note</code>，查看商或者余数的<code>REG_UNUSED</code>注解，来产生适当的指令。
+
+     <p><a name="index-g_t_0040code_007budivmod_0040var_007bm_007d4_007d-instruction-pattern-3435"></a><br><dt>&lsquo;<samp><span class="samp">udivmod</span><var>m</var><span class="samp">4</span></samp>&rsquo;<dd>类似的，不过进行无符号除法。
+
+     <!-- @anchor{shift patterns} -->
+     <!-- @cindex @code{ashl@var{m}3} instruction pattern -->
+     <!-- @cindex @code{ssashl@var{m}3} instruction pattern -->
+     <!-- @cindex @code{usashl@var{m}3} instruction pattern -->
+     <!-- @item @samp{ashl@var{m}3}, @samp{ssashl@var{m}3}, @samp{usashl@var{m}3} -->
+     <!-- Arithmetic-shift operand 1 left by a number of bits specified by operand -->
+     <!-- 2, and store the result in operand 0.  Here @var{m} is the mode of -->
+     <!-- operand 0 and operand 1; operand 2's mode is specified by the -->
+     <!-- instruction pattern, and the compiler will convert the operand to that -->
+     <!-- mode before generating the instruction.  The meaning of out-of-range shift -->
+     <!-- counts can optionally be specified by @code{TARGET_SHIFT_TRUNCATION_MASK}. -->
+     <!-- @xref{TARGET_SHIFT_TRUNCATION_MASK}.  Operand 2 is always a scalar type. -->
+     <!-- @cindex @code{ashr@var{m}3} instruction pattern -->
+     <!-- @cindex @code{lshr@var{m}3} instruction pattern -->
+     <!-- @cindex @code{rotl@var{m}3} instruction pattern -->
+     <!-- @cindex @code{rotr@var{m}3} instruction pattern -->
+     <!-- @item @samp{ashr@var{m}3}, @samp{lshr@var{m}3}, @samp{rotl@var{m}3}, @samp{rotr@var{m}3} -->
+     <!-- Other shift and rotate instructions, analogous to the -->
+     <!-- @code{ashl@var{m}3} instructions.  Operand 2 is always a scalar type. -->
+     <!-- @cindex @code{vashl@var{m}3} instruction pattern -->
+     <!-- @cindex @code{vashr@var{m}3} instruction pattern -->
+     <!-- @cindex @code{vlshr@var{m}3} instruction pattern -->
+     <!-- @cindex @code{vrotl@var{m}3} instruction pattern -->
+     <!-- @cindex @code{vrotr@var{m}3} instruction pattern -->
+     <!-- @item @samp{vashl@var{m}3}, @samp{vashr@var{m}3}, @samp{vlshr@var{m}3}, @samp{vrotl@var{m}3}, @samp{vrotr@var{m}3} -->
+     <!-- Vector shift and rotate instructions that take vectors as operand 2 -->
+     <!-- instead of a scalar type. -->
+     <p><a name="shift-patterns"></a><a name="index-g_t_0040code_007bashl_0040var_007bm_007d3_007d-instruction-pattern-3436"></a><a name="index-g_t_0040code_007bssashl_0040var_007bm_007d3_007d-instruction-pattern-3437"></a><a name="index-g_t_0040code_007busashl_0040var_007bm_007d3_007d-instruction-pattern-3438"></a><br><dt>&lsquo;<samp><span class="samp">ashl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssashl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usashl</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1向左算术移位，左移位数由操作数2指定，将结果存储在操作数0中。这里<var>m</var>为操作数0和1的机器模式；操作数2的机器模式通过指令模式来指定，编译器会在生成指令之前，将操作数转换成该模式。超出范围的移位数目的含义，可以通过<code>TARGET_SHIFT_TRUNCATION_MASK</code>来指定。参见<a href="TARGET_005fSHIFT_005fTRUNCATION_005fMASK.html#TARGET_005fSHIFT_005fTRUNCATION_005fMASK">TARGET_SHIFT_TRUNCATION_MASK</a>. 操作数2总是一个标量类型。
+
+     <p><a name="index-g_t_0040code_007bashr_0040var_007bm_007d3_007d-instruction-pattern-3439"></a><a name="index-g_t_0040code_007blshr_0040var_007bm_007d3_007d-instruction-pattern-3440"></a><a name="index-g_t_0040code_007brotl_0040var_007bm_007d3_007d-instruction-pattern-3441"></a><a name="index-g_t_0040code_007brotr_0040var_007bm_007d3_007d-instruction-pattern-3442"></a><br><dt>&lsquo;<samp><span class="samp">ashr</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">lshr</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">rotl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">rotr</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>其它移位或者旋转指令，类似于<code>ashl</code><var>m</var><code>3</code>指令。操作数2总是一个标量类型。
+
+     <p><a name="index-g_t_0040code_007bvashl_0040var_007bm_007d3_007d-instruction-pattern-3443"></a><a name="index-g_t_0040code_007bvashr_0040var_007bm_007d3_007d-instruction-pattern-3444"></a><a name="index-g_t_0040code_007bvlshr_0040var_007bm_007d3_007d-instruction-pattern-3445"></a><a name="index-g_t_0040code_007bvrotl_0040var_007bm_007d3_007d-instruction-pattern-3446"></a><a name="index-g_t_0040code_007bvrotr_0040var_007bm_007d3_007d-instruction-pattern-3447"></a><br><dt>&lsquo;<samp><span class="samp">vashl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">vashr</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">vlshr</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">vrotl</span><var>m</var><span class="samp">3</span></samp>&rsquo;, &lsquo;<samp><span class="samp">vrotr</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>向量移位和旋转指令，操作数2为向量，而不是标量类型。
+
+     <!-- @cindex @code{neg@var{m}2} instruction pattern -->
+     <!-- @cindex @code{ssneg@var{m}2} instruction pattern -->
+     <!-- @cindex @code{usneg@var{m}2} instruction pattern -->
+     <!-- @item @samp{neg@var{m}2}, @samp{ssneg@var{m}2}, @samp{usneg@var{m}2} -->
+     <!-- Negate operand 1 and store the result in operand 0. -->
+     <!-- @cindex @code{abs@var{m}2} instruction pattern -->
+     <!-- @item @samp{abs@var{m}2} -->
+     <!-- Store the absolute value of operand 1 into operand 0. -->
+     <!-- @cindex @code{sqrt@var{m}2} instruction pattern -->
+     <!-- @item @samp{sqrt@var{m}2} -->
+     <!-- Store the square root of operand 1 into operand 0. -->
+     <!-- The @code{sqrt} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{sqrtf} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <p><a name="index-g_t_0040code_007bneg_0040var_007bm_007d2_007d-instruction-pattern-3448"></a><a name="index-g_t_0040code_007bssneg_0040var_007bm_007d2_007d-instruction-pattern-3449"></a><a name="index-g_t_0040code_007busneg_0040var_007bm_007d2_007d-instruction-pattern-3450"></a><br><dt>&lsquo;<samp><span class="samp">neg</span><var>m</var><span class="samp">2</span></samp>&rsquo;, &lsquo;<samp><span class="samp">ssneg</span><var>m</var><span class="samp">2</span></samp>&rsquo;, &lsquo;<samp><span class="samp">usneg</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>对操作数1求负，并将结果存放在操作数0中。
+
+     <p><a name="index-g_t_0040code_007babs_0040var_007bm_007d2_007d-instruction-pattern-3451"></a><br><dt>&lsquo;<samp><span class="samp">abs</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的绝对值存放在操作数0中。
+
+     <p><a name="index-g_t_0040code_007bsqrt_0040var_007bm_007d2_007d-instruction-pattern-3452"></a><br><dt>&lsquo;<samp><span class="samp">sqrt</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的平方根存储在操作数0中。
+
+     <p><code>sqrt</code>内建C函数，总是使用对应于C数据类型<code>double</code>的机器模式，<code>sqrtf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <!-- @cindex @code{fmod@var{m}3} instruction pattern -->
+     <!-- @item @samp{fmod@var{m}3} -->
+     <!-- Store the remainder of dividing operand 1 by operand 2 into -->
+     <!-- operand 0, rounded towards zero to an integer. -->
+     <!-- The @code{fmod} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{fmodf} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <!-- @cindex @code{remainder@var{m}3} instruction pattern -->
+     <!-- @item @samp{remainder@var{m}3} -->
+     <!-- Store the remainder of dividing operand 1 by operand 2 into -->
+     <!-- operand 0, rounded to the nearest integer. -->
+     <!-- The @code{remainder} built-in function of C always uses the mode -->
+     <!-- which corresponds to the C data type @code{double} and the -->
+     <!-- @code{remainderf} built-in function uses the mode which corresponds -->
+     <!-- to the C data type @code{float}. -->
+     <p><a name="index-g_t_0040code_007bfmod_0040var_007bm_007d3_007d-instruction-pattern-3453"></a><br><dt>&lsquo;<samp><span class="samp">fmod</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1除以操作数2的余数，存储在操作数0中，并向零方向舍入为整数。
+
+     <p><code>fmod</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>fmodf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <p><a name="index-g_t_0040code_007bremainder_0040var_007bm_007d3_007d-instruction-pattern-3454"></a><br><dt>&lsquo;<samp><span class="samp">remainder</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1除以操作数2的余数，存储在操作数0中，并舍入为最接近的整数。
+
+     <p><code>remainder</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>remainderf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <!-- @cindex @code{cos@var{m}2} instruction pattern -->
+     <!-- @item @samp{cos@var{m}2} -->
+     <!-- Store the cosine of operand 1 into operand 0. -->
+     <!-- The @code{cos} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{cosf} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <!-- @cindex @code{sin@var{m}2} instruction pattern -->
+     <!-- @item @samp{sin@var{m}2} -->
+     <!-- Store the sine of operand 1 into operand 0. -->
+     <!-- The @code{sin} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{sinf} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <p><a name="index-g_t_0040code_007bcos_0040var_007bm_007d2_007d-instruction-pattern-3455"></a><br><dt>&lsquo;<samp><span class="samp">cos</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的余弦存放在操作数0中。
+
+     <p><code>cos</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>cosf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <p><a name="index-g_t_0040code_007bsin_0040var_007bm_007d2_007d-instruction-pattern-3456"></a><br><dt>&lsquo;<samp><span class="samp">sin</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的正弦存放在操作数0中。
+
+     <p><code>sin</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>sinf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <!-- @cindex @code{exp@var{m}2} instruction pattern -->
+     <!-- @item @samp{exp@var{m}2} -->
+     <!-- Store the exponential of operand 1 into operand 0. -->
+     <!-- The @code{exp} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{expf} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <!-- @cindex @code{log@var{m}2} instruction pattern -->
+     <!-- @item @samp{log@var{m}2} -->
+     <!-- Store the natural logarithm of operand 1 into operand 0. -->
+     <!-- The @code{log} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{logf} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <!-- @cindex @code{pow@var{m}3} instruction pattern -->
+     <!-- @item @samp{pow@var{m}3} -->
+     <!-- Store the value of operand 1 raised to the exponent operand 2 -->
+     <!-- into operand 0. -->
+     <!-- The @code{pow} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{powf} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <p><a name="index-g_t_0040code_007bexp_0040var_007bm_007d2_007d-instruction-pattern-3457"></a><br><dt>&lsquo;<samp><span class="samp">exp</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的幂存放在操作数0中。
+
+     <p><code>exp</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>expf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <p><a name="index-g_t_0040code_007blog_0040var_007bm_007d2_007d-instruction-pattern-3458"></a><br><dt>&lsquo;<samp><span class="samp">log</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将操作数1的自然对数存放在操作数0中。
+
+     <p><code>log</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>logf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <p><a name="index-g_t_0040code_007bpow_0040var_007bm_007d3_007d-instruction-pattern-3459"></a><br><dt>&lsquo;<samp><span class="samp">pow</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1的，指数为操作数2的幂值存放在操作数0中
+
+     <p><code>pow</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>powf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <!-- @cindex @code{atan2@var{m}3} instruction pattern -->
+     <!-- @item @samp{atan2@var{m}3} -->
+     <!-- Store the arc tangent (inverse tangent) of operand 1 divided by -->
+     <!-- operand 2 into operand 0, using the signs of both arguments to -->
+     <!-- determine the quadrant of the result. -->
+     <!-- The @code{atan2} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{atan2f} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <!-- @cindex @code{floor@var{m}2} instruction pattern -->
+     <!-- @item @samp{floor@var{m}2} -->
+     <!-- Store the largest integral value not greater than argument. -->
+     <!-- The @code{floor} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{floorf} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <!-- @cindex @code{btrunc@var{m}2} instruction pattern -->
+     <!-- @item @samp{btrunc@var{m}2} -->
+     <!-- Store the argument rounded to integer towards zero. -->
+     <!-- The @code{trunc} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{truncf} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <p><a name="index-g_t_0040code_007batan2_0040var_007bm_007d3_007d-instruction-pattern-3460"></a><br><dt>&lsquo;<samp><span class="samp">atan2</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd>将操作数1除以操作数2的反正切，存放在操作数0中，使用两个参数的正负符号来确定结果的商。
+
+     <p><code>atan2</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>atan2f</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <p><a name="index-g_t_0040code_007bfloor_0040var_007bm_007d2_007d-instruction-pattern-3461"></a><br><dt>&lsquo;<samp><span class="samp">floor</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>存储不大于参数的最大整数值。
+
+     <p><code>floor</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>floorf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <p><a name="index-g_t_0040code_007bbtrunc_0040var_007bm_007d2_007d-instruction-pattern-3462"></a><br><dt>&lsquo;<samp><span class="samp">btrunc</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>存储将参数向零方向舍入的整数。
+
+     <p><code>trunc</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>truncf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <!-- @cindex @code{round@var{m}2} instruction pattern -->
+     <!-- @item @samp{round@var{m}2} -->
+     <!-- Store the argument rounded to integer away from zero. -->
+     <!-- The @code{round} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{roundf} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <!-- @cindex @code{ceil@var{m}2} instruction pattern -->
+     <!-- @item @samp{ceil@var{m}2} -->
+     <!-- Store the argument rounded to integer away from zero. -->
+     <!-- The @code{ceil} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{ceilf} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <p><a name="index-g_t_0040code_007bround_0040var_007bm_007d2_007d-instruction-pattern-3463"></a><br><dt>&lsquo;<samp><span class="samp">round</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>存储将参数向远离零的方向舍入的整数。
+
+     <p><code>round</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>roundf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <p><a name="index-g_t_0040code_007bceil_0040var_007bm_007d2_007d-instruction-pattern-3464"></a><br><dt>&lsquo;<samp><span class="samp">ceil</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>存储将参数向远离零的方向舍入的整数。
+
+     <p><code>ceil</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>ceilf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <!-- @cindex @code{nearbyint@var{m}2} instruction pattern -->
+     <!-- @item @samp{nearbyint@var{m}2} -->
+     <!-- Store the argument rounded according to the default rounding mode -->
+     <!-- The @code{nearbyint} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{nearbyintf} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <p><a name="index-g_t_0040code_007bnearbyint_0040var_007bm_007d2_007d-instruction-pattern-3465"></a><br><dt>&lsquo;<samp><span class="samp">nearbyint</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将参数根据缺省的舍入模式，舍入为整数。
+
+     <p><code>nearbyint</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>nearbyintf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <p><a name="index-g_t_0040code_007brint_0040var_007bm_007d2_007d-instruction-pattern-3466"></a><br><dt>&lsquo;<samp><span class="samp">rint</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Store the argument rounded according to the default rounding mode and -->
+<!-- raise the inexact exception when the result differs in value from -->
+<!-- the argument -->
+将参数根据缺省的舍入模式，舍入为整数，并且当结果与参数的值不同的时候，抛出不精确异常。
+
+     <!-- The @code{rint} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{rintf} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <p><code>rint</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>rintf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <p><a name="index-g_t_0040code_007blrint_0040var_007bm_007d_0040var_007bn_007d2_007d-3467"></a><br><dt>&lsquo;<samp><span class="samp">lrint</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Convert operand 1 (valid for floating point mode @var{m}) to fixed -->
+<!-- point mode @var{n} as a signed number according to the current -->
+<!-- rounding mode and store in operand 0 (which has mode @var{n}). -->
+将操作数1（对于浮点模式<var>m</var>有效）转换成定点机器模式<var>n</var>，作为有符号数，根据当前的舍入模式，并存储在操作数0（具有机器模式<var>n</var>）中。
+
+     <p><a name="index-g_t_0040code_007blround_0040var_007bm_007d_0040var_007bn_007d2_007d-3468"></a><br><dt>&lsquo;<samp><span class="samp">lround</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Convert operand 1 (valid for floating point mode @var{m}) to fixed -->
+<!-- point mode @var{n} as a signed number rounding to nearest and away -->
+<!-- from zero and store in operand 0 (which has mode @var{n}). -->
+将操作数1（对于浮点模式<var>m</var>有效）转换成定点机器模式<var>n</var>，舍入到最近的，远离零方向的有符号数，并存储在操作数0（具有机器模式<var>n</var>）中。
+
+     <p><a name="index-g_t_0040code_007blfloor_0040var_007bm_007d_0040var_007bn_007d2_007d-3469"></a><br><dt>&lsquo;<samp><span class="samp">lfloor</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Convert operand 1 (valid for floating point mode @var{m}) to fixed -->
+<!-- point mode @var{n} as a signed number rounding down and store in -->
+<!-- operand 0 (which has mode @var{n}). -->
+将操作数1（对于浮点模式<var>m</var>有效）转换成定点机器模式<var>n</var>，向下舍入成有符号数，并存储在操作数0（具有机器模式<var>n</var>）中。
+
+     <p><a name="index-g_t_0040code_007blceil_0040var_007bm_007d_0040var_007bn_007d2_007d-3470"></a><br><dt>&lsquo;<samp><span class="samp">lceil</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Convert operand 1 (valid for floating point mode @var{m}) to fixed -->
+<!-- point mode @var{n} as a signed number rounding up and store in -->
+<!-- operand 0 (which has mode @var{n}). -->
+将操作数1（对于浮点模式<var>m</var>有效）转换成定点机器模式<var>n</var>，向上舍入成有符号数，并存储在操作数0（具有机器模式<var>n</var>）中。
+
+     <p><a name="index-g_t_0040code_007bcopysign_0040var_007bm_007d3_007d-instruction-pattern-3471"></a><br><dt>&lsquo;<samp><span class="samp">copysign</span><var>m</var><span class="samp">3</span></samp>&rsquo;<dd><!-- Store a value with the magnitude of operand 1 and the sign of operand -->
+<!-- 2 into operand 0. -->
+将操作数1的数量级和操作数的符号组成的值，存放在操作数0中。
+
+     <!-- The @code{copysign} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{double} and the @code{copysignf} -->
+     <!-- built-in function uses the mode which corresponds to the C data -->
+     <!-- type @code{float}. -->
+     <p><code>copysign</code>内建C函数总是使用对应于C数据类型<code>double</code>的机器模式，<code>copysignf</code>内建函数使用对应于C数据类型<code>float</code>的机器模式。
+
+     <p><a name="index-g_t_0040code_007bffs_0040var_007bm_007d2_007d-instruction-pattern-3472"></a><br><dt>&lsquo;<samp><span class="samp">ffs</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Store into operand 0 one plus the index of the least significant 1-bit -->
+<!-- of operand 1.  If operand 1 is zero, store zero.  @var{m} is the mode -->
+<!-- of operand 0; operand 1's mode is specified by the instruction -->
+<!-- pattern, and the compiler will convert the operand to that mode before -->
+<!-- generating the instruction. -->
+将操作数1的最小有效，置1的位的索引，加上1，存放在操作数0中。如果操作数1为零，则存储零。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+
+     <!-- The @code{ffs} built-in function of C always uses the mode which -->
+     <!-- corresponds to the C data type @code{int}. -->
+     <p><code>ffs</code>内建C函数总是使用对应于C数据类型<code>int</code>的机器模式。
+
+     <p><a name="index-g_t_0040code_007bclz_0040var_007bm_007d2_007d-instruction-pattern-3473"></a><br><dt>&lsquo;<samp><span class="samp">clz</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Store into operand 0 the number of leading 0-bits in @var{x}, starting -->
+<!-- at the most significant bit position.  If @var{x} is 0, the -->
+<!-- @code{CLZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc}) macro defines if -->
+<!-- the result is undefined or has a useful value. -->
+<!-- @var{m} is the mode of operand 0; operand 1's mode is -->
+<!-- specified by the instruction pattern, and the compiler will convert the -->
+<!-- operand to that mode before generating the instruction. -->
+将<var>x</var>中，从最高有效位开始，起始处置0的位的数目，存放在操作数0中。如果<var>x</var>为0，则<code>CLZ_DEFINED_VALUE_AT_ZERO</code> (参见<a href="Misc.html#Misc">Misc</a>)宏定义了结果是否为未定义或者一个有用的值。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+
+     <p><a name="index-g_t_0040code_007bctz_0040var_007bm_007d2_007d-instruction-pattern-3474"></a><br><dt>&lsquo;<samp><span class="samp">ctz</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Store into operand 0 the number of trailing 0-bits in @var{x}, starting -->
+<!-- at the least significant bit position.  If @var{x} is 0, the -->
+<!-- @code{CTZ_DEFINED_VALUE_AT_ZERO} (@pxref{Misc}) macro defines if -->
+<!-- the result is undefined or has a useful value. -->
+<!-- @var{m} is the mode of operand 0; operand 1's mode is -->
+<!-- specified by the instruction pattern, and the compiler will convert the -->
+<!-- operand to that mode before generating the instruction. -->
+将<var>x</var>中，从最小有效位开始，结尾处置0的位的数目，存放在操作数0中。如果<var>x</var>为0，则<code>CTZ_DEFINED_VALUE_AT_ZERO</code> (参见<a href="Misc.html#Misc">Misc</a>)宏定义了结果是否为未定义或者一个有用的值。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+
+     <p><a name="index-g_t_0040code_007bpopcount_0040var_007bm_007d2_007d-instruction-pattern-3475"></a><br><dt>&lsquo;<samp><span class="samp">popcount</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Store into operand 0 the number of 1-bits in @var{x}.  @var{m} is the -->
+<!-- mode of operand 0; operand 1's mode is specified by the instruction -->
+<!-- pattern, and the compiler will convert the operand to that mode before -->
+<!-- generating the instruction. -->
+<a name="index-g_t_0040code_007bpopcount_0040var_007bm_007d2_007d-instruction-pattern-3476"></a><br><dt>&lsquo;<samp><span class="samp">popcount</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>将<var>x</var>中置1的位的数目，存放在操作数0中。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+
+     <p><a name="index-g_t_0040code_007bparity_0040var_007bm_007d2_007d-instruction-pattern-3477"></a><br><dt>&lsquo;<samp><span class="samp">parity</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Store into operand 0 the parity of @var{x}, i.e.@: the number of 1-bits -->
+<!-- in @var{x} modulo 2.  @var{m} is the mode of operand 0; operand 1's mode -->
+<!-- is specified by the instruction pattern, and the compiler will convert -->
+<!-- the operand to that mode before generating the instruction. -->
+将<var>x</var>的奇偶校验存放在操作数0中，即：<var>x</var>中置1的位数对2求模。<var>m</var>为操作数0的机器模式；操作数1的机器模式由指令模式指定，编译器会在生成指令之前，将操作数转成该机器模式。
+
+     <!-- @cindex @code{one_cmpl@var{m}2} instruction pattern -->
+     <!-- @item @samp{one_cmpl@var{m}2} -->
+     <!-- Store the bitwise-complement of operand 1 into operand 0. -->
+     <p><a name="index-g_t_0040code_007bone_005fcmpl_0040var_007bm_007d2_007d-instruction-pattern-3478"></a><br><dt>&lsquo;<samp><span class="samp">one_cmpl</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd>对操作数1进行按位求补，并存放在操作数0中。
+
+     <p><a name="index-g_t_0040code_007bcmp_0040var_007bm_007d_007d-instruction-pattern-3479"></a><br><dt>&lsquo;<samp><span class="samp">cmp</span><var>m</var></samp>&rsquo;<dd>比较操作数0和1，并设置条件代码。RTL指令模式应该像这样：
+
+     <pre class="smallexample">          (set (cc0) (compare (match_operand:<var>m</var> 0 ...)
+                              (match_operand:<var>m</var> 1 ...)))
+</pre>
+     <p><a name="index-g_t_0040code_007btst_0040var_007bm_007d_007d-instruction-pattern-3480"></a><br><dt>&lsquo;<samp><span class="samp">tst</span><var>m</var></samp>&rsquo;<dd>将操作数0与零进行比较，并设置条件码。RTL指令模式应该像这样：
+
+     <pre class="smallexample">          (set (cc0) (match_operand:<var>m</var> 0 ...))
+</pre>
+     <p>&lsquo;<samp><span class="samp">tst</span><var>m</var></samp>&rsquo;指令模式不应该为不使用<code>(cc0)</code>的机器定义。这样做会使得编译器变得迷惑，因为其将会不清楚哪一个<code>set</code>操作为比较。应该使用&lsquo;<samp><span class="samp">cmp</span><var>m</var></samp>&rsquo;。
+
+     <!-- @cindex @code{movmem@var{m}} instruction pattern -->
+     <!-- @item @samp{movmem@var{m}} -->
+     <!-- Block move instruction.  The destination and source blocks of memory -->
+     <!-- are the first two operands, and both are @code{mem:BLK}s with an -->
+     <!-- address in mode @code{Pmode}. -->
+     <!-- The number of bytes to move is the third operand, in mode @var{m}. -->
+     <!-- Usually, you specify @code{word_mode} for @var{m}.  However, if you can -->
+     <!-- generate better code knowing the range of valid lengths is smaller than -->
+     <!-- those representable in a full word, you should provide a pattern with a -->
+     <!-- mode corresponding to the range of values you can handle efficiently -->
+     <!-- (e.g., @code{QImode} for values in the range 0-127; note we avoid numbers -->
+     <!-- that appear negative) and also a pattern with @code{word_mode}. -->
+     <!-- The fourth operand is the known shared alignment of the source and -->
+     <!-- destination, in the form of a @code{const_int} rtx.  Thus, if the -->
+     <!-- compiler knows that both source and destination are word-aligned, -->
+     <!-- it may provide the value 4 for this operand. -->
+     <!-- Optional operands 5 and 6 specify expected alignment and size of block -->
+     <!-- respectively.  The expected alignment differs from alignment in operand 4 -->
+     <!-- in a way that the blocks are not required to be aligned according to it in -->
+     <!-- all cases. This expected alignment is also in bytes, just like operand 4. -->
+     <!-- Expected size, when unknown, is set to @code{(const_int -1)}. -->
+     <!-- Descriptions of multiple @code{movmem@var{m}} patterns can only be -->
+     <!-- beneficial if the patterns for smaller modes have fewer restrictions -->
+     <!-- on their first, second and fourth operands.  Note that the mode @var{m} -->
+     <!-- in @code{movmem@var{m}} does not impose any restriction on the mode of -->
+     <!-- individually moved data units in the block. -->
+     <!-- These patterns need not give special consideration to the possibility -->
+     <!-- that the source and destination strings might overlap. -->
+     <p><a name="index-g_t_0040code_007bmovmem_0040var_007bm_007d_007d-instruction-pattern-3481"></a><br><dt>&lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo;<dd>块移动指令。内存的目的块和源块为前两个操作数，都为地址是<code>Pmode</code>的<code>mem:BLK</code>。
+
+     <p>要移动的字节数为第三个操作数，机器模式为<var>m</var>。通常，你会将<var>m</var>指定为<code>word_mode</code>。然而，如果你可以生成更好的代码，知道有效长度的范围比一整个字要小，则你应该提供一个指令模式，其机器模式对应于你可以更有效的处理的值的范围（例如，<code>QImode</code>对于范围0&ndash;127；注意我们回避了负数），并且一个使用<code>word_mode</code>的指令模式。
+
+     <p>第四个操作数为已知的源和目的的共享对齐，形式为一个<code>const_int</code> rtx。因此，如果编译器知道源和目的都是字对齐的，则其可以为该操作数提供值4。
+
+     <p>可选的操作数5和6，分别指定了期望的对齐方式和块的大小。期望的对齐方式不同于操作数4中的对齐方式，块并不要求所有的情况下都按照这样对齐。期望的对齐方式也是以字节为单位，类似于操作数4。期望的大小，当不知道的时候，被设置为<code>(const_int -1)</code>。
+
+     <p>描述多个<code>movmem</code><var>m</var>指令模式，只有当对于更小的机器模式的指令模式，对操作数1，2，4具有更少限制的时候，才会获利。注意<code>movmem</code><var>m</var>中的机器模式<var>m</var>不对块中单独的被移动的数据单元的机器模式做任何限制。
+
+     <p>这些指令模式不需要对源和目的可能重叠的情况，进行特殊的考虑。
+
+     <!-- @cindex @code{movstr} instruction pattern -->
+     <!-- @item @samp{movstr} -->
+     <!-- String copy instruction, with @code{stpcpy} semantics.  Operand 0 is -->
+     <!-- an output operand in mode @code{Pmode}.  The addresses of the -->
+     <!-- destination and source strings are operands 1 and 2, and both are -->
+     <!-- @code{mem:BLK}s with addresses in mode @code{Pmode}.  The execution of -->
+     <!-- the expansion of this pattern should store in operand 0 the address in -->
+     <!-- which the @code{NUL} terminator was stored in the destination string. -->
+     <p><a name="index-g_t_0040code_007bmovstr_007d-instruction-pattern-3482"></a><br><dt>&lsquo;<samp><span class="samp">movstr</span></samp>&rsquo;<dd>字符串复制指令，具有<code>stpcpy</code>的语义。操作数0为输出操作数，机器模式为<code>Pmode</code>。目的字符串和源字符串的地址为操作数1和2，都是地址为<code>Pmode</code>的<code>mem:BLK</code>。对该指令模式的执行，应该将地址存放在操作数0中，其中<code>NUL</code>终结符存放在目标字符串中。
+
+     <p><a name="index-g_t_0040code_007bsetmem_0040var_007bm_007d_007d-instruction-pattern-3483"></a><br><dt>&lsquo;<samp><span class="samp">setmem</span><var>m</var></samp>&rsquo;<dd><!-- Block set instruction.  The destination string is the first operand, -->
+<!-- given as a @code{mem:BLK} whose address is in mode @code{Pmode}.  The -->
+<!-- number of bytes to set is the second operand, in mode @var{m}.  The value to -->
+<!-- initialize the memory with is the third operand. Targets that only support the -->
+<!-- clearing of memory should reject any value that is not the constant 0.  See -->
+<!-- @samp{movmem@var{m}} for a discussion of the choice of mode. -->
+块设置指令。目的字符串为第一个操作数，作为一个<code>mem:BLK</code>，其地址的机器模式为<code>Pmode</code>。被设置的字节的数目是第二个操作数，机器模式为<var>m</var>。用于初始化内存的值为第三个操作数。只支持清空内存的目标机应该拒绝任何不为常数0的值。关于对机器模式选择的讨论，参见&lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo;。
+
+     <!-- The fourth operand is the known alignment of the destination, in the form -->
+     <!-- of a @code{const_int} rtx.  Thus, if the compiler knows that the -->
+     <!-- destination is word-aligned, it may provide the value 4 for this -->
+     <!-- operand. -->
+     <p>第四个操作数为目标的已知对齐方式，形式为<code>const_int</code> rtx。因此，如果编译器知道目的操作数是字对齐的，则其可以为该操作数提供值4。
+
+     <!-- Optional operands 5 and 6 specify expected alignment and size of block -->
+     <!-- respectively.  The expected alignment differs from alignment in operand 4 -->
+     <!-- in a way that the blocks are not required to be aligned according to it in -->
+     <!-- all cases. This expected alignment is also in bytes, just like operand 4. -->
+     <!-- Expected size, when unknown, is set to @code{(const_int -1)}. -->
+     <p>可选的操作数5和6，分别指定了期望的对齐方式和块的大小。期望的对齐方式不同于操作数4中的对齐方式，块并不要求所有的情况下都按照这样对齐。期望的对齐方式也是以字节为单位，类似于操作数4。期望的大小，当不知道的时候，被设置为<code>(const_int -1)</code>。
+
+     <!-- The use for multiple @code{setmem@var{m}} is as for @code{movmem@var{m}}. -->
+     <p>对多个<code>setmem</code><var>m</var>的使用，类似于<code>movmem</code><var>m</var>
+
+     <p><a name="index-g_t_0040code_007bcmpstrn_0040var_007bm_007d_007d-instruction-pattern-3484"></a><br><dt>&lsquo;<samp><span class="samp">cmpstrn</span><var>m</var></samp>&rsquo;<dd><!-- String compare instruction, with five operands.  Operand 0 is the output; -->
+<!-- it has mode @var{m}.  The remaining four operands are like the operands -->
+<!-- of @samp{movmem@var{m}}.  The two memory blocks specified are compared -->
+<!-- byte by byte in lexicographic order starting at the beginning of each -->
+<!-- string.  The instruction is not allowed to prefetch more than one byte -->
+<!-- at a time since either string may end in the first byte and reading past -->
+<!-- that may access an invalid page or segment and cause a fault.  The -->
+<!-- effect of the instruction is to store a value in operand 0 whose sign -->
+<!-- indicates the result of the comparison. -->
+
+     <p>字符串比较指令，有5个操作数。操作数0为输出，机器模式为<var>m</var>。剩下的4个操作数类似于&lsquo;<samp><span class="samp">movmem</span><var>m</var></samp>&rsquo;的操作数。两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。指令不允许一次取多个字节，因为每个字符串都可能在第一个字节中终止，读取后面的字节可能会访问一个无效的页或者段，并产生一个缺失。
+<!-- 该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。 -->
+The
+comparison terminates early if the fetched bytes are different or if
+they are equal to zero.  The effect of the instruction is to store a
+value in operand 0 whose sign indicates the result of the comparison.
+
+     <p><a name="index-g_t_0040code_007bcmpstr_0040var_007bm_007d_007d-instruction-pattern-3485"></a><br><dt>&lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;<dd><!-- String compare instruction, without known maximum length.  Operand 0 is the -->
+<!-- output; it has mode @var{m}.  The second and third operand are the blocks of -->
+<!-- memory to be compared; both are @code{mem:BLK} with an address in mode -->
+<!-- @code{Pmode}. -->
+字符串比较指令，不知道最大的长度。操作数0为输出，机器模式为<var>m</var>。第二个和第三个操作数为被比较的内存块；都是机器模式为<code>Pmode</code>的<code>mem:BLK</code>。
+
+     <!-- The fourth operand is the known shared alignment of the source and -->
+     <!-- destination, in the form of a @code{const_int} rtx.  Thus, if the -->
+     <!-- compiler knows that both source and destination are word-aligned, -->
+     <!-- it may provide the value 4 for this operand. -->
+     <p>第四个操作数为源和目的的已知共享的对齐方式，形式为<code>const_int</code> rtx。因此，如果编译器知道源和目的都是字对齐的，则其可以为该操作数提供值4。
+
+     <!-- The two memory blocks specified are compared byte by byte in lexicographic -->
+     <!-- order starting at the beginning of each string.  The instruction is not allowed -->
+     <!-- to prefetch more than one byte at a time since either string may end in the -->
+     <!-- first byte and reading past that may access an invalid page or segment and -->
+     <!-- cause a fault.  The effect of the instruction is to store a value in operand 0 -->
+     <!-- whose sign indicates the result of the comparison. -->
+     <p>两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。指令不允许一次取多个字节，因为每个字符串都可能在第一个字节中终止，读取后面的字节可能会访问一个无效的页或者段，并产生一个缺失。
+<!-- 该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。 -->
+The comparison will terminate when the fetched bytes
+are different or if they are equal to zero.  The effect of the
+instruction is to store a value in operand 0 whose sign indicates the
+result of the comparison.
+
+     <p><a name="index-g_t_0040code_007bcmpmem_0040var_007bm_007d_007d-instruction-pattern-3486"></a><br><dt>&lsquo;<samp><span class="samp">cmpmem</span><var>m</var></samp>&rsquo;<dd><!-- Block compare instruction, with five operands like the operands -->
+<!-- of @samp{cmpstr@var{m}}.  The two memory blocks specified are compared -->
+<!-- byte by byte in lexicographic order starting at the beginning of each -->
+<!-- block.  Unlike @samp{cmpstr@var{m}} the instruction can prefetch -->
+<!-- any bytes in the two memory blocks.  The effect of the instruction is -->
+<!-- to store a value in operand 0 whose sign indicates the result of the -->
+<!-- comparison. -->
+块比较指令，这5个操作数类似于&lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;。两个指定的内存块按字节来进行比较，按照字典顺序，从每个字符串的起始处开始。不像&lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;，该指令可以在两个内存块中取任意个字节。
+<!-- 该指令的效果是将值存放在操作数0中，其符号表示了比较的结果。 -->
+Also unlike &lsquo;<samp><span class="samp">cmpstr</span><var>m</var></samp>&rsquo;
+the comparison will not stop if both bytes are zero.  The effect of
+the instruction is to store a value in operand 0 whose sign indicates
+the result of the comparison.
+
+     <!-- @cindex @code{strlen@var{m}} instruction pattern -->
+     <!-- @item @samp{strlen@var{m}} -->
+     <!-- Compute the length of a string, with three operands. -->
+     <!-- Operand 0 is the result (of mode @var{m}), operand 1 is -->
+     <!-- a @code{mem} referring to the first character of the string, -->
+     <!-- operand 2 is the character to search for (normally zero), -->
+     <!-- and operand 3 is a constant describing the known alignment -->
+     <!-- of the beginning of the string. -->
+     <p><a name="index-g_t_0040code_007bstrlen_0040var_007bm_007d_007d-instruction-pattern-3487"></a><br><dt>&lsquo;<samp><span class="samp">strlen</span><var>m</var></samp>&rsquo;<dd>计算字符串的长度，有3个操作数。操作数0为结果（机器模式为<var>m</var>），操作数1为一个<code>mem</code>，指出字符串的第一个字符，操作数2为要查找的字符（通常为零），操作数3为一个常量，描述了字符串起始处的已知对齐方式。
+
+     <p><a name="index-g_t_0040code_007bfloat_0040var_007bm_007d_0040var_007bn_007d2_007d-instruction-pattern-3488"></a><br><dt>&lsquo;<samp><span class="samp">float</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Convert signed integer operand 1 (valid for fixed point mode @var{m}) to -->
+<!-- floating point mode @var{n} and store in operand 0 (which has mode -->
+<!-- @var{n}). -->
+将有符号整数，操作数1（对于定点机器模式<var>m</var>有效），转换成浮点机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。
+
+     <p><a name="index-g_t_0040code_007bfloatuns_0040var_007bm_007d_0040var_007bn_007d2_007d-instruction-pattern-3489"></a><br><dt>&lsquo;<samp><span class="samp">floatuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Convert unsigned integer operand 1 (valid for fixed point mode @var{m}) -->
+<!-- to floating point mode @var{n} and store in operand 0 (which has mode -->
+<!-- @var{n}). -->
+将无符号整数，操作数1（对于定点机器模式<var>m</var>有效），转换成浮点机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。
+
+     <p><a name="index-g_t_0040code_007bfix_0040var_007bm_007d_0040var_007bn_007d2_007d-instruction-pattern-3490"></a><br><dt>&lsquo;<samp><span class="samp">fix</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Convert operand 1 (valid for floating point mode @var{m}) to fixed -->
+<!-- point mode @var{n} as a signed number and store in operand 0 (which -->
+<!-- has mode @var{n}).  This instruction's result is defined only when -->
+<!-- the value of operand 1 is an integer. -->
+将操作数1（对于浮点机器模式<var>m</var>有效），转换成定点机器模式<var>n</var>，作为一个有符号数并存放在操作数0（机器模式为<var>n</var>）中。该指令的结果，只有当操作数1的值为整数时，才被定义。
+
+     <!-- If the machine description defines this pattern, it also needs to -->
+     <!-- define the @code{ftrunc} pattern. -->
+     <p>如果机器描述定义了该指令模式，则其还需要定义<code>ftrunc</code>指令模式。
+
+     <p><a name="index-g_t_0040code_007bfixuns_0040var_007bm_007d_0040var_007bn_007d2_007d-instruction-pattern-3491"></a><br><dt>&lsquo;<samp><span class="samp">fixuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Convert operand 1 (valid for floating point mode @var{m}) to fixed -->
+<!-- point mode @var{n} as an unsigned number and store in operand 0 (which -->
+<!-- has mode @var{n}).  This instruction's result is defined only when the -->
+<!-- value of operand 1 is an integer. -->
+将操作数1（对于浮点机器模式<var>m</var>有效），转换成定点机器模式<var>n</var>，作为一个无符号数并存放在操作数0（机器模式为<var>n</var>）中。该指令的结果，只有当操作数1的值为整数时，才被定义。
+
+     <p><a name="index-g_t_0040code_007bftrunc_0040var_007bm_007d2_007d-instruction-pattern-3492"></a><br><dt>&lsquo;<samp><span class="samp">ftrunc</span><var>m</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Convert operand 1 (valid for floating point mode @var{m}) to an -->
+<!-- integer value, still represented in floating point mode @var{m}, and -->
+<!-- store it in operand 0 (valid for floating point mode @var{m}). -->
+将操作数1（对于浮点机器模式<var>m</var>有效），转换成整数值，仍按照浮点机器模式<var>m</var>来表示，并存放在操作数0（对于浮点机器模式<var>m</var>有效）中。
+
+     <p><a name="index-g_t_0040code_007bfix_005ftrunc_0040var_007bm_007d_0040var_007bn_007d2_007d-instruction-pattern-3493"></a><br><dt>&lsquo;<samp><span class="samp">fix_trunc</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Like @samp{fix@var{m}@var{n}2} but works for any floating point value -->
+<!-- of mode @var{m} by converting the value to an integer. -->
+类似于&lsquo;<samp><span class="samp">fix</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;，不过工作于，将任意机器模式为<var>m</var>的浮点值，转换成整数。
+
+     <p><a name="index-g_t_0040code_007bfixuns_005ftrunc_0040var_007bm_007d_0040var_007bn_007d2_007d-instruction-pattern-3494"></a><br><dt>&lsquo;<samp><span class="samp">fixuns_trunc</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Like @samp{fixuns@var{m}@var{n}2} but works for any floating point -->
+<!-- value of mode @var{m} by converting the value to an integer. -->
+类似&lsquo;<samp><span class="samp">fixuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;，不过工作于，将任意机器模式为<var>m</var>的浮点值，转换成整数。
+
+     <p><a name="index-g_t_0040code_007btrunc_0040var_007bm_007d_0040var_007bn_007d2_007d-instruction-pattern-3495"></a><br><dt>&lsquo;<samp><span class="samp">trunc</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Truncate operand 1 (valid for mode @var{m}) to mode @var{n} and -->
+<!-- store in operand 0 (which has mode @var{n}).  Both modes must be fixed -->
+<!-- point or both floating point. -->
+将操作数1（对机器模式<var>m</var>有效），截取为机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。两个机器模式都必须同为定点的或者浮点的。
+
+     <p><a name="index-g_t_0040code_007bextend_0040var_007bm_007d_0040var_007bn_007d2_007d-instruction-pattern-3496"></a><br><dt>&lsquo;<samp><span class="samp">extend</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Sign-extend operand 1 (valid for mode @var{m}) to mode @var{n} and -->
+<!-- store in operand 0 (which has mode @var{n}).  Both modes must be fixed -->
+<!-- point or both floating point. -->
+将操作数1（对机器模式<var>m</var>有效）符号扩展成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。两个机器模式都必须同为定点的或者浮点的。
+
+     <p><a name="index-g_t_0040code_007bzero_005fextend_0040var_007bm_007d_0040var_007bn_007d2_007d-instruction-pattern-3497"></a><br><dt>&lsquo;<samp><span class="samp">zero_extend</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Zero-extend operand 1 (valid for mode @var{m}) to mode @var{n} and -->
+<!-- store in operand 0 (which has mode @var{n}).  Both modes must be fixed -->
+<!-- point. -->
+将操作数1（对机器模式<var>m</var>有效）零扩展成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。两个机器模式都必须同为定点的或者浮点的。
+
+     <p><a name="index-g_t_0040code_007bfract_0040var_007bm_007d_0040var_007bn_007d2_007d-instruction-pattern-3498"></a><br><dt>&lsquo;<samp><span class="samp">fract</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Convert operand 1 of mode @var{m} to mode @var{n} and store in -->
+<!-- operand 0 (which has mode @var{n}).  Mode @var{m} and mode @var{n} -->
+<!-- could be fixed-point to fixed-point, signed integer to fixed-point, -->
+<!-- fixed-point to signed integer, floating-point to fixed-point, -->
+<!-- or fixed-point to floating-point. -->
+<!-- When overflows or underflows happen, the results are undefined. -->
+将机器模式为<var>m</var>的操作数1，转换成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。机器模式<var>m</var>和<var>n</var>可以为定点到定点，有符号整数到定点，定点到有符号整数，浮点到浮点，或者定点到浮点。当发生溢出时，结果未定义。
+
+     <p><a name="index-g_t_0040code_007bsatfract_0040var_007bm_007d_0040var_007bn_007d2_007d-instruction-pattern-3499"></a><br><dt>&lsquo;<samp><span class="samp">satfract</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Convert operand 1 of mode @var{m} to mode @var{n} and store in -->
+<!-- operand 0 (which has mode @var{n}).  Mode @var{m} and mode @var{n} -->
+<!-- could be fixed-point to fixed-point, signed integer to fixed-point, -->
+<!-- or floating-point to fixed-point. -->
+<!-- When overflows or underflows happen, the instruction saturates the -->
+<!-- results to the maximum or the minimum. -->
+将机器模式为<var>m</var>的操作数1，转换成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。机器模式<var>m</var>和<var>n</var>可以为定点到定点，有符号整数到定点，或者浮点到定点。当发生溢出时，指令将结果饱和为最大或最小值。
+
+     <p><a name="index-g_t_0040code_007bfractuns_0040var_007bm_007d_0040var_007bn_007d2_007d-instruction-pattern-3500"></a><br><dt>&lsquo;<samp><span class="samp">fractuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Convert operand 1 of mode @var{m} to mode @var{n} and store in -->
+<!-- operand 0 (which has mode @var{n}).  Mode @var{m} and mode @var{n} -->
+<!-- could be unsigned integer to fixed-point, or -->
+<!-- fixed-point to unsigned integer. -->
+<!-- When overflows or underflows happen, the results are undefined. -->
+将机器模式为<var>m</var>的操作数1，转换成机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。机器模式<var>m</var>和<var>n</var>可以为无符号整数到定点，或者定点到无符号整数。当发生溢出时，结果未定义。
+
+     <p><a name="index-g_t_0040code_007bsatfractuns_0040var_007bm_007d_0040var_007bn_007d2_007d-instruction-pattern-3501"></a><br><dt>&lsquo;<samp><span class="samp">satfractuns</span><var>m</var><var>n</var><span class="samp">2</span></samp>&rsquo;<dd><!-- Convert unsigned integer operand 1 of mode @var{m} to fixed-point mode -->
+<!-- @var{n} and store in operand 0 (which has mode @var{n}). -->
+<!-- When overflows or underflows happen, the instruction saturates the -->
+<!-- results to the maximum or the minimum. -->
+将机器模式为<var>m</var>的，无符号整数，操作数1，转换成定点机器模式<var>n</var>，并存放在操作数0（机器模式为<var>n</var>）中。当发生溢出时，指令将结果饱和为最大或最小值。
+
+     <p><a name="index-g_t_0040code_007bextv_007d-instruction-pattern-3502"></a><br><dt>&lsquo;<samp><span class="samp">extv</span></samp>&rsquo;<dd><!-- Extract a bit-field from operand 1 (a register or memory operand), where -->
+<!-- operand 2 specifies the width in bits and operand 3 the starting bit, -->
+<!-- and store it in operand 0.  Operand 0 must have mode @code{word_mode}. -->
+<!-- Operand 1 may have mode @code{byte_mode} or @code{word_mode}; often -->
+<!-- @code{word_mode} is allowed only for registers.  Operands 2 and 3 must -->
+<!-- be valid for @code{word_mode}. -->
+从操作数1（寄存器或者内存操作数）中抽取一个位域，其中操作数2指定了宽度，按位为单位，操作数3为起始位，并将结果存放在操作数0中。操作数0必须具有机器模式<code>word_mode</code>。操作数1可以具有机器模式<code>byte_mode</code> 或 <code>word_mode</code>；通常<code>word_mode</code>只允许用于寄存器。操作数2和3必须对<code>word_mode</code>有效。
+
+     <!-- The RTL generation pass generates this instruction only with constants -->
+     <!-- for operands 2 and 3 and the constant is never zero for operand 2. -->
+     <p>RTL生成过程，生成的该指令，操作数2和3为常量，并且对于操作数2，常量不为零。
+
+     <!-- The bit-field value is sign-extended to a full word integer -->
+     <!-- before it is stored in operand 0. -->
+     <p>位域的值，在存放到操作数0之前，被有符号扩展为一整个字的整数。
+
+     <p><a name="index-g_t_0040code_007bextzv_007d-instruction-pattern-3503"></a><br><dt>&lsquo;<samp><span class="samp">extzv</span></samp>&rsquo;<dd><!-- Like @samp{extv} except that the bit-field value is zero-extended. -->
+类似&lsquo;<samp><span class="samp">extv</span></samp>&rsquo;，只不过位域的值被零扩展。
+
+     <p><a name="index-g_t_0040code_007binsv_007d-instruction-pattern-3504"></a><br><dt>&lsquo;<samp><span class="samp">insv</span></samp>&rsquo;<dd><!-- Store operand 3 (which must be valid for @code{word_mode}) into a -->
+<!-- bit-field in operand 0, where operand 1 specifies the width in bits and -->
+<!-- operand 2 the starting bit.  Operand 0 may have mode @code{byte_mode} or -->
+<!-- @code{word_mode}; often @code{word_mode} is allowed only for registers. -->
+<!-- Operands 1 and 2 must be valid for @code{word_mode}. -->
+将操作数3（必须对<code>word_mode</code>有效）存储到操作数0中的位域，其中操作数1指定了位宽，操作数2指定了起始位。操作数0可以具有机器模式<code>byte_mode</code> 或 <code>word_mode</code>；通常<code>word_mode</code>只允许用于寄存器。操作数1和2必须对<code>word_mode</code>有效。
+
+     <!-- The RTL generation pass generates this instruction only with constants -->
+     <!-- for operands 1 and 2 and the constant is never zero for operand 1. -->
+     <p>RTL生成过程，生成的该指令，操作数1和2为常量，并且对于操作数1，常量不为零。
+
+     <!-- @cindex @code{mov@var{mode}cc} instruction pattern -->
+     <!-- @item @samp{mov@var{mode}cc} -->
+     <!-- Conditionally move operand 2 or operand 3 into operand 0 according to the -->
+     <!-- comparison in operand 1.  If the comparison is true, operand 2 is moved -->
+     <!-- into operand 0, otherwise operand 3 is moved. -->
+     <!-- The mode of the operands being compared need not be the same as the operands -->
+     <!-- being moved.  Some machines, sparc64 for example, have instructions that -->
+     <!-- conditionally move an integer value based on the floating point condition -->
+     <!-- codes and vice versa. -->
+     <!-- If the machine does not have conditional move instructions, do not -->
+     <!-- define these patterns. -->
+     <p><a name="index-g_t_0040code_007bmov_0040var_007bmode_007dcc_007d-instruction-pattern-3505"></a><br><dt>&lsquo;<samp><span class="samp">mov</span><var>mode</var><span class="samp">cc</span></samp>&rsquo;<dd>根据对操作数1的比较，有条件的将操作数2或者3移送到操作数0中。如果比较为真，则操作数2被移送到操作数0中，否则操作数3被移送。
+
+     <p>操作数的机器模式不需要与被移送的操作数的相同。一些机器，例如sparc64，具有可以根据浮点条件码，条件移送整数值的指令，以及相反的指令。
+
+     <p>如果机器没有条件移送指令，则不要定义这些指令模式。
+
+     <!-- @cindex @code{add@var{mode}cc} instruction pattern -->
+     <!-- @item @samp{add@var{mode}cc} -->
+     <!-- Similar to @samp{mov@var{mode}cc} but for conditional addition.  Conditionally -->
+     <!-- move operand 2 or (operands 2 + operand 3) into operand 0 according to the -->
+     <!-- comparison in operand 1.  If the comparison is true, operand 2 is moved into -->
+     <!-- operand 0, otherwise (operand 2 + operand 3) is moved. -->
+     <p><a name="index-g_t_0040code_007badd_0040var_007bmode_007dcc_007d-instruction-pattern-3506"></a><br><dt>&lsquo;<samp><span class="samp">add</span><var>mode</var><span class="samp">cc</span></samp>&rsquo;<dd>类似于&lsquo;<samp><span class="samp">mov</span><var>mode</var><span class="samp">cc</span></samp>&rsquo;，不过是条件加法。根据在操作数1中的比较，条件性的将操作数2或者(操作数2 + 操作数3)，移送到操作数0中。如果比较为真，则操作数2被移送到操作数0中，否则(操作数2 + 操作数3)被移送。
+
+     <p><a name="index-g_t_0040code_007bs_0040var_007bcond_007d_007d-instruction-pattern-3507"></a><br><dt>&lsquo;<samp><span class="samp">s</span><var>cond</var></samp>&rsquo;<dd>根据条件码将零或者非零存放在操作数中。当且仅当条件<var>cond</var>为真时，存储的值才为非零。<var>cond</var>为一个比较运算表达式代码的名字，例如<code>eq</code>, <code>lt</code>或<code>leu</code>。
+
+     <p>当书写<code>match_operand</code>表达式的时候，你来指定操作数必须具有的机器模式。编译器自动的查看你使用的机器模式，并提供那个机器模式的操作数。
+
+     <p>对于条件为真时所存储的值，其低位必须为1，不然必须为负。否则，指令就不适合，你应该从机器描述中将其去掉。你可以通过定义宏<code>STORE_FLAG_VALUE</code> (参见<a href="Misc.html#Misc">Misc</a>)，来描述哪个值被存放。如果不能找到一个用于所有&lsquo;<samp><span class="samp">s</span><var>cond</var></samp>&rsquo;指令模式的描述，则你应该从机器描述中去掉这些操作。
+
+     <p>这些操作可以失败，但应该只在相对不常见的情况下这样做；如果它们对于常见的情况，包括整数比较，会失败，则最好去掉这些指令模式。
+
+     <p>如果这些操作被去掉，则编译器通常会生成，将常量复制到目标，并在将零赋值给目标的语句附近进行分支跳转。如果这样的代码比用于&lsquo;<samp><span class="samp">s</span><var>cond</var></samp>&rsquo;模式的指令，后面跟着需要将结果转成<code>SImode</code>的1或者零的的指令，更有效，则你应该从机器描述中去掉&lsquo;<samp><span class="samp">s</span><var>cond</var></samp>&rsquo;操作。
+
+     <p><a name="index-g_t_0040code_007bb_0040var_007bcond_007d_007d-instruction-pattern-3508"></a><br><dt>&lsquo;<samp><span class="samp">b</span><var>cond</var></samp>&rsquo;<dd>条件分支指令。操作数0为一个<code>label_ref</code>指出要跳转到的标号。如果条件码符合条件<var>cond</var>则跳转。
+
+     <p>一些机器不遵循这里假设的模型，即一个比较指令，跟随一个条件跳转指令。那种情况下，&lsquo;<samp><span class="samp">cmp</span><var>m</var></samp>&rsquo; (和 &lsquo;<samp><span class="samp">tst</span><var>m</var></samp>&rsquo;)指令模式，应该简单的将操作数存放开，并在<code>define_expand</code> (参见<a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)中为条件分支操作，生成所有需要的insn。所有对扩展&lsquo;<samp><span class="samp">b</span><var>cond</var></samp>&rsquo;指令模式的调用，都会立即优先执行对扩展&lsquo;<samp><span class="samp">cmp</span><var>m</var></samp>&rsquo;或者&lsquo;<samp><span class="samp">tst</span><var>m</var></samp>&rsquo;的调用。
+
+     <p>对条件代码值使用伪寄存器的，或者用于比较的机器模式取决于被测试的条件的机器，也应该使用上面的机制。参见<a href="Jump-Patterns.html#Jump-Patterns">Jump Patterns</a>.
+
+     <p>上面的讨论也应用在&lsquo;<samp><span class="samp">mov</span><var>mode</var><span class="samp">cc</span></samp>&rsquo;和&lsquo;<samp><span class="samp">s</span><var>cond</var></samp>&rsquo;指令模式上。
+
+     <!-- @cindex @code{cstore@var{mode}4} instruction pattern -->
+     <!-- @item @samp{cstore@var{mode}4} -->
+     <!-- Store zero or nonzero in operand 0 according to whether a comparison -->
+     <!-- is true.  Operand 1 is a comparison operator.  Operand 2 and operand 3 -->
+     <!-- are the first and second operand of the comparison, respectively. -->
+     <!-- You specify the mode that operand 0 must have when you write the -->
+     <!-- @code{match_operand} expression.  The compiler automatically sees which -->
+     <!-- mode you have used and supplies an operand of that mode. -->
+     <!-- The value stored for a true condition must have 1 as its low bit, or -->
+     <!-- else must be negative.  Otherwise the instruction is not suitable and -->
+     <!-- you should omit it from the machine description.  You describe to the -->
+     <!-- compiler exactly which value is stored by defining the macro -->
+     <!-- @code{STORE_FLAG_VALUE} (@pxref{Misc}).  If a description cannot be -->
+     <!-- found that can be used for all the possible comparison operators, you -->
+     <!-- should pick one and use a @code{define_expand} to map all results -->
+     <!-- onto the one you chose. -->
+     <!-- These operations may @code{FAIL}, but should do so only in relatively -->
+     <!-- uncommon cases; if they would @code{FAIL} for common cases involving -->
+     <!-- integer comparisons, it is best to restrict the predicates to not -->
+     <!-- allow these operands.  Likewise if a given comparison operator will -->
+     <!-- always fail, independent of the operands (for floating-point modes, the -->
+     <!-- @code{ordered_comparison_operator} predicate is often useful in this case). -->
+     <!-- If this pattern is omitted, the compiler will generate a conditional -->
+     <!-- branch-for example, it may copy a constant one to the target and branching -->
+     <!-- around an assignment of zero to the target-or a libcall.  If the predicate -->
+     <!-- for operand 1 only rejects some operators, it will also try reordering the -->
+     <!-- operands and/or inverting the result value (e.g.@: by an exclusive OR). -->
+     <!-- These possibilities could be cheaper or equivalent to the instructions -->
+     <!-- used for the @samp{cstore@var{mode}4} pattern followed by those required -->
+     <!-- to convert a positive result from @code{STORE_FLAG_VALUE} to 1; in this -->
+     <!-- case, you can and should make operand 1's predicate reject some operators -->
+     <!-- in the @samp{cstore@var{mode}4} pattern, or remove the pattern altogether -->
+     <!-- from the machine description. -->
+     <!-- @cindex @code{cbranch@var{mode}4} instruction pattern -->
+     <!-- @item @samp{cbranch@var{mode}4} -->
+     <!-- Conditional branch instruction combined with a compare instruction. -->
+     <!-- Operand 0 is a comparison operator.  Operand 1 and operand 2 are the -->
+     <!-- first and second operands of the comparison, respectively.  Operand 3 -->
+     <!-- is a @code{label_ref} that refers to the label to jump to. -->
+     <!-- @cindex @code{jump} instruction pattern -->
+     <!-- @item @samp{jump} -->
+     <!-- A jump inside a function; an unconditional branch.  Operand 0 is the -->
+     <!-- @code{label_ref} of the label to jump to.  This pattern name is mandatory -->
+     <!-- on all machines. -->
+     <p><a name="index-g_t_0040code_007bcbranch_0040var_007bmode_007d4_007d-instruction-pattern-3509"></a><br><dt>&lsquo;<samp><span class="samp">cbranch</span><var>mode</var><span class="samp">4</span></samp>&rsquo;<dd>条件分支指令，结合一个比较指令。操作数0为比较运算符。操作数1和2分别为比较运算的第一个和第二个操作数。操作数3为一个<code>label_ref</code>，指出了跳转的标号。
+
+     <p><a name="index-g_t_0040code_007bjump_007d-instruction-pattern-3510"></a><br><dt>&lsquo;<samp><span class="samp">jump</span></samp>&rsquo;<dd>函数内部跳转；无条件分支。操作数0为一个<code>label_ref</code>，指出了跳转的标号。该指令模式名在所有机器上都是强制必须的。
+
+     <!-- @cindex @code{call} instruction pattern -->
+     <!-- @item @samp{call} -->
+     <!-- Subroutine call instruction returning no value.  Operand 0 is the -->
+     <!-- function to call; operand 1 is the number of bytes of arguments pushed -->
+     <!-- as a @code{const_int}; operand 2 is the number of registers used as -->
+     <!-- operands. -->
+     <!-- On most machines, operand 2 is not actually stored into the RTL -->
+     <!-- pattern.  It is supplied for the sake of some RISC machines which need -->
+     <!-- to put this information into the assembler code; they can put it in -->
+     <!-- the RTL instead of operand 1. -->
+     <!-- Operand 0 should be a @code{mem} RTX whose address is the address of the -->
+     <!-- function.  Note, however, that this address can be a @code{symbol_ref} -->
+     <!-- expression even if it would not be a legitimate memory address on the -->
+     <!-- target machine.  If it is also not a valid argument for a call -->
+     <!-- instruction, the pattern for this operation should be a -->
+     <!-- @code{define_expand} (@pxref{Expander Definitions}) that places the -->
+     <!-- address into a register and uses that register in the call instruction. -->
+     <p><a name="index-g_t_0040code_007bcall_007d-instruction-pattern-3511"></a><br><dt>&lsquo;<samp><span class="samp">call</span></samp>&rsquo;<dd>没有返回值的子程序调用指令。操作数0为调用的函数；操作数1为压栈的参数的字节数，为一个<code>const_int</code>；操作数2为用作操作数的寄存器数目。
+
+     <p>在大多机器上，操作数2没有被实际存放在RTL模式中。提供它是出于安全考虑，一些RISC机器需要将该信息放到汇编代码中；它们可以将其放在RTL中，而不是操作数1中。
+
+     <p>操作数0应该为一个<code>mem</code> RTX，其地址为函数的地址。然而注意，该地址可以为一个<code>symbol_ref</code>表达式，即使其在目标机器上可能不是一个合法的内存地址。如果其也不是调用指令的有效参数，则该操作的指令模式应该为一个<code>define_expand</code> (参见<a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)，其将地址放入寄存器中，并在调用指令中使用寄存器。
+
+     <!-- @cindex @code{call_value} instruction pattern -->
+     <!-- @item @samp{call_value} -->
+     <!-- Subroutine call instruction returning a value.  Operand 0 is the hard -->
+     <!-- register in which the value is returned.  There are three more -->
+     <!-- operands, the same as the three operands of the @samp{call} -->
+     <!-- instruction (but with numbers increased by one). -->
+     <!-- Subroutines that return @code{BLKmode} objects use the @samp{call} -->
+     <!-- insn. -->
+     <!-- @cindex @code{call_pop} instruction pattern -->
+     <!-- @cindex @code{call_value_pop} instruction pattern -->
+     <!-- @item @samp{call_pop}, @samp{call_value_pop} -->
+     <!-- Similar to @samp{call} and @samp{call_value}, except used if defined and -->
+     <!-- if @code{RETURN_POPS_ARGS} is nonzero.  They should emit a @code{parallel} -->
+     <!-- that contains both the function call and a @code{set} to indicate the -->
+     <!-- adjustment made to the frame pointer. -->
+     <!-- For machines where @code{RETURN_POPS_ARGS} can be nonzero, the use of these -->
+     <!-- patterns increases the number of functions for which the frame pointer -->
+     <!-- can be eliminated, if desired. -->
+     <p><a name="index-g_t_0040code_007bcall_005fvalue_007d-instruction-pattern-3512"></a><br><dt>&lsquo;<samp><span class="samp">call_value</span></samp>&rsquo;<dd>有返回值的子程序调用指令。操作数0为硬件寄存器，存放返回值。还有三个操作数，与&lsquo;<samp><span class="samp">call</span></samp>&rsquo;指令相同（只不过将编号加一）。
+
+     <p>返回 <code>BLKmode</code>对象的子程序，使用&lsquo;<samp><span class="samp">call</span></samp>&rsquo; insn。
+
+     <p><a name="index-g_t_0040code_007bcall_005fpop_007d-instruction-pattern-3513"></a><a name="index-g_t_0040code_007bcall_005fvalue_005fpop_007d-instruction-pattern-3514"></a><br><dt>&lsquo;<samp><span class="samp">call_pop</span></samp>&rsquo;, &lsquo;<samp><span class="samp">call_value_pop</span></samp>&rsquo;<dd>类似于&lsquo;<samp><span class="samp">call</span></samp>&rsquo; 和 &lsquo;<samp><span class="samp">call_value</span></samp>&rsquo;，只不过用于其被定义，并且<code>RETURN_POPS_ARGS</code>为非零的时候。它们应该生成一个 <code>parallel</code>，包含函数调用和一个<code>set</code>，来指示对帧指针的调整。
+
+     <p>对于<code>RETURN_POPS_ARGS</code>可以为非零的机器，使用这些指令模式可以增加帧指针被消除掉的函数的数目。
+
+     <!-- @cindex @code{untyped_call} instruction pattern -->
+     <!-- @item @samp{untyped_call} -->
+     <!-- Subroutine call instruction returning a value of any type.  Operand 0 is -->
+     <!-- the function to call; operand 1 is a memory location where the result of -->
+     <!-- calling the function is to be stored; operand 2 is a @code{parallel} -->
+     <!-- expression where each element is a @code{set} expression that indicates -->
+     <!-- the saving of a function return value into the result block. -->
+     <!-- This instruction pattern should be defined to support -->
+     <!-- @code{__builtin_apply} on machines where special instructions are needed -->
+     <!-- to call a subroutine with arbitrary arguments or to save the value -->
+     <!-- returned.  This instruction pattern is required on machines that have -->
+     <!-- multiple registers that can hold a return value -->
+     <!-- (i.e.@: @code{FUNCTION_VALUE_REGNO_P} is true for more than one register). -->
+     <!-- @cindex @code{return} instruction pattern -->
+     <!-- @item @samp{return} -->
+     <!-- Subroutine return instruction.  This instruction pattern name should be -->
+     <!-- defined only if a single instruction can do all the work of returning -->
+     <!-- from a function. -->
+     <!-- Like the @samp{mov@var{m}} patterns, this pattern is also used after the -->
+     <!-- RTL generation phase.  In this case it is to support machines where -->
+     <!-- multiple instructions are usually needed to return from a function, but -->
+     <!-- some class of functions only requires one instruction to implement a -->
+     <!-- return.  Normally, the applicable functions are those which do not need -->
+     <!-- to save any registers or allocate stack space. -->
+     <p><a name="index-g_t_0040code_007buntyped_005fcall_007d-instruction-pattern-3515"></a><br><dt>&lsquo;<samp><span class="samp">untyped_call</span></samp>&rsquo;<dd>返回一个任意类型的值的子函数调用指令。操作数0为调用的函数；操作数1为内存位置，存放调用函数后的结果；操作数2为一个<code>parallel</code>表达式，其中每个元素都为一个<code>set</code>表达式，用来指示将函数返回值保存到结果块中。
+
+     <p>该指令模式应该被定义，来支持<code>__builtin_apply</code>，在一些机器上，需要特殊的指令来调用一个具有任意参数的子程序，或者将返回值保存。在具有多个寄存器，可以存放一个返回值（即<code>FUNCTION_VALUE_REGNO_P</code>对多个寄存器都为真）的机器上，需要该指令模式。
+
+     <p><a name="index-g_t_0040code_007breturn_007d-instruction-pattern-3516"></a><br><dt>&lsquo;<samp><span class="samp">return</span></samp>&rsquo;<dd>子程序返回指令。该指令模式名应该只有当，单个指令可以做从函数中返回时的所有工作的时候，才被定义。
+
+     <p>类似&lsquo;<samp><span class="samp">mov</span><var>m</var></samp>&rsquo;指令模式，该指令模式也在RTL生成阶段之后被使用。这种情况下，其用来支持一些机器，从函数中返回通常需要多个指令，但是某些类别的函数只需要一条指令来实现返回。通常，可以适用的函数为那些不需要保存任何寄存器或者分配栈空间的函数。
+
+     <p>It is valid for this pattern to expand to an instruction using
+<code>simple_return</code> if no epilogue is required.
+
+     <p><a name="index-g_t_0040code_007bsimple_005freturn_007d-instruction-pattern-3517"></a><br><dt>&lsquo;<samp><span class="samp">simple_return</span></samp>&rsquo;<dd>Subroutine return instruction.  This instruction pattern name should be
+defined only if a single instruction can do all the work of returning
+from a function on a path where no epilogue is required.  This pattern
+is very similar to the <code>return</code> instruction pattern, but it is emitted
+only by the shrink-wrapping optimization on paths where the function
+prologue has not been executed, and a function return should occur without
+any of the effects of the epilogue.  Additional uses may be introduced on
+paths where both the prologue and the epilogue have executed.
+
+     <!-- @findex reload_completed -->
+     <!-- @findex leaf_function_p -->
+     <!-- For such machines, the condition specified in this pattern should only -->
+     <!-- be true when @code{reload_completed} is nonzero and the function's -->
+     <!-- epilogue would only be a single instruction.  For machines with register -->
+     <!-- windows, the routine @code{leaf_function_p} may be used to determine if -->
+     <!-- a register window push is required. -->
+     <!-- Machines that have conditional return instructions should define patterns -->
+     <!-- such as -->
+     <!-- @smallexample -->
+     <!-- (define_insn "" -->
+     <!-- [(set (pc) -->
+     <!-- (if_then_else (match_operator -->
+     <!-- 0 "comparison_operator" -->
+     <!-- [(cc0) (const_int 0)]) -->
+     <!-- (return) -->
+     <!-- (pc)))] -->
+     <!-- "@var{condition}" -->
+     <!-- "@dots{}") -->
+     <!-- @end smallexample -->
+     <!-- where @var{condition} would normally be the same condition specified on the -->
+     <!-- named @samp{return} pattern. -->
+     <p><a name="index-reload_005fcompleted-3518"></a><a name="index-leaf_005ffunction_005fp-3519"></a>对于这样的机器，该指令模式中指定的条件，应该只有当<code>reload_completed</code>为非零的时候才为真，并且函数的尾声应该只为一单个指令。对于有寄存器窗口的机器，例程<code>leaf_function_p</code>可以用来确定是否需要对寄存器窗口压栈。
+
+     <p>具有条件性返回指令的机器，应该将指令模式定义成
+
+     <pre class="smallexample">          (define_insn ""
+            [(set (pc)
+                  (if_then_else (match_operator
+                                   0 "comparison_operator"
+                                   [(cc0) (const_int 0)])
+                                (return)
+                                (pc)))]
+            "<var>condition</var>"
+            "...")
+</pre>
+     <p>其中<var>condition</var>通常为，在&lsquo;<samp><span class="samp">return</span></samp>&rsquo;指令模式中指定的相同的条件。
+
+     <!-- @cindex @code{untyped_return} instruction pattern -->
+     <!-- @item @samp{untyped_return} -->
+     <!-- Untyped subroutine return instruction.  This instruction pattern should -->
+     <!-- be defined to support @code{__builtin_return} on machines where special -->
+     <!-- instructions are needed to return a value of any type. -->
+     <!-- Operand 0 is a memory location where the result of calling a function -->
+     <!-- with @code{__builtin_apply} is stored; operand 1 is a @code{parallel} -->
+     <!-- expression where each element is a @code{set} expression that indicates -->
+     <!-- the restoring of a function return value from the result block. -->
+     <p><a name="index-g_t_0040code_007buntyped_005freturn_007d-instruction-pattern-3520"></a><br><dt>&lsquo;<samp><span class="samp">untyped_return</span></samp>&rsquo;<dd>未定义类型的子程序返回指令。该指令模式应该被定义，来支持<code>__builtin_return</code>，在一些机器上，需要特殊的指令来返回一个任意类型的值。
+
+     <p>操作数0为一个内存位置，存放使用<code>__builtin_apply</code>调用函数的结果；操作数1为一个<code>parallel</code>表达式，每个元素都是一个<code>set</code>表达式，指示了从结果块中恢复函数的返回值。
+
+     <!-- @cindex @code{nop} instruction pattern -->
+     <!-- @item @samp{nop} -->
+     <!-- No-op instruction.  This instruction pattern name should always be defined -->
+     <!-- to output a no-op in assembler code.  @code{(const_int 0)} will do as an -->
+     <!-- RTL pattern. -->
+     <!-- @cindex @code{indirect_jump} instruction pattern -->
+     <!-- @item @samp{indirect_jump} -->
+     <!-- An instruction to jump to an address which is operand zero. -->
+     <!-- This pattern name is mandatory on all machines. -->
+     <p><a name="index-g_t_0040code_007bnop_007d-instruction-pattern-3521"></a><br><dt>&lsquo;<samp><span class="samp">nop</span></samp>&rsquo;<dd>空操作指令。该指令模式名应该总是被定义，用来在汇编代码中输出一个no-op。<code>(const_int 0)</code>将作为一个RTL指令模式。
+
+     <p><a name="index-g_t_0040code_007bindirect_005fjump_007d-instruction-pattern-3522"></a><br><dt>&lsquo;<samp><span class="samp">indirect_jump</span></samp>&rsquo;<dd>一个指令，跳转到操作数0表示的地址。该指令模式名在所有机器上都必须存在。
+
+     <!-- @cindex @code{casesi} instruction pattern -->
+     <!-- @item @samp{casesi} -->
+     <!-- Instruction to jump through a dispatch table, including bounds checking. -->
+     <!-- This instruction takes five operands: -->
+     <!-- @enumerate -->
+     <!-- @item -->
+     <!-- The index to dispatch on, which has mode @code{SImode}. -->
+     <!-- @item -->
+     <!-- The lower bound for indices in the table, an integer constant. -->
+     <!-- @item -->
+     <!-- The total range of indices in the table-the largest index -->
+     <!-- minus the smallest one (both inclusive). -->
+     <!-- @item -->
+     <!-- A label that precedes the table itself. -->
+     <!-- @item -->
+     <!-- A label to jump to if the index has a value outside the bounds. -->
+     <!-- @end enumerate -->
+     <!-- The table is an @code{addr_vec} or @code{addr_diff_vec} inside of a -->
+     <!-- @code{jump_insn}.  The number of elements in the table is one plus the -->
+     <!-- difference between the upper bound and the lower bound. -->
+     <p><a name="index-g_t_0040code_007bcasesi_007d-instruction-pattern-3523"></a><br><dt>&lsquo;<samp><span class="samp">casesi</span></samp>&rsquo;<dd>通过派遣表进行跳转的指令，包括边界检查。该指令接受五个操作数：
+
+          <ol type=1 start=1>
+<li>派遣的索引，具有机器模式<code>SImode</code>。
+
+          <li>表中索引的较低边界，一个整数常量。
+
+          <li>表中索引的整个范围&mdash;最大索引减去最小的。
+
+          <li>位于表之前的标号。
+
+          <li>一个标号，如果索引值超出边界，则跳转到该地方。
+          </ol>
+
+     <p>表为<code>jump_insn</code>中的一个<code>addr_vec</code> 或 <code>addr_diff_vec</code>。表中的元素个数为一加上上界和下界的差。
+
+     <!-- @cindex @code{tablejump} instruction pattern -->
+     <!-- @item @samp{tablejump} -->
+     <!-- Instruction to jump to a variable address.  This is a low-level -->
+     <!-- capability which can be used to implement a dispatch table when there -->
+     <!-- is no @samp{casesi} pattern. -->
+     <!-- This pattern requires two operands: the address or offset, and a label -->
+     <!-- which should immediately precede the jump table.  If the macro -->
+     <!-- @code{CASE_VECTOR_PC_RELATIVE} evaluates to a nonzero value then the first -->
+     <!-- operand is an offset which counts from the address of the table; otherwise, -->
+     <!-- it is an absolute address to jump to.  In either case, the first operand has -->
+     <!-- mode @code{Pmode}. -->
+     <!-- The @samp{tablejump} insn is always the last insn before the jump -->
+     <!-- table it uses.  Its assembler code normally has no need to use the -->
+     <!-- second operand, but you should incorporate it in the RTL pattern so -->
+     <!-- that the jump optimizer will not delete the table as unreachable code. -->
+     <p><a name="index-g_t_0040code_007btablejump_007d-instruction-pattern-3524"></a><br><dt>&lsquo;<samp><span class="samp">tablejump</span></samp>&rsquo;<dd>跳转到一个可变地址的指令。这是一个低级别的能力，可以用来实现一个派遣表，当没有&lsquo;<samp><span class="samp">casesi</span></samp>&rsquo;指令模式的时候。
+
+     <p>该指令模式需要两个操作数：地址或偏移量，以及一个标号，其直接位于跳转表的前面。如果宏<code>CASE_VECTOR_PC_RELATIVE</code>求值为一个非零值，则第一个操作数为一个偏移量，其从表的地址开始计算；否则，其为一个跳转的绝对地址。这两种情况下，第一个操作数都为<code>Pmode</code>。
+
+     <p>&lsquo;<samp><span class="samp">tablejump</span></samp>&rsquo; insn总是其使用的跳转表之前的最后一个insn。其汇编代码通常不需要用到第二个操作数，但是你应该在RTL指令模式中包含它，使得跳转优化不会将表作为不可到达代码删除。
+
+     <!-- @cindex @code{decrement_and_branch_until_zero} instruction pattern -->
+     <!-- @item @samp{decrement_and_branch_until_zero} -->
+     <!-- Conditional branch instruction that decrements a register and -->
+     <!-- jumps if the register is nonzero.  Operand 0 is the register to -->
+     <!-- decrement and test; operand 1 is the label to jump to if the -->
+     <!-- register is nonzero.  @xref{Looping Patterns}. -->
+     <!-- This optional instruction pattern is only used by the combiner, -->
+     <!-- typically for loops reversed by the loop optimizer when strength -->
+     <!-- reduction is enabled. -->
+     <p><a name="index-g_t_0040code_007bdecrement_005fand_005fbranch_005funtil_005fzero_007d-instruction-pattern-3525"></a><br><dt>&lsquo;<samp><span class="samp">decrement_and_branch_until_zero</span></samp>&rsquo;<dd>条件分支指令，递减一个寄存器并且如果寄存器非零则跳转。操作数0为递减并测试的寄存器；操作数1为如果寄存器非零，则跳转的标号。参见<a href="Looping-Patterns.html#Looping-Patterns">Looping Patterns</a>.
+
+     <p>该可选的指令模式只用于合并器，通常被循环优化器使用，当启动强度消减的时候。
+
+     <!-- @cindex @code{doloop_end} instruction pattern -->
+     <!-- @item @samp{doloop_end} -->
+     <!-- Conditional branch instruction that decrements a register and jumps if -->
+     <!-- the register is nonzero.  This instruction takes five operands: Operand -->
+     <!-- 0 is the register to decrement and test; operand 1 is the number of loop -->
+     <!-- iterations as a @code{const_int} or @code{const0_rtx} if this cannot be -->
+     <!-- determined until run-time; operand 2 is the actual or estimated maximum -->
+     <!-- number of iterations as a @code{const_int}; operand 3 is the number of -->
+     <!-- enclosed loops as a @code{const_int} (an innermost loop has a value of -->
+     <!-- 1); operand 4 is the label to jump to if the register is nonzero. -->
+     <!-- @xref{Looping Patterns}. -->
+     <!-- This optional instruction pattern should be defined for machines with -->
+     <!-- low-overhead looping instructions as the loop optimizer will try to -->
+     <!-- modify suitable loops to utilize it.  If nested low-overhead looping is -->
+     <!-- not supported, use a @code{define_expand} (@pxref{Expander Definitions}) -->
+     <!-- and make the pattern fail if operand 3 is not @code{const1_rtx}. -->
+     <!-- Similarly, if the actual or estimated maximum number of iterations is -->
+     <!-- too large for this instruction, make it fail. -->
+     <!-- @cindex @code{doloop_begin} instruction pattern -->
+     <!-- @item @samp{doloop_begin} -->
+     <!-- Companion instruction to @code{doloop_end} required for machines that -->
+     <!-- need to perform some initialization, such as loading special registers -->
+     <!-- used by a low-overhead looping instruction.  If initialization insns do -->
+     <!-- not always need to be emitted, use a @code{define_expand} -->
+     <!-- (@pxref{Expander Definitions}) and make it fail. -->
+     <p><a name="index-g_t_0040code_007bdoloop_005fend_007d-instruction-pattern-3526"></a><br><dt>&lsquo;<samp><span class="samp">doloop_end</span></samp>&rsquo;<dd>条件分支指令，递减一个寄存器，并且如果寄存器非零则跳转。该指令接受五个操作数：操作数0是用来递减和测试的寄存器；操作数1是循环迭代的次数，为一个<code>const_int</code>，或者如果直到运行时才能确定，则为<code>const0_rtx</code>；操作数2为实际的或者估算的最大迭代数，为一个<code>const_int</code>；操作数3为被包含的循环数，为一个<code>const_int</code>（最内层循环的值为1）；操作数4为如果寄存器非零，要跳转的标号。参见<a href="Looping-Patterns.html#Looping-Patterns">Looping Patterns</a>.
+
+     <p>该可选的指令模式应该为，具有低开销循环指令的机器定义，循环优化器会尝试修改合适的循环来利用它。如果不支持嵌套的低开销循环，则使用<code>define_expand</code> (参见<a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)，并如果操作数3不为<code>const1_rtx</code>，则使得指令模式失败。类似的，如果实际的或者估算的最大迭代数目对于该指令来说太大，则使其失败。
+
+     <p><a name="index-g_t_0040code_007bdoloop_005fbegin_007d-instruction-pattern-3527"></a><br><dt>&lsquo;<samp><span class="samp">doloop_begin</span></samp>&rsquo;<dd>与<code>doloop_end</code>成套的指令，被用于需要执行一些初始化的机器，例如加载用于低开销循环指令中的特定寄存器。如果初始化insn不总是需要被生成，则使用<code>define_expand</code>
+(参见<a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)，并使其失败。
+
+     <!-- @cindex @code{canonicalize_funcptr_for_compare} instruction pattern -->
+     <!-- @item @samp{canonicalize_funcptr_for_compare} -->
+     <!-- Canonicalize the function pointer in operand 1 and store the result -->
+     <!-- into operand 0. -->
+     <!-- Operand 0 is always a @code{reg} and has mode @code{Pmode}; operand 1 -->
+     <!-- may be a @code{reg}, @code{mem}, @code{symbol_ref}, @code{const_int}, etc -->
+     <!-- and also has mode @code{Pmode}. -->
+     <!-- Canonicalization of a function pointer usually involves computing -->
+     <!-- the address of the function which would be called if the function -->
+     <!-- pointer were used in an indirect call. -->
+     <!-- Only define this pattern if function pointers on the target machine -->
+     <!-- can have different values but still call the same function when -->
+     <!-- used in an indirect call. -->
+     <p><a name="index-g_t_0040code_007bcanonicalize_005ffuncptr_005ffor_005fcompare_007d-instruction-pattern-3528"></a><br><dt>&lsquo;<samp><span class="samp">canonicalize_funcptr_for_compare</span></samp>&rsquo;<dd>正规化操作数1中的函数指针，并将结果存放在操作数0中。
+
+     <p>操作数0总是一个<code>reg</code>，并具有机器模式<code>Pmode</code>；操作数1可以为一个<code>reg</code>, <code>mem</code>, <code>symbol_ref</code>, <code>const_int</code>等等，也具有机器模式<code>Pmode</code>。
+
+     <p>正规化一个函数指针，通常涉及到计算函数的地址，该函数指针用在间接调用中。
+
+     <p>只有当目标机器上，对于函数指针可以有不同的值，但是当在间接调用的时候，其还是调用相同的函数的时候，才定义该指令模式。
+
+     <!-- @cindex @code{save_stack_block} instruction pattern -->
+     <!-- @cindex @code{save_stack_function} instruction pattern -->
+     <!-- @cindex @code{save_stack_nonlocal} instruction pattern -->
+     <!-- @cindex @code{restore_stack_block} instruction pattern -->
+     <!-- @cindex @code{restore_stack_function} instruction pattern -->
+     <!-- @cindex @code{restore_stack_nonlocal} instruction pattern -->
+     <!-- @item @samp{save_stack_block} -->
+     <!-- @itemx @samp{save_stack_function} -->
+     <!-- @itemx @samp{save_stack_nonlocal} -->
+     <!-- @itemx @samp{restore_stack_block} -->
+     <!-- @itemx @samp{restore_stack_function} -->
+     <!-- @itemx @samp{restore_stack_nonlocal} -->
+     <!-- Most machines save and restore the stack pointer by copying it to or -->
+     <!-- from an object of mode @code{Pmode}.  Do not define these patterns on -->
+     <!-- such machines. -->
+     <!-- Some machines require special handling for stack pointer saves and -->
+     <!-- restores.  On those machines, define the patterns corresponding to the -->
+     <!-- non-standard cases by using a @code{define_expand} (@pxref{Expander -->
+     <!-- Definitions}) that produces the required insns.  The three types of -->
+     <!-- saves and restores are: -->
+     <p><a name="index-g_t_0040code_007bsave_005fstack_005fblock_007d-instruction-pattern-3529"></a><a name="index-g_t_0040code_007bsave_005fstack_005ffunction_007d-instruction-pattern-3530"></a><a name="index-g_t_0040code_007bsave_005fstack_005fnonlocal_007d-instruction-pattern-3531"></a><a name="index-g_t_0040code_007brestore_005fstack_005fblock_007d-instruction-pattern-3532"></a><a name="index-g_t_0040code_007brestore_005fstack_005ffunction_007d-instruction-pattern-3533"></a><a name="index-g_t_0040code_007brestore_005fstack_005fnonlocal_007d-instruction-pattern-3534"></a><br><dt>&lsquo;<samp><span class="samp">save_stack_block</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">save_stack_function</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">save_stack_nonlocal</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_block</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_function</span></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">restore_stack_nonlocal</span></samp>&rsquo;<dd>大多数机器用来保存和恢复栈指针的方式，是通过将其复制到一个机器模式为<code>Pmode</code>的对象。不要在这样的机器上定义这些指令模式。
+
+     <p>一些机器要求对栈指针的保存和恢复，进行特殊的处理。在那些机器上，根据非标准的情况来定义指令模式，使用<code>define_expand</code> (参见<a href="Expander-Definitions.html#Expander-Definitions">Expander Definitions</a>)来产生要求的insn。三种保存和恢复类型：
+
+     <!-- @enumerate -->
+     <!-- @item -->
+     <!-- @samp{save_stack_block} saves the stack pointer at the start of a block -->
+     <!-- that allocates a variable-sized object, and @samp{restore_stack_block} -->
+     <!-- restores the stack pointer when the block is exited. -->
+     <!-- @item -->
+     <!-- @samp{save_stack_function} and @samp{restore_stack_function} do a -->
+     <!-- similar job for the outermost block of a function and are used when the -->
+     <!-- function allocates variable-sized objects or calls @code{alloca}.  Only -->
+     <!-- the epilogue uses the restored stack pointer, allowing a simpler save or -->
+     <!-- restore sequence on some machines. -->
+     <!-- @item -->
+     <!-- @samp{save_stack_nonlocal} is used in functions that contain labels -->
+     <!-- branched to by nested functions.  It saves the stack pointer in such a -->
+     <!-- way that the inner function can use @samp{restore_stack_nonlocal} to -->
+     <!-- restore the stack pointer.  The compiler generates code to restore the -->
+     <!-- frame and argument pointer registers, but some machines require saving -->
+     <!-- and restoring additional data such as register window information or -->
+     <!-- stack backchains.  Place insns in these patterns to save and restore any -->
+     <!-- such required data. -->
+     <!-- @end enumerate -->
+          <ol type=1 start=1>
+<li>&lsquo;<samp><span class="samp">save_stack_block</span></samp>&rsquo;将栈指针存放在用来分配可变大小的对象块的起始处，&lsquo;<samp><span class="samp">restore_stack_block</span></samp>&rsquo;当退出块的时候恢复栈指针。
+
+          <li>&lsquo;<samp><span class="samp">save_stack_function</span></samp>&rsquo; 和 &lsquo;<samp><span class="samp">restore_stack_function</span></samp>&rsquo;为函数最外层的快做类似的工作，并用于当函数分配可变大小的对象或者调用<code>alloca</code>的时候。只有尾声使用被恢复的栈指针，这使得在一些机器上，可以有更简单的保存或恢复序列。
+
+          <li>&lsquo;<samp><span class="samp">save_stack_nonlocal</span></samp>&rsquo;用在包含嵌套函数分支跳转标号的函数中。其保存栈指针的方式为，最内层函数可以使用&lsquo;<samp><span class="samp">restore_stack_nonlocal</span></samp>&rsquo;来恢复栈指针。编译器生成代码，用来恢复帧寄存器和参数指针寄存器，但是一些机器要求保存和恢复额外的数据，例如寄存器窗口信息或者栈后退链。在这些指令模式中放置保存和恢复这些要求的数据的insn。
+          </ol>
+
+     <!-- When saving the stack pointer, operand 0 is the save area and operand 1 -->
+     <!-- is the stack pointer.  The mode used to allocate the save area defaults -->
+     <!-- to @code{Pmode} but you can override that choice by defining the -->
+     <!-- @code{STACK_SAVEAREA_MODE} macro (@pxref{Storage Layout}).  You must -->
+     <!-- specify an integral mode, or @code{VOIDmode} if no save area is needed -->
+     <!-- for a particular type of save (either because no save is needed or -->
+     <!-- because a machine-specific save area can be used).  Operand 0 is the -->
+     <!-- stack pointer and operand 1 is the save area for restore operations.  If -->
+     <!-- @samp{save_stack_block} is defined, operand 0 must not be -->
+     <!-- @code{VOIDmode} since these saves can be arbitrarily nested. -->
+     <!-- A save area is a @code{mem} that is at a constant offset from -->
+     <!-- @code{virtual_stack_vars_rtx} when the stack pointer is saved for use by -->
+     <!-- nonlocal gotos and a @code{reg} in the other two cases. -->
+     <p>当保存栈指针时，操作数0是保存区域，操作数1是栈指针。用于分配保存区域的机器模式缺省为<code>Pmode</code>，不过你可以通过定义<code>STACK_SAVEAREA_MODE</code>宏(参见<a href="Storage-Layout.html#Storage-Layout">Storage Layout</a>)来覆盖该选择。你必须指定一个整数机器模式，或者<code>VOIDmode</code>，如果对于特定的类型不需要保存区域（或者因为没有需要保存的，或者因为可以使用机器特定的保存区域）。操作数0为栈指针，操作数1为用于恢复操作的保存区域。如果&lsquo;<samp><span class="samp">save_stack_block</span></samp>&rsquo;被定义，则操作数0一定不能为<code>VOIDmode</code>，因为这些保存操作数可以被任意的嵌套。
+
+     <p>当栈指针被保存，是用于非局部goto，则保存区域为一个<code>mem</code>，为一个相对于<code>virtual_stack_vars_rtx</code>的常量偏移，其它两种情况下，保存区域为一个<code>reg</code>。
+
+     <!-- @cindex @code{allocate_stack} instruction pattern -->
+     <!-- @item @samp{allocate_stack} -->
+     <!-- Subtract (or add if @code{STACK_GROWS_DOWNWARD} is undefined) operand 1 from -->
+     <!-- the stack pointer to create space for dynamically allocated data. -->
+     <!-- Store the resultant pointer to this space into operand 0.  If you -->
+     <!-- are allocating space from the main stack, do this by emitting a -->
+     <!-- move insn to copy @code{virtual_stack_dynamic_rtx} to operand 0. -->
+     <!-- If you are allocating the space elsewhere, generate code to copy the -->
+     <!-- location of the space to operand 0.  In the latter case, you must -->
+     <!-- ensure this space gets freed when the corresponding space on the main -->
+     <!-- stack is free. -->
+     <!-- Do not define this pattern if all that must be done is the subtraction. -->
+     <!-- Some machines require other operations such as stack probes or -->
+     <!-- maintaining the back chain.  Define this pattern to emit those -->
+     <!-- operations in addition to updating the stack pointer. -->
+     <!-- @cindex @code{check_stack} instruction pattern -->
+     <!-- @item @samp{check_stack} -->
+     <!-- If stack checking (@pxref{Stack Checking}) cannot be done on your system by -->
+     <!-- probing the stack, define this pattern to perform the needed check and signal -->
+     <!-- an error if the stack has overflowed.  The single operand is the address in -->
+     <!-- the stack farthest from the current stack pointer that you need to validate. -->
+     <!-- Normally, on platforms where this pattern is needed, you would obtain the -->
+     <!-- stack limit from a global or thread-specific variable or register. -->
+     <!-- @cindex @code{probe_stack} instruction pattern -->
+     <!-- @item @samp{probe_stack} -->
+     <!-- If stack checking (@pxref{Stack Checking}) can be done on your system by -->
+     <!-- probing the stack but doing it with a ``store zero'' instruction is not valid -->
+     <!-- or optimal, define this pattern to do the probing differently and signal an -->
+     <!-- error if the stack has overflowed.  The single operand is the memory reference -->
+     <!-- in the stack that needs to be probed. -->
+     <p><a name="index-g_t_0040code_007ballocate_005fstack_007d-instruction-pattern-3535"></a><br><dt>&lsquo;<samp><span class="samp">allocate_stack</span></samp>&rsquo;<dd>从栈指针中减去（或者增加，如果<code>STACK_GROWS_DOWNWARD</code>未定义）操作数1，来为动态分配的数据创建空间。将由此产生的指向该空间的指针存放在操作数0中。如果你是从主栈中分配空间，则可以通过生成一个insn，将<code>virtual_stack_dynamic_rtx</code>复制到操作数0中。如果你是从其它地方分配空间，则可以生成将该空间的位置复制到操作数0中的代码。对于后者情况，你必须确保该空间当主栈中对应的空间被释放的时候，其也被释放。
+
+     <p>如果所有需要做的事情只是减法操作，则不用定义该指令模式。一些机器还要求其它的操作，例如栈探测，或者维护后向链。定义该指令模式除了更新栈指针之外的，来生成那些操作。
+
+     <p><a name="index-g_t_0040code_007bcheck_005fstack_007d-instruction-pattern-3536"></a><br><dt>&lsquo;<samp><span class="samp">check_stack</span></samp>&rsquo;<dd>如果在你的系统上，不能通过使用加载或者存储指令(参见<a href="Stack-Checking.html#Stack-Checking">Stack Checking</a>)探测栈，从而进行栈检查，则定义该指令模式来执行所需要的检查，并且如果栈已经溢出则产生一个错误信号。有单个操作数，为栈中从当前栈指针开始，最远的栈位置。通常，在需要该指令模式的机器上，你将从一个全局的或者线程特定的变量或者寄存器中获得栈的限制。
+
+     <!-- @cindex @code{nonlocal_goto} instruction pattern -->
+     <!-- @item @samp{nonlocal_goto} -->
+     <!-- Emit code to generate a non-local goto, e.g., a jump from one function -->
+     <!-- to a label in an outer function.  This pattern has four arguments, -->
+     <!-- each representing a value to be used in the jump.  The first -->
+     <!-- argument is to be loaded into the frame pointer, the second is -->
+     <!-- the address to branch to (code to dispatch to the actual label), -->
+     <!-- the third is the address of a location where the stack is saved, -->
+     <!-- and the last is the address of the label, to be placed in the -->
+     <!-- location for the incoming static chain. -->
+     <!-- On most machines you need not define this pattern, since GCC will -->
+     <!-- already generate the correct code, which is to load the frame pointer -->
+     <!-- and static chain, restore the stack (using the -->
+     <!-- @samp{restore_stack_nonlocal} pattern, if defined), and jump indirectly -->
+     <!-- to the dispatcher.  You need only define this pattern if this code will -->
+     <!-- not work on your machine. -->
+     <!-- @cindex @code{nonlocal_goto_receiver} instruction pattern -->
+     <!-- @item @samp{nonlocal_goto_receiver} -->
+     <!-- This pattern, if defined, contains code needed at the target of a -->
+     <!-- nonlocal goto after the code already generated by GCC@.  You will not -->
+     <!-- normally need to define this pattern.  A typical reason why you might -->
+     <!-- need this pattern is if some value, such as a pointer to a global table, -->
+     <!-- must be restored when the frame pointer is restored.  Note that a nonlocal -->
+     <!-- goto only occurs within a unit-of-translation, so a global table pointer -->
+     <!-- that is shared by all functions of a given module need not be restored. -->
+     <!-- There are no arguments. -->
+     <p><a name="index-g_t_0040code_007bnonlocal_005fgoto_007d-instruction-pattern-3537"></a><br><dt>&lsquo;<samp><span class="samp">nonlocal_goto</span></samp>&rsquo;<dd>生成产生一个非局部goto的代码，例如，从一个函数跳转到一个外部函数的标号。该指令模式有四个参数，每个参数表示一个在跳转中用到的值。第一个参数被加载到帧指针中，第二个为分支跳转的地址，第三个为栈被保存的地址，最后一个为标号的地址，放在静态链中。
+
+     <p>在大多上机器上，你不需要定义该指令模式，因为GCC会产生正确的代码，用来加载帧指针和静态链，恢复栈（使用&lsquo;<samp><span class="samp">restore_stack_nonlocal</span></samp>&rsquo;指令模式，如果定义），并间接跳转。你只有当该代码在你的机器上不工作的情况下，才需定义该指令模式。
+
+     <p><a name="index-g_t_0040code_007bnonlocal_005fgoto_005freceiver_007d-instruction-pattern-3538"></a><br><dt>&lsquo;<samp><span class="samp">nonlocal_goto_receiver</span></samp>&rsquo;<dd>该指令模式，如果定义，包含了非局部goto的目标处所需要的代码。通常不需要定义该指令模式。通常需要该指令模式的原因是，如果一些值，例如全局表的指针，必须在帧指针被恢复的时候，其也被恢复。注意，非局部goto，只出现在一个转换单元中，所以被给定模块的所有函数共享的全局表指针，不需要被恢复。该指令模式没有参数。
+
+     <!-- @cindex @code{exception_receiver} instruction pattern -->
+     <!-- @item @samp{exception_receiver} -->
+     <!-- This pattern, if defined, contains code needed at the site of an -->
+     <!-- exception handler that isn't needed at the site of a nonlocal goto.  You -->
+     <!-- will not normally need to define this pattern.  A typical reason why you -->
+     <!-- might need this pattern is if some value, such as a pointer to a global -->
+     <!-- table, must be restored after control flow is branched to the handler of -->
+     <!-- an exception.  There are no arguments. -->
+     <p><a name="index-g_t_0040code_007bexception_005freceiver_007d-instruction-pattern-3539"></a><br><dt>&lsquo;<samp><span class="samp">exception_receiver</span></samp>&rsquo;<dd>该指令模式，如果被定义，包含了在一个异常处理的地方所需要的代码，其在非局部goto的地方不需要。通常你不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须在控制流分支跳转到异常处理之后，被恢复。该指令模式没有参数。
+
+     <!-- @cindex @code{builtin_setjmp_setup} instruction pattern -->
+     <!-- @item @samp{builtin_setjmp_setup} -->
+     <!-- This pattern, if defined, contains additional code needed to initialize -->
+     <!-- the @code{jmp_buf}.  You will not normally need to define this pattern. -->
+     <!-- A typical reason why you might need this pattern is if some value, such -->
+     <!-- as a pointer to a global table, must be restored.  Though it is -->
+     <!-- preferred that the pointer value be recalculated if possible (given the -->
+     <!-- address of a label for instance).  The single argument is a pointer to -->
+     <!-- the @code{jmp_buf}.  Note that the buffer is five words long and that -->
+     <!-- the first three are normally used by the generic mechanism. -->
+     <!-- @cindex @code{builtin_setjmp_receiver} instruction pattern -->
+     <!-- @item @samp{builtin_setjmp_receiver} -->
+     <!-- This pattern, if defined, contains code needed at the site of a -->
+     <!-- built-in setjmp that isn't needed at the site of a nonlocal goto.  You -->
+     <!-- will not normally need to define this pattern.  A typical reason why you -->
+     <!-- might need this pattern is if some value, such as a pointer to a global -->
+     <!-- table, must be restored.  It takes one argument, which is the label -->
+     <!-- to which builtin_longjmp transfered control; this pattern may be emitted -->
+     <!-- at a small offset from that label. -->
+     <!-- @cindex @code{builtin_longjmp} instruction pattern -->
+     <!-- @item @samp{builtin_longjmp} -->
+     <!-- This pattern, if defined, performs the entire action of the longjmp. -->
+     <!-- You will not normally need to define this pattern unless you also define -->
+     <!-- @code{builtin_setjmp_setup}.  The single argument is a pointer to the -->
+     <!-- @code{jmp_buf}. -->
+     <p><a name="index-g_t_0040code_007bbuiltin_005fsetjmp_005fsetup_007d-instruction-pattern-3540"></a><br><dt>&lsquo;<samp><span class="samp">builtin_setjmp_setup</span></samp>&rsquo;<dd>该指令模式，如果被定义，则包含了需要初始化<code>jmp_buf</code>的代码。你通常不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须被恢复。尽管如此，还是推荐指针值如果可能（例如，给定一个标号的地址），则应被重新计算。有一单个操作数，
+
+     <p><a name="index-g_t_0040code_007bbuiltin_005fsetjmp_005freceiver_007d-instruction-pattern-3541"></a><br><dt>&lsquo;<samp><span class="samp">builtin_setjmp_receiver</span></samp>&rsquo;<dd>该指令模式，如果被定义，包含了在内建setjmp的地方，并且在非局部goto的地方不需要的代码。你通常不需要定义该指令模式。一个典型的，你可以需要定义该指令模式的原因是，如果某个值，例如指向全局表的指针，必须被恢复。其接受一个参数，为builtin_longjmp将控制转出的标号；该指令模式可以被生成为对于标号的一个小的偏移。
+
+     <p><a name="index-g_t_0040code_007bbuiltin_005flongjmp_007d-instruction-pattern-3542"></a><br><dt>&lsquo;<samp><span class="samp">builtin_longjmp</span></samp>&rsquo;<dd>该指令模式，如果被定义，则执行整个longjmp动作。你通常不需要定义该指令模式，除非你还定义了<code>builtin_setjmp_setup</code>。单个操作数为指向<code>jmp_buf</code>的指针。
+
+     <!-- @cindex @code{eh_return} instruction pattern -->
+     <!-- @item @samp{eh_return} -->
+     <!-- This pattern, if defined, affects the way @code{__builtin_eh_return}, -->
+     <!-- and thence the call frame exception handling library routines, are -->
+     <!-- built.  It is intended to handle non-trivial actions needed along -->
+     <!-- the abnormal return path. -->
+     <!-- The address of the exception handler to which the function should return -->
+     <!-- is passed as operand to this pattern.  It will normally need to copied by -->
+     <!-- the pattern to some special register or memory location. -->
+     <!-- If the pattern needs to determine the location of the target call -->
+     <!-- frame in order to do so, it may use @code{EH_RETURN_STACKADJ_RTX}, -->
+     <!-- if defined; it will have already been assigned. -->
+     <!-- If this pattern is not defined, the default action will be to simply -->
+     <!-- copy the return address to @code{EH_RETURN_HANDLER_RTX}.  Either -->
+     <!-- that macro or this pattern needs to be defined if call frame exception -->
+     <!-- handling is to be used. -->
+     <p><a name="index-g_t_0040code_007beh_005freturn_007d-instruction-pattern-3543"></a><br><dt>&lsquo;<samp><span class="samp">eh_return</span></samp>&rsquo;<dd>该指令模式，如果被定义，则影响<code>__builtin_eh_return</code>的方式，并且调用帧异常处理库函数会被建立。其用于处理异常返回路径所需要的非平凡的动作。
+
+     <p>函数应该返回的异常处理的地址，被作为操作数传给该指令模式。其通常需要被指令模式复制到某个特定的寄存器或者内存位置。如果该指令模式需要确定目标调用帧的位置，则可以使用<code>EH_RETURN_STACKADJ_RTX</code>。
+
+     <p>如果该指令模式没有被定义，缺省的动作为简单的将返回地址复制给<code>EH_RETURN_HANDLER_RTX</code>。或者宏，或者该指令模式，应该被定义，如果使用了调用帧异常处理。
+
+     <!-- @cindex @code{prologue} instruction pattern -->
+     <!-- @anchor{prologue instruction pattern} -->
+     <!-- @item @samp{prologue} -->
+     <!-- This pattern, if defined, emits RTL for entry to a function.  The function -->
+     <!-- entry is responsible for setting up the stack frame, initializing the frame -->
+     <!-- pointer register, saving callee saved registers, etc. -->
+     <!-- Using a prologue pattern is generally preferred over defining -->
+     <!-- @code{TARGET_ASM_FUNCTION_PROLOGUE} to emit assembly code for the prologue. -->
+     <!-- The @code{prologue} pattern is particularly useful for targets which perform -->
+     <!-- instruction scheduling. -->
+     <!-- @cindex @code{epilogue} instruction pattern -->
+     <!-- @anchor{epilogue instruction pattern} -->
+     <!-- @item @samp{epilogue} -->
+     <!-- This pattern emits RTL for exit from a function.  The function -->
+     <!-- exit is responsible for deallocating the stack frame, restoring callee saved -->
+     <!-- registers and emitting the return instruction. -->
+     <!-- Using an epilogue pattern is generally preferred over defining -->
+     <!-- @code{TARGET_ASM_FUNCTION_EPILOGUE} to emit assembly code for the epilogue. -->
+     <!-- The @code{epilogue} pattern is particularly useful for targets which perform -->
+     <!-- instruction scheduling or which have delay slots for their return instruction. -->
+     <p><a name="index-g_t_0040code_007bprologue_007d-instruction-pattern-3544"></a><a name="prologue-instruction-pattern"></a><br><dt>&lsquo;<samp><span class="samp">prologue</span></samp>&rsquo;<dd>该指令模式，如果被定义，用来产生函数的入口RTL。函数入口负责设置栈帧，初始化帧指针寄存器，保存被调用者需要保存的寄存器，等等。
+
+     <p>使用一个序言指令模式，通常的方式为定义<code>TARGET_ASM_FUNCTION_PROLOGUE</code>来产生序言的汇编代码。
+
+     <p><code>prologue</code>指令模式对于执行指令调度的目标机尤其有用。
+
+     <!-- @cindex @code{window_save} instruction pattern -->
+     <!-- @anchor{window_save instruction pattern} -->
+     <br><dt>&lsquo;<samp><span class="samp">window_save</span></samp>&rsquo;<dd>This pattern, if defined, emits RTL for a register window save.  It should
+be defined if the target machine has register windows but the window events
+are decoupled from calls to subroutines.  The canonical example is the SPARC
+architecture.
+
+     <p><a name="index-g_t_0040code_007bepilogue_007d-instruction-pattern-3545"></a><a name="epilogue-instruction-pattern"></a><br><dt>&lsquo;<samp><span class="samp">epilogue</span></samp>&rsquo;<dd>该指令模式为函数的出口生成RTL。函数出口负责撤销栈帧的分配，恢复被调用者所保存的寄存器，并产生返回指令。
+
+     <p>使用尾声指令模式，通常的方式为定义<code>TARGET_ASM_FUNCTION_EPILOGUE</code>，来产生尾声的汇编代码。
+
+     <p><code>prologue</code>指令模式对于执行指令调度的，或者它们的返回指令具有延迟槽的目标机，尤其有用。
+
+     <!-- @cindex @code{sibcall_epilogue} instruction pattern -->
+     <!-- @item @samp{sibcall_epilogue} -->
+     <!-- This pattern, if defined, emits RTL for exit from a function without the final -->
+     <!-- branch back to the calling function.  This pattern will be emitted before any -->
+     <!-- sibling call (aka tail call) sites. -->
+     <!-- The @code{sibcall_epilogue} pattern must not clobber any arguments used for -->
+     <!-- parameter passing or any stack slots for arguments passed to the current -->
+     <!-- function. -->
+     <p><a name="index-g_t_0040code_007bsibcall_005fepilogue_007d-instruction-pattern-3546"></a><br><dt>&lsquo;<samp><span class="samp">sibcall_epilogue</span></samp>&rsquo;<dd>该指令模式，如果被定义，产生一个函数的出口RTL，并且最终不分支跳转会到调用函数。该指令模式将在任何兄弟调用（即尾调用）地点之前被产生。
+
+     <p><code>sibcall_epilogue</code>指令模式一定不能破坏任何用于传递的参数，或者用于传给当前函数的参数的栈槽。
+
+     <!-- @cindex @code{trap} instruction pattern -->
+     <!-- @item @samp{trap} -->
+     <!-- This pattern, if defined, signals an error, typically by causing some -->
+     <!-- kind of signal to be raised.  Among other places, it is used by the Java -->
+     <!-- front end to signal `invalid array index' exceptions. -->
+     <!-- @cindex @code{ctrap@var{MM}4} instruction pattern -->
+     <!-- @item @samp{ctrap@var{MM}4} -->
+     <!-- Conditional trap instruction.  Operand 0 is a piece of RTL which -->
+     <!-- performs a comparison, and operands 1 and 2 are the arms of the -->
+     <!-- comparison.  Operand 3 is the trap code, an integer. -->
+     <!-- A typical @code{ctrap} pattern looks like -->
+     <!-- @smallexample -->
+     <!-- (define_insn "ctrapsi4" -->
+     <!-- [(trap_if (match_operator 0 "trap_operator" -->
+     <!-- [(match_operand 1 "register_operand") -->
+     <!-- (match_operand 2 "immediate_operand")]) -->
+     <!-- (match_operand 3 "const_int_operand" "i"))] -->
+     <!-- "" -->
+     <!-- "@dots{}") -->
+     <!-- @end smallexample -->
+     <p><a name="index-g_t_0040code_007btrap_007d-instruction-pattern-3547"></a><br><dt>&lsquo;<samp><span class="samp">trap</span></samp>&rsquo;<dd>该指令模式，如果被定义，则会发射一个错误信号。在其它地方，其被Java前端使用，来发射“无效的数组索引”异常信号。
+
+     <p><a name="index-g_t_0040code_007bconditional_005ftrap_007d-instruction-pattern-3548"></a><br><dt>&lsquo;<samp><span class="samp">conditional_trap</span></samp>&rsquo;<dd>条件陷阱指令。操作数0为执行比较的RTL。操作数1为陷阱代码，为一个整数。
+
+     <p>典型的<code>conditional_trap</code>指令模式型如：
+
+     <pre class="smallexample">          (define_insn "conditional_trap"
+            [(trap_if (match_operator 0 "trap_operator"
+                       [(cc0) (const_int 0)])
+                      (match_operand 1 "const_int_operand" "i"))]
+            ""
+            "...")
+</pre>
+     <!-- @cindex @code{prefetch} instruction pattern -->
+     <!-- @item @samp{prefetch} -->
+     <!-- This pattern, if defined, emits code for a non-faulting data prefetch -->
+     <!-- instruction.  Operand 0 is the address of the memory to prefetch.  Operand 1 -->
+     <!-- is a constant 1 if the prefetch is preparing for a write to the memory -->
+     <!-- address, or a constant 0 otherwise.  Operand 2 is the expected degree of -->
+     <!-- temporal locality of the data and is a value between 0 and 3, inclusive; 0 -->
+     <!-- means that the data has no temporal locality, so it need not be left in the -->
+     <!-- cache after the access; 3 means that the data has a high degree of temporal -->
+     <!-- locality and should be left in all levels of cache possible;  1 and 2 mean, -->
+     <!-- respectively, a low or moderate degree of temporal locality. -->
+     <!-- Targets that do not support write prefetches or locality hints can ignore -->
+     <!-- the values of operands 1 and 2. -->
+     <p><a name="index-g_t_0040code_007bprefetch_007d-instruction-pattern-3549"></a><br><dt>&lsquo;<samp><span class="samp">prefetch</span></samp>&rsquo;<dd>
+该指令模式，如果被定义，则产生无故障的数据预取指令代码。操作数0为预取的内存地址。操作数1为常量1，如果预取打算去写一个内存地址，否则为常量0。操作数2为数据的时间局部性的等级，值在0和3之间。0意味着数据没有时间局部性，所以在访问之后不需要留在缓存中；3意味着数据具有高等级的时间局部性，应该尽可能的留在所有级别的缓存中；1和2分别意味着，低等级和中等级的时间局部性。
+
+     <p>不支持写预取或者局部性暗示的目标机，可以忽略操作数1和2的值。
+
+     <!-- @cindex @code{blockage} instruction pattern -->
+     <!-- @item @samp{blockage} -->
+     <!-- This pattern defines a pseudo insn that prevents the instruction -->
+     <!-- scheduler from moving instructions across the boundary defined by the -->
+     <!-- blockage insn.  Normally an UNSPEC_VOLATILE pattern. -->
+     <!-- @cindex @code{memory_barrier} instruction pattern -->
+     <!-- @item @samp{memory_barrier} -->
+     <!-- If the target memory model is not fully synchronous, then this pattern -->
+     <!-- should be defined to an instruction that orders both loads and stores -->
+     <!-- before the instruction with respect to loads and stores after the instruction. -->
+     <!-- This pattern has no operands. -->
+     <p><a name="index-g_t_0040code_007bblockage_007d-instruction-pattern-3550"></a><br><dt>&lsquo;<samp><span class="samp">blockage</span></samp>&rsquo;<dd>
+该指令模式定义了一个伪insn，用来阻止指令调度器将指令跨越所定义的insn块边界进行移动。通常为一个UNSPEC_VOLATILE指令模式。
+
+     <p><a name="index-g_t_0040code_007bmemory_005fbarrier_007d-instruction-pattern-3551"></a><br><dt>&lsquo;<samp><span class="samp">memory_barrier</span></samp>&rsquo;<dd>
+如果目标机内存模型不完全同步，则该指令模式应该被定义为一条指令，在期望进行加载和存储的指令之前。该指令模式没有操作数。
+
+     <!-- @cindex @code{sync_compare_and_swap@var{mode}} instruction pattern -->
+     <!-- @item @samp{sync_compare_and_swap@var{mode}} -->
+     <!-- This pattern, if defined, emits code for an atomic compare-and-swap -->
+     <!-- operation.  Operand 1 is the memory on which the atomic operation is -->
+     <!-- performed.  Operand 2 is the ``old'' value to be compared against the -->
+     <!-- current contents of the memory location.  Operand 3 is the ``new'' value -->
+     <!-- to store in the memory if the compare succeeds.  Operand 0 is the result -->
+     <!-- of the operation; it should contain the contents of the memory -->
+     <!-- before the operation.  If the compare succeeds, this should obviously be -->
+     <!-- a copy of operand 2. -->
+     <!-- This pattern must show that both operand 0 and operand 1 are modified. -->
+     <!-- This pattern must issue any memory barrier instructions such that all -->
+     <!-- memory operations before the atomic operation occur before the atomic -->
+     <!-- operation and all memory operations after the atomic operation occur -->
+     <!-- after the atomic operation. -->
+     <!-- For targets where the success or failure of the compare-and-swap -->
+     <!-- operation is available via the status flags, it is possible to -->
+     <!-- avoid a separate compare operation and issue the subsequent -->
+     <!-- branch or store-flag operation immediately after the compare-and-swap. -->
+     <!-- To this end, GCC will look for a @code{MODE_CC} set in the -->
+     <!-- output of @code{sync_compare_and_swap@var{mode}}; if the machine -->
+     <!-- description includes such a set, the target should also define special -->
+     <!-- @code{cbranchcc4} and/or @code{cstorecc4} instructions.  GCC will then -->
+     <!-- be able to take the destination of the @code{MODE_CC} set and pass it -->
+     <!-- to the @code{cbranchcc4} or @code{cstorecc4} pattern as the first -->
+     <!-- operand of the comparison (the second will be @code{(const_int 0)}). -->
+     <p><a name="index-g_t_0040code_007bsync_005fcompare_005fand_005fswap_0040var_007bmode_007d_007d-instruction-pattern-3552"></a><br><dt>&lsquo;<samp><span class="samp">sync_compare_and_swap</span><var>mode</var></samp>&rsquo;<dd>
+该指令模式，如果被定义，产生一个比较并交换的原子操作代码。操作数1为执行原子操作的内存。操作数2为，与当前内存位置的内容进行比较的“旧”值。操作数3为，如果比较成功存放在内存中的“新”值。如果比较成功，其当然为对操作数2的一个复制。
+
+     <p>该指令模式必须同时显示出操作数0和1被修改。
+
+     <p>该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
+
+     <p><a name="index-g_t_0040code_007bsync_005fcompare_005fand_005fswap_005fcc_0040var_007bmode_007d_007d-instruction-pattern-3553"></a><br><dt>&lsquo;<samp><span class="samp">sync_compare_and_swap_cc</span><var>mode</var></samp>&rsquo;<dd>该指令模式与<code>sync_compare_and_swap</code><var>mode</var>类似，除了其比较和交换的比较部分就好像是通过<code>cmp</code><var>m</var>来发出的。该比较只与<code>EQ</code>和<code>NE</code>分支跳转，以及<code>setcc</code>操作一起使用。
+
+     <p>一些目标机确实是通过状态标记来暴露比较并交换操作的成功或失败。理想的，我们不需要一个单独的命名指令模式来利用该特性，但是合并过程无法处理具有多个set的指令模式，而这正是定义<code>sync_compare_and_swap</code><var>mode</var>所需要的。
+
+     <!-- @cindex @code{sync_add@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_sub@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_ior@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_and@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_xor@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_nand@var{mode}} instruction pattern -->
+     <!-- @item @samp{sync_add@var{mode}}, @samp{sync_sub@var{mode}} -->
+     <!-- @itemx @samp{sync_ior@var{mode}}, @samp{sync_and@var{mode}} -->
+     <!-- @itemx @samp{sync_xor@var{mode}}, @samp{sync_nand@var{mode}} -->
+     <!-- These patterns emit code for an atomic operation on memory. -->
+     <!-- Operand 0 is the memory on which the atomic operation is performed. -->
+     <!-- Operand 1 is the second operand to the binary operator. -->
+     <!-- This pattern must issue any memory barrier instructions such that all -->
+     <!-- memory operations before the atomic operation occur before the atomic -->
+     <!-- operation and all memory operations after the atomic operation occur -->
+     <!-- after the atomic operation. -->
+     <!-- If these patterns are not defined, the operation will be constructed -->
+     <!-- from a compare-and-swap operation, if defined. -->
+     <p><a name="index-g_t_0040code_007bsync_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3554"></a><a name="index-g_t_0040code_007bsync_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3555"></a><a name="index-g_t_0040code_007bsync_005fior_0040var_007bmode_007d_007d-instruction-pattern-3556"></a><a name="index-g_t_0040code_007bsync_005fand_0040var_007bmode_007d_007d-instruction-pattern-3557"></a><a name="index-g_t_0040code_007bsync_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3558"></a><a name="index-g_t_0040code_007bsync_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3559"></a><br><dt>&lsquo;<samp><span class="samp">sync_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_nand</span><var>mode</var></samp>&rsquo;<dd>该指令模式产生一个在内存上进行原子操作的代码。操作数0为进行原子操作的内存。操作数1为二元操作符的第二个操作数。
+
+     <p>&ldquo;nand&rdquo;运算为<code>~op0 &amp; op1</code>。
+
+     <p>该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
+
+     <p>如果这些指令模式没有被定义，则操作将通过一个比较并交换操作，如果定义，来构建。
+
+     <!-- @cindex @code{sync_old_add@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_old_sub@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_old_ior@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_old_and@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_old_xor@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_old_nand@var{mode}} instruction pattern -->
+     <!-- @item @samp{sync_old_add@var{mode}}, @samp{sync_old_sub@var{mode}} -->
+     <!-- @itemx @samp{sync_old_ior@var{mode}}, @samp{sync_old_and@var{mode}} -->
+     <!-- @itemx @samp{sync_old_xor@var{mode}}, @samp{sync_old_nand@var{mode}} -->
+     <!-- These patterns are emit code for an atomic operation on memory, -->
+     <!-- and return the value that the memory contained before the operation. -->
+     <!-- Operand 0 is the result value, operand 1 is the memory on which the -->
+     <!-- atomic operation is performed, and operand 2 is the second operand -->
+     <!-- to the binary operator. -->
+     <!-- This pattern must issue any memory barrier instructions such that all -->
+     <!-- memory operations before the atomic operation occur before the atomic -->
+     <!-- operation and all memory operations after the atomic operation occur -->
+     <!-- after the atomic operation. -->
+     <!-- If these patterns are not defined, the operation will be constructed -->
+     <!-- from a compare-and-swap operation, if defined. -->
+     <p><a name="index-g_t_0040code_007bsync_005fold_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3560"></a><a name="index-g_t_0040code_007bsync_005fold_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3561"></a><a name="index-g_t_0040code_007bsync_005fold_005fior_0040var_007bmode_007d_007d-instruction-pattern-3562"></a><a name="index-g_t_0040code_007bsync_005fold_005fand_0040var_007bmode_007d_007d-instruction-pattern-3563"></a><a name="index-g_t_0040code_007bsync_005fold_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3564"></a><a name="index-g_t_0040code_007bsync_005fold_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3565"></a><br><dt>&lsquo;<samp><span class="samp">sync_old_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_old_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_old_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_old_nand</span><var>mode</var></samp>&rsquo;<dd>这些指令模式产生在内存上的原子操作代码，并且返回操作之前内存中的值。操作数0为结果值，操作数1为执行原子操作的内存，操作数2为二元操作的第二个操作数。
+
+     <p>该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
+
+     <p>如果这些指令模式没有被定义，则操作将通过一个比较并交换操作，如果定义，来构建。
+
+     <!-- @cindex @code{sync_new_add@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_new_sub@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_new_ior@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_new_and@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_new_xor@var{mode}} instruction pattern -->
+     <!-- @cindex @code{sync_new_nand@var{mode}} instruction pattern -->
+     <!-- @item @samp{sync_new_add@var{mode}}, @samp{sync_new_sub@var{mode}} -->
+     <!-- @itemx @samp{sync_new_ior@var{mode}}, @samp{sync_new_and@var{mode}} -->
+     <!-- @itemx @samp{sync_new_xor@var{mode}}, @samp{sync_new_nand@var{mode}} -->
+     <!-- These patterns are like their @code{sync_old_@var{op}} counterparts, -->
+     <!-- except that they return the value that exists in the memory location -->
+     <!-- after the operation, rather than before the operation. -->
+     <!-- @cindex @code{sync_lock_test_and_set@var{mode}} instruction pattern -->
+     <!-- @item @samp{sync_lock_test_and_set@var{mode}} -->
+     <!-- This pattern takes two forms, based on the capabilities of the target. -->
+     <!-- In either case, operand 0 is the result of the operand, operand 1 is -->
+     <!-- the memory on which the atomic operation is performed, and operand 2 -->
+     <!-- is the value to set in the lock. -->
+     <!-- In the ideal case, this operation is an atomic exchange operation, in -->
+     <!-- which the previous value in memory operand is copied into the result -->
+     <!-- operand, and the value operand is stored in the memory operand. -->
+     <!-- For less capable targets, any value operand that is not the constant 1 -->
+     <!-- should be rejected with @code{FAIL}.  In this case the target may use -->
+     <!-- an atomic test-and-set bit operation.  The result operand should contain -->
+     <!-- 1 if the bit was previously set and 0 if the bit was previously clear. -->
+     <!-- The true contents of the memory operand are implementation defined. -->
+     <!-- This pattern must issue any memory barrier instructions such that the -->
+     <!-- pattern as a whole acts as an acquire barrier, that is all memory -->
+     <!-- operations after the pattern do not occur until the lock is acquired. -->
+     <!-- If this pattern is not defined, the operation will be constructed from -->
+     <!-- a compare-and-swap operation, if defined. -->
+     <p><a name="index-g_t_0040code_007bsync_005fnew_005fadd_0040var_007bmode_007d_007d-instruction-pattern-3566"></a><a name="index-g_t_0040code_007bsync_005fnew_005fsub_0040var_007bmode_007d_007d-instruction-pattern-3567"></a><a name="index-g_t_0040code_007bsync_005fnew_005fior_0040var_007bmode_007d_007d-instruction-pattern-3568"></a><a name="index-g_t_0040code_007bsync_005fnew_005fand_0040var_007bmode_007d_007d-instruction-pattern-3569"></a><a name="index-g_t_0040code_007bsync_005fnew_005fxor_0040var_007bmode_007d_007d-instruction-pattern-3570"></a><a name="index-g_t_0040code_007bsync_005fnew_005fnand_0040var_007bmode_007d_007d-instruction-pattern-3571"></a><br><dt>&lsquo;<samp><span class="samp">sync_new_add</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_sub</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_new_ior</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_and</span><var>mode</var></samp>&rsquo;<dt>&lsquo;<samp><span class="samp">sync_new_xor</span><var>mode</var></samp>&rsquo;, &lsquo;<samp><span class="samp">sync_new_nand</span><var>mode</var></samp>&rsquo;<dd>这些指令模式类似于<code>sync_old_</code><var>op</var>所对应的指令模式，除了它们返回操作之后内存位置中存在的值，而不是操作之前。
+
+     <p><a name="index-g_t_0040code_007bsync_005flock_005ftest_005fand_005fset_0040var_007bmode_007d_007d-instruction-pattern-3572"></a><br><dt>&lsquo;<samp><span class="samp">sync_lock_test_and_set</span><var>mode</var></samp>&rsquo;<dd>该指令模式根据目标机的能力，可以接受两种形式。两种情况下，操作数0为结果操作数，操作数1为执行原子操作的内存，操作数2为在锁中设置的值。
+
+     <p>理想的情况下，该操作为一个原子交换操作，内存操作数中之前的值被复制到结果操作数中，值操作数被保存在内存操作数中。
+
+     <p>对于能力差些的目标机，任何不为常量1的值操作数，将使用<code>FAIL</code>进行拒绝。这种情况下，目标机可以使用一个原子的测试并置位操作。结果操作数应该包含1，如果该位在之前被设置，或者为0，如果该位在之前被清空。内存操作数的真实内容由实现来定义。
+
+     <p>该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
+
+     <p>如果这些指令模式没有被定义，则操作将通过一个比较并交换操作，如果定义，来构建。
+
+     <!-- @cindex @code{sync_lock_release@var{mode}} instruction pattern -->
+     <!-- @item @samp{sync_lock_release@var{mode}} -->
+     <!-- This pattern, if defined, releases a lock set by -->
+     <!-- @code{sync_lock_test_and_set@var{mode}}.  Operand 0 is the memory -->
+     <!-- that contains the lock; operand 1 is the value to store in the lock. -->
+     <!-- If the target doesn't implement full semantics for -->
+     <!-- @code{sync_lock_test_and_set@var{mode}}, any value operand which is not -->
+     <!-- the constant 0 should be rejected with @code{FAIL}, and the true contents -->
+     <!-- of the memory operand are implementation defined. -->
+     <!-- This pattern must issue any memory barrier instructions such that the -->
+     <!-- pattern as a whole acts as a release barrier, that is the lock is -->
+     <!-- released only after all previous memory operations have completed. -->
+     <!-- If this pattern is not defined, then a @code{memory_barrier} pattern -->
+     <!-- will be emitted, followed by a store of the value to the memory operand. -->
+     <!-- @cindex @code{stack_protect_set} instruction pattern -->
+     <!-- @item @samp{stack_protect_set} -->
+     <!-- This pattern, if defined, moves a @code{ptr_mode} value from the memory -->
+     <!-- in operand 1 to the memory in operand 0 without leaving the value in -->
+     <!-- a register afterward.  This is to avoid leaking the value some place -->
+     <!-- that an attacker might use to rewrite the stack guard slot after -->
+     <!-- having clobbered it. -->
+     <!-- If this pattern is not defined, then a plain move pattern is generated. -->
+     <p><a name="index-g_t_0040code_007bsync_005flock_005frelease_0040var_007bmode_007d_007d-instruction-pattern-3573"></a><br><dt>&lsquo;<samp><span class="samp">sync_lock_release</span><var>mode</var></samp>&rsquo;<dd>该指令模式，如果被定义，释放由<code>sync_lock_test_and_set</code><var>mode</var>设置的锁。操作数0为包含锁的内存；操作数1为存放在锁中的值。
+
+     <p>如果目标机没有实现<code>sync_lock_test_and_set</code><var>mode</var>的完整语义，则任何不是常量0的值操作数将使用<code>FAIL</code>来拒绝，内存操作数的真实内容由实现来定义。
+
+     <p>该指令模式必须产生内存栅栏指令，使得在原子操作之前的所有内存操作，都在原子操作之前发生，所有在原子操作之后的内存操作，都在原子操作之后发生。
+
+     <p>如果这些指令模式没有被定义，则会产生一个<code>memory_barrier</code>指令模式，紧跟一个将值存储到内存操作数的操作。
+
+     <!-- @cindex @code{stack_protect_test} instruction pattern -->
+     <!-- @item @samp{stack_protect_test} -->
+     <!-- This pattern, if defined, compares a @code{Pmode} value from the -->
+     <!-- memory in operand 1 with the memory in operand 0 without leaving the -->
+     <!-- value in a register afterward and branches to operand 2 if the values -->
+     <!-- weren't equal. -->
+     <!-- If this pattern is not defined, then a plain compare pattern and -->
+     <!-- conditional branch pattern is used. -->
+     <p><a name="index-g_t_0040code_007bstack_005fprotect_005fset_007d-instruction-pattern-3574"></a><br><dt>&lsquo;<samp><span class="samp">stack_protect_set</span></samp>&rsquo;<dd>该指令模式，如果被定义，将内存操作数1中的<code>Pmode</code>值移送到内存操作数0中，并在之后不将该值留在寄存器中。这避免在某处泄露该值，从而使得攻击者用来重写栈保护槽。
+
+     <p>如果该指令模式没有被定义，则生成一个普通的move指令模式。
+
+     <p><a name="index-g_t_0040code_007bstack_005fprotect_005ftest_007d-instruction-pattern-3575"></a><br><dt>&lsquo;<samp><span class="samp">stack_protect_test</span></samp>&rsquo;<dd>该指令模式，如果被定义，比较内存操作数1和内存操作数0中的<code>Pmode</code>值，在之后不将该值留在寄存器中，并且如果值不等，则分支跳转到操作数2。
+
+     <p>如果该指令模式没有被定义，则使用一个普通的比较和条件分支指令模式。
+
+     <!-- @cindex @code{clear_cache} instruction pattern -->
+     <!-- @item @samp{clear_cache} -->
+     <!-- This pattern, if defined, flushes the instruction cache for a region of -->
+     <!-- memory.  The region is bounded to by the Pmode pointers in operand 0 -->
+     <!-- inclusive and operand 1 exclusive. -->
+     <!-- If this pattern is not defined, a call to the library function -->
+     <!-- @code{__clear_cache} is used. -->
+     <!-- @end table -->
+     <!-- @end ifset -->
+     <p><a name="index-g_t_0040code_007bclear_005fcache_007d-instruction-pattern-3576"></a><br><dt>&lsquo;<samp><span class="samp">clear_cache</span></samp>&rsquo;<dd>该指令模式，如果被定义，刷新一个内存区域的缓存。该区域的界限由操作数0（包含）和操作数1（不包含）中的Pmode指针界定。
+
+     <p>如果该指令模式没有被定义，则使用对库函数<code>__clear_cache</code>的一个调用。
+
+ </dl>
+
+<!-- Each of the following nodes are wrapped in separate -->
+<!-- "@ifset INTERNALS" to work around memory limits for the default -->
+<!-- configuration in older tetex distributions.  Known to not work: -->
+<!-- tetex-1.0.7, known to work: tetex-2.0.2. -->
+<!-- @node Pattern Ordering -->
+<!-- @section When the Order of Patterns Matters -->
+ </body></html>
+

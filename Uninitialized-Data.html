@@ -1,0 +1,198 @@
+<html lang="zh">
+<head>
+<title>Uninitialized Data - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Assembler-Format.html#Assembler-Format" title="Assembler Format">
+<link rel="prev" href="Data-Output.html#Data-Output" title="Data Output">
+<link rel="next" href="Label-Output.html#Label-Output" title="Label Output">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Uninitialized-Data"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Label-Output.html#Label-Output">Label Output</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Data-Output.html#Data-Output">Data Output</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Assembler-Format.html#Assembler-Format">Assembler Format</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.21.3 未初始化变量的输出</h4>
+
+<!-- Each of the macros in this section is used to do the whole job of -->
+<!-- outputting a single uninitialized variable. -->
+<p>这一节的每个宏都是用于输出单个未初始化变量的整个工作中。
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_COMMON</b> (<var>stream, name, size, rounded</var>)<var><a name="index-ASM_005fOUTPUT_005fCOMMON-4501"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} the assembler definition of a common-label named -->
+     <!-- @var{name} whose size is @var{size} bytes.  The variable @var{rounded} -->
+     <!-- is the size rounded up to whatever alignment the caller wants.  It is -->
+     <!-- possible that @var{size} may be zero, for instance if a struct with no -->
+     <!-- other member than a zero-length array is defined.  In this case, the -->
+     <!-- backend must output a symbol definition that allocates at least one -->
+     <!-- byte, both so that the address of the resulting object does not compare -->
+     <!-- equal to any other, and because some object formats cannot even express -->
+     <!-- the concept of a zero-sized common symbol, as that is how they represent -->
+     <!-- an ordinary undefined external. -->
+      <p>一条C语句（没有分号），用来将大小为<var>size</var>，
+名字为<var>name</var>的通用标号的汇编定义，输出到stdio流<var>stream</var>中。
+变量<var>rounded</var>为调用者想要对齐而舍入的大小。
+
+     <!-- Use the expression @code{assemble_name (@var{stream}, @var{name})} to -->
+     <!-- output the name itself; before and after that, output the additional -->
+     <!-- assembler syntax for defining the name, and a newline. -->
+      <p>使用表达式<code>assemble_name (</code><var>stream</var><code>, </code><var>name</var><code>)</code>来输出name本身；
+在这之前和之后，输出额外的定义name的汇编语法，以及换行。
+
+     <!-- This macro controls how the assembler definitions of uninitialized -->
+     <!-- common global variables are output. -->
+      <p>该宏控制如何输出未初始化的通用全局变量的汇编定义。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_ALIGNED_COMMON</b> (<var>stream, name, size, alignment</var>)<var><a name="index-ASM_005fOUTPUT_005fALIGNED_005fCOMMON-4502"></a></var><br>
+<blockquote><!-- Like @code{ASM_OUTPUT_COMMON} except takes the required alignment as a -->
+     <!-- separate, explicit argument.  If you define this macro, it is used in -->
+     <!-- place of @code{ASM_OUTPUT_COMMON}, and gives you more flexibility in -->
+     <!-- handling the required alignment of the variable.  The alignment is specified -->
+     <!-- as the number of bits. -->
+      <p>类似<code>ASM_OUTPUT_COMMON</code>，除了其接受一个alignment，作为独立，显式的参数。
+如果你定义了该宏，其被用于替换<code>ASM_OUTPUT_COMMON</code>，
+使得你在处理变量对齐方面变得更加灵活。aligment被指定为位的数目。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_ALIGNED_DECL_COMMON</b> (<var>stream, decl, name, size, alignment</var>)<var><a name="index-ASM_005fOUTPUT_005fALIGNED_005fDECL_005fCOMMON-4503"></a></var><br>
+<blockquote><!-- Like @code{ASM_OUTPUT_ALIGNED_COMMON} except that @var{decl} of the -->
+     <!-- variable to be output, if there is one, or @code{NULL_TREE} if there -->
+     <!-- is no corresponding variable.  If you define this macro, GCC will use it -->
+     <!-- in place of both @code{ASM_OUTPUT_COMMON} and -->
+     <!-- @code{ASM_OUTPUT_ALIGNED_COMMON}.  Define this macro when you need to see -->
+     <!-- the variable's decl in order to chose what to output. -->
+      <p>类似<code>ASM_OUTPUT_ALIGNED_COMMON</code>，除了要被输出的变量的<var>decl</var>，
+如果存在的话，或者为<code>NULL_TREE</code>如果没有相应的变量。如果你定义了该宏，
+GCC将替换<code>ASM_OUTPUT_COMMON</code>和<code>ASM_OUTPUT_ALIGNED_COMMON</code>。
+当你需要看到变量的decl，以便选择如何输出时，可以定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_ALIGNED_BSS</b> (<var>stream, decl, name, size, alignment</var>)<var><a name="index-ASM_005fOUTPUT_005fALIGNED_005fBSS-4504"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} the assembler definition of uninitialized global @var{decl} named -->
+     <!-- @var{name} whose size is @var{size} bytes.  The variable @var{alignment} -->
+     <!-- is the alignment specified as the number of bits. -->
+      <p>一条C语句（没有分号），用来将名字为<var>name</var>，
+大小为<var>size</var>个字节的未初始化的全局<var>decl</var>的汇编定义输出到stdio流
+<var>stream</var>中。变量<var>alignment</var>为内存对齐的比特位。
+
+     <!-- Try to use function @code{asm_output_aligned_bss} defined in @file{varasm.c} when -->
+     <!-- defining this macro.  If unable, use the expression -->
+     <!-- @code{assemble_name (@var{stream}, @var{name})} to output the name itself; -->
+     <!-- before and after that, output the additional assembler syntax for defining -->
+     <!-- the name, and a newline. -->
+      <p>当定义该宏时，可以尝试使用<samp><span class="file">varasm.c</span></samp>中定义的<code>asm_output_bss</code>。
+如果不行，
+使用表达式<code>assemble_name (</code><var>stream</var><code>, </code><var>name</var><code>)</code>来输出name本身；
+在此之前和之后，输出额外的定义name的汇编语法，以及换行。
+
+     <!-- There are two ways of handling global BSS@.  One is to define this macro -->
+     <!-- The other is to have @code{TARGET_ASM_SELECT_SECTION} return a -->
+     <!-- switchable BSS section (@pxref{TARGET_HAVE_SWITCHABLE_BSS_SECTIONS}). -->
+     <!-- You do not need to do both. -->
+      <p>有两种方式来处理全局BSS。一种是定义该宏，
+<code>ASM_OUTPUT_ALIGNED_BSS</code>。
+另一种是让<code>TARGET_ASM_SELECT_SECTION</code>返回一个可切换的BSS section
+（参见 <a href="TARGET_005fHAVE_005fSWITCHABLE_005fBSS_005fSECTIONS.html#TARGET_005fHAVE_005fSWITCHABLE_005fBSS_005fSECTIONS">TARGET_HAVE_SWITCHABLE_BSS_SECTIONS</a>）。你不需要两者都做。
+
+     <!-- Some languages do not have @code{common} data, and require a -->
+     <!-- non-common form of global BSS in order to handle uninitialized globals -->
+     <!-- efficiently.  C++ is one example of this.  However, if the target does -->
+     <!-- not support global BSS, the front end may choose to make globals -->
+     <!-- common in order to save space in the object file. -->
+      <p>一些语言不具有<code>common</code>数据，并且要求全局BSS为non-common的，
+以便高效的处理未初始化全局变量。C++就是这样的例子。然而，
+如果target不支持全局BSS，则前端可以选择生成全局common，
+以便在目标文件中节省空间。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_LOCAL</b> (<var>stream, name, size, rounded</var>)<var><a name="index-ASM_005fOUTPUT_005fLOCAL-4505"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to output to the stdio stream -->
+     <!-- @var{stream} the assembler definition of a local-common-label named -->
+     <!-- @var{name} whose size is @var{size} bytes.  The variable @var{rounded} -->
+     <!-- is the size rounded up to whatever alignment the caller wants. -->
+      <p>一条C语句（没有分号），用来将名字为<var>name</var>，
+大小为<var>size</var>个字节的local-common标号的汇编定义输出到stdio流<var>stream</var>中。
+变量<var>rounded</var>为调用者想要对齐而舍入的大小。
+
+     <!-- Use the expression @code{assemble_name (@var{stream}, @var{name})} to -->
+     <!-- output the name itself; before and after that, output the additional -->
+     <!-- assembler syntax for defining the name, and a newline. -->
+      <p>使用表达式<code>assemble_name (</code><var>stream</var><code>, </code><var>name</var><code>)</code>来输出name本身；
+在此之前和之后，输出额外的定义name的汇编语法，以及换行。
+
+     <!-- This macro controls how the assembler definitions of uninitialized -->
+     <!-- static variables are output. -->
+      <p>该宏控制如何输出未初始化的静态变量的汇编定义。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_ALIGNED_LOCAL</b> (<var>stream, name, size, alignment</var>)<var><a name="index-ASM_005fOUTPUT_005fALIGNED_005fLOCAL-4506"></a></var><br>
+<blockquote><!-- Like @code{ASM_OUTPUT_LOCAL} except takes the required alignment as a -->
+     <!-- separate, explicit argument.  If you define this macro, it is used in -->
+     <!-- place of @code{ASM_OUTPUT_LOCAL}, and gives you more flexibility in -->
+     <!-- handling the required alignment of the variable.  The alignment is specified -->
+     <!-- as the number of bits. -->
+      <p>类似<code>ASM_OUTPUT_LOCAL</code>，除了其接受需要的aligment作为单独，显式的参数。
+如果你定义了该宏，其被用于替换<code>ASM_OUTPUT_LOCAL</code>，
+这使得你在处理变量所需的对齐方面更加灵活。aligment被指定为位数。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ASM_OUTPUT_ALIGNED_DECL_LOCAL</b> (<var>stream, decl, name, size, alignment</var>)<var><a name="index-ASM_005fOUTPUT_005fALIGNED_005fDECL_005fLOCAL-4507"></a></var><br>
+<blockquote><!-- Like @code{ASM_OUTPUT_ALIGNED_DECL} except that @var{decl} of the -->
+     <!-- variable to be output, if there is one, or @code{NULL_TREE} if there -->
+     <!-- is no corresponding variable.  If you define this macro, GCC will use it -->
+     <!-- in place of both @code{ASM_OUTPUT_DECL} and -->
+     <!-- @code{ASM_OUTPUT_ALIGNED_DECL}.  Define this macro when you need to see -->
+     <!-- the variable's decl in order to chose what to output. -->
+      <p>类似<code>ASM_OUTPUT_ALIGNED_DECL</code>，除了要被输出的变量的<var>decl</var>，
+如果存在的话，或者为<code>NULL_TREE</code>如果没有相应的变量。如果你定义了该宏，
+GCC将替换<code>ASM_OUTPUT_DECL</code>和<code>ASM_OUTPUT_ALIGNED_DECL</code>。
+当你需要看到变量的decl，以便选择如何输出时，可以定义该宏。
+</p></blockquote></div>
+
+<!-- @node Label Output -->
+<!-- @subsection Output and Generation of Labels -->
+ </body></html>
+

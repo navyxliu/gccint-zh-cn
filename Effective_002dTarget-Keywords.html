@@ -1,0 +1,644 @@
+<html lang="zh">
+<head>
+<title>Effective-Target Keywords - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Test-Directives.html#Test-Directives" title="Test Directives">
+<link rel="prev" href="Selectors.html#Selectors" title="Selectors">
+<link rel="next" href="Add-Options.html#Add-Options" title="Add Options">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Effective-Target-Keywords"></a>
+<a name="Effective_002dTarget-Keywords"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Add-Options.html#Add-Options">Add Options</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Selectors.html#Selectors">Selectors</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Test-Directives.html#Test-Directives">Test Directives</a>
+<hr>
+</div>
+
+<h4 class="subsection">7.2.3 描述目标机器属性的关键字</h4>
+
+<!-- Effective-target keywords identify sets of targets that support -->
+<!-- particular functionality.  They are used to limit tests to be run only -->
+<!-- for particular targets, or to specify that particular sets of targets -->
+<!-- are expected to fail some tests. -->
+<p>有效目标关键字用来标识支持特定功能的目标机器集。它们被用于限定测试只运行在特定目标机器上，或者指定特定目标机器会期望某些测试失败。
+
+<!-- Effective-target keywords are defined in @file{lib/target-supports.exp} in -->
+<!-- the GCC testsuite, with the exception of those that are documented as -->
+<!-- being local to a particular test directory. -->
+ <p>有效目标关键字在GCC测试包中的<samp><span class="file">lib/target-supports.exp</span></samp>里定义，对于那些局限于特定测试目录下的除外。
+
+<!-- The @samp{effective target} takes into account all of the compiler options -->
+<!-- with which the test will be compiled, including the multilib options. -->
+<!-- By convention, keywords ending in @code{_nocache} can also include options -->
+<!-- specified for the particular test in an earlier @code{dg-options} or -->
+<!-- @code{dg-add-options} directive. -->
+ <p>&lsquo;<samp><span class="samp">effective target</span></samp>&rsquo;会考虑编译测试所用的所有编译器选项，包括multilib选项。作为约定，以<code>_nocache</code>作为结尾的关键字还可以包含，在早期<code>dg-options</code>或者<code>dg-add-options</code>指令中为特定测试指定的选项。
+
+<!-- @subsubsection Data type sizes -->
+<h5 class="subsubsection">7.2.3.1 数据类型大小</h5>
+
+     <dl>
+<dt><code>ilp32</code><dd><!-- Target has 32-bit @code{int}, @code{long}, and pointers. -->
+目标机器具有32位的<code>int</code>，<code>long</code>和指针。
+
+     <br><dt><code>lp64</code><dd><!-- Target has 32-bit @code{int}, 64-bit @code{long} and pointers. -->
+目标机器具有32位的<code>int</code>，64位的<code>long</code>和指针。
+
+     <br><dt><code>llp64</code><dd><!-- Target has 32-bit @code{int} and @code{long}, 64-bit @code{long long} -->
+<!-- and pointers. -->
+目标机器具有32位的<code>int</code>和<code>long</code>，64位的<code>long long</code>和指针。
+
+     <br><dt><code>double64</code><dd><!-- Target has 64-bit @code{double}. -->
+目标机器具有64位的<code>double</code>。
+
+     <br><dt><code>double64plus</code><dd><!-- Target has @code{double} that is 64 bits or longer. -->
+目标机器具有64位或者更长的<code>double</code>。
+
+     <br><dt><code>int32plus</code><dd><!-- Target has @code{int} that is at 32 bits or longer. -->
+目标机器具有32位或者更长的<code>int</code>。
+
+     <br><dt><code>int16</code><dd><!-- Target has @code{int} that is 16 bits or shorter. -->
+目标机器具有16位或者更短的<code>int</code>。
+
+     <br><dt><code>large_double</code><dd><!-- Target supports @code{double} that is longer than @code{float}. -->
+目标机器支持比<code>float</code>长的<code>double</code>。
+
+     <br><dt><code>large_long_double</code><dd><!-- Target supports @code{long double} that is longer than @code{double}. -->
+目标机器支持比<code>double</code>长的<code>long double</code>。
+
+     <br><dt><code>ptr32plus</code><dd><!-- Target has pointers that are 32 bits or longer. -->
+目标机器具有32位或者更长的指针。
+
+     <br><dt><code>size32plus</code><dd><!-- Target supports array and structure sizes that are 32 bits or longer. -->
+目标机器支持32位或者更长的数组和数据结构。
+
+     <br><dt><code>4byte_wchar_t</code><dd><!-- Target has @code{wchar_t} that is at least 4 bytes. -->
+目标机器具有至少4个字节的<code>wchar_t</code>。
+</dl>
+
+<!-- @subsubsection Fortran-specific attributes -->
+<h5 class="subsubsection">7.2.3.2 Fortran特定属性</h5>
+
+     <dl>
+<dt><code>fortran_integer_16</code><dd><!-- Target supports Fortran @code{integer} that is 16 bytes or longer. -->
+目标机器支持16个字节或者更长的Fortran <code>integer</code>。
+
+     <br><dt><code>fortran_large_int</code><dd><!-- Target supports Fortran @code{integer} kinds larger than @code{integer(8)}. -->
+目标机器支持大于<code>integer(8)</code>的Fortran <code>integer</code>种类。
+
+     <br><dt><code>fortran_large_real</code><dd><!-- Target supports Fortran @code{real} kinds larger than @code{real(8)}. -->
+目标机器支持大于<code>real(8)</code>的Fortran <code>real</code>种类。
+</dl>
+
+<!-- @subsubsection Vector-specific attributes -->
+<h5 class="subsubsection">7.2.3.3 向量特定属性</h5>
+
+     <dl>
+<dt><code>vect_condition</code><dd><!-- Target supports vector conditional operations. -->
+目标机器支持向量条件操作。
+
+     <br><dt><code>vect_double</code><dd><!-- Target supports hardware vectors of @code{double}. -->
+目标机器支持硬件向量<code>double</code>。
+
+     <br><dt><code>vect_float</code><dd><!-- Target supports hardware vectors of @code{float}. -->
+目标机器支持硬件向量<code>float</code>。
+
+     <br><dt><code>vect_int</code><dd><!-- Target supports hardware vectors of @code{int}. -->
+目标机器支持硬件向量<code>int</code>。
+
+     <br><dt><code>vect_long</code><dd><!-- Target supports hardware vectors of @code{long}. -->
+目标机器支持硬件向量<code>long</code>。
+
+     <br><dt><code>vect_long_long</code><dd><!-- Target supports hardware vectors of @code{long long}. -->
+目标机器支持硬件向量<code>long long</code>。
+
+     <br><dt><code>vect_aligned_arrays</code><dd><!-- Target aligns arrays to vector alignment boundary. -->
+目标机器将数组按照向量对齐边界进行对齐。
+
+     <br><dt><code>vect_hw_misalign</code><dd><!-- Target supports a vector misalign access. -->
+目标机器支持向量非对齐访问。
+
+     <br><dt><code>vect_no_align</code><dd><!-- Target does not support a vector alignment mechanism. -->
+目标机器不支持向量对齐机制。
+
+     <br><dt><code>vect_no_int_max</code><dd><!-- Target does not support a vector max instruction on @code{int}. -->
+目标机器不支持在<code>int</code>上的向量max指令。
+
+     <br><dt><code>vect_no_int_add</code><dd><!-- Target does not support a vector add instruction on @code{int}. -->
+目标机器不支持在<code>int</code>上的向量add指令。
+
+     <br><dt><code>vect_no_bitwise</code><dd><!-- Target does not support vector bitwise instructions. -->
+目标机器不支持向量位操作指令。
+
+     <br><dt><code>vect_char_mult</code><dd><!-- Target supports @code{vector char} multiplication. -->
+目标机器不支持<code>vector char</code>乘法。
+
+     <br><dt><code>vect_short_mult</code><dd><!-- Target supports @code{vector short} multiplication. -->
+目标机器不支持<code>vector short</code>乘法。
+
+     <br><dt><code>vect_int_mult</code><dd><!-- Target supports @code{vector int} multiplication. -->
+目标机器不支持<code>vector int</code>乘法。
+
+     <br><dt><code>vect_extract_even_odd</code><dd><!-- Target supports vector even/odd element extraction. -->
+目标机器支持向量奇/偶元素抽取操作。
+
+     <br><dt><code>vect_extract_even_odd_wide</code><dd><!-- Target supports vector even/odd element extraction of vectors with elements -->
+<!-- @code{SImode} or larger. -->
+目标机器支持元素为<code>SImode</code>或者更大的向量奇/偶元素抽取操作。
+
+     <br><dt><code>vect_interleave</code><dd>Target supports vector interleaving.
+
+     <br><dt><code>vect_strided</code><dd>Target supports vector interleaving and extract even/odd.
+
+     <br><dt><code>vect_strided_wide</code><dd>Target supports vector interleaving and extract even/odd for wide
+element types.
+
+     <br><dt><code>vect_perm</code><dd>Target supports vector permutation.
+
+     <br><dt><code>vect_shift</code><dd><!-- Target supports a hardware vector shift operation. -->
+目标机器支持硬件向量移位操作。
+
+     <br><dt><code>vect_widen_sum_hi_to_si</code><dd>Target supports a vector widening summation of <code>short</code> operands
+into <code>int</code> results, or can promote (unpack) from <code>short</code>
+to <code>int</code>.
+
+     <br><dt><code>vect_widen_sum_qi_to_hi</code><dd>Target supports a vector widening summation of <code>char</code> operands
+into <code>short</code> results, or can promote (unpack) from <code>char</code>
+to <code>short</code>.
+
+     <br><dt><code>vect_widen_sum_qi_to_si</code><dd>Target supports a vector widening summation of <code>char</code> operands
+into <code>int</code> results.
+
+     <br><dt><code>vect_widen_mult_qi_to_hi</code><dd>Target supports a vector widening multiplication of <code>char</code> operands
+into <code>short</code> results, or can promote (unpack) from <code>char</code> to
+<code>short</code> and perform non-widening multiplication of <code>short</code>.
+
+     <br><dt><code>vect_widen_mult_hi_to_si</code><dd>Target supports a vector widening multiplication of <code>short</code> operands
+into <code>int</code> results, or can promote (unpack) from <code>short</code> to
+<code>int</code> and perform non-widening multiplication of <code>int</code>.
+
+     <br><dt><code>vect_sdot_qi</code><dd><!-- Target supports a vector dot-product of @code{signed char}. -->
+目标机器支持<code>signed char</code>类型的向量点积。
+
+     <br><dt><code>vect_udot_qi</code><dd><!-- Target supports a vector dot-product of @code{unsigned char}. -->
+目标机器支持<code>unsigned char</code>类型的向量点积。
+
+     <br><dt><code>vect_sdot_hi</code><dd><!-- Target supports a vector dot-product of @code{signed short}. -->
+目标机器支持<code>signed short</code>类型的向量点积。
+
+     <br><dt><code>vect_udot_hi</code><dd><!-- Target supports a vector dot-product of @code{unsigned short}. -->
+目标机器支持<code>unsigned short</code>类型的向量点积。
+
+     <br><dt><code>vect_pack_trunc</code><dd>Target supports a vector demotion (packing) of <code>short</code> to <code>char</code>
+and from <code>int</code> to <code>short</code> using modulo arithmetic.
+
+     <br><dt><code>vect_unpack</code><dd>Target supports a vector promotion (unpacking) of <code>char</code> to <code>short</code>
+and from <code>char</code> to <code>int</code>.
+
+     <br><dt><code>vect_intfloat_cvt</code><dd><!-- Target supports conversion from @code{signed int} to @code{float}. -->
+目标机器支持从<code>signed int</code>到<code>float</code>的转换。
+
+     <br><dt><code>vect_uintfloat_cvt</code><dd><!-- Target supports conversion from @code{unsigned int} to @code{float}. -->
+目标机器支持从<code>unsigned int</code>到<code>float</code>的转换。
+
+     <br><dt><code>vect_floatint_cvt</code><dd><!-- Target supports conversion from @code{float} to @code{signed int}. -->
+目标机器支持从<code>float</code>到<code>signed int</code>的转换。
+
+     <br><dt><code>vect_floatuint_cvt</code><dd><!-- Target supports conversion from @code{float} to @code{unsigned int}. -->
+目标机器支持从<code>float</code>到<code>unsigned int</code>的转换。
+</dl>
+
+<!-- @subsubsection Thread Local Storage attributes -->
+<h5 class="subsubsection">7.2.3.4 线程局部存储属性</h5>
+
+     <dl>
+<dt><code>tls</code><dd><!-- Target supports thread-local storage. -->
+目标机器支持线程局部存储。
+
+     <br><dt><code>tls_native</code><dd><!-- Target supports native (rather than emulated) thread-local storage. -->
+目标机器支持本地（而不是模拟的）线程局部存储。
+
+     <br><dt><code>tls_runtime</code><dd><!-- Test system supports executing TLS executables. -->
+测试系统支持执行TLS可执行程序。
+</dl>
+
+<!-- @subsubsection Decimal floating point attributes -->
+<h5 class="subsubsection">7.2.3.5 十进制浮点属性</h5>
+
+     <dl>
+<dt><code>dfp</code><dd><!-- Targets supports compiling decimal floating point extension to C. -->
+目标机器支持编译十进制浮点C扩展。
+
+     <br><dt><code>dfp_nocache</code><dd><!-- Including the options used to compile this particular test, the -->
+<!-- target supports compiling decimal floating point extension to C. -->
+目标机器支持编译十进制浮点C扩展，包括用于编译该特定测试的选项。
+
+     <br><dt><code>dfprt</code><dd><!-- Test system can execute decimal floating point tests. -->
+测试系统可以执行十进制浮点测试。
+
+     <br><dt><code>dfprt_nocache</code><dd><!-- Including the options used to compile this particular test, the -->
+<!-- test system can execute decimal floating point tests. -->
+测试系统可以执行十进制浮点测试，包括用于编译该特定测试的选项。
+
+     <br><dt><code>hard_dfp</code><dd><!-- Target generates decimal floating point instructions with current options. -->
+目标机器使用当前选项生成十进制浮点指令。
+</dl>
+
+<!-- @subsubsection ARM-specific attributes -->
+<h5 class="subsubsection">7.2.3.6 ARM特定属性</h5>
+
+     <dl>
+<dt><code>arm32</code><dd><!-- ARM target generates 32-bit code. -->
+ARM目标机器生成32位代码。
+
+     <br><dt><code>arm_eabi</code><dd>ARM target adheres to the ABI for the ARM Architecture.
+
+     <br><dt><code>arm_hard_vfp_ok</code><dd><!-- ARM target supports @code{-mfpu=vfp -mfloat-abi=hard}. -->
+<!-- Some multilibs may be incompatible with these options. -->
+ARM目标机器支持<code>-mfpu=vfp -mfloat-abi=hard</code>。一些multilib可能与这些选项不兼容。
+
+     <br><dt><code>arm_iwmmxt_ok</code><dd><!-- ARM target supports @code{-mcpu=iwmmxt}. -->
+<!-- Some multilibs may be incompatible with this option. -->
+ARM目标机器支持<code>-mcpu=iwmmxt</code>。一些multilib可能与这些选项不兼容。
+
+     <br><dt><code>arm_neon</code><dd><!-- ARM target supports generating NEON instructions. -->
+ARM目标机器支持生成NEON指令。
+
+     <br><dt><code>arm_neon_hw</code><dd><!-- Test system supports executing NEON instructions. -->
+测试系统支持执行NEON指令。
+
+     <br><dt><code>arm_neon_ok</code><dd><a name="arm_005fneon_005fok"></a><!-- ARM Target supports @code{-mfpu=neon -mfloat-abi=softfp} or compatible -->
+<!-- options.  Some multilibs may be incompatible with these options. -->
+ARM目标机器支持<code>-mfpu=neon -mfloat-abi=softfp</code>或者兼容选项。一些multilib可能与这些选项不兼容。
+
+     <br><dt><code>arm_neon_fp16_ok</code><dd><a name="arm_005fneon_005ffp16_005fok"></a><!-- ARM Target supports @code{-mfpu=neon-fp16 -mfloat-abi=softfp} or compatible -->
+<!-- options.  Some multilibs may be incompatible with these options. -->
+ARM目标机器支持<code>-mfpu=neon-fp16 -mfloat-abi=softfp</code>或者兼容选项。一些multilib可能与这些选项不兼容。
+
+     <br><dt><code>arm_thumb1_ok</code><dd><!-- ARM target generates Thumb-1 code for @code{-mthumb}. -->
+ARM目标机器为<code>-mthumb</code>生成Thumb-1代码。
+
+     <br><dt><code>arm_thumb2_ok</code><dd><!-- ARM target generates Thumb-2 code for @code{-mthumb}. -->
+ARM目标机器为<code>-mthumb</code>生成Thumb-2代码。
+
+     <br><dt><code>arm_vfp_ok</code><dd><!-- ARM target supports @code{-mfpu=vfp -mfloat-abi=softfp}. -->
+<!-- Some multilibs may be incompatible with these options. -->
+ARM目标机器支持<code>-mfpu=vfp -mfloat-abi=softfp</code>。一些multilib可能与这些选项不兼容。
+</dl>
+
+<!-- @subsubsection MIPS-specific attributes -->
+<h5 class="subsubsection">7.2.3.7 MIPS特定属性</h5>
+
+     <dl>
+<dt><code>mips64</code><dd><!-- MIPS target supports 64-bit instructions. -->
+MIPS目标机器支持64位指令。
+
+     <br><dt><code>nomips16</code><dd><!-- MIPS target does not produce MIPS16 code. -->
+MIPS目标机器不产生MIPS16代码。
+
+     <br><dt><code>mips16_attribute</code><dd><!-- MIPS target can generate MIPS16 code. -->
+MIPS目标机器可以生成MIPS16代码。
+
+     <br><dt><code>mips_loongson</code><dd><!-- MIPS target is a Loongson-2E or -2F target using an ABI that supports -->
+<!-- the Loongson vector modes. -->
+MIPS目标机器是使用了支持Loongson向量模式ABI的Loongson-2E或者2F目标机器。
+
+     <br><dt><code>mips_newabi_large_long_double</code><dd><!-- MIPS target supports @code{long double} larger than @code{double} -->
+<!-- when using the new ABI. -->
+MIPS目标机器支持比<code>double</code>大的<code>long double</code>，当使用新ABI时。
+
+     <br><dt><code>mpaired_single</code><dd><!-- MIPS target supports @code{-mpaired-single}. -->
+MIPS目标机器支持<code>-mpaired-single</code>。
+</dl>
+
+<!-- @subsubsection PowerPC-specific attributes -->
+<h5 class="subsubsection">7.2.3.8 PowerPC特定属性</h5>
+
+     <dl>
+<dt><code>powerpc64</code><dd><!-- Test system supports executing 64-bit instructions. -->
+测试系统支持执行64位指令。
+
+     <br><dt><code>powerpc_altivec</code><dd><!-- PowerPC target supports AltiVec. -->
+PowerPC目标机器支持AltiVec。
+
+     <br><dt><code>powerpc_altivec_ok</code><dd><!-- PowerPC target supports @code{-maltivec}. -->
+PowerPC目标机器支持<code>-maltivec</code>。
+
+     <br><dt><code>powerpc_fprs</code><dd><!-- PowerPC target supports floating-point registers. -->
+PowerPC目标机器支持浮点寄存器。
+
+     <br><dt><code>powerpc_hard_double</code><dd><!-- PowerPC target supports hardware double-precision floating-point. -->
+PowerPC目标机器支持硬件双精度浮点。
+
+     <br><dt><code>powerpc_ppu_ok</code><dd><!-- PowerPC target supports @code{-mcpu=cell}. -->
+PowerPC目标机器支持<code>-mcpu=cell</code>。
+
+     <br><dt><code>powerpc_spe</code><dd><!-- PowerPC target supports PowerPC SPE. -->
+PowerPC目标机器支持PowerPC SPE。
+
+     <br><dt><code>powerpc_spe_nocache</code><dd><!-- Including the options used to compile this particular test, the -->
+<!-- PowerPC target supports PowerPC SPE. -->
+PowerPC目标机器支持PowerPC SPE，包括用于编译该特定测试的选项。
+
+     <br><dt><code>powerpc_spu</code><dd><!-- PowerPC target supports PowerPC SPU. -->
+PowerPC目标机器支持PowerPC SPU。
+
+     <br><dt><code>spu_auto_overlay</code><dd>SPU target has toolchain that supports automatic overlay generation. 
+SPU目标机器具有支持自动生成的工具链。
+
+     <br><dt><code>powerpc_vsx_ok</code><dd><!-- PowerPC target supports @code{-mvsx}. -->
+PowerPC目标机器支持<code>-mvsx</code>。
+
+     <br><dt><code>powerpc_405_nocache</code><dd><!-- Including the options used to compile this particular test, the -->
+<!-- PowerPC target supports PowerPC 405. -->
+PowerPC目标机器支持PowerPC 405，包括用于编译该特定测试的选项。
+
+     <br><dt><code>vmx_hw</code><dd><!-- PowerPC target supports executing AltiVec instructions. -->
+PowerPC目标机器支持。
+</dl>
+
+<!-- @subsubsection Other hardware attributes -->
+<h5 class="subsubsection">7.2.3.9 其它硬件属性</h5>
+
+     <dl>
+<dt><code>avx</code><dd><!-- Target supports compiling @code{avx} instructions. -->
+目标机器支持编译<code>avx</code>指令。
+
+     <br><dt><code>avx_runtime</code><dd><!-- Target supports the execution of @code{avx} instructions. -->
+目标机器支持执行<code>avx</code>指令。
+
+     <br><dt><code>cell_hw</code><dd><!-- Test system can execute AltiVec and Cell PPU instructions. -->
+测试系统能够执行AltiVec和Cell PPU指令。
+
+     <br><dt><code>coldfire_fpu</code><dd><!-- Target uses a ColdFire FPU. -->
+目标机器使用ColdFire FPU。
+
+     <br><dt><code>hard_float</code><dd><!-- Target supports FPU instructions. -->
+目标机器支持FPU指令。
+
+     <br><dt><code>sse</code><dd><!-- Target supports compiling @code{sse} instructions. -->
+目标机器支持编译<code>sse</code>指令。
+
+     <br><dt><code>sse_runtime</code><dd><!-- Target supports the execution of @code{sse} instructions. -->
+目标机器支持执行<code>sse</code>指令。
+
+     <br><dt><code>sse2</code><dd><!-- Target supports compiling @code{sse2} instructions. -->
+目标机器支持编译<code>sse2</code>指令。
+
+     <br><dt><code>sse2_runtime</code><dd><!-- Target supports the execution of @code{sse2} instructions. -->
+目标机器支持执行<code>sse2</code>指令。
+
+     <br><dt><code>sync_char_short</code><dd><!-- Target supports atomic operations on @code{char} and @code{short}. -->
+目标机器支持在<code>char</code>和<code>short</code>之上的原子操作。
+
+     <br><dt><code>sync_int_long</code><dd><!-- Target supports atomic operations on @code{int} and @code{long}. -->
+目标机器支持在<code>int</code>和<code>long</code>之上的原子操作。
+
+     <br><dt><code>ultrasparc_hw</code><dd><!-- Test environment appears to run executables on a simulator that -->
+<!-- accepts only @code{EM_SPARC} executables and chokes on @code{EM_SPARC32PLUS} -->
+<!-- or @code{EM_SPARCV9} executables. -->
+测试环境是在模拟器上运行可执行程序，且只接受<code>EM_SPARC</code>可执行程序，对于<code>EM_SPARC32PLUS</code>或者<code>EM_SPARCV9</code>可执行程序则不成。
+
+     <br><dt><code>vect_cmdline_needed</code><dd><!-- Target requires a command line argument to enable a SIMD instruction set. -->
+目标机器需要命令行参数来启用SIMD指令集。
+</dl>
+
+<!-- @subsubsection Environment attributes -->
+<h5 class="subsubsection">7.2.3.10 环境属性</h5>
+
+     <dl>
+<dt><code>c</code><dd>The language for the compiler under test is C.
+
+     <br><dt><code>c++</code><dd>The language for the compiler under test is C++.
+
+     <br><dt><code>c99_runtime</code><dd>Target provides a full C99 runtime.
+
+     <br><dt><code>correct_iso_cpp_string_wchar_protos</code><dd>Target <code>string.h</code> and <code>wchar.h</code> headers provide C++ required
+overloads for <code>strchr</code> etc. functions.
+
+     <br><dt><code>dummy_wcsftime</code><dd>Target uses a dummy <code>wcsftime</code> function that always returns zero.
+
+     <br><dt><code>fd_truncate</code><dd>Target can truncate a file from a file descriptor, as used by
+<samp><span class="file">libgfortran/io/unix.c:fd_truncate</span></samp>; i.e. <code>ftruncate</code> or
+<code>chsize</code>.
+
+     <br><dt><code>freestanding</code><dd>Target is &lsquo;<samp><span class="samp">freestanding</span></samp>&rsquo; as defined in section 4 of the C99 standard. 
+Effectively, it is a target which supports no extra headers or libraries
+other than what is considered essential.
+
+     <br><dt><code>init_priority</code><dd>Target supports constructors with initialization priority arguments.
+
+     <br><dt><code>inttypes_types</code><dd>Target has the basic signed and unsigned types in <code>inttypes.h</code>. 
+This is for tests that GCC's notions of these types agree with those
+in the header, as some systems have only <code>inttypes.h</code>.
+
+     <br><dt><code>lax_strtofp</code><dd>Target might have errors of a few ULP in string to floating-point
+conversion functions and overflow is not always detected correctly by
+those functions.
+
+     <br><dt><code>mmap</code><dd>Target supports <code>mmap</code>.
+
+     <br><dt><code>newlib</code><dd>Target supports Newlib.
+
+     <br><dt><code>pow10</code><dd>Target provides <code>pow10</code> function.
+
+     <br><dt><code>pthread</code><dd>Target can compile using <code>pthread.h</code> with no errors or warnings.
+
+     <br><dt><code>pthread_h</code><dd>Target has <code>pthread.h</code>.
+
+     <br><dt><code>run_expensive_tests</code><dd>Expensive testcases (usually those that consume excessive amounts of CPU
+time) should be run on this target.  This can be enabled by setting the
+<samp><span class="env">GCC_TEST_RUN_EXPENSIVE</span></samp> environment variable to a non-empty string.
+
+     <br><dt><code>simulator</code><dd>Test system runs executables on a simulator (i.e. slowly) rather than
+hardware (i.e. fast).
+
+     <br><dt><code>stdint_types</code><dd>Target has the basic signed and unsigned C types in <code>stdint.h</code>. 
+This will be obsolete when GCC ensures a working <code>stdint.h</code> for
+all targets.
+
+     <br><dt><code>trampolines</code><dd>Target supports trampolines.
+
+     <br><dt><code>uclibc</code><dd>Target supports uClibc.
+
+     <br><dt><code>unwrapped</code><dd>Target does not use a status wrapper.
+
+     <br><dt><code>vxworks_kernel</code><dd>Target is a VxWorks kernel.
+
+     <br><dt><code>vxworks_rtp</code><dd>Target is a VxWorks RTP.
+
+     <br><dt><code>wchar</code><dd>Target supports wide characters. 
+</dl>
+
+<!-- @subsubsection Other attributes -->
+<h5 class="subsubsection">7.2.3.11 其它属性</h5>
+
+     <dl>
+<dt><code>automatic_stack_alignment</code><dd>Target supports automatic stack alignment.
+
+     <br><dt><code>cxa_atexit</code><dd>Target uses <code>__cxa_atexit</code>.
+
+     <br><dt><code>default_packed</code><dd>Target has packed layout of structure members by default.
+
+     <br><dt><code>fgraphite</code><dd>Target supports Graphite optimizations.
+
+     <br><dt><code>fixed_point</code><dd>Target supports fixed-point extension to C.
+
+     <br><dt><code>fopenmp</code><dd>Target supports OpenMP via <samp><span class="option">-fopenmp</span></samp>.
+
+     <br><dt><code>fpic</code><dd>Target supports <samp><span class="option">-fpic</span></samp> and <samp><span class="option">-fPIC</span></samp>.
+
+     <br><dt><code>freorder</code><dd>Target supports <samp><span class="option">-freorder-blocks-and-partition</span></samp>.
+
+     <br><dt><code>fstack_protector</code><dd>Target supports <samp><span class="option">-fstack-protector</span></samp>.
+
+     <br><dt><code>gas</code><dd>Target uses GNU <samp><span class="command">as</span></samp>.
+
+     <br><dt><code>gc_sections</code><dd>Target supports <samp><span class="option">--gc-sections</span></samp>.
+
+     <br><dt><code>gld</code><dd>Target uses GNU <samp><span class="command">ld</span></samp>.
+
+     <br><dt><code>keeps_null_pointer_checks</code><dd>Target keeps null pointer checks, either due to the use of
+<samp><span class="option">-fno-delete-null-pointer-checks</span></samp> or hardwired into the target.
+
+     <br><dt><code>lto</code><dd>Compiler has been configured to support link-time optimization (LTO).
+
+     <br><dt><code>named_sections</code><dd>Target supports named sections.
+
+     <br><dt><code>natural_alignment_32</code><dd>Target uses natural alignment (aligned to type size) for types of
+32 bits or less.
+
+     <br><dt><code>target_natural_alignment_64</code><dd>Target uses natural alignment (aligned to type size) for types of
+64 bits or less.
+
+     <br><dt><code>nonpic</code><dd>Target does not generate PIC by default.
+
+     <br><dt><code>pcc_bitfield_type_matters</code><dd>Target defines <code>PCC_BITFIELD_TYPE_MATTERS</code>.
+
+     <br><dt><code>pe_aligned_commons</code><dd>Target supports <samp><span class="option">-mpe-aligned-commons</span></samp>.
+
+     <br><dt><code>pie</code><dd>Target supports <samp><span class="option">-pie</span></samp>, <samp><span class="option">-fpie</span></samp> and <samp><span class="option">-fPIE</span></samp>.
+
+     <br><dt><code>section_anchors</code><dd>Target supports section anchors.
+
+     <br><dt><code>short_enums</code><dd>Target defaults to short enums.
+
+     <br><dt><code>static</code><dd>Target supports <samp><span class="option">-static</span></samp>.
+
+     <br><dt><code>static_libgfortran</code><dd>Target supports statically linking &lsquo;<samp><span class="samp">libgfortran</span></samp>&rsquo;.
+
+     <br><dt><code>string_merging</code><dd>Target supports merging string constants at link time.
+
+     <br><dt><code>ucn</code><dd>Target supports compiling and assembling UCN.
+
+     <br><dt><code>ucn_nocache</code><dd>Including the options used to compile this particular test, the
+target supports compiling and assembling UCN.
+
+     <br><dt><code>unaligned_stack</code><dd>Target does not guarantee that its <code>STACK_BOUNDARY</code> is greater than
+or equal to the required vector alignment.
+
+     <br><dt><code>vector_alignment_reachable</code><dd>Vector alignment is reachable for types of 32 bits or less.
+
+     <br><dt><code>vector_alignment_reachable_for_64bit</code><dd>Vector alignment is reachable for types of 64 bits or less.
+
+     <br><dt><code>wchar_t_char16_t_compatible</code><dd>Target supports <code>wchar_t</code> that is compatible with <code>char16_t</code>.
+
+     <br><dt><code>wchar_t_char32_t_compatible</code><dd>Target supports <code>wchar_t</code> that is compatible with <code>char32_t</code>. 
+</dl>
+
+<!-- @subsubsection Local to tests in @code{gcc.target/i386} -->
+<h5 class="subsubsection">7.2.3.12 局限于<code>gcc.target/i386</code>下的测试</h5>
+
+     <dl>
+<dt><code>3dnow</code><dd><!-- Target supports compiling @code{3dnow} instructions. -->
+目标机器支持编译<code>3dnow</code>指令。
+
+     <br><dt><code>aes</code><dd><!-- Target supports compiling @code{aes} instructions. -->
+目标机器支持编译<code>aes</code>指令。
+
+     <br><dt><code>fma4</code><dd><!-- Target supports compiling @code{fma4} instructions. -->
+目标机器支持编译<code>fma4</code>指令。
+
+     <br><dt><code>ms_hook_prologue</code><dd><!-- Target supports attribute @code{ms_hook_prologue}. -->
+目标机器支持属性<code>ms_hook_prologue</code>。
+
+     <br><dt><code>pclmul</code><dd><!-- Target supports compiling @code{pclmul} instructions. -->
+目标机器支持编译<code>pclmul</code>指令。
+
+     <br><dt><code>sse3</code><dd><!-- Target supports compiling @code{sse3} instructions. -->
+目标机器支持编译<code>sse3</code>指令。
+
+     <br><dt><code>sse4</code><dd><!-- Target supports compiling @code{sse4} instructions. -->
+目标机器支持编译<code>sse4</code>指令。
+
+     <br><dt><code>sse4a</code><dd><!-- Target supports compiling @code{sse4a} instructions. -->
+目标机器支持编译<code>sse4a</code>指令。
+
+     <br><dt><code>ssse3</code><dd><!-- Target supports compiling @code{ssse3} instructions. -->
+目标机器支持编译<code>ssse3</code>指令。
+
+     <br><dt><code>vaes</code><dd><!-- Target supports compiling @code{vaes} instructions. -->
+目标机器支持编译<code>vaes</code>指令。
+
+     <br><dt><code>vpclmul</code><dd><!-- Target supports compiling @code{vpclmul} instructions. -->
+目标机器支持编译<code>vpclmul</code>指令。
+
+     <br><dt><code>xop</code><dd><!-- Target supports compiling @code{xop} instructions. -->
+目标机器支持编译<code>xop</code>指令。
+</dl>
+
+<!-- @subsubsection Local to tests in @code{gcc.target/spu/ea} -->
+<h5 class="subsubsection">7.2.3.13 局限于<code>gcc.target/spu/ea</code>下的测试</h5>
+
+     <dl>
+<dt><code>ealib</code><dd><!-- Target @code{__ea} library functions are available. -->
+目标机器<code>__ea</code>库函数可用。
+</dl>
+
+<!-- @subsubsection Local to tests in @code{gcc.test-framework} -->
+<h5 class="subsubsection">7.2.3.14 局限于<code>gcc.test-framework</code>下的测试</h5>
+
+     <dl>
+<dt><code>no</code><dd><!-- Always returns 0. -->
+总是返回0。
+
+     <br><dt><code>yes</code><dd><!-- Always returns 1. -->
+总是返回1。
+</dl>
+
+<!-- @node Add Options -->
+<!-- @subsection Features for @code{dg-add-options} -->
+ </body></html>
+

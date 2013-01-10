@@ -1,0 +1,136 @@
+<html lang="zh">
+<head>
+<title>Vectors - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Expression-trees.html#Expression-trees" title="Expression trees">
+<link rel="prev" href="Unary-and-Binary-Expressions.html#Unary-and-Binary-Expressions" title="Unary and Binary Expressions">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Vectors"></a>
+<p>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Unary-and-Binary-Expressions.html#Unary-and-Binary-Expressions">Unary and Binary Expressions</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Expression-trees.html#Expression-trees">Expression trees</a>
+<hr>
+</div>
+
+<h4 class="subsection">11.6.4 向量</h4>
+
+<p><a name="index-VEC_005fLSHIFT_005fEXPR-2512"></a><a name="index-VEC_005fRSHIFT_005fEXPR-2513"></a><a name="index-VEC_005fWIDEN_005fMULT_005fHI_005fEXPR-2514"></a><a name="index-VEC_005fWIDEN_005fMULT_005fLO_005fEXPR-2515"></a><a name="index-VEC_005fUNPACK_005fHI_005fEXPR-2516"></a><a name="index-VEC_005fUNPACK_005fLO_005fEXPR-2517"></a><a name="index-VEC_005fUNPACK_005fFLOAT_005fHI_005fEXPR-2518"></a><a name="index-VEC_005fUNPACK_005fFLOAT_005fLO_005fEXPR-2519"></a><a name="index-VEC_005fPACK_005fTRUNC_005fEXPR-2520"></a><a name="index-VEC_005fPACK_005fSAT_005fEXPR-2521"></a><a name="index-VEC_005fPACK_005fFIX_005fTRUNC_005fEXPR-2522"></a><a name="index-VEC_005fEXTRACT_005fEVEN_005fEXPR-2523"></a><a name="index-VEC_005fEXTRACT_005fODD_005fEXPR-2524"></a><a name="index-VEC_005fINTERLEAVE_005fHIGH_005fEXPR-2525"></a><a name="index-VEC_005fINTERLEAVE_005fLOW_005fEXPR-2526"></a>
+     <dl>
+<dt><code>VEC_LSHIFT_EXPR</code><dt><code>VEC_RSHIFT_EXPR</code><dd><!-- These nodes represent whole vector left and right shifts, respectively. -->
+<!-- The first operand is the vector to shift; it will always be of vector type. -->
+<!-- The second operand is an expression for the number of bits by which to -->
+<!-- shift.  Note that the result is undefined if the second operand is larger -->
+<!-- than or equal to the first operand's type size. -->
+这些节点相应的表示整个向量的左移和右移。第一个操作数为要移动的向量；其将总是为向量类型。第二个操作数是一个表达式，表示要移动的位数。注意如果第二个操作数大于或等于第一个操作数的类型大小，则结果未定义。
+
+     <br><dt><code>VEC_WIDEN_MULT_HI_EXPR</code><dt><code>VEC_WIDEN_MULT_LO_EXPR</code><dd><!-- These nodes represent widening vector multiplication of the high and low -->
+<!-- parts of the two input vectors, respectively.  Their operands are vectors -->
+<!-- that contain the same number of elements (@code{N}) of the same integral type. -->
+<!-- The result is a vector that contains half as many elements, of an integral type -->
+<!-- whose size is twice as wide.  In the case of @code{VEC_WIDEN_MULT_HI_EXPR} the -->
+<!-- high @code{N/2} elements of the two vector are multiplied to produce the -->
+<!-- vector of @code{N/2} products. In the case of @code{VEC_WIDEN_MULT_LO_EXPR} the -->
+<!-- low @code{N/2} elements of the two vector are multiplied to produce the -->
+<!-- vector of @code{N/2} products. -->
+这些节点分别表示两个输入向量的高部和低部的加宽向量乘法。它们的操作数为包含同一整数类型的同一数目（<code>N</code>）元素的向量。结果为一个包含整数类型的元素大小为两倍宽数目为一半的向量。对于<code>VEC_WIDEN_MULT_HI_EXPR</code>，两个向量的高<code>N/2</code>个元素相乘得到<code>N/2</code>个积的向量。对于<code>VEC_WIDEN_MULT_LO_EXPR</code>，两个向量的低<code>N/2</code>个元素相乘得到<code>N/2</code>个积的向量。
+
+     <br><dt><code>VEC_UNPACK_HI_EXPR</code><dt><code>VEC_UNPACK_LO_EXPR</code><dd><!-- These nodes represent unpacking of the high and low parts of the input vector, -->
+<!-- respectively.  The single operand is a vector that contains @code{N} elements -->
+<!-- of the same integral or floating point type.  The result is a vector -->
+<!-- that contains half as many elements, of an integral or floating point type -->
+<!-- whose size is twice as wide.  In the case of @code{VEC_UNPACK_HI_EXPR} the -->
+<!-- high @code{N/2} elements of the vector are extracted and widened (promoted). -->
+<!-- In the case of @code{VEC_UNPACK_LO_EXPR} the low @code{N/2} elements of the -->
+<!-- vector are extracted and widened (promoted). -->
+这些节点分别表示拆分输入向量的高部和低部。单操作数为一个包含同一整数或浮点类型的<code>N</code>个元素的向量。
+结果为包含整数或者浮点类型的元素大小为两倍宽数目为一半的向量。对于<code>VEC_UNPACK_HI_EXPR</code>，向量的高<code>N/2</code>个元素被提取并扩展（提升）。对于<code>VEC_UNPACK_LO_EXPR</code>，向量的低<code>N/2</code>个元素被提取并扩展（提升）。
+
+     <br><dt><code>VEC_UNPACK_FLOAT_HI_EXPR</code><dt><code>VEC_UNPACK_FLOAT_LO_EXPR</code><dd><!-- These nodes represent unpacking of the high and low parts of the input vector, -->
+<!-- where the values are converted from fixed point to floating point.  The -->
+<!-- single operand is a vector that contains @code{N} elements of the same -->
+<!-- integral type.  The result is a vector that contains half as many elements -->
+<!-- of a floating point type whose size is twice as wide.  In the case of -->
+<!-- @code{VEC_UNPACK_HI_EXPR} the high @code{N/2} elements of the vector are -->
+<!-- extracted, converted and widened.  In the case of @code{VEC_UNPACK_LO_EXPR} -->
+<!-- the low @code{N/2} elements of the vector are extracted, converted and widened. -->
+单操作数为包含同一整数类型的<code>N</code>个元素的向量。结果为包含浮点类型的元素大小为两倍宽数目为一半的向量。对于<code>VEC_UNPACK_HI_EXPR</code>，向量的高<code>N/2</code>个元素被提取，转换并扩展。对于<code>VEC_UNPACK_LO_EXPR</code>，向量的低<code>N/2</code>个元素被提取，转换并扩展。
+
+     <br><dt><code>VEC_PACK_TRUNC_EXPR</code><dd><!-- This node represents packing of truncated elements of the two input vectors -->
+<!-- into the output vector.  Input operands are vectors that contain the same -->
+<!-- number of elements of the same integral or floating point type.  The result -->
+<!-- is a vector that contains twice as many elements of an integral or floating -->
+<!-- point type whose size is half as wide. The elements of the two vectors are -->
+<!-- demoted and merged (concatenated) to form the output vector. -->
+该节点表示将两个输入向量的截断元素打包成输出向量。输入操作数是包含同一整数或者浮点类型的相同数目元素的向量。结果为包含整数或者浮点类型的元素大小为一半数目为两倍的向量。两个向量的元素合并成输出向量。
+
+     <br><dt><code>VEC_PACK_SAT_EXPR</code><dd><!-- This node represents packing of elements of the two input vectors into the -->
+<!-- output vector using saturation.  Input operands are vectors that contain -->
+<!-- the same number of elements of the same integral type.  The result is a -->
+<!-- vector that contains twice as many elements of an integral type whose size -->
+<!-- is half as wide.  The elements of the two vectors are demoted and merged -->
+<!-- (concatenated) to form the output vector. -->
+该节点表示使用饱和方式（saturation）将两个输入向量的元素打包成输出向量。输入操作数是包含了同一整数类型的相同数目元素的向量。结果为一个包含整数类型的元素大小为一半数目为两倍的向量。两个向量的元素合并成输出向量。
+
+     <br><dt><code>VEC_PACK_FIX_TRUNC_EXPR</code><dd><!-- This node represents packing of elements of the two input vectors into the -->
+<!-- output vector, where the values are converted from floating point -->
+<!-- to fixed point.  Input operands are vectors that contain the same number -->
+<!-- of elements of a floating point type.  The result is a vector that contains -->
+<!-- twice as many elements of an integral type whose size is half as wide.  The -->
+<!-- elements of the two vectors are merged (concatenated) to form the output -->
+<!-- vector. -->
+该节点表示将将两个输入向量的元素打包成输出向量，并将值由浮点转换为定点。输入操作数是包含浮点类型的相同数目元素的向量。结果为包含整数类型元素大小一半数目为两倍的向量。两个向量的元素合并成输出向量。
+
+     <br><dt><code>VEC_EXTRACT_EVEN_EXPR</code><dt><code>VEC_EXTRACT_ODD_EXPR</code><dd><!-- These nodes represent extracting of the even/odd elements of the two input -->
+<!-- vectors, respectively. Their operands and result are vectors that contain the -->
+<!-- same number of elements of the same type. -->
+这些节点分别表示提取两个输入向量的偶数/奇数个元素。它们的操作数和结果为包含同一类型的相同数目元素的向量。
+
+     <br><dt><code>VEC_INTERLEAVE_HIGH_EXPR</code><dt><code>VEC_INTERLEAVE_LOW_EXPR</code><dd><!-- These nodes represent merging and interleaving of the high/low elements of the -->
+<!-- two input vectors, respectively. The operands and the result are vectors that -->
+<!-- contain the same number of elements (@code{N}) of the same type. -->
+<!-- In the case of @code{VEC_INTERLEAVE_HIGH_EXPR}, the high @code{N/2} elements of -->
+<!-- the first input vector are interleaved with the high @code{N/2} elements of the -->
+<!-- second input vector. In the case of @code{VEC_INTERLEAVE_LOW_EXPR}, the low -->
+<!-- @code{N/2} elements of the first input vector are interleaved with the low -->
+<!-- @code{N/2} elements of the second input vector. -->
+这些节点分别表示交错合并两个输入向量的高/低元素。操作数和结果为包含同一类型的相同数目（<code>N</code>）元素的向量。对于<code>VEC_INTERLEAVE_HIGH_EXPR</code>，第一个输入向量的高<code>N/2</code>个元素被第二个输入向量的高<code>N/2</code>个元素替换。对于<code>VEC_INTERLEAVE_LOW_EXPR</code>，第一个输入向量的低<code>N/2</code>个元素被第二个输入向量的低<code>N/2</code>个元素替换。
+</dl>
+
+<!--  -->
+<!-- Statements -->
+<!--  -->
+<!-- @node Statements -->
+<!-- @section Statements -->
+ </body></html>
+

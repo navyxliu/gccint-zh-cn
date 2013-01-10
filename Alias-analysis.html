@@ -1,0 +1,168 @@
+<html lang="zh">
+<head>
+<title>Alias analysis - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Tree-SSA.html#Tree-SSA" title="Tree SSA">
+<link rel="prev" href="SSA.html#SSA" title="SSA">
+<link rel="next" href="Memory-model.html#Memory-model" title="Memory model">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Alias-analysis"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Memory-model.html#Memory-model">Memory model</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="SSA.html#SSA">SSA</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Tree-SSA.html#Tree-SSA">Tree SSA</a>
+<hr>
+</div>
+
+<h3 class="section">13.4 别名分析</h3>
+
+<p><a name="index-alias-3116"></a><a name="index-flow_002dsensitive-alias-analysis-3117"></a><a name="index-flow_002dinsensitive-alias-analysis-3118"></a>
+<!-- Alias analysis in GIMPLE SSA form consists of two pieces.  First -->
+<!-- the virtual SSA web ties conflicting memory accesses and provides -->
+<!-- a SSA use-def chain and SSA immediate-use chains for walking -->
+<!-- possibly dependent memory accesses.  Second an alias-oracle can -->
+<!-- be queried to disambiguate explicit and implicit memory references. -->
+
+ <p>别名分析由两部分组成，第一部分在虚拟的SSA web中将相互冲突的内存访问连接起来，并提供一个SSA use-def链、SSA immediate-use链用于遍历可能存在依赖关系的内存访问。另一部分提供一个alias-oracle，可用于显式或隐式的内存引用消歧。
+
+     <ol type=1 start=1>
+<li>Memory SSA form.
+
+     <!-- All statements that may use memory have exactly one accompanied use of -->
+     <!-- a virtual SSA name that represents the state of memory at the -->
+     <!-- given point in the IL. -->
+     <p>如果一个指令可能从内存中读数据，那么这个指令就对应一个虚拟SSA name的使用，用来表示IL中给定点的内存状态。
+
+     <!-- All statements that may define memory have exactly one accompanied -->
+     <!-- definition of a virtual SSA name using the previous state of memory -->
+     <!-- and defining the new state of memory after the given point in the IL. -->
+     <p>如果一个指令可能向内存中写数据，那么这个指令就对应一个虚拟SSA name的定义，在IL中的给定点之前保持内存的先前状态，在该给定点之后被赋予新的值。
+
+     <pre class="smallexample">          int i;
+          int foo (void)
+          {
+            # .MEM_3 = VDEF &lt;.MEM_2(D)&gt;
+            i = 1;
+            # VUSE &lt;.MEM_3&gt;
+            return i;
+          }
+</pre>
+     <!-- The virtual SSA names in this case are @code{.MEM_2(D)} and -->
+     <!-- @code{.MEM_3}.  The store to the global variable @code{i} -->
+     <!-- defines @code{.MEM_3} invalidating @code{.MEM_2(D)}.  The -->
+     <!-- load from @code{i} uses that new state @code{.MEM_3}. -->
+     <p>在这个例子中，vitrual SSA name分别是<code>.MEM_2(D)</code>和<code>.MEM_3</code>。全局变量<code>i</code>对应的存储区定义了<code>.MEM_3</code>，同时使<code>.MEM_2(D)</code>无效。（此后）从<code>i</code>加载使用的就是新状态<code>.MEM_3</code>。
+
+     <!-- The virtual SSA web serves as constraints to SSA optimizers -->
+     <!-- preventing illegitimate code-motion and optimization.  It -->
+     <!-- also provides a way to walk related memory statements. -->
+     <p>Virtual SSA web 用于对SSA相关优化的约束，防止不合法的代码移动和优化。同时也可以用来遍历相关存取内存的指令。
+
+     <!-- @item Points-to and escape analysis. -->
+     <li>指向分析和逃逸分析
+
+     <!-- Points-to analysis builds a set of constraints from the GIMPLE -->
+     <!-- SSA IL representing all pointer operations and facts we do -->
+     <!-- or do not know about pointers.  Solving this set of constraints -->
+     <!-- yields a conservatively correct solution for each pointer -->
+     <!-- variable in the program (though we are only interested in -->
+     <!-- SSA name pointers) as to what it may possibly point to. -->
+     <p>指向分析从GIMPLE SSA IL中提取出所有的指针操作（pointer operations）和关于指针的我们知道和不知道的事实（facts），建立一个包含所有指针的约束集合。对约束集合的求解得到一个保守但是正确的解，计算出程序中的每一个指针变量（虽然我们只对SSA name指针感兴趣）可能指向的位置。
+
+     <!-- This points-to solution for a given SSA name pointer is stored -->
+     <!-- in the @code{pt_solution} sub-structure of the -->
+     <!-- @code{SSA_NAME_PTR_INFO} record.  The following accessor -->
+     <!-- functions are available: -->
+     <p>对于一个给定的SSA name指针而言，指向分析的计算结果保存在<code>SSA_NAME_PTR_INFO</code>结构的<code>pt_solution</code>子结构中，可以用以下的辅助函数进行访问：
+
+          <ul>
+<li><code>pt_solution_includes</code>
+<li><code>pt_solutions_intersect</code>
+</ul>
+
+     <!-- Points-to analysis also computes the solution for two special -->
+     <!-- set of pointers, @code{ESCAPED} and @code{CALLUSED}.  Those -->
+     <!-- represent all memory that has escaped the scope of analysis -->
+     <!-- or that is used by pure or nested const calls. -->
+     <p>指向分析也计算<code>ESCAPED</code>和<code>CALLUSED</code>这两类特殊的指针。<code>ESCAPED</code>表示所有逃逸出分析范围的内存，<code>CALLUSED</code>表示指针用于纯（pure）函数调用或嵌套不变函数调用（nested const calls）。
+
+     <li>Type-based alias analysis
+
+     <li>基于类型的别名分析（TBAA）
+
+     <!-- Type-based alias analysis is frontend dependent though generic -->
+     <!-- support is provided by the middle-end in @code{alias.c}.  TBAA -->
+     <!-- code is used by both tree optimizers and RTL optimizers. -->
+     <p>TBAA需要前端的支持，一般性的支持由中端支持，相关代码参考<code>alias.c</code>。TBAA代码在tree优化器和RTL优化器中都有用到。
+
+     <!-- Every language that wishes to perform language-specific alias analysis -->
+     <!-- should define a function that computes, given a @code{tree} -->
+     <!-- node, an alias set for the node.  Nodes in different alias sets are not -->
+     <!-- allowed to alias.  For an example, see the C front-end function -->
+     <!-- @code{c_get_alias_set}. -->
+     <p>如果一个语言希望使用该语言特定的别名分析，则需要定义一个函数，对于一个<code>tree</code>节点，能够计算这个节点的别名集合。（alias set）。不同别名集合中的节点不允许相互别名。例如，C语言前端就有一个相应的函数<code>c_get_alias_set</code>。
+
+     <li>Tree alias-oracle
+<li>Tree alias-oracle
+
+     <!-- The tree alias-oracle provides means to disambiguate two memory -->
+     <!-- references and memory references against statements.  The following -->
+     <!-- queries are available: -->
+     <p>Tree alias-oracle提供一种手段来消除两个内存引用或一个内存引用和一个指令（statement）之间的歧义。可以使用以下的查询方法：
+
+          <ul>
+<li><code>refs_may_alias_p</code>
+<li><code>ref_maybe_used_by_stmt_p</code>
+<li><code>stmt_may_clobber_ref_p</code>
+</ul>
+
+     <!-- In addition to those two kind of statement walkers are available -->
+     <!-- walking statements related to a reference ref. -->
+     <p>除此之外还可以使用以下两种遍历方法来遍历一个内存引用（ref）相关的指令：
+
+     <!-- @code{walk_non_aliased_vuses} walks over dominating memory defining -->
+     <!-- statements and calls back if the statement does not clobber ref -->
+     <!-- providing the non-aliased VUSE.  The walk stops at -->
+     <!-- the first clobbering statement or if asked to. -->
+     <p><code>walk_non_aliased_vuses</code>遍历所有支配的内存定义指令（dominating memory defining statements），根据non-aliased VUSE判断指令是否破坏了（clobber）ref。当遍历的指令没有破坏ref时进行回调（call back）。遍历在被（调用者）要求时或遇见第一个破坏了ref的指令时停止。
+
+     <!-- @code{walk_aliased_vdefs} walks over dominating memory defining -->
+     <!-- statements and calls back on each statement clobbering ref -->
+     <!-- providing its aliasing VDEF.  The walk stops if asked to. -->
+     <p><code>walk_aliased_vdefs</code>遍历所有支配的内存定义指令，当遇到破坏了（clobber）ref的指令时进行回调（根据它的aliasing VDEF进行判断）。遍历在被（调用者）要求时停止。
+
+      </ol>
+
+ </body></html>
+

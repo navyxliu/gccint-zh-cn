@@ -1,0 +1,155 @@
+<html lang="zh">
+<head>
+<title>Namespaces - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="C-and-C_002b_002b-Trees.html#C-and-C_002b_002b-Trees" title="C and C++ Trees">
+<link rel="prev" href="Types-for-C_002b_002b.html#Types-for-C_002b_002b" title="Types for C++">
+<link rel="next" href="Classes.html#Classes" title="Classes">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Namespaces"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Classes.html#Classes">Classes</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Types-for-C_002b_002b.html#Types-for-C_002b_002b">Types for C++</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="C-and-C_002b_002b-Trees.html#C-and-C_002b_002b-Trees">C and C++ Trees</a>
+<hr>
+</div>
+
+<h4 class="subsection">11.10.2 命名空间</h4>
+
+<p><a name="index-namespace_002c-scope-2613"></a><a name="index-NAMESPACE_005fDECL-2614"></a>
+<!-- The root of the entire intermediate representation is the variable -->
+<!-- @code{global_namespace}.  This is the namespace specified with @code{::} -->
+<!-- in C++ source code.  All other namespaces, types, variables, functions, -->
+<!-- and so forth can be found starting with this namespace. -->
+整个中间表示的根是变量<code>global_namespace</code>。
+这是在C++源代码中由<code>::</code>描述的命名空间。
+所有其它命名空间，类型，变量，函数等，都能够从这里开始查找而获得。
+
+<!-- However, except for the fact that it is distinguished as the root of the -->
+<!-- representation, the global namespace is no different from any other -->
+<!-- namespace.  Thus, in what follows, we describe namespaces generally, -->
+<!-- rather than the global namespace in particular. -->
+ <p>然而，除了实际上是作为根表示以外，全局命名空间与其它命名空间没有区别。
+因此，在下文中，我们描述的是普遍的命名空间，而不是特定的全局命名空间。
+
+<!-- A namespace is represented by a @code{NAMESPACE_DECL} node. -->
+ <p>命名空间由<code>NAMESPACE_DECL</code>节点表示。
+
+<!-- The following macros and functions can be used on a @code{NAMESPACE_DECL}: -->
+ <p>下列宏和函数可以用于<code>NAMESPACE_DECL</code>:
+
+     <dl>
+<dt><code>DECL_NAME</code><a name="index-DECL_005fNAME-2615"></a><dd><!-- This macro is used to obtain the @code{IDENTIFIER_NODE} corresponding to -->
+<!-- the unqualified name of the name of the namespace (@pxref{Identifiers}). -->
+<!-- The name of the global namespace is @samp{::}, even though in C++ the -->
+<!-- global namespace is unnamed.  However, you should use comparison with -->
+<!-- @code{global_namespace}, rather than @code{DECL_NAME} to determine -->
+<!-- whether or not a namespace is the global one.  An unnamed namespace -->
+<!-- will have a @code{DECL_NAME} equal to @code{anonymous_namespace_name}. -->
+<!-- Within a single translation unit, all unnamed namespaces will have the -->
+<!-- same name. -->
+该宏用于获得<code>IDENTIFIER_NODE</code>相应的命名空间的未限定名
+（参见<a href="Identifiers.html#Identifiers">Identifiers</a>）。
+全局命名空间的名字为&lsquo;<samp><span class="samp">::</span></samp>&rsquo;，虽然在C++中全局命名空间是没有名字的。
+然而，你应该使用与<code>global_namespace</code>比较的方式，
+而不是用<code>DECL_NAME</code>来确定命名空间是否为全局的。
+一个未命名的命名空间，其 <code>DECL_NAME</code>等于<code>anonymous_namespace_name</code>。
+在一个单独的转换单元中，所有未命名空间将具有同一名字。
+
+     <br><dt><code>DECL_CONTEXT</code><a name="index-DECL_005fCONTEXT-2616"></a><dd><!-- This macro returns the enclosing namespace.  The @code{DECL_CONTEXT} for -->
+<!-- the @code{global_namespace} is @code{NULL_TREE}. -->
+该宏返回闭包的（enclosing）命名空间。
+<code>global_namespace</code>的<code>DECL_CONTEXT</code>为<code>NULL_TREE</code>。
+
+     <br><dt><code>DECL_NAMESPACE_ALIAS</code><a name="index-DECL_005fNAMESPACE_005fALIAS-2617"></a><dd><!-- If this declaration is for a namespace alias, then -->
+<!-- @code{DECL_NAMESPACE_ALIAS} is the namespace for which this one is an -->
+<!-- alias. -->
+如果该声明是一个命名空间的别名，
+则<code>DECL_NAMESPACE_ALIAS</code>为该别名所针对的命名空间。
+
+     <!-- Do not attempt to use @code{cp_namespace_decls} for a namespace which is -->
+     <!-- an alias.  Instead, follow @code{DECL_NAMESPACE_ALIAS} links until you -->
+     <!-- reach an ordinary, non-alias, namespace, and call -->
+     <!-- @code{cp_namespace_decls} there. -->
+     <p>不要对别名命名空间尝试使用<code>cp_namespace_decls</code>。
+相反的，沿着<code>DECL_NAMESPACE_ALIAS</code>链直到一个普通的，非别名的命名空间，
+然后在那里调用<code>cp_namespace_decls</code>。
+
+     <br><dt><code>DECL_NAMESPACE_STD_P</code><a name="index-DECL_005fNAMESPACE_005fSTD_005fP-2618"></a><dd><!-- This predicate holds if the namespace is the special @code{::std} -->
+<!-- namespace. -->
+该断言当命名空间为特殊的<code>::std</code>命名空间时有效。
+
+     <br><dt><code>cp_namespace_decls</code><a name="index-cp_005fnamespace_005fdecls-2619"></a><dd><!-- This function will return the declarations contained in the namespace, -->
+<!-- including types, overloaded functions, other namespaces, and so forth. -->
+<!-- If there are no declarations, this function will return -->
+<!-- @code{NULL_TREE}.  The declarations are connected through their -->
+<!-- @code{TREE_CHAIN} fields. -->
+该函数将返回包含在命名空间中的声明，包括类型，重载函数，其它命名空间等等。
+如果没有声明，该函数将返回<code>NULL_TREE</code>。
+声明通过它们的<code>TREE_CHAIN</code>域连在一起。
+
+     <!-- Although most entries on this list will be declarations, -->
+     <!-- @code{TREE_LIST} nodes may also appear.  In this case, the -->
+     <!-- @code{TREE_VALUE} will be an @code{OVERLOAD}.  The value of the -->
+     <!-- @code{TREE_PURPOSE} is unspecified; back ends should ignore this value. -->
+     <!-- As with the other kinds of declarations returned by -->
+     <!-- @code{cp_namespace_decls}, the @code{TREE_CHAIN} will point to the next -->
+     <!-- declaration in this list. -->
+     <p>虽然这个链表中的大多数实体将为声明，但也可能会出现<code>TREE_LIST</code>。
+这种情况下，<code>TREE_VALUE</code>将为一个<code>OVERLOAD</code>。
+<code>TREE_PURPOSE</code>的值未指定；后端应该忽略这个值。
+至于由<code>cp_namespace_decls</code>返回的其它种类的声明，
+<code>TREE_CHAIN</code>将会指向该链表中的下一个声明。
+
+     <!-- For more information on the kinds of declarations that can occur on this -->
+     <!-- list, @xref{Declarations}.  Some declarations will not appear on this -->
+     <!-- list.  In particular, no @code{FIELD_DECL}, @code{LABEL_DECL}, or -->
+     <!-- @code{PARM_DECL} nodes will appear here. -->
+     <p>关于可以出现在该链表中的各种声明的更多信息，参见<a href="Declarations.html#Declarations">Declarations</a>。
+一些声明将不会出现在该链表中。
+特别是，<code>FIELD_DECL</code>, <code>LABEL_DECL</code>和<code>PARM_DECL</code>节点。
+
+     <!-- This function cannot be used with namespaces that have -->
+     <!-- @code{DECL_NAMESPACE_ALIAS} set. -->
+     <p>该函数不能用于设置了<code>DECL_NAMESPACE_ALIAS</code>的命名空间。
+
+ </dl>
+
+<!--  -->
+<!-- Classes -->
+<!--  -->
+<!-- @node Classes -->
+<!-- @subsection Classes -->
+ </body></html>
+

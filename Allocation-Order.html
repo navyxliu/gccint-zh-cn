@@ -1,0 +1,122 @@
+<html lang="zh">
+<head>
+<title>Allocation Order - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Registers.html#Registers" title="Registers">
+<link rel="prev" href="Register-Basics.html#Register-Basics" title="Register Basics">
+<link rel="next" href="Values-in-Registers.html#Values-in-Registers" title="Values in Registers">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Allocation-Order"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Values-in-Registers.html#Values-in-Registers">Values in Registers</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Register-Basics.html#Register-Basics">Register Basics</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Registers.html#Registers">Registers</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.7.2 寄存器的分配顺序</h4>
+
+<p><a name="index-order-of-register-allocation-3974"></a><a name="index-register-allocation-order-3975"></a>
+<!-- prevent bad page break with this line -->
+<!-- Registers are allocated in order. -->
+寄存器按照顺序进行分配。
+
+<div class="defun">
+&mdash; Macro: <b>REG_ALLOC_ORDER</b><var><a name="index-REG_005fALLOC_005fORDER-3976"></a></var><br>
+<blockquote><!-- If defined, an initializer for a vector of integers, containing the -->
+     <!-- numbers of hard registers in the order in which GCC should prefer -->
+     <!-- to use them (from most preferred to least). -->
+      <p>如果定义，则为一个整数向量的初始化值，包含了硬件寄存器编号，GCC将按照该顺序来使用它们（前面的优先）。
+
+     <!-- If this macro is not defined, registers are used lowest numbered first -->
+     <!-- (all else being equal). -->
+      <p>如果没有定义该宏，则寄存器按照低编号优先的方式使用。
+
+     <!-- One use of this macro is on machines where the highest numbered -->
+     <!-- registers must always be saved and the save-multiple-registers -->
+     <!-- instruction supports only sequences of consecutive registers.  On such -->
+     <!-- machines, define @code{REG_ALLOC_ORDER} to be an initializer that lists -->
+     <!-- the highest numbered allocable register first. -->
+      <p>该宏的一个用处是在一些机器上，高编号的寄存器必须总是被保存并且save-multiple-registers指令只支持连续序列的寄存器。在这些机器上，可以定义<code>REG_ALLOC_ORDER</code>来进行初始化，将可用于分配的高编号寄存器列在前面。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>ADJUST_REG_ALLOC_ORDER</b><var><a name="index-ADJUST_005fREG_005fALLOC_005fORDER-3977"></a></var><br>
+<blockquote><!-- A C statement (sans semicolon) to choose the order in which to allocate -->
+     <!-- hard registers for pseudo-registers local to a basic block. -->
+      <p>一条C语句（没有分号），用来选择对基本块局部的伪寄存器进行分配硬件寄存器的顺序。
+
+     <!-- Store the desired register order in the array @code{reg_alloc_order}. -->
+     <!-- Element 0 should be the register to allocate first; element 1, the next -->
+     <!-- register; and so on. -->
+      <p>将想要的寄存器顺序存储到数组<code>reg_alloc_order</code>中。元素0为首选进行分配的寄存器；元素1为下一个寄存器，以此类推。
+
+     <!-- The macro body should not assume anything about the contents of -->
+     <!-- @code{reg_alloc_order} before execution of the macro. -->
+      <p>在实现该宏时，不能对执行该宏之前<code>reg_alloc_order</code>中的内容进行任何假设。
+
+     <!-- On most machines, it is not necessary to define this macro. -->
+      <p>在大多数机器上，不需要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>HONOR_REG_ALLOC_ORDER</b><var><a name="index-HONOR_005fREG_005fALLOC_005fORDER-3978"></a></var><br>
+<blockquote><!-- Normally, IRA tries to estimate the costs for saving a register in the -->
+     <!-- prologue and restoring it in the epilogue.  This discourages it from -->
+     <!-- using call-saved registers.  If a machine wants to ensure that IRA -->
+     <!-- allocates registers in the order given by REG_ALLOC_ORDER even if some -->
+     <!-- call-saved registers appear earlier than call-used ones, this macro -->
+     <!-- should be defined. -->
+      <p>通常，IRA会尝试去估算在函数起始处保存寄存器和结尾处恢复寄存器的代价。这将使得其不优先使用调用保存的（call-saved）寄存器。如果机器想要确保IRA按照REG_ALLOC_ORDER中给定的顺序进行分配寄存器，即使一些调用保存的寄存器出现在调用使用的（call-used）寄存器之前，则要定义该宏。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>IRA_HARD_REGNO_ADD_COST_MULTIPLIER</b> (<var>regno</var>)<var><a name="index-IRA_005fHARD_005fREGNO_005fADD_005fCOST_005fMULTIPLIER-3979"></a></var><br>
+<blockquote><!-- In some case register allocation order is not enough for the -->
+     <!-- Integrated Register Allocator (@acronym{IRA}) to generate a good code. -->
+     <!-- If this macro is defined, it should return a floating point value -->
+     <!-- based on @var{regno}.  The cost of using @var{regno} for a pseudo will -->
+     <!-- be increased by approximately the pseudo's usage frequency times the -->
+     <!-- value returned by this macro.  Not defining this macro is equivalent -->
+     <!-- to having it always return @code{0.0}. -->
+      <p>在一些情况下，寄存器分配顺序对集成寄存器分配器（<acronym>IRA</acronym>）来说，不足以生成好的代码。如果该宏被定义，其应该返回一个基于<var>regno</var>的浮点值。针对伪寄存器使用<var>regno</var>的代价，将通过估算伪寄存器的使用频率乘以该宏的返回值来获得。不定义该宏，等价于其总是返回<code>0.0</code>。
+
+     <!-- On most machines, it is not necessary to define this macro. -->
+      <p>在大多数机器上，不需要定义该宏。
+</p></blockquote></div>
+
+<!-- @node Values in Registers -->
+<!-- @subsection How Values Fit in Registers -->
+ </body></html>
+

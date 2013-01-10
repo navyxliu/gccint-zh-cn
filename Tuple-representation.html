@@ -1,0 +1,307 @@
+<html lang="zh">
+<head>
+<title>Tuple representation - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="GIMPLE.html#GIMPLE" title="GIMPLE">
+<link rel="next" href="GIMPLE-instruction-set.html#GIMPLE-instruction-set" title="GIMPLE instruction set">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Tuple-representation"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="GIMPLE-instruction-set.html#GIMPLE-instruction-set">GIMPLE instruction set</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="GIMPLE.html#GIMPLE">GIMPLE</a>
+<hr>
+</div>
+
+<h3 class="section">12.1 元组表示</h3>
+
+<p><a name="index-tuples-2714"></a>
+<!-- GIMPLE instructions are tuples of variable size divided in two -->
+<!-- groups: a header describing the instruction and its locations, -->
+<!-- and a variable length body with all the operands. Tuples are -->
+<!-- organized into a hierarchy with 3 main classes of tuples. -->
+GIMPLE指令为可变大小的元组，并由两部分组成：一个描述指令和位置的头，一个具有所有操作数的可变长度的身体。元组被组织成一个层次结构，并有3个主要类别。
+
+<h4 class="subsection">12.1.1 <code>gimple_statement_base</code> (gsbase)</h4>
+
+<p><a name="index-gimple_005fstatement_005fbase-2715"></a>
+<!-- This is the root of the hierarchy, it holds basic information -->
+<!-- needed by most GIMPLE statements. There are some fields that -->
+<!-- may not be relevant to every GIMPLE statement, but those were -->
+<!-- moved into the base structure to take advantage of holes left by -->
+<!-- other fields (thus making the structure more compact).  The -->
+<!-- structure takes 4 words (32 bytes) on 64 bit hosts: -->
+这是层次结构的根，其存放了大多GIMPLE语句所需要的基本信息。有一些域并不与所有的GIMPLE语句相关，但是被挪到基础结构中是为了利用其它域剩下的空位（从而使得结构体更加紧凑）。结构体在64位主机上占用4个字（32个字节 ）：
+
+ <p><table summary=""><tr align="left"><td valign="top">Field				</td><td valign="top">Size (bits)
+<br></td></tr><tr align="left"><td valign="top"><code>code</code>			</td><td valign="top">8
+<br></td></tr><tr align="left"><td valign="top"><code>subcode</code>			</td><td valign="top">16
+<br></td></tr><tr align="left"><td valign="top"><code>no_warning</code>			</td><td valign="top">1
+<br></td></tr><tr align="left"><td valign="top"><code>visited</code>			</td><td valign="top">1
+<br></td></tr><tr align="left"><td valign="top"><code>nontemporal_move</code>		</td><td valign="top">1
+<br></td></tr><tr align="left"><td valign="top"><code>plf</code>			</td><td valign="top">2
+<br></td></tr><tr align="left"><td valign="top"><code>modified</code>			</td><td valign="top">1
+<br></td></tr><tr align="left"><td valign="top"><code>has_volatile_ops</code>		</td><td valign="top">1
+<br></td></tr><tr align="left"><td valign="top"><code>references_memory_p</code>	</td><td valign="top">1
+<br></td></tr><tr align="left"><td valign="top"><code>uid</code>			</td><td valign="top">32
+<br></td></tr><tr align="left"><td valign="top"><code>location</code>			</td><td valign="top">32
+<br></td></tr><tr align="left"><td valign="top"><code>num_ops</code>			</td><td valign="top">32
+<br></td></tr><tr align="left"><td valign="top"><code>bb</code>				</td><td valign="top">64
+<br></td></tr><tr align="left"><td valign="top"><code>block</code>			</td><td valign="top">63
+<br></td></tr><tr align="left"><td valign="top">Total size			</td><td valign="top">32 bytes
+ <br></td></tr></table>
+
+     <ul>
+<li><code>code</code>
+<!-- Main identifier for a GIMPLE instruction. -->
+GIMPLE指令的主要标识
+
+     <li><code>subcode</code>
+<!-- Used to distinguish different variants of the same basic -->
+<!-- instruction or provide flags applicable to a given code. The -->
+<!-- @code{subcode} flags field has different uses depending on the code of -->
+<!-- the instruction, but mostly it distinguishes instructions of the -->
+<!-- same family. The most prominent use of this field is in -->
+<!-- assignments, where subcode indicates the operation done on the -->
+<!-- RHS of the assignment. For example, a = b + c is encoded as -->
+<!-- @code{GIMPLE_ASSIGN <PLUS_EXPR, a, b, c>}. -->
+用来区分相同基本指令的不同变体，或者提供使用于给定代码的标记。<code>subcode</code>标记域具有不同的用法，并取决于指令的代码，但是其主要是用来区分相同家族的指令。该域最突出的用法是在赋值中，其子代码指出了在赋值的右手边所进行的操作。例如，a = b + c被编码为<code>GIMPLE_ASSIGN &lt;PLUS_EXPR, a, b, c&gt;</code>。
+
+     <li><code>no_warning</code>
+<!-- Bitflag to indicate whether a warning has already been issued on -->
+<!-- this statement. -->
+位标记，用来指出是否在该语句上已经产生了一个警告。
+
+     <li><code>visited</code>
+<!-- General purpose ``visited'' marker. Set and cleared by each pass -->
+<!-- when needed. -->
+通用目的的“访问”标记 。由每个编译过程根据需要来设置和清除。
+
+     <li><code>nontemporal_move</code>
+<!-- Bitflag used in assignments that represent non-temporal moves. -->
+<!-- Although this bitflag is only used in assignments, it was moved -->
+<!-- into the base to take advantage of the bit holes left by the -->
+<!-- previous fields. -->
+位标记，用在赋值中，用来表示非临时的移动。虽然该位标记只用于赋值，但其被放到这里是为了利用先前域所剩下的空位。
+
+     <li><code>plf</code>
+<!-- Pass Local Flags. This 2-bit mask can be used as general purpose -->
+<!-- markers by any pass. Passes are responsible for clearing and -->
+<!-- setting these two flags accordingly. -->
+编译过程局部标记。该2个位的掩码可以由任何编译过程用作通用的标记。编译过程负责相应的清除和设置这两个标记。
+
+     <li><code>modified</code>
+<!-- Bitflag to indicate whether the statement has been modified. -->
+<!-- Used mainly by the operand scanner to determine when to re-scan a -->
+<!-- statement for operands. -->
+位标记，用来指出语句是否被修改。主要由操作数扫描器来使用，用来确定什么时候重新扫描一条语句的操作数。
+
+     <li><code>has_volatile_ops</code>
+<!-- Bitflag to indicate whether this statement contains operands that -->
+<!-- have been marked volatile. -->
+位标记，用来指出语句是否包含被标记为volatile的操作数。
+
+     <li><code>references_memory_p</code>
+<!-- Bitflag to indicate whether this statement contains memory -->
+<!-- references (i.e., its operands are either global variables, or -->
+<!-- pointer dereferences or anything that must reside in memory). -->
+位标记，用来指出语句是否包含内存引用（即，其操作数为全局变量，或者指针解引用，或者任何必须在内存中的）。
+
+     <li><code>uid</code>
+<!-- This is an unsigned integer used by passes that want to assign -->
+<!-- IDs to every statement. These IDs must be assigned and used by -->
+<!-- each pass. -->
+为无符号整数，由想要为每条语句分配ID的编译过程使用。这些ID必须由每个编译过程来分配和使用。
+
+     <li><code>location</code>
+<!-- This is a @code{location_t} identifier to specify source code -->
+<!-- location for this statement. It is inherited from the front -->
+<!-- end. -->
+为一个<code>location_t</code>标识符，用来指定该语句的源代码位置。其从前端继承下来。
+
+     <li><code>num_ops</code>
+<!-- Number of operands that this statement has. This specifies the -->
+<!-- size of the operand vector embedded in the tuple. Only used in -->
+<!-- some tuples, but it is declared in the base tuple to take -->
+<!-- advantage of the 32-bit hole left by the previous fields. -->
+该语句具有的操作数个数。这描述了元组中嵌套的操作数向量的大小。只在一些元组中使用，但其声明在基础元组中是为了利用先前语所剩下的32位空位。
+
+     <li><code>bb</code>
+<!-- Basic block holding the instruction. -->
+包含该语句的基本块。
+
+     <li><code>block</code>
+<!-- Lexical block holding this statement.  Also used for debug -->
+<!-- information generation. -->
+包含该语句的词法块。还用于调试信息的生成。
+
+ </ul>
+
+<h4 class="subsection">12.1.2 <code>gimple_statement_with_ops</code></h4>
+
+<p><a name="index-gimple_005fstatement_005fwith_005fops-2716"></a>
+<!-- This tuple is actually split in two: -->
+<!-- @code{gimple_statement_with_ops_base} and -->
+<!-- @code{gimple_statement_with_ops}. This is needed to accommodate the -->
+<!-- way the operand vector is allocated. The operand vector is -->
+<!-- defined to be an array of 1 element. So, to allocate a dynamic -->
+<!-- number of operands, the memory allocator (@code{gimple_alloc}) simply -->
+<!-- allocates enough memory to hold the structure itself plus @code{N -->
+<!--  1} operands which run ``off the end'' of the structure. For -->
+<!-- example, to allocate space for a tuple with 3 operands, -->
+<!-- @code{gimple_alloc} reserves @code{sizeof (struct -->
+<!-- gimple_statement_with_ops) + 2 * sizeof (tree)} bytes. -->
+该元组实际分成两部分：<code>gimple_statement_with_ops_base</code> 和 <code>gimple_statement_with_ops</code>。这是为了适应操作数向量的分配方法。操作数向量被定义为有1个元素的数组。所以，要分配动态数目的操作数，内存分配器(<code>gimple_alloc</code>)只是简单的分配足够的内存来存放结构体本身，以及在结构体尾部加上<code>N - 1</code>个操作数。例如，要为有3个操作数的元组分配空间，<code>gimple_alloc</code>预留了<code>sizeof (struct gimple_statement_with_ops) + 2 * sizeof (tree)</code>个字节。
+
+<!-- On the other hand, several fields in this tuple need to be shared -->
+<!-- with the @code{gimple_statement_with_memory_ops} tuple. So, these -->
+<!-- common fields are placed in @code{gimple_statement_with_ops_base} which -->
+<!-- is then inherited from the other two tuples. -->
+ <p>另一方面，该元组中的一些域需要与<code>gimple_statement_with_memory_ops</code>元组共享。所以，这些公共域被放在<code>gimple_statement_with_ops_base</code>中，然后由其它两个元组来继承。
+
+ <p><table summary=""><tr align="left"><td valign="top"><code>gsbase</code>		</td><td valign="top">256
+<br></td></tr><tr align="left"><td valign="top"><code>def_ops</code>		</td><td valign="top">64
+<br></td></tr><tr align="left"><td valign="top"><code>use_ops</code>		</td><td valign="top">64
+<br></td></tr><tr align="left"><td valign="top"><code>op</code>		</td><td valign="top"><code>num_ops</code> * 64
+<br></td></tr><tr align="left"><td valign="top">Total size		</td><td valign="top">48 + 8 * <code>num_ops</code> bytes
+ <br></td></tr></table>
+
+     <ul>
+<li><code>gsbase</code>
+<!-- Inherited from @code{struct gimple_statement_base}. -->
+继承自<code>struct gimple_statement_base</code>。
+
+     <li><code>def_ops</code>
+<!-- Array of pointers into the operand array indicating all the slots that -->
+<!-- contain a variable written-to by the statement. This array is -->
+<!-- also used for immediate use chaining. Note that it would be -->
+<!-- possible to not rely on this array, but the changes required to -->
+<!-- implement this are pretty invasive. -->
+指针数组，指向操作数数组，指出该包含语句写入的变量的所有插槽。该数组还用于立即使用链。注意，是可以不依赖该数组的，但是这种实现会很具有入侵性。
+
+     <li><code>use_ops</code>
+<!-- Similar to @code{def_ops} but for variables read by the statement. -->
+类似于<code>def_ops</code>，不过是针对语句读取的变量。
+
+     <li><code>op</code>
+<!-- Array of trees with @code{num_ops} slots. -->
+具有<code>num_ops</code>插槽的tree数组。
+</ul>
+
+<h4 class="subsection">12.1.3 <code>gimple_statement_with_memory_ops</code></h4>
+
+<!-- This tuple is essentially identical to @code{gimple_statement_with_ops}, -->
+<!-- except that it contains 4 additional fields to hold vectors -->
+<!-- related memory stores and loads.  Similar to the previous case, -->
+<!-- the structure is split in two to accommodate for the operand -->
+<!-- vector (@code{gimple_statement_with_memory_ops_base} and -->
+<!-- @code{gimple_statement_with_memory_ops}). -->
+<p>该元组本质上等同于<code>gimple_statement_with_ops</code>，除了其包含4个额外的域，来存放与内存存储和加载相关的向量。类似于先前的情况，结构体被分成两部分，用来容纳操作数向量(<code>gimple_statement_with_memory_ops_base</code>和<code>gimple_statement_with_memory_ops</code>)。
+
+ <p><table summary=""><tr align="left"><td valign="top">Field			</td><td valign="top">Size (bits)
+<br></td></tr><tr align="left"><td valign="top"><code>gsbase</code>		</td><td valign="top">256
+<br></td></tr><tr align="left"><td valign="top"><code>def_ops</code>		</td><td valign="top">64
+<br></td></tr><tr align="left"><td valign="top"><code>use_ops</code>		</td><td valign="top">64
+<br></td></tr><tr align="left"><td valign="top"><code>vdef_ops</code>		</td><td valign="top">64
+<br></td></tr><tr align="left"><td valign="top"><code>vuse_ops</code>		</td><td valign="top">64
+<br></td></tr><tr align="left"><td valign="top"><code>stores</code>		</td><td valign="top">64
+<br></td></tr><tr align="left"><td valign="top"><code>loads</code>		</td><td valign="top">64
+<br></td></tr><tr align="left"><td valign="top"><code>op</code>			</td><td valign="top"><code>num_ops</code> * 64
+<br></td></tr><tr align="left"><td valign="top">Total size		</td><td valign="top">80 + 8 * <code>num_ops</code> bytes
+ <br></td></tr></table>
+
+     <ul>
+<li><code>vdef_ops</code>
+<!-- Similar to @code{def_ops} but for @code{VDEF} operators. There is -->
+<!-- one entry per memory symbol written by this statement. This is -->
+<!-- used to maintain the memory SSA use-def and def-def chains. -->
+类似于<code>def_ops</code>，不过用于<code>VDEF</code>操作符。这是该语句写入的内存符号的一个实体。这用于维护内存SSA use-def和def-def链。
+
+     <li><code>vuse_ops</code>
+<!-- Similar to @code{use_ops} but for @code{VUSE} operators. There is -->
+<!-- one entry per memory symbol loaded by this statement. This is -->
+<!-- used to maintain the memory SSA use-def chains. -->
+类似于<code>use_ops</code>，不过用于<code>VUSE</code>操作数。这是该语句加载的内存符号的一个实体。这用于维护内存SSA use-def链。
+
+     <li><code>stores</code>
+<!-- Bitset with all the UIDs for the symbols written-to by the -->
+<!-- statement.  This is different than @code{vdef_ops} in that all the -->
+<!-- affected symbols are mentioned in this set.  If memory -->
+<!-- partitioning is enabled, the @code{vdef_ops} vector will refer to memory -->
+<!-- partitions. Furthermore, no SSA information is stored in this -->
+<!-- set. -->
+位集合，该语句写入的符号的所有UID。这与<code>vdef_ops</code>不同之处是，所有被影响的符号都在该集合中被提到。如果开启了内存划分，则<code>vdef_ops</code>向量将指向内存划分。而且，该集合中不存放SSA信息。
+
+     <li><code>loads</code>
+<!-- Similar to @code{stores}, but for memory loads. (Note that there -->
+<!-- is some amount of redundancy here, it should be possible to -->
+<!-- reduce memory utilization further by removing these sets). -->
+类似于<code>stores</code>，不过用于内存加载。（注意，这里有一些冗余，应该可以通过移除这些集合来减少内存使用）。
+
+ </ul>
+
+<!-- All the other tuples are defined in terms of these three basic -->
+<!-- ones. Each tuple will add some fields. The main gimple type -->
+<!-- is defined to be the union of all these structures (@code{GTY} markers -->
+<!-- elided for clarity): -->
+ <p>所有其它元组按照这三个基本元组来定义。每个元组会增加一些域。gimple类型被定义成所有这些结构体的联合体（为了清晰，省略掉了<code>GTY</code>标记）：
+
+<pre class="smallexample">     union gimple_statement_d
+     {
+       struct gimple_statement_base gsbase;
+       struct gimple_statement_with_ops gsops;
+       struct gimple_statement_with_memory_ops gsmem;
+       struct gimple_statement_omp omp;
+       struct gimple_statement_bind gimple_bind;
+       struct gimple_statement_catch gimple_catch;
+       struct gimple_statement_eh_filter gimple_eh_filter;
+       struct gimple_statement_phi gimple_phi;
+       struct gimple_statement_resx gimple_resx;
+       struct gimple_statement_try gimple_try;
+       struct gimple_statement_wce gimple_wce;
+       struct gimple_statement_asm gimple_asm;
+       struct gimple_statement_omp_critical gimple_omp_critical;
+       struct gimple_statement_omp_for gimple_omp_for;
+       struct gimple_statement_omp_parallel gimple_omp_parallel;
+       struct gimple_statement_omp_task gimple_omp_task;
+       struct gimple_statement_omp_sections gimple_omp_sections;
+       struct gimple_statement_omp_single gimple_omp_single;
+       struct gimple_statement_omp_continue gimple_omp_continue;
+       struct gimple_statement_omp_atomic_load gimple_omp_atomic_load;
+       struct gimple_statement_omp_atomic_store gimple_omp_atomic_store;
+     };
+</pre>
+ <!-- @node GIMPLE instruction set -->
+<!-- @section GIMPLE instruction set -->
+ </body></html>
+

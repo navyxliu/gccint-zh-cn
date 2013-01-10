@@ -1,0 +1,182 @@
+<html lang="zh">
+<head>
+<title>Aggregate Return - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="up" href="Stack-and-Calling.html#Stack-and-Calling" title="Stack and Calling">
+<link rel="prev" href="Scalar-Return.html#Scalar-Return" title="Scalar Return">
+<link rel="next" href="Caller-Saves.html#Caller-Saves" title="Caller Saves">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Aggregate-Return"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Caller-Saves.html#Caller-Saves">Caller Saves</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Scalar-Return.html#Scalar-Return">Scalar Return</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="Stack-and-Calling.html#Stack-and-Calling">Stack and Calling</a>
+<hr>
+</div>
+
+<h4 class="subsection">17.10.9 如何返回大的值</h4>
+
+<p><a name="index-aggregates-as-return-values-4182"></a><a name="index-large-return-values-4183"></a><a name="index-returning-aggregate-values-4184"></a><a name="index-structure-value-address-4185"></a>
+<!-- When a function value's mode is @code{BLKmode} (and in some other -->
+<!-- cases), the value is not returned according to -->
+<!-- @code{TARGET_FUNCTION_VALUE} (@pxref{Scalar Return}).  Instead, the -->
+<!-- caller passes the address of a block of memory in which the value -->
+<!-- should be stored.  This address is called the @dfn{structure value -->
+<!-- address}. -->
+当函数值的机器模式为<code>BLKmode</code>（并且在一些其它情况下），
+值不根据<code>TARGET_FUNCTION_VALUE</code>来返回(参见<a href="Scalar-Return.html#Scalar-Return">Scalar Return</a>)。
+替代的，调用者传递内存块的地址。
+该地址被称为结构体地址（<dfn>structure value address</dfn>）。
+
+<!-- This section describes how to control returning structure values in -->
+<!-- memory. -->
+ <p>这一节描述了如何控制在内存中返回结构体值。
+
+<div class="defun">
+&mdash; Target Hook: bool <b>TARGET_RETURN_IN_MEMORY</b> (<var>const_tree type, const_tree fntype</var>)<var><a name="index-TARGET_005fRETURN_005fIN_005fMEMORY-4186"></a></var><br>
+<blockquote><!-- This target hook should return a nonzero value to say to return the -->
+     <!-- function value in memory, just as large structures are always returned. -->
+     <!-- Here @var{type} will be the data type of the value, and @var{fntype} -->
+     <!-- will be the type of the function doing the returning, or @code{NULL} for -->
+     <!-- libcalls. -->
+      <p>该target钩子应该返回一个非零值，来指明在内存中返回函数值，
+正如返回大的结构体的方式。这里<var>type</var>为值的数据类型，
+<var>fntype</var>为函数的类型，或者<code>NULL</code>，如果是libcall。
+
+     <!-- Note that values of mode @code{BLKmode} must be explicitly handled -->
+     <!-- by this function.  Also, the option @option{-fpcc-struct-return} -->
+     <!-- takes effect regardless of this macro.  On most systems, it is -->
+     <!-- possible to leave the hook undefined; this causes a default -->
+     <!-- definition to be used, whose value is the constant 1 for @code{BLKmode} -->
+     <!-- values, and 0 otherwise. -->
+      <p>注意模式<code>BLKmode</code>的值必须被该函数显示的处理。
+而且，选项<samp><span class="option">-fpcc-struct-return</span></samp>将会其作用，
+而不管该宏如何定义。在大多数系统上，可能会没有定义该钩子；
+这将使用一个缺省定义，其值为常数1对于<code>BLKmode</code>值，其它的为0。
+
+     <!-- Do not use this hook to indicate that structures and unions should always -->
+     <!-- be returned in memory.  You should instead use @code{DEFAULT_PCC_STRUCT_RETURN} -->
+     <!-- to indicate this. -->
+      <p>不要使用该宏来指示结构体和联合体应该总是在内存中返回。
+你应该使用<code>DEFAULT_PCC_STRUCT_RETURN</code>来做这件事情。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>DEFAULT_PCC_STRUCT_RETURN</b><var><a name="index-DEFAULT_005fPCC_005fSTRUCT_005fRETURN-4187"></a></var><br>
+<blockquote><!-- Define this macro to be 1 if all structure and union return values must be -->
+     <!-- in memory.  Since this results in slower code, this should be defined -->
+     <!-- only if needed for compatibility with other compilers or with an ABI@. -->
+     <!-- If you define this macro to be 0, then the conventions used for structure -->
+     <!-- and union return values are decided by the @code{TARGET_RETURN_IN_MEMORY} -->
+     <!-- target hook. -->
+      <p>定义该宏为1，如果所有的结构体和联合体返回值必须在内存中。
+由于这将使得代码变慢，所以应该只有需要与其它编译器或者ABI兼容时才定义。
+如果你定义了该宏为0，
+则对于结构体和联合体返回值的约定则由<code>TARGET_RETURN_IN_MEMORY</code> target钩子来决定。
+
+     <!-- If not defined, this defaults to the value 1. -->
+      <p>如果没有定义，将缺省为1。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: rtx <b>TARGET_STRUCT_VALUE_RTX</b> (<var>tree fndecl, int incoming</var>)<var><a name="index-TARGET_005fSTRUCT_005fVALUE_005fRTX-4188"></a></var><br>
+<blockquote><!-- This target hook should return the location of the structure value -->
+     <!-- address (normally a @code{mem} or @code{reg}), or 0 if the address is -->
+     <!-- passed as an ``invisible'' first argument.  Note that @var{fndecl} may -->
+     <!-- be @code{NULL}, for libcalls.  You do not need to define this target -->
+     <!-- hook if the address is always passed as an ``invisible'' first -->
+     <!-- argument. -->
+      <p>该target钩子应该返回结构体值的地址位置（通常为<code>mem</code>或者<code>reg</code>），
+或者0，如果地址作为“不可视”的第一个参数传递。
+注意<var>fndecl</var>可以为<code>NULL</code>，对于libcall。
+你不需要定义该target钩子，如果地址总是作为“不可视”的第一个参数传递。
+
+     <!-- On some architectures the place where the structure value address -->
+     <!-- is found by the called function is not the same place that the -->
+     <!-- caller put it.  This can be due to register windows, or it could -->
+     <!-- be because the function prologue moves it to a different place. -->
+     <!-- @var{incoming} is @code{1} or @code{2} when the location is needed in -->
+     <!-- the context of the called function, and @code{0} in the context of -->
+     <!-- the caller. -->
+      <p>在一些体系结构上，
+被调用函数寻找结构体值地址的地方与调用者放入的地方不相同。
+这可能是由于寄存器窗口，或者函数序言将其移动到一个不同的地方。
+<var>incoming</var>为<code>1</code>或者<code>2</code>，
+当地址在被调用函数的上下文中需要，
+为<code>0</code>如果在调用者的上下文中需要。
+
+     <!-- If @var{incoming} is nonzero and the address is to be found on the -->
+     <!-- stack, return a @code{mem} which refers to the frame pointer. If -->
+     <!-- @var{incoming} is @code{2}, the result is being used to fetch the -->
+     <!-- structure value address at the beginning of a function.  If you need -->
+     <!-- to emit adjusting code, you should do it at this point. -->
+      <p>如果<var>incoming</var>为非0并且地址是在栈中找到，
+则返回一个<code>mem</code>，其引用帧指针。
+如果<var>incoming</var>为<code>2</code>，
+则结果用于在函数的起始处获取结构体值的地址。
+如果你需要输出调整代码，你应该在这里进行。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Macro: <b>PCC_STATIC_STRUCT_RETURN</b><var><a name="index-PCC_005fSTATIC_005fSTRUCT_005fRETURN-4189"></a></var><br>
+<blockquote><!-- Define this macro if the usual system convention on the target machine -->
+     <!-- for returning structures and unions is for the called function to return -->
+     <!-- the address of a static variable containing the value. -->
+      <p>定义该宏，如果在target机器上的通常的系统约定，
+对于返回结构体和联合体，为被调用函数返回包含该值的静态变量的地址。
+
+     <!-- Do not define this if the usual system convention is for the caller to -->
+     <!-- pass an address to the subroutine. -->
+      <p>不要定义该宏，如果通常的系统约定为调用者将地址传给子程序。
+
+     <!-- This macro has effect in @option{-fpcc-struct-return} mode, but it does -->
+     <!-- nothing when you use @option{-freg-struct-return} mode. -->
+      <p>该宏具有<samp><span class="option">-fpcc-struct-return</span></samp>模式下的效果，
+但是当你使用<samp><span class="option">-freg-struct-return</span></samp>模式时，其将不做任何事。
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: enum machine_mode <b>TARGET_GET_RAW_RESULT_MODE</b> (<var>int regno</var>)<var><a name="index-TARGET_005fGET_005fRAW_005fRESULT_005fMODE-4190"></a></var><br>
+<blockquote><p>This target hook returns the mode to be used when accessing raw return registers in <code>__builtin_return</code>.  Define this macro if the value in <var>reg_raw_mode</var> is not correct. 
+</p></blockquote></div>
+
+<div class="defun">
+&mdash; Target Hook: enum machine_mode <b>TARGET_GET_RAW_ARG_MODE</b> (<var>int regno</var>)<var><a name="index-TARGET_005fGET_005fRAW_005fARG_005fMODE-4191"></a></var><br>
+<blockquote><p>This target hook returns the mode to be used when accessing raw argument registers in <code>__builtin_apply_args</code>.  Define this macro if the value in <var>reg_raw_mode</var> is not correct. 
+</p></blockquote></div>
+
+<!-- @node Caller Saves -->
+<!-- @subsection Caller-Saves Register Allocation -->
+ </body></html>
+

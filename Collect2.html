@@ -1,0 +1,159 @@
+<html lang="zh">
+<head>
+<title>Collect2 - GNU Compiler Collection (GCC) Internals</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="description" content="GNU Compiler Collection (GCC) Internals">
+<meta name="generator" content="makeinfo 4.13">
+<link title="Top" rel="start" href="index.html#Top">
+<link rel="prev" href="Fragments.html#Fragments" title="Fragments">
+<link rel="next" href="Header-Dirs.html#Header-Dirs" title="Header Dirs">
+<link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
+<!--
+版权 (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
+1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2010 自由软件基金会
+
+您可以依据自由软件基金会所发行的GNU自由文档授权1.3版本或者之后的任何版本，对本文档进行复制，分发和/或修改；其中不可变章节为"资助自由软件"，封面文字为 (a) (参见下面)，以及封底文字为 (b) (参见下面)。授权的副本要被包含在标题为"GNU自由文档授权"的章节中。
+
+(a) FSF的封面文字为：
+
+     GNU 手册
+
+(b) FSF的封底文字为：
+
+     您可以自由复制和修改本GNU手册，如同GNU软件。由自由软件基金会所发行的副本用于为GNU开发筹集资金。-->
+<meta http-equiv="Content-Style-Type" content="text/css">
+<style type="text/css"><!--
+  pre.display { font-family:inherit }
+  pre.format  { font-family:inherit }
+  pre.smalldisplay { font-family:inherit; font-size:smaller }
+  pre.smallformat  { font-family:inherit; font-size:smaller }
+  pre.smallexample { font-size:smaller }
+  pre.smalllisp    { font-size:smaller }
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
+--></style>
+</head>
+<body>
+<div class="node">
+<a name="Collect2"></a>
+<p>
+Next:&nbsp;<a rel="next" accesskey="n" href="Header-Dirs.html#Header-Dirs">Header Dirs</a>,
+Previous:&nbsp;<a rel="previous" accesskey="p" href="Fragments.html#Fragments">Fragments</a>,
+Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
+<hr>
+</div>
+
+<h2 class="chapter">20 <code>collect2</code></h2>
+
+<!-- GCC uses a utility called @code{collect2} on nearly all systems to arrange -->
+<!-- to call various initialization functions at start time. -->
+<p>GCC使用叫做 <code>collect2</code> 的工具，在几乎所有的系统上，来安排在起始
+时候调用不同的初始化函数。
+
+<!-- The program @code{collect2} works by linking the program once and -->
+<!-- looking through the linker output file for symbols with particular names -->
+<!-- indicating they are constructor functions.  If it finds any, it -->
+<!-- creates a new temporary @samp{.c} file containing a table of them, -->
+<!-- compiles it, and links the program a second time including that file. -->
+ <p>程序 <code>collect2</code> 的工作方式是通过初次连接程序，并查找连接器输出
+文件中的指示为构造函数的特定名字符号；如果找到，则会创建一个新的包含
+这些符号的临时文件 &lsquo;<samp><span class="samp">.c</span></samp>&rsquo;，编译该文件，并再次连接程序。
+
+ <p><a name="index-g_t_005f_005fmain-4941"></a><a name="index-constructors_002c-automatic-calls-4942"></a><!-- The actual calls to the constructors are carried out by a subroutine -->
+<!-- called @code{__main}, which is called (automatically) at the beginning -->
+<!-- of the body of @code{main} (provided @code{main} was compiled with GNU -->
+<!-- CC)@.  Calling @code{__main} is necessary, even when compiling C code, to -->
+<!-- allow linking C and C++ object code together.  (If you use -->
+<!-- @option{-nostdlib}, you get an unresolved reference to @code{__main}, -->
+<!-- since it's defined in the standard GCC library.  Include @option{-lgcc} at -->
+<!-- the end of your compiler command line to resolve this reference.) -->
+实际调用构造者的是叫做 <code>__main</code> 的子程序，其在main函数体（假若
+<code>main</code> 是由GNU CC编译的）的开始处被（自动的）调用。调用
+<code>__main</code> 是必需的，即使当编译C代码，并允许将C和C++目标代码连接
+一起时。如果使用了 <samp><span class="option">-nostdlib</span></samp>，则会得到对 <code>__main</code> 未解
+决的引用(unresolved reference)这样的错误，这是因为它是定义在标准GCC库
+中。将 <samp><span class="option">-lgcc</span></samp> 包含在编译器命令行的后面便可以解决这个引用。
+
+<!-- The program @code{collect2} is installed as @code{ld} in the directory -->
+<!-- where the passes of the compiler are installed.  When @code{collect2} -->
+<!-- needs to find the @emph{real} @code{ld}, it tries the following file -->
+<!-- names: -->
+ <p>程序 <code>collect2</code> 被作为 <code>ld</code> 安装在编译器过程所被安装的目录
+下。当 <code>collect2</code> 需要找到 <em>真正的</em> <code>ld</code> 时，它会尝试
+下面的文件名：
+
+     <ul>
+<li><!-- a hard coded linker file name, if GCC was configured with the -->
+<!-- @option{-with-ld} option. -->
+一个硬编码的链接器文件名，如果GCC使用<samp><span class="option">--with-ld</span></samp>选项进行配置。
+
+     <li><!-- @file{real-ld} in the directories listed in the compiler's search -->
+<!-- directories. -->
+编译器搜索目录下的 <samp><span class="file">real-ld</span></samp>。
+
+     <li><!-- @file{real-ld} in the directories listed in the environment variable -->
+<!-- @code{PATH}. -->
+环境变量 <code>PATH</code> 所列出的目录下的 <samp><span class="file">real-ld</span></samp>。
+
+     <li><!-- The file specified in the @code{REAL_LD_FILE_NAME} configuration macro, -->
+<!-- if specified. -->
+如果制定了配置宏 <code>REAL_LD_FILE_NAME</code> 则搜索该文件。
+
+     <li><!-- @file{ld} in the compiler's search directories, except that -->
+<!-- @code{collect2} will not execute itself recursively. -->
+编译器搜索目录下的 <samp><span class="file">ld</span></samp>，除了能导致 <code>collect2</code> 递归执行自己
+的以外。
+
+     <li><!-- @file{ld} in @code{PATH}. -->
+<code>PATH</code> 下的 <samp><span class="file">ld</span></samp>。
+</ul>
+
+<!-- ``The compiler's search directories'' means all the directories where -->
+<!-- @command{gcc} searches for passes of the compiler.  This includes -->
+<!-- directories that you specify with @option{-B}. -->
+ <p>“编译器搜索目录”是指的 <samp><span class="command">gcc</span></samp> 针对编译器过程所搜寻的全部目录。
+这包括通过 <samp><span class="option">-B</span></samp> 制定的目录。
+
+<!-- Cross-compilers search a little differently: -->
+ <p>交叉编译器的搜寻方式有一些不同：
+
+     <ul>
+<li><!-- @file{real-ld} in the compiler's search directories. -->
+编译器搜索目录下的 <samp><span class="file">real-ld</span></samp>。
+
+     <li><!-- @file{@var{target}-real-ld} in @code{PATH}. -->
+<code>PATH</code> 下的 <samp><var>target</var><span class="file">-real-ld</span></samp>。
+
+     <li><!-- The file specified in the @code{REAL_LD_FILE_NAME} configuration macro, -->
+<!-- if specified. -->
+如果制定了配置宏 <code>REAL_LD_FILE_NAME</code> 则搜索该文件。
+
+     <li><!-- @file{ld} in the compiler's search directories. -->
+编译器搜索目录下的 <samp><span class="file">ld</span></samp>。
+
+     <li><!-- @file{@var{target}-ld} in @code{PATH}. -->
+<code>PATH</code> 下的 <samp><var>target</var><span class="file">-ld</span></samp>。
+</ul>
+
+<!-- @code{collect2} explicitly avoids running @code{ld} using the file name -->
+<!-- under which @code{collect2} itself was invoked.  In fact, it remembers -->
+<!-- up a list of such names-in case one copy of @code{collect2} finds -->
+<!-- another copy (or version) of @code{collect2} installed as @code{ld} in a -->
+<!-- second place in the search path. -->
+ <p><code>collect2</code> 显示的避免使用调用 <code>collect2</code> 的文件名来运行
+<code>ld</code>。实际上，它记录了一个名字列表——以防一个 <code>collect2</code> 版本会
+找到另一个版本的 <code>collect2</code>。
+
+<!-- @code{collect2} searches for the utilities @code{nm} and @code{strip} -->
+<!-- using the same algorithm as above for @code{ld}. -->
+ <p><code>collect2</code> 使用上面针对 <code>ld</code> 的相同算法来搜寻工具 <code>nm</code> 和
+<code>strip</code>。
+
+<!-- Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001 Free Software Foundation, Inc. -->
+<!-- This is part of the GCC manual. -->
+<!-- For copying conditions, see the file gcc.texi. -->
+<!-- @node Header Dirs -->
+<!-- @chapter Standard Header File Directories -->
+ </body></html>
+
